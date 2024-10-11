@@ -979,7 +979,7 @@ case class FieldTerm(
 case class RecordTerm(
     name: Name,
     fields: Vector[FieldTerm],
-    body: Seq[Term],
+    body: Option[BlockTerm],
     meta: OptionTermMeta = None
 ) extends StmtTerm {
   override def descent(f: Term => Term): RecordTerm = copy(
