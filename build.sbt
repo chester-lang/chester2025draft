@@ -16,7 +16,7 @@ inThisBuild(
   )
 )
 
-val scala3Version = "3.5.2-RC1"
+val scala3Version = "3.5.2-RC2"
 val scala2Version = "2.13.15"
 
 val graalVm = "graalvm-java23"
@@ -165,6 +165,40 @@ bump := {
     IO.write(file("build.sbt"), updatedBuildSbt)
 
     println(s"Version bumped from $oldVersion to $newVersion in all specified files.")
+  }
+}
+
+lazy val bumpScala = inputKey[Unit]("Bump Scala version in multiple files")
+bumpScala := {
+  val args: Seq[String] = spaceDelimited("<new_scala_version>").parsed
+  if (args.length != 1) {
+    println("Usage: bumpScala <new_scala_version>")
+  } else {
+    val newScalaVersion = args(0)
+    val oldScalaVersion = scalaVersion.value
+    val filesToUpdate = Seq(
+      file("build.sbt"),
+      file(".github/workflows/build.yml"),
+      file("docs/dev.sh"),
+      file("idea-plugin/build.sbt"),
+      file("site/package.json")
+    )
+
+    filesToUpdate.foreach { f =>
+      val content = IO.read(f)
+      val updated = content.replaceAllLiterally(oldScalaVersion, newScalaVersion)
+      IO.write(f, updated)
+    }
+
+    // Update the Scala version in build.sbt
+    val buildSbtContent = IO.read(file("build.sbt"))
+    val updatedBuildSbt = buildSbtContent.replace(
+      s"""val scala3Version = "$oldScalaVersion"""",
+      s"""val scala3Version = "$newScalaVersion""""
+    )
+    IO.write(file("build.sbt"), updatedBuildSbt)
+
+    println(s"Scala version bumped from $oldScalaVersion to $newScalaVersion in all specified files.")
   }
 }
 
