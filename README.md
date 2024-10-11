@@ -2,6 +2,8 @@
 
 This project is under development and not usable yet.
 
+Warning: This project does contain very low quality large language model generated code when the person is too tired to code.
+
 https://www.the-lingo.org - note that the domain is subject to change
 
 [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=mio-19.chester-language-support)
