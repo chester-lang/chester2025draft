@@ -984,7 +984,7 @@ case class RecordTerm(
 ) extends StmtTerm {
   override def descent(f: Term => Term): RecordTerm = copy(
     fields = fields.map(field => field.copy(ty = f(field.ty))),
-    body = body.map(f)
+    body = body.map(f).asInstanceOf[Option[BlockTerm]]
   )
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
