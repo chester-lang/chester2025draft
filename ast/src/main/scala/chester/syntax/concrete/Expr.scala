@@ -16,6 +16,7 @@ import spire.math.Rational
 import chester.utils.impls.*
 import chester.error.ProblemUpickle.*
 import chester.uniqid.*
+import chester.syntax.accociativity.Associativity
 
 enum CommentType derives ReadWriter {
   case OneLine
@@ -196,6 +197,7 @@ case class InfixExpr(
     left: Expr,
     operator: Identifier,
     right: Expr,
+    associativity: Associativity,
     meta: Option[ExprMeta] = None
 ) extends Expr {
   override def descent(operator: Expr => Expr): Expr = thisOr {
