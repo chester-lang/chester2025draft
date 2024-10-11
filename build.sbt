@@ -46,7 +46,8 @@ val commonSettings = Seq(
   // resolvers += Resolver.githubPackages("edadma", "readline"),
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
-  // https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
+  resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    // https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
   scalacOptions ++=
     Seq(
       "-encoding",
@@ -539,7 +540,8 @@ object GeneratedJS {
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
-      "org.graalvm.polyglot" % "js" % graalvmVersion
+      "org.graalvm.polyglot" % "js" % graalvmVersion,
+      "org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT"
     )
   )
 
