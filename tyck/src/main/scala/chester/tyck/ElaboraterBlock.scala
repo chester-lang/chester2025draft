@@ -27,7 +27,74 @@ trait ElaboraterBlock extends Elaborater {
 }
 
 trait ProvideElaboraterBlock extends ElaboraterBlock {
+def processRecordStmt(
+    expr: RecordStmt,
+    ctx: LocalCtx,
+    effects: CIdOf[EffectsCell]
+)(using
+    parameter: SemanticCollector,
+    ck: Tyck,
+    state: StateAbility[Tyck]
+): (Seq[StmtTerm], LocalCtx) = {
+  implicit val localCtx: LocalCtx = ctx
 
+  // Extract the record name and fields
+  val name = expr.name.name
+  val fields = expr.fields
+
+  // Create a new type for the record
+  val recordType = newType
+
+  // Generate a unique ID for the record
+  val recordId = UniqId.generate[LocalV] // TODO: use a specific identifier for records
+
+  // Create a new toplevel variable for the record
+  val recordV = newLocalv(name, recordType, recordId, expr.meta)// TODO: use a specific identifier for records
+
+  // Add the record to the semantic collector
+  val r = parameter.newSymbol(recordV, recordId, expr)
+
+  // Add the record to the context
+  val recordItem = ContextItem(name, recordId, recordV, recordType, Some(r))
+  val newCtx = ctx.add(recordItem)
+
+  // Elaborate the fields
+  val elaboratedFields = fields.map { field =>
+    val fieldType = field.ty match {
+      case Some(tyExpr) => checkType(tyExpr)
+      case None         => newTypeTerm
+    }
+
+    // Create a new local variable for the field
+    val fieldId = UniqId.generate[LocalV]
+    val fieldV = newLocalv(field.name.name, fieldType, fieldId, field.meta)
+
+    // Add the field to the context
+    val fieldItem = ContextItem(field.name.name, fieldId, fieldV, fieldType)
+    // Note: We're adding to `newCtx` since `localCtx` is immutable
+    // Leave `localCtx` unchanged for now
+
+    // Create the FieldTerm
+    FieldTerm(field.name.name, fieldType)
+  }
+
+  // Elaborate the optional body (if any)
+  val elaboratedBody = expr.body.map { body =>
+    // Recursively elaborate the block using the new context
+    elabBlock(body, newTypeTerm, effects)(using newCtx, parameter, ck, state)
+  }
+
+  // Construct a RecordStmtTerm
+  val recordStmtTerm = RecordStmtTerm(
+    name = name,
+    fields = elaboratedFields,
+    body = elaboratedBody,
+    meta = convertMeta(expr.meta)
+  )
+
+  // Return the statement term and the updated context
+  (Seq(recordStmtTerm), newCtx)
+}
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: LocalCtx,
       parameter: SemanticCollector,
@@ -55,9 +122,14 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         ctx = newCtx
         stmtTerms
 
+      case expr: RecordStmt =>
+        val (stmtTerms, newCtx) = processRecordStmt(expr, ctx, effects)
+        ctx = newCtx
+        stmtTerms
+
       case importStmt: ImportStmt =>
         ck.reporter.apply(NotImplemented(importStmt))
-        Vector()
+        Vector.empty
 
       case expr =>
         implicit val localCtx: LocalCtx = ctx
@@ -65,8 +137,8 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         Vector(ExprStmtTerm(elab(expr, ty, effects), Meta(ty)))
     }
 
+    // block is needed for implicit locals, don't remove
     {
-
       implicit val localCtx: LocalCtx = ctx
       val tailExpr = tail.getOrElse(UnitExpr(meta))
       val wellTyped = elab(tailExpr, ty, effects)

@@ -431,7 +431,7 @@ case object SimpleDesalt {
           })
         } else None
 
-        RecordExpr(
+        RecordStmt(
           name = name,
           fields = desugaredFields,
           body = desugaredBody,
