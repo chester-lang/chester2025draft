@@ -4,7 +4,6 @@ import chester.cli.Main.CliConfig
 import chester.tyck.SemanticDBGenerator
 import chester.utils.*
 
-
 object PlatformSpecific {
   def testLoadingJS(): Unit = {
     println(chester.Js4Jvm.exports.getMember("helloFromJs").toString)
