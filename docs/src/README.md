@@ -1,4 +1,4 @@
-# Chapter 1: Introduction to Chester
+# Chester
 
 Welcome to the Chester Programming Language documentation! Chester is a modern, expressive language designed to combine the best features of functional and object-oriented programming paradigms.
 

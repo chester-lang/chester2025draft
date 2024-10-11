@@ -1,4 +1,4 @@
-# Chapter 2: Statements
+# Statements
 
 ## Scope of `let` and `def`
 
