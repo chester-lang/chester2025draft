@@ -10,7 +10,7 @@ object Js4Jvm {
     .allowIO(IOAccess.ALL)
     .option("js.esm-eval-returns-exports", "true")
     .option("engine.WarnInterpreterOnly", "false")
-  lazy val context = contextBuilder.build()
+  lazy val context: Context = contextBuilder.build()
   private val source = Source.newBuilder("js", chester.generated.GeneratedJS.jsCode, "main.mjs").mimeType("application/javascript+module").build()
-  lazy val exports = context.eval(source)
+  lazy val exports: Value = context.eval(source)
 }
