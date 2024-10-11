@@ -31,8 +31,7 @@ val nativeImageOption = Seq(
   // runtime: org.jline
   "--initialize-at-build-time=org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
   "--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
-  "-O2",
-  "-J-Xmx18G"
+  "-O2"
 )
 
 val classVersion =
@@ -544,7 +543,7 @@ object GeneratedJS {
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
       "org.graalvm.polyglot" % "js" % graalvmVersion,
-      "org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT"
+      //"org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT" // no: no enough memory to build it with native image
     )
   )
 
