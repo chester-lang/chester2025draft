@@ -382,12 +382,25 @@ case object SimpleDesalt {
             reporter(error)
             DesaltFailed(opseq, error, meta)
         }
-      case expr @ OpSeq(Vector(Identifier(Const.Record, _), name: Identifier, rest @ _*), meta) =>
+      case expr @ OpSeq(Vector(Identifier(Const.Record, _), nameExpr, rest @ _*), meta) =>
+        // Parse the record name and parameters if any
+        val (name, parameterExprs) = nameExpr match {
+          case id: Identifier =>
+            (id, Vector.empty[Expr])
+          case FunctionCall(id: Identifier, telescope, _) =>
+            (id, Vector(telescope))
+          case _ =>
+            val error = ExpectRecordName(nameExpr)
+            reporter(error)
+            return DesaltFailed(expr, error, meta)
+        }
+
         // Parse the fields and body
-        val (fieldExprs, bodyExprs) = rest.toList.span {
+        val (fieldExprs0, bodyExprs) = rest.toVector.span {
           case Tuple(_, _) => true
           case _           => false
         }
+        val fieldExprs = parameterExprs ++ fieldExprs0
 
         // Desugar fields into Field instances
         val desugaredFields = fieldExprs

@@ -258,3 +258,10 @@ case class ExpectFieldDeclaration(cause: Expr) extends TyckError {
   ): Doc =
     t"Expected a field declaration, got "
 }
+
+case class ExpectRecordName(cause: Expr) extends TyckError {
+  override def toDoc(implicit
+      options: PrettierOptions = PrettierOptions.Default
+  ): Doc =
+    t"Expected a record name, got "
+}
