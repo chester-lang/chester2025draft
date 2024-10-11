@@ -15,4 +15,5 @@ object Const {
   val `:` : String = ":"
   val `=` : String = "="
   val kw1: Set[String] = Set(Let, Def)
+  val `<:`: String = "<:"
 }

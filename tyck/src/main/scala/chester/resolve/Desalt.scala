@@ -395,8 +395,20 @@ case object SimpleDesalt {
             return DesaltFailed(expr, error, meta)
         }
 
-        // Parse the fields and body
-        val (fieldExprs0, bodyExprs) = rest.toVector.span {
+        // Process the rest of the tokens
+        var tokens = rest.toList
+
+        // Parse optional ExtendsClause
+        val extendsClause = tokens match {
+          case Identifier(Const.`<:`, _) :: superType :: tail =>
+            tokens = tail
+            Some(ExtendsClause(superType, meta))
+          case _ =>
+            None
+        }
+
+        // Parse fields and body
+        val (fieldExprs0, bodyExprs) = tokens.span {
           case Tuple(_, _) => true
           case _           => false
         }
@@ -433,6 +445,7 @@ case object SimpleDesalt {
 
         RecordStmt(
           name = name,
+          extendsClause = extendsClause,
           fields = desugaredFields,
           body = desugaredBody,
           meta = meta

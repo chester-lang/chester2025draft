@@ -249,7 +249,7 @@ case class PostfixExpr(
   )
 }
 
-sealed trait Field extends Expr derives ReadWriter {
+sealed trait Field extends DesaltExpr derives ReadWriter {
   def name: Identifier
   def ty: Option[Expr]
   override def descent(operator: Expr => Expr): Field = ???
@@ -278,15 +278,29 @@ case class RecordField(
     name.toDoc <> tyDoc <> defaultDoc
   }
 }
+case class ExtendsClause(superType: Expr, meta: Option[ExprMeta] = None) extends DesaltExpr {
+  override def descent(operator: Expr => Expr): ExtendsClause = thisOr {
+    ExtendsClause(operator(superType), meta)
+  }
 
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): ExtendsClause = copy(meta = updater(meta))
+
+  override def toDoc(implicit options: PrettierOptions): Doc = group(
+    Doc.text("<:") <+> superType.toDoc
+  )
+}
 case class RecordStmt(
     name: Identifier,
+    extendsClause: Option[ExtendsClause],
     fields: Vector[Field],
     body: Option[Block],
     meta: Option[ExprMeta] = None
 ) extends Stmt {
   override def descent(operator: Expr => Expr): RecordStmt = copy(
     name = name,
+    extendsClause = extendsClause.map(_.descent(operator)),
     fields = fields.map(_.descent(operator)),
     body = body.map(_.descent(operator)),
     meta = meta
@@ -297,9 +311,12 @@ case class RecordStmt(
   ): RecordStmt = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
     val fieldsDoc = fields.map(_.toDoc).reduceOption(_ <> Docs.`,` <+> _).getOrElse(Doc.empty)
     val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
-    group(Doc.text("record") <+> name.toDoc <> Docs.`(` <> fieldsDoc <> Docs.`)` <> bodyDoc)
+    group(
+      Doc.text("record") <+> name.toDoc <> extendsDoc <> Docs.`(` <> fieldsDoc <> Docs.`)` <> bodyDoc
+    )
   }
 }
 
