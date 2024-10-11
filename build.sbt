@@ -47,7 +47,7 @@ val commonSettings = Seq(
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
   resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    // https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
+  // https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
   scalacOptions ++=
     Seq(
       "-encoding",
@@ -188,6 +188,8 @@ ThisBuild / assemblyMergeStrategy := {
   case PathList("org", "osgi", "service", "prefs", xs @ _*) => MergeStrategy.first
   // TODO
   case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.first
+  // TODO
+  case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") => MergeStrategy.first
   case x =>
     val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
     oldStrategy(x)
