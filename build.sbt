@@ -189,7 +189,7 @@ ThisBuild / assemblyMergeStrategy := {
   // TODO
   case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.first
   // TODO
-  case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") => MergeStrategy.first
+  case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") || xs.contains("reflect-config.json") => MergeStrategy.first
   case x =>
     val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
     oldStrategy(x)
