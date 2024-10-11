@@ -7,6 +7,7 @@ import { Terminal } from '@xterm/xterm';
 import { Readline } from "xterm-readline";
 import { useTranslations } from 'next-intl';
 import { useTheme } from '@/components/ThemeContext';
+import Link from 'next/link';
 
 export default function Home() {
   const t = useTranslations('Home');
@@ -113,6 +114,16 @@ export default function Home() {
       <div className="flex-grow flex flex-col items-center justify-start p-1 sm:p-2">
         <main className="flex flex-col gap-2 w-full max-w-4xl mt-2 sm:mt-4">
           <h1 className="text-2xl font-bold text-center">{t('title')}</h1>
+          <div className="text-center mb-4">
+            <Link
+              href="https://marketplace.visualstudio.com/items?itemName=mio-19.chester-language-support"
+              className="text-blue-500 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('vsCodeExtensionText')}
+            </Link>
+          </div>
           <XTerm ref={xtermRef} />
         </main>
       </div>
