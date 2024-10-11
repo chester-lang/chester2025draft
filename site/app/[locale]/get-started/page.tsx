@@ -12,17 +12,6 @@ export default function GetStartedPage() {
                 <h1 className="text-2xl font-bold text-center">{t('title')}</h1>
                 <p className="text-center">{t('introText')}</p>
 
-                <div className="text-center">
-                    <Link
-                        href="https://marketplace.visualstudio.com/items?itemName=mio-19.chester-language-support"
-                        className="text-blue-500 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {t('vsCodeExtensionText')}
-                    </Link>
-                </div>
-
                 <h2 className="text-xl font-bold mt-6">{t('step1Title')}</h2>
                 <p>{t('step1Description')}</p>
 

@@ -21,7 +21,8 @@ trait SemanticCollector {
   def newSymbol(
       call: MaybeVarCall,
       id: UniqIdOf[? <: MaybeVarCall],
-      definedOn: Expr
+      definedOn: Expr,
+      localCtx: Any // TODO, nessary for deciding type of the symbol if some type is in local variables
   ): SymbolCollector = NoopSymbolCollector
 
   def metaFinished(replace: MetaTerm => Term): Unit = ()
@@ -50,7 +51,8 @@ class VectorSemanticCollector extends SemanticCollector {
   override def newSymbol(
       call: MaybeVarCall,
       id: UniqIdOf[? <: MaybeVarCall],
-      definedOn: Expr
+      definedOn: Expr,
+      localCtx: Any
   ): SymbolCollector = {
     val index = builder.length
     builder.append(CollectedSymbol(call, id, definedOn, Vector()))
@@ -76,9 +78,10 @@ class UnusedVariableWarningWrapper(x: SemanticCollector) extends SemanticCollect
   override def newSymbol(
       call: MaybeVarCall,
       id: UniqIdOf[? <: MaybeVarCall],
-      definedOn: Expr
+      definedOn: Expr,
+      localCtx: Any
   ): SymbolCollector = {
-    val symbolCollector = x.newSymbol(call, id, definedOn)
+    val symbolCollector = x.newSymbol(call, id, definedOn, localCtx)
     val c = CollectedSymbol(call, id, definedOn, Vector())
     unusedVariables = unusedVariables :+ c
     new SymbolCollector {

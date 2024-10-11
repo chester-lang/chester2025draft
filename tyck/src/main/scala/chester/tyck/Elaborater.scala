@@ -1,6 +1,5 @@
 package chester.tyck
 
-import cats.implicits.*
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
@@ -9,7 +8,6 @@ import chester.utils.*
 import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
-import chester.uniqid.*
 import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
@@ -68,7 +66,7 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
   }
 }
 
-trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFunction with ElaboraterFunctionCall {
+trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFunction with ElaboraterFunctionCall with ElaboraterBlock {
 
   // TODO: add something for implicit conversion
 
@@ -80,106 +78,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     val cell = newType
     state.addPropagator(Unify(toId(ty), cell, cause))
     cell
-  }
-
-  def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: LocalCtx,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
-  ): BlockTerm = {
-    val ty = toId(readMetaVar(toTerm(ty0)))
-    val Block(heads0, tail, meta) = expr
-    val heads = heads0.map(resolve)
-    {
-      case class DefInfo(
-          expr: LetDefStmt,
-          id: UniqIdOf[LocalV],
-          tyAndVal: TyAndVal,
-          item: ContextItem
-      )
-
-      val defs = heads.collect {
-        case expr: LetDefStmt if expr.kind == LetDefType.Def =>
-          val name = expr.defined match {
-            // TODO: support other defined patterns
-            case DefinedPattern(PatternBind(name, _)) => name.name
-          }
-          val tyandval = TyAndVal.create()
-          val id = UniqId.generate[LocalV]
-          val localv = newLocalv(name, tyandval.ty, id, meta)
-          val r = parameter.newSymbol(localv, id, expr)
-          DefInfo(
-            expr,
-            UniqId.generate[LocalV],
-            tyandval,
-            ContextItem(name, id, localv, tyandval.ty, Some(r))
-          )
-      }
-      val defsMap = defs.map(info => (info.expr, info)).toMap
-      var ctx = localCtx.add(defs.map(_.item))
-      val names = heads.collect { case expr: LetDefStmt =>
-        expr.defined match {
-          case DefinedPattern(PatternBind(name, _)) => name
-        }
-      }
-      if (names.hasDuplication) {
-        val problem = DuplicateDefinition(expr)
-        ck.reporter.apply(problem)
-      }
-      val stmts: Seq[StmtTerm] = heads.flatMapOrdered {
-        case expr: LetDefStmt if expr.kind == LetDefType.Def => {
-          implicit val localCtx: LocalCtx = ctx
-          val d = defsMap.apply(expr)
-          val ty = expr.ty match {
-            case Some(tyExpr) => {
-              val t = checkTypeId(tyExpr)
-              merge(t, d.tyAndVal.tyId)
-              t
-            }
-            case None => d.tyAndVal.ty
-          }
-          val wellTyped = elabId(expr.body.get, ty, effects)
-          merge(d.tyAndVal.valueId, wellTyped)
-          ctx = ctx.knownAdd(d.id, TyAndVal(ty, wellTyped))
-          Vector(DefStmtTerm(d.item.name, Meta(wellTyped), toTerm(ty)))
-        }
-        case expr: LetDefStmt if expr.kind == LetDefType.Let => {
-          implicit val localCtx: LocalCtx = ctx
-          val name = expr.defined match {
-            // TODO: support other defined patterns
-            case DefinedPattern(PatternBind(name, _)) => name.name
-          }
-          val id = UniqId.generate[LocalV]
-          val ty = expr.ty match {
-            case Some(tyExpr) => checkType(tyExpr)
-            case None         => newTypeTerm
-          }
-          val localv = newLocalv(name, ty, id, meta)
-          val r = parameter.newSymbol(localv, id, expr)
-          val wellTyped = elab(expr.body.get, ty, effects)
-          ctx = ctx
-            .add(ContextItem(name, id, localv, ty, Some(r)))
-            .knownAdd(id, TyAndVal(ty, wellTyped))
-          Vector(LetStmtTerm(name, wellTyped, ty))
-        }
-        case importStmt: ImportStmt => {
-          ck.reporter.apply(NotImplemented(importStmt))
-          Vector()
-        }
-        case expr => {
-          implicit val localCtx: LocalCtx = ctx
-          val ty = newType
-          Vector(ExprStmtTerm(elab(expr, ty, effects), Meta(ty)))
-        }
-      }
-      {
-        implicit val localCtx: LocalCtx = ctx
-        val tailExpr = tail.getOrElse(UnitExpr(meta))
-        val wellTyped = elab(tailExpr, ty, effects)
-        BlockTerm(stmts, wellTyped)
-      }
-    }
   }
 
   /** ty is lhs */
@@ -271,8 +169,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     }
   }
 
-  given ckToReport(using ck: Tyck): Reporter[TyckProblem] = ck.reporter
-
   // TODO: untested
   def elabObjectExpr(
       expr: ObjectExpr,
@@ -314,7 +210,12 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
   }
 }
 
-trait DefaultImpl extends ProvideElaborater with ProvideImpl with ProvideElaboraterFunction with ProvideElaboraterFunctionCall {
+trait DefaultImpl
+    extends ProvideElaborater
+    with ProvideImpl
+    with ProvideElaboraterFunction
+    with ProvideElaboraterFunctionCall
+    with ProvideElaboraterBlock {
 
   def check(
       expr: Expr,

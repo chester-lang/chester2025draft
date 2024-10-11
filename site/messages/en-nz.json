@@ -4,6 +4,7 @@
         "description": "Chester: A Programming Language"
     },
     "Home": {
+        "vsCodeExtensionText": "VSCode Extension",
         "title": "Chester: A Programming Language"
     },
     "Footer": {
@@ -21,7 +22,6 @@
     "GetStartedPage": {
         "title": "Get Started with Chester",
         "introText": "Welcome to Chester! Follow these steps to get started with your new programming language.",
-        "vsCodeExtensionText": "VSCode Extension",
         "step1Title": "1. Install Proto to manage Chester versions",
         "step1Description": "Proto is a tool that helps you manage different versions of Chester. Install Proto using the following commands based on your operating system:",
         "linuxMacOSWSL": "Linux, macOS, WSL",

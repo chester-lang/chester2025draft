@@ -976,13 +976,13 @@ case class FieldTerm(
     Doc.text(name) <> Doc.text(": ") <> ty.toDoc
 }
 
-case class RecordTerm(
+case class RecordStmtTerm(
     name: Name,
     fields: Vector[FieldTerm],
     body: Option[BlockTerm],
     meta: OptionTermMeta = None
 ) extends StmtTerm {
-  override def descent(f: Term => Term): RecordTerm = copy(
+  override def descent(f: Term => Term): RecordStmtTerm = copy(
     fields = fields.map(field => field.copy(ty = f(field.ty))),
     body = body.map(f).asInstanceOf[Option[BlockTerm]]
   )

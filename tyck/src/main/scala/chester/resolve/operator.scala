@@ -155,7 +155,8 @@ def buildExpr(
         // For infix operators, pop two operands
         val right = buildExpr(stack, opContext, reporter)
         val left = buildExpr(stack, opContext, reporter)
-        InfixExpr(left, expr.asInstanceOf[Identifier], right, expr.meta)
+        val associativity = tokenInfo.associativity
+        InfixExpr(left, expr.asInstanceOf[Identifier], right, associativity, expr.meta)
       case OpType.Prefix =>
         // For prefix operators, pop one operand
         val operand = buildExpr(stack, opContext, reporter)

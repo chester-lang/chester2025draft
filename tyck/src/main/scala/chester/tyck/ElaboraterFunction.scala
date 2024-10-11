@@ -30,7 +30,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
     val default = arg.exprOrDefault.map(elab(_, ty, effects))
     val id = UniqId.generate[LocalV]
     val bind = newLocalv(arg.name.name, ty, id, arg.meta)
-    val r = parameter.newSymbol(bind, id, arg)
+    val r = parameter.newSymbol(bind, id, arg, localCtx)
     localCtx.update(_.add(ContextItem(arg.name.name, id, bind, ty, Some(r))))
     default match {
       case Some(defaultValue) =>
