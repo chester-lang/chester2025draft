@@ -542,8 +542,8 @@ object GeneratedJS {
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
-      "org.graalvm.polyglot" % "js" % graalvmVersion,
-      //"org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT" // no: no enough memory to build it with native image
+      "org.graalvm.polyglot" % "js" % graalvmVersion
+      // "org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT" // no: no enough memory to build it with native image
     )
   )
 
