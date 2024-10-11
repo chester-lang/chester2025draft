@@ -6,7 +6,7 @@ lazy val chesterPlugin =
     .enablePlugins(SbtIdeaPlugin)
     .settings(
       name := "ChesterLanguageSupport",
-      version := "0.0.12",
+      version := "0.0.13",
       scalaVersion := "3.5.2-RC1",
       ThisBuild / intellijPluginName := "Chester Language Support",
       ThisBuild / intellijBuild := "242.23339.11",
@@ -23,7 +23,7 @@ lazy val chesterPlugin =
       ),
       // Exclude LSP4J dependencies
       libraryDependencies ++= Seq(
-        ("com.github.chester-lang.chester" %% "lsp" % "0.0.12")
+        ("com.github.chester-lang.chester" %% "lsp" % "0.0.13")
           .exclude("org.eclipse.lsp4j", "org.eclipse.lsp4j")
           .exclude("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc"),
         "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5"
