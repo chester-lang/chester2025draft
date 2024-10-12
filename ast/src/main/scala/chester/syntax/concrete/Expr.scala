@@ -247,144 +247,6 @@ case class PostfixExpr(
     operand.toDoc <+> operator.toDoc
   )
 }
-sealed trait DeclarationStmt extends Stmt derives ReadWriter
-
-case class TraitStmt(
-    name: Identifier,
-    extendsClause: Option[ExtendsClause],
-    body: Option[Block],
-    meta: Option[ExprMeta] = None
-) extends DeclarationStmt {
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): TraitStmt =
-    copy(meta = updater(meta))
-
-  override def descent(operator: Expr => Expr): Expr = thisOr(
-    copy(
-      name = name,
-      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
-      body = body.map(operator(_).asInstanceOf[Block]),
-      meta = meta
-    )
-  )
-
-  override def toDoc(implicit options: PrettierOptions): Doc = {
-    val nameDoc = name.toDoc
-    val extendsDoc = extendsClause.map { ec =>
-      val typesDoc = ec.superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
-      Docs.`<:` <+> typesDoc
-    }.getOrElse(Doc.empty)
-    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
-    group(
-      Doc.text("trait") <+> nameDoc <+> extendsDoc <+> bodyDoc
-    )
-  }
-}
-
-case class InterfaceStmt(
-    name: Identifier,
-    extendsClause: Option[ExtendsClause],
-    body: Option[Block],
-    meta: Option[ExprMeta] = None
-) extends DeclarationStmt {
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): InterfaceStmt =
-    copy(meta = updater(meta))
-
-  override def descent(operator: Expr => Expr): Expr = thisOr(
-    copy(
-      name = name,
-      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
-      body = body.map(operator(_).asInstanceOf[Block]),
-      meta = meta
-    )
-  )
-
-  override def toDoc(implicit options: PrettierOptions): Doc = {
-    val nameDoc = name.toDoc
-    val extendsDoc = extendsClause.map { ec =>
-      val typesDoc = ec.superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
-      Docs.`<:` <+> typesDoc
-    }.getOrElse(Doc.empty)
-    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
-    group(
-      Doc.text("interface") <+> nameDoc <+> extendsDoc <+> bodyDoc
-    )
-  }
-}
-
-sealed trait Field extends DesaltExpr derives ReadWriter {
-  def name: Identifier
-  def ty: Option[Expr]
-  override def descent(operator: Expr => Expr): Field = ???
-}
-
-case class RecordField(
-    name: Identifier,
-    ty: Option[Expr] = None,
-    defaultValue: Option[Expr] = None,
-    meta: Option[ExprMeta] = None
-) extends Field {
-  override def descent(operator: Expr => Expr): RecordField = copy(
-    name = name,
-    ty = ty.map(operator),
-    defaultValue = defaultValue.map(operator),
-    meta = meta
-  )
-
-  override def updateMeta(
-      updater: Option[ExprMeta] => Option[ExprMeta]
-  ): RecordField = copy(meta = updater(meta))
-
-  override def toDoc(implicit options: PrettierOptions): Doc = {
-    val tyDoc = ty.map(t => Docs.`:` <+> t.toDoc).getOrElse(Doc.empty)
-    val defaultDoc = defaultValue.map(v => Docs.`=` <+> v.toDoc).getOrElse(Doc.empty)
-    name.toDoc <> tyDoc <> defaultDoc
-  }
-}
-
-case class ExtendsClause(superTypes: Vector[Expr], meta: Option[ExprMeta] = None) extends DesaltExpr {
-  override def descent(operator: Expr => Expr): ExtendsClause = thisOr {
-    ExtendsClause(superTypes.map(operator), meta)
-  }
-
-  override def updateMeta(
-      updater: Option[ExprMeta] => Option[ExprMeta]
-  ): ExtendsClause = copy(meta = updater(meta))
-
-  override def toDoc(implicit options: PrettierOptions): Doc = {
-    val typesDoc = superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
-    group(Doc.text("<:") <+> typesDoc)
-  }
-}
-
-case class RecordStmt(
-    name: Identifier,
-    fields: Vector[Field],
-    extendsClause: Option[ExtendsClause],
-    body: Option[Block],
-    meta: Option[ExprMeta] = None
-) extends DeclarationStmt {
-  override def descent(operator: Expr => Expr): RecordStmt = copy(
-    name = name,
-    fields = fields.map(_.descent(operator)),
-    extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
-    body = body.map(_.descent(operator)),
-    meta = meta
-  )
-
-  override def updateMeta(
-      updater: Option[ExprMeta] => Option[ExprMeta]
-  ): RecordStmt = copy(meta = updater(meta))
-
-  override def toDoc(implicit options: PrettierOptions): Doc = {
-    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
-    val fieldsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(fields.map(_.toDoc))
-    val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
-    group(
-      Doc.text("record") <+> name.toDoc <> extendsDoc <> fieldsDoc <> bodyDoc
-    )
-  }
-}
-
 case class Block(
     heads: Vector[Expr],
     tail: Option[Expr],
@@ -1115,6 +977,138 @@ case class LetDefStmt(
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
     copy(meta = updater(meta))
+}
+
+sealed trait DeclarationStmt extends Stmt derives ReadWriter
+
+case class TraitStmt(
+    name: Identifier,
+    extendsClause: Option[ExtendsClause],
+    body: Option[Block],
+    meta: Option[ExprMeta] = None
+) extends DeclarationStmt {
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): TraitStmt =
+    copy(meta = updater(meta))
+
+  override def descent(operator: Expr => Expr): Expr = thisOr(
+    copy(
+      name = name,
+      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
+      body = body.map(operator(_).asInstanceOf[Block]),
+      meta = meta
+    )
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val nameDoc = name.toDoc
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("trait") <+> nameDoc <+> extendsDoc <+> bodyDoc
+    )
+  }
+}
+
+case class InterfaceStmt(
+    name: Identifier,
+    extendsClause: Option[ExtendsClause],
+    body: Option[Block],
+    meta: Option[ExprMeta] = None
+) extends DeclarationStmt {
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): InterfaceStmt =
+    copy(meta = updater(meta))
+
+  override def descent(operator: Expr => Expr): Expr = thisOr(
+    copy(
+      name = name,
+      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
+      body = body.map(operator(_).asInstanceOf[Block]),
+      meta = meta
+    )
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val nameDoc = name.toDoc
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("interface") <+> nameDoc <+> extendsDoc <+> bodyDoc
+    )
+  }
+}
+
+sealed trait Field extends DesaltExpr derives ReadWriter {
+  def name: Identifier
+  def ty: Option[Expr]
+  override def descent(operator: Expr => Expr): Field = ???
+}
+
+case class RecordField(
+    name: Identifier,
+    ty: Option[Expr] = None,
+    defaultValue: Option[Expr] = None,
+    meta: Option[ExprMeta] = None
+) extends Field {
+  override def descent(operator: Expr => Expr): RecordField = copy(
+    name = name,
+    ty = ty.map(operator),
+    defaultValue = defaultValue.map(operator),
+    meta = meta
+  )
+
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): RecordField = copy(meta = updater(meta))
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val tyDoc = ty.map(t => Docs.`:` <+> t.toDoc).getOrElse(Doc.empty)
+    val defaultDoc = defaultValue.map(v => Docs.`=` <+> v.toDoc).getOrElse(Doc.empty)
+    name.toDoc <> tyDoc <> defaultDoc
+  }
+}
+
+case class ExtendsClause(superTypes: Vector[Expr], meta: Option[ExprMeta] = None) extends DesaltExpr {
+  override def descent(operator: Expr => Expr): ExtendsClause = thisOr {
+    ExtendsClause(superTypes.map(operator), meta)
+  }
+
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): ExtendsClause = copy(meta = updater(meta))
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val typesDoc = superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
+    Docs.`<:` <+> typesDoc
+  }
+}
+
+case class RecordStmt(
+    name: Identifier,
+    fields: Vector[Field],
+    extendsClause: Option[ExtendsClause],
+    body: Option[Block],
+    meta: Option[ExprMeta] = None
+) extends DeclarationStmt {
+  override def descent(operator: Expr => Expr): RecordStmt = copy(
+    name = name,
+    fields = fields.map(_.descent(operator)),
+    extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
+    body = body.map(_.descent(operator)),
+    meta = meta
+  )
+
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): RecordStmt = copy(meta = updater(meta))
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
+    val fieldsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(fields.map(_.toDoc))
+    val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("record") <+> name.toDoc <> extendsDoc <> fieldsDoc <> bodyDoc
+    )
+  }
 }
 
 case class ReturnStmt(expr: Expr, meta: Option[ExprMeta] = None) extends Stmt {

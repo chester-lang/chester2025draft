@@ -547,11 +547,13 @@ case object SimpleDesalt {
     }
     tokens match {
       case firstType :: tail => loop(List(firstType), tail)
-      case Nil => (Nil, Nil)
+      case Nil               => (Nil, Nil)
     }
   }
 
-  private def parseExtendsClause(tokens: List[Expr], meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): (Option[ExtendsClause], List[Expr]) = {
+  private def parseExtendsClause(tokens: List[Expr], meta: Option[ExprMeta])(using
+      reporter: Reporter[TyckProblem]
+  ): (Option[ExtendsClause], List[Expr]) = {
     tokens match {
       case Identifier(Const.`<:`, _) :: rest =>
         val (superTypes, remainingTokens) = parseSuperTypes(rest)
