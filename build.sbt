@@ -112,7 +112,8 @@ val baseDeps = Seq(
     "org.typelevel" %%% "cats-free" % "2.12.0",
     "com.lihaoyi" %%% "upickle" % "4.0.2",
     "com.lihaoyi" %%% "fansi" % "0.5.0",
-    "com.lihaoyi" %%% "fastparse" % "3.1.1"
+    "com.lihaoyi" %%% "fastparse" % "3.1.1",
+    "org.json4s" %%% "json4s-native-core" % "4.1.0-M7"
     // "com.lihaoyi" %%% "scalatags" % "0.13.1",
     // "com.github.rssh" %%% "dotty-cps-async" % "0.9.22",
     // "io.getkyo" %%% "kyo-prelude" % "0.12.2",
@@ -560,7 +561,7 @@ object GeneratedJS {
     }.taskValue,
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "semanticdb-shared" % "4.10.1" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13"),
+      "org.scalameta" %% "semanticdb-shared" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13"),
       "org.scala-lang.modules" % "scala-asm" % "9.7.0-scala-2",
       "ch.epfl.scala" %% "tasty-query" % "1.4.0",
       "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
