@@ -42,13 +42,13 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = expr.name.name
     val fields = expr.fields
 
-    // Extract the symbol from the extendsClause, if any
-    val extendsSymbolOpt = expr.extendsClause.map { case ExtendsClause(superType, _) =>
-      superType match {
+    // Extract the symbol from the extendsClause, if any. TODO: this is a stub only
+    val extendsSymbolOpt = expr.extendsClause.map { case clause@ExtendsClause(superType, _) =>
+      superType.head match {
         case Identifier(superName, _) => superName
         case _                        =>
           // For now, only handle simple identifiers; report a warning or error if needed
-          ck.reporter.apply(UnsupportedExtendsType(superType))
+          ck.reporter.apply(UnsupportedExtendsType(clause))
           // Return None since we cannot handle complex types yet
           return (Seq.empty, ctx)
       }

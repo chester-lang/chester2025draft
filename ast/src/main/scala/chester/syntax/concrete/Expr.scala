@@ -261,7 +261,7 @@ case class TraitStmt(
   override def descent(operator: Expr => Expr): Expr = thisOr(
     copy(
       name = name,
-      extendsClause = extendsClause.map(ec => ec.copy(superType = operator(ec.superType))),
+      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
       body = body.map(operator(_).asInstanceOf[Block]),
       meta = meta
     )
@@ -269,7 +269,10 @@ case class TraitStmt(
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
     val nameDoc = name.toDoc
-    val extendsDoc = extendsClause.map(ec => Docs.`<:` <+> ec.superType.toDoc).getOrElse(Doc.empty)
+    val extendsDoc = extendsClause.map { ec =>
+      val typesDoc = ec.superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
+      Docs.`<:` <+> typesDoc
+    }.getOrElse(Doc.empty)
     val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
     group(
       Doc.text("trait") <+> nameDoc <+> extendsDoc <+> bodyDoc
@@ -289,7 +292,7 @@ case class InterfaceStmt(
   override def descent(operator: Expr => Expr): Expr = thisOr(
     copy(
       name = name,
-      extendsClause = extendsClause.map(ec => ec.copy(superType = operator(ec.superType))),
+      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
       body = body.map(operator(_).asInstanceOf[Block]),
       meta = meta
     )
@@ -297,7 +300,10 @@ case class InterfaceStmt(
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
     val nameDoc = name.toDoc
-    val extendsDoc = extendsClause.map(ec => Docs.`<:` <+> ec.superType.toDoc).getOrElse(Doc.empty)
+    val extendsDoc = extendsClause.map { ec =>
+      val typesDoc = ec.superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
+      Docs.`<:` <+> typesDoc
+    }.getOrElse(Doc.empty)
     val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
     group(
       Doc.text("interface") <+> nameDoc <+> extendsDoc <+> bodyDoc
@@ -335,18 +341,19 @@ case class RecordField(
   }
 }
 
-case class ExtendsClause(superType: Expr, meta: Option[ExprMeta] = None) extends DesaltExpr {
+case class ExtendsClause(superTypes: Vector[Expr], meta: Option[ExprMeta] = None) extends DesaltExpr {
   override def descent(operator: Expr => Expr): ExtendsClause = thisOr {
-    ExtendsClause(operator(superType), meta)
+    ExtendsClause(superTypes.map(operator), meta)
   }
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ExtendsClause = copy(meta = updater(meta))
 
-  override def toDoc(implicit options: PrettierOptions): Doc = group(
-    Doc.text("<:") <+> superType.toDoc
-  )
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val typesDoc = superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
+    group(Doc.text("<:") <+> typesDoc)
+  }
 }
 
 case class RecordStmt(
@@ -359,7 +366,7 @@ case class RecordStmt(
   override def descent(operator: Expr => Expr): RecordStmt = copy(
     name = name,
     fields = fields.map(_.descent(operator)),
-    extendsClause = extendsClause.map(_.descent(operator)),
+    extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
     body = body.map(_.descent(operator)),
     meta = meta
   )

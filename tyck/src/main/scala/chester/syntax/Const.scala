@@ -17,4 +17,5 @@ object Const {
   val kw1: Set[String] = Set(Let, Def)
   val `<:`: String = "<:"
   val Interface = "interface"
+  val `with` = "with"
 }

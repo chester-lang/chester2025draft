@@ -32,4 +32,5 @@ object Docs {
   def `;`(implicit options: PrettierOptions): Doc = Doc.text(";")
   def `<:`(implicit options: PrettierOptions): Doc =
     if (ReplaceBracketsWithWord.get) Doc.text("isSubtypeOf ") else Doc.text("<:")
+  val `with`: Doc = Doc.text("with")
 }

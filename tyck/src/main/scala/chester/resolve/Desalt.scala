@@ -398,14 +398,9 @@ case object SimpleDesalt {
         // Process the rest of the tokens
         var tokens = rest.toList
 
-        // Parse optional ExtendsClause
-        val extendsClause = tokens match {
-          case Identifier(Const.`<:`, _) :: superType :: tail =>
-            tokens = tail
-            Some(ExtendsClause(superType, meta))
-          case _ =>
-            None
-        }
+        // Use the common method to parse the optional ExtendsClause
+        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+        tokens = remainingTokens
 
         // Parse fields and body
         val (fieldExprs0, bodyExprs) = tokens.span {
@@ -465,17 +460,12 @@ case object SimpleDesalt {
             return DesaltFailed(expr, error, meta)
         }
 
-        // Process the rest of the tokens (e.g., extends clause, body)
+        // Process the rest of the tokens
         var tokens = rest.toList
 
-        // Parse optional ExtendsClause
-        val extendsClause = tokens match {
-          case Identifier(Const.`<:`, _) :: superType :: tail =>
-            tokens = tail
-            Some(ExtendsClause(superType, meta))
-          case _ =>
-            None
-        }
+        // Use the common method to parse the optional ExtendsClause
+        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+        tokens = remainingTokens
 
         // Parse body if present
         val bodyExpr = if (tokens.nonEmpty) {
@@ -507,17 +497,12 @@ case object SimpleDesalt {
             return DesaltFailed(expr, error, meta)
         }
 
-        // Process the rest of the tokens (e.g., extends clause, body)
+        // Process the rest of the tokens
         var tokens = rest.toList
 
-        // Parse optional ExtendsClause
-        val extendsClause = tokens match {
-          case Identifier(Const.`<:`, _) :: superType :: tail =>
-            tokens = tail
-            Some(ExtendsClause(superType, meta))
-          case _ =>
-            None
-        }
+        // Use the common method to parse the optional ExtendsClause
+        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+        tokens = remainingTokens
 
         // Parse body if present
         val bodyExpr = if (tokens.nonEmpty) {
@@ -548,6 +533,33 @@ case object SimpleDesalt {
 
   def desugarUnwrap(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr =
     unwrap(desugar(expr))
+
+  // Helper method to parse super types separated by 'with'
+  def parseSuperTypes(tokens: List[Expr]): (List[Expr], List[Expr]) = {
+    @tailrec
+    def loop(accum: List[Expr], remaining: List[Expr]): (List[Expr], List[Expr]) = {
+      remaining match {
+        case Identifier(Const.`with`, _) :: next :: tail =>
+          loop(next :: accum, tail)
+        case _ =>
+          (accum.reverse, remaining)
+      }
+    }
+    tokens match {
+      case firstType :: tail => loop(List(firstType), tail)
+      case Nil => (Nil, Nil)
+    }
+  }
+
+  private def parseExtendsClause(tokens: List[Expr], meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): (Option[ExtendsClause], List[Expr]) = {
+    tokens match {
+      case Identifier(Const.`<:`, _) :: rest =>
+        val (superTypes, remainingTokens) = parseSuperTypes(rest)
+        (Some(ExtendsClause(superTypes.toVector, meta)), remainingTokens)
+      case _ =>
+        (None, tokens)
+    }
+  }
 }
 case object OpSeqDesalt {
   def desugar(expr: Expr): Expr = ???
