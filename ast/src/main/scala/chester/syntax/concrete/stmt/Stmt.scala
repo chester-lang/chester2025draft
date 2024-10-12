@@ -19,8 +19,7 @@ case class QualifiedID(
     component: ModuleName,
     name: Name,
     sourcePos: Option[SourcePos] = None
-) extends WithPos
-    derives ReadWriter
+) extends WithPos derives ReadWriter
 
 @deprecated("Create new module representation")
 object QualifiedID {

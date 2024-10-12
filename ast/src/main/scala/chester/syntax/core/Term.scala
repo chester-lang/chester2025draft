@@ -31,8 +31,7 @@ case class CallingArgTerm(
     name: Option[Name] = None,
     vararg: Boolean = false,
     meta: OptionTermMeta = None
-) extends ToDoc
-    derives ReadWriter {
+) extends ToDoc derives ReadWriter {
   override def toDoc(implicit options: PrettierOptions): Doc = {
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
     val nameDoc = name.map(_.toDoc <+> Docs.`:`).getOrElse(Doc.empty)
@@ -47,8 +46,7 @@ case class Calling(
     args: Vector[CallingArgTerm],
     implicitly: Boolean = false,
     meta: OptionTermMeta = None
-) extends ToDoc
-    derives ReadWriter {
+) extends ToDoc derives ReadWriter {
   def toDoc(implicit options: PrettierOptions): Doc = {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc

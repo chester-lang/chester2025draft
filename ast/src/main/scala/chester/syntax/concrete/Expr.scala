@@ -293,15 +293,15 @@ case class ExtendsClause(superType: Expr, meta: Option[ExprMeta] = None) extends
 }
 case class RecordStmt(
     name: Identifier,
-    extendsClause: Option[ExtendsClause],
     fields: Vector[Field],
+    extendsClause: Option[ExtendsClause],
     body: Option[Block],
     meta: Option[ExprMeta] = None
 ) extends Stmt {
   override def descent(operator: Expr => Expr): RecordStmt = copy(
     name = name,
-    extendsClause = extendsClause.map(_.descent(operator)),
     fields = fields.map(_.descent(operator)),
+    extendsClause = extendsClause.map(_.descent(operator)),
     body = body.map(_.descent(operator)),
     meta = meta
   )
@@ -362,8 +362,7 @@ case class Arg(
     exprOrDefault: Option[Expr] = None,
     vararg: Boolean = false,
     meta: Option[ExprMeta] = None
-) extends Expr
-    derives ReadWriter {
+) extends Expr derives ReadWriter {
 
   def getName: Name = name match {
     case Identifier(name, _) => name
@@ -409,8 +408,7 @@ case class CallingArg(
     expr: Expr,
     vararg: Boolean = false,
     meta: Option[ExprMeta] = None
-) extends ToDoc
-    derives ReadWriter {
+) extends ToDoc derives ReadWriter {
   def descent(operator: Expr => Expr): CallingArg = {
     CallingArg(name, operator(expr), vararg, meta)
   }
@@ -471,8 +469,7 @@ case class DefTelescope(
     implicitly: Boolean = false,
     meta: Option[ExprMeta] = None
 ) extends MaybeTelescope
-    with DesaltExpr
-    derives ReadWriter {
+    with DesaltExpr derives ReadWriter {
   override def descent(operator: Expr => Expr): DefTelescope = thisOr {
     DefTelescope(args.map(_.descent(operator)), implicitly, meta)
   }
@@ -538,8 +535,7 @@ case class DotCall(
     field: Expr,
     telescope: Vector[MaybeTelescope],
     meta: Option[ExprMeta] = None
-) extends ParsedExpr
-    derives ReadWriter {
+) extends ParsedExpr derives ReadWriter {
   override def descent(operator: Expr => Expr): Expr = thisOr {
     DotCall(
       operator(expr),

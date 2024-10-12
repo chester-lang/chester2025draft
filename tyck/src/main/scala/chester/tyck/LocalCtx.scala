@@ -67,11 +67,18 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
   object Imports {
     val Empty: Imports = Imports()
   }
-
+  case class RecordDefinition(
+      name: Name,
+      fields: Vector[FieldTerm],
+      extendsSymbol: Option[Name], // Store the symbol from the extends clause
+      id: UniqIdOf[LocalV],
+      ty: CellId[Term]
+  )
   case class LocalCtx(
       map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
       contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
       knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
+      recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
       imports: Imports = Imports.Empty,
       loadedModules: LoadedModules = LoadedModules.Empty,
       operators: OperatorsContext = OperatorsContext.Default,
@@ -108,6 +115,16 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
         acc + (item.uniqId -> item)
       }
       copy(map = newMap, contextItems = newContextItems)
+    }
+
+    // Method to add a record definition to the context
+    def addRecordDefinition(recordDef: RecordDefinition): LocalCtx = {
+      copy(recordDefinitions = recordDefinitions + (recordDef.name -> recordDef))
+    }
+
+    // Method to get a record definition by name
+    def getRecordDefinition(name: Name): Option[RecordDefinition] = {
+      recordDefinitions.get(name)
     }
   }
 

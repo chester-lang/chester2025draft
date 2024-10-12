@@ -265,3 +265,11 @@ case class ExpectRecordName(cause: Expr) extends TyckError {
   ): Doc =
     t"Expected a record name, got "
 }
+case class DuplicateFieldDefinition(cause: Expr) extends TyckError {
+  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+    t"Duplicate field definition in record"
+}
+case class UnsupportedExtendsType(cause: Expr) extends TyckError {
+  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+    Doc.text("Unsupported type in extends clause")
+}

@@ -27,8 +27,7 @@ private case class ProblemSer(
     stage: Problem.Stage,
     severity: Problem.Severity,
     message: Doc
-) extends Problem
-    derives ReadWriter {
+) extends Problem derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc = message
 }
 

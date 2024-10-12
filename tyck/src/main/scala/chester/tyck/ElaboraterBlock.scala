@@ -42,54 +42,63 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = expr.name.name
     val fields = expr.fields
 
+    // Extract the symbol from the extendsClause, if any
+    val extendsSymbolOpt = expr.extendsClause.map { case ExtendsClause(superType, _) =>
+      superType match {
+        case Identifier(superName, _) => superName
+        case _                        =>
+          // For now, only handle simple identifiers; report a warning or error if needed
+          ck.reporter.apply(UnsupportedExtendsType(superType))
+          // Return None since we cannot handle complex types yet
+          return (Seq.empty, ctx)
+      }
+    }
+
     // Create a new type for the record
     val recordType = newType
 
     // Generate a unique ID for the record
-    val recordId = UniqId.generate[LocalV] // TODO: use a specific identifier for records
+    val recordId = UniqId.generate[LocalV]
 
-    // Create a new toplevel variable for the record
-    val recordV = newLocalv(name, recordType, recordId, expr.meta) // TODO: use a specific identifier for records
+    // Create a new local variable for the record
+    val recordV = newLocalv(name, recordType, recordId, expr.meta)
 
     // Add the record to the semantic collector
     val r = parameter.newSymbol(recordV, recordId, expr, localCtx)
 
-    // Add the record to the context
-    val recordItem = ContextItem(name, recordId, recordV, recordType, Some(r))
-    val newCtx = ctx.add(recordItem)
+    // Create the RecordDefinition with the extendsSymbol
+    val recordDef = RecordDefinition(name, Vector.empty, extendsSymbolOpt, recordId, recordType)
 
-    // Elaborate the fields
+    // Update the context with the new record definition
+    val newCtx = ctx
+      .add(ContextItem(name, recordId, recordV, recordType, Some(r)))
+      .addRecordDefinition(recordDef)
+
+    // Elaborate the fields without combining them with any super class fields
     val elaboratedFields = fields.map { field =>
       val fieldType = field.ty match {
         case Some(tyExpr) => checkType(tyExpr)
         case None         => newTypeTerm
       }
 
-      // Create a new local variable for the field
-      val fieldId = UniqId.generate[LocalV]
-      val fieldV = newLocalv(field.name.name, fieldType, fieldId, field.meta)
-
-      // Add the field to the context
-      val fieldItem = ContextItem(field.name.name, fieldId, fieldV, fieldType)
-      // Note: We're adding to `newCtx` since `localCtx` is immutable
-      // Leave `localCtx` unchanged for now
-
-      // Create the FieldTerm
+      // Create a FieldTerm representing the field in the record
       FieldTerm(field.name.name, fieldType)
     }
 
     // Elaborate the optional body (if any)
     val elaboratedBody = expr.body.map { body =>
-      // Recursively elaborate the block using the new context
       elabBlock(body, newTypeTerm, effects)(using newCtx, parameter, ck, state)
     }
 
-    // Construct a RecordStmtTerm
+    // Construct the RecordStmtTerm that includes the fields and extendsClause
     val recordStmtTerm = RecordStmtTerm(
       name = name,
       fields = elaboratedFields,
       body = elaboratedBody,
       meta = convertMeta(expr.meta)
+      // We can store the extendsSymbol here if needed in the future
+      // For now, we add a TODO comment
+      // TODO: Handle the extendsClause during type checking
     )
 
     // Return the statement term and the updated context
