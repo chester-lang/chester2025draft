@@ -5,7 +5,6 @@ import cats.data.*
 import chester.doc.*
 import chester.doc.const.Docs
 import chester.error.*
-import chester.syntax.accociativity.Associativity
 import chester.syntax.concrete.stmt.QualifiedID
 import chester.syntax.core.*
 import chester.syntax.*
@@ -189,7 +188,7 @@ case class OpSeq(seq: Vector[Expr], meta: Option[ExprMeta] = None) extends Parse
   ): OpSeq = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = group(
-    seq.map(_.toDoc).reduceOption(_ </> _).getOrElse(Doc.empty)
+    Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(seq.map(_.toDoc))
   )
 }
 
@@ -278,6 +277,7 @@ case class RecordField(
     name.toDoc <> tyDoc <> defaultDoc
   }
 }
+
 case class ExtendsClause(superType: Expr, meta: Option[ExprMeta] = None) extends DesaltExpr {
   override def descent(operator: Expr => Expr): ExtendsClause = thisOr {
     ExtendsClause(operator(superType), meta)
@@ -291,6 +291,7 @@ case class ExtendsClause(superType: Expr, meta: Option[ExprMeta] = None) extends
     Doc.text("<:") <+> superType.toDoc
   )
 }
+
 case class RecordStmt(
     name: Identifier,
     fields: Vector[Field],
@@ -312,10 +313,10 @@ case class RecordStmt(
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
-    val fieldsDoc = fields.map(_.toDoc).reduceOption(_ <> Docs.`,` <+> _).getOrElse(Doc.empty)
+    val fieldsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(fields.map(_.toDoc))
     val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
     group(
-      Doc.text("record") <+> name.toDoc <> extendsDoc <> Docs.`(` <> fieldsDoc <> Docs.`)` <> bodyDoc
+      Doc.text("record") <+> name.toDoc <> extendsDoc <> fieldsDoc <> bodyDoc
     )
   }
 }
@@ -334,10 +335,7 @@ case class Block(
   ): Block = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = group {
-    val headDocs = heads
-      .map(_.toDoc)
-      .reduceOption(_ <> Docs.`;` </> _)
-      .getOrElse(Doc.empty)
+    val headDocs = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`;` </> Doc.empty)(heads.map(_.toDoc))
     val tailDoc = tail.map(_.toDoc).getOrElse(Doc.empty)
 
     Docs.`{` </>
@@ -392,7 +390,7 @@ case class Arg(
   override def toDoc(implicit options: PrettierOptions): Doc = group {
     val decDoc =
       if (decorations.nonEmpty)
-        decorations.map(_.toDoc).reduce(_ </> _) <+> Doc.empty
+        Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(decorations.map(_.toDoc)) <+> Doc.empty
       else Doc.empty
     val nameDoc = name.toDoc
     val tyDoc = ty.map(t => Docs.`:` <+> t.toDoc).getOrElse(Doc.empty)
@@ -437,7 +435,7 @@ case class DesaltCallingTelescope(
   ): DesaltCallingTelescope = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
-    val argsDoc = args.map(_.toDoc).reduceOption(_ <> Docs.`,` <+> _).getOrElse(Doc.empty)
+    val argsDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`,` <+> Doc.empty)(args.map(_.toDoc))
     if (implicitly) Docs.`[` <> argsDoc <> Docs.`]`
     else Docs.`(` <> argsDoc <> Docs.`)`
   }
@@ -461,7 +459,7 @@ case class Tuple(terms: Vector[Expr], meta: Option[ExprMeta] = None) extends Par
   ): Tuple = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc =
-    Doc.wrapperlist(Docs.`(`, Docs.`)`)(terms)
+    Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(terms.map(_.toDoc))
 }
 
 case class DefTelescope(
@@ -479,7 +477,7 @@ case class DefTelescope(
   ): DefTelescope = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc =
-    Doc.wrapperlist("(", ")", ", ")(args.map(_.toDoc))
+    Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(args.map(_.toDoc))
 }
 
 object DefTelescope {
@@ -523,10 +521,7 @@ case class DesaltFunctionCall(
   ): DesaltFunctionCall = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = group(
-    function.toDoc <> telescopes
-      .map(_.toDoc)
-      .reduceOption(_ <> _)
-      .getOrElse(Doc.empty)
+    function.toDoc <> Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescopes.map(_.toDoc))
   )
 }
 
@@ -554,7 +549,7 @@ case class DotCall(
   def isQualifiedName: Boolean = {
     if (telescope.nonEmpty) return false
     if (!field.isInstanceOf[Identifier]) return false
-    expr.match {
+    expr match {
       case Identifier(_, _)    => true
       case DotCall(_, _, _, _) => expr.asInstanceOf[DotCall].isQualifiedName
       case _                   => false
@@ -562,10 +557,8 @@ case class DotCall(
   }
 
   override def toDoc(implicit options: PrettierOptions): Doc = group(
-    expr.toDoc <> Docs.`.` <> field.toDoc <> telescope
-      .map(_.toDoc)
-      .reduceOption(_ <> _)
-      .getOrElse(Doc.empty)
+    expr.toDoc <> Docs.`.` <> field.toDoc <>
+      Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
   )
 }
 
@@ -633,7 +626,7 @@ case class ListExpr(terms: Vector[Expr], meta: Option[ExprMeta] = None) extends 
   ): ListExpr = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc =
-    Doc.wrapperlist("[", "]", ", ")(terms)
+    Doc.wrapperlist(Docs.`[`, Docs.`]`, Docs.`,` <+> Doc.empty)(terms.map(_.toDoc))
 }
 
 case class HoleExpr(description: String, meta: Option[ExprMeta] = None) extends Expr {
@@ -680,10 +673,8 @@ case class AnnotatedExpr(
   ): AnnotatedExpr = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = group(
-    annotation.toDoc <> telescope
-      .map(_.toDoc)
-      .reduceOption(_ <> _)
-      .getOrElse(Doc.empty) <> expr.toDoc
+    annotation.toDoc <>
+      Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc)) <> expr.toDoc
   )
 }
 
@@ -722,7 +713,7 @@ case class ObjectExpr(
   ): ObjectExpr = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc =
-    Doc.wrapperlist(Docs.`{`, Docs.`}`)(
+    Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`,` <+> Doc.empty)(
       clauses.map {
         case ObjectExprClause(key, value) =>
           key.toDoc <> Docs.`=` <+> value.toDoc
@@ -746,10 +737,8 @@ case class Keyword(
   ): Keyword = copy(meta = updater(meta))
 
   override def toDoc(implicit options: PrettierOptions): Doc = group(
-    Doc.text("#" + key) <> telescope
-      .map(_.toDoc)
-      .reduceOption(_ <> _)
-      .getOrElse(Doc.empty)
+    Doc.text("#" + key) <>
+      Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
   )
 }
 
@@ -786,7 +775,7 @@ case class DesaltMatching(
   )
 
   override def toDoc(implicit options: PrettierOptions): Doc =
-    Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`;`)(
+    Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`;` <+> Doc.empty)(
       clauses.map(_.toDoc)
     )
 }
@@ -813,7 +802,7 @@ case class FunctionExpr(
   )
 
   override def toDoc(implicit options: PrettierOptions): Doc = group {
-    val telescopeDoc = telescope.map(_.toDoc).reduceOption(_ <+> _).getOrElse(Doc.empty)
+    val telescopeDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
     val effectDoc = effect.map(_.toDoc).getOrElse(Doc.empty)
     val resultDoc = resultTy.map(r => Docs.`->` <+> r.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.toDoc
@@ -1008,10 +997,7 @@ case class DefinedFunction(
   def bindings: Vector[Identifier] = Vector(id)
 
   override def toDoc(implicit options: PrettierOptions): Doc = group(
-    id.toDoc <> telescope
-      .map(_.toDoc)
-      .reduceOption(_ <+> _)
-      .getOrElse(Doc.empty)
+    id.toDoc <> Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
   )
 }
 
@@ -1059,9 +1045,7 @@ case class LetDefStmt(
     val definedDoc = defined.toDoc
     val tyDoc = ty.map(t => Doc.text(": ") <> t.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(b => Doc.text(" = ") <> b.toDoc).getOrElse(Doc.empty)
-    val decorationsDoc =
-      if (decorations.isEmpty) Doc.empty
-      else decorations.map(_.toDoc).reduce(_ <+> _)
+    val decorationsDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(decorations.map(_.toDoc))
     decorationsDoc <+> kindDoc <+> definedDoc <+> tyDoc <+> bodyDoc
   }
 
