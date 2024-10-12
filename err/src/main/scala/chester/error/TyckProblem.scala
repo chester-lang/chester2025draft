@@ -273,3 +273,12 @@ case class UnsupportedExtendsType(cause: Expr) extends TyckError {
   override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
     Doc.text("Unsupported type in extends clause")
 }
+case class ExpectTraitName(cause: Expr) extends TyckError {
+  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+    t"Expected a trait name, got ${cause.toDoc}"
+}
+
+case class ExpectInterfaceName(cause: Expr) extends TyckError {
+  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+    t"Expected an interface name, got ${cause.toDoc}"
+}

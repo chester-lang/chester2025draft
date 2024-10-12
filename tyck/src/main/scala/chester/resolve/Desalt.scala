@@ -451,6 +451,90 @@ case object SimpleDesalt {
           meta = meta
         )
 
+      // Handling 'trait' keyword
+      case expr @ OpSeq(Vector(Identifier(Const.Trait, _), nameExpr, rest @ _*), meta) =>
+        // Parse the trait name and parameters if any
+        val (name, parameterExprs) = nameExpr match {
+          case id: Identifier =>
+            (id, Vector.empty[Expr])
+          case FunctionCall(id: Identifier, telescope, _) =>
+            (id, Vector(telescope))
+          case _ =>
+            val error = ExpectTraitName(nameExpr)
+            reporter(error)
+            return DesaltFailed(expr, error, meta)
+        }
+
+        // Process the rest of the tokens (e.g., extends clause, body)
+        var tokens = rest.toList
+
+        // Parse optional ExtendsClause
+        val extendsClause = tokens match {
+          case Identifier(Const.`<:`, _) :: superType :: tail =>
+            tokens = tail
+            Some(ExtendsClause(superType, meta))
+          case _ =>
+            None
+        }
+
+        // Parse body if present
+        val bodyExpr = if (tokens.nonEmpty) {
+          val body = opSeq(tokens)
+          Some(desugar(body) match {
+            case b: Block => b
+            case other    => Block(Vector(other), None)
+          })
+        } else None
+
+        TraitStmt(
+          name = name,
+          extendsClause = extendsClause,
+          body = bodyExpr,
+          meta = meta
+        )
+
+      // Handling 'interface' keyword
+      case expr @ OpSeq(Vector(Identifier(Const.Interface, _), nameExpr, rest @ _*), meta) =>
+        // Parse the interface name and parameters if any
+        val (name, parameterExprs) = nameExpr match {
+          case id: Identifier =>
+            (id, Vector.empty[Expr])
+          case FunctionCall(id: Identifier, telescope, _) =>
+            (id, Vector(telescope))
+          case _ =>
+            val error = ExpectInterfaceName(nameExpr)
+            reporter(error)
+            return DesaltFailed(expr, error, meta)
+        }
+
+        // Process the rest of the tokens (e.g., extends clause, body)
+        var tokens = rest.toList
+
+        // Parse optional ExtendsClause
+        val extendsClause = tokens match {
+          case Identifier(Const.`<:`, _) :: superType :: tail =>
+            tokens = tail
+            Some(ExtendsClause(superType, meta))
+          case _ =>
+            None
+        }
+
+        // Parse body if present
+        val bodyExpr = if (tokens.nonEmpty) {
+          val body = opSeq(tokens)
+          Some(desugar(body) match {
+            case b: Block => b
+            case other    => Block(Vector(other), None)
+          })
+        } else None
+
+        InterfaceStmt(
+          name = name,
+          extendsClause = extendsClause,
+          body = bodyExpr,
+          meta = meta
+        )
+
       case default => default
     }
 

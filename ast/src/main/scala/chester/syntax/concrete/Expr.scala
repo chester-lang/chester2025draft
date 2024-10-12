@@ -247,6 +247,63 @@ case class PostfixExpr(
     operand.toDoc <+> operator.toDoc
   )
 }
+sealed trait DeclarationStmt extends Stmt derives ReadWriter
+
+case class TraitStmt(
+    name: Identifier,
+    extendsClause: Option[ExtendsClause],
+    body: Option[Block],
+    meta: Option[ExprMeta] = None
+) extends DeclarationStmt {
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): TraitStmt =
+    copy(meta = updater(meta))
+
+  override def descent(operator: Expr => Expr): Expr = thisOr(
+    copy(
+      name = name,
+      extendsClause = extendsClause.map(ec => ec.copy(superType = operator(ec.superType))),
+      body = body.map(operator(_).asInstanceOf[Block]),
+      meta = meta
+    )
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val nameDoc = name.toDoc
+    val extendsDoc = extendsClause.map(ec => Docs.`<:` <+> ec.superType.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("trait") <+> nameDoc <+> extendsDoc <+> bodyDoc
+    )
+  }
+}
+
+case class InterfaceStmt(
+    name: Identifier,
+    extendsClause: Option[ExtendsClause],
+    body: Option[Block],
+    meta: Option[ExprMeta] = None
+) extends DeclarationStmt {
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): InterfaceStmt =
+    copy(meta = updater(meta))
+
+  override def descent(operator: Expr => Expr): Expr = thisOr(
+    copy(
+      name = name,
+      extendsClause = extendsClause.map(ec => ec.copy(superType = operator(ec.superType))),
+      body = body.map(operator(_).asInstanceOf[Block]),
+      meta = meta
+    )
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val nameDoc = name.toDoc
+    val extendsDoc = extendsClause.map(ec => Docs.`<:` <+> ec.superType.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("interface") <+> nameDoc <+> extendsDoc <+> bodyDoc
+    )
+  }
+}
 
 sealed trait Field extends DesaltExpr derives ReadWriter {
   def name: Identifier
@@ -298,7 +355,7 @@ case class RecordStmt(
     extendsClause: Option[ExtendsClause],
     body: Option[Block],
     meta: Option[ExprMeta] = None
-) extends Stmt {
+) extends DeclarationStmt {
   override def descent(operator: Expr => Expr): RecordStmt = copy(
     name = name,
     fields = fields.map(_.descent(operator)),
