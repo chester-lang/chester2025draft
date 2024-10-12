@@ -2,7 +2,6 @@ package chester.tyck
 
 import chester.core.parseCheckTAST
 import chester.error.*
-import chester.parser.*
 import chester.parser
 import chester.tyck.api.{CollectedSymbol, VectorSemanticCollector}
 import chester.syntax.*

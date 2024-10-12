@@ -1,7 +1,6 @@
 package chester.tyck
 
 import scala.meta.internal.semanticdb.TextDocuments
-import scala.meta.internal.semanticdb.Scala._
 
 object SemanticDBReaderTest {
 
