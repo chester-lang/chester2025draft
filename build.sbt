@@ -46,7 +46,7 @@ val commonSettings = Seq(
   // resolvers += Resolver.githubPackages("edadma", "readline"),
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
-  resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   // https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
   scalacOptions ++=
     Seq(
@@ -112,8 +112,7 @@ val baseDeps = Seq(
     "org.typelevel" %%% "cats-free" % "2.12.0",
     "com.lihaoyi" %%% "upickle" % "4.0.2",
     "com.lihaoyi" %%% "fansi" % "0.5.0",
-    "com.lihaoyi" %%% "fastparse" % "3.1.1",
-    "org.json4s" %%% "json4s-native-core" % "4.1.0-M7"
+    "com.lihaoyi" %%% "fastparse" % "3.1.1"
     // "com.lihaoyi" %%% "scalatags" % "0.13.1",
     // "com.github.rssh" %%% "dotty-cps-async" % "0.9.22",
     // "io.getkyo" %%% "kyo-prelude" % "0.12.2",
