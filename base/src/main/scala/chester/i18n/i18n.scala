@@ -1,12 +1,8 @@
 package chester.i18n
 
-import scala.io.Source
-import java.nio.file.{Files, Paths}
-import java.nio.charset.StandardCharsets
-import upickle.default._
-
 case class Language(tag: LanguageTag, region: RegionTag) {
   def name: String = s"${tag.name}_${region.name}"
+
   override def toString: String = name
 }
 
@@ -17,6 +13,7 @@ object Language {
   private val regions = RegionTag.values
 
   def fromOption(x: String): Option[Language] = {
+    // split by _ or -
     val parts = x.split("[_\\-]")
     if (parts.length == 1) {
       languages.find(_.is(parts(0))).map(Language(_))
@@ -39,7 +36,9 @@ enum LanguageTag {
   case EN, ZH
 
   def name: String = toString.toLowerCase()
+
   def is(x: String): Boolean = x.toLowerCase() == name
+
   def defaultRegion: RegionTag = this match {
     case EN => RegionTag.NZ
     case ZH => RegionTag.TW
@@ -50,6 +49,7 @@ enum RegionTag {
   case NZ, AU, TW, HK, US, BG
 
   def name: String = toString.toUpperCase()
+
   def is(x: String): Boolean = x.toUpperCase() == name
 }
 
@@ -59,75 +59,34 @@ case class RegionTable(table: Map[RegionTag, Map[String, String]]) {
 
   def get(region: RegionTag, context: String): String = {
     table.get(region).flatMap(_.get(context)) match {
-      case Some(value) => value
-      case None =>
-        alternatives.flatMap(_.get(context)).headOption.getOrElse(context)
+      case Some(value) => return value
+      case None        => {}
     }
-  }
-
-  def update(region: RegionTag, key: String, value: String): RegionTable = {
-    val updatedRegionMap = table.getOrElse(region, Map()) + (key -> value)
-    copy(table = table + (region -> updatedRegionMap))
+    alternatives.foreach { map =>
+      map.get(context) match {
+        case Some(value) => return value
+        case None        => {}
+      }
+    }
+    context
   }
 }
 
-object TranslationTable {
-  private var table: Map[LanguageTag, RegionTable] = loadTranslations()
-
-  private def loadTranslations(): Map[LanguageTag, RegionTable] = {
-    LanguageTag.values.map { langTag =>
-      val filePath = s"translations/${langTag.name}.json"
-      val langMap = if (Files.exists(Paths.get(filePath))) {
-        val source = Source.fromFile(filePath)(scala.io.Codec.UTF8)
-        val fileContent = try source.mkString finally source.close()
-        val jsonMap = read[Map[String, Map[String, String]]](fileContent)
-        val regionMap = jsonMap.map {
-          case (regionName, translations) =>
-            RegionTag.valueOf(regionName.toUpperCase()) -> translations
-        }
-        RegionTable(regionMap)
-      } else {
-        RegionTable(Map())
-      }
-      langTag -> langMap
-    }.toMap
-  }
-
-  def get(lang: Language, key: String): String = {
-    val translation = table.get(lang.tag).map(_.get(lang.region, key)).getOrElse(key)
-    if (translation == key) {
-      // Missing translation, update the translation file
-      addMissingTranslation(lang, key)
-    }
-    translation
-  }
-
-  private def addMissingTranslation(lang: Language, key: String): Unit = {
-    synchronized {
-      val regionTable = table.getOrElse(lang.tag, RegionTable(Map()))
-      val updatedRegionTable = regionTable.update(lang.region, key, key)
-      table = table + (lang.tag -> updatedRegionTable)
-      // Save back to the JSON file
-      val filePath = s"translations/${lang.tag.name}.json"
-      val jsonMap = updatedRegionTable.table.map {
-        case (region, translations) => region.name -> translations
-      }
-      val jsonString = write(jsonMap, indent = 2)
-      Files.write(Paths.get(filePath), jsonString.getBytes(StandardCharsets.UTF_8))
-    }
+case class TranslationTable(table: Map[LanguageTag, RegionTable]) {
+  def get(lang: Language, context: String): String = {
+    table.get(lang.tag).map(_.get(lang.region, context)).getOrElse(context)
   }
 }
 
 object Template {
   def stringContextToString(sc: StringContext): String = {
+
     val stringbuilder = new StringBuilder()
-    val partsIterator = sc.parts.iterator
-    var count = 1
-    while (partsIterator.hasNext) {
-      stringbuilder.append(partsIterator.next().replace("$", "$$"))
-      if (partsIterator.hasNext) {
-        stringbuilder.append(s"$$$${count}")
-        count += 1
+    for (part <- sc.parts) {
+      if (part.isEmpty) {
+        stringbuilder.append("s$$${count}")
+      } else {
+        stringbuilder.append(part.replace("$", "$$"))
       }
     }
     stringbuilder.result()
@@ -139,15 +98,20 @@ object Template {
     var result = template
     val xs = args.map(_.toString)
     for (i <- xs.indices) {
-      val placeholder = s"$$${i + 1}"
-      result = result.replace(placeholder, xs(i))
+      val newResult = result.replace(s"$$${i + 1}", xs(i))
+      if (newResult == result)
+        throw new IllegalArgumentException(
+          s"Missing argument ${i + 1} in template $template"
+        )
+      result = newResult
     }
-    // Check for missing arguments
-    val missingArgs = "\\$\\$\\{\\d+\\}".r.findAllIn(result)
-    if (missingArgs.nonEmpty) {
-      throw new IllegalArgumentException(
-        s"Missing arguments ${missingArgs.mkString(", ")} in template $template"
-      )
+    for (i <- 1 to 9) {
+      for (x <- xs) {
+        if (x.contains("s$$${i}"))
+          throw new IllegalArgumentException(s"Unexpected $i in args $args")
+      }
+      if (result.contains("s$$${i}"))
+        throw new IllegalArgumentException(s"Missing argument $i in args $args")
     }
     result.replace("$$", "$")
   }
