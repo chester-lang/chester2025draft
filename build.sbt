@@ -939,11 +939,12 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     Compile / mainClass := Some("chester.cli.Main"),
     assembly / assemblyOutputPath := file("target") / "chester.jar",
     libraryDependencies ++= Seq(
+      "com.github.alexarchambault" %%% "case-app" % "2.1.0-M29",
       "com.github.scopt" %%% "scopt" % "4.1.0"
     ),
     commonSettings,
     buildInfoKeys := Seq[BuildInfoKey](version), // Specify the keys to include
-    buildInfoPackage := "chester.cli", // Set the package for the generated object
+    buildInfoPackage := "chester", // Set the package for the generated object
     buildInfoObject := "BuildInfo" // Set the object name
   )
   .jvmSettings(

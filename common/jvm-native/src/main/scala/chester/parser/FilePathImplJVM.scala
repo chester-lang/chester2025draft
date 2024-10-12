@@ -6,7 +6,7 @@ import chester.utils.*
 import java.nio.file.Paths
 import scala.util.*
 
-implicit object FilePathImplJVM extends FilePathImpl {
+object FilePathImplJVM extends FilePathImpl {
   override def readContent(fileName: String): Either[ParseError, String] = {
     Try(readFileFrom(fileName)) match {
       case Success(content) =>
@@ -21,3 +21,5 @@ implicit object FilePathImplJVM extends FilePathImpl {
   override def absolute(fileName: String): String =
     Paths.get(fileName).toAbsolutePath.toString
 }
+
+given filePathImplJVM: FilePathImpl = FilePathImplJVM

@@ -8,6 +8,7 @@ import chester.tyck.api.{CollectedSymbol, VectorSemanticCollector}
 import chester.syntax.*
 import chester.syntax.concrete.Expr
 import os.*
+import chester.parser.given
 
 import scala.meta.internal.semanticdb.*
 
