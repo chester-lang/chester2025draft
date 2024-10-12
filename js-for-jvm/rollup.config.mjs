@@ -14,10 +14,11 @@ export default {
       preferBuiltins: false,
     }),
     commonjs(),
-    terser({
+// broken on termux
+/*    terser({
       compress: {
         dead_code: true, // Enable dead code removal
       },
-    }),
+    }),*/
   ],
 };
