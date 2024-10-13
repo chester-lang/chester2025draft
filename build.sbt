@@ -569,6 +569,7 @@ object GeneratedJS {
       }
     }.taskValue,
     */
+    // note that won't run on compile only package and run  - https://github.com/sbt/sbt/issues/1832
     Compile / resourceGenerators  += Def.taskDyn {
       (jsForJvm.js / Compile / fastLinkJS).map { jsLinkerOutput =>
         val jsArtifact = (jsForJvm.js / Compile / fastLinkJSOutput).value / jsLinkerOutput.data.publicModules.head.jsFileName
@@ -580,10 +581,10 @@ object GeneratedJS {
         Process("pnpm install", file("js-for-jvm")) ! log
         Process("pnpm run build", file("js-for-jvm")) ! log
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
-        val dest = ((Compile / resourceManaged).value  / "chester").getAbsolutePath
+        val dest = (Compile / resourceManaged).value / "chester"
 
-        org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-nosource", "-d", dest, "-o", "ChesterJs", "-package" ,"chester", jsFile))
-        Seq((Compile / resourceManaged).value / "ChesterJs.class")
+        org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
+        Seq(dest / "ChesterJs.class")
       }
     }.taskValue,
     commonJvmLibSettings,
