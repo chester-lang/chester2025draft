@@ -1019,3 +1019,50 @@ case class RecordConstructorCallTerm(
     Doc.text(recordName) <> argsDoc
   }
 }
+case class TraitStmtTerm(
+    name: Name,
+    uniqId: UniqIdOf[TraitStmtTerm] = UniqId.generate[TraitStmtTerm],
+    extendsClause: Option[Term] = None,
+    body: Option[BlockTerm] = None,
+    meta: OptionTermMeta = None
+) extends StmtTerm
+    with TermWithUniqId {
+  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+
+  override def descent(f: Term => Term): TraitStmtTerm = copy(
+    extendsClause = extendsClause.map(f),
+    body = body.map(_.descent(f).asInstanceOf[BlockTerm])
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val extendsDoc = extendsClause.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("trait ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
+    )
+  }
+}
+
+case class InterfaceStmtTerm(
+    name: Name,
+    uniqId: UniqIdOf[InterfaceStmtTerm] = UniqId.generate[InterfaceStmtTerm],
+    extendsClause: Option[Term] = None,
+    body: Option[BlockTerm] = None,
+    meta: OptionTermMeta = None
+) extends StmtTerm
+    with TermWithUniqId {
+  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+
+  override def descent(f: Term => Term): InterfaceStmtTerm = copy(
+    extendsClause = extendsClause.map(f),
+    body = body.map(_.descent(f).asInstanceOf[BlockTerm])
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val extendsDoc = extendsClause.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("interface ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
+    )
+  }
+}

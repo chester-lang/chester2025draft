@@ -12,7 +12,7 @@ import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
 
 trait ElaboraterBlock extends Elaborater {
-  // Sealed trait for declaration information
+  // Sealed trait for declaration information, for forwarding references
   sealed trait DeclarationInfo {
     def expr: Expr
     def name: Name
@@ -32,6 +32,19 @@ trait ElaboraterBlock extends Elaborater {
   case class RecordDeclaration(
       expr: RecordStmt,
       uniqId: UniqIdOf[RecordStmtTerm],
+      name: Name
+  ) extends DeclarationInfo
+
+  // New declarations for trait and interface
+  case class TraitDeclaration(
+      expr: TraitStmt,
+      uniqId: UniqIdOf[TraitStmtTerm],
+      name: Name
+  ) extends DeclarationInfo
+
+  case class InterfaceDeclaration(
+      expr: InterfaceStmt,
+      uniqId: UniqIdOf[InterfaceStmtTerm],
       name: Name
   ) extends DeclarationInfo
 
@@ -71,6 +84,18 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         ctx = newCtx
         stmtTerms
 
+      // Process trait statements
+      case expr: TraitStmt =>
+        val (stmtTerms, newCtx) = processTraitStmt(expr, ctx, declarationsMap, effects)
+        ctx = newCtx
+        stmtTerms
+
+      // Process interface statements
+      case expr: InterfaceStmt =>
+        val (stmtTerms, newCtx) = processInterfaceStmt(expr, ctx, declarationsMap, effects)
+        ctx = newCtx
+        stmtTerms
+
       case expr: LetDefStmt if expr.kind == LetDefType.Let =>
         val (stmtTerms, newCtx) = processLetLetDefStmt(expr, ctx, effects, meta)
         ctx = newCtx
@@ -104,6 +129,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[DeclarationInfo], Seq[Name], LocalCtx) = {
+    // Collect def declarations as before
     val defDeclarations = heads.collect {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         val name = expr.defined match {
@@ -122,20 +148,35 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         )
     }
 
+    // Collect record declarations as before
     val recordDeclarations = heads.collect { case expr: RecordStmt =>
       val name = expr.name.name
       val id = UniqId.generate[RecordStmtTerm]
-      RecordDeclaration(
-        expr,
-        id,
-        name
-      )
+      RecordDeclaration(expr, id, name)
     }
 
-    val declarations = defDeclarations ++ recordDeclarations
+    // Collect trait declarations
+    val traitDeclarations = heads.collect { case expr: TraitStmt =>
+      val name = expr.name.name
+      val id = UniqId.generate[TraitStmtTerm]
+      TraitDeclaration(expr, id, name)
+    }
+
+    // Collect interface declarations
+    val interfaceDeclarations = heads.collect { case expr: InterfaceStmt =>
+      val name = expr.name.name
+      val id = UniqId.generate[InterfaceStmtTerm]
+      InterfaceDeclaration(expr, id, name)
+    }
+
+    val declarations = defDeclarations ++ recordDeclarations ++ traitDeclarations ++ interfaceDeclarations
     val names = declarations.map(_.name)
+
+    // Collect context items from def declarations
     val defContextItems = defDeclarations.map(_.item)
     val initialCtx = localCtx.add(defContextItems)
+
+    // Return all declarations, names, and the initial context
     (declarations, names, initialCtx)
   }
 
@@ -268,5 +309,85 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       Vector(LetStmtTerm(localv, wellTyped, ty)),
       newCtx
     )
+  }
+
+  def processTraitStmt(
+      expr: TraitStmt,
+      ctx: LocalCtx,
+      declarationsMap: Map[Expr, DeclarationInfo],
+      effects: CIdOf[EffectsCell]
+  )(using
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): (Seq[StmtTerm], LocalCtx) = {
+    implicit val localCtx: LocalCtx = ctx
+    val traitInfo = declarationsMap(expr).asInstanceOf[TraitDeclaration]
+    val name = traitInfo.name
+
+    // TODO: Elaborate the extends clause properly
+    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
+      checkType(clause)
+    }
+
+    // Elaborate the optional body (if any)
+    val elaboratedBody = expr.body.map { body =>
+      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+    }
+
+    // Create the TraitStmtTerm
+    val traitStmtTerm = TraitStmtTerm(
+      name = name,
+      uniqId = traitInfo.uniqId,
+      extendsClause = elaboratedExtendsClause,
+      body = elaboratedBody,
+      meta = convertMeta(expr.meta)
+    )
+
+    // Update the context with the new trait definition
+    val newCtx = ctx // .addTraitDefinition(traitStmtTerm) // TODO
+
+    // Return the statement term and the updated context
+    (Seq(traitStmtTerm), newCtx)
+  }
+
+  def processInterfaceStmt(
+      expr: InterfaceStmt,
+      ctx: LocalCtx,
+      declarationsMap: Map[Expr, DeclarationInfo],
+      effects: CIdOf[EffectsCell]
+  )(using
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): (Seq[StmtTerm], LocalCtx) = {
+    implicit val localCtx: LocalCtx = ctx
+    val interfaceInfo = declarationsMap(expr).asInstanceOf[InterfaceDeclaration]
+    val name = interfaceInfo.name
+
+    // TODO: Elaborate the extends clause properly
+    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
+      checkType(clause)
+    }
+
+    // Elaborate the optional body (if any)
+    val elaboratedBody = expr.body.map { body =>
+      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+    }
+
+    // Create the InterfaceStmtTerm
+    val interfaceStmtTerm = InterfaceStmtTerm(
+      name = name,
+      uniqId = interfaceInfo.uniqId,
+      extendsClause = elaboratedExtendsClause,
+      body = elaboratedBody,
+      meta = convertMeta(expr.meta)
+    )
+
+    // Update the context with the new interface definition
+    val newCtx = ctx // .addInterfaceDefinition(interfaceStmtTerm) // TODO
+
+    // Return the statement term and the updated context
+    (Seq(interfaceStmtTerm), newCtx)
   }
 }
