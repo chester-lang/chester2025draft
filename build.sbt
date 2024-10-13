@@ -583,7 +583,7 @@ object GeneratedJS {
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
         val dest = (Compile / resourceManaged).value
 
-        org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
+        org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
         Seq(dest / "chester" / "ChesterJs.class")
       }
     }.taskValue,
