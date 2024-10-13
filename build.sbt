@@ -206,17 +206,17 @@ ThisBuild / assemblyMergeStrategy := {
     MergeStrategy.discard
   case PathList("META-INF", "eclipse.inf")                    => MergeStrategy.discard
   case PathList("META-INF", "groovy-release-info.properties") => MergeStrategy.discard
-  // TODO: actually fix jline issue
-  case PathList("org", "jline", xs @ _*)                          => MergeStrategy.first
-  case PathList("META-INF", "native-image", "org.jline", xs @ _*) => MergeStrategy.first
-  // TODO: actually fix scala issue
-  case PathList("scala", "tools", xs @ _*) => MergeStrategy.first
-  case PathList("scala-asm.properties")    => MergeStrategy.discard
-  case PathList("compiler.properties")     => MergeStrategy.discard
-  // TODO
-  case PathList("org", "osgi", "service", "prefs", xs @ _*) => MergeStrategy.first
-  // TODO
-  case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.first
+  // solved
+  // case PathList("org", "jline", xs @ _*)                          => MergeStrategy.first
+  // case PathList("META-INF", "native-image", "org.jline", xs @ _*) => MergeStrategy.first
+  // solved
+  // case PathList("scala", "tools", xs @ _*) => MergeStrategy.first
+  // case PathList("scala-asm.properties")    => MergeStrategy.discard
+  // case PathList("compiler.properties")     => MergeStrategy.discard
+  // solved
+  // case PathList("org", "osgi", "service", "prefs", xs @ _*) => MergeStrategy.first
+  // solved
+  // case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.first
   // TODO
   case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") || xs.contains("reflect-config.json") => MergeStrategy.discard
   case x =>
@@ -586,7 +586,11 @@ object GeneratedJS {
     }.taskValue,
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "semanticdb-shared" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13"),
+      "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
+      "org.scalameta" %% "semanticdb-shared" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+        "org.jline",
+        "jline"
+      ),
       "org.scala-lang.modules" % "scala-asm" % "9.7.0-scala-2",
       // "ch.epfl.scala" %% "tasty-query" % "1.4.0",
       // "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
