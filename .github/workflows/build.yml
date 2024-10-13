@@ -42,8 +42,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - uses: graalvm/setup-graalvm@v1
-      if: runner.os != 'Linux'
+    - name: Setup GraalVM
+      uses: graalvm/setup-graalvm@v1
+      if: runner.os != 'Linux' || true
       with:
         java-version: '23'
         distribution: 'graalvm'
@@ -67,8 +68,9 @@ jobs:
       with:
         args: install pnpm
 
-    - uses: graalvm/setup-graalvm@v1
-      if: runner.os == 'Linux'
+    - name: GraalVM - Linux - musl - disabled
+      uses: graalvm/setup-graalvm@v1
+      if: runner.os == 'Linux' && false
       with:
         native-image-musl: 'true'
         java-version: '23'
