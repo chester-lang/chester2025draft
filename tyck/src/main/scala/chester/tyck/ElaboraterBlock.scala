@@ -14,7 +14,7 @@ import chester.uniqid.*
 trait ElaboraterBlock extends Elaborater {
   case class DefInfo(
       expr: LetDefStmt,
-      id: UniqIdOf[LocalV],
+      localv: LocalV,
       tyAndVal: TyAndVal,
       item: ContextItem
   )
@@ -176,7 +176,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         val r = parameter.newSymbol(localv, id, expr, localCtx)
         DefInfo(
           expr,
-          id,
+          localv,
           tyandval,
           ContextItem(name, id, localv, tyandval.ty, Some(r))
         )
@@ -214,9 +214,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     }
     val wellTyped = elabId(expr.body.get, ty, effects)
     merge(defInfo.tyAndVal.valueId, wellTyped)
-    val newCtx = ctx.knownAdd(defInfo.id, TyAndVal(ty, wellTyped))
+    val newCtx = ctx.knownAdd(defInfo.localv.uniqId, TyAndVal(ty, wellTyped))
     (
-      Vector(DefStmtTerm(defInfo.item.name, Meta(wellTyped), toTerm(ty))),
+      Vector(DefStmtTerm(defInfo.localv, Meta(wellTyped), toTerm(ty))),
       newCtx
     )
   }
@@ -248,7 +248,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       .add(ContextItem(name, id, localv, ty, Some(r)))
       .knownAdd(id, TyAndVal(ty, wellTyped))
     (
-      Vector(LetStmtTerm(name, wellTyped, ty)),
+      Vector(LetStmtTerm(localv, wellTyped, ty)),
       newCtx
     )
   }

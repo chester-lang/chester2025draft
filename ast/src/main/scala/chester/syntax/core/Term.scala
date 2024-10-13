@@ -838,34 +838,38 @@ sealed trait StmtTerm extends ToDoc derives ReadWriter {
 }
 
 case class LetStmtTerm(
-    name: Name,
+    localv: LocalV,
     value: Term,
     ty: Term,
     meta: OptionTermMeta = None
 ) extends StmtTerm {
-  override def descent(f: Term => Term): StmtTerm =
-    copy(value = f(value), ty = f(ty))
+  override def descent(f: Term => Term): LetStmtTerm =
+    copy(
+      localv = localv.copy(ty = f(localv.ty)),
+      value = f(value),
+      ty = f(ty)
+    )
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
-    Doc.text(s"let $name: ") <> ty.toDoc <> Doc.text(
-      " = "
-    ) <> value.toDoc // TODO: fix this
+    Doc.text("let ") <> localv.toDoc <> Doc.text(": ") <> ty.toDoc <> Doc.text(" = ") <> value.toDoc
   }
 }
 
 case class DefStmtTerm(
-    name: Name,
+    localv: LocalV,
     value: Term,
     ty: Term,
     meta: OptionTermMeta = None
 ) extends StmtTerm {
-  override def descent(f: Term => Term): StmtTerm =
-    copy(value = f(value), ty = f(ty))
+  override def descent(f: Term => Term): DefStmtTerm =
+    copy(
+      localv = localv.copy(ty = f(localv.ty)),
+      value = f(value),
+      ty = f(ty)
+    )
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
-    Doc.text(s"def $name: ") <> ty.toDoc <> Doc.text(
-      " = "
-    ) <> value.toDoc // TODO: fix this
+    Doc.text("def ") <> localv.toDoc <> Doc.text(": ") <> ty.toDoc <> Doc.text(" = ") <> value.toDoc
   }
 }
 
@@ -996,3 +1000,17 @@ case class RecordStmtTerm(
     )
   }
 }
+   case class RecordConstructorCallTerm(
+       recordName: Name,
+       args: Vector[Term],
+       meta: OptionTermMeta = None
+   ) extends Term {
+     override def descent(f: Term => Term): RecordConstructorCallTerm = copy(
+       args = args.map(f)
+     )
+
+     override def toDoc(implicit options: PrettierOptions): Doc = {
+       val argsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,`)(args.map(_.toDoc))
+       Doc.text(recordName) <> argsDoc
+     }
+   }
