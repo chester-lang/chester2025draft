@@ -504,13 +504,13 @@ lazy val jsForJvm = crossProject(JSPlatform)
   )
 
 val sootupVersion = "1.3.0"
-lazy val tyckPlatform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("tyck-platform"))
+  .in(file("platform"))
   .dependsOn(common)
   .settings(
-    name := "tyck-platform",
+    name := "platform",
     commonSettings
   )
   .jvmSettings(
@@ -933,7 +933,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cli"))
   .jvmEnablePlugins(NativeImagePlugin)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
-  .dependsOn(common, tyckPlatform)
+  .dependsOn(common, platform)
   .settings(
     name := "cli",
     Compile / mainClass := Some("chester.cli.Main"),
@@ -1188,7 +1188,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     err,
     pretty,
     tyck,
-    tyckPlatform,
+    platform,
     jsForJvm,
     core,
     common,
