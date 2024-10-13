@@ -589,7 +589,7 @@ object GeneratedJS {
       "org.scala-lang.modules" % "scala-asm" % "9.7.0-scala-2",
       "ch.epfl.scala" %% "tasty-query" % "1.4.0",
       "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
-      "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-8",
+      "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-9",
       "com.github.javaparser" % "javaparser-symbol-solver-core" % "3.26.2",
       "org.soot-oss" % "sootup.core" % sootupVersion,
       "org.soot-oss" % "sootup.java.core" % sootupVersion,

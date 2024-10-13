@@ -18,7 +18,7 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
   ): Term
 }
 
-trait ProvideElaboraterFunction extends ElaboraterFunction{
+trait ProvideElaboraterFunction extends ElaboraterFunction {
   def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
       localCtx: MutableLocalCtx,
       parameter: SemanticCollector,

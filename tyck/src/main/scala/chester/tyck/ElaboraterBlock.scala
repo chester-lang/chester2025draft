@@ -36,10 +36,10 @@ trait ElaboraterBlock extends Elaborater {
   ) extends DeclarationInfo
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-                                                                               localCtx: LocalCtx,
-                                                                               parameter: SemanticCollector,
-                                                                               ck: Tyck,
-                                                                               state: StateAbility[Tyck]
+      localCtx: LocalCtx,
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
   ): BlockTerm
 }
 
@@ -122,15 +122,14 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         )
     }
 
-    val recordDeclarations = heads.collect {
-      case expr: RecordStmt =>
-        val name = expr.name.name
-        val id = UniqId.generate[RecordStmtTerm]
-        RecordDeclaration(
-          expr,
-          id,
-          name
-        )
+    val recordDeclarations = heads.collect { case expr: RecordStmt =>
+      val name = expr.name.name
+      val id = UniqId.generate[RecordStmtTerm]
+      RecordDeclaration(
+        expr,
+        id,
+        name
+      )
     }
 
     val declarations = defDeclarations ++ recordDeclarations
