@@ -57,18 +57,6 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
   }
 
   implicit class LocalCtxOps(ignored: LocalCtx.type) {
-    def apply(
-        map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
-        contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
-        knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
-        recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
-        imports: Imports = Imports.Empty,
-        loadedModules: LoadedModules = LoadedModules.Empty,
-        operators: OperatorsContext = OperatorsContext.Default,
-        currentModule: ModuleRef = DefaultModule
-    ): LocalCtx = {
-      new LocalCtx(map, contextItems, knownMap, recordDefinitions, imports, loadedModules, operators, currentModule)
-    }
     def default(using state: StateAbility[Tyck]): LocalCtx = {
       val items = BuiltIn.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
@@ -104,19 +92,12 @@ object Imports {
   val Empty: Imports = Imports()
 }
 
-case class RecordDefinition(
-    name: Name,
-    fields: Vector[FieldTerm],
-    extendsSymbol: Option[Name], // Store the symbol from the extends clause
-    id: UniqIdOf[LocalV],
-    ty: Term
-)
-
 case class LocalCtx(
-    map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
-    contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
-    knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
-    recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
+    map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]], // empty[...] are needed because compiler bugs
+    contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem], // empty[...] are needed because compiler bugs
+    knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal], // empty[...] are needed because compiler bugs
+     recordDefinitionNames: Map[Name, UniqIdOf[RecordStmtTerm]] = Map.empty, // Map from Name to UniqId
+    recordDefinitions: Map[UniqIdOf[RecordStmtTerm], RecordStmtTerm] = Map.empty, // Map from UniqId to RecordDefinition
     imports: Imports = Imports.Empty,
     loadedModules: LoadedModules = LoadedModules.Empty,
     operators: OperatorsContext = OperatorsContext.Default,
@@ -156,15 +137,23 @@ case class LocalCtx(
     copy(map = newMap, contextItems = newContextItems)
   }
 
-  // Method to add a record definition to the context
-  def addRecordDefinition(recordDef: RecordDefinition): LocalCtx = {
-    copy(recordDefinitions = recordDefinitions + (recordDef.name -> recordDef))
-  }
+    // Method to add a record definition to the context
+    def addRecordDefinition(recordDef: RecordStmtTerm): LocalCtx = {
+        copy(
+            recordDefinitionNames = recordDefinitionNames + (recordDef.name -> recordDef.uniqId),
+            recordDefinitions = recordDefinitions + (recordDef.uniqId -> recordDef)
+        )
+    }
 
-  // Method to get a record definition by name
-  def getRecordDefinition(name: Name): Option[RecordDefinition] = {
-    recordDefinitions.get(name)
-  }
+    // Method to get a record definition by name
+    def getRecordDefinition(name: Name): Option[RecordStmtTerm] = {
+        recordDefinitionNames.get(name).flatMap(recordDefinitions.get)
+    }
+
+    // (Optional) Method to get a record definition by UniqId
+    def getRecordDefinitionById(id: UniqIdOf[RecordStmtTerm]): Option[RecordStmtTerm] = {
+        recordDefinitions.get(id)
+    }
 }
 
 object LocalCtx {}

@@ -66,14 +66,6 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     // Add the record to the semantic collector
     val r = parameter.newSymbol(recordV, recordId, expr, localCtx)
 
-    // Create the RecordDefinition with the extendsSymbol
-    val recordDef = RecordDefinition(name, Vector.empty, extendsSymbolOpt, recordId, toTerm(recordType))
-
-    // Update the context with the new record definition
-    val newCtx = ctx
-      .add(ContextItem(name, recordId, recordV, toTerm(recordType), Some(r)))
-      .addRecordDefinition(recordDef)
-
     // Elaborate the fields without combining them with any super class fields
     val elaboratedFields = fields.map { field =>
       val fieldType = field.ty match {
@@ -87,7 +79,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
     // Elaborate the optional body (if any)
     val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using newCtx, parameter, ck, state)
+      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
     }
 
     // Construct the RecordStmtTerm that includes the fields and extendsClause
@@ -100,6 +92,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       // For now, we add a TODO comment
       // TODO: Handle the extendsClause during type checking
     )
+
+    // Update the context with the new record definition
+    val newCtx = ctx
+      .addRecordDefinition(recordStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(recordStmtTerm), newCtx)
