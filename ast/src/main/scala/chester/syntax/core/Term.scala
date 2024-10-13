@@ -121,14 +121,14 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
     ()
   }
 
-  def foreach(f: Term => Unit): Unit = {
-    inspect(_.foreach(f))
+  def inspectRecursive(f: Term => Unit): Unit = {
+    inspect(_.inspectRecursive(f))
     f(this)
   }
 
   def mapFlatten[B](f: Term => Seq[B]): Vector[B] = {
     var result = Vector.empty[B]
-    foreach { term =>
+    inspectRecursive { term =>
       result ++= f(term)
     }
     result
@@ -179,19 +179,20 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
     }
   }
 
-  override def collectU(collector: CollectorU): Unit = {
-    inspect(_.collectU(collector))
+  final override def collectU(collector: CollectorU): Unit = inspectRecursive {
+    case x: TermWithUniqId => collector(x.uniqId)
+    case _                 =>
   }
 
-  override def rerangeU(reranger: RerangerU): Term = {
-    descent(_.rerangeU(reranger))
+  final override def rerangeU(reranger: RerangerU): Term = descentRecursive {
+    case x: TermWithUniqId => x.switchUniqId(reranger)
+    case x                 => x
   }
 }
 
 sealed trait TermWithUniqId extends Term with HasUniqId derives ReadWriter {
   override def uniqId: UniqIdOf[Term]
-  override def collectU(collector: CollectorU): Unit = ???
-  override def rerangeU(reranger: RerangerU): TermWithUniqId = ???
+  def switchUniqId(r: RerangerU): TermWithUniqId
 }
 
 // allow write, not allow read
@@ -805,6 +806,8 @@ case class LocalV(
     Doc.text(name.toString)
 
   override def descent(f: Term => Term): LocalV = thisOr(copy(ty = f(ty)))
+
+  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
 }
 
 case class ToplevelV(
@@ -820,6 +823,7 @@ case class ToplevelV(
   )
 
   override def descent(f: Term => Term): ToplevelV = thisOr(copy(ty = f(ty)))
+  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
 }
 
 case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends Term {
@@ -984,18 +988,7 @@ case class RecordStmtTerm(
     meta: OptionTermMeta = None
 ) extends StmtTerm
     with TermWithUniqId {
-  override def collectU(collector: CollectorU): Unit = {
-    collector(uniqId)
-    fields.foreach(_.collectU(collector))
-    body.foreach(_.collectU(collector))
-  }
-  override def rerangeU(reranger: RerangerU): RecordStmtTerm = thisOr(
-    copy(
-      fields = fields.map(_.rerangeU(reranger)).asInstanceOf[Vector[FieldTerm]],
-      uniqId = reranger(uniqId),
-      body = body.map(_.rerangeU(reranger)).asInstanceOf[Option[BlockTerm]]
-    )
-  )
+  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
   override def descent(f: Term => Term): RecordStmtTerm = copy(
     fields = fields.map(f).asInstanceOf[Vector[FieldTerm]],
     body = body.map(f).asInstanceOf[Option[BlockTerm]]
