@@ -581,10 +581,10 @@ object GeneratedJS {
         Process("pnpm install", file("js-for-jvm")) ! log
         Process("pnpm run build", file("js-for-jvm")) ! log
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
-        val dest = (Compile / resourceManaged).value / "chester"
+        val dest = (Compile / resourceManaged).value
 
         org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
-        Seq(dest / "ChesterJs.class")
+        Seq(dest / "chester" / "ChesterJs.class")
       }
     }.taskValue,
     commonJvmLibSettings,
