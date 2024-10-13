@@ -9,127 +9,67 @@ import chester.tyck.api.SymbolCollector
 import chester.utils.propagator.*
 import chester.uniqid.*
 
+import scala.collection.immutable.Seq as seq
+
 trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
-  case class ContextItem(
-      name: Name,
-      uniqId: UniqIdOf[? <: MaybeVarCall],
-      ref: MaybeVarCall,
-      ty: CellIdOr[Term],
-      reference: Option[SymbolCollector] = None
-  ) {
-    def tyId(using state: StateAbility[Tyck]): CellId[Term] = toId(ty)
+  implicit class TyAndValOpsss(ignored: TyAndVal.type) {
+    def create(ty: Term, value: Term)(using
+        state: StateAbility[Tyck]
+    ): TyAndVal = {
+      new TyAndVal(toTerm(literal(ty)), toTerm(literal(value)))
+    }
 
-    def tyTerm(using state: StateAbility[Tyck]): Term = toTerm(ty)
+    def create()(using state: StateAbility[Tyck]): TyAndVal = {
+      new TyAndVal(toTerm(state.addCell(OnceCell[Term]())), toTerm(state.addCell(OnceCell[Term]())))
+    }
+  }
+  
+  extension (context: ContextItem) {
+    def tyId(using state: StateAbility[Tyck]): CellId[Term] = toId(context.ty)
+
+    def tyTerm(using state: StateAbility[Tyck]): Term = toTerm(context.ty)
   }
 
-  object ContextItem {
-    def builtin[Ck](
-        item: BuiltinItem
-    )(using state: StateAbility[Ck]): (TyAndVal, ContextItem) = {
+  implicit class ContextItemObject(ignored: ContextItem.type) {
+    def builtin(
+                     item: BuiltinItem
+                   )(using state: StateAbility[Tyck]): (TyAndVal, ContextItem) = {
       val varId = UniqId.generate[ToplevelV]
       val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId)
       val ty1 = state.toId(item.ty)
       (
-        TyAndVal(ty1, state.toId(item.value)),
-        ContextItem(item.id, varId, name, ty1)
+        new TyAndVal(toTerm(ty1), item.value),
+        new ContextItem(item.id, varId, name, toTerm(ty1))
       )
     }
   }
+  
+  implicit class TyAndValOps(tyandval: TyAndVal) {
+    def tyId(using state: StateAbility[Tyck]): CellId[Term] = toId(tyandval.ty)
 
-  case class TyAndVal(
-      ty: CellIdOr[Term],
-      value: CellIdOr[Term]
-  ) {
-    def tyId(using state: StateAbility[Tyck]): CellId[Term] = toId(ty)
+    def valueId(using state: StateAbility[Tyck]): CellId[Term] = toId(tyandval.value)
 
-    def valueId(using state: StateAbility[Tyck]): CellId[Term] = toId(value)
+    def tyTerm(using state: StateAbility[Tyck]): Term = toTerm(tyandval.ty)
 
-    def tyTerm(using state: StateAbility[Tyck]): Term = toTerm(ty)
-
-    def valueTerm(using state: StateAbility[Tyck]): Term = toTerm(value)
+    def valueTerm(using state: StateAbility[Tyck]): Term = toTerm(tyandval.value)
+    
   }
 
-  object TyAndVal {
-    def create[Ck](ty: Term, value: Term)(using
-        state: StateAbility[Ck]
-    ): TyAndVal = {
-      TyAndVal(literal(ty), literal(value))
+  implicit class LocalCtxOps(ignored: LocalCtx.type) {
+    def apply(
+               map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
+               contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
+               knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
+               recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
+               imports: Imports = Imports.Empty,
+               loadedModules: LoadedModules = LoadedModules.Empty,
+               operators: OperatorsContext = OperatorsContext.Default,
+               currentModule: ModuleRef = DefaultModule
+             ): LocalCtx = {
+        new LocalCtx(map, contextItems, knownMap, recordDefinitions, imports, loadedModules, operators, currentModule)
     }
-
-    def create[Ck]()(using state: StateAbility[Ck]): TyAndVal = {
-      TyAndVal(state.addCell(OnceCell[Term]()), state.addCell(OnceCell[Term]()))
-    }
-  }
-
-  case class Imports()
-
-  object Imports {
-    val Empty: Imports = Imports()
-  }
-  case class RecordDefinition(
-      name: Name,
-      fields: Vector[FieldTerm],
-      extendsSymbol: Option[Name], // Store the symbol from the extends clause
-      id: UniqIdOf[LocalV],
-      ty: CellId[Term]
-  )
-  case class LocalCtx(
-      map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
-      contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
-      knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
-      recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
-      imports: Imports = Imports.Empty,
-      loadedModules: LoadedModules = LoadedModules.Empty,
-      operators: OperatorsContext = OperatorsContext.Default,
-      currentModule: ModuleRef = DefaultModule
-  ) {
-    def updateModule(module: ModuleRef): LocalCtx = copy(currentModule = module)
-    def getKnown(x: MaybeVarCall): Option[TyAndVal] =
-      knownMap.get(x.uniqId.asInstanceOf[UniqIdOf[? <: MaybeVarCall]])
-
-    def get(id: Name): Option[ContextItem] =
-      map.get(id).flatMap(uniqId => contextItems.get(uniqId))
-
-    def knownAdd(id: UniqIdOf[? <: MaybeVarCall], y: TyAndVal): LocalCtx =
-      knownAdd(Seq(id -> y))
-
-    def knownAdd(
-        seq: Seq[(UniqIdOf[? <: MaybeVarCall], TyAndVal)]
-    ): LocalCtx = {
-      val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
-        assert(!acc.contains(item._1), s"Duplicate key ${item._1}")
-        acc + item
-      }
-      copy(knownMap = newKnownMap)
-    }
-
-    def add(item: ContextItem): LocalCtx = add(Seq(item))
-
-    def add(seq: Seq[ContextItem]): LocalCtx = {
-      val newMap = seq.foldLeft(map) { (acc, item) =>
-        acc + (item.name -> item.uniqId)
-      }
-      val newContextItems = seq.foldLeft(contextItems) { (acc, item) =>
-        require(!acc.contains(item.uniqId), s"Duplicate key ${item.uniqId}")
-        acc + (item.uniqId -> item)
-      }
-      copy(map = newMap, contextItems = newContextItems)
-    }
-
-    // Method to add a record definition to the context
-    def addRecordDefinition(recordDef: RecordDefinition): LocalCtx = {
-      copy(recordDefinitions = recordDefinitions + (recordDef.name -> recordDef))
-    }
-
-    // Method to get a record definition by name
-    def getRecordDefinition(name: Name): Option[RecordDefinition] = {
-      recordDefinitions.get(name)
-    }
-  }
-
-  object LocalCtx {
-    def default[Ck](using state: StateAbility[Ck]): LocalCtx = {
+    def default(using state: StateAbility[Tyck]): LocalCtx = {
       val items = BuiltIn.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
       val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
@@ -137,7 +77,102 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
         .map(item => item._2.uniqId -> item._1)
         .toMap
         .asInstanceOf[Map[UniqIdOf[? <: MaybeVarCall], TyAndVal]]
-      LocalCtx(map, contextItems, knownMap)
+      new LocalCtx(map, contextItems, knownMap)
     }
   }
+
+}
+
+
+case class TyAndVal(
+                     ty: Term,
+                     value: Term
+                   ) {
+}
+
+object TyAndVal {
+  
+}
+
+case class ContextItem(
+                        name: Name,
+                        uniqId: UniqIdOf[? <: MaybeVarCall],
+                        ref: MaybeVarCall,
+                        ty: Term,
+                        reference: Option[SymbolCollector] = None
+                      ) 
+object ContextItem{
+  
+}
+case class Imports()
+
+object Imports {
+  val Empty: Imports = Imports()
+}
+
+case class RecordDefinition(
+                             name: Name,
+                             fields: Vector[FieldTerm],
+                             extendsSymbol: Option[Name], // Store the symbol from the extends clause
+                             id: UniqIdOf[LocalV],
+                             ty: Term
+                           )
+
+case class LocalCtx(
+                     map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
+                     contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
+                     knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
+                     recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
+                     imports: Imports = Imports.Empty,
+                     loadedModules: LoadedModules = LoadedModules.Empty,
+                     operators: OperatorsContext = OperatorsContext.Default,
+                     currentModule: ModuleRef = DefaultModule
+                   ) {
+  def updateModule(module: ModuleRef): LocalCtx = copy(currentModule = module)
+
+  def getKnown(x: MaybeVarCall): Option[TyAndVal] =
+    knownMap.get(x.uniqId.asInstanceOf[UniqIdOf[? <: MaybeVarCall]])
+
+  def get(id: Name): Option[ContextItem] =
+    map.get(id).flatMap(uniqId => contextItems.get(uniqId))
+
+  def knownAdd(id: UniqIdOf[? <: MaybeVarCall], y: TyAndVal): LocalCtx =
+    knownAdd(Seq(id -> y))
+
+  def knownAdd(
+                seq: Seq[(UniqIdOf[? <: MaybeVarCall], TyAndVal)]
+              ): LocalCtx = {
+    val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
+      assert(!acc.contains(item._1), s"Duplicate key ${item._1}")
+      acc + item
+    }
+    copy(knownMap = newKnownMap)
+  }
+
+  def add(item: ContextItem): LocalCtx = add(Seq(item))
+
+  def add(seq: Seq[ContextItem]): LocalCtx = {
+    val newMap = seq.foldLeft(map) { (acc, item) =>
+      acc + (item.name -> item.uniqId)
+    }
+    val newContextItems = seq.foldLeft(contextItems) { (acc, item) =>
+      require(!acc.contains(item.uniqId), s"Duplicate key ${item.uniqId}")
+      acc + (item.uniqId -> item)
+    }
+    copy(map = newMap, contextItems = newContextItems)
+  }
+
+  // Method to add a record definition to the context
+  def addRecordDefinition(recordDef: RecordDefinition): LocalCtx = {
+    copy(recordDefinitions = recordDefinitions + (recordDef.name -> recordDef))
+  }
+
+  // Method to get a record definition by name
+  def getRecordDefinition(name: Name): Option[RecordDefinition] = {
+    recordDefinitions.get(name)
+  }
+}
+
+object LocalCtx {
+  
 }

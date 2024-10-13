@@ -67,11 +67,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val r = parameter.newSymbol(recordV, recordId, expr, localCtx)
 
     // Create the RecordDefinition with the extendsSymbol
-    val recordDef = RecordDefinition(name, Vector.empty, extendsSymbolOpt, recordId, recordType)
+    val recordDef = RecordDefinition(name, Vector.empty, extendsSymbolOpt, recordId, toTerm(recordType))
 
     // Update the context with the new record definition
     val newCtx = ctx
-      .add(ContextItem(name, recordId, recordV, recordType, Some(r)))
+      .add(ContextItem(name, recordId, recordV, toTerm(recordType), Some(r)))
       .addRecordDefinition(recordDef)
 
     // Elaborate the fields without combining them with any super class fields
@@ -214,7 +214,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     }
     val wellTyped = elabId(expr.body.get, ty, effects)
     merge(defInfo.tyAndVal.valueId, wellTyped)
-    val newCtx = ctx.knownAdd(defInfo.localv.uniqId, TyAndVal(ty, wellTyped))
+    val newCtx = ctx.knownAdd(defInfo.localv.uniqId, TyAndVal(toTerm(ty), toTerm(wellTyped)))
     (
       Vector(DefStmtTerm(defInfo.localv, Meta(wellTyped), toTerm(ty))),
       newCtx
