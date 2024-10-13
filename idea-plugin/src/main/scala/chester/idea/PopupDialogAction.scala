@@ -3,17 +3,13 @@ package chester.idea
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.pom.Navigatable
-import org.jetbrains.annotations.{Nls, NotNull, Nullable}
-import javax.swing._
 class PopupDialogAction extends AnAction() {
-  /** Gives the user feedback when the dynamic action menu is chosen. Pops a
-   * simple message dialog.
-   * @param event
-   *   Event received when the associated menu item is chosen.
-   */
+
+  /** Gives the user feedback when the dynamic action menu is chosen. Pops a simple message dialog.
+    * @param event
+    *   Event received when the associated menu item is chosen.
+    */
   override def actionPerformed(event: AnActionEvent): Unit = { // Using the event, create and show a dialog
     val currentProject = event.getProject
     val dlgMsg = new StringBuilder(
@@ -45,12 +41,12 @@ class PopupDialogAction extends AnAction() {
       Messages.getInformationIcon
     )
   }
-  /** Determines whether this menu item is available for the current context.
-   * Requires a project to be open.
-   *
-   * @param e
-   *   Event received when the associated group-id menu is chosen.
-   */
+
+  /** Determines whether this menu item is available for the current context. Requires a project to be open.
+    *
+    * @param e
+    *   Event received when the associated group-id menu is chosen.
+    */
   override def update(e: AnActionEvent): Unit = { // Set the availability based on whether a project is open
     val project = e.getProject
     e.getPresentation.setEnabledAndVisible(project != null)
