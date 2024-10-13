@@ -78,6 +78,7 @@ case class TyAndVal(
 
 object TyAndVal {}
 
+/** for pure values only like let and def. record is not included */
 case class ContextItem(
     name: Name,
     uniqId: UniqIdOf[? <: MaybeVarCall],

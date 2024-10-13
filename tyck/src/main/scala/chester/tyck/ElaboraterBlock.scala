@@ -12,94 +12,38 @@ import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
 
 trait ElaboraterBlock extends Elaborater {
-  case class DefInfo(
+  // Sealed trait for declaration information
+  sealed trait DeclarationInfo {
+    def expr: Expr
+    def name: Name
+  }
+
+  // Case class for 'def' declarations
+  case class DefDeclaration(
       expr: LetDefStmt,
       localv: LocalV,
       tyAndVal: TyAndVal,
       item: ContextItem
-  )
+  ) extends DeclarationInfo {
+    def name: Name = item.name
+  }
+
+  // Case class for 'record' declarations
+  case class RecordDeclaration(
+      expr: RecordStmt,
+      uniqId: UniqIdOf[RecordStmtTerm],
+      name: Name
+  ) extends DeclarationInfo
+
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: LocalCtx,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+                                                                               localCtx: LocalCtx,
+                                                                               parameter: SemanticCollector,
+                                                                               ck: Tyck,
+                                                                               state: StateAbility[Tyck]
   ): BlockTerm
 }
 
 trait ProvideElaboraterBlock extends ElaboraterBlock {
-  def processRecordStmt(
-      expr: RecordStmt,
-      ctx: LocalCtx,
-      effects: CIdOf[EffectsCell]
-  )(using
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
-  ): (Seq[StmtTerm], LocalCtx) = {
-    implicit val localCtx: LocalCtx = ctx
-
-    // Extract the record name and fields
-    val name = expr.name.name
-    val fields = expr.fields
-
-    // Extract the symbol from the extendsClause, if any. TODO: this is a stub only
-    val extendsSymbolOpt = expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
-      superType.head match {
-        case Identifier(superName, _) => superName
-        case _                        =>
-          // For now, only handle simple identifiers; report a warning or error if needed
-          ck.reporter.apply(UnsupportedExtendsType(clause))
-          // Return None since we cannot handle complex types yet
-          return (Seq.empty, ctx)
-      }
-    }
-
-    // Create a new type for the record
-    val recordType = newType
-
-    // Generate a unique ID for the record
-    val recordId = UniqId.generate[LocalV]
-
-    // Create a new local variable for the record
-    val recordV = newLocalv(name, recordType, recordId, expr.meta)
-
-    // Add the record to the semantic collector
-    val r = parameter.newSymbol(recordV, recordId, expr, localCtx)
-
-    // Elaborate the fields without combining them with any super class fields
-    val elaboratedFields = fields.map { field =>
-      val fieldType = field.ty match {
-        case Some(tyExpr) => checkType(tyExpr)
-        case None         => newTypeTerm
-      }
-
-      // Create a FieldTerm representing the field in the record
-      FieldTerm(field.name.name, fieldType)
-    }
-
-    // Elaborate the optional body (if any)
-    val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
-    }
-
-    // Construct the RecordStmtTerm that includes the fields and extendsClause
-    val recordStmtTerm = RecordStmtTerm(
-      name = name,
-      fields = elaboratedFields,
-      body = elaboratedBody,
-      meta = convertMeta(expr.meta)
-      // We can store the extendsSymbol here if needed in the future
-      // For now, we add a TODO comment
-      // TODO: Handle the extendsClause during type checking
-    )
-
-    // Update the context with the new record definition
-    val newCtx = ctx
-      .addRecordDefinition(recordStmtTerm)
-
-    // Return the statement term and the updated context
-    (Seq(recordStmtTerm), newCtx)
-  }
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: LocalCtx,
       parameter: SemanticCollector,
@@ -110,25 +54,25 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val Block(heads0, tail, meta) = expr
     val heads = heads0.map(resolve)
 
-    val (defs, names, initialCtx) = collectDefs(heads, meta)
+    val (declarations, names, initialCtx) = collectDeclarations(heads, meta)
     checkForDuplicateNames(names, expr)
 
     var ctx = initialCtx
-    val defsMap = defs.map(info => (info.expr, info)).toMap
+    val declarationsMap = declarations.map(info => (info.expr, info)).toMap
 
     val stmts: Seq[StmtTerm] = heads.flatMapOrdered {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
-        val (stmtTerms, newCtx) = processDefLetDefStmt(expr, ctx, defsMap, effects)
+        val (stmtTerms, newCtx) = processDefLetDefStmt(expr, ctx, declarationsMap, effects)
+        ctx = newCtx
+        stmtTerms
+
+      case expr: RecordStmt =>
+        val (stmtTerms, newCtx) = processRecordStmt(expr, ctx, declarationsMap, effects)
         ctx = newCtx
         stmtTerms
 
       case expr: LetDefStmt if expr.kind == LetDefType.Let =>
         val (stmtTerms, newCtx) = processLetLetDefStmt(expr, ctx, effects, meta)
-        ctx = newCtx
-        stmtTerms
-
-      case expr: RecordStmt =>
-        val (stmtTerms, newCtx) = processRecordStmt(expr, ctx, effects)
         ctx = newCtx
         stmtTerms
 
@@ -142,7 +86,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         Vector(ExprStmtTerm(elab(expr, ty, effects), Meta(ty)))
     }
 
-    // block is needed for implicit locals, don't remove
+    // Block is needed for implicit locals, don't remove
     {
       implicit val localCtx: LocalCtx = ctx
       val tailExpr = tail.getOrElse(UnitExpr(meta))
@@ -151,7 +95,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     }
   }
 
-  def collectDefs(
+  def collectDeclarations(
       heads: Seq[Expr],
       meta: Option[ExprMeta]
   )(using
@@ -159,27 +103,41 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[DefInfo], Seq[Name], LocalCtx) = {
-    val defs = heads.collect {
+  ): (Seq[DeclarationInfo], Seq[Name], LocalCtx) = {
+    val defDeclarations = heads.collect {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         val name = expr.defined match {
           // TODO: support other defined patterns
           case DefinedPattern(PatternBind(name, _)) => name.name
         }
-        val tyandval = TyAndVal.create()
+        val tyAndVal = TyAndVal.create()
         val id = UniqId.generate[LocalV]
-        val localv = newLocalv(name, tyandval.ty, id, meta)
+        val localv = newLocalv(name, tyAndVal.ty, id, meta)
         val r = parameter.newSymbol(localv, id, expr, localCtx)
-        DefInfo(
+        DefDeclaration(
           expr,
           localv,
-          tyandval,
-          ContextItem(name, id, localv, tyandval.ty, Some(r))
+          tyAndVal,
+          ContextItem(name, id, localv, tyAndVal.ty, Some(r))
         )
     }
-    val names = defs.map(_.item.name)
-    val initialCtx = localCtx.add(defs.map(_.item))
-    (defs, names, initialCtx)
+
+    val recordDeclarations = heads.collect {
+      case expr: RecordStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[RecordStmtTerm]
+        RecordDeclaration(
+          expr,
+          id,
+          name
+        )
+    }
+
+    val declarations = defDeclarations ++ recordDeclarations
+    val names = declarations.map(_.name)
+    val defContextItems = defDeclarations.map(_.item)
+    val initialCtx = localCtx.add(defContextItems)
+    (declarations, names, initialCtx)
   }
 
   def checkForDuplicateNames(names: Seq[Name], expr: Expr)(using ck: Tyck): Unit = {
@@ -192,7 +150,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
   def processDefLetDefStmt(
       expr: LetDefStmt,
       ctx: LocalCtx,
-      defsMap: Map[LetDefStmt, DefInfo],
+      declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
       parameter: SemanticCollector,
@@ -200,7 +158,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], LocalCtx) = {
     implicit val localCtx: LocalCtx = ctx
-    val defInfo = defsMap(expr)
+    val defInfo = declarationsMap(expr).asInstanceOf[DefDeclaration]
     val ty = expr.ty match {
       case Some(tyExpr) =>
         val t = checkTypeId(tyExpr)
@@ -215,6 +173,70 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       Vector(DefStmtTerm(defInfo.localv, Meta(wellTyped), toTerm(ty))),
       newCtx
     )
+  }
+
+  def processRecordStmt(
+      expr: RecordStmt,
+      ctx: LocalCtx,
+      declarationsMap: Map[Expr, DeclarationInfo],
+      effects: CIdOf[EffectsCell]
+  )(using
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): (Seq[StmtTerm], LocalCtx) = {
+    implicit val localCtx: LocalCtx = ctx
+    val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
+    val name = recordInfo.name
+
+    // Extract the fields from the record
+    val fields = expr.fields
+
+    // Extract the symbol from the extendsClause, if any. TODO: this is a stub only
+    val extendsSymbolOpt = expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
+      superType.head match {
+        case Identifier(superName, _) => superName
+        case _                        =>
+          // For now, only handle simple identifiers; report a warning or error if needed
+          ck.reporter.apply(UnsupportedExtendsType(clause))
+          // Return None since we cannot handle complex types yet
+          return (Seq.empty, ctx)
+      }
+    }
+
+    // Elaborate the fields without combining them with any super class fields
+    val elaboratedFields = fields.map { field =>
+      val fieldType = field.ty match {
+        case Some(tyExpr) => checkType(tyExpr)
+        case None         => newTypeTerm
+      }
+      // Create a FieldTerm representing the field in the record
+      FieldTerm(field.name.name, fieldType)
+    }
+
+    // Elaborate the optional body (if any)
+    val elaboratedBody = expr.body.map { body =>
+      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+    }
+
+    // Construct the RecordStmtTerm that includes the fields and extendsClause
+    val recordStmtTerm = RecordStmtTerm(
+      name = name,
+      uniqId = recordInfo.uniqId,
+      fields = elaboratedFields,
+      body = elaboratedBody,
+      meta = convertMeta(expr.meta)
+      // We can store the extendsSymbol here if needed in the future
+      // For now, we add a TODO comment
+      // TODO: Handle the extendsClause during type checking
+    )
+
+    // Update the context with the new record definition
+    val newCtx = ctx
+      .addRecordDefinition(recordStmtTerm)
+
+    // Return the statement term and the updated context
+    (Seq(recordStmtTerm), newCtx)
   }
 
   def processLetLetDefStmt(
@@ -248,5 +270,4 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       newCtx
     )
   }
-
 }

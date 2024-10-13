@@ -1,0 +1,4 @@
+
+def g(x:Integer) = f(x);
+def f(x:Integer) = x;
+g(0);
