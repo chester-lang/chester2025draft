@@ -439,21 +439,21 @@ lazy val parser = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("parser"))
-  .dependsOn(utils, ast)
+  .dependsOn(utils, syntax)
   .settings(
     name := "parser",
     commonSettings
   )
   .jvmSettings(commonJvmLibSettings)
 
-lazy val ast = useSpire(
+lazy val syntax = useSpire(
   crossProject(JSPlatform, JVMPlatform, NativePlatform)
     .withoutSuffixFor(JVMPlatform)
     .crossType(CrossType.Pure)
-    .in(file("ast"))
+    .in(file("syntax"))
     .dependsOn(base, pretty)
     .settings(
-      name := "ast",
+      name := "syntax",
       commonSettings
     )
     .jvmSettings(commonJvmLibSettings)
@@ -463,7 +463,7 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("err"))
-  .dependsOn(ast)
+  .dependsOn(syntax)
   .settings(
     name := "err",
     commonSettings
@@ -474,7 +474,7 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("tyck"))
-  .dependsOn(base, ast, err)
+  .dependsOn(base, syntax, err)
   .settings(
     name := "tyck",
     commonSettings
@@ -611,7 +611,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
-  .dependsOn(base, parser, ast, pretty, tyck, utils2)
+  .dependsOn(base, parser, syntax, pretty, tyck, utils2)
   .settings(
     name := "core",
     assembly / assemblyOutputPath := file("target") / "chester-core.jar",
@@ -1210,7 +1210,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     utils2,
     base,
     parser,
-    ast,
+    syntax,
     err,
     pretty,
     tyck,
