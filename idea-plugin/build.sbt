@@ -1,5 +1,13 @@
 import org.jetbrains.sbtidea.Keys._
 
+addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
+addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
+inThisBuild(
+  List(
+    semanticdbEnabled := true, // enable SemanticDB
+    semanticdbVersion := scalafixSemanticdb.revision // only required for Scala 2.x
+  )
+)
 lazy val chesterPlugin =
   project
     .in(file("."))
@@ -21,6 +29,8 @@ lazy val chesterPlugin =
       scalacOptions ++= Seq(
         "-experimental"
       ),
+      // scalafix
+      scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
       // Exclude LSP4J dependencies
       libraryDependencies ++= Seq(
         ("com.github.chester-lang.chester" %% "lsp" % "0.0.14")

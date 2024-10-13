@@ -4,8 +4,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiFile
 import com.redhat.devtools.lsp4ij.features.semanticTokens.SemanticTokensColorsProvider
 
-import scala.jdk.CollectionConverters._
-
 class ChesterSemanticTokensColorsProvider extends SemanticTokensColorsProvider {
   override def getTextAttributesKey(
       tokenType: String,

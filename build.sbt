@@ -55,16 +55,10 @@ val commonSettings = Seq(
       "-explain-cyclic",
       "-Wvalue-discard",
       "-Wnonunit-statement",
-      "-Wunused:implicits",
-      "-Wunused:explicits",
-      // "-Wunused:imports",
-      "-Wunused:locals",
-      "-Wunused:params",
-      "-Wunused:privates",
       "-experimental"
     ),
   // scalafix
-  scalacOptions ++= Seq("-Wunused:imports", "-Xlint:adapted-args", "-Wunused:unsafe-warn-patvars"),
+  scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.4-migration"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.0.2" % Test,
