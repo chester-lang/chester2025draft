@@ -504,7 +504,8 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
         // Use .mjs extension.
         .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
     }
-  ).jvmSettings(
+  )
+  .jvmSettings(
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.mozilla" % "rhino" % "1.7.15"
@@ -568,9 +569,9 @@ object GeneratedJS {
         Seq(generatedFile)
       }
     }.taskValue,
-    */
+     */
     // note that won't run on compile only package and run  - https://github.com/sbt/sbt/issues/1832
-    Compile / resourceGenerators  += Def.taskDyn {
+    Compile / resourceGenerators += Def.taskDyn {
       (jsForJvm.js / Compile / fastLinkJS).map { jsLinkerOutput =>
         val jsArtifact = (jsForJvm.js / Compile / fastLinkJSOutput).value / jsLinkerOutput.data.publicModules.head.jsFileName
 
@@ -583,7 +584,8 @@ object GeneratedJS {
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
         val dest = (Compile / resourceManaged).value
 
-        org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
+        org.mozilla.javascript.tools.jsc.Main
+          .main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
         Seq(dest / "chester" / "ChesterJs.class")
       }
     }.taskValue,
@@ -602,11 +604,11 @@ object GeneratedJS {
       "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       "org.soot-oss" % "sootup.analysis" % sootupVersion,
-      "org.mozilla" % "rhino" % "1.7.15",
+      "org.mozilla" % "rhino" % "1.7.15"
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
-      //"org.graalvm.polyglot" % "polyglot" % graalvmVersion,
-      //"org.graalvm.polyglot" % "js" % graalvmVersion
+      // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
+      // "org.graalvm.polyglot" % "js" % graalvmVersion
       // "org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT" // no: no enough memory to build it with native image
     )
   )

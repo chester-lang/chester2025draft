@@ -9,15 +9,14 @@ object Js4Jvm {
     val cx = Context.enter()
     cx.setLanguageVersion(Context.VERSION_ES6)
     cx
-    }
+  }
   private val scope: ScriptableObject = context.initStandardObjects()
   private val script: org.mozilla.javascript.Script = new ChesterJs()
   val exports: Scriptable = {
 
-   val result: Scriptable = context.newObject(scope)
+    val result: Scriptable = context.newObject(scope)
 
-  scope.put("exports", scope, result)
-
+    scope.put("exports", scope, result)
 
     script.exec(context, scope)
 
