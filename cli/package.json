@@ -1,10 +1,10 @@
 {
   "name": "chester-cli",
-  "version": "0.0.14",
+  "version": "0.0.14a",
   "description": "Chester is a programming language",
-  "main": "main.js",
+  "main": "cli.js",
   "bin": {
-    "chester-cli": "./main.js"
+    "chester-cli": "./cli.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/chester-lang/chester#readme",
   "files": [
+    "cli.js",
     "main.js",
     "main.js.map"
   ]
