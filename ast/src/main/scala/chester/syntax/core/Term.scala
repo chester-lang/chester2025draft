@@ -190,9 +190,7 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
 
 sealed trait TermWithUniqId extends Term with HasUniqId derives ReadWriter {
   override def uniqId: UniqIdOf[Term]
-
   override def collectU(collector: CollectorU): Unit = ???
-
   override def rerangeU(reranger: RerangerU): TermWithUniqId = ???
 }
 
@@ -980,12 +978,26 @@ case class FieldTerm(
 
 case class RecordStmtTerm(
     name: Name,
+    uniqId: UniqIdOf[RecordStmtTerm] = UniqId.generate[RecordStmtTerm],
     fields: Vector[FieldTerm],
     body: Option[BlockTerm],
     meta: OptionTermMeta = None
-) extends StmtTerm {
+) extends StmtTerm
+    with TermWithUniqId {
+  override def collectU(collector: CollectorU): Unit = {
+    collector(uniqId)
+    fields.foreach(_.collectU(collector))
+    body.foreach(_.collectU(collector))
+  }
+  override def rerangeU(reranger: RerangerU): RecordStmtTerm = thisOr(
+    copy(
+      fields = fields.map(_.rerangeU(reranger)).asInstanceOf[Vector[FieldTerm]],
+      uniqId = reranger(uniqId),
+      body = body.map(_.rerangeU(reranger)).asInstanceOf[Option[BlockTerm]]
+    )
+  )
   override def descent(f: Term => Term): RecordStmtTerm = copy(
-    fields = fields.map(field => field.copy(ty = f(field.ty))),
+    fields = fields.map(f).asInstanceOf[Vector[FieldTerm]],
     body = body.map(f).asInstanceOf[Option[BlockTerm]]
   )
 
@@ -1000,17 +1012,17 @@ case class RecordStmtTerm(
     )
   }
 }
-   case class RecordConstructorCallTerm(
-       recordName: Name,
-       args: Vector[Term],
-       meta: OptionTermMeta = None
-   ) extends Term {
-     override def descent(f: Term => Term): RecordConstructorCallTerm = copy(
-       args = args.map(f)
-     )
+case class RecordConstructorCallTerm(
+    recordName: Name,
+    args: Vector[Term],
+    meta: OptionTermMeta = None
+) extends Term {
+  override def descent(f: Term => Term): RecordConstructorCallTerm = copy(
+    args = args.map(f)
+  )
 
-     override def toDoc(implicit options: PrettierOptions): Doc = {
-       val argsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,`)(args.map(_.toDoc))
-       Doc.text(recordName) <> argsDoc
-     }
-   }
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val argsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,`)(args.map(_.toDoc))
+    Doc.text(recordName) <> argsDoc
+  }
+}
