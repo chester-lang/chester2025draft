@@ -987,18 +987,18 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "org.jline" % "jline" % jlineVersion,
       "org.jline" % "jline-terminal" % jlineVersion,
       "org.jline" % "jline-terminal-jansi" % jlineVersion,
-      "org.jline" % "jline-terminal-jni" % jlineVersion,
-      "org.jline" % "jline-terminal-jna" % jlineVersion,
-      "org.jline" % "jline-terminal-ffm" % jlineVersion,
-      "org.jline" % "jline-native" % jlineVersion,
+      //"org.jline" % "jline-terminal-jni" % jlineVersion,
+      //"org.jline" % "jline-terminal-jna" % jlineVersion,
+      //"org.jline" % "jline-terminal-ffm" % jlineVersion,
+      //"org.jline" % "jline-native" % jlineVersion,
       "org.jline" % "jline-reader" % jlineVersion,
-      "org.jline" % "jline-style" % jlineVersion,
-      "org.jline" % "jline-remote-ssh" % jlineVersion,
-      "org.jline" % "jline-remote-telnet" % jlineVersion,
-      "org.jline" % "jline-builtins" % jlineVersion,
-      "org.jline" % "jline-console" % jlineVersion,
+      //"org.jline" % "jline-style" % jlineVersion,
+      //"org.jline" % "jline-remote-ssh" % jlineVersion,
+      //"org.jline" % "jline-remote-telnet" % jlineVersion,
+      //"org.jline" % "jline-builtins" % jlineVersion,
+      //"org.jline" % "jline-console" % jlineVersion,
       // "org.jline" % "jline-groovy" % jlineVersion,
-      "org.jline" % "jline-console-ui" % jlineVersion
+      //"org.jline" % "jline-console-ui" % jlineVersion
     )
   )
   .jsConfigure(_.dependsOn(nodejs.js))
