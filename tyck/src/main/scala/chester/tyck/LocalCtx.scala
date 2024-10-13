@@ -24,7 +24,7 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
       new TyAndVal(toTerm(state.addCell(OnceCell[Term]())), toTerm(state.addCell(OnceCell[Term]())))
     }
   }
-  
+
   extension (context: ContextItem) {
     def tyId(using state: StateAbility[Tyck]): CellId[Term] = toId(context.ty)
 
@@ -33,8 +33,8 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
   implicit class ContextItemObject(ignored: ContextItem.type) {
     def builtin(
-                     item: BuiltinItem
-                   )(using state: StateAbility[Tyck]): (TyAndVal, ContextItem) = {
+        item: BuiltinItem
+    )(using state: StateAbility[Tyck]): (TyAndVal, ContextItem) = {
       val varId = UniqId.generate[ToplevelV]
       val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId)
       val ty1 = state.toId(item.ty)
@@ -44,7 +44,7 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
       )
     }
   }
-  
+
   implicit class TyAndValOps(tyandval: TyAndVal) {
     def tyId(using state: StateAbility[Tyck]): CellId[Term] = toId(tyandval.ty)
 
@@ -53,21 +53,21 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
     def tyTerm(using state: StateAbility[Tyck]): Term = toTerm(tyandval.ty)
 
     def valueTerm(using state: StateAbility[Tyck]): Term = toTerm(tyandval.value)
-    
+
   }
 
   implicit class LocalCtxOps(ignored: LocalCtx.type) {
     def apply(
-               map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
-               contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
-               knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
-               recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
-               imports: Imports = Imports.Empty,
-               loadedModules: LoadedModules = LoadedModules.Empty,
-               operators: OperatorsContext = OperatorsContext.Default,
-               currentModule: ModuleRef = DefaultModule
-             ): LocalCtx = {
-        new LocalCtx(map, contextItems, knownMap, recordDefinitions, imports, loadedModules, operators, currentModule)
+        map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
+        contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
+        knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
+        recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
+        imports: Imports = Imports.Empty,
+        loadedModules: LoadedModules = LoadedModules.Empty,
+        operators: OperatorsContext = OperatorsContext.Default,
+        currentModule: ModuleRef = DefaultModule
+    ): LocalCtx = {
+      new LocalCtx(map, contextItems, knownMap, recordDefinitions, imports, loadedModules, operators, currentModule)
     }
     def default(using state: StateAbility[Tyck]): LocalCtx = {
       val items = BuiltIn.builtinItems.map(ContextItem.builtin)
@@ -83,27 +83,21 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
 }
 
-
 case class TyAndVal(
-                     ty: Term,
-                     value: Term
-                   ) {
-}
+    ty: Term,
+    value: Term
+) {}
 
-object TyAndVal {
-  
-}
+object TyAndVal {}
 
 case class ContextItem(
-                        name: Name,
-                        uniqId: UniqIdOf[? <: MaybeVarCall],
-                        ref: MaybeVarCall,
-                        ty: Term,
-                        reference: Option[SymbolCollector] = None
-                      ) 
-object ContextItem{
-  
-}
+    name: Name,
+    uniqId: UniqIdOf[? <: MaybeVarCall],
+    ref: MaybeVarCall,
+    ty: Term,
+    reference: Option[SymbolCollector] = None
+)
+object ContextItem {}
 case class Imports()
 
 object Imports {
@@ -111,23 +105,23 @@ object Imports {
 }
 
 case class RecordDefinition(
-                             name: Name,
-                             fields: Vector[FieldTerm],
-                             extendsSymbol: Option[Name], // Store the symbol from the extends clause
-                             id: UniqIdOf[LocalV],
-                             ty: Term
-                           )
+    name: Name,
+    fields: Vector[FieldTerm],
+    extendsSymbol: Option[Name], // Store the symbol from the extends clause
+    id: UniqIdOf[LocalV],
+    ty: Term
+)
 
 case class LocalCtx(
-                     map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
-                     contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
-                     knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
-                     recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
-                     imports: Imports = Imports.Empty,
-                     loadedModules: LoadedModules = LoadedModules.Empty,
-                     operators: OperatorsContext = OperatorsContext.Default,
-                     currentModule: ModuleRef = DefaultModule
-                   ) {
+    map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]],
+    contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] = Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem],
+    knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal],
+    recordDefinitions: Map[Name, RecordDefinition] = Map.empty, // New field for records
+    imports: Imports = Imports.Empty,
+    loadedModules: LoadedModules = LoadedModules.Empty,
+    operators: OperatorsContext = OperatorsContext.Default,
+    currentModule: ModuleRef = DefaultModule
+) {
   def updateModule(module: ModuleRef): LocalCtx = copy(currentModule = module)
 
   def getKnown(x: MaybeVarCall): Option[TyAndVal] =
@@ -140,8 +134,8 @@ case class LocalCtx(
     knownAdd(Seq(id -> y))
 
   def knownAdd(
-                seq: Seq[(UniqIdOf[? <: MaybeVarCall], TyAndVal)]
-              ): LocalCtx = {
+      seq: Seq[(UniqIdOf[? <: MaybeVarCall], TyAndVal)]
+  ): LocalCtx = {
     val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
       assert(!acc.contains(item._1), s"Duplicate key ${item._1}")
       acc + item
@@ -173,6 +167,4 @@ case class LocalCtx(
   }
 }
 
-object LocalCtx {
-  
-}
+object LocalCtx {}
