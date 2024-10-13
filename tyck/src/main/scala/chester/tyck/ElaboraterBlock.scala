@@ -49,7 +49,7 @@ trait ElaboraterBlock extends Elaborater {
   ) extends DeclarationInfo
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -58,7 +58,7 @@ trait ElaboraterBlock extends Elaborater {
 
 trait ProvideElaboraterBlock extends ElaboraterBlock {
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -106,14 +106,14 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         Vector.empty
 
       case expr =>
-        implicit val localCtx: LocalCtx = ctx
+        implicit val localCtx: Context = ctx
         val ty = newType
         Vector(ExprStmtTerm(elab(expr, ty, effects), Meta(ty)))
     }
 
     // Block is needed for implicit locals, don't remove
     {
-      implicit val localCtx: LocalCtx = ctx
+      implicit val localCtx: Context = ctx
       val tailExpr = tail.getOrElse(UnitExpr(meta))
       val wellTyped = elab(tailExpr, ty, effects)
       BlockTerm(stmts, wellTyped)
@@ -124,11 +124,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       heads: Seq[Expr],
       meta: Option[ExprMeta]
   )(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[DeclarationInfo], Seq[Name], LocalCtx) = {
+  ): (Seq[DeclarationInfo], Seq[Name], Context) = {
     // Collect def declarations as before
     val defDeclarations = heads.collect {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
@@ -189,15 +189,15 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
   def processDefLetDefStmt(
       expr: LetDefStmt,
-      ctx: LocalCtx,
+      ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[StmtTerm], LocalCtx) = {
-    implicit val localCtx: LocalCtx = ctx
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
     val defInfo = declarationsMap(expr).asInstanceOf[DefDeclaration]
     val ty = expr.ty match {
       case Some(tyExpr) =>
@@ -217,15 +217,15 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
   def processRecordStmt(
       expr: RecordStmt,
-      ctx: LocalCtx,
+      ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[StmtTerm], LocalCtx) = {
-    implicit val localCtx: LocalCtx = ctx
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
     val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
     val name = recordInfo.name
 
@@ -281,15 +281,15 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
   def processLetLetDefStmt(
       expr: LetDefStmt,
-      ctx: LocalCtx,
+      ctx: Context,
       effects: CIdOf[EffectsCell],
       meta: Option[ExprMeta]
   )(using
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[StmtTerm], LocalCtx) = {
-    implicit val localCtx: LocalCtx = ctx
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
     val name = expr.defined match {
       // TODO: support other defined patterns
       case DefinedPattern(PatternBind(name, _)) => name.name
@@ -313,15 +313,15 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
   def processTraitStmt(
       expr: TraitStmt,
-      ctx: LocalCtx,
+      ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[StmtTerm], LocalCtx) = {
-    implicit val localCtx: LocalCtx = ctx
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
     val traitInfo = declarationsMap(expr).asInstanceOf[TraitDeclaration]
     val name = traitInfo.name
 
@@ -353,15 +353,15 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
   def processInterfaceStmt(
       expr: InterfaceStmt,
-      ctx: LocalCtx,
+      ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): (Seq[StmtTerm], LocalCtx) = {
-    implicit val localCtx: LocalCtx = ctx
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
     val interfaceInfo = declarationsMap(expr).asInstanceOf[InterfaceDeclaration]
     val name = interfaceInfo.name
 

@@ -11,7 +11,7 @@ trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      ctx: LocalCtx,
+      ctx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -24,7 +24,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      ctx: LocalCtx,
+      ctx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -75,7 +75,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       cause: Expr,
       functionTerm: Term,
       functionCallTerm: CellId[Term]
-  )(using localCtx: LocalCtx)
+  )(using localCtx: Context)
       extends Propagator[Tyck] {
 
     override val readingCells: Set[CellId[?]] = Set(functionTy)

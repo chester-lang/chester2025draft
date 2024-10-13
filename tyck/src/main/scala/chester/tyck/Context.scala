@@ -56,8 +56,8 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
   }
 
-  implicit class LocalCtxOps(ignored: LocalCtx.type) {
-    def default(using state: StateAbility[Tyck]): LocalCtx = {
+  implicit class LocalCtxOps(ignored: Context.type) {
+    def default(using state: StateAbility[Tyck]): Context = {
       val items = BuiltIn.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
       val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
@@ -65,7 +65,7 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
         .map(item => item._2.uniqId -> item._1)
         .toMap
         .asInstanceOf[Map[UniqIdOf[? <: MaybeVarCall], TyAndVal]]
-      new LocalCtx(map, contextItems, knownMap)
+      new Context(map, contextItems, knownMap)
     }
   }
 
@@ -93,7 +93,7 @@ object Imports {
   val Empty: Imports = Imports()
 }
 
-case class LocalCtx(
+case class Context(
     map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]], // empty[...] are needed because compiler bugs
     contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] =
       Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem], // empty[...] are needed because compiler bugs
@@ -106,7 +106,7 @@ case class LocalCtx(
     operators: OperatorsContext = OperatorsContext.Default,
     currentModule: ModuleRef = DefaultModule
 ) {
-  def updateModule(module: ModuleRef): LocalCtx = copy(currentModule = module)
+  def updateModule(module: ModuleRef): Context = copy(currentModule = module)
 
   def getKnown(x: MaybeVarCall): Option[TyAndVal] =
     knownMap.get(x.uniqId.asInstanceOf[UniqIdOf[? <: MaybeVarCall]])
@@ -114,12 +114,12 @@ case class LocalCtx(
   def get(id: Name): Option[ContextItem] =
     map.get(id).flatMap(uniqId => contextItems.get(uniqId))
 
-  def knownAdd(id: UniqIdOf[? <: MaybeVarCall], y: TyAndVal): LocalCtx =
+  def knownAdd(id: UniqIdOf[? <: MaybeVarCall], y: TyAndVal): Context =
     knownAdd(Seq(id -> y))
 
   def knownAdd(
       seq: Seq[(UniqIdOf[? <: MaybeVarCall], TyAndVal)]
-  ): LocalCtx = {
+  ): Context = {
     val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
       assert(!acc.contains(item._1), s"Duplicate key ${item._1}")
       acc + item
@@ -127,9 +127,9 @@ case class LocalCtx(
     copy(knownMap = newKnownMap)
   }
 
-  def add(item: ContextItem): LocalCtx = add(Seq(item))
+  def add(item: ContextItem): Context = add(Seq(item))
 
-  def add(seq: Seq[ContextItem]): LocalCtx = {
+  def add(seq: Seq[ContextItem]): Context = {
     val newMap = seq.foldLeft(map) { (acc, item) =>
       acc + (item.name -> item.uniqId)
     }
@@ -141,7 +141,7 @@ case class LocalCtx(
   }
 
   // Method to add a record definition to the context
-  def addRecordDefinition(recordDef: RecordStmtTerm): LocalCtx = {
+  def addRecordDefinition(recordDef: RecordStmtTerm): Context = {
     copy(
       recordDefinitionNames = recordDefinitionNames + (recordDef.name -> recordDef.uniqId),
       recordDefinitions = recordDefinitions + (recordDef.uniqId -> recordDef)
@@ -159,4 +159,4 @@ case class LocalCtx(
   }
 }
 
-object LocalCtx {}
+object Context {}

@@ -3,7 +3,7 @@ package chester.tyck.api
 import chester.syntax.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.LocalCtx
+import chester.tyck.Context
 import upickle.default.*
 import chester.uniqid.*
 
@@ -24,7 +24,7 @@ trait SemanticCollector {
       call: MaybeVarCall,
       id: UniqIdOf[? <: MaybeVarCall],
       definedOn: Expr,
-      localCtx: LocalCtx
+      localCtx: Context
   ): SymbolCollector = NoopSymbolCollector
 
   def metaFinished(replace: MetaTerm => Term): Unit = ()
@@ -54,7 +54,7 @@ class VectorSemanticCollector extends SemanticCollector {
       call: MaybeVarCall,
       id: UniqIdOf[? <: MaybeVarCall],
       definedOn: Expr,
-      localCtx: LocalCtx
+      localCtx: Context
   ): SymbolCollector = {
     val index = builder.length
     builder.append(CollectedSymbol(call, id, definedOn, Vector()))
@@ -81,7 +81,7 @@ class UnusedVariableWarningWrapper(x: SemanticCollector) extends SemanticCollect
       call: MaybeVarCall,
       id: UniqIdOf[? <: MaybeVarCall],
       definedOn: Expr,
-      localCtx: LocalCtx
+      localCtx: Context
   ): SymbolCollector = {
     val symbolCollector = x.newSymbol(call, id, definedOn, localCtx)
     val c = CollectedSymbol(call, id, definedOn, Vector())

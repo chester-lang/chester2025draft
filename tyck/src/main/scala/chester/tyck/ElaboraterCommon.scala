@@ -52,7 +52,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def resolve(
       expr: Expr
-  )(using localCtx: LocalCtx, reporter: Reporter[TyckProblem]): Expr = {
+  )(using localCtx: Context, reporter: Reporter[TyckProblem]): Expr = {
     val result = SimpleDesalt.desugarUnwrap(expr) match {
       case opseq: OpSeq => {
         val result = resolveOpSeq(reporter, localCtx.operators, opseq)
@@ -66,7 +66,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   type Literals = Expr & (IntegerLiteral | RationalLiteral | StringLiteral | SymbolLiteral)
 
   case class Unify(lhs: CellId[Term], rhs: CellId[Term], cause: Expr)(using
-      localCtx: LocalCtx
+      localCtx: Context
   ) extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
@@ -117,7 +117,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       lhs: CellId[Term],
       rhs: Vector[CellId[Term]],
       cause: Expr
-  )(using localCtx: LocalCtx)
+  )(using localCtx: Context)
       extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
@@ -175,7 +175,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def tryUnify(lhs: Term, rhs: Term)(using
       state: StateAbility[Tyck],
-      localCtx: LocalCtx
+      localCtx: Context
   ): Boolean = {
     if (lhs == rhs) return true
     val lhsResolved = lhs match {
@@ -223,7 +223,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   }
 
   case class LiteralType(x: Literals, tyLhs: CellId[Term])(using
-      localCtx: LocalCtx
+      localCtx: Context
   ) extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
@@ -309,7 +309,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def readVar(
       x: Term
-  )(using localCtx: LocalCtx, ck: Tyck, state: StateAbility[Tyck]): Term = {
+  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term = {
     var result = x
     while (true) {
       result match {
@@ -329,7 +329,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def readMetaVar(
       x: Term
-  )(using localCtx: LocalCtx, ck: Tyck, state: StateAbility[Tyck]): Term = {
+  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term = {
     var result = x
     while (true) {
       result match {
@@ -353,7 +353,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   }
 
   def unify(lhs: Term, rhs: Term, cause: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
@@ -397,7 +397,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   }
 
   def unify(t1: Term, t2: CellId[Term], cause: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
@@ -405,7 +405,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   }
 
   def unify(t1: CellId[Term], t2: Term, cause: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
@@ -413,7 +413,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   }
 
   def unify(t1: CellId[Term], t2: CellId[Term], cause: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
@@ -423,7 +423,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   /** t is rhs, listT is lhs */
   case class ListOf(tRhs: CellId[Term], listTLhs: CellId[Term], cause: Expr)(using
       ck: Tyck,
-      localCtx: LocalCtx
+      localCtx: Context
   ) extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
@@ -473,14 +473,14 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     }
   }
 
-  class MutableLocalCtx(var ctx: LocalCtx) {
-    def update(f: LocalCtx => LocalCtx): Unit = {
+  class MutableLocalCtx(var ctx: Context) {
+    def update(f: Context => Context): Unit = {
       ctx = f(ctx)
     }
   }
 
-  given mutL(using m: MutableLocalCtx): LocalCtx = m.ctx
-  implicit def mutLc(m: MutableLocalCtx): LocalCtx = m.ctx
+  given mutL(using m: MutableLocalCtx): Context = m.ctx
+  implicit def mutLc(m: MutableLocalCtx): Context = m.ctx
 
 }
 

@@ -11,7 +11,7 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
       ty: CellId[Term],
       outerEffects: CIdOf[EffectsCell]
   )(using
-      ctx: LocalCtx,
+      ctx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -59,7 +59,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
       ty: CellId[Term],
       outerEffects: CIdOf[EffectsCell]
   )(using
-      ctx: LocalCtx,
+      ctx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]

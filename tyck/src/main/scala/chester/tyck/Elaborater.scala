@@ -17,7 +17,7 @@ type Tyck = Get[TyckProblem, Unit]
 trait Elaborater extends ProvideCtx with ElaboraterCommon {
 
   def checkType(expr: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -29,7 +29,7 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
   }
 
   def checkTypeId(expr: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -38,7 +38,7 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
   }
 
   def elabTy(expr: Option[Expr])(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -49,14 +49,14 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
     }
 
   def elab(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term
 
   def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -71,7 +71,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
   // TODO: add something for implicit conversion
 
   def newSubtype(ty: CellIdOr[Term], cause: Expr)(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): CellId[Term] = {
@@ -86,7 +86,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       ty0: CellIdOr[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -176,7 +176,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      localCtx: LocalCtx,
+      localCtx: Context,
       parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -247,7 +247,7 @@ trait DefaultImpl
         newEffects
       }
     }
-    implicit val ctx: LocalCtx = LocalCtx.default
+    implicit val ctx: Context = Context.default
     val wellTyped = elabId(expr, ty1, effects1)
     able.naiveZonk(Vector(ty1, effects1, wellTyped))
     val judge = Judge(
@@ -295,7 +295,7 @@ trait DefaultImpl
     )
     implicit val get: Tyck = new Get(reporter, new MutBox(()))
     implicit val able: StateAbility[Tyck] = stateAbilityImpl
-    implicit var ctx: LocalCtx = LocalCtx.default
+    implicit var ctx: Context = Context.default
     val (module, block): (ModuleRef, Block) = resolve(expr) match {
       case b @ Block(head +: heads, tail, _) =>
         resolve(head) match {
