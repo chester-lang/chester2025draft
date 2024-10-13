@@ -480,6 +480,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   }
 
   given mutL(using m: MutableLocalCtx): LocalCtx = m.ctx
+  implicit def mutLc(m: MutableLocalCtx): LocalCtx = m.ctx
 
 }
 
