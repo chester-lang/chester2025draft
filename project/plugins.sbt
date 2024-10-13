@@ -16,6 +16,10 @@ addSbtPlugin("com.eed3si9n.ifdef" % "sbt-ifdef" % "0.3.0")
 //addSbtPlugin("com.github.sbt" % "sbt-proguard" % "0.5.0")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.12.0")
 
+libraryDependencies ++= Seq(
+  "org.mozilla" % "rhino" % "1.7.15"
+)
+
 // cli tools
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.3")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")

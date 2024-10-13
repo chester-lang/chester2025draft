@@ -1,16 +1,12 @@
 package chester
 
-import org.graalvm.polyglot.*
-import org.graalvm.polyglot.io.IOAccess
+import org.mozilla.javascript.Context
+import org.mozilla.javascript.Scriptable
+import org.mozilla.javascript.GeneratedClassLoader
+import org.mozilla.javascript.NativeFunction
 
 object Js4Jvm {
-  // https://www.graalvm.org/latest/reference-manual/js/Modules/
-  private val contextBuilder = Context
-    .newBuilder("js")
-    .allowIO(IOAccess.ALL)
-    .option("js.esm-eval-returns-exports", "true")
-    .option("engine.WarnInterpreterOnly", "false")
-  lazy val context: Context = contextBuilder.build()
-  private val source = Source.newBuilder("js", chester.generated.GeneratedJS.jsCode, "main.mjs").mimeType("application/javascript+module").build()
-  lazy val exports: Value = context.eval(source)
+  // Initialize the Rhino context
+  private val context: Context = Context.enter()
+  val c = new chester.ChesterJs()
 }

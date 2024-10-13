@@ -487,20 +487,28 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-lazy val jsForJvm = crossProject(JSPlatform)
+// jvm holds stub for class interface.
+lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JSPlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .in(file("js-for-jvm"))
-  .dependsOn(common)
   .settings(
     commonSettings,
-    name := "js-for-jvm",
+    name := "js-for-jvm"
+  )
+  .jsConfigure(_.dependsOn(common.js))
+  .jsSettings(
     scalaJSLinkerConfig ~= {
       // Enable ECMAScript module output.
       _.withModuleKind(ModuleKind.ESModule)
         // Use .mjs extension.
         .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
     }
+  ).jvmSettings(
+    commonJvmLibSettings,
+    libraryDependencies ++= Seq(
+      "org.mozilla" % "rhino" % "1.7.15"
+    )
   )
 
 val sootupVersion = "1.3.0"
@@ -513,11 +521,13 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "platform",
     commonSettings
   )
+  .jvmConfigure(_.dependsOn(jsForJvm.jvm % Provided))
   .jvmSettings(
     // Ensure that tyckPlatform.jvm depends on jsForJvm's fastLinkJS task
     Compile / compile := (Compile / compile)
       .dependsOn(jsForJvm.js / Compile / fastLinkJS)
       .value,
+    /*
     // Modify the source generator to use Def.taskDyn
     Compile / sourceGenerators += Def.taskDyn {
       // Use Def.taskDyn to create a dynamic dependency on jsForJvm.js / fastLinkJS
@@ -558,6 +568,24 @@ object GeneratedJS {
         Seq(generatedFile)
       }
     }.taskValue,
+    */
+    Compile / resourceGenerators  += Def.taskDyn {
+      (jsForJvm.js / Compile / fastLinkJS).map { jsLinkerOutput =>
+        val jsArtifact = (jsForJvm.js / Compile / fastLinkJSOutput).value / jsLinkerOutput.data.publicModules.head.jsFileName
+
+        val log = streams.value.log
+
+        // Copy to file("js-for-jvm") / "index.js"
+        IO.copyFile(jsArtifact, file("js-for-jvm") / "index.js")
+        Process("pnpm install", file("js-for-jvm")) ! log
+        Process("pnpm run build", file("js-for-jvm")) ! log
+        val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
+        val dest = ((Compile / resourceManaged).value  / "chester").getAbsolutePath
+
+        org.mozilla.javascript.tools.jsc.Main.main(Array("-opt", "9", "-nosource", "-d", dest, "-o", "ChesterJs", "-package" ,"chester", jsFile))
+        Seq((Compile / resourceManaged).value / "ChesterJs.class")
+      }
+    }.taskValue,
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scalameta" %% "semanticdb-shared" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13"),
@@ -573,10 +601,11 @@ object GeneratedJS {
       "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       "org.soot-oss" % "sootup.analysis" % sootupVersion,
+      "org.mozilla" % "rhino" % "1.7.15",
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
-      "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
-      "org.graalvm.polyglot" % "js" % graalvmVersion
+      //"org.graalvm.polyglot" % "polyglot" % graalvmVersion,
+      //"org.graalvm.polyglot" % "js" % graalvmVersion
       // "org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT" // no: no enough memory to build it with native image
     )
   )

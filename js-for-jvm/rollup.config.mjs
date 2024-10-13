@@ -1,12 +1,13 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import babel from '@rollup/plugin-babel';
 
 export default {
   input: 'index.js', // Adjust the input path as needed
   output: {
     file: 'dist/bundle.js',
-    format: 'es', // Output as an ES6 module
+    format: 'cjs',
     sourcemap: true,
   },
   plugins: [
@@ -14,6 +15,12 @@ export default {
       preferBuiltins: false,
     }),
     commonjs(),
+    babel({
+      babelHelpers: 'bundled',
+      presets: [
+        ['@babel/preset-env', { targets: {rhino: "1.7.15"} }]
+      ]
+    }),
 // broken on termux
 /*    terser({
       compress: {
