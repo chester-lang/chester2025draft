@@ -133,7 +133,8 @@ bump := {
       file("build.sbt"),
       file("idea-plugin/build.sbt"),
       file("idea-plugin/resources/META-INF/plugin.xml"),
-      file("vscode/package.json")
+      file("vscode/package.json"),
+      file("cli/package.json")
     )
     val filesToUpdateWithoutQuotes = Seq(
       file("idea-plugin/resources/META-INF/plugin.xml")
@@ -176,7 +177,8 @@ bumpScala := {
       file(".github/workflows/build.yml"),
       file("docs/dev.sh"),
       file("idea-plugin/build.sbt"),
-      file("site/package.json")
+      file("site/package.json"),
+      file("cli/package.json")
     )
 
     filesToUpdate.foreach { f =>
