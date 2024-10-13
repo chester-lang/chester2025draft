@@ -14,6 +14,12 @@
     <depends>com.redhat.devtools.lsp4ij</depends>
 
     <resource-bundle>messages.ChesterPluginBundle</resource-bundle>
+    <actions>
+        <action id="chester.idea.PopupDialogAction"
+                class="chester.idea.PopupDialogAction">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
+    </actions>
 
     <!-- LSP4IJ Extension Points -->
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
