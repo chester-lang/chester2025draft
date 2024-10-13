@@ -31,7 +31,8 @@ val nativeImageOption = Seq(
   // runtime: org.jline
   "--initialize-at-build-time=org.mozilla.javascript,org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
   "--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
-  "-O2"
+  "-O2",
+  "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
 )
 
 val classVersion =
