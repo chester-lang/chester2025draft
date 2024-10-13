@@ -211,14 +211,14 @@ ThisBuild / assemblyMergeStrategy := {
   case PathList("META-INF", "native-image", "org.jline", xs @ _*) => MergeStrategy.first
   // TODO: actually fix scala issue
   case PathList("scala", "tools", xs @ _*) => MergeStrategy.first
-  case PathList("scala-asm.properties")    => MergeStrategy.first
-  case PathList("compiler.properties")     => MergeStrategy.first
+  case PathList("scala-asm.properties")    => MergeStrategy.discard
+  case PathList("compiler.properties")     => MergeStrategy.discard
   // TODO
   case PathList("org", "osgi", "service", "prefs", xs @ _*) => MergeStrategy.first
   // TODO
   case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.first
   // TODO
-  case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") || xs.contains("reflect-config.json") => MergeStrategy.first
+  case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") || xs.contains("reflect-config.json") => MergeStrategy.discard
   case x =>
     val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
     oldStrategy(x)
@@ -588,17 +588,17 @@ object GeneratedJS {
     libraryDependencies ++= Seq(
       "org.scalameta" %% "semanticdb-shared" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13"),
       "org.scala-lang.modules" % "scala-asm" % "9.7.0-scala-2",
-      "ch.epfl.scala" %% "tasty-query" % "1.4.0",
-      "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
-      "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-9",
-      "com.github.javaparser" % "javaparser-symbol-solver-core" % "3.26.2",
-      "org.soot-oss" % "sootup.core" % sootupVersion,
-      "org.soot-oss" % "sootup.java.core" % sootupVersion,
-      "org.soot-oss" % "sootup.java.sourcecode" % sootupVersion,
-      "org.soot-oss" % "sootup.java.bytecode" % sootupVersion,
-      "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
-      "org.soot-oss" % "sootup.callgraph" % sootupVersion,
-      "org.soot-oss" % "sootup.analysis" % sootupVersion,
+      // "ch.epfl.scala" %% "tasty-query" % "1.4.0",
+      // "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
+      // "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-9",
+      // "com.github.javaparser" % "javaparser-symbol-solver-core" % "3.26.2",
+      // "org.soot-oss" % "sootup.core" % sootupVersion,
+      // "org.soot-oss" % "sootup.java.core" % sootupVersion,
+      // "org.soot-oss" % "sootup.java.sourcecode" % sootupVersion,
+      // "org.soot-oss" % "sootup.java.bytecode" % sootupVersion,
+      // "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
+      // "org.soot-oss" % "sootup.callgraph" % sootupVersion,
+      // "org.soot-oss" % "sootup.analysis" % sootupVersion,
       "org.mozilla" % "rhino" % "1.7.15"
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/

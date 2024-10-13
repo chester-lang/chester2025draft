@@ -1,7 +1,7 @@
 package chester.tyck
 
-import org.objectweb.asm._
-import org.objectweb.asm.tree._
+import scala.tools.asm._
+import scala.tools.asm.tree._
 import scala.jdk.CollectionConverters._
 import java.nio.file.{Files, Paths}
 
