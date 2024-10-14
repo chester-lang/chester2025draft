@@ -48,11 +48,8 @@ implicit object DefaultIO extends IO[Future] {
     }
   }
 
-  def bytesToJS(bytes: Array[Byte]): Int8Array =
-    new Int8Array(bytes.toJSArray)
-
-  inline override def write(path: String, content: Array[Byte]): Future[Unit] =
-    fsPromisesMod.writeFile(path, bytesToJS)
+  override def write(path: String, content: Array[Byte]): Future[Unit] =
+    fsPromisesMod.writeFile(path, content.toTypedArray)
 
   inline override def removeWhenExists(path: String): Future[Boolean] =
     fsPromisesMod.unlink(path).map(_ => true).recover { case _: js.JavaScriptException =>
