@@ -7,6 +7,7 @@ Warning: This project does contain very low quality large language model generat
 https://www.the-lingo.org - note that the domain is subject to change
 
 [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=mio-19.chester-language-support)
+[Intellij IDEA](https://plugins.jetbrains.com/plugin/25508-chester-language-support/)
 
 NodeJS CLI (experimental)
 ```bash
