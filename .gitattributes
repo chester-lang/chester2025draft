@@ -1,0 +1,3 @@
+vendor/* linguist-vendored
+quickjs linguist-vendored
+linenoise linguist-vendored
