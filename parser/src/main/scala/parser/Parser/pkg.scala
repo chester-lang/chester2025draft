@@ -63,34 +63,3 @@ def parseExpr(
 ): Either[ParseError, ParsedExpr] = {
   parseFromSource(source, _.exprEntrance, ignoreLocation)
 }
-
-@deprecated("Create new module representation")
-def extractModuleName(block: Block): Either[ParseError, QualifiedIDString] = {
-  block.heads.headOption match {
-    case Some(OpSeq(Vector(Identifier("module", _), identifiers*), _)) =>
-      val names = identifiers.collect { case Identifier(name, _) =>
-        name
-      }.toVector
-      if (names.nonEmpty) Right(names)
-      else Left(ParseError("Module identifiers could not be parsed", Pos.Zero))
-    case _ => Right(Vector.empty)
-  }
-}
-
-@deprecated("Create new module representation")
-def parseModule(
-    source: ParserSource,
-    modules: ResolvingModules = ResolvingModules.Empty,
-    ignoreLocation: Boolean = false
-): Either[ParseError, ResolvingModules] = {
-  parseTopLevel(source, ignoreLocation).flatMap { block =>
-    extractModuleName(block).map { id =>
-      val moduleFile = ResolvingModuleFile(
-        id,
-        source.fileName,
-        ResolvingBlock.fromParsed(block)
-      )
-      modules.addModuleFile(id, moduleFile)
-    }
-  }
-}
