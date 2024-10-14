@@ -13,7 +13,7 @@ trait Animal {
   def makeSound: String
 }
 
-data Dog <: Animal {
+object Dog <: Animal {
   override def makeSound: String = "Woof!"
 }
 ```
@@ -31,12 +31,12 @@ interface Soundmaker {
   def makeSound: String
 }
 
-data Cat {
+object Cat {
   def makeSound: String = "Meow!"
 }
 
 // Cat is implicitly a Soundmaker because it has a matching structure
-def soundmaker: Soundmaker = Cat()
+def soundmaker: Soundmaker = Cat
 ```
 
 In this case, `Cat` is considered a subtype of `Soundmaker` because it has a matching `makeSound` method, even though it wasn't explicitly declared as such.
