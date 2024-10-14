@@ -11,8 +11,16 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8Array
 import scala.concurrent.ExecutionContext.Implicits.global
 import typings.std.global.fetch
+import scala.scalajs.js.typedarray._
+import scala.scalajs.js.JSConverters._
 
 implicit object DefaultIO extends IO[Future] {
+  // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
+  def toScalaArray(input: Uint8Array): Array[Byte] = {
+    // Create a view as Int8 on the same underlying data.
+    new Int8Array(input.buffer, input.byteOffset, input.length).toArray
+  }
+
   type Path = String
 
   def pathOps = PathOpsString
@@ -26,10 +34,7 @@ implicit object DefaultIO extends IO[Future] {
   // TODO: maybe use https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte
   inline override def read(path: String): Future[Array[Byte]] = for {
     buffer <- fsPromisesMod.readFile(path)
-    b = buffer.asInstanceOf[Uint8Array]
-    arr = new Array[Short](b.length)
-    _ = b.copyToArray(arr)
-  } yield arr.map(_.toByte)
+  } yield toScalaArray(buffer.asInstanceOf[Uint8Array])
 
   inline override def writeString(
       path: String,
@@ -43,8 +48,8 @@ implicit object DefaultIO extends IO[Future] {
     }
   }
 
-  def bytesToJS(bytes: Array[Byte]): Uint8Array =
-    Uint8Array.of(bytes.map(_.toShort)*)
+  def bytesToJS(bytes: Array[Byte]): Int8Array =
+    new Int8Array(bytes.toJSArray)
 
   inline override def write(path: String, content: Array[Byte]): Future[Unit] =
     fsPromisesMod.writeFile(path, bytesToJS)
