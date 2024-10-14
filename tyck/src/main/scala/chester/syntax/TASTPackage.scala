@@ -27,17 +27,17 @@ object TASTPackage {
       effects: Effects,
       problems: SeverityMap
   ) extends ContainsUniqId derives ReadWriter {
-    override def collectU(collector: CollectorU): Unit = {
+    override def collectU(collector: UCollector): Unit = {
       ast.collectU(collector)
       ty.collectU(collector)
       effects.collectU(collector)
     }
 
-    override def rerangeU(reranger: RerangerU): TAST = {
+    override def replaceU(reranger: UReplacer): TAST = {
       copy(
-        ast = ast.rerangeU(reranger).asInstanceOf[BlockTerm],
-        ty = ty.rerangeU(reranger),
-        effects = effects.rerangeU(reranger).asInstanceOf[Effects]
+        ast = ast.replaceU(reranger).asInstanceOf[BlockTerm],
+        ty = ty.replaceU(reranger),
+        effects = effects.replaceU(reranger).asInstanceOf[Effects]
       )
     }
 
