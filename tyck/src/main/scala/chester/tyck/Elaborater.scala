@@ -103,9 +103,17 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             c.ref
           }
           case None => {
-            val problem = UnboundVariable(name, expr)
-            ck.reporter.apply(problem)
-            ErrorTerm(problem)
+            // Check if 'name' refers to an object definition
+            localCtx.getTypeDefinition(name) match {
+              case Some(objectDef: ObjectStmtTerm) =>
+                val objectCallTerm = ObjectCallTerm(objectDef)
+                unify(ty, TodoTerm(), expr)
+                objectCallTerm
+              case _ =>
+                val problem = UnboundVariable(name, expr)
+                ck.reporter.apply(problem)
+                ErrorTerm(problem)
+            }
           }
         }
       }
