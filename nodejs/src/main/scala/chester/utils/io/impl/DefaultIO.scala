@@ -48,7 +48,8 @@ implicit object DefaultIO extends IO[Future] {
     }
   }
 
-  override def write(path: String, content: Array[Byte]): Future[Unit] =
+  // https://stackoverflow.com/questions/76455786/scala-js-how-to-convert-arraybyte-to-blob/76463887#76463887
+  inline override def write(path: String, content: Array[Byte]): Future[Unit] =
     fsPromisesMod.writeFile(path, content.toTypedArray)
 
   inline override def removeWhenExists(path: String): Future[Boolean] =
