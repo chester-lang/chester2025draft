@@ -26,8 +26,11 @@ class FilesTyckTest extends FunSuite {
           Tycker.check(parsedBlock) match {
             case TyckResult.Success(result, _, _) =>
               if(result.collectMeta.isEmpty) {
+                println(s"Testing read/write for $inputFile")
                 assertEquals(read[Judge](write[Judge](result)), result)
                 assertEquals(readBinary[Judge](writeBinary[Judge](result)), result)
+              } else {
+                println(s"Skipping read/write test for $inputFile")
               }
               val actual = StringPrinter.render(result.wellTyped)(using
                 PrettierOptions.Default
