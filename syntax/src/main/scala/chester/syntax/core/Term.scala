@@ -104,8 +104,8 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
 
   def whnf: Boolean = true
 
-  protected final inline def thisOr(inline x: Term): this.type =
-    reuse(this, x.asInstanceOf[this.type])
+  protected final inline def thisOr[T <: Term](inline x: T): T =
+    reuse(this.asInstanceOf[T], x)
 
   def descent(f: Term => Term): Term
 
@@ -837,6 +837,9 @@ def ErrorType(error: Problem, meta: OptionTermMeta = None): ErrorTerm =
 
 sealed trait StmtTerm extends ToDoc derives ReadWriter {
   def descent(f: Term => Term): StmtTerm = ???
+  protected final inline def thisOr[T <: StmtTerm](inline x: T): T =
+    reuse(this.asInstanceOf[T], x)
+
 }
 
 case class LetStmtTerm(
@@ -1065,4 +1068,24 @@ case class InterfaceStmtTerm(
       Doc.text("interface ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
     )
   }
+}
+case class ObjectStmtTerm(
+    name: Name,
+    uniqId: UniqIdOf[ObjectStmtTerm],
+    extendsClause: Option[Term],
+    body: Option[BlockTerm],
+    meta: OptionTermMeta = None
+) extends StmtTerm {
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    Doc.text("object") <+> Doc.text(name) <+> extendsDoc <+> bodyDoc
+  }
+
+  override def descent(f: Term => Term): ObjectStmtTerm = thisOr(
+    copy(
+      extendsClause = extendsClause.map(f),
+      body = body.map(_.descent(f))
+    )
+  )
 }

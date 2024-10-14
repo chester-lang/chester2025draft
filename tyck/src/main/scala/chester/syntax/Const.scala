@@ -18,4 +18,5 @@ object Const {
   val `<:`: String = "<:"
   val Interface = "interface"
   val `with` = "with"
+  val Object = "object"
 }

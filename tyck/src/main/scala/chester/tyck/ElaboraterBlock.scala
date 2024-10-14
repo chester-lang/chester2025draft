@@ -48,6 +48,13 @@ trait ElaboraterBlock extends Elaborater {
       name: Name
   ) extends DeclarationInfo
 
+  // Add case class for 'object' declarations
+  case class ObjectDeclaration(
+      expr: ObjectStmt,
+      uniqId: UniqIdOf[ObjectStmtTerm],
+      name: Name
+  ) extends DeclarationInfo
+
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
       parameter: SemanticCollector,
@@ -104,6 +111,12 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       case importStmt: ImportStmt =>
         ck.reporter.apply(NotImplemented(importStmt))
         Vector.empty
+
+      // Process object statements
+      case expr: ObjectStmt =>
+        val (stmtTerms, newCtx) = processObjectStmt(expr, ctx, declarationsMap, effects)
+        ctx = newCtx
+        stmtTerms
 
       case expr =>
         implicit val localCtx: Context = ctx
@@ -169,7 +182,14 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       InterfaceDeclaration(expr, id, name)
     }
 
-    val declarations = defDeclarations ++ recordDeclarations ++ traitDeclarations ++ interfaceDeclarations
+    // Collect object declarations
+    val objectDeclarations = heads.collect { case expr: ObjectStmt =>
+      val name = expr.name.name
+      val id = UniqId.generate[ObjectStmtTerm]
+      ObjectDeclaration(expr, id, name)
+    }
+
+    val declarations = defDeclarations ++ recordDeclarations ++ traitDeclarations ++ interfaceDeclarations ++ objectDeclarations
     val names = declarations.map(_.name)
 
     // Collect context items from def declarations
@@ -186,7 +206,6 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck.reporter.apply(problem)
     }
   }
-
   def processDefLetDefStmt(
       expr: LetDefStmt,
       ctx: Context,
@@ -389,5 +408,45 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
     // Return the statement term and the updated context
     (Seq(interfaceStmtTerm), newCtx)
+  }
+
+  def processObjectStmt(
+      expr: ObjectStmt,
+      ctx: Context,
+      declarationsMap: Map[Expr, DeclarationInfo],
+      effects: CIdOf[EffectsCell]
+  )(using
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
+    val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]
+    val name = objectInfo.name
+
+    // Elaborate the extends clause if present
+    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
+      checkType(clause)
+    }
+
+    // Elaborate the body if present
+    val elaboratedBody = expr.body.map { body =>
+      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+    }
+
+    // Create the ObjectStmtTerm
+    val objectStmtTerm = ObjectStmtTerm(
+      name = name,
+      uniqId = objectInfo.uniqId,
+      extendsClause = elaboratedExtendsClause,
+      body = elaboratedBody,
+      meta = convertMeta(expr.meta)
+    )
+
+    // Update the context if necessary (e.g., register the object)
+    val newCtx = ctx // Implement context update if needed
+
+    // Return the statement term and the updated context
+    (Seq(objectStmtTerm), newCtx)
   }
 }
