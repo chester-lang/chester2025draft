@@ -4,7 +4,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon
 
-class ChesterFileType extends LanguageFileType(ChesterLanguage) {
+class ChesterFileType extends LanguageFileType(ChesterLanguage.INSTANCE) {
   override def getName: String = "Chester File"
   override def getDescription: String = "Chester language file"
   override def getDefaultExtension: String = "chester"
