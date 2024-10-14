@@ -16,16 +16,16 @@ importers:
         version: 1.1.2(react-dom@19.0.0-beta-26f2496093-20240514(react@19.0.0-beta-26f2496093-20240514))(react@19.0.0-beta-26f2496093-20240514)
       '@xterm/addon-fit':
         specifier: ^0.10.0
-        version: 0.10.0(@xterm/xterm@5.5.0)
+        version: 0.10.0(@xterm/xterm@5.6.0-beta.67)
       '@xterm/addon-search':
         specifier: ^0.15.0
-        version: 0.15.0(@xterm/xterm@5.5.0)
+        version: 0.15.0(@xterm/xterm@5.6.0-beta.67)
       '@xterm/addon-web-links':
         specifier: ^0.11.0
-        version: 0.11.0(@xterm/xterm@5.5.0)
+        version: 0.11.0(@xterm/xterm@5.6.0-beta.67)
       '@xterm/xterm':
-        specifier: ^5.5.0
-        version: 5.5.0
+        specifier: 5.6.0-beta.67
+        version: 5.6.0-beta.67
       base64-arraybuffer:
         specifier: ^1.0.2
         version: 1.0.2
@@ -405,6 +405,9 @@ packages:
 
   '@xterm/xterm@5.5.0':
     resolution: {integrity: sha512-hqJHYaQb5OptNunnyAnkHyM8aCjZ1MEIDTQu1iIbbTD/xops91NB5yq1ZK/dC2JDbVWtF23zUtl9JE2NqwT87A==}
+
+  '@xterm/xterm@5.6.0-beta.67':
+    resolution: {integrity: sha512-u4kxUR7zjTY0UsuPA0MzoRPfUa9B2yoYwiK8EK+HCZr7rlA6alPtqPQWNRMsI082tdZY87cgvMNuQ9g2zJY1YQ==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -2160,19 +2163,21 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
+  '@xterm/addon-fit@0.10.0(@xterm/xterm@5.6.0-beta.67)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0)':
+  '@xterm/addon-search@0.15.0(@xterm/xterm@5.6.0-beta.67)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/addon-web-links@0.11.0(@xterm/xterm@5.5.0)':
+  '@xterm/addon-web-links@0.11.0(@xterm/xterm@5.6.0-beta.67)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
 
   '@xterm/xterm@5.5.0': {}
+
+  '@xterm/xterm@5.6.0-beta.67': {}
 
   acorn-jsx@5.3.2(acorn@8.12.1):
     dependencies:
