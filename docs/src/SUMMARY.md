@@ -2,3 +2,4 @@
 - [Chester](README.md)
 - [Record Syntax in Chester](Record.md)
 - [Statements](statements.md)
+- [Traits and Interfaces in Chester](traid-and-interface.md)
