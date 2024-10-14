@@ -5,7 +5,6 @@ import cats.data.*
 import chester.doc.*
 import chester.doc.const.Docs
 import chester.error.*
-import chester.syntax.concrete.stmt.QualifiedID
 import chester.syntax.core.*
 import chester.syntax.*
 import chester.utils.doc.*
@@ -872,7 +871,7 @@ case class PrecedenceGroupResolving(
 
 @deprecated("not used")
 case class PrecedenceGroupResolved(
-    name: QualifiedID,
+    name: QualifiedIDString,
     higherThan: Vector[PrecedenceGroupResolved] = Vector(),
     lowerThan: Vector[PrecedenceGroupResolved] = Vector(),
     associativity: Associativity = Associativity.None,
