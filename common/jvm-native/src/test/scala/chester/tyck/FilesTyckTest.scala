@@ -25,7 +25,7 @@ class FilesTyckTest extends FunSuite {
           assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
           Tycker.check(parsedBlock) match {
             case TyckResult.Success(result, _, _) =>
-              if(result.collectMeta.isEmpty) {
+              if (result.collectMeta.isEmpty) {
                 println(s"Testing read/write for $inputFile")
                 assertEquals(read[Judge](write[Judge](result)), result)
                 assertEquals(readBinary[Judge](writeBinary[Judge](result)), result)

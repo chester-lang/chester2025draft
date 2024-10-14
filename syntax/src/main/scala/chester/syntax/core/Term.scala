@@ -981,15 +981,21 @@ case class FieldTerm(
     Doc.text(name) <> Doc.text(": ") <> ty.toDoc
 }
 
+sealed trait TypeDefinition extends StmtTerm with TermWithUniqId derives ReadWriter {
+  def name: Name
+  def uniqId: UniqIdOf[TypeDefinition]
+
+  override def switchUniqId(r: UReplacer): TypeDefinition
+}
+
 case class RecordStmtTerm(
     name: Name,
     uniqId: UniqIdOf[RecordStmtTerm] = UniqId.generate[RecordStmtTerm],
     fields: Vector[FieldTerm],
     body: Option[BlockTerm],
     meta: OptionTermMeta = None
-) extends StmtTerm
-    with TermWithUniqId {
-  override def switchUniqId(r: UReplacer): TermWithUniqId = copy(uniqId = r(uniqId))
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): RecordStmtTerm = copy(uniqId = r(uniqId))
   override def descent(f: Term => Term): RecordStmtTerm = copy(
     fields = fields.map(f).asInstanceOf[Vector[FieldTerm]],
     body = body.map(f).asInstanceOf[Option[BlockTerm]]
@@ -1026,9 +1032,8 @@ case class TraitStmtTerm(
     extendsClause: Option[Term] = None,
     body: Option[BlockTerm] = None,
     meta: OptionTermMeta = None
-) extends StmtTerm
-    with TermWithUniqId {
-  override def switchUniqId(r: UReplacer): TermWithUniqId = copy(uniqId = r(uniqId))
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): TraitStmtTerm = copy(uniqId = r(uniqId))
 
   override def descent(f: Term => Term): TraitStmtTerm = copy(
     extendsClause = extendsClause.map(f),
@@ -1050,9 +1055,8 @@ case class InterfaceStmtTerm(
     extendsClause: Option[Term] = None,
     body: Option[BlockTerm] = None,
     meta: OptionTermMeta = None
-) extends StmtTerm
-    with TermWithUniqId {
-  override def switchUniqId(r: UReplacer): TermWithUniqId = copy(uniqId = r(uniqId))
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): InterfaceStmtTerm = copy(uniqId = r(uniqId))
 
   override def descent(f: Term => Term): InterfaceStmtTerm = copy(
     extendsClause = extendsClause.map(f),
@@ -1073,7 +1077,8 @@ case class ObjectStmtTerm(
     extendsClause: Option[Term],
     body: Option[BlockTerm],
     meta: OptionTermMeta = None
-) extends StmtTerm {
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): ObjectStmtTerm = copy(uniqId = r(uniqId))
   override def toDoc(implicit options: PrettierOptions): Doc = {
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)

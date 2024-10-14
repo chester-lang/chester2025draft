@@ -99,8 +99,8 @@ case class Context(
       Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem], // empty[...] are needed because compiler bugs
     knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] =
       Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal], // empty[...] are needed because compiler bugs
-    recordDefinitionNames: Map[Name, UniqIdOf[RecordStmtTerm]] = Map.empty, // Map from Name to UniqId
-    recordDefinitions: Map[UniqIdOf[RecordStmtTerm], RecordStmtTerm] = Map.empty, // Map from UniqId to RecordDefinition
+    typeDefinitionNames: Map[Name, UniqIdOf[TypeDefinition]] = Map.empty,
+    typeDefinitions: Map[UniqIdOf[TypeDefinition], TypeDefinition] = Map.empty,
     imports: Imports = Imports.Empty,
     loadedModules: LoadedModules = LoadedModules.Empty,
     operators: OperatorsContext = OperatorsContext.Default,
@@ -139,23 +139,19 @@ case class Context(
     }
     copy(map = newMap, contextItems = newContextItems)
   }
-
-  // Method to add a record definition to the context
-  def addRecordDefinition(recordDef: RecordStmtTerm): Context = {
+  def addTypeDefinition(typeDef: TypeDefinition): Context = {
     copy(
-      recordDefinitionNames = recordDefinitionNames + (recordDef.name -> recordDef.uniqId),
-      recordDefinitions = recordDefinitions + (recordDef.uniqId -> recordDef)
+      typeDefinitionNames = typeDefinitionNames + (typeDef.name -> typeDef.uniqId),
+      typeDefinitions = typeDefinitions + (typeDef.uniqId -> typeDef)
     )
   }
 
-  // Method to get a record definition by name
-  def getRecordDefinition(name: Name): Option[RecordStmtTerm] = {
-    recordDefinitionNames.get(name).flatMap(recordDefinitions.get)
+  def getTypeDefinition(name: Name): Option[TypeDefinition] = {
+    typeDefinitionNames.get(name).flatMap(typeDefinitions.get)
   }
 
-  // (Optional) Method to get a record definition by UniqId
-  def getRecordDefinitionById(id: UniqIdOf[RecordStmtTerm]): Option[RecordStmtTerm] = {
-    recordDefinitions.get(id)
+  def getTypeDefinitionById(id: UniqIdOf[TypeDefinition]): Option[TypeDefinition] = {
+    typeDefinitions.get(id)
   }
 }
 

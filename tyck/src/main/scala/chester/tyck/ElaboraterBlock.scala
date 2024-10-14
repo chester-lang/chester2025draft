@@ -190,8 +190,8 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val names = declarations.map(_.name)
 
     // Collect context items from 'def' declarations
-    val defContextItems = declarations.collect {
-      case defDecl: DefDeclaration => defDecl.item
+    val defContextItems = declarations.collect { case defDecl: DefDeclaration =>
+      defDecl.item
     }
     val initialCtx = localCtx.add(defContextItems)
 
@@ -291,7 +291,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
     // Update the context with the new record definition
     val newCtx = ctx
-      .addRecordDefinition(recordStmtTerm)
+      .addTypeDefinition(recordStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(recordStmtTerm), newCtx)
@@ -363,7 +363,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     )
 
     // Update the context with the new trait definition
-    val newCtx = ctx // .addTraitDefinition(traitStmtTerm) // TODO
+    val newCtx = ctx.addTypeDefinition(traitStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(traitStmtTerm), newCtx)
@@ -403,7 +403,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     )
 
     // Update the context with the new interface definition
-    val newCtx = ctx // .addInterfaceDefinition(interfaceStmtTerm) // TODO
+    val newCtx = ctx.addTypeDefinition(interfaceStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(interfaceStmtTerm), newCtx)
@@ -442,8 +442,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       meta = convertMeta(expr.meta)
     )
 
-    // Update the context if necessary (e.g., register the object)
-    val newCtx = ctx // Implement context update if needed
+    val newCtx = ctx.addTypeDefinition(objectStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(objectStmtTerm), newCtx)
