@@ -142,8 +142,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[DeclarationInfo], Seq[Name], Context) = {
-    // Collect def declarations as before
-    val defDeclarations = heads.collect {
+
+    // Collect all declarations in a single pass
+    val declarations = heads.collect {
+      // Collect 'def' declarations
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         val name = expr.defined match {
           // TODO: support other defined patterns
@@ -159,41 +161,38 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
           tyAndVal,
           ContextItem(name, id, localv, tyAndVal.ty, Some(r))
         )
+
+      // Collect 'record' declarations
+      case expr: RecordStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[RecordStmtTerm]
+        RecordDeclaration(expr, id, name)
+
+      // Collect 'trait' declarations
+      case expr: TraitStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[TraitStmtTerm]
+        TraitDeclaration(expr, id, name)
+
+      // Collect 'interface' declarations
+      case expr: InterfaceStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[InterfaceStmtTerm]
+        InterfaceDeclaration(expr, id, name)
+
+      // Collect 'object' declarations
+      case expr: ObjectStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[ObjectStmtTerm]
+        ObjectDeclaration(expr, id, name)
     }
 
-    // Collect record declarations as before
-    val recordDeclarations = heads.collect { case expr: RecordStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[RecordStmtTerm]
-      RecordDeclaration(expr, id, name)
-    }
-
-    // Collect trait declarations
-    val traitDeclarations = heads.collect { case expr: TraitStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[TraitStmtTerm]
-      TraitDeclaration(expr, id, name)
-    }
-
-    // Collect interface declarations
-    val interfaceDeclarations = heads.collect { case expr: InterfaceStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[InterfaceStmtTerm]
-      InterfaceDeclaration(expr, id, name)
-    }
-
-    // Collect object declarations
-    val objectDeclarations = heads.collect { case expr: ObjectStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[ObjectStmtTerm]
-      ObjectDeclaration(expr, id, name)
-    }
-
-    val declarations = defDeclarations ++ recordDeclarations ++ traitDeclarations ++ interfaceDeclarations ++ objectDeclarations
     val names = declarations.map(_.name)
 
-    // Collect context items from def declarations
-    val defContextItems = defDeclarations.map(_.item)
+    // Collect context items from 'def' declarations
+    val defContextItems = declarations.collect {
+      case defDecl: DefDeclaration => defDecl.item
+    }
     val initialCtx = localCtx.add(defContextItems)
 
     // Return all declarations, names, and the initial context
