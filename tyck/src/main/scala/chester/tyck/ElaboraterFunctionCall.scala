@@ -30,6 +30,44 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       state: StateAbility[Tyck]
   ): Term = {
 
+    // Check if the function refers to a record definition
+    val functionExpr = expr.function
+
+    val resultTerm = functionExpr match {
+      case Identifier(name, _) =>
+        ctx.getTypeDefinition(name) match {
+          case Some(recordDef: RecordStmtTerm) =>
+            // Elaborate the arguments
+            val argTerms = expr.telescopes.flatMap(_.args.map { arg =>
+              elab(arg.expr, newTypeTerm, effects)
+            })
+            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, argTerms)
+            // TODO: Unify the type with the expected type
+            // unify(ty, recordDefType, expr)
+            recordCallTerm
+          case _ =>
+            // Proceed with default elaboration
+            defaultElabFunctionCall(expr, ty, effects)
+        }
+      case _ =>
+        // Proceed with default elaboration
+        defaultElabFunctionCall(expr, ty, effects)
+    }
+
+    resultTerm
+  }
+
+  def defaultElabFunctionCall(
+      expr: DesaltFunctionCall,
+      ty: CellId[Term],
+      effects: CIdOf[EffectsCell]
+  )(using
+      ctx: Context,
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Term = {
+
     // Elaborate the function expression to get its term and type
     val functionTy = newType
     val functionTerm = elab(expr.function, functionTy, effects)
