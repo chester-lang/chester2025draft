@@ -9,7 +9,7 @@ const withNextIntl = createNextIntlPlugin('./app/request.ts');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const from = path.join(__dirname, '..', 'resources', 'favicon.ico');
-const to = path.join(__dirname, 'public', 'favicon.ico');
+const to = path.join(__dirname, 'app', 'favicon.ico');
 if (fs.existsSync(from)) {
     fs.copyFileSync(from, to);
     console.log('Favicon copied successfully');
