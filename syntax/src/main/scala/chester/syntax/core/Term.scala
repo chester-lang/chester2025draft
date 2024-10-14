@@ -104,9 +104,10 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
 
   def whnf: Boolean = true
 
-  protected final inline def thisOr(inline x: Term): this.type =
-    reuse(this, x.asInstanceOf[this.type])
+  protected final inline def thisOr[T <: Term](inline x: T): T =
+    reuse(this.asInstanceOf[T], x)
 
+  /** not type safe. unsound. Sometimes we have problems deciding how to do when a case class contains a subtype of Term */
   def descent(f: Term => Term): Term
 
   final def descentRecursive(f: Term => Term): Term = thisOr {
@@ -179,12 +180,12 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
     }
   }
 
-  final override def collectU(collector: CollectorU): Unit = inspectRecursive {
+  final override def collectU(collector: UCollector): Unit = inspectRecursive {
     case x: TermWithUniqId => collector(x.uniqId)
     case _                 =>
   }
 
-  final override def rerangeU(reranger: RerangerU): Term = descentRecursive {
+  final override def replaceU(reranger: UReplacer): Term = descentRecursive {
     case x: TermWithUniqId => x.switchUniqId(reranger)
     case x                 => x
   }
@@ -192,10 +193,10 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
 
 sealed trait TermWithUniqId extends Term with HasUniqId derives ReadWriter {
   override def uniqId: UniqIdOf[Term]
-  def switchUniqId(r: RerangerU): TermWithUniqId
+  def switchUniqId(r: UReplacer): TermWithUniqId
 }
 
-// allow write, not allow read
+// allow to write, not allow read
 given MetaTermHoldRW: ReadWriter[MetaTermHold[?]] =
   readwriter[MetaTermRW].bimap(
     _ => MetaTermRW(),
@@ -490,7 +491,7 @@ case class ArgTerm(
   def name: Name = bind.name
 
   override def descent(f: Term => Term): ArgTerm = thisOr(
-    copy(ty = f(ty), default = default.map(f))
+    copy(bind = f(bind).asInstanceOf[LocalV], ty = f(ty), default = default.map(f))
   )
 }
 
@@ -807,7 +808,7 @@ case class LocalV(
 
   override def descent(f: Term => Term): LocalV = thisOr(copy(ty = f(ty)))
 
-  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+  override def switchUniqId(r: UReplacer): TermWithUniqId = copy(uniqId = r(uniqId))
 }
 
 case class ToplevelV(
@@ -823,7 +824,7 @@ case class ToplevelV(
   )
 
   override def descent(f: Term => Term): ToplevelV = thisOr(copy(ty = f(ty)))
-  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+  override def switchUniqId(r: UReplacer): TermWithUniqId = copy(uniqId = r(uniqId))
 }
 
 case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends Term {
@@ -835,7 +836,7 @@ case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends Term
 def ErrorType(error: Problem, meta: OptionTermMeta = None): ErrorTerm =
   ErrorTerm(error, meta)
 
-sealed trait StmtTerm extends ToDoc derives ReadWriter {
+sealed trait StmtTerm extends Term derives ReadWriter {
   def descent(f: Term => Term): StmtTerm = ???
 }
 
@@ -980,15 +981,21 @@ case class FieldTerm(
     Doc.text(name) <> Doc.text(": ") <> ty.toDoc
 }
 
+sealed trait TypeDefinition extends StmtTerm with TermWithUniqId derives ReadWriter {
+  def name: Name
+  def uniqId: UniqIdOf[TypeDefinition]
+
+  override def switchUniqId(r: UReplacer): TypeDefinition
+}
+
 case class RecordStmtTerm(
     name: Name,
     uniqId: UniqIdOf[RecordStmtTerm] = UniqId.generate[RecordStmtTerm],
     fields: Vector[FieldTerm],
     body: Option[BlockTerm],
     meta: OptionTermMeta = None
-) extends StmtTerm
-    with TermWithUniqId {
-  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): RecordStmtTerm = copy(uniqId = r(uniqId))
   override def descent(f: Term => Term): RecordStmtTerm = copy(
     fields = fields.map(f).asInstanceOf[Vector[FieldTerm]],
     body = body.map(f).asInstanceOf[Option[BlockTerm]]
@@ -1025,9 +1032,8 @@ case class TraitStmtTerm(
     extendsClause: Option[Term] = None,
     body: Option[BlockTerm] = None,
     meta: OptionTermMeta = None
-) extends StmtTerm
-    with TermWithUniqId {
-  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): TraitStmtTerm = copy(uniqId = r(uniqId))
 
   override def descent(f: Term => Term): TraitStmtTerm = copy(
     extendsClause = extendsClause.map(f),
@@ -1049,9 +1055,8 @@ case class InterfaceStmtTerm(
     extendsClause: Option[Term] = None,
     body: Option[BlockTerm] = None,
     meta: OptionTermMeta = None
-) extends StmtTerm
-    with TermWithUniqId {
-  override def switchUniqId(r: RerangerU): TermWithUniqId = copy(uniqId = r(uniqId))
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): InterfaceStmtTerm = copy(uniqId = r(uniqId))
 
   override def descent(f: Term => Term): InterfaceStmtTerm = copy(
     extendsClause = extendsClause.map(f),
@@ -1065,4 +1070,25 @@ case class InterfaceStmtTerm(
       Doc.text("interface ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
     )
   }
+}
+case class ObjectStmtTerm(
+    name: Name,
+    uniqId: UniqIdOf[ObjectStmtTerm],
+    extendsClause: Option[Term],
+    body: Option[BlockTerm],
+    meta: OptionTermMeta = None
+) extends TypeDefinition {
+  override def switchUniqId(r: UReplacer): ObjectStmtTerm = copy(uniqId = r(uniqId))
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    Doc.text("object") <+> Doc.text(name) <+> extendsDoc <+> bodyDoc
+  }
+
+  override def descent(f: Term => Term): ObjectStmtTerm = thisOr(
+    copy(
+      extendsClause = extendsClause.map(f),
+      body = body.map(_.descent(f))
+    )
+  )
 }

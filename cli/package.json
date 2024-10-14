@@ -1,0 +1,28 @@
+{
+  "name": "chester-cli",
+  "version": "0.0.15-c",
+  "description": "Chester is a programming language",
+  "main": "cli.js",
+  "bin": {
+    "chester-cli": "./cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "copy-js": "cp js/target/scala-3.5.2-RC2/cli-opt/main.js ./ && cp js/target/scala-3.5.2-RC2/cli-opt/main.js.map ./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chester-lang/chester.git"
+  },
+  "author": "mio-19",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/chester-lang/chester/issues"
+  },
+  "homepage": "https://github.com/chester-lang/chester#readme",
+  "files": [
+    "cli.js",
+    "main.js",
+    "main.js.map"
+  ]
+}

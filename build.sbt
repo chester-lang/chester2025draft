@@ -118,7 +118,7 @@ val baseDeps = Seq(
 
 commonSettings
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.14")
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.15")
 ThisBuild / organization := "com.github.chester-lang"
 
 lazy val bump = inputKey[Unit]("Bump version in multiple files")
@@ -133,7 +133,8 @@ bump := {
       file("build.sbt"),
       file("idea-plugin/build.sbt"),
       file("idea-plugin/resources/META-INF/plugin.xml"),
-      file("vscode/package.json")
+      file("vscode/package.json"),
+      file("cli/package.json")
     )
     val filesToUpdateWithoutQuotes = Seq(
       file("idea-plugin/resources/META-INF/plugin.xml")
@@ -176,7 +177,8 @@ bumpScala := {
       file(".github/workflows/build.yml"),
       file("docs/dev.sh"),
       file("idea-plugin/build.sbt"),
-      file("site/package.json")
+      file("site/package.json"),
+      file("cli/package.json")
     )
 
     filesToUpdate.foreach { f =>

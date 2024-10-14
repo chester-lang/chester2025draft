@@ -50,20 +50,20 @@ private val rwUniqID: ReadWriter[UniqIdOf[?]] =
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqIdOf[T]] = rwUniqID
 
-trait CollectorU {
+trait UCollector {
   def apply[T](x: UniqIdOf[T]): Unit = ()
 }
 
 trait CollectUniqId extends Any {
-  def collectU(collector: CollectorU): Unit
+  def collectU(collector: UCollector): Unit
 }
 
-trait RerangerU {
+trait UReplacer {
   def apply[T](x: UniqIdOf[T]): UniqIdOf[T] = x
 }
 
 trait RerangeUniqId extends Any {
-  def rerangeU(reranger: RerangerU): Any
+  def replaceU(reranger: UReplacer): Any
 }
 
 trait ContainsUniqId extends Any with CollectUniqId with RerangeUniqId {
@@ -100,7 +100,7 @@ object UniqId {
 
   def calculateRange[T <: ContainsUniqId](x: T): UniqIdRange = {
     val currentRangeCollect = new mutable.ArrayDeque[UniqId]()
-    val collecter: CollectorU = new CollectorU {
+    val collecter: UCollector = new UCollector {
       override def apply[T](id: UniqIdOf[T]): Unit = {
         currentRangeCollect.append(id)
       }
@@ -114,10 +114,10 @@ object UniqId {
   ): (oldRange: UniqIdRange, newRange: UniqIdRange, result: T) = {
     val currentRange = x.uniqIdRange
     val newRange = requireRange(currentRange.size)
-    val reranger: RerangerU = new RerangerU {
+    val reranger: UReplacer = new UReplacer {
       override def apply[T](id: UniqIdOf[T]): UniqIdOf[T] =
         id.rerange(currentRange, newRange)
     }
-    (currentRange, newRange, x.rerangeU(reranger).asInstanceOf[T])
+    (currentRange, newRange, x.replaceU(reranger).asInstanceOf[T])
   }
 }

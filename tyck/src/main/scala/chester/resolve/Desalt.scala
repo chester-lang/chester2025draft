@@ -482,7 +482,38 @@ case object SimpleDesalt {
           body = bodyExpr,
           meta = meta
         )
+      case expr @ OpSeq(Vector(Identifier(Const.Object, _), nameExpr, rest @ _*), meta) => {
+        // Parse the object name
+        val name = nameExpr match {
+          case id: Identifier => id
+          case _ =>
+            val error = ExpectObjectName(nameExpr)
+            reporter(error)
+            return DesaltFailed(expr, error, meta)
+        }
 
+        // Process the rest of the tokens
+        val tokens = rest.toList
+
+        // Parse the optional ExtendsClause
+        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+
+        // Parse body if present
+        val bodyExpr = if (remainingTokens.nonEmpty) {
+          val body = opSeq(remainingTokens)
+          Some(desugar(body) match {
+            case b: Block => b
+            case other    => Block(Vector(other), None)
+          })
+        } else None
+
+        ObjectStmt(
+          name = name,
+          extendsClause = extendsClause,
+          body = bodyExpr,
+          meta = meta
+        )
+      }
       // Handling 'interface' keyword
       case expr @ OpSeq(Vector(Identifier(Const.Interface, _), nameExpr, rest @ _*), meta) =>
         // Parse the interface name and parameters if any

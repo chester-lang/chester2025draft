@@ -48,6 +48,13 @@ trait ElaboraterBlock extends Elaborater {
       name: Name
   ) extends DeclarationInfo
 
+  // Add case class for 'object' declarations
+  case class ObjectDeclaration(
+      expr: ObjectStmt,
+      uniqId: UniqIdOf[ObjectStmtTerm],
+      name: Name
+  ) extends DeclarationInfo
+
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
       parameter: SemanticCollector,
@@ -105,6 +112,12 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         ck.reporter.apply(NotImplemented(importStmt))
         Vector.empty
 
+      // Process object statements
+      case expr: ObjectStmt =>
+        val (stmtTerms, newCtx) = processObjectStmt(expr, ctx, declarationsMap, effects)
+        ctx = newCtx
+        stmtTerms
+
       case expr =>
         implicit val localCtx: Context = ctx
         val ty = newType
@@ -129,8 +142,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[DeclarationInfo], Seq[Name], Context) = {
-    // Collect def declarations as before
-    val defDeclarations = heads.collect {
+
+    // Collect all declarations in a single pass
+    val declarations = heads.collect {
+      // Collect 'def' declarations
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         val name = expr.defined match {
           // TODO: support other defined patterns
@@ -146,34 +161,38 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
           tyAndVal,
           ContextItem(name, id, localv, tyAndVal.ty, Some(r))
         )
+
+      // Collect 'record' declarations
+      case expr: RecordStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[RecordStmtTerm]
+        RecordDeclaration(expr, id, name)
+
+      // Collect 'trait' declarations
+      case expr: TraitStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[TraitStmtTerm]
+        TraitDeclaration(expr, id, name)
+
+      // Collect 'interface' declarations
+      case expr: InterfaceStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[InterfaceStmtTerm]
+        InterfaceDeclaration(expr, id, name)
+
+      // Collect 'object' declarations
+      case expr: ObjectStmt =>
+        val name = expr.name.name
+        val id = UniqId.generate[ObjectStmtTerm]
+        ObjectDeclaration(expr, id, name)
     }
 
-    // Collect record declarations as before
-    val recordDeclarations = heads.collect { case expr: RecordStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[RecordStmtTerm]
-      RecordDeclaration(expr, id, name)
-    }
-
-    // Collect trait declarations
-    val traitDeclarations = heads.collect { case expr: TraitStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[TraitStmtTerm]
-      TraitDeclaration(expr, id, name)
-    }
-
-    // Collect interface declarations
-    val interfaceDeclarations = heads.collect { case expr: InterfaceStmt =>
-      val name = expr.name.name
-      val id = UniqId.generate[InterfaceStmtTerm]
-      InterfaceDeclaration(expr, id, name)
-    }
-
-    val declarations = defDeclarations ++ recordDeclarations ++ traitDeclarations ++ interfaceDeclarations
     val names = declarations.map(_.name)
 
-    // Collect context items from def declarations
-    val defContextItems = defDeclarations.map(_.item)
+    // Collect context items from 'def' declarations
+    val defContextItems = declarations.collect { case defDecl: DefDeclaration =>
+      defDecl.item
+    }
     val initialCtx = localCtx.add(defContextItems)
 
     // Return all declarations, names, and the initial context
@@ -186,7 +205,6 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck.reporter.apply(problem)
     }
   }
-
   def processDefLetDefStmt(
       expr: LetDefStmt,
       ctx: Context,
@@ -273,7 +291,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
 
     // Update the context with the new record definition
     val newCtx = ctx
-      .addRecordDefinition(recordStmtTerm)
+      .addTypeDefinition(recordStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(recordStmtTerm), newCtx)
@@ -345,7 +363,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     )
 
     // Update the context with the new trait definition
-    val newCtx = ctx // .addTraitDefinition(traitStmtTerm) // TODO
+    val newCtx = ctx.addTypeDefinition(traitStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(traitStmtTerm), newCtx)
@@ -385,9 +403,48 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     )
 
     // Update the context with the new interface definition
-    val newCtx = ctx // .addInterfaceDefinition(interfaceStmtTerm) // TODO
+    val newCtx = ctx.addTypeDefinition(interfaceStmtTerm)
 
     // Return the statement term and the updated context
     (Seq(interfaceStmtTerm), newCtx)
+  }
+
+  def processObjectStmt(
+      expr: ObjectStmt,
+      ctx: Context,
+      declarationsMap: Map[Expr, DeclarationInfo],
+      effects: CIdOf[EffectsCell]
+  )(using
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): (Seq[StmtTerm], Context) = {
+    implicit val localCtx: Context = ctx
+    val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]
+    val name = objectInfo.name
+
+    // Elaborate the extends clause if present
+    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
+      checkType(clause)
+    }
+
+    // Elaborate the body if present
+    val elaboratedBody = expr.body.map { body =>
+      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+    }
+
+    // Create the ObjectStmtTerm
+    val objectStmtTerm = ObjectStmtTerm(
+      name = name,
+      uniqId = objectInfo.uniqId,
+      extendsClause = elaboratedExtendsClause,
+      body = elaboratedBody,
+      meta = convertMeta(expr.meta)
+    )
+
+    val newCtx = ctx.addTypeDefinition(objectStmtTerm)
+
+    // Return the statement term and the updated context
+    (Seq(objectStmtTerm), newCtx)
   }
 }

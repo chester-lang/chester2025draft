@@ -1,5 +1,5 @@
 import { Terminal } from '@xterm/xterm';
-import { Readline } from "xterm-readline";
+import { Readline } from 'xterm-readline';
 
 export function startRepl(terminal: Terminal): Promise<void>;
 /* eslint-disable @typescript-eslint/no-explicit-any */

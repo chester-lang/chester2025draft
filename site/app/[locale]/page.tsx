@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from "react";
-import { XTerm } from "@pablo-lion/xterm-react";
-import { startRepl, startReplPty, startReplReadline } from "@/scala/main";
+import { useEffect, useRef } from 'react';
+import { XTerm } from '@pablo-lion/xterm-react';
+import { startRepl, startReplPty, startReplReadline } from '@/scala/main';
 import { Terminal } from '@xterm/xterm';
-import { Readline } from "xterm-readline";
+import { Readline } from 'xterm-readline';
 import { useTranslations } from 'next-intl';
 import { useTheme } from '@/components/ThemeContext';
 import Link from 'next/link';
@@ -26,57 +26,56 @@ export default function Home() {
         terminal.loadAddon(fitAddon);
         fitAddon.fit();
         terminal.focus();
-        if(false){
+        if (false) {
           const { SearchAddon } = await import('@xterm/addon-search');
           const searchAddon = new SearchAddon();
           terminal.loadAddon(searchAddon);
         }
-          const used: string = 'startReplReadline';
-            if (used === 'startRepl'){
-              while(true){
-                try{
-                  await startRepl(terminal);
-                }catch(e){
-                  console.log(e);
-                }
-              }
-            }else if(used === 'startReplPty'){
-              // @ts-expect-error xterm-pty types are not recognized
-              const {openpty} = await import('xterm-pty');
-              const { master, slave } = openpty();
-              terminal.loadAddon(master);
-              while(true){
-                try{
-                  await startReplPty(slave);
-                }catch(e){
-                  console.log(e);
-                }
-              }
-            } else if (used === 'startReplReadline') {
-              const rl = new Readline();
-              terminal.loadAddon(rl);
-              while(true){
-                try{
-                  await startReplReadline(rl);
-                }catch(e: any){
-                  console.log(e);
-                  rl.println(e.toString());
-                }
-              }
+        const used: string = 'startReplReadline';
+        if (used === 'startRepl') {
+          while (true) {
+            try {
+              await startRepl(terminal);
+            } catch (e) {
+              console.log(e);
             }
+          }
+        } else if (used === 'startReplPty') {
+          // @ts-expect-error xterm-pty types are not recognized
+          const { openpty } = await import('xterm-pty');
+          const { master, slave } = openpty();
+          terminal.loadAddon(master);
+          while (true) {
+            try {
+              await startReplPty(slave);
+            } catch (e) {
+              console.log(e);
+            }
+          }
+        } else if (used === 'startReplReadline') {
+          const rl = new Readline();
+          terminal.loadAddon(rl);
+          while (true) {
+            try {
+              await startReplReadline(rl);
+            } catch (e: any) {
+              console.log(e);
+              rl.println(e.toString());
+            }
+          }
+        }
       }
     };
     initTerminal();
   }, [xtermRef]);
 
-  
   useEffect(() => {
     if (xtermRef.current) {
       const terminal = xtermRef.current.terminal as Terminal;
       // Apply theme to XTerm
       if (theme === 'dark') {
         terminal.options.theme = {};
-      } else if(theme === 'light') {
+      } else if (theme === 'light') {
         // Color source: https://github.com/microsoft/vscode/blob/main/extensions/theme-defaults/themes/light_plus.json
         terminal.options.theme = {
           background: '#ffffff',
@@ -100,12 +99,11 @@ export default function Home() {
           magenta: '#bc05bc',
           red: '#cd3131',
           white: '#555555',
-          yellow: '#949800'
+          yellow: '#949800',
         };
       }
       // Force a redraw of the terminal
       terminal.refresh(0, terminal.rows - 1);
-
     }
   }, [theme, xtermRef]);
 

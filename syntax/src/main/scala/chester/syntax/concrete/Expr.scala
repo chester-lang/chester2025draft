@@ -5,7 +5,6 @@ import cats.data.*
 import chester.doc.*
 import chester.doc.const.Docs
 import chester.error.*
-import chester.syntax.concrete.stmt.QualifiedID
 import chester.syntax.core.*
 import chester.syntax.*
 import chester.utils.doc.*
@@ -872,7 +871,7 @@ case class PrecedenceGroupResolving(
 
 @deprecated("not used")
 case class PrecedenceGroupResolved(
-    name: QualifiedID,
+    name: QualifiedIDString,
     higherThan: Vector[PrecedenceGroupResolved] = Vector(),
     lowerThan: Vector[PrecedenceGroupResolved] = Vector(),
     associativity: Associativity = Associativity.None,
@@ -1110,7 +1109,34 @@ case class RecordStmt(
     )
   }
 }
+case class ObjectStmt(
+    name: Identifier,
+    extendsClause: Option[ExtendsClause],
+    body: Option[Block],
+    meta: Option[ExprMeta] = None
+) extends DeclarationStmt {
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): ObjectStmt = copy(meta = updater(meta))
 
+  override def descent(operator: Expr => Expr): Expr = thisOr(
+    copy(
+      name = name,
+      extendsClause = extendsClause.map(operator(_).asInstanceOf[ExtendsClause]),
+      body = body.map(operator(_).asInstanceOf[Block]),
+      meta = meta
+    )
+  )
+
+  override def toDoc(implicit options: PrettierOptions): Doc = {
+    val nameDoc = name.toDoc
+    val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
+    val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
+    group(
+      Doc.text("object") <+> nameDoc <+> extendsDoc <+> bodyDoc
+    )
+  }
+}
 case class ReturnStmt(expr: Expr, meta: Option[ExprMeta] = None) extends Stmt {
   override def descent(operator: Expr => Expr): Expr = thisOr {
     ReturnStmt(operator(expr), meta)

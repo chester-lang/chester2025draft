@@ -6,8 +6,11 @@ import MonacoEditor from '@/components/MonacoEditor';
 import * as monaco from 'monaco-editor';
 import { useDebouncedCallback } from 'use-debounce';
 import { deflate, inflate } from 'pako';
-import { encode as base64Encode, decode as base64Decode } from 'base64-arraybuffer';
-import { runFile } from "@/scala/main";
+import {
+  encode as base64Encode,
+  decode as base64Decode,
+} from 'base64-arraybuffer';
+import { runFile } from '@/scala/main';
 import { useTheme } from '@/components/ThemeContext';
 
 export default function PlaygroundPage() {

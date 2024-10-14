@@ -2,9 +2,11 @@ package chester.tyck
 
 import chester.parser.{*, given}
 import chester.syntax.concrete.*
+import chester.syntax.core.Judge
 import chester.utils.doc.*
 import chester.utils.ponyfill.Files
 import munit.FunSuite
+import upickle.default.*
 
 import java.nio.charset.StandardCharsets
 
@@ -19,8 +21,17 @@ class FilesTyckTest extends FunSuite {
 
       Parser.parseTopLevel(FilePath(inputFile.toString)) match {
         case Right(parsedBlock) =>
+          assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
+          assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
           Tycker.check(parsedBlock) match {
             case TyckResult.Success(result, _, _) =>
+              if (result.collectMeta.isEmpty) {
+                println(s"Testing read/write for $inputFile")
+                assertEquals(read[Judge](write[Judge](result)), result)
+                assertEquals(readBinary[Judge](writeBinary[Judge](result)), result)
+              } else {
+                println(s"Skipping read/write test for $inputFile")
+              }
               val actual = StringPrinter.render(result.wellTyped)(using
                 PrettierOptions.Default
               )
