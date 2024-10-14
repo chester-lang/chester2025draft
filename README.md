@@ -8,6 +8,11 @@ https://www.the-lingo.org - note that the domain is subject to change
 
 [VSCode Extension](https://marketplace.visualstudio.com/items?itemName=mio-19.chester-language-support)
 
+NodeJS CLI (experimental)
+```bash
+NODE_OPTIONS=--enable-source-maps npx chester-cli
+```
+
 ## Get Started
 
 1. Install [Proto](https://moonrepo.dev/docs/proto/install) to manage Chester versions.
