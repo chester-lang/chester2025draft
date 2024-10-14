@@ -107,6 +107,7 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
   protected final inline def thisOr[T <: Term](inline x: T): T =
     reuse(this.asInstanceOf[T], x)
 
+  /** not type safe. unsound. Sometimes we have problems deciding how to do when a case class contains a subtype of Term */
   def descent(f: Term => Term): Term
 
   final def descentRecursive(f: Term => Term): Term = thisOr {
@@ -490,7 +491,7 @@ case class ArgTerm(
   def name: Name = bind.name
 
   override def descent(f: Term => Term): ArgTerm = thisOr(
-    copy(ty = f(ty), default = default.map(f))
+    copy(bind = f(bind).asInstanceOf[LocalV], ty = f(ty), default = default.map(f))
   )
 }
 

@@ -3,7 +3,9 @@ package chester.parser
 import chester.parser.*
 import chester.syntax.concrete.*
 import chester.utils.ponyfill.Files
+import munit.Assertions.assertEquals
 import munit.FunSuite
+import upickle.default.*
 
 import java.nio.charset.StandardCharsets
 
@@ -22,6 +24,8 @@ class FileParserTest extends FunSuite {
         ignoreLocation = true
       ) match {
         case Right(parsedBlock) =>
+          assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
+          assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
           val actual: String = pprint
             .apply(parsedBlock, width = 128, height = Integer.MAX_VALUE)
             .plainText
