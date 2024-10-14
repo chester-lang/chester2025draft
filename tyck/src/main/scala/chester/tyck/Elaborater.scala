@@ -107,7 +107,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             localCtx.getTypeDefinition(name) match {
               case Some(objectDef: ObjectStmtTerm) =>
                 val objectCallTerm = ObjectCallTerm(objectDef)
-                unify(ty, TodoTerm(), expr)
+                unify(ty, ObjectTypeTerm(objectDef), expr)
                 objectCallTerm
               case _ =>
                 val problem = UnboundVariable(name, expr)

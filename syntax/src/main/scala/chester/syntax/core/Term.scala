@@ -1103,7 +1103,15 @@ case class ObjectCallTerm(
   override def descent(f: Term => Term): ObjectCallTerm =
     copy(objectRef = f(objectRef))
 }
+case class ObjectTypeTerm(
+    objectDef: ObjectStmtTerm,
+    meta: OptionTermMeta = None
+) extends TypeTerm {
+  override def toDoc(implicit options: PrettierOptions): Doc =
+    Doc.text("ObjectType(") <> objectDef.name.toDoc <> Doc.text(")")
 
+  override def descent(f: Term => Term): Term = this
+}
 case class TodoTerm(meta: OptionTermMeta = None) extends Term {
   override def toDoc(implicit options: PrettierOptions): Doc = Doc.text("TODO")
   override def descent(f: Term => Term): TodoTerm = this
