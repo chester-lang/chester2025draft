@@ -20,7 +20,7 @@ Some key characteristics of Chester include:
 
 Let's take a look at a simple Chester program to get a feel for the language:
 
-```chester
+```chester,playground,editable
 module 😿😿;
 
 def me: String = "インターネット・エンジェル";
