@@ -835,11 +835,8 @@ case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends Term
 def ErrorType(error: Problem, meta: OptionTermMeta = None): ErrorTerm =
   ErrorTerm(error, meta)
 
-sealed trait StmtTerm extends ToDoc derives ReadWriter {
+sealed trait StmtTerm extends Term derives ReadWriter {
   def descent(f: Term => Term): StmtTerm = ???
-  protected final inline def thisOr[T <: StmtTerm](inline x: T): T =
-    reuse(this.asInstanceOf[T], x)
-
 }
 
 case class LetStmtTerm(
