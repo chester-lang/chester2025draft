@@ -12,7 +12,7 @@ record RecordName(field1: Type1, field2: Type2, ...)
 
 Here's a simple example of a `Person` record:
 
-```chester
+```chester,playground,editable
 record Person(name: String, age: Int)
 ```
 
@@ -20,7 +20,7 @@ record Person(name: String, age: Int)
 
 Once defined, you can create instances of records and access their fields:
 
-```chester
+```chester,playground,editable
 let alice = Person("Alice", 30)
 println(alice.name)  // Outputs: Alice
 println(alice.age)   // Outputs: 30

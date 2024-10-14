@@ -2,6 +2,8 @@
 
 Welcome to the Chester Programming Language documentation! Chester is a modern, expressive language designed to combine the best features of functional and object-oriented programming paradigms.
 
+This programming language is under active development and not ready for use. Many important features are not implemented yet, including some described in this documentation.
+
 ## What is Chester?
 
 Chester is a statically-typed language that aims to provide a balance between expressiveness and safety. It draws inspiration from languages like Scala, Haskell, and Rust, while introducing its own unique features.

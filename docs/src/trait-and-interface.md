@@ -8,7 +8,7 @@ Traits in Chester use nominal subtyping, which means that the name of the type i
 
 Here's an example of a trait definition in Chester:
 
-```chester
+```chester,playground,editable
 trait Animal {
   def makeSound: String
 }
@@ -26,7 +26,7 @@ Interfaces in Chester use structural subtyping, which means that subtype relatio
 
 Here's an example of an interface definition:
 
-```chester
+```chester,playground,editable
 interface Soundmaker {
   def makeSound: String
 }
