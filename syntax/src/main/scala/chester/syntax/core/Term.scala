@@ -196,7 +196,7 @@ sealed trait TermWithUniqId extends Term with HasUniqId derives ReadWriter {
   def switchUniqId(r: UReplacer): TermWithUniqId
 }
 
-// allow write, not allow read
+// allow to write, not allow read
 given MetaTermHoldRW: ReadWriter[MetaTermHold[?]] =
   readwriter[MetaTermRW].bimap(
     _ => MetaTermRW(),
