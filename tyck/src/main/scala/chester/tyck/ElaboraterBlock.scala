@@ -251,7 +251,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val fields = expr.fields
 
     // Extract the symbol from the extendsClause, if any. TODO: this is a stub only
-    val extendsSymbolOpt = expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
+    expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
       superType.head match {
         case Identifier(superName, _) => superName
         case _                        =>

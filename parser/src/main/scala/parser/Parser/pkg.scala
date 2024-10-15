@@ -1,6 +1,5 @@
 package chester.parser.Parser
 import chester.parser.*
-import chester.syntax.QualifiedIDString
 import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*

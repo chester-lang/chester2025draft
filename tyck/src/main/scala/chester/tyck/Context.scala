@@ -9,7 +9,6 @@ import chester.tyck.api.SymbolCollector
 import chester.utils.propagator.*
 import chester.uniqid.*
 
-import scala.collection.immutable.Seq as seq
 
 trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 

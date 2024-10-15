@@ -8,11 +8,9 @@ import scala.scalajs.js.Thenable.Implicits.*
 import java.io.IOException
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.Uint8Array
 import scala.concurrent.ExecutionContext.Implicits.global
 import typings.std.global.fetch
 import scala.scalajs.js.typedarray._
-import scala.scalajs.js.JSConverters._
 
 implicit object DefaultIO extends IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498

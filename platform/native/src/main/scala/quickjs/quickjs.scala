@@ -3,7 +3,6 @@ package quickjs
 
 import _root_.scala.scalanative.unsafe.*
 import _root_.scala.scalanative.unsigned.*
-import _root_.scala.scalanative.libc.*
 import _root_.scala.scalanative.*
 
 object predef:
@@ -114,11 +113,7 @@ object enumerations:
       inline def is(b: JSTypedArrayEnum): Boolean = (a & b) == b
 
 object aliases:
-  import _root_.quickjs.enumerations.*
-  import _root_.quickjs.predef.*
-  import _root_.quickjs.aliases.*
   import _root_.quickjs.structs.*
-  import _root_.quickjs.unions.*
   type FILE = libc.stdio.FILE
   object FILE:
     val _tag: Tag[FILE] = summon[Tag[libc.stdio.FILE]]
@@ -296,10 +291,7 @@ object aliases:
     extension (v: uint8_t) inline def value: scala.scalanative.unsigned.UByte = v
 
 object structs:
-  import _root_.quickjs.enumerations.*
-  import _root_.quickjs.predef.*
   import _root_.quickjs.aliases.*
-  import _root_.quickjs.structs.*
   import _root_.quickjs.unions.*
 
   /** [bindgen] header: quickjs.h
@@ -919,8 +911,6 @@ object structs:
       def tag_=(value: int64_t): Unit = !struct.at2 = value
 
 object unions:
-  import _root_.quickjs.enumerations.*
-  import _root_.quickjs.predef.*
   import _root_.quickjs.aliases.*
   import _root_.quickjs.structs.*
   import _root_.quickjs.unions.*
@@ -1081,10 +1071,8 @@ object unions:
 @extern
 private[quickjs] object extern_functions:
   import _root_.quickjs.enumerations.*
-  import _root_.quickjs.predef.*
   import _root_.quickjs.aliases.*
   import _root_.quickjs.structs.*
-  import _root_.quickjs.unions.*
 
   /** [bindgen] header: quickjs.h
     */
@@ -1885,11 +1873,8 @@ private[quickjs] object extern_functions:
 
 object functions:
   import _root_.quickjs.enumerations.*
-  import _root_.quickjs.predef.*
   import _root_.quickjs.aliases.*
   import _root_.quickjs.structs.*
-  import _root_.quickjs.unions.*
-  import extern_functions.*
   export extern_functions.*
 
   /** [bindgen] header: quickjs.h

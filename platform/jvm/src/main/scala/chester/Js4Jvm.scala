@@ -1,7 +1,6 @@
 package chester
 
-import org.mozilla.javascript.{Context, GeneratedClassLoader, NativeFunction, Scriptable, ScriptableObject}
-import _root_.chester.ChesterJs
+import org.mozilla.javascript.{Context, Scriptable, ScriptableObject}
 
 object Js4Jvm {
   // Initialize the Rhino context
