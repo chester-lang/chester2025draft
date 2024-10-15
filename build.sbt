@@ -23,7 +23,7 @@ val graalVm = "graalvm-java23"
 val graalJdkVersion = "23.0.0"
 val graalvmVersion = "24.1.0"
 
-val nativeImageOption = Seq(
+val defaultNativeImageOptions = Seq(
   "-H:-CheckToolchain",
   "--verbose",
   "--no-fallback",
@@ -72,11 +72,13 @@ val commonSettings = Seq(
   )
 )
 val commonVendorSettings = Seq(
+  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala3Version,
   scalacOptions ++= Seq("-java-output-version", "11"),
   scalacOptions += "-nowarn"
 )
 val scala2VendorSettings = Seq(
+  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala2Version,
   scalacOptions ++= Seq("-java-output-version", "11"),
   scalacOptions += "-nowarn"
@@ -96,9 +98,9 @@ val NativeImageOptions = sys.env.get("NATIVE_IMAGE_OPTIONS").map(_.split(" ").to
 
 val graalvmSettings = Seq(
   nativeImageVersion := graalJdkVersion,
-  nativeImageOptions := nativeImageOption,
+  nativeImageOptions ++= defaultNativeImageOptions,
+  nativeImageOptions ++= NativeImageOptions,
   nativeImageJvm := graalVm,
-  nativeImageOptions ++= NativeImageOptions
 )
 
 val baseDeps = Seq(
