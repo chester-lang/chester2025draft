@@ -268,7 +268,7 @@ lazy val effektKiama = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "jline" % "jline" % "2.14.6",
       "org.rogach" %% "scallop" % "5.1.0",
-      "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.23.1",
+      "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
       "com.google.code.gson" % "gson" % "2.11.0"
     )
   )
@@ -1063,8 +1063,8 @@ lazy val site = crossProject(JSPlatform)
         .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
     },
      */
-    libraryDependencies += "com.github.japgolly.scalajs-react" %%% "core" % "2.1.2",
-    libraryDependencies += "me.shadaj" %%% "slinky-core" % "0.7.4"
+    //libraryDependencies += "com.github.japgolly.scalajs-react" %%% "core" % "2.1.2",
+    //libraryDependencies += "me.shadaj" %%% "slinky-core" % "0.7.4"
   )
 
 lazy val docs = crossProject(JSPlatform)
@@ -1091,7 +1091,7 @@ lazy val lsp = crossProject(JVMPlatform)
     ),
     name := "lsp",
     Compile / mainClass := Some("chester.lsp.Main"),
-    libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.23.1",
+    libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
     assembly / assemblyOutputPath := file("target") / "chester-lsp.jar",
     nativeImageOutput := file("target") / "chester-lsp",
     commonSettings
