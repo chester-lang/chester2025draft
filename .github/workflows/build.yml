@@ -42,15 +42,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup GraalVM
-      uses: graalvm/setup-graalvm@v1
-      if: runner.os != 'Linux' || true
-      with:
-        java-version: '23'
-        distribution: 'graalvm'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        native-image-job-reports: 'true'
-
     - uses: pnpm/action-setup@v4
       if: runner.os != 'Windows'
       with:
@@ -67,6 +58,20 @@ jobs:
       uses: crazy-max/ghaction-chocolatey@v3
       with:
         args: install pnpm
+
+    - name: Setup GraalVM
+      uses: graalvm/setup-graalvm@v1
+      if: runner.os != 'Linux' || true
+      with:
+        java-version: '24-ea'
+        distribution: 'graalvm'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        native-image-job-reports: 'true'
+
+    - name: GraalVM Env - G1GC
+      shell: bash
+      run: |
+        echo "NATIVE_IMAGE_OPTIONS=--gc=G1" >> $GITHUB_ENV
 
     - name: GraalVM - Linux - musl - disabled
       uses: graalvm/setup-graalvm@v1
