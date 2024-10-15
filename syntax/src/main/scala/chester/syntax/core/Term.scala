@@ -728,10 +728,12 @@ sealed trait Effect extends Term derives ReadWriter {
   override def descent(f: Term => Term): Effect = this
 }
 
-type EffectsM = (Effects | MetaTerm)
+type OrM[T <: Term] = (T | MetaTerm)
 
-given EffectsMRW: ReadWriter[EffectsM] =
-  readwriter[Term].asInstanceOf[ReadWriter[EffectsM]]
+type EffectsM = OrM[Effects]
+
+given OrMRW[T <: Term]: ReadWriter[OrM[T]] =
+  readwriter[Term].asInstanceOf[ReadWriter[OrM[T]]]
 
 extension (e: EffectsM) {
   def descentM(f: Term => Term): EffectsM = e match {
@@ -802,7 +804,7 @@ case class LocalV(
     ty: Term,
     uniqId: UniqIdOf[LocalV],
     meta: OptionTermMeta = None
-) extends MaybeVarCall {
+) extends MaybeVarCall derives ReadWriter {
   override def toDoc(implicit options: PrettierOptions): Doc =
     Doc.text(name.toString)
 
@@ -916,7 +918,7 @@ case class BlockTerm(
     stmts: Vector[StmtTerm],
     value: Term,
     meta: OptionTermMeta = None
-) extends Term {
+) extends Term derives ReadWriter {
   override def descent(f: Term => Term): BlockTerm = thisOr(
     copy(
       stmts = stmts.map {
@@ -974,7 +976,7 @@ case class FieldTerm(
     name: Name,
     ty: Term,
     meta: OptionTermMeta = None
-) extends Term {
+) extends Term derives ReadWriter {
   override def descent(f: Term => Term): Term = copy(ty = f(ty))
 
   override def toDoc(implicit options: PrettierOptions): Doc =
@@ -1032,7 +1034,7 @@ case class TraitStmtTerm(
     extendsClause: Option[Term] = None,
     body: Option[BlockTerm] = None,
     meta: OptionTermMeta = None
-) extends TypeDefinition {
+) extends TypeDefinition derives ReadWriter {
   override def switchUniqId(r: UReplacer): TraitStmtTerm = copy(uniqId = r(uniqId))
 
   override def descent(f: Term => Term): TraitStmtTerm = copy(
@@ -1055,7 +1057,7 @@ case class InterfaceStmtTerm(
     extendsClause: Option[Term] = None,
     body: Option[BlockTerm] = None,
     meta: OptionTermMeta = None
-) extends TypeDefinition {
+) extends TypeDefinition derives ReadWriter {
   override def switchUniqId(r: UReplacer): InterfaceStmtTerm = copy(uniqId = r(uniqId))
 
   override def descent(f: Term => Term): InterfaceStmtTerm = copy(
@@ -1077,7 +1079,7 @@ case class ObjectStmtTerm(
     extendsClause: Option[Term],
     body: Option[BlockTerm],
     meta: OptionTermMeta = None
-) extends TypeDefinition {
+) extends TypeDefinition derives ReadWriter {
   override def switchUniqId(r: UReplacer): ObjectStmtTerm = copy(uniqId = r(uniqId))
   override def toDoc(implicit options: PrettierOptions): Doc = {
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
