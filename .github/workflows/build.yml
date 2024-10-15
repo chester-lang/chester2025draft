@@ -68,7 +68,8 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         native-image-job-reports: 'true'
 
-    - name: GraalVM Env - G1GC
+    - name: GraalVM Env - G1GC - Linux
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         echo "NATIVE_IMAGE_OPTIONS=--gc=G1" >> $GITHUB_ENV
