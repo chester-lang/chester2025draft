@@ -190,11 +190,11 @@ jobs:
 
     - name: Install Node.js dependencies
       working-directory: vscode
-      run: npm install
+      run: pnpm install --frozen-lockfile
 
     - name: Build VSCode Extension
       working-directory: vscode
-      run: npm run package
+      run: pnpm run package
 
     - name: Upload Unix Artifacts
       if: runner.os != 'Windows'

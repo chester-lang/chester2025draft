@@ -46,11 +46,12 @@
     }
   },
   "scripts": {
-    "build": "npm run compile && npm run copy-server",
-    "compile": "tsc -p ./",
-    "copy-server": "cpx ../target/chester-lsp.jar ./server/",
-    "package": "npm run build && vsce package",
-    "pretest": "npm run compile",
+    "build": "pnpm run compile && pnpm run copy-server",
+    "compile": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "pnpm run compile --watch",
+    "copy-server": "cp ../target/chester-lsp.jar ./server/",
+    "package": "pnpm run build && vsce package --no-dependencies",
+    "pretest": "tsc -p ./",
     "test": "node ./out/test/runTest.js",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
@@ -63,7 +64,7 @@
     "@typescript-eslint/parser": "^8.7.0",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.1.0",
-    "cpx2": "^8.0.0",
+    "esbuild": "^0.24.0",
     "eslint": "^9.11.1",
     "typescript": "^5.6.2"
   },
