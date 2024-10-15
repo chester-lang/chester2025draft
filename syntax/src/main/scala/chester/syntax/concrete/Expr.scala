@@ -77,6 +77,7 @@ object MetaFactory {
 }
 
 sealed trait Expr extends WithPos with ToDoc derives ReadWriter {
+  @deprecated("partially broken")
   def descent(operator: Expr => Expr): Expr = this
   def inspect(operator: Expr => Unit): Unit = {
     descent { x =>
