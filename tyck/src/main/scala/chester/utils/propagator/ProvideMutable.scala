@@ -102,6 +102,7 @@ trait ProvideMutable extends ProvideImpl {
       }
     }
 
+    @deprecated("impure")
     override def readingZonkings(
         cells: Vector[CIdOf[Cell[?]]]
     ): Vector[Propagator[Ability]] = {
@@ -110,6 +111,7 @@ trait ProvideMutable extends ProvideImpl {
         .map(_.store.asInstanceOf[Propagator[Ability]])
     }
 
+    @deprecated("impure")
     override def requireRemovePropagatorZonking(
         identify: Any,
         cell: CellId[?]

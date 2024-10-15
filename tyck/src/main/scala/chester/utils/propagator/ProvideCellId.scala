@@ -181,6 +181,7 @@ trait ProvideCellId {
       readCell(id).exists((x: T) => x.hasSomeValue)
 
     def noAnyValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
+    @deprecated("impure")
     def requireRemovePropagatorZonking(identify: Any, cell: CellId[?]): Unit =
       ???
 
@@ -198,6 +199,7 @@ trait ProvideCellId {
       }
     }
 
+    @deprecated("impure")
     def readingZonkings(
         cells: Vector[CIdOf[Cell[?]]]
     ): Vector[Propagator[Ability]] = ???
