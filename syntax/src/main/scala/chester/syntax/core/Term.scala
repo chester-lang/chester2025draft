@@ -135,17 +135,16 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
   final def descent(f: Term => Term): Term = descent(f, new SpecialMap {
     def use[T<:Term](x:T):x.ThisTree = x.descent(f).asInstanceOf[x.ThisTree]
   })
-  final def descent(f: SpecialMap): ThisTree = descent(x=>f.use(x), f).asInstanceOf[ThisTree]
+  final def descent2(f: SpecialMap): ThisTree = descent(x=>f.use(x), f).asInstanceOf[ThisTree]
 
   final def descentRecursive(f: Term => Term): Term = thisOr {
     f(descent(_.descentRecursive(f)))
   }
 
   def inspect(f: Term => Unit): Unit = {
-    descent { x =>
-      f(x)
-      x
-    }
+    descent2(new SpecialMap {
+      def use[T<:Term](x:T):x.ThisTree = { f(x); x.asInstanceOf[x.ThisTree] }
+    })
     ()
   }
 
@@ -203,7 +202,9 @@ sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
   def replaceMeta(f: MetaTerm => Term): Term = thisOr {
     this match {
       case term: MetaTerm => f(term)
-      case _              => descent(_.replaceMeta(f))
+      case _              => descent2(new SpecialMap {
+        def use[T<:Term](x:T):x.ThisTree = x.replaceMeta(f).asInstanceOf[x.ThisTree]
+      })
     }
   }
 
