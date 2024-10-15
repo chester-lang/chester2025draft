@@ -51,6 +51,7 @@
     "watch": "pnpm run compile --watch",
     "copy-server": "cp ../target/chester-lsp.jar ./server/",
     "package": "pnpm run build && vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies",
     "pretest": "tsc -p ./",
     "test": "node ./out/test/runTest.js",
     "lint": "eslint . --ext .ts,.tsx",
