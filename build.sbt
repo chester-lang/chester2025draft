@@ -20,8 +20,8 @@ val scala3Version = "3.5.2-RC2"
 val scala2Version = "2.13.15"
 
 val graalVm = "graalvm-java23"
-val graalJdkVersion = "23.0.0"
-val graalvmVersion = "24.1.0"
+val graalJdkVersion = "23.0.1"
+val graalvmVersion = "24.1.1"
 
 val defaultNativeImageOptions = Seq(
   "-H:-CheckToolchain",
@@ -972,7 +972,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.27.0"
+val jlineVersion = "3.27.1"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
