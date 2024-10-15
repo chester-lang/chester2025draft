@@ -622,7 +622,7 @@ case class FunctionType(
 ) extends Term {
   override type ThisTree = FunctionType
   override def descent(f: Term => Term, g: SpecialMap): FunctionType = thisOr(
-    copy(telescope = telescope.map(g), effects = g(effects))
+    copy(telescope = telescope.map(g), resultTy=f(resultTy), effects = g(effects))
   )
 
   override def toDoc(implicit options: PrettierOptions): Doc = {
