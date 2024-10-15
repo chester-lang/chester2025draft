@@ -484,6 +484,17 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
+lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("compiler"))
+  .dependsOn(base, syntax, err)
+  .settings(
+    name := "compiler",
+    commonSettings
+  )
+  .jvmSettings(commonJvmLibSettings)
+
 // jvm holds stub for class interface.
 lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JSPlatform)
@@ -1217,6 +1228,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     utils2,
     base,
     parser,
+    compiler,
     syntax,
     err,
     pretty,
