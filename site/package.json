@@ -1,4 +1,10 @@
 {
+  "pnpm": {
+    "overrides": {
+      "xterm-pty@0.10.2>xterm": "$xterm",
+      "xterm-readline@1>xterm": "$xterm"
+    }
+  },
   "name": "next-i18n-static",
   "version": "0.1.0",
   "private": true,
@@ -17,17 +23,18 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-search": "^0.15.0",
     "@xterm/addon-web-links": "^0.11.0",
-    "@xterm/xterm": "5.6.0-beta.67",
+    "@xterm/xterm": "5.5.0",
     "base64-arraybuffer": "^1.0.2",
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.0",
     "next": "^14.2.15",
     "next-intl": "3.22.0-canary.0",
     "pako": "^2.1.0",
-    "react": "19.0.0-beta-26f2496093-20240514",
-    "react-dom": "19.0.0-beta-26f2496093-20240514",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-syntax-highlighter": "^15.5.0",
     "use-debounce": "^10.0.4",
+    "xterm": "npm:@xterm/xterm@^5.5.0",
     "xterm-pty": "^0.10.2",
     "xterm-readline": "^1.1.1"
   },
@@ -45,7 +52,6 @@
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.13",
-    "typescript": "^5.6.3",
-    "xterm": "^5.3.0"
+    "typescript": "^5.6.3"
   }
 }
