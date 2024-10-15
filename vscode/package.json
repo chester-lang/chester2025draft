@@ -10,7 +10,7 @@
     "directory": "vscode"
   },
   "engines": {
-    "vscode": "^1.93.0"
+    "vscode": "^1.94.0"
   },
   "categories": [
     "Programming Languages"
