@@ -732,8 +732,8 @@ type OrM[T <: Term] = (T | MetaTerm)
 
 type EffectsM = OrM[Effects]
 
-given OrMRW[T <: Term]: ReadWriter[OrM[T]] =
-  readwriter[Term].asInstanceOf[ReadWriter[OrM[T]]]
+given OrMRW[T <: Term](using rw: ReadWriter[Term]): ReadWriter[OrM[T]] =
+  rw.asInstanceOf[ReadWriter[OrM[T]]]
 
 extension (e: EffectsM) {
   def descentM(f: Term => Term): EffectsM = e match {
