@@ -7,13 +7,13 @@ Chester provides a concise and powerful syntax for defining records, which are s
 The basic syntax for defining a record in Chester is as follows:
 
 ```chester
-record RecordName(field1: Type1, field2: Type2, ...)
+record RecordName(field1: Type1, field2: Type2, ...) { ... }
 ```
 
 Here's a simple example of a `Person` record:
 
 ```chester,playground,editable
-record Person(name: String, age: Int)
+record Person(name: String, age: Int);
 ```
 
 ## Using Records
@@ -21,7 +21,7 @@ record Person(name: String, age: Int)
 Once defined, you can create instances of records and access their fields:
 
 ```chester,playground,editable
-let alice = Person("Alice", 30)
-println(alice.name)  // Outputs: Alice
-println(alice.age)   // Outputs: 30
+let alice = Person("Alice", 30);
+println(alice.name);  // Outputs: Alice
+println(alice.age);   // Outputs: 30
 ```
