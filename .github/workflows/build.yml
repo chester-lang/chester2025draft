@@ -51,7 +51,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 22
-        cache: ''
+        cache: pnpm
 
     - name: Choco install pnpm on windows
       if: runner.os == 'Windows'

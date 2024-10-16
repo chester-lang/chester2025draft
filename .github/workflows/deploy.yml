@@ -39,14 +39,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          cache: ''
+          node-version: 22
+          cache: pnpm
 
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '23'
           cache: 'sbt'
 
       - uses: sbt/setup-sbt@v1
