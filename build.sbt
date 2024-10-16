@@ -7,6 +7,9 @@ import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
 
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.16")
+ThisBuild / organization := "com.github.chester-lang"
+
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
 inThisBuild(
@@ -120,9 +123,6 @@ val baseDeps = Seq(
 
 commonSettings
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.16")
-ThisBuild / organization := "com.github.chester-lang"
-
 lazy val bump = inputKey[Unit]("Bump version in multiple files")
 bump := {
   val args: Seq[String] = spaceDelimited("<new_version>").parsed
@@ -180,7 +180,8 @@ bumpScala := {
       file("docs/dev.sh"),
       file("idea-plugin/build.sbt"),
       file("site/package.json"),
-      file("cli/package.json")
+      file("cli/package.json"),
+      file("chester-repo/base/package.json")
     )
 
     filesToUpdate.foreach { f =>

@@ -1,0 +1,17 @@
+{
+  "name": "base.chester",
+  "version": "0.0.16",
+  "description": "Chester base library",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "chester": "0.0.16"
+  },
+  "keywords": [],
+  "author": "mio-19",
+  "license": "SEE LICENSE IN LICENSE"
+}
