@@ -74,6 +74,12 @@ jobs:
       run: |
         echo "NATIVE_IMAGE_OPTIONS=--gc=G1" >> $GITHUB_ENV
 
+    - name: GraalVM Env - -march=native - mac
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        echo "NATIVE_IMAGE_OPTIONS=-march=native" >> $GITHUB_ENV
+
     - name: GraalVM - Linux - musl - disabled
       uses: graalvm/setup-graalvm@v1
       if: runner.os == 'Linux' && false
