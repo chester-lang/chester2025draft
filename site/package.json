@@ -32,7 +32,7 @@
     "pako": "^2.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-syntax-highlighter": "^15.5.0",
+    "react-syntax-highlighter": "^15.6.1",
     "use-debounce": "^10.0.4",
     "xterm": "npm:@xterm/xterm@^5.5.0",
     "xterm-pty": "^0.10.2",
