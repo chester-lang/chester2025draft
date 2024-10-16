@@ -58,7 +58,7 @@ implicit object DefaultIO extends IO[Future] {
     }
 
   inline override def pwd: Future[String] =
-    Future.successful(processMod.cwd())
+    Future.successful(processMod.^.cwd())
 
   inline override def getHomeDir: Future[String] =
     Future.successful(osMod.homedir())
