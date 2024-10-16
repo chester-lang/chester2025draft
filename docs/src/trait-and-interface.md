@@ -10,11 +10,11 @@ Here's an example of a trait definition in Chester:
 
 ```chester,playground,editable
 trait Animal {
-  def makeSound: String
+  def makeSound: String;
 }
 
 object Dog <: Animal {
-  override def makeSound: String = "Woof!"
+  override def makeSound: String = "Woof!";
 }
 ```
 
@@ -28,15 +28,15 @@ Here's an example of an interface definition:
 
 ```chester,playground,editable
 interface Soundmaker {
-  def makeSound: String
+  def makeSound: String;
 }
 
 object Cat {
-  def makeSound: String = "Meow!"
+  def makeSound: String = "Meow!";
 }
 
 // Cat is implicitly a Soundmaker because it has a matching structure
-def soundmaker: Soundmaker = Cat
+def soundmaker: Soundmaker = Cat;
 ```
 
 In this case, `Cat` is considered a subtype of `Soundmaker` because it has a matching `makeSound` method, even though it wasn't explicitly declared as such.
