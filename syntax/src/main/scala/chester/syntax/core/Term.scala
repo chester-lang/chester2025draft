@@ -117,7 +117,7 @@ type EffectsM = OrM[Effects]
 given OrMRW[T <: Term](using rw: ReadWriter[Term]): ReadWriter[OrM[T]] =
   rw.asInstanceOf[ReadWriter[OrM[T]]]
 
-sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
+sealed abstract class Term extends ToDoc with ContainsUniqId derives ReadWriter {
   type ThisTree <: Term
   def meta: OptionTermMeta
 
@@ -273,7 +273,7 @@ sealed trait Sort extends Term derives ReadWriter {
   def level: Term
 }
 
-case class Type(level: Term, meta: OptionTermMeta = None) extends Sort with Term {
+case class Type(level: Term, meta: OptionTermMeta = None) extends Sort  {
   override type ThisTree = Type
   override def toDoc(implicit options: PrettierOptions): Doc =
     Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
@@ -320,7 +320,7 @@ val Type0 = Type(Level0)
 // Referencing Setω in Agda
 val Typeω = Type(Levelω())
 
-case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort with Term {
+case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort  {
   override type ThisTree = Prop
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(Prop(f(level)))
 
@@ -329,7 +329,7 @@ case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort with Term
 }
 
 // fibrant types
-case class FType(level: Term, meta: OptionTermMeta = None) extends Sort with Term {
+case class FType(level: Term, meta: OptionTermMeta = None) extends Sort {
   override type ThisTree = FType
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(FType(f(level)))
 
@@ -799,7 +799,7 @@ extension (e: EffectsM) {
   }
 }
 
-case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta = None) extends ToDoc with Term derives ReadWriter {
+case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta = None) extends Term derives ReadWriter {
   override type ThisTree = Effects
   override def descent(f: Term => Term, g: SpecialMap): Effects = thisOr(
     copy(effects = effects.map { case (k, v) => g(k) -> f(v) })
