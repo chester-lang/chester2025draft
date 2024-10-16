@@ -205,15 +205,6 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       case (ListType(elem1, _), ListType(elem2, _)) =>
         tryUnify(elem1, elem2)
 
-      case (Identifier(name1, _), Identifier(name2, _)) =>
-        name1 == name2
-
-      case (IntegerLiteral(value1, _), IntegerLiteral(value2, _)) =>
-        value1 == value2
-
-      case (StringLiteral(value1, _), StringLiteral(value2, _)) =>
-        value1 == value2
-
       case (Union(_, _), Union(_, _)) => ???
 
       case (Intersection(_, _), Intersection(_, _)) => ???
