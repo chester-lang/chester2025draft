@@ -13,6 +13,7 @@ import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
 import chester.syntax.TASTPackage.TAST
 import chester.utils.doc.*
+import chester.BuildInfo
 
 object Program {
   def spawn[F[_]](config: Option[Config])(using
