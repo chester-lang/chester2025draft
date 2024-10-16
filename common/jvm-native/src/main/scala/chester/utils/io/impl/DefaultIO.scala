@@ -39,7 +39,7 @@ object DefaultPathOps extends PathOps[_root_.os.FilePath] {
 
   override inline def asString(p: os.FilePath): String = p.toString
 
-  override inline def basename(p: os.FilePath): String = p.last
+  override inline def baseName(p: os.FilePath): String = p.last
 }
 
 implicit object DefaultIO extends IO[Id] {
@@ -49,7 +49,7 @@ implicit object DefaultIO extends IO[Id] {
 
   override inline def println(x: String): Unit = Predef.println(x)
 
-  def pwd: os.Path = os2.pwd
+  override def pwd: os.Path = os2.pwd
 
   override inline def readString(path: Path): String =
     os.read(path.resolveFrom(pwd))

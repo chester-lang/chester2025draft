@@ -180,7 +180,7 @@ class Program[F[_]](using
     for {
       currentDir <- IO.pwd
       packageJsonPath = io.pathOps.join(currentDir, "package.json")
-      _ <- IO.write(packageJsonPath(io.pathOps.baseName(currentDir)), content.getBytes("UTF-8"))
+      _ <- IO.writeString(packageJsonPath, content(io.pathOps.baseName(currentDir)))
       _ <- IO.println("Initialized package.json in the current directory.")
     } yield ()
   }

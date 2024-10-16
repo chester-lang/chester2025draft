@@ -7,7 +7,7 @@ trait PathOps[T] {
 
   def asString(p: T): String
 
-  def basename(p: T): String
+  def baseName(p: T): String
 }
 
 extension [T](p: T)(using ops: PathOps[T]) {
@@ -25,5 +25,5 @@ implicit object PathOpsString extends PathOps[String] {
 
   inline def asString(p: String): String = p
 
-  inline def basename(p: String): String = p.split("/").last
+  inline def baseName(p: String): String = p.split("/").last
 }
