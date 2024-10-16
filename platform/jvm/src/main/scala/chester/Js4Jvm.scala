@@ -11,7 +11,7 @@ object Js4Jvm {
   }
   private val scope: ScriptableObject = context.initStandardObjects()
   private val script: org.mozilla.javascript.Script = new ChesterJs()
-  val exports: Scriptable = {
+  private val exports: Scriptable = {
 
     val result: Scriptable = context.newObject(scope)
 
@@ -21,5 +21,7 @@ object Js4Jvm {
 
     result
   }
+  private val test = exports.get("test", exports).asInstanceOf[org.mozilla.javascript.Function]
+  def test(x: Any): Any = test.call(context, exports, exports, Array(x))
   val helloFromJs: CharSequence = exports.get("helloFromJs", exports).asInstanceOf[CharSequence]
 }

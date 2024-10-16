@@ -6,7 +6,7 @@ import chester.utils.*
 
 object PlatformSpecific {
   def testLoadingJS(): Unit = {
-    println(chester.Js4Jvm.helloFromJs)
+    println(chester.Js4Jvm.test(chester.Js4Jvm.helloFromJs))
   }
   def genSemanticDB(config: CliConfig): Unit = {
     val inputPath = config.input.getOrElse {
