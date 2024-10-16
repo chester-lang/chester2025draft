@@ -6,7 +6,7 @@ trait PathOps[T] {
   def join(p1: T, p2: String): T
 
   def asString(p: T): String
-  
+
   def basename(p: T): String
 }
 
@@ -24,6 +24,6 @@ implicit object PathOpsString extends PathOps[String] {
   inline def join(p1: String, p2: String): String = p1 + "/" + p2
 
   inline def asString(p: String): String = p
-  
-    inline def basename(p: String): String = p.split("/").last
+
+  inline def basename(p: String): String = p.split("/").last
 }

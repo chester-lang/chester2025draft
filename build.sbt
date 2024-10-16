@@ -103,7 +103,7 @@ val graalvmSettings = Seq(
   nativeImageVersion := graalJdkVersion,
   nativeImageOptions ++= defaultNativeImageOptions,
   nativeImageOptions ++= NativeImageOptions,
-  nativeImageJvm := graalVm,
+  nativeImageJvm := graalVm
 )
 
 val baseDeps = Seq(
@@ -1059,15 +1059,15 @@ lazy val site = crossProject(JSPlatform)
   .jsSettings(
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.CommonJSModule)
-    },
+    }
     /*
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
         .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
     },
      */
-    //libraryDependencies += "com.github.japgolly.scalajs-react" %%% "core" % "2.1.2",
-    //libraryDependencies += "me.shadaj" %%% "slinky-core" % "0.7.4"
+    // libraryDependencies += "com.github.japgolly.scalajs-react" %%% "core" % "2.1.2",
+    // libraryDependencies += "me.shadaj" %%% "slinky-core" % "0.7.4"
   )
 
 lazy val docs = crossProject(JSPlatform)

@@ -38,7 +38,7 @@ object DefaultPathOps extends PathOps[_root_.os.FilePath] {
     (p1 / os.SubPath(p2)).asInstanceOf[os.FilePath]
 
   override inline def asString(p: os.FilePath): String = p.toString
-  
+
   override inline def basename(p: os.FilePath): String = p.last
 }
 
