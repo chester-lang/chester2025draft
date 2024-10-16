@@ -1,12 +1,13 @@
 package chester
 
 import org.mozilla.javascript.{Context, Scriptable, ScriptableObject}
+import chester.utils.onNativeImageBuildTime
 
 // single threaded
 object Js4Jvm {
   private var context: Context = null
   private def check(): Unit = {
-    if (context neq null) return
+    if (context ne null) return
     val cx = Context.enter()
     cx.setLanguageVersion(Context.VERSION_ES6)
     context = cx
