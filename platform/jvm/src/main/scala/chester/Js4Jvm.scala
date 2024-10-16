@@ -4,12 +4,14 @@ import org.mozilla.javascript.{Context, Scriptable, ScriptableObject}
 
 // single threaded
 object Js4Jvm {
-  // Initialize the Rhino context
-  private val context: Context = {
+  private var context: Context = null
+  private def check(): Unit = {
+    if (context neq null) return
     val cx = Context.enter()
     cx.setLanguageVersion(Context.VERSION_ES6)
-    cx
+    context = cx
   }
+  check()
   private val scope: ScriptableObject = context.initStandardObjects()
   private val script: org.mozilla.javascript.Script = new ChesterJs()
   private val exports: Scriptable = {
@@ -22,18 +24,17 @@ object Js4Jvm {
 
     result
   }
-  // for graalvm
-  private var checked = false
-  private def check(): Unit = {
-    if (checked) return
-    val result = Context.enter(context)
-    assert(result eq context)
-    checked = true
-  }
   private val test = exports.get("test", exports).asInstanceOf[org.mozilla.javascript.Function]
+
+  val helloFromJs: CharSequence = exports.get("helloFromJs", exports).asInstanceOf[CharSequence]
+
+  onNativeImageBuildTime {
+    Context.exit()
+    context = null
+  }
+
   def test(x: Any): Any = {
     check()
     test.call(context, exports, exports, Array(x))
   }
-  val helloFromJs: CharSequence = exports.get("helloFromJs", exports).asInstanceOf[CharSequence]
 }
