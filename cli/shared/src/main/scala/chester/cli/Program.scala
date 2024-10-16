@@ -52,6 +52,8 @@ class Program[F[_]](using
             this.compileFiles(inputs, targetDir)
           case DecompileConfig(inputFile) =>
             this.decompileFile(inputFile)
+          case InitConfig => // Handle the init subcommand
+            this.initializePackageJson()
         }
       case None =>
         // Arguments are bad, error message will have been displayed
@@ -152,6 +154,33 @@ class Program[F[_]](using
         } else {
           IO.println(s"Error: File $inputFile does not exist.")
         }
+    } yield ()
+  }
+
+  private def content(name: String): String =
+    s"""{
+       |  "name": "$name.chester",
+       |  "version": "0.1.0",
+       |  "description": "A Chester library",
+       |  "files": [
+       |    "src"
+       |  ],
+       |  "scripts": {
+       |    "test": "echo \"Error: no test specified\" && exit 1"
+       |  },
+       |  "engines": {
+       |    "chester": "${BuildInfo.version}"
+       |  },
+       |  "keywords": [],
+       |  "author": "",
+       |  "license": ""
+       |}""".stripMargin
+  def initializePackageJson(): F[Unit] = {
+    for {
+      currentDir <- IO.pwd
+      packageJsonPath = io.pathOps.join(currentDir, "package.json")
+      _ <- IO.write(packageJsonPath(io.pathOps.baseName(currentDir)), content.getBytes("UTF-8"))
+      _ <- IO.println("Initialized package.json in the current directory.")
     } yield ()
   }
 }

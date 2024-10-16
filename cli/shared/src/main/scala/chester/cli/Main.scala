@@ -23,8 +23,9 @@ object Main {
       targetDir: String = "."
   ) extends Config
 
-  // Add this new case class for decompilation
   case class DecompileConfig(input: String) extends Config
+
+  case object InitConfig extends Config
 
   // Parsing state class with default command set to "run"
   case class CliConfig(
@@ -136,6 +137,11 @@ object Main {
               .text("Input source file or directory.")
           ),
 
+        // Command for "init"
+        cmd("init")
+          .action((_, c) => c.copy(command = "init"))
+          .text("Initialize a Chester project in the current directory"),
+
         // Handle case where user might omit "run" and just provide input directly
         arg[String]("input")
           .optional()
@@ -181,6 +187,8 @@ object Main {
                 println("Error: Input file is required for decompile command.")
                 return
             }
+          case "init" =>
+            InitConfig
           case "genSemanticDB" =>
             PlatformSpecific.genSemanticDB(cliConfig)
             return
