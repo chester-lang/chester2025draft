@@ -7,7 +7,7 @@ import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.16")
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.17")
 ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
@@ -181,7 +181,7 @@ bumpScala := {
       file("idea-plugin/build.sbt"),
       file("site/package.json"),
       file("cli/package.json"),
-      file("chester-repo/base/package.json")
+      file("packages/base/package.json")
     )
 
     filesToUpdate.foreach { f =>
