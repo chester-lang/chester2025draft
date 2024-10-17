@@ -24,8 +24,9 @@
         "introText": "Welcome to Chester! Follow these steps to get started with your new programming language.",
         "linuxMacOSWSL": "Linux/macOS/WSL",
         "windows": "Windows",
-        "alternativeInstallTitle": "Manual Installation with Proto",
-        "alternativeInstallDescription": "You can also manually install Proto to manage Chester versions. Install Chester using the following commands:"
+        "manualInstallTitle": "Manual Installation with Proto",
+        "manualInstallDescription": "You can also manually install Chester using Proto. First, install Proto, then run the following commands:",
+        "installProtoLink": "Install Proto"
     },
     "PlaygroundPage": {
         "title": "Playground",

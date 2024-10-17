@@ -56,8 +56,16 @@ export default function GetStartedPage() {
           {installCommand}
         </SyntaxHighlighter>
 
-        <h2 className="text-xl font-bold mt-6">{t('alternativeInstallTitle')}</h2>
-        <p>{t('alternativeInstallDescription')}</p>
+        <h2 className="text-xl font-bold mt-6">{t('manualInstallTitle')}</h2>
+        <Link
+          href="https://moonrepo.dev/docs/proto/install"
+          className="text-blue-500 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t('installProtoLink')}
+        </Link>
+        <p>{t('manualInstallDescription')}</p>
 
         <SyntaxHighlighter language="bash" style={syntaxStyle}>
           {`proto plugin add --global chester "https://github.com/chester-lang/chester/raw/refs/heads/main/proto.toml"
