@@ -103,6 +103,6 @@ implicit object DefaultIO extends IO[Id] {
   
   override inline def call(command: Seq[String]): CommandOutput = {
     val result = os.call(command, stdout = os.Inherit, stderr = os.Inherit)
-    CommandOutput(result.exitCode)
+    CommandOutput(exitCode = Some(result.exitCode))
   }
 }
