@@ -89,7 +89,7 @@ val scala2VendorSettings = Seq(
 val cpsSettings = Seq(
   autoCompilerPlugins := true,
   addCompilerPlugin(
-    "com.github.rssh" %% "dotty-cps-async-compiler-plugin" % "0.9.22"
+    "com.github.rssh" %% "dotty-cps-async-compiler-plugin" % "0.9.23"
   )
 )
 val commonJvmLibSettings = Seq(
@@ -114,7 +114,7 @@ val baseDeps = Seq(
     "com.lihaoyi" %%% "fansi" % "0.5.0",
     "com.lihaoyi" %%% "fastparse" % "3.1.1"
     // "com.lihaoyi" %%% "scalatags" % "0.13.1",
-    // "com.github.rssh" %%% "dotty-cps-async" % "0.9.22",
+    // "com.github.rssh" %%% "dotty-cps-async" % "0.9.23",
     // "io.getkyo" %%% "kyo-prelude" % "0.12.2",
     // "io.getkyo" %%% "kyo-data" % "0.12.2",
     // "io.getkyo" %%% "kyo-tag" % "0.12.2",
