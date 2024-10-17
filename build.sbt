@@ -19,7 +19,7 @@ inThisBuild(
   )
 )
 
-val scala3Version = "3.5.2-RC2"
+val scala3Version = "3.5.2"
 val scala2Version = "2.13.15"
 
 val graalVm = "graalvm-java23"
