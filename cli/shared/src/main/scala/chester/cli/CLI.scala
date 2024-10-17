@@ -191,6 +191,6 @@ class CLI[F[_]](using
   } yield ()
 
   def addPackages(packages: Seq[String]): F[Unit] = for {
-    _ <- IO.call(Vector("pnpm", "add") ++ packages)
+    _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => s"${p}.chester"))
   } yield ()
 }
