@@ -27,6 +27,9 @@ object Main {
 
   case object InitConfig extends Config
 
+  // Add the new InstallConfig
+  case object InstallConfig extends Config
+
   // Parsing state class with default command set to "run"
   case class CliConfig(
       command: String = "run", // Default command is "run"
@@ -37,7 +40,7 @@ object Main {
   )
 
   def main(args: Array[String]): Unit = {
-    PlatformSpecific.testLoadingJS()
+    if(false) platform.testLoadingJS()
 
     val builder = OParser.builder[CliConfig]
     val parser = {
@@ -142,6 +145,12 @@ object Main {
           .action((_, c) => c.copy(command = "init"))
           .text("Initialize a Chester project in the current directory"),
 
+        // Command for "install" (aliased as "i")
+        cmd("install")
+          .abbr("i") // Alias the command as "i"
+          .action((_, c) => c.copy(command = "install"))
+          .text("Install dependencies"),
+
         // Handle case where user might omit "run" and just provide input directly
         arg[String]("input")
           .optional()
@@ -159,7 +168,7 @@ object Main {
     }
 
     // Parse the arguments
-    OParser.parse(parser, argsPlatform(args), CliConfig()) match {
+    OParser.parse(parser, platform.argsPlatform(args), CliConfig()) match {
       case Some(cliConfig) if cliConfig.version =>
         // Handle version flag
         println(s"Chester version ${BuildInfo.version}")
@@ -178,7 +187,6 @@ object Main {
               )
               return
             }
-          // Add this case for decompile
           case "decompile" =>
             cliConfig.input match {
               case Some(inputFile) =>
@@ -189,8 +197,10 @@ object Main {
             }
           case "init" =>
             InitConfig
+          case "install" =>
+            InstallConfig
           case "genSemanticDB" =>
-            PlatformSpecific.genSemanticDB(cliConfig)
+            platform.genSemanticDB(cliConfig)
             return
           case _ =>
             println("Invalid command")
@@ -203,7 +213,7 @@ object Main {
           Program.spawn(Some(RunConfig(None)))
         } else {
           // Arguments are bad, error message will have been displayed
-          Program.spawn(None)
+          // Program.spawn(None)
         }
     }
   }

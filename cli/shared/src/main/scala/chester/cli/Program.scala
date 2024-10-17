@@ -53,8 +53,10 @@ class Program[F[_]](using
             this.compileFiles(inputs, targetDir)
           case DecompileConfig(inputFile) =>
             this.decompileFile(inputFile)
-          case InitConfig => // Handle the init subcommand
+          case InitConfig =>
             this.initializePackageJson()
+          case InstallConfig =>
+            this.installDependencies() // Call the stub method
         }
       case None =>
         // Arguments are bad, error message will have been displayed
@@ -183,5 +185,10 @@ class Program[F[_]](using
       _ <- IO.writeString(packageJsonPath, content(io.pathOps.baseName(currentDir)))
       _ <- IO.println("Initialized package.json in the current directory.")
     } yield ()
+  }
+
+  def installDependencies(): F[Unit] = {
+    println("Install command is not yet implemented.")
+    Runner.pure(())
   }
 }

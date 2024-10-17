@@ -1,4 +1,4 @@
-package chester.cli
+package chester.cli.platform
 
 import typings.node.processMod
 import scala.scalajs.js
