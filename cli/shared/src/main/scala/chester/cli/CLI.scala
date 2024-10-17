@@ -168,7 +168,7 @@ class CLI[F[_]](using
        |    "src"
        |  ],
        |  "scripts": {
-       |    "test": "echo \"Error: no test specified\" && exit 1"
+       |    "test": "echo \\\"Error: no test specified\\\" && exit 1"
        |  },
        |  "engines": {
        |    "chester": "${BuildInfo.version}"
