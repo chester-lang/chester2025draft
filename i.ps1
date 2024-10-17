@@ -11,6 +11,6 @@ if (!(Test-Path $BinPath)) {
   irm https://moonrepo.dev/install/proto.ps1 | iex
 }
 
-"$BinPath" plugin add --global chester "https://github.com/chester-lang/chester/raw/refs/heads/main/proto.toml"
+& "$BinPath" plugin add --global chester "https://github.com/chester-lang/chester/raw/refs/heads/main/proto.toml"
 
-"$BinPath" install chester
+& "$BinPath" install chester
