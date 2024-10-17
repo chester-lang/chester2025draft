@@ -117,7 +117,7 @@ type EffectsM = OrM[Effects]
 given OrMRW[T <: Term](using rw: ReadWriter[Term]): ReadWriter[OrM[T]] =
   rw.asInstanceOf[ReadWriter[OrM[T]]]
 
-sealed abstract class Term extends ToDoc with ContainsUniqId derives ReadWriter {
+sealed trait Term extends ToDoc with ContainsUniqId derives ReadWriter {
   type ThisTree <: Term
   def meta: OptionTermMeta
 
