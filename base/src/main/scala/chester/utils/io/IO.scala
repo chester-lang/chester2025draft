@@ -52,14 +52,12 @@ trait IO[F[_]] {
 
   def getAbsolutePath(path: Path): F[Path]
 
-  def execCommand(
-      command: String,
-      captureStdout: Boolean = true,
-      captureStderr: Boolean = true
-  ): F[CommandOutput] = ???
+  def call(
+      command: Seq[String]
+  ): F[CommandOutput]
 }
 
-case class CommandOutput(stdout: String, stderr: String, exitCode: Int)
+case class CommandOutput(exitCode: Option[Int])
 
 object Runner {
   inline def pure[F[_], A](inline x: A)(using inline runner: Runner[F]): F[A] =
@@ -105,9 +103,7 @@ extension [F[_]](_io: IO.type)(using io: IO[F]) {
     io.chmodExecutable(path)
   inline def getAbsolutePath(inline path: io.Path): F[io.Path] =
     io.getAbsolutePath(path)
-  inline def execCommand(
-      inline command: String,
-      inline captureStdout: Boolean = true,
-      inline captureStderr: Boolean = true
-  ): F[CommandOutput] = io.execCommand(command, captureStdout, captureStderr)
+  inline def call(
+      inline command: Seq[String]
+  ): F[CommandOutput] = io.call(command)
 }
