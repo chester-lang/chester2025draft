@@ -352,7 +352,7 @@ lazy val utils = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "os-lib" % "0.11.1"
+      "com.lihaoyi" %%% "os-lib" % "0.11.2"
     ),
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
@@ -370,7 +370,7 @@ lazy val utils = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .nativeSettings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "os-lib" % "0.11.1"
+      "com.lihaoyi" %%% "os-lib" % "0.11.2"
     ),
     libraryDependencies ++= Seq(
       "org.scala-js" %% "scalajs-stubs" % "1.1.0"
