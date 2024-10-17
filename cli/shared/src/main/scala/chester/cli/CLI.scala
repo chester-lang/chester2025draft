@@ -14,8 +14,9 @@ import chester.utils.term.{Terminal, TerminalInit}
 import chester.syntax.TASTPackage.TAST
 import chester.utils.doc.*
 import chester.BuildInfo
+import chester.cli.Config.*
 
-object Program {
+object CLI {
   def spawn[F[_]](config: Option[Config])(using
       runner: Runner[F],
       terminal: Terminal[F],
@@ -25,12 +26,12 @@ object Program {
       io: IO[F]
   ): Unit = {
     Spawn.spawn {
-      (new Program[F]).run(config)
+      (new CLI[F]).run(config)
     }
   }
 }
 
-class Program[F[_]](using
+class CLI[F[_]](using
     runner: Runner[F],
     terminal: Terminal[F],
     env: Environment,
@@ -75,17 +76,17 @@ class Program[F[_]](using
   }
 
   // Evaluate from file or directory
-  def runFileOrDirectory(fileOrDir: String): F[Unit] = {
-    println(s"Running from $fileOrDir...")
+  def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
+    _ <- IO.println(s"Running from $fileOrDir...")
     // Implement your logic here
-    Runner.pure(())
-  }
+    _ <- Runner.pure(())
+  } yield ()
 
-  def runIntegrityCheck(): F[Unit] = {
-    println("Running integrity check...")
-    IntegrityCheck()
-    Runner.pure(())
-  }
+  def runIntegrityCheck(): F[Unit] = for {
+    _ <- IO.println("Running integrity check...")
+    _ = IntegrityCheck()
+      _ <- Runner.pure(())
+    } yield ()
 
   def compileFiles(inputs: Seq[String], targetDir: String): F[Unit] = {
     inputs.foldLeft(Runner.pure(())) { (acc, inputFile) =>
@@ -98,10 +99,9 @@ class Program[F[_]](using
     val expectedExtension = ".chester"
 
     if (!inputFile.endsWith(expectedExtension)) {
-      println(
+      IO.println(
         s"Error: Input file '$inputFile' does not have the expected '$expectedExtension' extension."
       )
-      Runner.pure(())
     } else {
       // Generate output file name by replacing the extension
       val outputFileName = inputFile.stripSuffix(expectedExtension) + ".tast"
@@ -128,8 +128,7 @@ class Program[F[_]](using
       val tast = parseCheckTAST(source)
 
       if (reporter.hasErrors) {
-        println(s"Compilation failed for $inputFile with errors.")
-        Runner.pure(())
+        IO.println(s"Compilation failed for $inputFile with errors.")
       } else {
         for {
           _ <- IO.createDirRecursiveIfNotExists(io.pathOps.of(targetDir))
@@ -187,8 +186,11 @@ class Program[F[_]](using
     } yield ()
   }
 
-  def installDependencies(): F[Unit] = {
-    println("Install command is not yet implemented.")
-    Runner.pure(())
-  }
+  def installDependencies(): F[Unit] = for {
+    _ <- IO.call(Vector("pnpm", "install"))
+  } yield ()
+
+  def addPackages(packages: Seq[String]): F[Unit] = for {
+    _ <- IO.call(Vector("pnpm", "add") ++ packages)
+  } yield ()
 }

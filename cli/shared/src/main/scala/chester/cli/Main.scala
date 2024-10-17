@@ -7,28 +7,8 @@ import scopt.OParser
 import chester.utils.env.DefaultEnv
 import chester.utils.io.*
 import chester.utils.io.impl.*
-
-// Import the generated BuildInfo object
-
+import chester.cli.Config.*
 object Main {
-
-  sealed trait Config
-
-  case class RunConfig(input: Option[String]) extends Config
-
-  case object IntegrityConfig extends Config
-
-  case class CompileConfig(
-      inputs: Seq[String],
-      targetDir: String = "."
-  ) extends Config
-
-  case class DecompileConfig(input: String) extends Config
-
-  case object InitConfig extends Config
-
-  // Add the new InstallConfig
-  case object InstallConfig extends Config
 
   // Parsing state class with default command set to "run"
   case class CliConfig(
@@ -36,7 +16,8 @@ object Main {
       input: Option[String] = None,
       inputs: Seq[String] = Seq(),
       targetDir: String = ".",
-      version: Boolean = false // Add a flag for the version option
+      version: Boolean = false, // Add a flag for the version option
+      packages: Seq[String] = Seq() // Add this line
   )
 
   def main(args: Array[String]): Unit = {
@@ -49,12 +30,10 @@ object Main {
         programName("chester"),
         head("chester", BuildInfo.version), // Use BuildInfo.version here
 
-        // Global version option
         opt[Unit]('v', "version")
           .action((_, c) => c.copy(version = true))
           .text("Print version information and exit"),
 
-        // Command for "run"
         cmd("run")
           .action((_, c) => c.copy(command = "run"))
           .text("Run expressions")
@@ -73,12 +52,10 @@ object Main {
               .text("Input file or directory. Use '-' for stdin.")
           ),
 
-        // Command for "integrity"
         cmd("integrity")
           .action((_, c) => c.copy(command = "integrity"))
           .text("Run integrity check"),
 
-        // Command for "compile"
         cmd("compile")
           .action((_, c) => c.copy(command = "compile"))
           .text("Compile Chester source files")
@@ -104,7 +81,6 @@ object Main {
               )
           ),
 
-        // Command for "decompile"
         cmd("decompile")
           .action((_, c) => c.copy(command = "decompile"))
           .text("Decompile a .tast binary file")
@@ -140,14 +116,21 @@ object Main {
               .text("Input source file or directory.")
           ),
 
-        // Command for "init"
         cmd("init")
           .action((_, c) => c.copy(command = "init"))
           .text("Initialize a Chester project in the current directory"),
-
-        // Command for "install" (aliased as "i")
+cmd("add")
+  .action((_, c) => c.copy(command = "add"))
+  .text("Add one or more packages")
+  .children(
+    arg[String]("<packages>...")
+      .unbounded()
+      .required()
+      .action((x, c) => c.copy(packages = c.packages :+ x))
+      .text("Package names to add")
+  ),
         cmd("install")
-          .abbr("i") // Alias the command as "i"
+          .abbr("i")
           .action((_, c) => c.copy(command = "install"))
           .text("Install dependencies"),
 
@@ -199,6 +182,13 @@ object Main {
             InitConfig
           case "install" =>
             InstallConfig
+          case "add" =>
+            if (cliConfig.packages.nonEmpty) {
+              AddConfig(cliConfig.packages)
+            } else {
+              println("Error: At least one package name is required for add command.")
+              return
+            }
           case "genSemanticDB" =>
             platform.genSemanticDB(cliConfig)
             return
@@ -206,14 +196,14 @@ object Main {
             println("Invalid command")
             return
         }
-        Program.spawn(Some(config))
+        CLI.spawn(Some(config))
       case None =>
         // If parsing fails, default to "run" command when no args are provided
         if (args.isEmpty) {
-          Program.spawn(Some(RunConfig(None)))
+          CLI.spawn(Some(RunConfig(None)))
         } else {
           // Arguments are bad, error message will have been displayed
-          // Program.spawn(None)
+          // CLI.spawn(None)
         }
     }
   }
