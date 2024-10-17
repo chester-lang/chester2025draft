@@ -32,7 +32,6 @@ export const LOCALE_NAMES = {
   de: 'Deutsch',
   mi: 'Māori',
   yue: '粵語',
-  wzhu: '甌語',
   ja: '日本語',
   ko: '한국어',
 } as const;
