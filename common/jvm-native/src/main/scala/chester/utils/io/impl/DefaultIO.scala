@@ -8,6 +8,8 @@ import _root_.os.*
 import java.nio.file.Files
 import scala.annotation.tailrec
 import scala.util.Try
+import com.eed3si9n.ifdef.*
+
 
 implicit object DefaultSpawn extends Spawn[Id] {
   override inline def spawn(x: => Unit): Unit = x
@@ -101,8 +103,14 @@ implicit object DefaultIO extends IO[Id] {
 
   override inline def getAbsolutePath(path: Path): Path = path.resolveFrom(pwd)
 
+  @ifndef("scalaNativeForTermux")
   override inline def call(command: Seq[String]): CommandOutput = {
     val result = os.call(command, stdout = os.Inherit, stderr = os.Inherit)
     CommandOutput(exitCode = Some(result.exitCode))
+  }
+
+  @ifdef("scalaNativeForTermux")
+  override inline def call(command: Seq[String]): CommandOutput = {
+    throw new NotImplementedError("Not implemented for Termux")
   }
 }
