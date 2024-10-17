@@ -273,7 +273,7 @@ sealed trait Sort extends Term derives ReadWriter {
   def level: Term
 }
 
-case class Type(level: Term, meta: OptionTermMeta = None) extends Sort  {
+case class Type(level: Term, meta: OptionTermMeta = None) extends Sort {
   override type ThisTree = Type
   override def toDoc(implicit options: PrettierOptions): Doc =
     Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
@@ -320,7 +320,7 @@ val Type0 = Type(Level0)
 // Referencing Setω in Agda
 val Typeω = Type(Levelω())
 
-case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort  {
+case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort {
   override type ThisTree = Prop
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(Prop(f(level)))
 

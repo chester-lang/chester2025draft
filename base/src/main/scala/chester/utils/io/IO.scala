@@ -23,7 +23,7 @@ implicit inline def summonPathOpsFromIO[F[_]](using
 
 trait IO[F[_]] {
   type Path
-  
+
   def pwd: F[Path]
 
   def pathOps: PathOps[Path]

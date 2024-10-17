@@ -89,12 +89,11 @@ implicit object DefaultIO extends IO[Future] {
 
   inline override def getAbsolutePath(path: String): Future[String] =
     Future.successful(pathMod.resolve(path))
-  inline override def call(
-        command: Seq[String]): Future[CommandOutput] = {
+  inline override def call(command: Seq[String]): Future[CommandOutput] = {
     val result = childProcessMod.spawnSync(command.head, command.tail.toJSArray, SpawnSyncOptions().setStdio(IOType.inherit))
     val status = result.status match {
-      case null => None
-      case s:Double => Some(s.toInt)
+      case null      => None
+      case s: Double => Some(s.toInt)
     }
     Future.successful(CommandOutput(status))
   }

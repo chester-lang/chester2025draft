@@ -100,7 +100,7 @@ implicit object DefaultIO extends IO[Id] {
   }
 
   override inline def getAbsolutePath(path: Path): Path = path.resolveFrom(pwd)
-  
+
   override inline def call(command: Seq[String]): CommandOutput = {
     val result = os.call(command, stdout = os.Inherit, stderr = os.Inherit)
     CommandOutput(exitCode = Some(result.exitCode))

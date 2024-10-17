@@ -40,7 +40,7 @@ object Main {
   )
 
   def main(args: Array[String]): Unit = {
-    if(false) platform.testLoadingJS()
+    if (false) platform.testLoadingJS()
 
     val builder = OParser.builder[CliConfig]
     val parser = {
