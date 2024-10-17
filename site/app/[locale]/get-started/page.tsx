@@ -20,16 +20,17 @@ export default function GetStartedPage() {
   useEffect(() => {
     // Detect user's OS
     const userAgent = window.navigator.userAgent.toLowerCase();
-    if (userAgent.indexOf("win") > -1) {
+    if (userAgent.indexOf('win') > -1) {
       setSelectedOS('windows');
     } else {
       setSelectedOS('unix');
     }
   }, []);
 
-  const installCommand = selectedOS === 'unix'
-    ? `curl -fsSL https://github.com/chester-lang/chester/raw/refs/heads/main/i.sh | bash`
-    : `irm https://github.com/chester-lang/chester/raw/refs/heads/main/i.ps1 | iex`;
+  const installCommand =
+    selectedOS === 'unix'
+      ? `curl -fsSL https://github.com/chester-lang/chester/raw/refs/heads/main/i.sh | bash`
+      : `irm https://github.com/chester-lang/chester/raw/refs/heads/main/i.ps1 | iex`;
 
   return (
     <main className="flex-grow flex flex-col items-center justify-center p-4 pb-8 gap-8 sm:p-8">
@@ -52,7 +53,10 @@ export default function GetStartedPage() {
           </button>
         </div>
 
-        <SyntaxHighlighter language={selectedOS === 'unix' ? "bash" : "powershell"} style={syntaxStyle}>
+        <SyntaxHighlighter
+          language={selectedOS === 'unix' ? 'bash' : 'powershell'}
+          style={syntaxStyle}
+        >
           {installCommand}
         </SyntaxHighlighter>
 
