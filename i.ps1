@@ -7,8 +7,13 @@ $InstallDir = if ($env:PROTO_HOME) {
 }
 
 $BinPath = "${InstallDir}\proto.exe"
-if (!(Test-Path $BinPath)) {
-  irm https://moonrepo.dev/install/proto.ps1 | iex
+
+if (Get-Command proto -ErrorAction SilentlyContinue) {
+  $BinPath = "proto"
+} else {
+  if (!(Test-Path $BinPath)) {
+    irm https://moonrepo.dev/install/proto.ps1 | iex
+  }
 }
 
 & "$BinPath" plugin add --global chester "https://github.com/chester-lang/chester/raw/refs/heads/main/proto.toml"
