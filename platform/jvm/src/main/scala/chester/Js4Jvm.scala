@@ -1,7 +1,7 @@
 package chester
 
 import org.mozilla.javascript.{Context, Scriptable, ScriptableObject}
-import chester.utils.onNativeImageBuildTime
+import _root_.chester.utils.onNativeImageBuildTime
 
 // single threaded
 object Js4Jvm {

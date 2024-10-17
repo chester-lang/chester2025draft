@@ -3,7 +3,8 @@ package chester.utils.io.impl
 import chester.utils.io.*
 import typings.node.bufferMod.global.BufferEncoding
 import typings.node.fsMod.MakeDirectoryOptions
-import typings.node.{fsMod, fsPromisesMod, osMod, pathMod, processMod}
+import typings.node.{fsMod, fsPromisesMod, osMod, pathMod, processMod, childProcessMod}
+import typings.node.childProcessMod.{SpawnSyncOptions, IOType}
 
 import scala.scalajs.js.Thenable.Implicits.*
 import java.io.IOException
@@ -11,6 +12,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.concurrent.ExecutionContext.Implicits.global
 import typings.std.global.fetch
+import js.JSConverters._
 
 import scala.scalajs.js.typedarray.*
 
@@ -87,5 +89,12 @@ implicit object DefaultIO extends IO[Future] {
 
   inline override def getAbsolutePath(path: String): Future[String] =
     Future.successful(pathMod.resolve(path))
-
+  inline override def call(command: Seq[String]): Future[CommandOutput] = {
+    val result = childProcessMod.spawnSync(command.head, command.tail.toJSArray, SpawnSyncOptions().setStdio(IOType.inherit))
+    val status = result.status match {
+      case null      => None
+      case s: Double => Some(s.toInt)
+    }
+    Future.successful(CommandOutput(status))
+  }
 }

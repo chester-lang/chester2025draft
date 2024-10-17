@@ -1,6 +1,6 @@
 {
   "name": "chester-cli",
-  "version": "0.0.16",
+  "version": "0.0.19",
   "description": "Chester is a programming language",
   "main": "cli.js",
   "bin": {

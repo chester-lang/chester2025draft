@@ -2,7 +2,7 @@
   "name": "chester-language-support",
   "displayName": "Chester Language Support",
   "description": "Provides language support for Chester",
-  "version": "0.0.16",
+  "version": "0.0.19",
   "publisher": "mio-19",
   "repository": {
     "type": "git",
@@ -59,7 +59,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.9",
-    "@types/node": "^20.16.11",
+    "@types/node": "^20.16.12",
     "@types/vscode": "^1.94.0",
     "@typescript-eslint/eslint-plugin": "^8.9.0",
     "@typescript-eslint/parser": "^8.9.0",

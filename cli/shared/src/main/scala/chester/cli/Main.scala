@@ -7,25 +7,8 @@ import scopt.OParser
 import chester.utils.env.DefaultEnv
 import chester.utils.io.*
 import chester.utils.io.impl.*
-
-// Import the generated BuildInfo object
-
+import chester.cli.Config.*
 object Main {
-
-  sealed trait Config
-
-  case class RunConfig(input: Option[String]) extends Config
-
-  case object IntegrityConfig extends Config
-
-  case class CompileConfig(
-      inputs: Seq[String],
-      targetDir: String = "."
-  ) extends Config
-
-  case class DecompileConfig(input: String) extends Config
-
-  case object InitConfig extends Config
 
   // Parsing state class with default command set to "run"
   case class CliConfig(
@@ -33,11 +16,12 @@ object Main {
       input: Option[String] = None,
       inputs: Seq[String] = Seq(),
       targetDir: String = ".",
-      version: Boolean = false // Add a flag for the version option
+      version: Boolean = false, // Add a flag for the version option
+      packages: Seq[String] = Seq() // Add this line
   )
 
   def main(args: Array[String]): Unit = {
-    PlatformSpecific.testLoadingJS()
+    if (false) platform.testLoadingJS()
 
     val builder = OParser.builder[CliConfig]
     val parser = {
@@ -46,12 +30,9 @@ object Main {
         programName("chester"),
         head("chester", BuildInfo.version), // Use BuildInfo.version here
 
-        // Global version option
         opt[Unit]('v', "version")
           .action((_, c) => c.copy(version = true))
           .text("Print version information and exit"),
-
-        // Command for "run"
         cmd("run")
           .action((_, c) => c.copy(command = "run"))
           .text("Run expressions")
@@ -69,13 +50,9 @@ object Main {
               .action((x, c) => c.copy(input = Some(x)))
               .text("Input file or directory. Use '-' for stdin.")
           ),
-
-        // Command for "integrity"
         cmd("integrity")
           .action((_, c) => c.copy(command = "integrity"))
           .text("Run integrity check"),
-
-        // Command for "compile"
         cmd("compile")
           .action((_, c) => c.copy(command = "compile"))
           .text("Compile Chester source files")
@@ -100,8 +77,6 @@ object Main {
                 "Target directory for compiled outputs (defaults to current directory)."
               )
           ),
-
-        // Command for "decompile"
         cmd("decompile")
           .action((_, c) => c.copy(command = "decompile"))
           .text("Decompile a .tast binary file")
@@ -136,11 +111,23 @@ object Main {
               .action((x, c) => c.copy(input = Some(x)))
               .text("Input source file or directory.")
           ),
-
-        // Command for "init"
         cmd("init")
           .action((_, c) => c.copy(command = "init"))
           .text("Initialize a Chester project in the current directory"),
+        cmd("add")
+          .action((_, c) => c.copy(command = "add"))
+          .text("Add one or more packages")
+          .children(
+            arg[String]("<packages>...")
+              .unbounded()
+              .required()
+              .action((x, c) => c.copy(packages = c.packages :+ x))
+              .text("Package names to add")
+          ),
+        cmd("install")
+          .abbr("i")
+          .action((_, c) => c.copy(command = "install"))
+          .text("Install dependencies"),
 
         // Handle case where user might omit "run" and just provide input directly
         arg[String]("input")
@@ -159,7 +146,7 @@ object Main {
     }
 
     // Parse the arguments
-    OParser.parse(parser, argsPlatform(args), CliConfig()) match {
+    OParser.parse(parser, platform.argsPlatform(args), CliConfig()) match {
       case Some(cliConfig) if cliConfig.version =>
         // Handle version flag
         println(s"Chester version ${BuildInfo.version}")
@@ -178,7 +165,6 @@ object Main {
               )
               return
             }
-          // Add this case for decompile
           case "decompile" =>
             cliConfig.input match {
               case Some(inputFile) =>
@@ -189,21 +175,30 @@ object Main {
             }
           case "init" =>
             InitConfig
+          case "install" =>
+            InstallConfig
+          case "add" =>
+            if (cliConfig.packages.nonEmpty) {
+              AddConfig(cliConfig.packages)
+            } else {
+              println("Error: At least one package name is required for add command.")
+              return
+            }
           case "genSemanticDB" =>
-            PlatformSpecific.genSemanticDB(cliConfig)
+            platform.genSemanticDB(cliConfig)
             return
           case _ =>
             println("Invalid command")
             return
         }
-        Program.spawn(Some(config))
+        CLI.spawn(Some(config))
       case None =>
         // If parsing fails, default to "run" command when no args are provided
         if (args.isEmpty) {
-          Program.spawn(Some(RunConfig(None)))
+          CLI.spawn(Some(RunConfig(None)))
         } else {
           // Arguments are bad, error message will have been displayed
-          Program.spawn(None)
+          // CLI.spawn(None)
         }
     }
   }
