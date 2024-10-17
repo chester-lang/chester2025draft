@@ -7,7 +7,7 @@ import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.17")
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.18")
 ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
@@ -136,7 +136,8 @@ bump := {
       file("idea-plugin/build.sbt"),
       file("idea-plugin/resources/META-INF/plugin.xml"),
       file("vscode/package.json"),
-      file("cli/package.json")
+      file("cli/package.json"),
+      file("packages/base/package.json")
     )
     val filesToUpdateWithoutQuotes = Seq(
       file("idea-plugin/resources/META-INF/plugin.xml")
