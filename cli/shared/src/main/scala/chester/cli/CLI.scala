@@ -57,7 +57,11 @@ class CLI[F[_]](using
           case InitConfig =>
             this.initializePackageJson()
           case InstallConfig =>
-            this.installDependencies() // Call the stub method
+            this.installDependencies()
+          case AddConfig(packages) =>
+            this.addPackages(packages)
+          case SelfUpdateConfig =>
+            this.selfUpdate()
         }
       case None =>
         // Arguments are bad, error message will have been displayed
@@ -192,5 +196,9 @@ class CLI[F[_]](using
 
   def addPackages(packages: Seq[String]): F[Unit] = for {
     _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => s"${p}.chester"))
+  } yield ()
+
+  def selfUpdate(): F[Unit] = for {
+    _ <- IO.call(Vector("proto", "install", "chester"))
   } yield ()
 }

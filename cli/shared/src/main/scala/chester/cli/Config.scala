@@ -11,4 +11,5 @@ enum Config {
   case InitConfig extends Config
   case InstallConfig extends Config
   case AddConfig(packages: Seq[String]) extends Config
+  case SelfUpdateConfig extends Config
 }

@@ -8,6 +8,7 @@ import chester.utils.env.DefaultEnv
 import chester.utils.io.*
 import chester.utils.io.impl.*
 import chester.cli.Config.*
+
 object Main {
 
   // Parsing state class with default command set to "run"
@@ -16,8 +17,8 @@ object Main {
       input: Option[String] = None,
       inputs: Seq[String] = Seq(),
       targetDir: String = ".",
-      version: Boolean = false, // Add a flag for the version option
-      packages: Seq[String] = Seq() // Add this line
+      version: Boolean = false,
+      packages: Seq[String] = Seq()
   )
 
   def main(args: Array[String]): Unit = {
@@ -28,11 +29,12 @@ object Main {
       import builder._
       OParser.sequence(
         programName("chester"),
-        head("chester", BuildInfo.version), // Use BuildInfo.version here
+        head("chester", BuildInfo.version),
 
         opt[Unit]('v', "version")
           .action((_, c) => c.copy(version = true))
           .text("Print version information and exit"),
+
         cmd("run")
           .action((_, c) => c.copy(command = "run"))
           .text("Run expressions")
@@ -129,6 +131,10 @@ object Main {
           .action((_, c) => c.copy(command = "install"))
           .text("Install dependencies"),
 
+        cmd("self-update")
+          .action((_, c) => c.copy(command = "self-update"))
+          .text("Update Chester CLI to the latest version"),
+
         // Handle case where user might omit "run" and just provide input directly
         arg[String]("input")
           .optional()
@@ -184,6 +190,8 @@ object Main {
               println("Error: At least one package name is required for add command.")
               return
             }
+          case "self-update" =>
+            SelfUpdateConfig
           case "genSemanticDB" =>
             platform.genSemanticDB(cliConfig)
             return
