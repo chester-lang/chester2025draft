@@ -8,6 +8,10 @@ trait PathOps[T] {
   def asString(p: T): String
 
   def baseName(p: T): String
+
+  def isAbsolute(p: T): Boolean
+
+  def isRelative(p: T): Boolean
 }
 
 extension [T](p: T)(using ops: PathOps[T]) {
@@ -26,4 +30,8 @@ implicit object PathOpsString extends PathOps[String] {
   inline def asString(p: String): String = p
 
   inline def baseName(p: String): String = p.split("/").last
+
+  inline def isAbsolute(p: String): Boolean = p.startsWith("/") ||  p.matches("^[A-Za-z]:\\\\.*") || p.startsWith("\\\\")
+
+  inline def isRelative(p: String): Boolean = !isAbsolute(p)
 }

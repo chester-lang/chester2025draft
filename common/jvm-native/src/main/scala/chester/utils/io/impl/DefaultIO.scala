@@ -42,6 +42,10 @@ object DefaultPathOps extends PathOps[_root_.os.FilePath] {
   override inline def asString(p: os.FilePath): String = p.toString
 
   override inline def baseName(p: os.FilePath): String = p.last
+
+  override inline def isAbsolute(p: os.FilePath): Boolean = p.toNIO.isAbsolute
+
+  override inline def isRelative(p: os.FilePath): Boolean = !p.toNIO.isAbsolute
 }
 
 implicit object DefaultIO extends IO[Id] {
