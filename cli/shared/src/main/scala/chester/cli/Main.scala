@@ -33,7 +33,6 @@ object Main {
         opt[Unit]('v', "version")
           .action((_, c) => c.copy(version = true))
           .text("Print version information and exit"),
-
         cmd("run")
           .action((_, c) => c.copy(command = "run"))
           .text("Run expressions")
@@ -51,11 +50,9 @@ object Main {
               .action((x, c) => c.copy(input = Some(x)))
               .text("Input file or directory. Use '-' for stdin.")
           ),
-
         cmd("integrity")
           .action((_, c) => c.copy(command = "integrity"))
           .text("Run integrity check"),
-
         cmd("compile")
           .action((_, c) => c.copy(command = "compile"))
           .text("Compile Chester source files")
@@ -80,7 +77,6 @@ object Main {
                 "Target directory for compiled outputs (defaults to current directory)."
               )
           ),
-
         cmd("decompile")
           .action((_, c) => c.copy(command = "decompile"))
           .text("Decompile a .tast binary file")
@@ -115,20 +111,19 @@ object Main {
               .action((x, c) => c.copy(input = Some(x)))
               .text("Input source file or directory.")
           ),
-
         cmd("init")
           .action((_, c) => c.copy(command = "init"))
           .text("Initialize a Chester project in the current directory"),
-cmd("add")
-  .action((_, c) => c.copy(command = "add"))
-  .text("Add one or more packages")
-  .children(
-    arg[String]("<packages>...")
-      .unbounded()
-      .required()
-      .action((x, c) => c.copy(packages = c.packages :+ x))
-      .text("Package names to add")
-  ),
+        cmd("add")
+          .action((_, c) => c.copy(command = "add"))
+          .text("Add one or more packages")
+          .children(
+            arg[String]("<packages>...")
+              .unbounded()
+              .required()
+              .action((x, c) => c.copy(packages = c.packages :+ x))
+              .text("Package names to add")
+          ),
         cmd("install")
           .abbr("i")
           .action((_, c) => c.copy(command = "install"))

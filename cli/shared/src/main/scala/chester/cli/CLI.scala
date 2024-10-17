@@ -85,8 +85,8 @@ class CLI[F[_]](using
   def runIntegrityCheck(): F[Unit] = for {
     _ <- IO.println("Running integrity check...")
     _ = IntegrityCheck()
-      _ <- Runner.pure(())
-    } yield ()
+    _ <- Runner.pure(())
+  } yield ()
 
   def compileFiles(inputs: Seq[String], targetDir: String): F[Unit] = {
     inputs.foldLeft(Runner.pure(())) { (acc, inputFile) =>
