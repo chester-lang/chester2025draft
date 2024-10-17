@@ -6,10 +6,24 @@ check_cmd() {
   command -v "$1" > /dev/null 2>&1
   return $?
 }
-proto_cmd=proto
-if ! check_cmd proto; then
+
+if [[ -z "$PROTO_HOME" ]]; then
+  install_dir="$HOME/.proto/bin"
+else
+  install_dir="$PROTO_HOME/bin"
+fi
+
+if [[ "$OS" == "Windows_NT" ]]; then
+  proto_exe="proto.exe"
+else
+  proto_exe="proto"
+fi
+
+if check_cmd "$proto_exe"; then
+  proto_cmd="$proto_exe"
+else
+  proto_cmd="$install_dir/$proto_exe"
   curl -fsSL https://moonrepo.dev/install/proto.sh | bash
-  proto_cmd="$HOME/.proto/bin/proto"
   if ! check_cmd "$proto_cmd"; then
     echo "proto command not found"
     exit 1
