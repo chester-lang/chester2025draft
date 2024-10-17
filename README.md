@@ -16,21 +16,19 @@ NODE_OPTIONS=--enable-source-maps npx chester-cli
 
 ## Get Started
 
-1. Install [Proto](https://moonrepo.dev/docs/proto/install) to manage Chester versions.
-
 Linux, macOS, WSL
 
 ```bash
-curl -fsSL https://moonrepo.dev/install/proto.sh | bash
+curl -fsSL https://github.com/chester-lang/chester/raw/refs/heads/main/i.sh | bash
 ```
 
 Windows
 
 ```powershell
-irm https://moonrepo.dev/install/proto.ps1 | iex
+irm https://github.com/chester-lang/chester/raw/refs/heads/main/i.ps1 | iex
 ```
 
-2. Use Proto to install Chester.
+Or use [Proto](https://moonrepo.dev/docs/proto/install) to install Chester.
 
 ```bash
 proto plugin add --global chester "https://github.com/chester-lang/chester/raw/refs/heads/main/proto.toml"
