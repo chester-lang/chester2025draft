@@ -6,7 +6,10 @@ sealed trait ASTNode
 // Expressions
 sealed trait Expression extends ASTNode
 
-case class Identifier(name: String) extends Expression
+case class Identifier(
+  name: String, 
+  typeAnnotation: Option[TypeAnnotation] = None
+) extends Expression
 
 case class Literal(value: Any) extends Expression
 
@@ -30,8 +33,16 @@ case class MemberExpression(
 // Statements
 sealed trait Statement extends ASTNode
 
+// VariableKind enumeration
+sealed trait VariableKind
+object VariableKind {
+  case object Var extends VariableKind
+  case object Let extends VariableKind
+  case object Const extends VariableKind
+}
+
 case class VariableDeclaration(
-  kind: String, // "var", "let", or "const"
+  kind: VariableKind,
   declarations: List[VariableDeclarator]
 ) extends Statement
 
@@ -43,13 +54,12 @@ case class VariableDeclarator(
 case class FunctionDeclaration(
   id: Identifier, 
   params: List[Parameter], 
-  returnType: Option[TypeAnnotation],
+  returnType: Option[TypeAnnotation] = None,
   body: BlockStatement
 ) extends Statement
 
 case class Parameter(
-  id: Identifier, 
-  typeAnnotation: Option[TypeAnnotation]
+  id: Identifier
 ) extends ASTNode
 
 case class BlockStatement(
@@ -76,31 +86,11 @@ case class FunctionTypeAnnotation(
   returnType: TypeAnnotation
 ) extends TypeAnnotation
 
-// Extend existing nodes with optional type annotations
-case class TypedIdentifier(
-  name: String, 
-  typeAnnotation: Option[TypeAnnotation]
-) extends Expression
-
-// Update VariableDeclarator to hold TypedIdentifier
-case class TypedVariableDeclarator(
-  id: TypedIdentifier, 
-  init: Option[Expression]
-) extends ASTNode
-
-// Update FunctionDeclaration to hold TypedIdentifiers and returnType
-case class TypedFunctionDeclaration(
-  id: TypedIdentifier, 
-  params: List[Parameter], 
-  returnType: Option[TypeAnnotation],
-  body: BlockStatement
-) extends Statement
-
 // Interfaces and Classes (TypeScript)
 case class InterfaceDeclaration(
   id: Identifier,
-  typeParameters: Option[List[TypeParameter]],
-  extendsInterfaces: Option[List[Expression]],
+  typeParameters: Option[List[TypeParameter]] = None,
+  extendsInterfaces: Option[List[Expression]] = None,
   body: InterfaceBody
 ) extends Statement
 
@@ -116,8 +106,8 @@ case class InterfaceProperty(
 
 case class ClassDeclaration(
   id: Identifier,
-  typeParameters: Option[List[TypeParameter]],
-  superClass: Option[Expression],
+  typeParameters: Option[List[TypeParameter]] = None,
+  superClass: Option[Expression] = None,
   body: ClassBody
 ) extends Statement
 
@@ -130,7 +120,7 @@ sealed trait ClassElement extends ASTNode
 case class MethodDefinition(
   key: Identifier,
   params: List[Parameter],
-  returnType: Option[TypeAnnotation],
+  returnType: Option[TypeAnnotation] = None,
   body: BlockStatement,
   isStatic: Boolean,
   kind: String // "constructor", "method", "get", "set"
@@ -138,15 +128,14 @@ case class MethodDefinition(
 
 case class PropertyDefinition(
   key: Identifier,
-  typeAnnotation: Option[TypeAnnotation],
-  initializer: Option[Expression],
+  initializer: Option[Expression] = None,
   isStatic: Boolean
 ) extends ClassElement
 
 // Type Parameters
 case class TypeParameter(
   name: String,
-  constraint: Option[TypeAnnotation]
+  constraint: Option[TypeAnnotation] = None
 ) extends ASTNode
 
 // Union and Intersection Types
@@ -161,5 +150,5 @@ case class IntersectionType(
 // Generics
 case class GenericTypeAnnotation(
   id: Identifier,
-  typeParameters: Option[List[TypeAnnotation]]
+  typeParameters: Option[List[TypeAnnotation]] = None
 ) extends TypeAnnotation
