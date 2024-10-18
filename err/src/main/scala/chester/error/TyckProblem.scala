@@ -15,7 +15,7 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
   final def stage: Problem.Stage = Problem.Stage.TYCK
 
   final def getMessage: String = {
-    implicit val options: PrettierOptions
+    implicit val options: PrettierOptions = PrettierOptions.Default
     render(toDoc)
   }
 
