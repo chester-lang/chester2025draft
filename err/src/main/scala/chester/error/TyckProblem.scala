@@ -137,22 +137,22 @@ sealed trait OpInfoError extends TyckError derives ReadWriter {
 }
 
 case class UnknownOperator(override val cause: Expr) extends OpInfoError {
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Unknown operator."
 }
 
 case class PrecedenceCycleDetected(groups: Iterable[PrecedenceGroup]) extends OpInfoError {
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Precedence cycle detected among groups: ${groups.map(_.name).mkString(" -> ")}"
 }
 
 case class UnexpectedTokens(tokens: List[Expr]) extends OpInfoError {
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Unexpected tokens after parsing expression: $tokens"
 }
 
 case class UnknownPrecedenceGroup(group: PrecedenceGroup) extends OpInfoError {
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Unknown precedence group: '${group.name}'."
 }
 
@@ -160,7 +160,7 @@ case class UnconnectedPrecedenceGroups(
     group1: PrecedenceGroup,
     group2: PrecedenceGroup
 ) extends OpInfoError {
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Precedence groups '${group1.name}' and '${group2.name}' are not connected."
 }
 
@@ -266,23 +266,23 @@ case class ExpectRecordName(cause: Expr) extends TyckError {
     t"Expected a record name, got "
 }
 case class DuplicateFieldDefinition(cause: Expr) extends TyckError {
-  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Duplicate field definition in record"
 }
 case class UnsupportedExtendsType(cause: Expr) extends TyckError {
-  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("Unsupported type in extends clause")
 }
 case class ExpectTraitName(cause: Expr) extends TyckError {
-  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Expected a trait name, got"
 }
 
 case class ExpectInterfaceName(cause: Expr) extends TyckError {
-  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Expected an interface name, got"
 }
 case class ExpectObjectName(cause: Expr) extends TyckError {
-  override def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     t"Expected an object name, got"
 }

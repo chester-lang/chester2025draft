@@ -29,7 +29,7 @@ implicit val ModuleRefRW: ReadWriter[ModuleRef] =
 
 /** nonempty */
 case class ModuleRef(xs: Vector[Name]) extends AnyVal with ToDoc {
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     Doc.text(xs.mkString("."))
 }
 
@@ -39,6 +39,6 @@ val DefaultModule = ModuleRef(Vector("_default"))
 
 case class AbsoluteRef(module: ModuleRef, id: Name) extends ToDoc derives ReadWriter {
   def name: Name = id
-  override def toDoc(implicit options: PrettierOptions): Doc =
+  override def toDoc(using options: PrettierOptions): Doc =
     module.toDoc <> Doc.text(".") <> id.toDoc
 }

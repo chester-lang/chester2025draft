@@ -3,7 +3,7 @@ package chester.utils.doc
 trait PrettierOptionsKey[T] {
   def default: T
 
-  def get(implicit options: PrettierOptions): T = options.get(this)
+  def get(using options: PrettierOptions): T = options.get(this)
 }
 
 case class PrettierOptions(x: Map[PrettierOptionsKey[?], Any]) extends AnyVal {
