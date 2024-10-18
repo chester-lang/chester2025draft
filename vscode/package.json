@@ -2,7 +2,7 @@
   "name": "chester-language-support",
   "displayName": "Chester Language Support",
   "description": "Provides language support for Chester",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "publisher": "mio-19",
   "repository": {
     "type": "git",
