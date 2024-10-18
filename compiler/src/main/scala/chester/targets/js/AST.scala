@@ -27,34 +27,34 @@ case class TypedIdentifier(
 // Operators as Enums (Using Scala 3 Syntax)
 enum BinaryOperator derives ReadWriter {
   case EqualEqual, NotEqual, StrictEqual, StrictNotEqual,
-       LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual,
-       LeftShift, RightShift, UnsignedRightShift,
-       Plus, Minus, Multiply, Divide, Modulo,
-       BitwiseOR, BitwiseXOR, BitwiseAND,
-       In, InstanceOf
+    LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual,
+    LeftShift, RightShift, UnsignedRightShift,
+    Plus, Minus, Multiply, Divide, Modulo,
+    BitwiseOR, BitwiseXOR, BitwiseAND,
+    In, InstanceOf
 
   override def toString: String = this match {
-    case EqualEqual => "=="
-    case NotEqual => "!="
-    case StrictEqual => "==="
-    case StrictNotEqual => "!=="
-    case LessThan => "<"
-    case LessThanOrEqual => "<="
-    case GreaterThan => ">"
+    case EqualEqual         => "=="
+    case NotEqual           => "!="
+    case StrictEqual        => "==="
+    case StrictNotEqual     => "!=="
+    case LessThan           => "<"
+    case LessThanOrEqual    => "<="
+    case GreaterThan        => ">"
     case GreaterThanOrEqual => ">="
-    case LeftShift => "<<"
-    case RightShift => ">>"
+    case LeftShift          => "<<"
+    case RightShift         => ">>"
     case UnsignedRightShift => ">>>"
-    case Plus => "+"
-    case Minus => "-"
-    case Multiply => "*"
-    case Divide => "/"
-    case Modulo => "%"
-    case BitwiseOR => "|"
-    case BitwiseXOR => "^"
-    case BitwiseAND => "&"
-    case In => "in"
-    case InstanceOf => "instanceof"
+    case Plus               => "+"
+    case Minus              => "-"
+    case Multiply           => "*"
+    case Divide             => "/"
+    case Modulo             => "%"
+    case BitwiseOR          => "|"
+    case BitwiseXOR         => "^"
+    case BitwiseAND         => "&"
+    case In                 => "in"
+    case InstanceOf         => "instanceof"
   }
 }
 
@@ -62,31 +62,31 @@ enum LogicalOperator derives ReadWriter {
   case Or, And, NullishCoalescing
 
   override def toString: String = this match {
-    case Or => "||"
-    case And => "&&"
+    case Or                => "||"
+    case And               => "&&"
     case NullishCoalescing => "??"
   }
 }
 
 enum AssignmentOperator derives ReadWriter {
   case Assign, PlusAssign, MinusAssign, MultiplyAssign, DivideAssign, ModuloAssign,
-       LeftShiftAssign, RightShiftAssign, UnsignedRightShiftAssign,
-       BitwiseORAssign, BitwiseXORAssign, BitwiseANDAssign, ExponentiationAssign
+    LeftShiftAssign, RightShiftAssign, UnsignedRightShiftAssign,
+    BitwiseORAssign, BitwiseXORAssign, BitwiseANDAssign, ExponentiationAssign
 
   override def toString: String = this match {
-    case Assign => "="
-    case PlusAssign => "+="
-    case MinusAssign => "-="
-    case MultiplyAssign => "*="
-    case DivideAssign => "/="
-    case ModuloAssign => "%="
-    case LeftShiftAssign => "<<="
-    case RightShiftAssign => ">>="
+    case Assign                   => "="
+    case PlusAssign               => "+="
+    case MinusAssign              => "-="
+    case MultiplyAssign           => "*="
+    case DivideAssign             => "/="
+    case ModuloAssign             => "%="
+    case LeftShiftAssign          => "<<="
+    case RightShiftAssign         => ">>="
     case UnsignedRightShiftAssign => ">>>="
-    case BitwiseORAssign => "|="
-    case BitwiseXORAssign => "^="
-    case BitwiseANDAssign => "&="
-    case ExponentiationAssign => "**="
+    case BitwiseORAssign          => "|="
+    case BitwiseXORAssign         => "^="
+    case BitwiseANDAssign         => "&="
+    case ExponentiationAssign     => "**="
   }
 }
 
@@ -94,13 +94,13 @@ enum UnaryOperator derives ReadWriter {
   case Minus, Plus, Not, BitwiseNot, Typeof, Void, Delete
 
   override def toString: String = this match {
-    case Minus => "-"
-    case Plus => "+"
-    case Not => "!"
+    case Minus      => "-"
+    case Plus       => "+"
+    case Not        => "!"
     case BitwiseNot => "~"
-    case Typeof => "typeof"
-    case Void => "void"
-    case Delete => "delete"
+    case Typeof     => "typeof"
+    case Void       => "void"
+    case Delete     => "delete"
   }
 }
 
@@ -649,7 +649,7 @@ case class ForOfStatement(
     case Left(varDecl) => varDecl.toDoc
     case Right(expr)   => expr.toDoc
   }
-  def awaitDoc(using options: PrettierOptions) = if (await) Doc.text("await") <+> Doc.empty else Doc.empty
+  def awaitDoc(using options: PrettierOptions): Doc = if (await) Doc.text("await") <+> Doc.empty else Doc.empty
   def toDoc(using options: PrettierOptions): Doc =
     Doc.text("for") <+> awaitDoc <> Doc.text("(") <> leftDoc <> Doc.text(" of ") <> right.toDoc <> Doc.text(")") <+> body.toDoc
 }

@@ -1,6 +1,5 @@
 package chester.cli
 
-import chester.cli.Main.*
 import chester.core.parseCheckTAST
 import chester.error.Problem
 import chester.error.Problem.Severity

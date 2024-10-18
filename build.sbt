@@ -58,8 +58,8 @@ val commonSettings = Seq(
       "utf8",
       "-explain-cyclic",
       "-Wvalue-discard",
-      "-Wnonunit-statement",
-      //"-experimental"
+      "-Wnonunit-statement"
+      // "-experimental"
     ),
   // scalafix
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),

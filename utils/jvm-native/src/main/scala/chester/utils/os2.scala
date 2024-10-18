@@ -19,10 +19,13 @@ object os2 {
   }
 
   def pwd: Path = {
+    onNativeImageBuildTime {
+      throw new IllegalStateException("os2.pwd should not be called at build time")
+    }
     ifNativeImageRunTime {
-        pwdGraalVM
+      pwdGraalVM
     } {
-        os.pwd
+      os.pwd
     }
   }
   def path(x: String): os.Path = os.Path(x, pwd)

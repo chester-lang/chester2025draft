@@ -162,23 +162,23 @@ case object VoidType extends TypeSpecifier {
 // Operators
 enum BinaryOperator derives ReadWriter {
   case Add, Subtract, Multiply, Divide,
-       Modulo, And, Or, Equal, NotEqual,
-       LessThan, GreaterThan, LessThanOrEqual, GreaterThanOrEqual
+    Modulo, And, Or, Equal, NotEqual,
+    LessThan, GreaterThan, LessThanOrEqual, GreaterThanOrEqual
 
   override def toString: String = this match {
-    case Add               => "+"
-    case Subtract          => "-"
-    case Multiply          => "*"
-    case Divide            => "/"
-    case Modulo            => "%"
-    case And               => "&&"
-    case Or                => "||"
-    case Equal             => "=="
-    case NotEqual          => "!="
-    case LessThan          => "<"
-    case GreaterThan       => ">"
-    case LessThanOrEqual   => "<="
-    case GreaterThanOrEqual=> ">="
+    case Add                => "+"
+    case Subtract           => "-"
+    case Multiply           => "*"
+    case Divide             => "/"
+    case Modulo             => "%"
+    case And                => "&&"
+    case Or                 => "||"
+    case Equal              => "=="
+    case NotEqual           => "!="
+    case LessThan           => "<"
+    case GreaterThan        => ">"
+    case LessThanOrEqual    => "<="
+    case GreaterThanOrEqual => ">="
   }
 }
 
