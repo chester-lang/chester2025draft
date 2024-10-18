@@ -22,17 +22,6 @@ case class StringIndex(val stringList: LazyList[String]) {
 
   lazy val charLength: Int = stringIterator.foldLeft(0)((count, _) => count + 1)
 
-  private lazy val lineBreaks: LazyList[Int] = {
-    def lineBreakIndices(s: LazyList[Char], idx: Int = 0): LazyList[Int] =
-      s match {
-        case LazyList()    => LazyList(idx)
-        case '\n' #:: tail => idx #:: lineBreakIndices(tail, idx + 1)
-        case _ #:: tail    => lineBreakIndices(tail, idx + 1)
-      }
-
-    lineBreakIndices(stringList.flatten)
-  }
-
   def charIndexToWithUTF16(charIndex: Int :| Positive0): WithUTF16 =
     WithUTF16(charIndexToUnicodeIndex(charIndex), charIndex)
 
