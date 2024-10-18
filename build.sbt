@@ -59,7 +59,7 @@ val commonSettings = Seq(
       "-explain-cyclic",
       "-Wvalue-discard",
       "-Wnonunit-statement",
-      "-experimental"
+      //"-experimental"
     ),
   // scalafix
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),

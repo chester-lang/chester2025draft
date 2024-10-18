@@ -109,15 +109,21 @@ object UniqId {
     UniqIdRange(currentRangeCollect.min, currentRangeCollect.max + 1)
   }
 
+  case class GiveNewRangeResult[T <: ContainsUniqId](
+      oldRange: UniqIdRange,
+      newRange: UniqIdRange,
+      result: T
+  )
+
   def giveNewRange[T <: ContainsUniqId](
       x: T
-  ): (oldRange: UniqIdRange, newRange: UniqIdRange, result: T) = {
+  ): GiveNewRangeResult[T] = {
     val currentRange = x.uniqIdRange
     val newRange = requireRange(currentRange.size)
     val reranger: UReplacer = new UReplacer {
       override def apply[T](id: UniqIdOf[T]): UniqIdOf[T] =
         id.rerange(currentRange, newRange)
     }
-    (currentRange, newRange, x.replaceU(reranger).asInstanceOf[T])
+    GiveNewRangeResult(currentRange, newRange, x.replaceU(reranger).asInstanceOf[T])
   }
 }
