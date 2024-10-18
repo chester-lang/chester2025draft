@@ -31,7 +31,7 @@ implicit object PathOpsString extends PathOps[String] {
 
   inline def baseName(p: String): String = p.split("/").last
 
-  inline def isAbsolute(p: String): Boolean = p.startsWith("/") ||  p.matches("^[A-Za-z]:\\\\.*") || p.startsWith("\\\\")
+  inline def isAbsolute(p: String): Boolean = p.startsWith("/") || p.matches("^[A-Za-z]:\\\\.*") || p.startsWith("\\\\")
 
   inline def isRelative(p: String): Boolean = !isAbsolute(p)
 }

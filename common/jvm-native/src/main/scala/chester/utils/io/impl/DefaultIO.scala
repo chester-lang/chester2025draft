@@ -10,7 +10,6 @@ import scala.annotation.tailrec
 import scala.util.Try
 import com.eed3si9n.ifdef.*
 
-
 implicit object DefaultSpawn extends Spawn[Id] {
   override inline def spawn(x: => Unit): Unit = x
 }

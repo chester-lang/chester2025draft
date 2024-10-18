@@ -30,11 +30,9 @@ object Main {
       OParser.sequence(
         programName("chester"),
         head("chester", BuildInfo.version),
-
         opt[Unit]('v', "version")
           .action((_, c) => c.copy(version = true))
           .text("Print version information and exit"),
-
         cmd("run")
           .action((_, c) => c.copy(command = "run"))
           .text("Run expressions")
@@ -130,7 +128,6 @@ object Main {
           .abbr("i")
           .action((_, c) => c.copy(command = "install"))
           .text("Install dependencies"),
-
         cmd("self-update")
           .action((_, c) => c.copy(command = "self-update"))
           .text("Update Chester CLI to the latest version"),
