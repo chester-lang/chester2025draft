@@ -108,7 +108,8 @@ implicit object DefaultIO extends IO[Id] {
 
   @ifndef("scalaNativeForTermux")
   override inline def call(command: Seq[String]): CommandOutput = {
-    val result = os.call(command, stdout = os.Inherit, stderr = os.Inherit)
+    os2.init()
+    val result = os.call(command, stdin = os.Inherit, stdout = os.Inherit, stderr = os.Inherit)
     CommandOutput(exitCode = Some(result.exitCode))
   }
 

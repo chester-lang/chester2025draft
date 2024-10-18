@@ -4,10 +4,26 @@ import os.Path
 
 object os2 {
   // https://github.com/com-lihaoyi/os-lib/issues/318
-  lazy val pwd: Path = {
+  lazy val pwdGraalVM: Path = {
     val result = os.Path(java.nio.file.Paths.get(".").toAbsolutePath)
     os.dynamicPwd.value = result
     result
+  }
+  def init(): Unit = {
+    onNativeImageBuildTime {
+      throw new IllegalStateException("os2.init() should not be called at build time")
+    }
+    onNativeImageRunTime {
+      val _ = pwdGraalVM
+    }
+  }
+
+  def pwd: Path = {
+    ifNativeImageRunTime {
+        pwdGraalVM
+    } {
+        os.pwd
+    }
   }
   def path(x: String): os.Path = os.Path(x, pwd)
 }
