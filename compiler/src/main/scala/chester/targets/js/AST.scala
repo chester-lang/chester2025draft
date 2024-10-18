@@ -1030,7 +1030,9 @@ case class NonNullExpression(
 // Decorators (TypeScript)
 case class Decorator(
   expression: Expression
-) extends ASTNode
+) extends ASTNode {
+  def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc = Doc.text("@") <> expression.toDoc
+}
 
 // Destructuring and Spread Elements
 // Already handled in Patterns and SpreadElement above
@@ -1045,24 +1047,49 @@ case class AsyncGeneratorFunctionDeclaration(
   returnType: Option[TypeAnnotation] = None,
   body: BlockStatement,
   typeParameters: Option[List[TypeParameter]] = None
-) extends Declaration
+) extends Declaration {
+  def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc = {
+    val idDoc = id.map(_.toDoc).getOrElse(Doc.empty)
+    val typeParamsDoc = typeParameters.map { tps =>
+      Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">")
+    }.getOrElse(Doc.empty)
+    val paramsDoc = Doc.text("(") <> Doc.sep(Doc.text(","), params.map(_.toDoc)) <> Doc.text(")")
+    val returnTypeDoc = returnType.map(rt => Doc.text(":") <+> rt.toDoc).getOrElse(Doc.empty)
+    Doc.text("async function*") <+> idDoc <> typeParamsDoc <> paramsDoc <> returnTypeDoc <+> body.toDoc
+  }
+}
 
 // Index Signatures and Mapped Types (TypeScript)
 case class IndexSignature(
   parameter: Parameter,
   typeAnnotation: TypeAnnotation
-) extends ASTNode
+) extends ASTNode {
+  def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc = {
+    Doc.text("[") <> parameter.toDoc <> Doc.text("]") <> Doc.text(":") <+> typeAnnotation.toDoc
+  }
+}
 
 case class MappedType(
   typeParameter: TypeParameter,
   typeAnnotation: TypeAnnotation,
   optional: Boolean = false,
   readonly: Boolean = false
-) extends TypeAnnotation
+) extends TypeAnnotation {
+  def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc = {
+    val readonlyDoc = if (readonly) Doc.text("readonly ") else Doc.empty
+    val optionalDoc = if (optional) Doc.text("?") else Doc.empty
+    Doc.text("{") <+> readonlyDoc <> Doc.text("[") <> typeParameter.toDoc <> Doc.text(" in ") <> typeAnnotation.toDoc <> Doc.text("]") <> optionalDoc <> Doc.text(":") <+> typeAnnotation.toDoc <+> Doc.text("}")
+  }
+}
 
 // Symbol Type and Symbol Expressions
 case class SymbolExpression(
   description: Option[Expression]
-) extends Expression
+) extends Expression {
+  def toDoc(implicit options: PrettierOptions = PrettierOptions.Default): Doc = {
+    val descDoc = description.map(d => Doc.text("(") <> d.toDoc <> Doc.text(")")).getOrElse(Doc.empty)
+    Doc.text("Symbol") <> descDoc
+  }
+}
 
 // Await and Async Functions already handled in FunctionExpression and FunctionDeclaration
