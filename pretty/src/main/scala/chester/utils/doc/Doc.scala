@@ -92,13 +92,24 @@ def concat(docs: ToDoc*)(using options: PrettierOptions): Doc = group {
   docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
 }
 
+@targetName("concatIterable")
+def concat(docs: Iterable[ToDoc])(using options: PrettierOptions): Doc = group {
+  docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
+}
+
+def hsep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = hsep(ds.map(_.toDoc), sep.toDoc)
+def ssep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = ssep(ds.map(_.toDoc), sep.toDoc)
+def sep(sep: ToDoc, ds: Seq[ToDoc])(using options: PrettierOptions): Doc = hsep(ds, sep)
+
 val empty = text("")
 val hardline = text("\n") // TODO: CRLF?
+val line = hardline
 
 object Doc {
   def indented(doc: ToDoc)(using options: PrettierOptions): Doc = doc.indented()
+  def indent(doc: ToDoc)(using options: PrettierOptions): Doc = doc.indented()
 
-  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, empty, concat, hardline}
+  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, empty, concat, hardline, line, sep}
 }
 
 implicit class DocOps(doc: Doc) extends AnyVal {
