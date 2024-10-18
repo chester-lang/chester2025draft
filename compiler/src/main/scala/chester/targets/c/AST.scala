@@ -161,24 +161,35 @@ case object VoidType extends TypeSpecifier {
 
 // Operators
 enum BinaryOperator derives ReadWriter {
-  case Add, Subtract, Multiply, Divide
-  // Add more binary operators as needed
+  case Add, Subtract, Multiply, Divide,
+       Modulo, And, Or, Equal, NotEqual,
+       LessThan, GreaterThan, LessThanOrEqual, GreaterThanOrEqual
 
   override def toString: String = this match {
-    case Add => "+"
-    case Subtract => "-"
-    case Multiply => "*"
-    case Divide => "/"
+    case Add               => "+"
+    case Subtract          => "-"
+    case Multiply          => "*"
+    case Divide            => "/"
+    case Modulo            => "%"
+    case And               => "&&"
+    case Or                => "||"
+    case Equal             => "=="
+    case NotEqual          => "!="
+    case LessThan          => "<"
+    case GreaterThan       => ">"
+    case LessThanOrEqual   => "<="
+    case GreaterThanOrEqual=> ">="
   }
 }
 
 enum UnaryOperator derives ReadWriter {
-  case Negate, Not
-  // Add more unary operators as needed
+  case Negate, Not, AddressOf, Dereference
 
   override def toString: String = this match {
-    case Negate => "-"
-    case Not => "!"
+    case Negate      => "-"
+    case Not         => "!"
+    case AddressOf   => "&"
+    case Dereference => "*"
   }
 }
 
@@ -201,7 +212,7 @@ case class WhileStatement(
     test: Expression,
     body: Statement
 ) extends Statement {
-  def toDoc(using options: PrettierOptions): Doc = 
+  def toDoc(using options: PrettierOptions): Doc =
     Doc.text("while (") <> test.toDoc <> Doc.text(")") <+> body.toDoc
 }
 
@@ -273,7 +284,7 @@ case class EnumMember(
 sealed trait PreprocessorDirective extends ASTNode derives ReadWriter
 
 case class IncludeDirective(path: String, isSystem: Boolean) extends PreprocessorDirective {
-  def toDoc(using options: PrettierOptions): Doc = 
+  def toDoc(using options: PrettierOptions): Doc =
     if (isSystem) Doc.text(s"#include <$path>")
     else Doc.text(s"""#include "$path"""")
 }
