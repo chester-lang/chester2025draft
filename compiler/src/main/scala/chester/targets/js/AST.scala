@@ -1,12 +1,13 @@
 package chester.targets.js
 
 import chester.utils.doc.*
+import upickle.default.*
 
 // Base trait for all AST nodes
-sealed trait ASTNode extends ToDoc
+sealed trait ASTNode extends ToDoc derives ReadWriter
 
 // Expressions
-sealed trait Expression extends ASTNode
+sealed trait Expression extends ASTNode derives ReadWriter
 
 // Unannotated Identifier
 case class Identifier(
@@ -24,7 +25,7 @@ case class TypedIdentifier(
 }
 
 // Operators as Enums (Using Scala 2 Syntax)
-sealed trait BinaryOperator
+sealed trait BinaryOperator derives ReadWriter
 object BinaryOperator {
   case object `==` extends BinaryOperator
   case object `!=` extends BinaryOperator
@@ -49,14 +50,14 @@ object BinaryOperator {
   case object `instanceof` extends BinaryOperator
 }
 
-sealed trait LogicalOperator
+sealed trait LogicalOperator derives ReadWriter
 object LogicalOperator {
   case object `||` extends LogicalOperator
   case object `&&` extends LogicalOperator
   case object `??` extends LogicalOperator
 }
 
-sealed trait AssignmentOperator
+sealed trait AssignmentOperator derives ReadWriter
 object AssignmentOperator {
   case object `=` extends AssignmentOperator
   case object `+=` extends AssignmentOperator
@@ -73,7 +74,7 @@ object AssignmentOperator {
   case object `**=` extends AssignmentOperator
 }
 
-sealed trait UnaryOperator
+sealed trait UnaryOperator derives ReadWriter
 object UnaryOperator {
   case object `-` extends UnaryOperator
   case object `+` extends UnaryOperator
@@ -84,7 +85,7 @@ object UnaryOperator {
   case object `delete` extends UnaryOperator
 }
 
-sealed trait UpdateOperator
+sealed trait UpdateOperator derives ReadWriter
 object UpdateOperator {
   case object `++` extends UpdateOperator
   case object `--` extends UpdateOperator
@@ -174,7 +175,7 @@ case class ConditionalExpression(
 // Ensure to update any pattern matches or usages of the operator fields in your code to account for the new enum types.
 
 // Literals
-sealed trait Literal extends Expression
+sealed trait Literal extends Expression derives ReadWriter
 
 case class NumericLiteral(value: Double) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(value.toString)
@@ -406,7 +407,7 @@ case class ArrayExpression(
 }
 
 // Patterns for destructuring
-sealed trait Pattern extends ASTNode
+sealed trait Pattern extends ASTNode derives ReadWriter
 
 case class ObjectPattern(
     properties: List[PatternProperty],
@@ -466,9 +467,9 @@ case class AssignmentPattern(
 }
 
 // Statements
-sealed trait Statement extends ASTNode
+sealed trait Statement extends ASTNode derives ReadWriter
 
-sealed trait Declaration extends Statement
+sealed trait Declaration extends Statement derives ReadWriter
 
 case class VariableDeclaration(
     kind: VariableKind,
@@ -486,7 +487,7 @@ case class VariableDeclaration(
 }
 
 // VariableKind enumeration
-sealed trait VariableKind
+sealed trait VariableKind derives ReadWriter
 object VariableKind {
   case object Var extends VariableKind
   case object Let extends VariableKind
@@ -732,7 +733,7 @@ case class ClassBody(
   }
 }
 
-sealed trait ClassElement extends ASTNode
+sealed trait ClassElement extends ASTNode derives ReadWriter
 
 case class MethodDefinition(
     key: Expression,
@@ -760,7 +761,7 @@ case class MethodDefinition(
 }
 
 // MethodKind enumeration
-sealed trait MethodKind
+sealed trait MethodKind derives ReadWriter
 object MethodKind {
   case object Constructor extends MethodKind
   case object Method extends MethodKind
@@ -804,7 +805,7 @@ case class ImportDeclaration(
   }
 }
 
-sealed trait ImportSpecifier extends ASTNode
+sealed trait ImportSpecifier extends ASTNode derives ReadWriter
 
 case class ImportDefaultSpecifier(
     local: Identifier
@@ -831,7 +832,7 @@ case class ImportNamedSpecifier(
   }
 }
 
-sealed trait ExportDeclaration extends Statement
+sealed trait ExportDeclaration extends Statement derives ReadWriter
 
 case class ExportNamedDeclaration(
     declaration: Option[Declaration],
@@ -884,7 +885,7 @@ case class ExportSpecifier(
 }
 
 // TypeScript-specific nodes
-sealed trait TypeAnnotation extends ASTNode
+sealed trait TypeAnnotation extends ASTNode derives ReadWriter
 
 case class TypeReference(
     name: String,
