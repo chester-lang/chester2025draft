@@ -99,10 +99,8 @@ case class BinaryExpression(
   left: Expression,
   right: Expression
 ) extends Expression {
-  def toDoc: Doc = {
-    val opDoc = Doc.text(operator.toString)
-    Doc.group(left.toDoc <+> opDoc <+> right.toDoc)
-  }
+  def toDoc: Doc =
+    Doc.group(left.toDoc <+> Doc.text(operator.toString) <+> right.toDoc)
 }
 
 // Logical Expression
@@ -516,7 +514,9 @@ case class FunctionDeclaration(
     }.getOrElse(Doc.empty)
     val paramsDoc = Doc.text("(") <> Doc.sep(Doc.text(", "), params.map(_.toDoc)) <> Doc.text(")")
     val returnTypeDoc = returnType.map(rt => Doc.text(":") <+> rt.toDoc).getOrElse(Doc.empty)
-    Doc.group(asyncDoc <> Doc.text("function") <> genDoc <+> idDoc <> typeParamsDoc <> paramsDoc <> returnTypeDoc <+> body.toDoc)
+    Doc.group(
+      asyncDoc <> Doc.text("function") <> genDoc <+> idDoc <> typeParamsDoc <> paramsDoc <> returnTypeDoc <+> body.toDoc
+    )
   }
 }
 
