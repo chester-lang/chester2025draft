@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>chester.language.plugin</id>
     <name>Chester Language Support</name>
-    <version>0.0.20</version>
+    <version>0.0.21</version>
     <vendor>mio-19</vendor>
 
     <description>Provides language support for the Chester programming language.</description>
