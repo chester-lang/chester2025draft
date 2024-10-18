@@ -17,7 +17,7 @@ def parseCheckTAST(
   Parser.parseTopLevel(source, ignoreLocation) match {
     case Right(expr) =>
       // Type-check the parsed expression
-      checkTop(source.fileName, expr, reporter, loadedModules=loadedModules)
+      checkTop(source.fileName, expr, reporter, loadedModules = loadedModules)
     case Left(error) =>
       // Report the parsing error
       reporter(error)

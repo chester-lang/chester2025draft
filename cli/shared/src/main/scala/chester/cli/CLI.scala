@@ -103,21 +103,22 @@ class CLI[F[_]](using
         modules <- acc
         path = io.pathOps.of(dir)
         isDir <- IO.isDirectory(path)
-        newModules <- if (isDir) {
-          for {
-            files <- IO.listFiles(path)
-            tastFiles = files.filter(f => io.pathOps.asString(f).endsWith(".tast"))
-            modulesWithFiles <- tastFiles.foldLeft(Runner.pure(modules)) { (modAcc, file) =>
-              for {
-                mods <- modAcc
-                bytes <- IO.read(file)
-                tast <- Runner.pure(upickle.default.readBinary[TAST](bytes))
-              } yield mods.add(tast)
-            }
-          } yield modulesWithFiles
-        } else {
-          Runner.pure(modules)
-        }
+        newModules <-
+          if (isDir) {
+            for {
+              files <- IO.listFiles(path)
+              tastFiles = files.filter(f => io.pathOps.asString(f).endsWith(".tast"))
+              modulesWithFiles <- tastFiles.foldLeft(Runner.pure(modules)) { (modAcc, file) =>
+                for {
+                  mods <- modAcc
+                  bytes <- IO.read(file)
+                  tast <- Runner.pure(upickle.default.readBinary[TAST](bytes))
+                } yield mods.add(tast)
+              }
+            } yield modulesWithFiles
+          } else {
+            Runner.pure(modules)
+          }
       } yield newModules
     }
   }
@@ -153,20 +154,22 @@ class CLI[F[_]](using
         def hasErrors: Boolean = varErrors
       }
 
-    for {
-      // Load TASTs from the specified directories
-      loadedModules <- loadTASTs(tastDirs)
-      tast = parseCheckTAST(source, loadedModules = loadedModules)
+      for {
+        // Load TASTs from the specified directories
+        loadedModules <- loadTASTs(tastDirs)
+        tast = parseCheckTAST(source, loadedModules = loadedModules)
 
-      _ <-if (reporter.hasErrors) {
-        IO.println(s"Compilation failed for $inputFile with errors.")
-      } else {
-        for {
-          _ <- IO.createDirRecursiveIfNotExists(io.pathOps.of(targetDir))
-          _ <- IO.write(outputPath, upickle.default.writeBinary(tast))
-          _ <- IO.println(s"Compiled $inputFile to $outputPath")
-        } yield ()
-      }} yield ()
+        _ <-
+          if (reporter.hasErrors) {
+            IO.println(s"Compilation failed for $inputFile with errors.")
+          } else {
+            for {
+              _ <- IO.createDirRecursiveIfNotExists(io.pathOps.of(targetDir))
+              _ <- IO.write(outputPath, upickle.default.writeBinary(tast))
+              _ <- IO.println(s"Compiled $inputFile to $outputPath")
+            } yield ()
+          }
+      } yield ()
     }
   }
 
