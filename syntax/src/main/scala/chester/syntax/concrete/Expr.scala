@@ -407,7 +407,7 @@ case class DefTelescope(
 }
 
 object DefTelescope {
-  def of(args: Arg*)(implicit meta: Option[ExprMeta] = None): DefTelescope =
+  def of(args: Arg*)(using meta: Option[ExprMeta] = None): DefTelescope =
     DefTelescope(args.toVector, meta = meta)
 }
 

@@ -20,10 +20,10 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
 
 trait ProvideElaboraterFunction extends ElaboraterFunction {
   def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
-                                                     localCtx: MutableContext,
-                                                     parameter: SemanticCollector,
-                                                     ck: Tyck,
-                                                     state: StateAbility[Tyck]
+      localCtx: MutableContext,
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
   ): ArgTerm = {
     require(arg.decorations.isEmpty, "decorations are not supported yet")
     val ty = elabTy(arg.ty)
@@ -41,10 +41,10 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
   }
 
   def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
-                                                                          localCtx: MutableContext,
-                                                                          parameter: SemanticCollector,
-                                                                          ck: Tyck,
-                                                                          state: StateAbility[Tyck]
+      localCtx: MutableContext,
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
     val argTerms = telescope.args.map { arg =>
