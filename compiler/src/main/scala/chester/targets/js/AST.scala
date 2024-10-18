@@ -1,4 +1,4 @@
-package chester.target.js
+package chester.targets.js
 
 // Base trait for all AST nodes
 sealed trait ASTNode
