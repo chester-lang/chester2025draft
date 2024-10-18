@@ -464,14 +464,14 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     }
   }
 
-  class MutableLocalCtx(var ctx: Context) {
+  class MutableContext(var ctx: Context) {
     def update(f: Context => Context): Unit = {
       ctx = f(ctx)
     }
   }
 
-  given mutL(using m: MutableLocalCtx): Context = m.ctx
-  implicit def mutLc(m: MutableLocalCtx): Context = m.ctx
+  given mutL(using m: MutableContext): Context = m.ctx
+  implicit def mutLc(m: MutableContext): Context = m.ctx
 
 }
 
