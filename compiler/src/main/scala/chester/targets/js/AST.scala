@@ -24,71 +24,93 @@ case class TypedIdentifier(
   def toDoc(using options: PrettierOptions): Doc = Doc.text(name) <> Doc.text(":") <+> typeAnnotation.toDoc
 }
 
-// Operators as Enums (Using Scala 2 Syntax)
-sealed trait BinaryOperator derives ReadWriter
-object BinaryOperator {
-  case object `==` extends BinaryOperator
-  case object `!=` extends BinaryOperator
-  case object `===` extends BinaryOperator
-  case object `!==` extends BinaryOperator
-  case object `<` extends BinaryOperator
-  case object `<=` extends BinaryOperator
-  case object `>` extends BinaryOperator
-  case object `>=` extends BinaryOperator
-  case object `<<` extends BinaryOperator
-  case object `>>` extends BinaryOperator
-  case object `>>>` extends BinaryOperator
-  case object `+` extends BinaryOperator
-  case object `-` extends BinaryOperator
-  case object `*` extends BinaryOperator
-  case object `/` extends BinaryOperator
-  case object `%` extends BinaryOperator
-  case object `|` extends BinaryOperator
-  case object `^` extends BinaryOperator
-  case object `&` extends BinaryOperator
-  case object `in` extends BinaryOperator
-  case object `instanceof` extends BinaryOperator
+// Operators as Enums (Using Scala 3 Syntax)
+enum BinaryOperator derives ReadWriter {
+  case EqualEqual, NotEqual, StrictEqual, StrictNotEqual,
+       LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual,
+       LeftShift, RightShift, UnsignedRightShift,
+       Plus, Minus, Multiply, Divide, Modulo,
+       BitwiseOR, BitwiseXOR, BitwiseAND,
+       In, InstanceOf
+
+  override def toString: String = this match {
+    case EqualEqual => "=="
+    case NotEqual => "!="
+    case StrictEqual => "==="
+    case StrictNotEqual => "!=="
+    case LessThan => "<"
+    case LessThanOrEqual => "<="
+    case GreaterThan => ">"
+    case GreaterThanOrEqual => ">="
+    case LeftShift => "<<"
+    case RightShift => ">>"
+    case UnsignedRightShift => ">>>"
+    case Plus => "+"
+    case Minus => "-"
+    case Multiply => "*"
+    case Divide => "/"
+    case Modulo => "%"
+    case BitwiseOR => "|"
+    case BitwiseXOR => "^"
+    case BitwiseAND => "&"
+    case In => "in"
+    case InstanceOf => "instanceof"
+  }
 }
 
-sealed trait LogicalOperator derives ReadWriter
-object LogicalOperator {
-  case object `||` extends LogicalOperator
-  case object `&&` extends LogicalOperator
-  case object `??` extends LogicalOperator
+enum LogicalOperator derives ReadWriter {
+  case Or, And, NullishCoalescing
+
+  override def toString: String = this match {
+    case Or => "||"
+    case And => "&&"
+    case NullishCoalescing => "??"
+  }
 }
 
-sealed trait AssignmentOperator derives ReadWriter
-object AssignmentOperator {
-  case object `=` extends AssignmentOperator
-  case object `+=` extends AssignmentOperator
-  case object `-=` extends AssignmentOperator
-  case object `*=` extends AssignmentOperator
-  case object `/=` extends AssignmentOperator
-  case object `%=` extends AssignmentOperator
-  case object `<<=` extends AssignmentOperator
-  case object `>>=` extends AssignmentOperator
-  case object `>>>=` extends AssignmentOperator
-  case object `|=` extends AssignmentOperator
-  case object `^=` extends AssignmentOperator
-  case object `&=` extends AssignmentOperator
-  case object `**=` extends AssignmentOperator
+enum AssignmentOperator derives ReadWriter {
+  case Assign, PlusAssign, MinusAssign, MultiplyAssign, DivideAssign, ModuloAssign,
+       LeftShiftAssign, RightShiftAssign, UnsignedRightShiftAssign,
+       BitwiseORAssign, BitwiseXORAssign, BitwiseANDAssign, ExponentiationAssign
+
+  override def toString: String = this match {
+    case Assign => "="
+    case PlusAssign => "+="
+    case MinusAssign => "-="
+    case MultiplyAssign => "*="
+    case DivideAssign => "/="
+    case ModuloAssign => "%="
+    case LeftShiftAssign => "<<="
+    case RightShiftAssign => ">>="
+    case UnsignedRightShiftAssign => ">>>="
+    case BitwiseORAssign => "|="
+    case BitwiseXORAssign => "^="
+    case BitwiseANDAssign => "&="
+    case ExponentiationAssign => "**="
+  }
 }
 
-sealed trait UnaryOperator derives ReadWriter
-object UnaryOperator {
-  case object `-` extends UnaryOperator
-  case object `+` extends UnaryOperator
-  case object `!` extends UnaryOperator
-  case object `~` extends UnaryOperator
-  case object `typeof` extends UnaryOperator
-  case object `void` extends UnaryOperator
-  case object `delete` extends UnaryOperator
+enum UnaryOperator derives ReadWriter {
+  case Minus, Plus, Not, BitwiseNot, Typeof, Void, Delete
+
+  override def toString: String = this match {
+    case Minus => "-"
+    case Plus => "+"
+    case Not => "!"
+    case BitwiseNot => "~"
+    case Typeof => "typeof"
+    case Void => "void"
+    case Delete => "delete"
+  }
 }
 
-sealed trait UpdateOperator derives ReadWriter
-object UpdateOperator {
-  case object `++` extends UpdateOperator
-  case object `--` extends UpdateOperator
+enum UpdateOperator derives ReadWriter {
+  case Increment, Decrement
+
+  override def toString: String = this match {
+    case Increment => "++"
+    case Decrement => "--"
+  }
 }
 
 // Now update the AST nodes to use these enums instead of Strings
@@ -761,12 +783,8 @@ case class MethodDefinition(
 }
 
 // MethodKind enumeration
-sealed trait MethodKind derives ReadWriter
-object MethodKind {
-  case object Constructor extends MethodKind
-  case object Method extends MethodKind
-  case object Get extends MethodKind
-  case object Set extends MethodKind
+enum MethodKind derives ReadWriter {
+  case Constructor, Method, Get, Set
 }
 
 case class PropertyDefinition(

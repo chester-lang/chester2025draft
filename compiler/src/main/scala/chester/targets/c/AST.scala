@@ -160,20 +160,26 @@ case object VoidType extends TypeSpecifier {
 }
 
 // Operators
-sealed trait BinaryOperator derives ReadWriter
-object BinaryOperator {
-  case object Add extends BinaryOperator { override def toString = "+" }
-  case object Subtract extends BinaryOperator { override def toString = "-" }
-  case object Multiply extends BinaryOperator { override def toString = "*" }
-  case object Divide extends BinaryOperator { override def toString = "/" }
+enum BinaryOperator derives ReadWriter {
+  case Add, Subtract, Multiply, Divide
   // Add more binary operators as needed
+
+  override def toString: String = this match {
+    case Add => "+"
+    case Subtract => "-"
+    case Multiply => "*"
+    case Divide => "/"
+  }
 }
 
-sealed trait UnaryOperator derives ReadWriter
-object UnaryOperator {
-  case object Negate extends UnaryOperator { override def toString = "-" }
-  case object Not extends UnaryOperator { override def toString = "!" }
+enum UnaryOperator derives ReadWriter {
+  case Negate, Not
   // Add more unary operators as needed
+
+  override def toString: String = this match {
+    case Negate => "-"
+    case Not => "!"
+  }
 }
 
 // Control Flow Statements
