@@ -294,7 +294,8 @@ trait DefaultImpl
       fileName: String,
       expr: Expr,
       reporter0: Reporter[Problem],
-      sementicCollector: SemanticCollector = NoopSemanticCollector
+      sementicCollector: SemanticCollector = NoopSemanticCollector,
+      loadedModules: LoadedModules = LoadedModules.Empty
   ): chester.syntax.TAST = {
     implicit val collecter: UnusedVariableWarningWrapper =
       new UnusedVariableWarningWrapper(sementicCollector)
@@ -303,7 +304,7 @@ trait DefaultImpl
     )
     implicit val get: Tyck = new Get(reporter, new MutBox(()))
     implicit val able: StateAbility[Tyck] = stateAbilityImpl
-    implicit var ctx: Context = Context.default
+    implicit var ctx: Context = Context.default.copy(loadedModules = loadedModules)
     val (module, block): (ModuleRef, Block) = resolve(expr) match {
       case b @ Block(head +: heads, tail, _) =>
         resolve(head) match {

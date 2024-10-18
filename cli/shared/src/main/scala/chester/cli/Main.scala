@@ -18,7 +18,8 @@ object Main {
       inputs: Seq[String] = Seq(),
       targetDir: String = ".",
       version: Boolean = false,
-      packages: Seq[String] = Seq()
+      packages: Seq[String] = Seq(),
+      tastDirs: Seq[String] = Seq()
   )
 
   def main(args: Array[String]): Unit = {
@@ -75,7 +76,13 @@ object Main {
               .action((x, c) => c.copy(targetDir = x))
               .text(
                 "Target directory for compiled outputs (defaults to current directory)."
-              )
+              ),
+            opt[Seq[String]]("tast-dir")
+              .abbr("t")
+              .optional()
+              .valueName("<dir1>,<dir2>...")
+              .action((x, c) => c.copy(tastDirs = x))
+              .text("Directories containing TAST files to load")
           ),
         cmd("decompile")
           .action((_, c) => c.copy(command = "decompile"))
@@ -161,7 +168,7 @@ object Main {
             IntegrityConfig
           case "compile" =>
             if (cliConfig.inputs.nonEmpty) {
-              CompileConfig(cliConfig.inputs, cliConfig.targetDir)
+              CompileConfig(cliConfig.inputs, cliConfig.targetDir, cliConfig.tastDirs)
             } else {
               println(
                 "Error: At least one input file is required for compile command."

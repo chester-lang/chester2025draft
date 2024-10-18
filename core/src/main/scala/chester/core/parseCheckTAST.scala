@@ -10,13 +10,14 @@ import chester.tyck.api.{NoopSemanticCollector, SemanticCollector}
 def parseCheckTAST(
     source: ParserSource,
     ignoreLocation: Boolean = false,
-    sementicCollector: SemanticCollector = NoopSemanticCollector
+    sementicCollector: SemanticCollector = NoopSemanticCollector,
+    loadedModules: LoadedModules = LoadedModules.Empty
 )(using reporter: Reporter[Problem]): chester.syntax.TAST = {
   // Parse the source code into an Expr using parseTopLevel
   Parser.parseTopLevel(source, ignoreLocation) match {
     case Right(expr) =>
       // Type-check the parsed expression
-      checkTop(source.fileName, expr, reporter)
+      checkTop(source.fileName, expr, reporter, loadedModules=loadedModules)
     case Left(error) =>
       // Report the parsing error
       reporter(error)

@@ -55,6 +55,9 @@ trait IO[F[_]] {
   def call(
       command: Seq[String]
   ): F[CommandOutput]
+
+  def listFiles(path: Path): F[Seq[Path]]
+  def isDirectory(path: Path): F[Boolean]
 }
 
 case class CommandOutput(exitCode: Option[Int])
@@ -106,4 +109,6 @@ extension [F[_]](_io: IO.type)(using io: IO[F]) {
   inline def call(
       inline command: Seq[String]
   ): F[CommandOutput] = io.call(command)
+  inline def listFiles(inline path: io.Path): F[Seq[io.Path]] = io.listFiles(path)
+  inline def isDirectory(inline path: io.Path): F[Boolean] = io.isDirectory(path)
 }

@@ -12,7 +12,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.concurrent.ExecutionContext.Implicits.global
 import typings.std.global.fetch
-import js.JSConverters._
+import js.JSConverters.*
 
 import scala.scalajs.js.typedarray.*
 
@@ -96,5 +96,15 @@ implicit object DefaultIO extends IO[Future] {
       case s: Double => Some(s.toInt)
     }
     Future.successful(CommandOutput(status))
+  }
+
+  override def listFiles(path: String): Future[Seq[String]] = {
+    fsPromisesMod
+      .readdir(path)
+      .map(_.toSeq.map(file => pathMod.join(path, file)))
+  }
+
+  override def isDirectory(path: String): Future[Boolean] = {
+    fsPromisesMod.lstat(path).map(_.isDirectory())
   }
 }

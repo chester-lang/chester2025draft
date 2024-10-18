@@ -117,4 +117,12 @@ implicit object DefaultIO extends IO[Id] {
   override inline def call(command: Seq[String]): CommandOutput = {
     throw new NotImplementedError("Not implemented for Termux")
   }
+
+  override def listFiles(path: Path): Id[Seq[Path]] = {
+    os.list(path.resolveFrom(pwd))
+  }
+
+  override def isDirectory(path: Path): Id[Boolean] = {
+    os.isDir(path.resolveFrom(pwd))
+  }
 }

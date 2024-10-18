@@ -10,7 +10,7 @@ import chester.tyck.Reporter
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
-import chester.syntax.TASTPackage.TAST
+import chester.syntax.TASTPackage.{LoadedModules, TAST}
 import chester.utils.doc.*
 import chester.BuildInfo
 import chester.cli.Config.*
@@ -49,8 +49,8 @@ class CLI[F[_]](using
             }
           case IntegrityConfig =>
             this.runIntegrityCheck()
-          case CompileConfig(inputs, targetDir) =>
-            this.compileFiles(inputs, targetDir)
+          case CompileConfig(inputs, targetDir, tastDirs) =>
+            this.compileFiles(inputs, targetDir, tastDirs)
           case DecompileConfig(inputFile) =>
             this.decompileFile(inputFile)
           case InitConfig =>
@@ -91,13 +91,38 @@ class CLI[F[_]](using
     _ <- Runner.pure(())
   } yield ()
 
-  def compileFiles(inputs: Seq[String], targetDir: String): F[Unit] = {
+  def compileFiles(inputs: Seq[String], targetDir: String, tastDirs: Seq[String]): F[Unit] = {
     inputs.foldLeft(Runner.pure(())) { (acc, inputFile) =>
-      acc.flatMap(_ => this.compileFile(inputFile, targetDir))
+      acc.flatMap(_ => this.compileFile(inputFile, targetDir, tastDirs))
     }
   }
 
-  def compileFile(inputFile: String, targetDir: String): F[Unit] = {
+  def loadTASTs(tastDirs: Seq[String]): F[LoadedModules] = {
+    tastDirs.foldLeft(Runner.pure(LoadedModules.Empty)) { (acc, dir) =>
+      for {
+        modules <- acc
+        path = io.pathOps.of(dir)
+        isDir <- IO.isDirectory(path)
+        newModules <- if (isDir) {
+          for {
+            files <- IO.listFiles(path)
+            tastFiles = files.filter(f => io.pathOps.asString(f).endsWith(".tast"))
+            modulesWithFiles <- tastFiles.foldLeft(Runner.pure(modules)) { (modAcc, file) =>
+              for {
+                mods <- modAcc
+                bytes <- IO.read(file)
+                tast <- Runner.pure(upickle.default.readBinary[TAST](bytes))
+              } yield mods.add(tast)
+            }
+          } yield modulesWithFiles
+        } else {
+          Runner.pure(modules)
+        }
+      } yield newModules
+    }
+  }
+
+  def compileFile(inputFile: String, targetDir: String, tastDirs: Seq[String]): F[Unit] = {
     // Expected input file extension
     val expectedExtension = ".chester"
 
@@ -128,9 +153,12 @@ class CLI[F[_]](using
         def hasErrors: Boolean = varErrors
       }
 
-      val tast = parseCheckTAST(source)
+    for {
+      // Load TASTs from the specified directories
+      loadedModules <- loadTASTs(tastDirs)
+      tast = parseCheckTAST(source, loadedModules = loadedModules)
 
-      if (reporter.hasErrors) {
+      _ <-if (reporter.hasErrors) {
         IO.println(s"Compilation failed for $inputFile with errors.")
       } else {
         for {
@@ -138,7 +166,7 @@ class CLI[F[_]](using
           _ <- IO.write(outputPath, upickle.default.writeBinary(tast))
           _ <- IO.println(s"Compiled $inputFile to $outputPath")
         } yield ()
-      }
+      }} yield ()
     }
   }
 

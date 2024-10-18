@@ -5,7 +5,8 @@ enum Config {
   case IntegrityConfig extends Config
   case CompileConfig(
       inputs: Seq[String],
-      targetDir: String = "."
+      targetDir: String = ".",
+      tastDirs: Seq[String] = Seq()
   ) extends Config
   case DecompileConfig(input: String) extends Config
   case InitConfig extends Config
