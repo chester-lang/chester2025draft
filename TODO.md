@@ -7,3 +7,7 @@
 ## prompt
 
 create a concise prompt introducing the language so that large langiage model can read and write chester
+
+## abstract syntax
+
+maybe create a trait and let graalvm's syntax tree variant implement it
