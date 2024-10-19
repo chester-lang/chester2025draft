@@ -28,7 +28,7 @@ case class CallingArgTerm(
     name: Option[Name] = None,
     vararg: Boolean = false,
     meta: OptionTermMeta = None
-) extends WHNFTerm derives ReadWriter {
+) extends Term with WHNFTerm derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc = {
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
     val nameDoc = name.map(_.toDoc <+> Docs.`:`).getOrElse(Doc.empty)
@@ -44,7 +44,7 @@ case class Calling(
     args: Vector[CallingArgTerm],
     implicitly: Boolean = false,
     meta: OptionTermMeta = None
-) extends WHNFTerm derives ReadWriter {
+) extends Term with WHNFTerm derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc = {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
@@ -58,7 +58,7 @@ case class FCallTerm(
     f: Term,
     args: Vector[Calling],
     meta: OptionTermMeta = None
-) extends UnevaluatedTerm {
+) extends Term with UnevaluatedTerm {
   override type ThisTree = FCallTerm
 
   override def toDoc(using options: PrettierOptions): Doc = {
@@ -273,12 +273,12 @@ case class MetaTermHold[T](inner: T) extends AnyVal
 
 case class MetaTermRW() derives ReadWriter
 
-sealed trait MetaTermA extends MoreTermA {
+sealed trait MetaTermA extends TermA with MoreTermA {
   override type ThisTree <: MetaTermA
   def impl: MetaTermHold[?]
 }
 
-case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends MoreTerm with MetaTermA {
+case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends Term with MoreTerm with MetaTermA {
   override type ThisTree = MetaTerm
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
@@ -292,12 +292,12 @@ object MetaTerm {
   def from[T](x: T): MetaTerm = MetaTerm(MetaTermHold(x))
 }
 
-sealed trait ListTermA extends WHNFTermA {
+sealed trait ListTermA extends TermA with WHNFTermA {
   override type ThisTree <: ListTermA
   def terms: Vector[TermA]
 }
 
-case class ListTerm(terms: Vector[Term], meta: OptionTermMeta = None) extends WHNFTerm with ListTermA derives ReadWriter {
+case class ListTerm(terms: Vector[Term], meta: OptionTermMeta = None) extends Term with WHNFTerm with ListTermA derives ReadWriter {
   override type ThisTree = ListTerm
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
@@ -311,11 +311,11 @@ object ListTerm {
   def apply(terms: Seq[Term]): ListTerm = new ListTerm(terms.toVector)
 }
 
-sealed trait TypeTermA extends WHNFTermA { 
+sealed trait TypeTermA extends TermA with WHNFTermA { 
   override type ThisTree <: TypeTermA
 }
 
-sealed trait TypeTerm extends WHNFTerm with TypeTermA derives ReadWriter {
+sealed trait TypeTerm extends Term with WHNFTerm with TypeTermA derives ReadWriter {
   override type ThisTree <: TypeTerm
 }
 
@@ -355,7 +355,7 @@ case class LevelType(meta: OptionTermMeta = None) extends TypeTerm with WithType
   override def ty: Term = Type0
 }
 
-sealed trait Level extends WHNFTerm derives ReadWriter {
+sealed trait Level extends Term with WHNFTerm derives ReadWriter {
   type ThisTree <: Level
 }
 
@@ -405,7 +405,7 @@ case class FType(level: Term, meta: OptionTermMeta = None) extends Sort {
     Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-sealed trait LiteralTerm extends WHNFTerm derives ReadWriter
+sealed trait LiteralTerm extends Term with WHNFTerm derives ReadWriter
 
 case class IntTerm(value: Int, meta: OptionTermMeta = None) extends LiteralTerm derives ReadWriter {
   override type ThisTree = IntTerm
@@ -602,7 +602,7 @@ case class ArgTerm(
     default: Option[Term] = None,
     vararg: Boolean = false,
     meta: OptionTermMeta = None
-) extends WHNFTerm {
+) extends Term with WHNFTerm {
   override type ThisTree = ArgTerm
   override def descent(f: Term => Term, g: SpecialMap): ArgTerm = thisOr(
     copy(bind = g(bind), ty = f(ty), default = default.map(f))
@@ -629,7 +629,7 @@ case class TelescopeTerm(
     args: Vector[ArgTerm],
     implicitly: Boolean = false,
     meta: OptionTermMeta = None
-) extends WHNFTerm {
+) extends Term with WHNFTerm {
   override type ThisTree = TelescopeTerm
   override def descent(f: Term => Term, g: SpecialMap): TelescopeTerm = thisOr(
     copy(args = args.map(g))
@@ -646,7 +646,7 @@ case class TelescopeTerm(
   }
 }
 
-case class Function(ty: FunctionType, body: Term, meta: OptionTermMeta = None) extends WHNFTerm {
+case class Function(ty: FunctionType, body: Term, meta: OptionTermMeta = None) extends Term with WHNFTerm {
   override type ThisTree = Function
   override def descent(f: Term => Term, g: SpecialMap): Function = thisOr(
     copy(ty = g(ty), body = f(body))
@@ -673,7 +673,7 @@ case class Matching(
     ty: FunctionType,
     clauses: NonEmptyVector[MatchingClause],
     meta: OptionTermMeta = None
-) extends WHNFTerm {
+) extends Term with WHNFTerm {
   override type ThisTree = Matching
   override def descent(f: Term => Term, g: SpecialMap): Matching = thisOr(
     copy(ty = g(ty))
@@ -688,7 +688,7 @@ case class FunctionType(
     resultTy: Term,
     effects: EffectsM = NoEffect,
     meta: OptionTermMeta = None
-) extends WHNFTerm {
+) extends Term with WHNFTerm {
   override type ThisTree = FunctionType
   override def descent(f: Term => Term, g: SpecialMap): FunctionType = thisOr(
     copy(telescope = telescope.map(g), resultTy = f(resultTy), effects = g(effects))
@@ -730,7 +730,7 @@ case class ObjectClauseValueTerm(
     key: Term,
     value: Term,
     meta: OptionTermMeta = None
-) extends WHNFTerm derives ReadWriter {
+) extends Term with WHNFTerm derives ReadWriter {
   override type ThisTree = ObjectClauseValueTerm
   override def descent(f: Term => Term, g: SpecialMap): ObjectClauseValueTerm = (
     copy(key = f(key), value = f(value))
@@ -744,7 +744,7 @@ case class ObjectClauseValueTerm(
 case class ObjectTerm(
     clauses: Vector[ObjectClauseValueTerm],
     meta: OptionTermMeta = None
-) extends WHNFTerm {
+) extends Term with WHNFTerm {
   override type ThisTree = ObjectTerm
   override def descent(f: Term => Term, g: SpecialMap): ObjectTerm = thisOr(
     copy(clauses = clauses.map(g))
@@ -759,7 +759,7 @@ case class ObjectType(
     fieldTypes: Vector[ObjectClauseValueTerm],
     exactFields: Boolean = false,
     meta: OptionTermMeta = None
-) extends WHNFTerm {
+) extends Term with WHNFTerm {
   override type ThisTree = ObjectType
   override def descent(f: Term => Term, g: SpecialMap): ObjectType = thisOr(
     copy(fieldTypes = fieldTypes.map(g))
@@ -771,7 +771,7 @@ case class ObjectType(
     )
 }
 
-sealed trait Builtin extends WHNFTerm derives ReadWriter {
+sealed trait Builtin extends Term with WHNFTerm derives ReadWriter {
   override type ThisTree <: Builtin
 }
 
@@ -782,7 +782,7 @@ case class ListF(meta: OptionTermMeta = None) extends Builtin {
   override def toDoc(using options: PrettierOptions): Doc = "List"
 }
 
-sealed trait Constructed extends WHNFTerm derives ReadWriter {
+sealed trait Constructed extends Term with WHNFTerm derives ReadWriter {
   type ThisTree <: Constructed
 }
 
@@ -853,7 +853,7 @@ object Intersection {
 
 /** Effect needs to have reasonable equals and hashcode for simple comparison, whereas they are not requirements for other Terms
   */
-sealed trait Effect extends WHNFTerm derives ReadWriter {
+sealed trait Effect extends Term with WHNFTerm derives ReadWriter {
   override type ThisTree <: Effect
   override def descent(f: Term => Term, g: SpecialMap): Effect = this
   def name: String
@@ -868,7 +868,7 @@ extension (e: EffectsM) {
   }
 }
 
-case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta = None) extends WHNFTerm derives ReadWriter {
+case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta = None) extends Term with WHNFTerm derives ReadWriter {
   override type ThisTree = Effects
   override def descent(f: Term => Term, g: SpecialMap): Effects = thisOr(
     copy(effects = effects.map { case (k, v) => g(k) -> f(v) })
@@ -917,7 +917,7 @@ case class STEffect(meta: OptionTermMeta = None) extends Effect {
   val name = "ST"
 }
 
-sealed trait ReferenceCall extends UnevaluatedTerm with TermWithUniqId derives ReadWriter {
+sealed trait ReferenceCall extends Term with UnevaluatedTerm with TermWithUniqId derives ReadWriter {
   @deprecated("avoid using this")
   def name: Name
   def ty: Term
@@ -961,7 +961,7 @@ case class ToplevelV(
   override def switchUniqId(r: UReplacer): TermWithUniqId = copy(uniqId = r(uniqId))
 }
 
-case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends MoreTerm {
+case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends Term with MoreTerm {
   override type ThisTree = ErrorTerm
   override def descent(f: Term => Term, g: SpecialMap): ErrorTerm = this
 
@@ -971,7 +971,7 @@ case class ErrorTerm(problem: Problem, meta: OptionTermMeta = None) extends More
 def ErrorType(error: Problem, meta: OptionTermMeta = None): ErrorTerm =
   ErrorTerm(error, meta)
 
-sealed trait StmtTerm extends WHNFTerm derives ReadWriter {
+sealed trait StmtTerm extends Term with WHNFTerm derives ReadWriter {
   override type ThisTree <: StmtTerm
 }
 
@@ -1049,7 +1049,7 @@ case class TupleType(types: Vector[Term], meta: OptionTermMeta = None) extends T
   }
 }
 
-case class TupleTerm(values: Vector[Term], meta: OptionTermMeta = None) extends WHNFTerm {
+case class TupleTerm(values: Vector[Term], meta: OptionTermMeta = None) extends Term with WHNFTerm {
   override type ThisTree = TupleTerm
   override def descent(f: Term => Term, g: SpecialMap): TupleTerm = thisOr(
     copy(values = values.map(f))
@@ -1064,7 +1064,7 @@ case class BlockTerm(
     stmts: Vector[StmtTerm],
     value: Term,
     meta: OptionTermMeta = None
-) extends UnevaluatedTerm derives ReadWriter {
+) extends Term with UnevaluatedTerm derives ReadWriter {
   override type ThisTree = BlockTerm
   override def descent(f: Term => Term, g: SpecialMap): BlockTerm = thisOr(
     copy(
@@ -1093,7 +1093,7 @@ case class Annotation(
     ty: Option[Term],
     effects: Option[EffectsM],
     meta: OptionTermMeta = None
-) extends UnevaluatedTerm {
+) extends Term with UnevaluatedTerm {
   override type ThisTree = Annotation
   override def descent(f: Term => Term, g: SpecialMap): Annotation = thisOr(
     copy(
@@ -1122,7 +1122,7 @@ case class FieldTerm(
     name: Name,
     ty: Term,
     meta: OptionTermMeta = None
-) extends WHNFTerm derives ReadWriter {
+) extends Term with WHNFTerm derives ReadWriter {
   override type ThisTree = FieldTerm
   override def descent(f: Term => Term, g: SpecialMap): FieldTerm = thisOr(
     copy(ty = f(ty))
@@ -1170,7 +1170,7 @@ case class RecordConstructorCallTerm(
     recordName: Name,
     args: Vector[Term],
     meta: OptionTermMeta = None
-) extends UnevaluatedTerm {
+) extends Term with UnevaluatedTerm {
   override type ThisTree = RecordConstructorCallTerm
   override def descent(f: Term => Term, g: SpecialMap): RecordConstructorCallTerm = thisOr(
     copy(args = args.map(f))
@@ -1258,7 +1258,7 @@ case class ObjectStmtTerm(
 case class ObjectCallTerm(
     objectRef: Term,
     meta: OptionTermMeta = None
-) extends UnevaluatedTerm {
+) extends Term with UnevaluatedTerm {
   override def toDoc(using options: PrettierOptions): Doc =
     group("ObjectCall" <+> objectRef.toDoc)
 
@@ -1279,7 +1279,7 @@ case class ObjectTypeTerm(
     copy(objectDef = g(objectDef))
   )
 }
-case class TodoTerm(meta: OptionTermMeta = None) extends MoreTerm {
+case class TodoTerm(meta: OptionTermMeta = None) extends Term with MoreTerm {
   override def toDoc(using options: PrettierOptions): Doc = Doc.text("TODO")
   override type ThisTree = TodoTerm
   override def descent(f: Term => Term, g: SpecialMap): TodoTerm = this
