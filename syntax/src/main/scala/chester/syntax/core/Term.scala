@@ -110,6 +110,7 @@ trait SpecialMap {
 
 implicit inline def convertSpecialMap[T <: Term](inline f: SpecialMap): T => T = x => f.use(x).asInstanceOf[T]
 
+/** note that this disallow non normal form terms, so avoid using it when non normal form terms are allowed */
 type OrM[T <: Term] = (T | MetaTerm)
 
 type EffectsM = OrM[Effects]
