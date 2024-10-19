@@ -320,6 +320,10 @@ val Type0 = Type(Level0)
 // Referencing Setω in Agda
 val Typeω = Type(Levelω())
 
+enum Usage derives ReadWriter {
+  case None, Linear, Unrestricted
+}
+
 case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort {
   override type ThisTree = Prop
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(Prop(f(level)))
