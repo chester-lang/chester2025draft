@@ -1165,16 +1165,16 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
-lazy val truffle = crossProject(JVMPlatform)
+lazy val eval = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("truffle"))
-  .dependsOn(common)
+  .in(file("eval"))
+  .dependsOn(core)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
-    name := "truffle",
-    assembly / assemblyOutputPath := file("target") / "chester-truffle.jar",
+    name := "eval",
+    assembly / assemblyOutputPath := file("target") / "chester-eval.jar",
     assembly / test := {},
     assembly / assemblyExcludedJars := {
       val cp = (assembly / fullClasspath).value
@@ -1245,7 +1245,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     lsp,
     buildProtocol,
     buildTool,
-    truffle,
+    eval,
     js,
     nodejs,
     site,
