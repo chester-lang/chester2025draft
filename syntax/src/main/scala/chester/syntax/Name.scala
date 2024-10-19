@@ -24,11 +24,18 @@ object QualifiedIDString {
   def from(id: Name*): QualifiedIDString = id.toVector
 }
 
-implicit val ModuleRefRW: ReadWriter[ModuleRef] =
-  readwriter[Vector[Name]].bimap(_.xs, ModuleRef(_))
+implicit val NamespaceRW: ReadWriter[Namespace] =
+  readwriter[Name].bimap(_.x, Namespace(_))
+case class Namespace(x: Name) extends AnyVal with ToDoc {
+  override def toDoc(using options: PrettierOptions): Doc = Doc.text(x)
+}
+
+object Namespace {
+  val Default = Namespace("default")
+}
 
 /** nonempty */
-case class ModuleRef(xs: Vector[Name]) extends AnyVal with ToDoc {
+case class ModuleRef(xs: Vector[Name], namespace: Namespace = Namespace.Default) extends ToDoc  derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text(xs.mkString("."))
 }
