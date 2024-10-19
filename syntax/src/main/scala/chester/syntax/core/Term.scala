@@ -110,14 +110,14 @@ type EffectsM = OrM[Effects]
 given OrMRW[T <: Term](using rw: ReadWriter[Term]): ReadWriter[OrM[T]] =
   rw.asInstanceOf[ReadWriter[OrM[T]]]
 
-/** more abstract Term */
-sealed trait TermA[+Rec <: TermA[Rec]] {
-  type ThisTree <: TermA[Rec]
+/** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
+sealed trait TermT[+Rec <: TermT[Rec]] {
+  type ThisTree <: TermT[Rec]
   def meta: OptionTermMeta
   def whnf: Trilean
 }
 
-sealed trait Term extends ToDoc with TermA[Term] with ContainsUniqId derives ReadWriter {
+sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqId derives ReadWriter {
   type ThisTree <: Term
   def meta: OptionTermMeta
 
@@ -222,21 +222,21 @@ sealed trait Term extends ToDoc with TermA[Term] with ContainsUniqId derives Rea
   }
 }
 
-sealed trait WHNFA[+Rec <: TermA[Rec]] extends TermA[Rec] {
-  override type ThisTree <: WHNFA[Rec]
+sealed trait WHNFT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+  override type ThisTree <: WHNFT[Rec]
   override def whnf: Trilean = True
 }
 
-sealed trait WHNF extends Term with WHNFA[Term] derives ReadWriter {
+sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
   override type ThisTree <: WHNF
 }
 
-sealed trait TermWithUniqIdA[+Rec <: TermA[Rec]] extends TermA[Rec] with HasUniqId {
-  override type ThisTree <: TermWithUniqIdA[Rec]
+sealed trait TermWithUniqIdT[+Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqId {
+  override type ThisTree <: TermWithUniqIdT[Rec]
   override def uniqId: UniqIdOf[Rec]
 }
 
-sealed trait TermWithUniqId extends Term with TermWithUniqIdA[Term] derives ReadWriter {
+sealed trait TermWithUniqId extends Term with TermWithUniqIdT[Term] derives ReadWriter {
   override type ThisTree <: TermWithUniqId
   override def uniqId: UniqIdOf[Term]
   def switchUniqId(r: UReplacer): TermWithUniqId
@@ -255,12 +255,12 @@ case class MetaTermHold[T](inner: T) extends AnyVal
 
 case class MetaTermRW() derives ReadWriter
 
-sealed trait MetaTermA[+Rec <: TermA[Rec]] extends TermA[Rec] {
-  override type ThisTree <: MetaTermA[Rec]
+trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
+  override type ThisTree <: MetaTermC[Rec]
   def impl: MetaTermHold[?]
 }
 
-case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends Term with MetaTermA[Term] {
+case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends Term with MetaTermC[Term] {
   override type ThisTree = MetaTerm
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
@@ -274,12 +274,12 @@ object MetaTerm {
   def from[T](x: T): MetaTerm = MetaTerm(MetaTermHold(x))
 }
 
-sealed trait ListTermA[+Rec <: TermA[Rec]] extends TermA[Rec] {
-  override type ThisTree <: ListTermA[Rec]
+trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
+  override type ThisTree <: ListTermC[Rec]
   def terms: Vector[Rec]
 }
 
-case class ListTerm(terms: Vector[Term], meta: OptionTermMeta = None) extends Term with ListTermA[Term] derives ReadWriter {
+case class ListTerm(terms: Vector[Term], meta: OptionTermMeta = None) extends Term with ListTermC[Term] derives ReadWriter {
   override type ThisTree = ListTerm
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
@@ -293,30 +293,30 @@ object ListTerm {
   def apply(terms: Seq[Term]): ListTerm = new ListTerm(terms.toVector)
 }
 
-sealed trait TypeTermA[+Rec <: TermA[Rec]] extends TermA[Rec] with WHNFA[Rec] {
-  override type ThisTree <: TypeTermA[Rec]
+sealed trait TypeTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
+  override type ThisTree <: TypeTermT[Rec]
 }
 
-sealed trait TypeTerm extends Term with TypeTermA[Term] with WHNF derives ReadWriter {
+sealed trait TypeTerm extends Term with TypeTermT[Term] with WHNF derives ReadWriter {
   override type ThisTree <: TypeTerm
 }
 
-sealed trait SortA[+Rec <: TermA[Rec]] extends TypeTermA[Rec] {
-  override type ThisTree <: SortA[Rec]
-  def level: TermA[Rec]
+sealed trait SortT[+Rec <: TermT[Rec]] extends TypeTermT[Rec] {
+  override type ThisTree <: SortT[Rec]
+  def level: TermT[Rec]
 }
 
-sealed trait Sort extends TypeTerm with SortA[Term] derives ReadWriter {
+sealed trait Sort extends TypeTerm with SortT[Term] derives ReadWriter {
   override type ThisTree <: Sort
   def level: Term
 }
 
-sealed trait TypeA[+Rec <: TermA[Rec]] extends SortA[Rec] {
-  override type ThisTree <: TypeA[Rec]
+sealed trait TypeT[+Rec <: TermT[Rec]] extends SortT[Rec] {
+  override type ThisTree <: TypeT[Rec]
   def level: Rec
 }
 
-case class Type(level: Term, meta: OptionTermMeta = None) extends Sort with TypeA[Term] {
+case class Type(level: Term, meta: OptionTermMeta = None) extends Sort with TypeT[Term] {
   override type ThisTree = Type
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
@@ -324,11 +324,11 @@ case class Type(level: Term, meta: OptionTermMeta = None) extends Sort with Type
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(Type(f(level)))
 }
 
-sealed trait LevelTypeA[+Rec <: TermA[Rec]] extends TypeTermA[Rec] {
-  override type ThisTree <: LevelTypeA[Rec]
+trait LevelTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] {
+  override type ThisTree <: LevelTypeC[Rec]
 }
 
-case class LevelType(meta: OptionTermMeta = None) extends TypeTerm with WithType with LevelTypeA[Term] {
+case class LevelType(meta: OptionTermMeta = None) extends TypeTerm with WithType with LevelTypeC[Term] {
   override type ThisTree = LevelType
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("LevelType")
@@ -338,20 +338,20 @@ case class LevelType(meta: OptionTermMeta = None) extends TypeTerm with WithType
   override def ty: Term = Type0
 }
 
-sealed trait LevelA[+Rec <: TermA[Rec]] extends TypeTermA[Rec] with WHNFA[Rec] {
-  override type ThisTree <: LevelA[Rec]
+sealed trait LevelT[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WHNFT[Rec] {
+  override type ThisTree <: LevelT[Rec]
 }
 
-sealed trait Level extends Term with LevelA[Term] with WHNF derives ReadWriter {
+sealed trait Level extends Term with LevelT[Term] with WHNF derives ReadWriter {
   type ThisTree <: Level
 }
 
-sealed trait LevelFiniteA[+Rec <: TermA[Rec]] extends LevelA[Rec] {
-  override type ThisTree <: LevelFiniteA[Rec]
+trait LevelFiniteC[+Rec <: TermT[Rec]] extends LevelT[Rec] {
+  override type ThisTree <: LevelFiniteC[Rec]
   def n: Rec
 }
 
-case class LevelFinite(n: Term, meta: OptionTermMeta = None) extends Level with LevelFiniteA[Term] {
+case class LevelFinite(n: Term, meta: OptionTermMeta = None) extends Level with LevelFiniteC[Term] {
   override type ThisTree = LevelFinite
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("Level(") <> n.toDoc <> Doc.text(")")
@@ -360,11 +360,11 @@ case class LevelFinite(n: Term, meta: OptionTermMeta = None) extends Level with 
     thisOr(LevelFinite(f(n)))
 }
 
-sealed trait LevelUnrestrictedA[+Rec <: TermA[Rec]] extends LevelA[Rec] {
-  override type ThisTree <: LevelUnrestrictedA[Rec]
+trait LevelUnrestrictedC[+Rec <: TermT[Rec]] extends LevelT[Rec] {
+  override type ThisTree <: LevelUnrestrictedC[Rec]
 }
 
-case class LevelUnrestricted(meta: OptionTermMeta = None) extends Level with LevelUnrestrictedA[Term] {
+case class LevelUnrestricted(meta: OptionTermMeta = None) extends Level with LevelUnrestrictedC[Term] {
   override type ThisTree = LevelUnrestricted
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("Levelω")
@@ -384,7 +384,7 @@ enum Usage derives ReadWriter {
   case None, Linear, Unrestricted
 }
 
-sealed trait PropA[+Rec <: TermA[Rec]] extends SortA[Rec] {
+sealed trait PropA[+Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: PropA[Rec]
   def level: Rec
 }
@@ -397,7 +397,7 @@ case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort with Prop
     Doc.wrapperlist("Prop" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-sealed trait FTypeA[+Rec <: TermA[Rec]] extends SortA[Rec] {
+sealed trait FTypeA[+Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: FTypeA[Rec]
   def level: Rec
 }
