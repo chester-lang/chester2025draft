@@ -224,7 +224,7 @@ sealed trait UnevaluatedTerm extends Term derives ReadWriter {
 }
 
 sealed trait MoreTerm extends Term derives ReadWriter {
-  final  override def whnf: Trilean = Unknown
+  final override def whnf: Trilean = Unknown
 }
 
 sealed trait TermWithUniqId extends Term with HasUniqId derives ReadWriter {

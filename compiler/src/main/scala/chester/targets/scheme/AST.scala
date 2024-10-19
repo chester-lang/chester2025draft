@@ -43,8 +43,8 @@ case class ListExpression(elements: List[Expression]) extends Expression {
 
 // Define expression
 case class DefineExpression(
-  name: Identifier,
-  value: Expression
+    name: Identifier,
+    value: Expression
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc =
     Doc.text("(define ") <> name.toDoc <+> value.toDoc <> Doc.text(")")
@@ -52,8 +52,8 @@ case class DefineExpression(
 
 // Lambda expression
 case class LambdaExpression(
-  parameters: List[Identifier],
-  body: List[Expression]
+    parameters: List[Identifier],
+    body: List[Expression]
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val paramsDoc = Doc.sep(Doc.text(" "), parameters.map(_.toDoc))
@@ -64,9 +64,9 @@ case class LambdaExpression(
 
 // If expression
 case class IfExpression(
-  condition: Expression,
-  thenBranch: Expression,
-  elseBranch: Option[Expression]
+    condition: Expression,
+    thenBranch: Expression,
+    elseBranch: Option[Expression]
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val elseDoc = elseBranch.map(e => Doc.text(" ") <> e.toDoc).getOrElse(Doc.empty)
@@ -76,8 +76,8 @@ case class IfExpression(
 
 // Set! expression
 case class SetExpression(
-  name: Identifier,
-  value: Expression
+    name: Identifier,
+    value: Expression
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc =
     Doc.text("(set! ") <> name.toDoc <+> value.toDoc <> Doc.text(")")
@@ -85,7 +85,7 @@ case class SetExpression(
 
 // Begin expression
 case class BeginExpression(
-  expressions: List[Expression]
+    expressions: List[Expression]
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val exprsDoc = Doc.concat(expressions.map(_.toDoc <> Doc.line))
@@ -95,8 +95,8 @@ case class BeginExpression(
 
 // Let expression
 case class LetExpression(
-  bindings: List[(Identifier, Expression)],
-  body: List[Expression]
+    bindings: List[(Identifier, Expression)],
+    body: List[Expression]
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val bindingsDoc = Doc.concat(bindings.map { case (id, expr) =>
@@ -109,7 +109,7 @@ case class LetExpression(
 
 // Cond expression
 case class CondExpression(
-  clauses: List[(Expression, List[Expression])]
+    clauses: List[(Expression, List[Expression])]
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val clausesDoc = Doc.concat(clauses.map { case (test, exprs) =>
@@ -122,9 +122,9 @@ case class CondExpression(
 
 // Case expression
 case class CaseExpression(
-  key: Expression,
-  clauses: List[(List[Literal], List[Expression])],
-  elseClause: Option[List[Expression]] = None
+    key: Expression,
+    clauses: List[(List[Literal], List[Expression])],
+    elseClause: Option[List[Expression]] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val clausesDoc = Doc.concat(clauses.map { case (datums, exprs) =>
@@ -132,20 +132,22 @@ case class CaseExpression(
       val exprsDoc = Doc.concat(exprs.map(_.toDoc <> Doc.line))
       Doc.text("(") <> Doc.text("(") <> datumsDoc <> Doc.text(")") <> Doc.indent(Doc.line <> exprsDoc) <> Doc.text(")")
     })
-    val elseDoc = elseClause.map { exprs =>
-      val exprsDoc = Doc.concat(exprs.map(_.toDoc <> Doc.line))
-      Doc.text("(else") <> Doc.indent(Doc.line <> exprsDoc) <> Doc.text(")")
-    }.getOrElse(Doc.empty)
+    val elseDoc = elseClause
+      .map { exprs =>
+        val exprsDoc = Doc.concat(exprs.map(_.toDoc <> Doc.line))
+        Doc.text("(else") <> Doc.indent(Doc.line <> exprsDoc) <> Doc.text(")")
+      }
+      .getOrElse(Doc.empty)
     Doc.text("(case ") <> key.toDoc <> Doc.indent(Doc.line <> clausesDoc <> elseDoc) <> Doc.line <> Doc.text(")")
   }
 }
 
 // Do expression
 case class DoExpression(
-  variables: List[(Identifier, Expression, Option[Expression])],
-  test: Expression,
-  commands: List[Expression],
-  body: List[Expression]
+    variables: List[(Identifier, Expression, Option[Expression])],
+    test: Expression,
+    commands: List[Expression],
+    body: List[Expression]
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val varsDoc = Doc.concat(variables.map { case (id, init, stepOpt) =>
@@ -166,7 +168,7 @@ case class Quotation(value: Expression) extends Expression {
 
 // Program
 case class Program(
-  expressions: List[Expression]
+    expressions: List[Expression]
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     Doc.concat(expressions.map(_.toDoc <> Doc.line))

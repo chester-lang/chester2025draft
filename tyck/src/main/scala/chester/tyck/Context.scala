@@ -78,11 +78,11 @@ object TyAndVal {}
 
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
-                        name: Name,
-                        uniqId: UniqIdOf[? <: ReferenceCall],
-                        ref: ReferenceCall,
-                        ty: Term,
-                        reference: Option[SymbolCollector] = None
+    name: Name,
+    uniqId: UniqIdOf[? <: ReferenceCall],
+    ref: ReferenceCall,
+    ty: Term,
+    reference: Option[SymbolCollector] = None
 )
 object ContextItem {}
 case class Imports()
@@ -92,17 +92,17 @@ object Imports {
 }
 
 case class Context(
-                    map: Map[Name, UniqIdOf[? <: ReferenceCall]] = Map.empty[Name, UniqIdOf[? <: ReferenceCall]], // empty[...] are needed because compiler bugs
-                    contextItems: Map[UniqIdOf[? <: ReferenceCall], ContextItem] =
+    map: Map[Name, UniqIdOf[? <: ReferenceCall]] = Map.empty[Name, UniqIdOf[? <: ReferenceCall]], // empty[...] are needed because compiler bugs
+    contextItems: Map[UniqIdOf[? <: ReferenceCall], ContextItem] =
       Map.empty[UniqIdOf[? <: ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
-                    knownMap: Map[UniqIdOf[? <: ReferenceCall], TyAndVal] =
+    knownMap: Map[UniqIdOf[? <: ReferenceCall], TyAndVal] =
       Map.empty[UniqIdOf[? <: ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
-                    typeDefinitionNames: Map[Name, UniqIdOf[TypeDefinition]] = Map.empty,
-                    typeDefinitions: Map[UniqIdOf[TypeDefinition], TypeDefinition] = Map.empty,
-                    imports: Imports = Imports.Empty,
-                    loadedModules: LoadedModules = LoadedModules.Empty,
-                    operators: OperatorsContext = OperatorsContext.Default,
-                    currentModule: ModuleRef = DefaultModule
+    typeDefinitionNames: Map[Name, UniqIdOf[TypeDefinition]] = Map.empty,
+    typeDefinitions: Map[UniqIdOf[TypeDefinition], TypeDefinition] = Map.empty,
+    imports: Imports = Imports.Empty,
+    loadedModules: LoadedModules = LoadedModules.Empty,
+    operators: OperatorsContext = OperatorsContext.Default,
+    currentModule: ModuleRef = DefaultModule
 ) {
   def updateModule(module: ModuleRef): Context = copy(currentModule = module)
 

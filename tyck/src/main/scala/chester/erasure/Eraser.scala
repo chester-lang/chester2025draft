@@ -10,7 +10,6 @@ trait Eraser {
 
 case class ErasureContext()
 
-
 object EraserImpl extends Eraser {
   def checkAndErase(term: Term, ty: Term, effects: Effects)(using context: ErasureContext, reporter: Reporter[TyckProblem]): Term = {
     term match {

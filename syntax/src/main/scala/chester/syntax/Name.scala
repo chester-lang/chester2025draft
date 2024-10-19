@@ -26,6 +26,7 @@ object QualifiedIDString {
 
 implicit val NamespaceRW: ReadWriter[Namespace] =
   readwriter[Name].bimap(_.x, Namespace(_))
+
 /** when it is needed to have different version of the same library etc */
 case class Namespace(x: Name) extends AnyVal with ToDoc {
   override def toDoc(using options: PrettierOptions): Doc = Doc.text(x)
@@ -36,7 +37,7 @@ object Namespace {
 }
 
 /** nonempty */
-case class ModuleRef(xs: Vector[Name], namespace: Namespace = Namespace.Default) extends ToDoc  derives ReadWriter {
+case class ModuleRef(xs: Vector[Name], namespace: Namespace = Namespace.Default) extends ToDoc derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text(xs.mkString("."))
 }
