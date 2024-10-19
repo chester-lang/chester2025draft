@@ -360,7 +360,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       case (ListType(elem1, _), ListType(elem2, _)) =>
         unify(elem1, elem2, cause)
 
-      case (Type(Levelω(_), _), Type(LevelFinite(_, _), _)) => ()
+      case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
 
       case (x, Intersection(xs, _)) =>
         if (xs.exists(tryUnify(x, _))) return
@@ -376,7 +376,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       case (Type(level1, _), Type(level2, _)) =>
         unify(level1, level2, cause)
 
-      case (LevelFinite(_, _), Levelω(_)) => ()
+      case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
 
       case (Union(_, _), Union(_, _)) => ???
 

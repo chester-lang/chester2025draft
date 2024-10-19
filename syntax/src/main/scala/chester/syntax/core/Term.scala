@@ -313,12 +313,12 @@ case class LevelFinite(n: Term, meta: OptionTermMeta = None) extends Level {
     thisOr(LevelFinite(f(n)))
 }
 
-case class Levelω(meta: OptionTermMeta = None) extends Level {
-  override type ThisTree = Levelω
+case class LevelUnrestricted(meta: OptionTermMeta = None) extends Level {
+  override type ThisTree = LevelUnrestricted
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("Levelω")
 
-  override def descent(f: Term => Term, g: SpecialMap): Levelω = this
+  override def descent(f: Term => Term, g: SpecialMap): LevelUnrestricted = this
 }
 
 // Define Level0 using LevelFinite
@@ -327,7 +327,7 @@ val Level0 = LevelFinite(IntegerTerm(0))
 val Type0 = Type(Level0)
 
 // Referencing Setω in Agda
-val Typeω = Type(Levelω())
+val Typeω = Type(LevelUnrestricted())
 
 enum Usage derives ReadWriter {
   case None, Linear, Unrestricted
