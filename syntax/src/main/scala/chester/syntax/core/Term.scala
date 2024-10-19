@@ -231,6 +231,15 @@ sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
   override type ThisTree <: WHNF
 }
 
+sealed trait UnevalT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+  override type ThisTree <: UnevalT[Rec]
+  override def whnf: Trilean = False
+}
+
+sealed trait Uneval extends Term with UnevalT[Term] derives ReadWriter {
+  override type ThisTree <: Uneval
+}
+
 sealed trait TermWithUniqIdT[+Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqId {
   override type ThisTree <: TermWithUniqIdT[Rec]
   override def uniqId: UniqIdOf[Rec]
@@ -923,7 +932,7 @@ case class STEffect(meta: OptionTermMeta = None) extends Effect {
   val name = "ST"
 }
 
-sealed trait ReferenceCall extends Term with TermWithUniqId derives ReadWriter {
+sealed trait ReferenceCall extends Term with Uneval with TermWithUniqId derives ReadWriter {
   @deprecated("avoid using this")
   def name: Name
   def ty: Term
