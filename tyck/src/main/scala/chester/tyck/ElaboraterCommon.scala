@@ -179,7 +179,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   ): Boolean = {
     if (lhs == rhs) return true
     val lhsResolved = lhs match {
-      case varCall: MaybeVarCall =>
+      case varCall: ReferenceCall =>
         localCtx.getKnown(varCall) match {
           case Some(tyAndVal) =>
             state.readStable(tyAndVal.valueId).getOrElse(lhs)
@@ -188,7 +188,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       case _ => lhs
     }
     val rhsResolved = rhs match {
-      case varCall: MaybeVarCall =>
+      case varCall: ReferenceCall =>
         localCtx.getKnown(varCall) match {
           case Some(tyAndVal) =>
             state.readStable(tyAndVal.valueId).getOrElse(rhs)
@@ -304,7 +304,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     var result = x
     while (true) {
       result match {
-        case varCall: MaybeVarCall =>
+        case varCall: ReferenceCall =>
           localCtx.getKnown(varCall) match {
             case Some(tyAndVal) =>
               result = state.readStable(tyAndVal.valueId).getOrElse {
@@ -324,7 +324,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     var result = x
     while (true) {
       result match {
-        case varCall: MaybeVarCall =>
+        case varCall: ReferenceCall =>
           localCtx.getKnown(varCall) match {
             case Some(tyAndVal) =>
               result = state.readStable(tyAndVal.valueId).getOrElse {

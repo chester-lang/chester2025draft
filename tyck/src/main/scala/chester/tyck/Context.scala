@@ -59,10 +59,10 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
       val items = BuiltIn.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
       val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
-      val knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] = items
+      val knownMap: Map[UniqIdOf[? <: ReferenceCall], TyAndVal] = items
         .map(item => item._2.uniqId -> item._1)
         .toMap
-        .asInstanceOf[Map[UniqIdOf[? <: MaybeVarCall], TyAndVal]]
+        .asInstanceOf[Map[UniqIdOf[? <: ReferenceCall], TyAndVal]]
       new Context(map, contextItems, knownMap)
     }
   }
@@ -78,11 +78,11 @@ object TyAndVal {}
 
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
-    name: Name,
-    uniqId: UniqIdOf[? <: MaybeVarCall],
-    ref: MaybeVarCall,
-    ty: Term,
-    reference: Option[SymbolCollector] = None
+                        name: Name,
+                        uniqId: UniqIdOf[? <: ReferenceCall],
+                        ref: ReferenceCall,
+                        ty: Term,
+                        reference: Option[SymbolCollector] = None
 )
 object ContextItem {}
 case class Imports()
@@ -92,31 +92,31 @@ object Imports {
 }
 
 case class Context(
-    map: Map[Name, UniqIdOf[? <: MaybeVarCall]] = Map.empty[Name, UniqIdOf[? <: MaybeVarCall]], // empty[...] are needed because compiler bugs
-    contextItems: Map[UniqIdOf[? <: MaybeVarCall], ContextItem] =
-      Map.empty[UniqIdOf[? <: MaybeVarCall], ContextItem], // empty[...] are needed because compiler bugs
-    knownMap: Map[UniqIdOf[? <: MaybeVarCall], TyAndVal] =
-      Map.empty[UniqIdOf[? <: MaybeVarCall], TyAndVal], // empty[...] are needed because compiler bugs
-    typeDefinitionNames: Map[Name, UniqIdOf[TypeDefinition]] = Map.empty,
-    typeDefinitions: Map[UniqIdOf[TypeDefinition], TypeDefinition] = Map.empty,
-    imports: Imports = Imports.Empty,
-    loadedModules: LoadedModules = LoadedModules.Empty,
-    operators: OperatorsContext = OperatorsContext.Default,
-    currentModule: ModuleRef = DefaultModule
+                    map: Map[Name, UniqIdOf[? <: ReferenceCall]] = Map.empty[Name, UniqIdOf[? <: ReferenceCall]], // empty[...] are needed because compiler bugs
+                    contextItems: Map[UniqIdOf[? <: ReferenceCall], ContextItem] =
+      Map.empty[UniqIdOf[? <: ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
+                    knownMap: Map[UniqIdOf[? <: ReferenceCall], TyAndVal] =
+      Map.empty[UniqIdOf[? <: ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
+                    typeDefinitionNames: Map[Name, UniqIdOf[TypeDefinition]] = Map.empty,
+                    typeDefinitions: Map[UniqIdOf[TypeDefinition], TypeDefinition] = Map.empty,
+                    imports: Imports = Imports.Empty,
+                    loadedModules: LoadedModules = LoadedModules.Empty,
+                    operators: OperatorsContext = OperatorsContext.Default,
+                    currentModule: ModuleRef = DefaultModule
 ) {
   def updateModule(module: ModuleRef): Context = copy(currentModule = module)
 
-  def getKnown(x: MaybeVarCall): Option[TyAndVal] =
-    knownMap.get(x.uniqId.asInstanceOf[UniqIdOf[? <: MaybeVarCall]])
+  def getKnown(x: ReferenceCall): Option[TyAndVal] =
+    knownMap.get(x.uniqId.asInstanceOf[UniqIdOf[? <: ReferenceCall]])
 
   def get(id: Name): Option[ContextItem] =
     map.get(id).flatMap(uniqId => contextItems.get(uniqId))
 
-  def knownAdd(id: UniqIdOf[? <: MaybeVarCall], y: TyAndVal): Context =
+  def knownAdd(id: UniqIdOf[? <: ReferenceCall], y: TyAndVal): Context =
     knownAdd(Seq(id -> y))
 
   def knownAdd(
-      seq: Seq[(UniqIdOf[? <: MaybeVarCall], TyAndVal)]
+      seq: Seq[(UniqIdOf[? <: ReferenceCall], TyAndVal)]
   ): Context = {
     val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
       assert(!acc.contains(item._1), s"Duplicate key ${item._1}")

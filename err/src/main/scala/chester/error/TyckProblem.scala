@@ -74,7 +74,7 @@ sealed trait TyckWarning extends TyckProblem derives ReadWriter {
   final override def severity: Problem.Severity = Problem.Severity.Warning
 }
 
-case class UnusedVariableWarning(id: MaybeVarCall, cause: Expr) extends TyckWarning {
+case class UnusedVariableWarning(id: ReferenceCall, cause: Expr) extends TyckWarning {
   override def toDoc(using
       options: PrettierOptions
   ): Doc =
