@@ -1,0 +1,2 @@
+def A[a: Int](b: Int) = b;
+A(0);
