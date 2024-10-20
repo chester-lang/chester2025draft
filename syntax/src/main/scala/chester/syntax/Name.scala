@@ -33,7 +33,7 @@ case class Namespace(x: Name) extends AnyVal with ToDoc {
 }
 
 object Namespace {
-  val Default = Namespace("default")
+  val Default: Namespace = Namespace("default")
 }
 
 /** nonempty */
