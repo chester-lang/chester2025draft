@@ -292,12 +292,12 @@ object MetaTerm {
   def from[T](x: T): MetaTerm = MetaTerm(MetaTermHold(x))
 }
 
-trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
+trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: ListTermC[Rec]
   def terms: Vector[Rec]
 }
 
-case class ListTerm(terms: Vector[Term], meta: OptionTermMeta = None) extends Term with ListTermC[Term] derives ReadWriter {
+case class ListTerm(terms: Vector[Term], meta: OptionTermMeta = None) extends Term with WHNF with ListTermC[Term] derives ReadWriter {
   override type ThisTree = ListTerm
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
@@ -402,12 +402,12 @@ enum Usage derives ReadWriter {
   case None, Linear, Unrestricted
 }
 
-sealed trait PropA[+Rec <: TermT[Rec]] extends SortT[Rec] {
-  override type ThisTree <: PropA[Rec]
+trait PropC[+Rec <: TermT[Rec]] extends SortT[Rec] {
+  override type ThisTree <: PropC[Rec]
   def level: Rec
 }
 
-case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort with PropA[Term] {
+case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort with PropC[Term] {
   override type ThisTree = Prop
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(Prop(f(level)))
 
@@ -415,13 +415,13 @@ case class Prop(level: Term, meta: OptionTermMeta = None) extends Sort with Prop
     Doc.wrapperlist("Prop" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-sealed trait FTypeA[+Rec <: TermT[Rec]] extends SortT[Rec] {
-  override type ThisTree <: FTypeA[Rec]
+trait FTypeC[+Rec <: TermT[Rec]] extends SortT[Rec] {
+  override type ThisTree <: FTypeC[Rec]
   def level: Rec
 }
 
 // fibrant types
-case class FType(level: Term, meta: OptionTermMeta = None) extends Sort with FTypeA[Term] {
+case class FType(level: Term, meta: OptionTermMeta = None) extends Sort with FTypeC[Term] {
   override type ThisTree = FType
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(FType(f(level)))
 
@@ -429,7 +429,11 @@ case class FType(level: Term, meta: OptionTermMeta = None) extends Sort with FTy
     Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-sealed trait LiteralTerm extends Term derives ReadWriter
+sealed trait LiteralTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
+  override type ThisTree <: LiteralTermT[Rec]
+}
+
+sealed trait LiteralTerm extends Term with WHNF with LiteralTermT[Term] derives ReadWriter
 
 case class IntTerm(value: Int, meta: OptionTermMeta = None) extends LiteralTerm derives ReadWriter {
   override type ThisTree = IntTerm
