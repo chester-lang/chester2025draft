@@ -13,7 +13,7 @@
           "${workspaceFolder}/vscode/out/**/*.js"
         ],
         "preLaunchTask": {
-          "type": "npm",
+          "type": "pnpm",
           "script": "build",
           "path": "vscode"
         },
