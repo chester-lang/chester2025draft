@@ -94,7 +94,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     }
 
     override def naiveZonk(
-        needed: Vector[CellId[?]]
+        needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val lhs = state.readStable(this.lhs)
       val rhs = state.readStable(this.rhs)
@@ -144,7 +144,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     }
 
     override def naiveZonk(
-        needed: Vector[CellId[?]]
+        needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val lhsValueOpt = state.readStable(lhs)
       val rhsValuesOpt = rhs.map(state.readStable)
@@ -258,7 +258,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     }
 
     override def naiveZonk(
-        needed: Vector[CellId[?]]
+        needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       state.fill(
         tyLhs,
@@ -452,7 +452,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     }
 
     override def naiveZonk(
-        needed: Vector[CellId[?]]
+        needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val t1 = state.readStable(this.tRhs)
       val listT1 = state.readStable(this.listTLhs)

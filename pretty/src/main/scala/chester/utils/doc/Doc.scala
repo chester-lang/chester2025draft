@@ -121,7 +121,7 @@ implicit class DocOps(doc: Doc) extends AnyVal {
     Doc.render(doc, w)
 }
 
-implicit class DocPrinterOps[T <: DocPrinter](private val printer: T) extends AnyVal {
+implicit class DocPrinterOps[T <: DocPrinter](val printer: T) extends AnyVal {
   def render(doc: Doc, maxWidth: Width = maxWidth): printer.Layout =
     doc.render(maxWidth)(using printer)
 

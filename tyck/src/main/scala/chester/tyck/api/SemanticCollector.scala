@@ -22,7 +22,7 @@ trait SemanticCollector {
 
   def newSymbol(
       call: ReferenceCall,
-      id: UniqIdOf[? <: ReferenceCall],
+      id: UniqIdOf[ReferenceCall],
       definedOn: Expr,
       localCtx: Context
   ): SymbolCollector = NoopSymbolCollector
@@ -30,13 +30,13 @@ trait SemanticCollector {
   def metaFinished(replace: MetaTerm => Term): Unit = ()
 }
 
-private implicit inline def rwUniqIDOfVar[T]: ReadWriter[UniqIdOf[? <: ReferenceCall]] =
-  rwUniqIDOf.asInstanceOf[ReadWriter[UniqIdOf[? <: ReferenceCall]]]
+private implicit inline def rwUniqIDOfVar[T]: ReadWriter[UniqIdOf[ReferenceCall]] =
+  rwUniqIDOf.asInstanceOf[ReadWriter[UniqIdOf[ReferenceCall]]]
 
 // TODO: handle when call's ty is MetaTerm
 case class CollectedSymbol(
     call: ReferenceCall,
-    id: UniqIdOf[? <: ReferenceCall],
+    id: UniqIdOf[ReferenceCall],
     definedOn: Expr,
     referencedOn: Vector[Expr]
 ) derives ReadWriter {
@@ -52,7 +52,7 @@ class VectorSemanticCollector extends SemanticCollector {
     new mutable.ArrayDeque[CollectedSymbol]()
   override def newSymbol(
       call: ReferenceCall,
-      id: UniqIdOf[? <: ReferenceCall],
+      id: UniqIdOf[ReferenceCall],
       definedOn: Expr,
       localCtx: Context
   ): SymbolCollector = {
@@ -79,7 +79,7 @@ class UnusedVariableWarningWrapper(x: SemanticCollector) extends SemanticCollect
   private var unusedVariables: Vector[CollectedSymbol] = Vector()
   override def newSymbol(
       call: ReferenceCall,
-      id: UniqIdOf[? <: ReferenceCall],
+      id: UniqIdOf[ReferenceCall],
       definedOn: Expr,
       localCtx: Context
   ): SymbolCollector = {

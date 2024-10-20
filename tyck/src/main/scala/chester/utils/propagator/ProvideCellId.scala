@@ -5,6 +5,7 @@ trait ProvideCellId {
   type CIdOf[+T <: Cell[?]]
   type PIdOf[+T <: Propagator[?]]
   type CellId[T] = CIdOf[Cell[T]]
+  type CellIdAny = CIdOf[Cell[?]]
   type SeqId[T] = CIdOf[SeqCell[T]]
   type CellIdOr[T] = CellId[T] | T
 
@@ -182,7 +183,7 @@ trait ProvideCellId {
 
     def noAnyValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
     @deprecated("impure")
-    def requireRemovePropagatorZonking(identify: Any, cell: CellId[?]): Unit =
+    def requireRemovePropagatorZonking(identify: Any, cell: CellIdAny): Unit =
       ???
 
     def addPropagator[T <: Propagator[Ability]](propagator: T)(using

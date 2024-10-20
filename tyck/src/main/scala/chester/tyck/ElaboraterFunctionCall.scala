@@ -119,9 +119,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
   )(using localCtx: Context)
       extends Propagator[Tyck] {
 
-    override val readingCells: Set[CellId[?]] = Set(functionTy)
-    override val writingCells: Set[CellId[?]] = Set(resultTy, functionCallTerm)
-    override val zonkingCells: Set[CellId[?]] = Set(resultTy, functionCallTerm)
+    override val readingCells: Set[CellIdAny] = Set(functionTy)
+    override val writingCells: Set[CellIdAny] = Set(resultTy, functionCallTerm)
+    override val zonkingCells: Set[CellIdAny] = Set(resultTy, functionCallTerm)
 
     override def run(using state: StateAbility[Tyck], ck: Tyck): Boolean = {
       val readFunctionTy = state.readStable(functionTy)
@@ -235,7 +235,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
     }
 
     override def naiveZonk(
-        needed: Vector[CellId[?]]
+        needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], ck: Tyck): ZonkResult = {
       ZonkResult.Require(Vector(functionTy))
     }

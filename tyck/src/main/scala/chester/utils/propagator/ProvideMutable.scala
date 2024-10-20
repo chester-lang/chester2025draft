@@ -114,7 +114,7 @@ trait ProvideMutable extends ProvideImpl {
     @deprecated("impure")
     override def requireRemovePropagatorZonking(
         identify: Any,
-        cell: CellId[?]
+        cell: CellIdAny
     ): Unit = {
       val cell1 = cell.asInstanceOf[CIdOf[Cell[?]]]
       for (

@@ -45,7 +45,7 @@ extension [T](x: UniqIdOf[T]) {
   }
 }
 
-private val rwUniqID: ReadWriter[UniqIdOf[?]] =
+private val rwUniqID: ReadWriter[UniqIdOf[Any]] =
   readwriter[java.lang.Integer].bimap(_.toInt, _.toInt)
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqIdOf[T]] = rwUniqID
@@ -96,7 +96,7 @@ object UniqId {
   }
 
   def is(x: Any): Boolean = x.isInstanceOf[Int] || x.isInstanceOf[Integer] || x
-    .isInstanceOf[UniqIdOf[?]]
+    .isInstanceOf[UniqIdOf[Any]]
 
   def calculateRange[T <: ContainsUniqId](x: T): UniqIdRange = {
     val currentRangeCollect = new mutable.ArrayDeque[UniqId]()

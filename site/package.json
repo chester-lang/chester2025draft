@@ -13,8 +13,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "copy-js": "cp .js/target/scala-3.5.2-RC2/site-opt/main.js .js/target/scala-3.5.2-RC2/site-opt/main.js.map scala/",
-    "copy-js-mjs": "cp .js/target/scala-3.5.2-RC2/site-fastopt/main.mjs .js/target/scala-3.5.2-RC2/site-fastopt/main.mjs.map scala/",
+    "copy-js": "cp .js/target/scala-3.6.1/site-opt/main.js .js/target/scala-3.6.1/site-opt/main.js.map scala/",
+    "copy-js-mjs": "cp .js/target/scala-3.6.1/site-fastopt/main.mjs .js/target/scala-3.6.1/site-fastopt/main.mjs.map scala/",
     "format": "prettier --write \"**/*.{ts,tsx}\""
   },
   "dependencies": {
