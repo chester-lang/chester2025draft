@@ -488,6 +488,19 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
+val fastparse213 = Seq(
+  libraryDependencies ++= Seq(
+ "com.lihaoyi" %%% "fastparse" % "3.1.1" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "geny_2.13") exclude ("com.lihaoyi", "geny_sjs1_2.13") exclude ("com.lihaoyi", "geny_native0.5_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude ("com.lihaoyi", "sourcecode_native0.5_2.13") exclude ("com.lihaoyi", "sourcecode_2.13"),
+    "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1", // dependency of fastparse
+    "com.lihaoyi" %%% "geny" % "1.1.1", // dependency of fastparse
+  ),
+  excludeDependencies ++= Seq(
+    ExclusionRule("com.lihaoyi", "fastparse_3"),
+    ExclusionRule("com.lihaoyi", "fastparse_native0.5_3"),
+    ExclusionRule("com.lihaoyi", "fastparse_sjs1_3"),
+  )
+)
+
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -506,8 +519,12 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "org.scala-lang" % "scalap" % scala2Version exclude (
         "org.jline",
         "jline"
-      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude ("com.lihaoyi", "sourcecode_native0.5_2.13")
-    )
+      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude ("com.lihaoyi", "sourcecode_native0.5_2.13"),
+      
+   
+    ),
+    // scalameta uses fastparse
+    fastparse213
   )
   .jvmSettings(commonJvmLibSettings)
 
