@@ -1,6 +1,6 @@
 package chester.tyck
 
-import chester.error.{TyckProblem, TypeMismatch}
+import chester.error.*
 import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.syntax.Name
 import chester.syntax.concrete.*
@@ -473,6 +473,23 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   given mutL(using m: MutableContext): Context = m.ctx
   implicit def mutLc(m: MutableContext): Context = m.ctx
 
+  def generateImplicitArg(
+      paramTy: Term,
+      cause: Expr
+  )(using
+      ctx: Context,
+      state: StateAbility[Tyck],
+      ck: Tyck
+  ): Term = {
+    // TODO: Implement logic to generate an implicit argument based on the parameter type.
+    // This could involve looking up available implicit values in the context.
+    // For now, create a new meta-term as a placeholder.
+    val argTerm = newMeta
+    // Report a warning or note that an implicit argument is not provided explicitly.
+    ck.reporter(MissingImplicitArgumentWarning(paramTy, cause))
+    toTerm(argTerm)
+  }
+
 }
 
 trait ElaboraterBase extends CommonPropagator[Tyck] {
@@ -553,3 +570,4 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
     }
   }
 }
+

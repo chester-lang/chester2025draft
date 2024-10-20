@@ -286,3 +286,9 @@ case class ExpectObjectName(cause: Expr) extends TyckError {
   override def toDoc(using options: PrettierOptions): Doc =
     t"Expected an object name, got"
 }
+case class MissingImplicitArgumentWarning(paramTy: Term, cause: Expr) extends TyckError {
+  override def toDoc(using
+      options: PrettierOptions
+  ): Doc =
+    d"Implicit argument of type ${paramTy} is inferred for ${cause}"
+}
