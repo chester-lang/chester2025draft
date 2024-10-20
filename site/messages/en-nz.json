@@ -5,6 +5,7 @@
     },
     "Home": {
         "vsCodeExtensionText": "VSCode Extension",
+        "ideaPluginText": "IntelliJ IDEA Plugin",
         "title": "Chester: A Programming Language"
     },
     "Footer": {

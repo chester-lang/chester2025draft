@@ -112,7 +112,7 @@ export default function Home() {
       <div className="flex-grow flex flex-col items-center justify-start p-1 sm:p-2">
         <main className="flex flex-col gap-2 w-full max-w-4xl mt-2 sm:mt-4">
           <h1 className="text-2xl font-bold text-center">{t('title')}</h1>
-          <div className="text-center mb-4">
+          <div className="text-center mb-4 flex flex-col sm:flex-row justify-center gap-2">
             <Link
               href="https://marketplace.visualstudio.com/items?itemName=mio-19.chester-language-support"
               className="text-blue-500 hover:underline"
@@ -120,6 +120,14 @@ export default function Home() {
               rel="noopener noreferrer"
             >
               {t('vsCodeExtensionText')}
+            </Link>
+            <Link
+              href="https://plugins.jetbrains.com/plugin/25508-chester-language-support/"
+              className="text-blue-500 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('ideaPluginText')}
             </Link>
           </div>
           <XTerm ref={xtermRef} />
