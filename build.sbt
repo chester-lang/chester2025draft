@@ -522,7 +522,10 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude (
         "com.lihaoyi",
         "sourcecode_native0.5_2.13"
-      ),
+      ) exclude ("com.lihaoyi", "fastparse_2.13") exclude ("com.lihaoyi", "fastparse_sjs1_2.13") exclude (
+        "com.lihaoyi",
+        "fastparse_native0.5_2.13"
+      ) exclude ("org.scalameta", "parsers_2.13") exclude ("org.scalameta", "parsers_sjs1_2.13") exclude ("org.scalameta", "parsers_native0.5_2.13"),
       "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1", // for scalameta
       // dependency of scalameta
       "org.scala-lang" % "scalap" % scala2Version exclude (
@@ -532,9 +535,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "com.lihaoyi",
         "sourcecode_native0.5_2.13"
       )
-    ),
-    // scalameta uses fastparse
-    fastparse213
+    )
   )
   .jvmSettings(commonJvmLibSettings)
 
@@ -568,7 +569,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("platform"))
-  .dependsOn(common)
+  .dependsOn(common, compiler)
   .settings(
     name := "platform",
     commonSettings
@@ -1020,7 +1021,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cli"))
   .jvmEnablePlugins(NativeImagePlugin)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
-  .dependsOn(common, platform)
+  .dependsOn(common, platform, compiler)
   .settings(
     name := "cli",
     Compile / mainClass := Some("chester.cli.Main"),
