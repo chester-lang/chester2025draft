@@ -240,6 +240,15 @@ sealed trait Uneval extends Term with UnevalT[Term] derives ReadWriter {
   override type ThisTree <: Uneval
 }
 
+sealed trait SpecialTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+  override type ThisTree <: SpecialTermT[Rec]
+  override def whnf: Trilean = Unknown
+}
+
+sealed trait SpecialTerm extends Term with SpecialTermT[Term] derives ReadWriter {
+  override type ThisTree <: SpecialTerm
+}
+
 sealed trait TermWithUniqIdT[+Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqId {
   override type ThisTree <: TermWithUniqIdT[Rec]
   override def uniqId: UniqIdOf[Rec]
@@ -264,12 +273,12 @@ case class MetaTermHold[T](inner: T) extends AnyVal
 
 case class MetaTermRW() derives ReadWriter
 
-trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
+trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] with SpecialTermT[Rec] {
   override type ThisTree <: MetaTermC[Rec]
   def impl: MetaTermHold[?]
 }
 
-case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends Term with MetaTermC[Term] {
+case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends Term with SpecialTerm with MetaTermC[Term] {
   override type ThisTree = MetaTerm
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
