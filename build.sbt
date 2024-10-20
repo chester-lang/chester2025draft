@@ -497,8 +497,12 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "compiler",
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13"),
-      "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1" // for scalameta
+      "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+        "org.jline",
+        "jline"
+      ),
+      "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1", // for scalameta
+      "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline") // dependency of scalameta
     )
   )
   .jvmSettings(commonJvmLibSettings)
