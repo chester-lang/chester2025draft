@@ -252,7 +252,7 @@ sealed trait SpecialTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
 sealed trait SpecialTerm extends Term with SpecialTermT[Term] derives ReadWriter {
   override type ThisTree <: SpecialTerm
 }
-*/
+ */
 sealed trait TermWithUniqIdT[+Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqId {
   override type ThisTree <: TermWithUniqIdT[Rec]
   override def uniqId: UniqIdOf[Rec]

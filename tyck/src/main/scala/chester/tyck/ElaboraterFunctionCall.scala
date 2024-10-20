@@ -177,7 +177,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
 
         val matchesProvided = actualTeleOpt match {
           case Some(actualTele) => actualTele.implicitly == expectedTele.implicitly
-          case None => false
+          case None             => false
         }
 
         if (matchesProvided) {
@@ -190,8 +190,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
           if (expectedTele.implicitly) {
             // Expected implicit telescope not provided; infer arguments
             val callingArgs = expectedTele.args.map { argTerm =>
-                  // For now, throw an exception
-                  throw new NotImplementedError(s"Implicit parameter with identifier '$argTerm' is not implemented yet.")
+              // For now, throw an exception
+              throw new NotImplementedError(s"Implicit parameter with identifier '$argTerm' is not implemented yet.")
             }
             val calling = Calling(callingArgs, implicitly = true)
             adjustedCallings = adjustedCallings :+ calling
