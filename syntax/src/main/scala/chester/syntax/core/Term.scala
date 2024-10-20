@@ -433,9 +433,24 @@ sealed trait LiteralTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec]
   override type ThisTree <: LiteralTermT[Rec]
 }
 
-sealed trait LiteralTerm extends Term with WHNF with LiteralTermT[Term] derives ReadWriter
+sealed trait LiteralTerm extends Term with WHNF with LiteralTermT[Term] derives ReadWriter {
+  override type ThisTree <: LiteralTerm
+}
 
-case class IntTerm(value: Int, meta: OptionTermMeta = None) extends LiteralTerm derives ReadWriter {
+sealed trait AbstractIntTermT[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+  override type ThisTree <: AbstractIntTermT[Rec]
+}
+
+sealed trait AbstractIntTerm extends LiteralTerm with AbstractIntTermT[Term] derives ReadWriter {
+  override type ThisTree <: AbstractIntTerm
+}
+
+trait IntTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
+  override type ThisTree <: IntTermC[Rec]
+  def value: Int
+}
+
+case class IntTerm(value: Int, meta: OptionTermMeta = None) extends LiteralTerm with AbstractIntTerm with IntTermC[Term] derives ReadWriter {
   override type ThisTree = IntTerm
   override def descent(f: Term => Term, g: SpecialMap): Term = this
 
@@ -443,15 +458,18 @@ case class IntTerm(value: Int, meta: OptionTermMeta = None) extends LiteralTerm 
     Doc.text(value.toString, ColorProfile.literalColor)
 }
 
-case class IntegerTerm(value: BigInt, meta: OptionTermMeta = None) extends LiteralTerm derives ReadWriter {
+trait IntegerTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
+  override type ThisTree <: IntegerTermC[Rec]
+  def value: BigInt
+}
+
+case class IntegerTerm(value: BigInt, meta: OptionTermMeta = None) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term] derives ReadWriter {
   override type ThisTree = IntegerTerm
   override def descent(f: Term => Term, g: SpecialMap): Term = this
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-
-type AbstractIntTerm = IntegerTerm | IntTerm
 
 object AbstractIntTerm {
   def from(value: BigInt, meta: OptionTermMeta = None): AbstractIntTerm =
