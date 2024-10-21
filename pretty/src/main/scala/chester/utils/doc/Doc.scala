@@ -1,5 +1,6 @@
 package chester.utils.doc
 
+import chester.utils.{*,given}
 import kiama2.output.*
 import kiama2.output.PrettyPrinterTypes.Width
 import upickle.default.*
@@ -224,10 +225,17 @@ case class $ssep(docs: Seq[Doc], sep: Doc) extends Doc {
     copy(docs = docs.map(f), sep = f(sep))
 }
 
+case class $link(n: HoldOptionNoRead[AnyRef], d: Doc) extends Doc {
+  def printToExpr(using printer: DocPrinter): printer.Expr =
+    printer.link(n.get, d.getDoc)
+
+  override def descent(f: Doc => Doc): Doc = copy(d=f(d))
+}
+
 def hsep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $hsep(ds.map(_.toDoc), sep.toDoc)
 def ssep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
 def sep(sep: ToDoc, ds: Seq[ToDoc])(using options: PrettierOptions): Doc = hsep(ds, sep)
-def link(n: AnyRef, d: ToDoc)(using options: PrettierOptions): Doc = ???
+def link(n: AnyRef, d: ToDoc)(using options: PrettierOptions): Doc = $link(HoldOptionNoRead(Some(n)), d.toDoc)
 extension (self: ToDoc)(using options: PrettierOptions) {
   implicit inline def asDoc: Doc = self.toDoc
 
