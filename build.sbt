@@ -7,7 +7,7 @@ import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.22")
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.23")
 ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
