@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import LocaleSwitcher from './LocaleSwitcher';
 // https://stackoverflow.com/questions/65930789/how-does-next-js-basepath-works-for-images/76197261#76197261
-import chesterLogo from '@/../resources/chester-logo.svg';
+import chesterLogo from '@/chester-logo.svg';
 import NextLink from 'next/link';
 import { useDocsUrl } from '@/i18n/localeUtils';
 //import ThemeToggle from './ThemeToggle';
