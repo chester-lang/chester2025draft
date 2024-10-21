@@ -971,7 +971,7 @@ lazy val common = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("common"))
-  .dependsOn(core)
+  .dependsOn(core, compiler)
   .jsConfigure(
     _.dependsOn(jsTypings.js)
   )
