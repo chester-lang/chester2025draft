@@ -4,7 +4,16 @@ import chester.error.*
 import chester.utils.doc.*
 import upickle.default.*
 
-case class Meta(sourcePos: SourcePos) derives ReadWriter
+case class Meta(sourcePos: SourcePos) derives ReadWriter {
+  def link(x: Doc): Doc = Doc.link(this, x)
+}
+
+extension (m: Option[Meta]) {
+  def link(x: Doc): Doc = m match {
+    case Some(m) => m.link(x)
+    case None => x
+  }
+}
 
 // Base trait for all AST nodes
 sealed trait ASTNode extends ToDoc derives ReadWriter {
@@ -21,14 +30,14 @@ case class StringLiteral(
     value: String,
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text(s""""$value"""")
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text(s""""$value""""))
 }
 
 case class NumberLiteral(
     value: Double,
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text(value.toString)
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text(value.toString))
 }
 
 case class BooleanLiteral(
@@ -36,13 +45,13 @@ case class BooleanLiteral(
     meta: Option[Meta] = None
 ) extends Literal {
   def toDoc(using options: PrettierOptions): Doc =
-    if (value) Doc.text("#t") else Doc.text("#f")
+    meta.link(if (value) Doc.text("#t") else Doc.text("#f"))
 }
 
 case class NullLiteral(
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text("'()")
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text("'()"))
 }
 
 // Identifiers
@@ -50,7 +59,7 @@ case class Identifier(
     name: String,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text(name))
 }
 
 // ListExpression as a case class
@@ -61,7 +70,7 @@ case class ListExpression(
 
   def toDoc(using options: PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(Doc.text(" "), elements.map(_.toDoc))
-    Doc.text("(") <> elemsDoc <> Doc.text(")")
+    meta.link(Doc.text("(") <> elemsDoc <> Doc.text(")"))
   }
 }
 
@@ -173,7 +182,7 @@ case class Quotation(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text("'") <> value.toDoc
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text("'") <> value.toDoc)
 }
 
 // QuasiQuotation class
@@ -181,7 +190,7 @@ case class QuasiQuotation(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text("`") <> value.toDoc
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text("`") <> value.toDoc)
 }
 
 // Unquote class
@@ -189,7 +198,7 @@ case class Unquote(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text(",") <> value.toDoc
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text(",") <> value.toDoc)
 }
 
 // UnquoteSplicing class
@@ -197,7 +206,7 @@ case class UnquoteSplicing(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using options: PrettierOptions): Doc = Doc.text(",@") <> value.toDoc
+  def toDoc(using options: PrettierOptions): Doc = meta.link(Doc.text(",@") <> value.toDoc)
 }
 
 // Program
@@ -206,6 +215,6 @@ case class Program(
     meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
-    Doc.concat(expressions.map(_.toDoc <> Doc.line))
+    meta.link(Doc.concat(expressions.map(_.toDoc <> Doc.line)))
   }
 }
