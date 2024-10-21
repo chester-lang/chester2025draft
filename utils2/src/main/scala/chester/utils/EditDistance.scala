@@ -13,26 +13,23 @@
 
 package chester.utils
 
-import java.lang.Character.{ toLowerCase => lower }
+import java.lang.Character.{toLowerCase => lower}
 
 object EditDistance {
 
-  /**
-   * @author Paul Phillips
-   * Translated from the java version at
-   *    https://www.merriampark.com/ld.htm
-   *  which is declared to be public domain.
-   */
+  /** @author
+    *   Paul Phillips Translated from the java version at https://www.merriampark.com/ld.htm which is declared to be public domain.
+    */
   def levenshtein(
-                   s: String,
-                   t: String,
-                   insertCost: Int = 1,
-                   deleteCost: Int = 1,
-                   subCost: Int = 1,
-                   matchCost: Int = 0,
-                   caseCost: Int = 1,
-                   transpositions: Boolean = false
-                 ): Int = {
+      s: String,
+      t: String,
+      insertCost: Int = 1,
+      deleteCost: Int = 1,
+      subCost: Int = 1,
+      matchCost: Int = 0,
+      caseCost: Int = 1,
+      transpositions: Boolean = false
+  ): Int = {
     val n = s.length
     val m = t.length
     if (n == 0) return m

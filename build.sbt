@@ -71,8 +71,8 @@ val commonSettings = Seq(
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
     "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test,
     "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
-    "com.lihaoyi" %%% "pprint" % "0.9.0" % Test,
-    "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test
+    "com.lihaoyi" %%% "pprint" % "0.9.0" % Test
+    // "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test
   ),
   testFrameworks += new TestFramework("verify.runner.Framework")
 )
