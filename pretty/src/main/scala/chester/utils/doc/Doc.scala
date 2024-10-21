@@ -97,10 +97,6 @@ def concat(docs: Iterable[ToDoc])(using options: PrettierOptions): Doc = group {
   docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
 }
 
-def hsep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = hsep(ds.map(_.toDoc), sep.toDoc)
-def ssep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = ssep(ds.map(_.toDoc), sep.toDoc)
-def sep(sep: ToDoc, ds: Seq[ToDoc])(using options: PrettierOptions): Doc = hsep(ds, sep)
-
 val empty = text("")
 val hardline = text("\n") // TODO: CRLF?
 val line = hardline
@@ -212,6 +208,26 @@ case class $indent(doc: Doc) extends Doc {
   override def descent(f: Doc => Doc): Doc = copy(doc = f(doc))
 }
 
+case class $hsep(docs: Seq[Doc], sep: Doc) extends Doc {
+  def printToExpr(using printer: DocPrinter): printer.Expr =
+    printer.hsep(docs.map(_.getDoc), sep.getDoc)
+
+  override def descent(f: Doc => Doc): Doc =
+    copy(docs = docs.map(f), sep = f(sep))
+}
+
+case class $ssep(docs: Seq[Doc], sep: Doc) extends Doc {
+  def printToExpr(using printer: DocPrinter): printer.Expr =
+    printer.ssep(docs.map(_.getDoc), sep.getDoc)
+
+  override def descent(f: Doc => Doc): Doc =
+    copy(docs = docs.map(f), sep = f(sep))
+}
+
+def hsep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $hsep(ds.map(_.toDoc), sep.toDoc)
+def ssep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
+def sep(sep: ToDoc, ds: Seq[ToDoc])(using options: PrettierOptions): Doc = hsep(ds, sep)
+def link(n: AnyRef, d: ToDoc)(using options: PrettierOptions): Doc = ???
 extension (self: ToDoc)(using options: PrettierOptions) {
   implicit inline def asDoc: Doc = self.toDoc
 
