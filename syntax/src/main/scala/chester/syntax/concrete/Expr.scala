@@ -150,6 +150,7 @@ case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr d
   def toSymbol: SymbolLiteral = SymbolLiteral(name, meta)
 }
 
+@deprecated("not used")
 case class ResolvedIdentifier(
     module: QualifiedIDString,
     name: Name,
@@ -164,6 +165,7 @@ case class ResolvedIdentifier(
   )
 }
 
+@deprecated("not used")
 case class ResolvedLocalVar(
     name: Name,
     varId: UniqId,
