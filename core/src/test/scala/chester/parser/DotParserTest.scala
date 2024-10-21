@@ -8,24 +8,28 @@ class DotParserTest extends FunSuite {
   test("world.execute(me)") {
     val input = "world.execute(me)"
     val expected = DotCall(
-      Identifier("world"),
-      Identifier("execute"),
+      Identifier("world", meta = None),
+      Identifier("execute", meta = None),
       Vector(
         Tuple(
           Vector(
-            Identifier("me")
-          )
+            Identifier("me", meta = None)
+          ),
+          meta = None
         )
-      )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
+
   test("parse simple dot call") {
     val input = "obj.field"
     val expected = DotCall(
-      Identifier("obj"),
-      Identifier("field"),
-      Vector()
+      Identifier("obj", meta = None),
+      Identifier("field", meta = None),
+      Vector(),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -33,9 +37,15 @@ class DotParserTest extends FunSuite {
   test("parse dot call with function call") {
     val input = "obj.method()"
     val expected = DotCall(
-      Identifier("obj"),
-      Identifier("method"),
-      Vector(Tuple(Vector()))
+      Identifier("obj", meta = None),
+      Identifier("method", meta = None),
+      Vector(
+        Tuple(
+          Vector(),
+          meta = None
+        )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -44,73 +54,87 @@ class DotParserTest extends FunSuite {
     val input = "obj.field1.field2"
     val expected = DotCall(
       DotCall(
-        Identifier("obj"),
-        Identifier("field1"),
-        Vector()
+        Identifier("obj", meta = None),
+        Identifier("field1", meta = None),
+        Vector(),
+        meta = None
       ),
-      Identifier("field2"),
-      Vector()
+      Identifier("field2", meta = None),
+      Vector(),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
+
   test("parse dot call with arguments") {
     val input = "obj.method(arg1, arg2)"
     val expected = DotCall(
-      Identifier("obj"),
-      Identifier("method"),
+      Identifier("obj", meta = None),
+      Identifier("method", meta = None),
       Vector(
         Tuple(
           Vector(
-            Identifier("arg1"),
-            Identifier("arg2")
-          )
+            Identifier("arg1", meta = None),
+            Identifier("arg2", meta = None)
+          ),
+          meta = None
         )
-      )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
+
   test("parse dot call with arguments arguments") {
     val input = "obj.method(arg1, arg2)(arg1)"
-    val expected =
-      DotCall(
-        expr = Identifier(
-          name = "obj"
-        ),
-        field = Identifier(
-          name = "method"
-        ),
-        telescope = Vector(
-          Tuple(
-            terms = Vector(
-              Identifier(
-                name = "arg1"
-              ),
-              Identifier(
-                name = "arg2"
-              )
-            )
+    val expected = DotCall(
+      expr = Identifier("obj", meta = None),
+      field = Identifier("method", meta = None),
+      telescope = Vector(
+        Tuple(
+          terms = Vector(
+            Identifier("arg1", meta = None),
+            Identifier("arg2", meta = None)
           ),
-          Tuple(
-            terms = Vector(
-              Identifier(
-                name = "arg1"
-              )
-            )
-          )
+          meta = None
+        ),
+        Tuple(
+          terms = Vector(
+            Identifier("arg1", meta = None)
+          ),
+          meta = None
         )
-      )
+      ),
+      meta = None
+    )
     parseAndCheck(input, expected)
   }
 
   test("parse dot call with arguments block arguments") {
     val input = "obj.method(arg1, arg2){arg1}"
     val expected = DotCall(
-      Identifier("obj"),
-      Identifier("method"),
+      Identifier("obj", meta = None),
+      Identifier("method", meta = None),
       Vector(
-        Tuple(Vector(Identifier("arg1"), Identifier("arg2"))),
-        Tuple(Vector(Block(Vector(), Some(Identifier("arg1")))))
-      )
+        Tuple(
+          Vector(
+            Identifier("arg1", meta = None),
+            Identifier("arg2", meta = None)
+          ),
+          meta = None
+        ),
+        Tuple(
+          Vector(
+            Block(
+              heads = Vector(),
+              tail = Some(Identifier("arg1", meta = None)),
+              meta = None
+            )
+          ),
+          meta = None
+        )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -118,9 +142,18 @@ class DotParserTest extends FunSuite {
   test("parse dot + call with arguments") {
     val input = "obj.+(arg1, arg2)"
     val expected = DotCall(
-      Identifier("obj"),
-      Identifier("+"),
-      Vector(Tuple(Vector(Identifier("arg1"), Identifier("arg2"))))
+      Identifier("obj", meta = None),
+      Identifier("+", meta = None),
+      Vector(
+        Tuple(
+          Vector(
+            Identifier("arg1", meta = None),
+            Identifier("arg2", meta = None)
+          ),
+          meta = None
+        )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -129,14 +162,25 @@ class DotParserTest extends FunSuite {
     val input = "obj.method().anotherMethod()"
     val expected = DotCall(
       DotCall(
-        Identifier("obj"),
-        Identifier("method"),
-        Vector(Tuple(Vector()))
+        Identifier("obj", meta = None),
+        Identifier("method", meta = None),
+        Vector(
+          Tuple(
+            Vector(),
+            meta = None
+          )
+        ),
+        meta = None
       ),
-      Identifier("anotherMethod"),
-      Vector(Tuple(Vector()))
+      Identifier("anotherMethod", meta = None),
+      Vector(
+        Tuple(
+          Vector(),
+          meta = None
+        )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
-
 }

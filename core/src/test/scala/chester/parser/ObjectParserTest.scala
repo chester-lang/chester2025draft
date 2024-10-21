@@ -8,7 +8,7 @@ class ObjectParserTest extends FunSuite {
 
   test("parse empty object") {
     val input = "{}"
-    val expected = ObjectExpr(Vector())
+    val expected = ObjectExpr(Vector(), meta = None)
     parseAndCheck(input, expected)
   }
 
@@ -16,8 +16,9 @@ class ObjectParserTest extends FunSuite {
     val input = "{ a = 1 }"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1)
-      )
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -26,8 +27,9 @@ class ObjectParserTest extends FunSuite {
     val input = "{a=1}"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1)
-      )
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -36,8 +38,12 @@ class ObjectParserTest extends FunSuite {
     val input = "{ 'a => 1}"
     val expected = ObjectExpr(
       Vector(
-        ObjectExprClauseOnValue(SymbolLiteral("a"), IntegerLiteral(1))
-      )
+        ObjectExprClauseOnValue(
+          SymbolLiteral("a", meta = None),
+          IntegerLiteral(1, meta = None)
+        )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -46,8 +52,12 @@ class ObjectParserTest extends FunSuite {
     val input = "{'a=>1}"
     val expected = ObjectExpr(
       Vector(
-        ObjectExprClauseOnValue(SymbolLiteral("a"), IntegerLiteral(1))
-      )
+        ObjectExprClauseOnValue(
+          SymbolLiteral("a", meta = None),
+          IntegerLiteral(1, meta = None)
+        )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -56,10 +66,11 @@ class ObjectParserTest extends FunSuite {
     val input = "{ a = 1, b = 2, c = 3 }"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1),
-        Identifier("b") -> IntegerLiteral(2),
-        Identifier("c") -> IntegerLiteral(3)
-      )
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
+        Identifier("b", meta = None) -> IntegerLiteral(2, meta = None),
+        Identifier("c", meta = None) -> IntegerLiteral(3, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -68,10 +79,11 @@ class ObjectParserTest extends FunSuite {
     val input = "{ a = 1, b = 2, c = 3 ,}"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1),
-        Identifier("b") -> IntegerLiteral(2),
-        Identifier("c") -> IntegerLiteral(3)
-      )
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
+        Identifier("b", meta = None) -> IntegerLiteral(2, meta = None),
+        Identifier("c", meta = None) -> IntegerLiteral(3, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -80,10 +92,11 @@ class ObjectParserTest extends FunSuite {
     val input = "{a=1,b=2,c=3,}"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1),
-        Identifier("b") -> IntegerLiteral(2),
-        Identifier("c") -> IntegerLiteral(3)
-      )
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
+        Identifier("b", meta = None) -> IntegerLiteral(2, meta = None),
+        Identifier("c", meta = None) -> IntegerLiteral(3, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -92,13 +105,15 @@ class ObjectParserTest extends FunSuite {
     val input = "{ a = { b = 2 }, c = 3 }"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> ObjectExpr(
+        Identifier("a", meta = None) -> ObjectExpr(
           Vector(
-            Identifier("b") -> IntegerLiteral(2)
-          )
+            Identifier("b", meta = None) -> IntegerLiteral(2, meta = None)
+          ),
+          meta = None
         ),
-        Identifier("c") -> IntegerLiteral(3)
-      )
+        Identifier("c", meta = None) -> IntegerLiteral(3, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -107,21 +122,24 @@ class ObjectParserTest extends FunSuite {
     val input = "{ a = 1, b = \"hello\", c = [1, 2, 3], d = { e = 4 } }"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1),
-        Identifier("b") -> StringLiteral("hello"),
-        Identifier("c") -> ListExpr(
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
+        Identifier("b", meta = None) -> StringLiteral("hello", meta = None),
+        Identifier("c", meta = None) -> ListExpr(
           Vector(
-            IntegerLiteral(1),
-            IntegerLiteral(2),
-            IntegerLiteral(3)
-          )
+            IntegerLiteral(1, meta = None),
+            IntegerLiteral(2, meta = None),
+            IntegerLiteral(3, meta = None)
+          ),
+          meta = None
         ),
-        Identifier("d") -> ObjectExpr(
+        Identifier("d", meta = None) -> ObjectExpr(
           Vector(
-            Identifier("e") -> IntegerLiteral(4)
-          )
+            Identifier("e", meta = None) -> IntegerLiteral(4, meta = None)
+          ),
+          meta = None
         )
-      )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -130,9 +148,10 @@ class ObjectParserTest extends FunSuite {
     val input = "{ a = 1, b = 2, }"
     val expected = ObjectExpr(
       Vector(
-        Identifier("a") -> IntegerLiteral(1),
-        Identifier("b") -> IntegerLiteral(2)
-      )
+        Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
+        Identifier("b", meta = None) -> IntegerLiteral(2, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }

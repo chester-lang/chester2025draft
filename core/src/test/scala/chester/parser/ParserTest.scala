@@ -46,58 +46,58 @@ class ParserTest extends FunSuite {
   // Tests for IntegerLiteral
   test("parse valid decimal integer") {
     val input = "12345"
-    val expected = IntegerLiteral(BigInt("12345"))
+    val expected = IntegerLiteral(BigInt("12345"), meta = None)
     parseAndCheck(input, expected)
   }
 
   test("parse valid hexadecimal integer") {
     val input = "0x1A3F"
-    val expected = IntegerLiteral(BigInt("1A3F", 16))
+    val expected = IntegerLiteral(BigInt("1A3F", 16), meta = None)
     parseAndCheck(input, expected)
   }
 
   test("parse valid binary integer") {
     val input = "0b1101"
-    val expected = IntegerLiteral(BigInt("1101", 2))
+    val expected = IntegerLiteral(BigInt("1101", 2), meta = None)
     parseAndCheck(input, expected)
   }
 
-  if (false) test("parse signed integer") { // we are see it as -(6789) now
+  if (false) test("parse signed integer") { // we see it as -(6789) now
     val input = "-6789"
-    val expected = IntegerLiteral(BigInt("-6789"))
+    val expected = IntegerLiteral(BigInt("-6789"), meta = None)
     parseAndCheck(input, expected)
   }
 
   // Tests for DoubleLiteral
   test("parse valid double with exponent") {
     val input = "3.14e2"
-    val expected = RationalLiteral(BigDecimal("3.14e2"))
+    val expected = RationalLiteral(BigDecimal("3.14e2"), meta = None)
     parseAndCheck(input, expected)
   }
 
   if (false)
-    test("parse signed double with exponent") { // we are see it as -(1.23e-4) now
+    test("parse signed double with exponent") { // we see it as -(1.23e-4) now
       val input = "-1.23e-4"
-      val expected = RationalLiteral(BigDecimal("-1.23e-4"))
+      val expected = RationalLiteral(BigDecimal("-1.23e-4"), meta = None)
       parseAndCheck(input, expected)
     }
 
   test("parse double without exponent") {
     val input = "456.789"
-    val expected = RationalLiteral(BigDecimal("456.789"))
+    val expected = RationalLiteral(BigDecimal("456.789"), meta = None)
     parseAndCheck(input, expected)
   }
 
   // General literal tests
   test("parse integerLiteral") {
     val input = "12345"
-    val expected = IntegerLiteral(BigInt("12345"))
+    val expected = IntegerLiteral(BigInt("12345"), meta = None)
     parseAndCheck(input, expected)
   }
 
   test("parse doubleLiteral") {
     val input = "1.23e4"
-    val expected = RationalLiteral(BigDecimal("1.23e4"))
+    val expected = RationalLiteral(BigDecimal("1.23e4"), meta = None)
     parseAndCheck(input, expected)
   }
 
@@ -105,7 +105,7 @@ class ParserTest extends FunSuite {
     val input = "\"Hello, world!\""
     val result = Parser.parseExpr(FileNameAndContent("testFile", input))
     result match {
-      case Right(StringLiteral(value, _)) =>
+      case Right(StringLiteral(value, meta)) =>
         assertEquals(value, "Hello, world!")
       case _ => fail(s"Expected StringLiteral but got $result")
     }
@@ -115,7 +115,7 @@ class ParserTest extends FunSuite {
     val input = "\"Hello, \\\"world\\\"!\\n\""
     val result = Parser.parseExpr(FileNameAndContent("testFile", input))
     result match {
-      case Right(StringLiteral(value, _)) =>
+      case Right(StringLiteral(value, meta)) =>
         assertEquals(value, "Hello, \"world\"!\n")
       case _ => fail(s"Expected StringLiteral but got $result")
     }
@@ -126,7 +126,7 @@ class ParserTest extends FunSuite {
       val input = "\"\"\"\n  Hello,\n  world!\n\"\"\""
       val result = Parser.parseExpr(FileNameAndContent("testFile", input))
       result match {
-        case Right(StringLiteral(value, _)) =>
+        case Right(StringLiteral(value, meta)) =>
           assertEquals(value, "Hello,\nworld!")
         case _ => fail(s"Expected StringLiteral but got $result")
       }
@@ -168,99 +168,99 @@ class ParserTest extends FunSuite {
         |    ))
         |""".stripMargin
     val expected = FunctionCall(
-      Identifier("ObjectExpr"),
+      Identifier("ObjectExpr", meta = None),
       Tuple(
         Vector(
           FunctionCall(
-            Identifier("Vector"),
+            Identifier("Vector", meta = None),
             Tuple(
               Vector(
                 OpSeq(
                   Vector(
                     FunctionCall(
-                      Identifier("Identifier"),
-                      Tuple(Vector(StringLiteral("a")), None),
-                      None
+                      Identifier("Identifier", meta = None),
+                      Tuple(Vector(StringLiteral("a", meta = None)), meta = None),
+                      meta = None
                     ),
-                    Identifier("->"),
+                    Identifier("->", meta = None),
                     FunctionCall(
-                      Identifier("ObjectExpr"),
+                      Identifier("ObjectExpr", meta = None),
                       Tuple(
                         Vector(
                           FunctionCall(
-                            Identifier("Vector"),
+                            Identifier("Vector", meta = None),
                             Tuple(
                               Vector(
                                 OpSeq(
                                   Vector(
                                     FunctionCall(
-                                      Identifier("Identifier"),
-                                      Tuple(Vector(StringLiteral("b")), None),
-                                      None
+                                      Identifier("Identifier", meta = None),
+                                      Tuple(Vector(StringLiteral("b", meta = None)), meta = None),
+                                      meta = None
                                     ),
-                                    Identifier("->"),
+                                    Identifier("->", meta = None),
                                     FunctionCall(
-                                      Identifier("IntegerLiteral"),
+                                      Identifier("IntegerLiteral", meta = None),
                                       Tuple(
-                                        Vector(IntegerLiteral(2, None)),
-                                        None
+                                        Vector(IntegerLiteral(2, meta = None)),
+                                        meta = None
                                       ),
-                                      None
+                                      meta = None
                                     )
                                   ),
-                                  None
+                                  meta = None
                                 )
                               ),
-                              None
+                              meta = None
                             ),
-                            None
+                            meta = None
                           )
                         ),
-                        None
+                        meta = None
                       ),
-                      None
+                      meta = None
                     )
                   ),
-                  None
+                  meta = None
                 ),
                 OpSeq(
                   Vector(
                     FunctionCall(
-                      Identifier("Identifier"),
-                      Tuple(Vector(StringLiteral("c")), None),
-                      None
+                      Identifier("Identifier", meta = None),
+                      Tuple(Vector(StringLiteral("c", meta = None)), meta = None),
+                      meta = None
                     ),
-                    Identifier("->"),
+                    Identifier("->", meta = None),
                     FunctionCall(
-                      Identifier("IntegerLiteral"),
-                      Tuple(Vector(IntegerLiteral(3, None)), None),
-                      None
+                      Identifier("IntegerLiteral", meta = None),
+                      Tuple(Vector(IntegerLiteral(3, meta = None)), meta = None),
+                      meta = None
                     )
                   ),
-                  None
+                  meta = None
                 )
               ),
-              None
+              meta = None
             ),
-            None
+            meta = None
           )
         ),
-        None
+        meta = None
       ),
-      None
+      meta = None
     )
     parseAndCheck(input, expected)
   }
 
   test("emoji") {
     val input = "👍"
-    val expected = Identifier("👍")
+    val expected = Identifier("👍", meta = None)
     parseAndCheck(input, expected)
   }
 
   test("Multiple UTF-16 characters for one codepoint") {
     val input = "𠀋好"
-    val expected = Identifier("𠀋好")
+    val expected = Identifier("𠀋好", meta = None)
     parseAndCheck(input, expected)
   }
 }

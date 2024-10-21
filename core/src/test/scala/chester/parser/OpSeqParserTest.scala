@@ -10,10 +10,11 @@ class OpSeqParserTest extends FunSuite {
     val input = "1 + 2"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("+"),
-        IntegerLiteral(2)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(2, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -22,10 +23,11 @@ class OpSeqParserTest extends FunSuite {
     val input = "1 *2"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("*"),
-        IntegerLiteral(2)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("*", meta = None),
+        IntegerLiteral(2, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -34,14 +36,15 @@ class OpSeqParserTest extends FunSuite {
     val input = "1 + 2 + 3 + 4"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("+"),
-        IntegerLiteral(2),
-        Identifier("+"),
-        IntegerLiteral(3),
-        Identifier("+"),
-        IntegerLiteral(4)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(2, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(3, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(4, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -50,14 +53,15 @@ class OpSeqParserTest extends FunSuite {
     val input = "1 + 2 * 4 + 5"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("+"),
-        IntegerLiteral(2),
-        Identifier("*"),
-        IntegerLiteral(4),
-        Identifier("+"),
-        IntegerLiteral(5)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(2, meta = None),
+        Identifier("*", meta = None),
+        IntegerLiteral(4, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(5, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -66,9 +70,10 @@ class OpSeqParserTest extends FunSuite {
     val input = "+ x"
     val expected = OpSeq(
       Vector(
-        Identifier("+"),
-        Identifier("x")
-      )
+        Identifier("+", meta = None),
+        Identifier("x", meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -77,9 +82,10 @@ class OpSeqParserTest extends FunSuite {
     val input = "not x"
     val expected = OpSeq(
       Vector(
-        Identifier("not"),
-        Identifier("x")
-      )
+        Identifier("not", meta = None),
+        Identifier("x", meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -88,13 +94,14 @@ class OpSeqParserTest extends FunSuite {
     val input = "if x then q else w"
     val expected = OpSeq(
       Vector(
-        Identifier("if"),
-        Identifier("x"),
-        Identifier("then"),
-        Identifier("q"),
-        Identifier("else"),
-        Identifier("w")
-      )
+        Identifier("if", meta = None),
+        Identifier("x", meta = None),
+        Identifier("then", meta = None),
+        Identifier("q", meta = None),
+        Identifier("else", meta = None),
+        Identifier("w", meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -103,53 +110,33 @@ class OpSeqParserTest extends FunSuite {
     val input = "if x then f(if o then a else b) else w"
     val expected = OpSeq(
       Vector(
-        Identifier(
-          name = "if"
-        ),
-        Identifier(
-          name = "x"
-        ),
-        Identifier(
-          name = "then"
-        ),
+        Identifier("if", meta = None),
+        Identifier("x", meta = None),
+        Identifier("then", meta = None),
         FunctionCall(
-          function = Identifier(
-            name = "f"
-          ),
+          function = Identifier("f", meta = None),
           telescope = Tuple(
             Vector(
               OpSeq(
-                seq = Vector(
-                  Identifier(
-                    name = "if"
-                  ),
-                  Identifier(
-                    name = "o"
-                  ),
-                  Identifier(
-                    name = "then"
-                  ),
-                  Identifier(
-                    name = "a"
-                  ),
-                  Identifier(
-                    name = "else"
-                  ),
-                  Identifier(
-                    name = "b"
-                  )
-                )
+                Vector(
+                  Identifier("if", meta = None),
+                  Identifier("o", meta = None),
+                  Identifier("then", meta = None),
+                  Identifier("a", meta = None),
+                  Identifier("else", meta = None),
+                  Identifier("b", meta = None)
+                ),
+                meta = None
               )
-            )
-          )
+            ),
+            meta = None
+          ),
+          meta = None
         ),
-        Identifier(
-          name = "else"
-        ),
-        Identifier(
-          name = "w"
-        )
-      )
+        Identifier("else", meta = None),
+        Identifier("w", meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -158,14 +145,15 @@ class OpSeqParserTest extends FunSuite {
     val input = "1+2*4+5"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("+"),
-        IntegerLiteral(2),
-        Identifier("*"),
-        IntegerLiteral(4),
-        Identifier("+"),
-        IntegerLiteral(5)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(2, meta = None),
+        Identifier("*", meta = None),
+        IntegerLiteral(4, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(5, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -174,42 +162,38 @@ class OpSeqParserTest extends FunSuite {
     val input = "!1"
     val expected = OpSeq(
       Vector(
-        Identifier("!"),
-        IntegerLiteral(1)
-      )
+        Identifier("!", meta = None),
+        IntegerLiteral(1, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
+
   test("parse opSeq with and") {
     val input = "1 and 5"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("and"),
-        IntegerLiteral(5)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("and", meta = None),
+        IntegerLiteral(5, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
+
   test("parse val input") {
     val input = "val input = \"1 -> 5\""
-    val expected =
-      OpSeq(
-        seq = Vector(
-          Identifier(
-            name = "val"
-          ),
-          Identifier(
-            name = "input"
-          ),
-          Identifier(
-            name = "="
-          ),
-          StringLiteral(
-            value = "1 -> 5"
-          )
-        )
-      )
+    val expected = OpSeq(
+      Vector(
+        Identifier("val", meta = None),
+        Identifier("input", meta = None),
+        Identifier("=", meta = None),
+        StringLiteral("1 -> 5", meta = None)
+      ),
+      meta = None
+    )
     parseAndCheck(input, expected)
   }
 
@@ -217,54 +201,51 @@ class OpSeqParserTest extends FunSuite {
     val input = "1 -> 5"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("->"),
-        IntegerLiteral(5)
-      )
+        IntegerLiteral(1, meta = None),
+        Identifier("->", meta = None),
+        IntegerLiteral(5, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
+
   test("parse infix with block") {
     val input = "so getthen { doSomething }"
-    val expected =
-      OpSeq(
-        seq = Vector(
-          Identifier(
-            name = "so"
-          ),
-          Identifier(
-            name = "getthen"
-          ),
-          Block(
-            heads = Vector(),
-            tail = Identifier(
-              name = "doSomething"
-            )
-          )
+    val expected = OpSeq(
+      Vector(
+        Identifier("so", meta = None),
+        Identifier("getthen", meta = None),
+        Block(
+          heads = Vector(),
+          tail = Identifier("doSomething", meta = None),
+          meta = None
         )
-      )
+      ),
+      meta = None
+    )
     parseAndCheck(input, expected)
   }
 
   test("parse function call with") {
     val input = "+(2 + 3)"
-    val expected =
-      FunctionCall(
-        function = Identifier(
-          name = "+"
-        ),
-        telescope = Tuple(
-          Vector(
-            OpSeq(
-              seq = Vector(
-                IntegerLiteral(2),
-                Identifier("+"),
-                IntegerLiteral(3)
-              )
-            )
+    val expected = FunctionCall(
+      function = Identifier("+", meta = None),
+      telescope = Tuple(
+        Vector(
+          OpSeq(
+            Vector(
+              IntegerLiteral(2, meta = None),
+              Identifier("+", meta = None),
+              IntegerLiteral(3, meta = None)
+            ),
+            meta = None
           )
-        )
-      )
+        ),
+        meta = None
+      ),
+      meta = None
+    )
     parseAndCheck(input, expected)
   }
 
@@ -273,53 +254,60 @@ class OpSeqParserTest extends FunSuite {
       "def apply(heads: Vector[Expr], tail: Expr): Block = Block(heads, Some(tail), None)"
     val expected = OpSeq(
       Vector(
-        Identifier("def"),
+        Identifier("def", meta = None),
         FunctionCall(
-          Identifier("apply"),
-          Tuple(
+          function = Identifier("apply", meta = None),
+          telescope = Tuple(
             Vector(
               OpSeq(
                 Vector(
-                  Identifier("heads"),
-                  Identifier(":"),
+                  Identifier("heads", meta = None),
+                  Identifier(":", meta = None),
                   FunctionCall(
-                    Identifier("Vector"),
-                    ListExpr(Vector(Identifier("Expr")), None),
-                    None
+                    function = Identifier("Vector", meta = None),
+                    telescope = ListExpr(
+                      Vector(Identifier("Expr", meta = None)),
+                      meta = None
+                    ),
+                    meta = None
                   )
                 ),
-                None
+                meta = None
               ),
               OpSeq(
-                Vector(Identifier("tail"), Identifier(":"), Identifier("Expr")),
-                None
+                Vector(
+                  Identifier("tail", meta = None),
+                  Identifier(":", meta = None),
+                  Identifier("Expr", meta = None)
+                ),
+                meta = None
               )
             ),
-            None
+            meta = None
           ),
-          None
+          meta = None
         ),
-        Identifier(":"),
-        Identifier("Block"),
-        Identifier("="),
+        Identifier(":", meta = None),
+        Identifier("Block", meta = None),
+        Identifier("=", meta = None),
         FunctionCall(
-          Identifier("Block"),
-          Tuple(
+          function = Identifier("Block", meta = None),
+          telescope = Tuple(
             Vector(
-              Identifier("heads"),
+              Identifier("heads", meta = None),
               FunctionCall(
-                Identifier("Some"),
-                Tuple(Vector(Identifier("tail")), None),
-                None
+                function = Identifier("Some", meta = None),
+                telescope = Tuple(Vector(Identifier("tail", meta = None)), meta = None),
+                meta = None
               ),
-              Identifier("None")
+              Identifier("None", meta = None)
             ),
-            None
+            meta = None
           ),
-          None
+          meta = None
         )
       ),
-      None
+      meta = None
     )
     assertEquals(getParsed(input), expected)
   }
@@ -328,36 +316,43 @@ class OpSeqParserTest extends FunSuite {
     val input = "def apply(heads: Vector[Expr], tail: Expr): Block"
     val expected = OpSeq(
       Vector(
-        Identifier("def"),
+        Identifier("def", meta = None),
         FunctionCall(
-          Identifier("apply"),
-          Tuple(
+          function = Identifier("apply", meta = None),
+          telescope = Tuple(
             Vector(
               OpSeq(
                 Vector(
-                  Identifier("heads"),
-                  Identifier(":"),
+                  Identifier("heads", meta = None),
+                  Identifier(":", meta = None),
                   FunctionCall(
-                    Identifier("Vector"),
-                    ListExpr(Vector(Identifier("Expr")), None),
-                    None
+                    function = Identifier("Vector", meta = None),
+                    telescope = ListExpr(
+                      Vector(Identifier("Expr", meta = None)),
+                      meta = None
+                    ),
+                    meta = None
                   )
                 ),
-                None
+                meta = None
               ),
               OpSeq(
-                Vector(Identifier("tail"), Identifier(":"), Identifier("Expr")),
-                None
+                Vector(
+                  Identifier("tail", meta = None),
+                  Identifier(":", meta = None),
+                  Identifier("Expr", meta = None)
+                ),
+                meta = None
               )
             ),
-            None
+            meta = None
           ),
-          None
+          meta = None
         ),
-        Identifier(":"),
-        Identifier("Block")
+        Identifier(":", meta = None),
+        Identifier("Block", meta = None)
       ),
-      None
+      meta = None
     )
     assertEquals(getParsed(input), expected)
   }
@@ -367,15 +362,24 @@ class OpSeqParserTest extends FunSuite {
     val expected = OpSeq(
       Vector(
         FunctionCall(
-          Identifier("Identifier"),
-          Tuple(Vector(StringLiteral("b")))
+          function = Identifier("Identifier", meta = None),
+          telescope = Tuple(
+            Vector(StringLiteral("b", meta = None)),
+            meta = None
+          ),
+          meta = None
         ),
-        Identifier("->"),
+        Identifier("->", meta = None),
         FunctionCall(
-          Identifier("IntegerLiteral"),
-          Tuple(Vector(IntegerLiteral(2)))
+          function = Identifier("IntegerLiteral", meta = None),
+          telescope = Tuple(
+            Vector(IntegerLiteral(2, meta = None)),
+            meta = None
+          ),
+          meta = None
         )
-      )
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -383,24 +387,35 @@ class OpSeqParserTest extends FunSuite {
   test("parse OpSeq with identifier to integer literal mapping") {
     val input = "Vector(\n  Identifier(\"b\") -> IntegerLiteral(2)\n)"
     val expected = FunctionCall(
-      Identifier("Vector"),
-      Tuple(
+      function = Identifier("Vector", meta = None),
+      telescope = Tuple(
         Vector(
           OpSeq(
             Vector(
               FunctionCall(
-                Identifier("Identifier"),
-                Tuple(Vector(StringLiteral("b")))
+                function = Identifier("Identifier", meta = None),
+                telescope = Tuple(
+                  Vector(StringLiteral("b", meta = None)),
+                  meta = None
+                ),
+                meta = None
               ),
-              Identifier("->"),
+              Identifier("->", meta = None),
               FunctionCall(
-                Identifier("IntegerLiteral"),
-                Tuple(Vector(IntegerLiteral(2)))
+                function = Identifier("IntegerLiteral", meta = None),
+                telescope = Tuple(
+                  Vector(IntegerLiteral(2, meta = None)),
+                  meta = None
+                ),
+                meta = None
               )
-            )
+            ),
+            meta = None
           )
-        )
-      )
+        ),
+        meta = None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }

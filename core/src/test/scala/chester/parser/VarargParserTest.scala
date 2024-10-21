@@ -10,29 +10,22 @@ class VarargParserTest extends FunSuite {
     val input = "func(1, 2, xs*)"
     val expected =
       FunctionCall(
-        function = Identifier(
-          name = "func"
-        ),
+        function = Identifier("func", meta = None),
         telescope = Tuple(
           terms = Vector(
-            IntegerLiteral(
-              value = 1
-            ),
-            IntegerLiteral(
-              value = 2
-            ),
+            IntegerLiteral(1, meta = None),
+            IntegerLiteral(2, meta = None),
             OpSeq(
               seq = Vector(
-                Identifier(
-                  name = "xs"
-                ),
-                Identifier(
-                  name = "*"
-                )
-              )
+                Identifier("xs", meta = None),
+                Identifier("*", meta = None)
+              ),
+              meta = None
             )
-          )
-        )
+          ),
+          meta = None
+        ),
+        meta = None
       )
     parseAndCheck(input, expected)
   }
@@ -41,29 +34,22 @@ class VarargParserTest extends FunSuite {
     val input = "func(x : Integer *)"
     val expected =
       FunctionCall(
-        function = Identifier(
-          name = "func"
-        ),
+        function = Identifier("func", meta = None),
         telescope = Tuple(
           terms = Vector(
             OpSeq(
               seq = Vector(
-                Identifier(
-                  name = "x"
-                ),
-                Identifier(
-                  name = ":"
-                ),
-                Identifier(
-                  name = "Integer"
-                ),
-                Identifier(
-                  name = "*"
-                )
-              )
+                Identifier("x", meta = None),
+                Identifier(":", meta = None),
+                Identifier("Integer", meta = None),
+                Identifier("*", meta = None)
+              ),
+              meta = None
             )
-          )
-        )
+          ),
+          meta = None
+        ),
+        meta = None
       )
     parseAndCheck(input, expected)
   }

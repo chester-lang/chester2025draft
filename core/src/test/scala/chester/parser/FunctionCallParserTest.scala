@@ -8,15 +8,26 @@ class FunctionCallParserTest extends FunSuite {
 
   test("parse simple function call with no arguments") {
     val input = "func()"
-    val expected = FunctionCall(Identifier("func"), Tuple(Vector()))
+    val expected = FunctionCall(
+      Identifier("func", meta = None),
+      Tuple(Vector(), meta = None),
+      meta = None
+    )
     parseAndCheck(input, expected)
   }
 
   test("parse function call with multiple arguments") {
     val input = "multiply(2, 3)"
     val expected = FunctionCall(
-      Identifier("multiply"),
-      Tuple(Vector(IntegerLiteral(2), IntegerLiteral(3)))
+      Identifier("multiply", meta = None),
+      Tuple(
+        Vector(
+          IntegerLiteral(2, meta = None),
+          IntegerLiteral(3, meta = None)
+        ),
+        meta = None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -24,8 +35,15 @@ class FunctionCallParserTest extends FunSuite {
   test("parse function call with multiple arguments and symbol identifier") {
     val input = "+(2, 3)"
     val expected = FunctionCall(
-      Identifier("+"),
-      Tuple(Vector(IntegerLiteral(2), IntegerLiteral(3)))
+      Identifier("+", meta = None),
+      Tuple(
+        Vector(
+          IntegerLiteral(2, meta = None),
+          IntegerLiteral(3, meta = None)
+        ),
+        meta = None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -33,10 +51,16 @@ class FunctionCallParserTest extends FunSuite {
   test("parse function call with mixed type arguments") {
     val input = "createPerson(\"John\", 30, true)"
     val expected = FunctionCall(
-      Identifier("createPerson"),
+      Identifier("createPerson", meta = None),
       Tuple(
-        Vector(StringLiteral("John"), IntegerLiteral(30), Identifier("true"))
-      )
+        Vector(
+          StringLiteral("John", meta = None),
+          IntegerLiteral(30, meta = None),
+          Identifier("true", meta = None)
+        ),
+        meta = None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -45,12 +69,22 @@ class FunctionCallParserTest extends FunSuite {
     val input = "createPerson[Integer](\"John\", 30, true)"
     val expected = FunctionCall(
       FunctionCall(
-        Identifier("createPerson"),
-        ListExpr(Vector(Identifier("Integer")))
+        Identifier("createPerson", meta = None),
+        ListExpr(
+          Vector(Identifier("Integer", meta = None)),
+          meta = None
+        ),
+        meta = None
       ),
       Tuple(
-        Vector(StringLiteral("John"), IntegerLiteral(30), Identifier("true"))
-      )
+        Vector(
+          StringLiteral("John", meta = None),
+          IntegerLiteral(30, meta = None),
+          Identifier("true", meta = None)
+        ),
+        meta = None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }

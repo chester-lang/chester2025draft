@@ -16,65 +16,74 @@ class PatternMatchingTest extends FunSuite {
         |""".stripMargin
     val expected = OpSeq(
       Vector(
-        Identifier("notification"),
-        Identifier("match"),
+        Identifier("notification", meta = None),
+        Identifier("match", meta = None),
         Block(
-          Vector(
+          heads = Vector(
             OpSeq(
               Vector(
-                Identifier("case"),
+                Identifier("case", meta = None),
                 FunctionCall(
-                  Identifier("Email"),
+                  Identifier("Email", meta = None),
                   Tuple(
                     Vector(
-                      Identifier("sender"),
-                      Identifier("title"),
-                      Identifier("_")
+                      Identifier("sender", meta = None),
+                      Identifier("title", meta = None),
+                      Identifier("_", meta = None)
                     ),
-                    None
+                    meta = None
                   ),
-                  None
+                  meta = None
                 ),
-                Identifier("=>"),
-                Identifier("A")
+                Identifier("=>", meta = None),
+                Identifier("A", meta = None)
               ),
-              None
+              meta = None
             ),
             OpSeq(
               Vector(
-                Identifier("case"),
+                Identifier("case", meta = None),
                 FunctionCall(
-                  Identifier("SMS"),
+                  Identifier("SMS", meta = None),
                   Tuple(
-                    Vector(Identifier("number"), Identifier("message")),
-                    None
+                    Vector(
+                      Identifier("number", meta = None),
+                      Identifier("message", meta = None)
+                    ),
+                    meta = None
                   ),
-                  None
+                  meta = None
                 ),
-                Identifier("=>"),
-                Identifier("B")
+                Identifier("=>", meta = None),
+                Identifier("B", meta = None)
               ),
-              None
+              meta = None
             ),
             OpSeq(
               Vector(
-                Identifier("case"),
+                Identifier("case", meta = None),
                 FunctionCall(
-                  Identifier("VoiceRecording"),
-                  Tuple(Vector(Identifier("name"), Identifier("link")), None),
-                  None
+                  Identifier("VoiceRecording", meta = None),
+                  Tuple(
+                    Vector(
+                      Identifier("name", meta = None),
+                      Identifier("link", meta = None)
+                    ),
+                    meta = None
+                  ),
+                  meta = None
                 ),
-                Identifier("=>"),
-                Identifier("C")
+                Identifier("=>", meta = None),
+                Identifier("C", meta = None)
               ),
-              None
+              meta = None
             )
           ),
-          None,
-          None
+          tail = None,
+          meta = None
         )
       ),
-      None
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -95,89 +104,104 @@ class PatternMatchingTest extends FunSuite {
         |""".stripMargin
     val expected = OpSeq(
       Vector(
-        Identifier("notification"),
-        Identifier("match"),
+        Identifier("notification", meta = None),
+        Identifier("match", meta = None),
         Block(
-          Vector(
+          heads = Vector(
             OpSeq(
               Vector(
-                Identifier("case"),
+                Identifier("case", meta = None),
                 FunctionCall(
-                  Identifier("Email"),
+                  Identifier("Email", meta = None),
                   Tuple(
                     Vector(
-                      Identifier("sender"),
-                      Identifier("title"),
-                      Identifier("_")
+                      Identifier("sender", meta = None),
+                      Identifier("title", meta = None),
+                      Identifier("_", meta = None)
                     ),
-                    None
+                    meta = None
                   ),
-                  None
+                  meta = None
                 ),
-                Identifier("=>"),
+                Identifier("=>", meta = None),
                 Block(
-                  Vector(
+                  heads = Vector(
                     FunctionCall(
-                      Identifier("println"),
-                      Tuple(Vector(Identifier("sender")), None),
-                      None
+                      Identifier("println", meta = None),
+                      Tuple(
+                        Vector(Identifier("sender", meta = None)),
+                        meta = None
+                      ),
+                      meta = None
                     ),
                     FunctionCall(
-                      Identifier("println"),
-                      Tuple(Vector(Identifier("title")), None),
-                      None
+                      Identifier("println", meta = None),
+                      Tuple(
+                        Vector(Identifier("title", meta = None)),
+                        meta = None
+                      ),
+                      meta = None
                     )
                   ),
-                  None,
-                  None
+                  tail = None,
+                  meta = None
                 )
               ),
-              None
+              meta = None
             ),
             OpSeq(
               Vector(
-                Identifier("case"),
+                Identifier("case", meta = None),
                 FunctionCall(
-                  Identifier("SMS"),
+                  Identifier("SMS", meta = None),
                   Tuple(
-                    Vector(Identifier("number"), Identifier("message")),
-                    None
+                    Vector(
+                      Identifier("number", meta = None),
+                      Identifier("message", meta = None)
+                    ),
+                    meta = None
                   ),
-                  None
+                  meta = None
                 ),
-                Identifier("=>"),
-                Identifier("B")
+                Identifier("=>", meta = None),
+                Identifier("B", meta = None)
               ),
-              None
+              meta = None
             ),
             OpSeq(
               Vector(
-                Identifier("case"),
+                Identifier("case", meta = None),
                 FunctionCall(
-                  Identifier("VoiceRecording"),
-                  Tuple(Vector(Identifier("name"), Identifier("link")), None),
-                  None
+                  Identifier("VoiceRecording", meta = None),
+                  Tuple(
+                    Vector(
+                      Identifier("name", meta = None),
+                      Identifier("link", meta = None)
+                    ),
+                    meta = None
+                  ),
+                  meta = None
                 ),
-                Identifier("=>"),
-                Identifier("C")
+                Identifier("=>", meta = None),
+                Identifier("C", meta = None)
               ),
-              None
+              meta = None
             ),
             OpSeq(
               Vector(
-                Identifier("case"),
-                Identifier("_"),
-                Identifier("=>"),
-                Identifier("D")
+                Identifier("case", meta = None),
+                Identifier("_", meta = None),
+                Identifier("=>", meta = None),
+                Identifier("D", meta = None)
               ),
-              None
+              meta = None
             )
           ),
-          None,
-          None
+          tail = None,
+          meta = None
         )
       ),
-      None
+      meta = None
     )
     parseAndCheck(input, expected)
   }
