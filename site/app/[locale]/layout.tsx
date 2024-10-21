@@ -15,12 +15,14 @@ import { ThemeProvider } from '@/components/ThemeContext';
 
 type Props = {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
-export async function generateMetadata({
-  params: { locale },
-}: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+
+  const { locale } = params;
+
   const messages = await getMessages(locale);
 
   return {
@@ -34,10 +36,13 @@ export async function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
 }
 
-export default async function RootLayout({
-  children,
-  params: { locale },
-}: Props) {
+export default async function RootLayout(props: Props) {
+  const params = await props.params;
+
+  const { locale } = params;
+
+  const { children } = props;
+
   const messages = await getMessages(locale);
 
   return (
