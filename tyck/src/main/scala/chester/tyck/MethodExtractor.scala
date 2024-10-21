@@ -34,9 +34,9 @@ trait MethodExtractor {
 
   // Helper method to collect methods from Block
   private def collectMethodsFromBlock(block: Block): Seq[LetDefStmt] = {
-    block.heads.collect {
+    block.statements.collect {
       case letDefStmt: LetDefStmt if letDefStmt.kind == LetDefType.Def => letDefStmt
-    } ++ block.tail.toSeq.flatMap(collectMethodsFromExpr)
+    } ++ block.result.toSeq.flatMap(collectMethodsFromExpr)
   }
 
   // Overloaded method for Term

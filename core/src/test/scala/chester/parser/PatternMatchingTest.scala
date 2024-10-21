@@ -19,7 +19,7 @@ class PatternMatchingTest extends FunSuite {
         Identifier("notification", meta = None),
         Identifier("match", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               Vector(
                 Identifier("case", meta = None),
@@ -79,7 +79,7 @@ class PatternMatchingTest extends FunSuite {
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -107,7 +107,7 @@ class PatternMatchingTest extends FunSuite {
         Identifier("notification", meta = None),
         Identifier("match", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               Vector(
                 Identifier("case", meta = None),
@@ -125,7 +125,7 @@ class PatternMatchingTest extends FunSuite {
                 ),
                 Identifier("=>", meta = None),
                 Block(
-                  heads = Vector(
+                  statements = Vector(
                     FunctionCall(
                       Identifier("println", meta = None),
                       Tuple(
@@ -143,7 +143,7 @@ class PatternMatchingTest extends FunSuite {
                       meta = None
                     )
                   ),
-                  tail = None,
+                  result = None,
                   meta = None
                 )
               ),
@@ -197,7 +197,7 @@ class PatternMatchingTest extends FunSuite {
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),

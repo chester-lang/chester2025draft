@@ -248,12 +248,12 @@ case class PostfixExpr(
   )
 }
 case class Block(
-    heads: Vector[Expr],
-    tail: Option[Expr],
-    meta: Option[ExprMeta]
+                  statements: Vector[Expr],
+                  result: Option[Expr],
+                  meta: Option[ExprMeta]
 ) extends ParsedExpr {
   override def descent(operator: Expr => Expr): Block = thisOr {
-    Block(heads.map(operator), tail.map(operator), meta)
+    Block(statements.map(operator), result.map(operator), meta)
   }
 
   override def updateMeta(
@@ -261,8 +261,8 @@ case class Block(
   ): Block = copy(meta = updater(meta))
 
   override def toDoc(using options: PrettierOptions): Doc = group {
-    val headDocs = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`;` </> Doc.empty)(heads.map(_.toDoc))
-    val tailDoc = tail.map(_.toDoc).getOrElse(Doc.empty)
+    val headDocs = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`;` </> Doc.empty)(statements.map(_.toDoc))
+    val tailDoc = result.map(_.toDoc).getOrElse(Doc.empty)
 
     Docs.`{` </>
       Doc.indented(Doc.concat(headDocs, tailDoc)) </>

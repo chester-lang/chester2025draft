@@ -126,8 +126,8 @@ class DotParserTest extends FunSuite {
         Tuple(
           Vector(
             Block(
-              heads = Vector(),
-              tail = Some(Identifier("arg1", meta = None)),
+              statements = Vector(),
+              result = Some(Identifier("arg1", meta = None)),
               meta = None
             )
           ),

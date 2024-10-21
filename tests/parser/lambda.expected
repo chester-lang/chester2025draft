@@ -1,11 +1,11 @@
 Block(
-  heads = Vector(
+  statements = Vector(
     OpSeq(
       seq = Vector(
         Identifier(name = "matchingLambda", meta = None),
         Identifier(name = "=", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "case", meta = None),
@@ -25,7 +25,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -58,7 +58,7 @@ Block(
         Identifier(name = "blockingFunction", meta = None),
         Identifier(name = "=", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "x", meta = None),
@@ -73,7 +73,7 @@ Block(
               meta = None
             )
           ),
-          tail = Some(value = Identifier(name = "y", meta = None)),
+          result = Some(value = Identifier(name = "y", meta = None)),
           meta = None
         )
       ),
@@ -103,6 +103,6 @@ Block(
       meta = None
     )
   ),
-  tail = None,
+  result = None,
   meta = None
 )

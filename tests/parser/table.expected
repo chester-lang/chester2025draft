@@ -1,5 +1,5 @@
 Block(
-  heads = Vector(
+  statements = Vector(
     ObjectExpr(
       clauses = Vector(
         ObjectExprClause(
@@ -27,6 +27,6 @@ Block(
       meta = None
     )
   ),
-  tail = None,
+  result = None,
   meta = None
 )

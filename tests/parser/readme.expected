@@ -1,5 +1,5 @@
 Block(
-  heads = Vector(
+  statements = Vector(
     OpSeq(seq = Vector(Identifier(name = "module", meta = None), Identifier(name = "😿😿", meta = None)), meta = None),
     OpSeq(
       seq = Vector(
@@ -16,7 +16,7 @@ Block(
         Identifier(name = "world", meta = None),
         Identifier(name = "=", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "execute", meta = None),
@@ -40,7 +40,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -75,7 +75,7 @@ Block(
         Identifier(name = "extends", meta = None),
         Identifier(name = "舞", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "field", meta = None),
@@ -86,7 +86,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -162,7 +162,7 @@ Block(
         Identifier(name = ":", meta = None),
         Identifier(name = "Type", meta = None),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "eval", meta = None),
@@ -172,7 +172,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -189,7 +189,7 @@ Block(
           meta = None
         ),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "field", meta = None),
@@ -209,7 +209,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -242,7 +242,7 @@ Block(
           meta = None
         ),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "field", meta = None),
@@ -262,7 +262,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -339,7 +339,7 @@ Block(
           meta = None
         ),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 Identifier(name = "field", meta = None),
@@ -366,7 +366,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -527,7 +527,7 @@ Block(
           meta = None
         ),
         Block(
-          heads = Vector(
+          statements = Vector(
             OpSeq(
               seq = Vector(
                 FunctionCall(
@@ -581,7 +581,7 @@ Block(
               meta = None
             )
           ),
-          tail = None,
+          result = None,
           meta = None
         )
       ),
@@ -627,6 +627,6 @@ Block(
       meta = None
     )
   ),
-  tail = None,
+  result = None,
   meta = None
 )
