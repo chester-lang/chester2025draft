@@ -176,6 +176,30 @@ case class Quotation(
   def toDoc(using options: PrettierOptions): Doc = Doc.text("'") <> value.toDoc
 }
 
+// QuasiQuotation class
+case class QuasiQuotation(
+    value: Expression,
+    meta: Option[Meta] = None
+) extends Expression {
+    def toDoc(using options: PrettierOptions): Doc = Doc.text("`") <> value.toDoc
+}
+
+// Unquote class
+case class Unquote(
+    value: Expression,
+    meta: Option[Meta] = None
+) extends Expression {
+    def toDoc(using options: PrettierOptions): Doc = Doc.text(",") <> value.toDoc
+}
+
+// UnquoteSplicing class
+case class UnquoteSplicing(
+    value: Expression,
+    meta: Option[Meta] = None
+) extends Expression {
+    def toDoc(using options: PrettierOptions): Doc = Doc.text(",@") <> value.toDoc
+}
+
 // Program
 case class Program(
     expressions: Vector[Expression],
