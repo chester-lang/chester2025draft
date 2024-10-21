@@ -59,7 +59,7 @@ private object MatchDeclarationTelescope {
   )(using reporter: Reporter[TyckProblem]): Option[DefTelescope] = x match {
     case id: Identifier =>
       // Single parameter without type
-      Some(DefTelescope(Vector(Arg(name = id, meta = id.meta)),meta=x.meta))
+      Some(DefTelescope(Vector(Arg(name = id, meta = id.meta)), meta = x.meta))
     case opseq @ OpSeq(terms, meta) if terms.nonEmpty => unapply(Tuple(Vector(opseq), meta))
     case t @ Tuple(terms, _)                          => handleTerms(terms, t, false)
     case t @ ListExpr(terms, _)                       => handleTerms(terms, t, true)
@@ -70,7 +70,7 @@ private object MatchDeclarationTelescope {
 }
 
 def opSeq(xs: Seq[Expr])(using reporter: Reporter[TyckProblem]): Expr =
-  SimpleDesalt.desugar(OpSeq(xs.toVector,xs.head.meta))
+  SimpleDesalt.desugar(OpSeq(xs.toVector, xs.head.meta))
 
 private object DesaltSimpleFunction {
   def predicate(x: Expr): Boolean = x match {
@@ -87,8 +87,8 @@ private object DesaltSimpleFunction {
         val after = xs.drop(index + 1)
 
         val paramsExpr = before match {
-          case Vector(Tuple(terms, meta)) => Vector(Tuple(terms,meta))
-          case _                       => before
+          case Vector(Tuple(terms, meta)) => Vector(Tuple(terms, meta))
+          case _                          => before
         }
 
         paramsExpr.traverse(MatchDeclarationTelescope.unapply) match {
@@ -153,7 +153,7 @@ private object ObjectDesalt {
         (fields, others :+ clause)
     }
 
-    val nestedObject = insertNested(desugaredFields, ObjectExpr(Vector.empty, meta=expr.meta))
+    val nestedObject = insertNested(desugaredFields, ObjectExpr(Vector.empty, meta = expr.meta))
 
     val updatedClauses = (nestedObject.clauses ++ otherClauses).map {
       case ObjectExprClause(key: Identifier, value) =>
@@ -327,7 +327,7 @@ case object SimpleDesalt {
           case t: Tuple =>
             Vector(
               DesaltCallingTelescope(
-                t.terms.map(term => CallingArg(expr = desugar(term), meta=term.meta)),
+                t.terms.map(term => CallingArg(expr = desugar(term), meta = term.meta)),
                 meta = t.meta
               )
             )
@@ -335,7 +335,7 @@ case object SimpleDesalt {
             reporter(UnexpectedTelescope(other))
             Vector(
               DesaltCallingTelescope(
-                Vector(CallingArg(expr = desugar(other), meta=other.meta)),
+                Vector(CallingArg(expr = desugar(other), meta = other.meta)),
                 meta = other.meta
               )
             )
@@ -415,9 +415,9 @@ case object SimpleDesalt {
             case Tuple(terms, _) =>
               terms.map {
                 case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
-                  Some(RecordField(name = id, ty = Some(ty), meta=id.meta))
+                  Some(RecordField(name = id, ty = Some(ty), meta = id.meta))
                 case id: Identifier =>
-                  Some(RecordField(name = id, meta=id.meta))
+                  Some(RecordField(name = id, meta = id.meta))
                 case other =>
                   reporter(ExpectFieldDeclaration(other))
                   None
@@ -434,7 +434,7 @@ case object SimpleDesalt {
           val bodyExpr = opSeq(bodyExprs)
           Some(desugar(bodyExpr) match {
             case b: Block => b
-            case other    => Block(Vector(other), None,meta=other.meta)
+            case other    => Block(Vector(other), None, meta = other.meta)
           })
         } else None
 
@@ -472,7 +472,7 @@ case object SimpleDesalt {
           val body = opSeq(tokens)
           Some(desugar(body) match {
             case b: Block => b
-            case other    => Block(Vector(other), None,meta=other.meta)
+            case other    => Block(Vector(other), None, meta = other.meta)
           })
         } else None
 
@@ -503,7 +503,7 @@ case object SimpleDesalt {
           val body = opSeq(remainingTokens)
           Some(desugar(body) match {
             case b: Block => b
-            case other    => Block(Vector(other), None,meta=other.meta)
+            case other    => Block(Vector(other), None, meta = other.meta)
           })
         } else None
 
@@ -540,7 +540,7 @@ case object SimpleDesalt {
           val body = opSeq(tokens)
           Some(desugar(body) match {
             case b: Block => b
-            case other    => Block(Vector(other), None,meta=other.meta)
+            case other    => Block(Vector(other), None, meta = other.meta)
           })
         } else None
 

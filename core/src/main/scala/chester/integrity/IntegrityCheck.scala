@@ -51,14 +51,15 @@ object IntegrityCheck {
     val input = "1+2*4+5"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1,meta=None),
-        Identifier("+",meta=None),
-        IntegerLiteral(2,meta=None),
-        Identifier("*",meta=None),
-        IntegerLiteral(4,meta=None),
-        Identifier("+",meta=None),
-        IntegerLiteral(5,meta=None)
-      ),meta=None
+        IntegerLiteral(1, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(2, meta = None),
+        Identifier("*", meta = None),
+        IntegerLiteral(4, meta = None),
+        Identifier("+", meta = None),
+        IntegerLiteral(5, meta = None)
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -68,15 +69,18 @@ object IntegrityCheck {
     val expected = OpSeq(
       Vector(
         FunctionCall(
-          Identifier("Identifier",meta=None),
-          Tuple(Vector(StringLiteral("b",meta=None)),meta=None),meta=None
+          Identifier("Identifier", meta = None),
+          Tuple(Vector(StringLiteral("b", meta = None)), meta = None),
+          meta = None
         ),
-        Identifier("->",meta=None),
+        Identifier("->", meta = None),
         FunctionCall(
-          Identifier("IntegerLiteral",meta=None),
-          Tuple(Vector(IntegerLiteral(2,meta=None)),meta=None),meta=None
+          Identifier("IntegerLiteral", meta = None),
+          Tuple(Vector(IntegerLiteral(2, meta = None)), meta = None),
+          meta = None
         )
-      ),meta=None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
@@ -84,24 +88,29 @@ object IntegrityCheck {
   test("parse OpSeq with identifier to integer literal mapping") {
     val input = "Vector(\n  Identifier(\"b\") -> IntegerLiteral(2)\n)"
     val expected = FunctionCall(
-      Identifier("Vector",meta=None),
+      Identifier("Vector", meta = None),
       Tuple(
         Vector(
           OpSeq(
             Vector(
               FunctionCall(
-                Identifier("Identifier",meta=None),
-                Tuple(Vector(StringLiteral("b",meta=None)),meta=None),meta=None
+                Identifier("Identifier", meta = None),
+                Tuple(Vector(StringLiteral("b", meta = None)), meta = None),
+                meta = None
               ),
-              Identifier("->",meta=None),
+              Identifier("->", meta = None),
               FunctionCall(
-                Identifier("IntegerLiteral",meta=None),
-                Tuple(Vector(IntegerLiteral(2,meta=None)),meta=None),meta=None
+                Identifier("IntegerLiteral", meta = None),
+                Tuple(Vector(IntegerLiteral(2, meta = None)), meta = None),
+                meta = None
               )
-            ),meta=None
+            ),
+            meta = None
           )
-        ),meta=None
-      ),meta=None
+        ),
+        meta = None
+      ),
+      meta = None
     )
     parseAndCheck(input, expected)
   }
