@@ -144,7 +144,7 @@ def buildExpr(
 ): Expr = {
   if (stack.isEmpty) {
     reporter.apply(UnexpectedTokens(Nil))
-    Identifier("error")
+    Identifier("error",meta=None)
   } else {
     val tokenInfo = stack.pop()
     val expr = tokenInfo.expr

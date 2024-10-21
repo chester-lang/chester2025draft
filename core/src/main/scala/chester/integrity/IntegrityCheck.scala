@@ -51,14 +51,14 @@ object IntegrityCheck {
     val input = "1+2*4+5"
     val expected = OpSeq(
       Vector(
-        IntegerLiteral(1),
-        Identifier("+"),
-        IntegerLiteral(2),
-        Identifier("*"),
-        IntegerLiteral(4),
-        Identifier("+"),
-        IntegerLiteral(5)
-      )
+        IntegerLiteral(1,meta=None),
+        Identifier("+",meta=None),
+        IntegerLiteral(2,meta=None),
+        Identifier("*",meta=None),
+        IntegerLiteral(4,meta=None),
+        Identifier("+",meta=None),
+        IntegerLiteral(5,meta=None)
+      ),meta=None
     )
     parseAndCheck(input, expected)
   }
@@ -68,15 +68,15 @@ object IntegrityCheck {
     val expected = OpSeq(
       Vector(
         FunctionCall(
-          Identifier("Identifier"),
-          Tuple(Vector(StringLiteral("b")))
+          Identifier("Identifier",meta=None),
+          Tuple(Vector(StringLiteral("b",meta=None)),meta=None),meta=None
         ),
-        Identifier("->"),
+        Identifier("->",meta=None),
         FunctionCall(
-          Identifier("IntegerLiteral"),
-          Tuple(Vector(IntegerLiteral(2)))
+          Identifier("IntegerLiteral",meta=None),
+          Tuple(Vector(IntegerLiteral(2,meta=None)),meta=None),meta=None
         )
-      )
+      ),meta=None
     )
     parseAndCheck(input, expected)
   }
@@ -84,24 +84,24 @@ object IntegrityCheck {
   test("parse OpSeq with identifier to integer literal mapping") {
     val input = "Vector(\n  Identifier(\"b\") -> IntegerLiteral(2)\n)"
     val expected = FunctionCall(
-      Identifier("Vector"),
+      Identifier("Vector",meta=None),
       Tuple(
         Vector(
           OpSeq(
             Vector(
               FunctionCall(
-                Identifier("Identifier"),
-                Tuple(Vector(StringLiteral("b")))
+                Identifier("Identifier",meta=None),
+                Tuple(Vector(StringLiteral("b",meta=None)),meta=None),meta=None
               ),
-              Identifier("->"),
+              Identifier("->",meta=None),
               FunctionCall(
-                Identifier("IntegerLiteral"),
-                Tuple(Vector(IntegerLiteral(2)))
+                Identifier("IntegerLiteral",meta=None),
+                Tuple(Vector(IntegerLiteral(2,meta=None)),meta=None),meta=None
               )
-            )
+            ),meta=None
           )
-        )
-      )
+        ),meta=None
+      ),meta=None
     )
     parseAndCheck(input, expected)
   }
