@@ -19,9 +19,9 @@ trait WithServerity extends Any {
   final def isError: Boolean = severity == Problem.Severity.Error
 }
 
-/** TODO: maybe add method to get location */
 trait Problem extends ToDoc with WithServerity {
   def stage: Problem.Stage
+  def location: Option[SourcePos] = None
 }
 
 private case class ProblemSer(
