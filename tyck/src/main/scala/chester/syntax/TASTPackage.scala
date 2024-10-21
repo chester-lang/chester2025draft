@@ -1,6 +1,5 @@
 package chester.syntax
 
-import chester.syntax.*
 import chester.syntax.core.{BlockTerm, Effects, Term}
 import chester.tyck.SeverityMap
 import chester.uniqid.*

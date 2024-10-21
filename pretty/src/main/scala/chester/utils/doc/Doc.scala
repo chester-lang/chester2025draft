@@ -117,7 +117,6 @@ implicit class DocOps(doc: Doc) extends AnyVal {
   def render(w: Width = maxWidth)(using printer: DocPrinter): printer.Layout =
     Doc.render(doc, w)
 }
-
 implicit class DocPrinterOps[T <: DocPrinter](val printer: T) extends AnyVal {
   def render(doc: Doc, maxWidth: Width = maxWidth): printer.Layout =
     doc.render(maxWidth)(using printer)
