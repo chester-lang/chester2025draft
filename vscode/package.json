@@ -49,7 +49,7 @@
     "build": "pnpm run compile && pnpm run copy-server",
     "compile": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "pnpm run compile --watch",
-    "copy-server": "cp ../target/chester-lsp.jar ./server/",
+    "copy-server": "shx cp ../target/chester-lsp.jar ./server/",
     "package": "pnpm run build && vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies",
     "pretest": "tsc -p ./",
@@ -67,6 +67,7 @@
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",
+    "shx": "^0.3.4",
     "typescript": "^5.6.3"
   },
   "dependencies": {

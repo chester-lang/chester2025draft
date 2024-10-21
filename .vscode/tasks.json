@@ -3,9 +3,12 @@
     "tasks": [
       {
         "label": "build",
-        "type": "npm",
-        "script": "build",
-        "path": "vscode",
+        "type": "shell",
+        "command": "pnpm",
+        "args": ["build"],
+        "options": {
+          "cwd": "vscode"
+        },
         "problemMatcher": [],
         "group": {
           "kind": "build",

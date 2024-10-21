@@ -12,11 +12,7 @@
         "outFiles": [
           "${workspaceFolder}/vscode/out/**/*.js"
         ],
-        "preLaunchTask": {
-          "type": "npm",
-          "script": "build",
-          "path": "vscode"
-        },
+        "preLaunchTask": "build",
         "autoAttachChildProcesses": true
       },
       {
