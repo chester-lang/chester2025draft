@@ -1,17 +1,23 @@
 package chester.targets.js
 
+import chester.error.*
 import chester.utils.doc.*
 import upickle.default.*
 
+case class Meta(sourcePos: SourcePos) derives ReadWriter 
+
 // Base trait for all AST nodes
-sealed trait ASTNode extends ToDoc derives ReadWriter
+sealed trait ASTNode extends ToDoc derives ReadWriter {
+  val meta: Option[Meta]
+}
 
 // Expressions
 sealed trait Expression extends ASTNode derives ReadWriter
 
 // Unannotated Identifier
 case class Identifier(
-    name: String
+    name: String,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
 }
@@ -19,7 +25,8 @@ case class Identifier(
 // Annotated Identifier
 case class TypedIdentifier(
     name: String,
-    typeAnnotation: TypeAnnotation
+    typeAnnotation: TypeAnnotation,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(name) <> Doc.text(":") <+> typeAnnotation.toDoc
 }
@@ -113,13 +120,12 @@ enum UpdateOperator derives ReadWriter {
   }
 }
 
-// Now update the AST nodes to use these enums instead of Strings
-
 // Binary Expression
 case class BinaryExpression(
     operator: BinaryOperator,
     left: Expression,
-    right: Expression
+    right: Expression,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc =
     Doc.group(left.toDoc <+> Doc.text(operator.toString) <+> right.toDoc)
@@ -129,7 +135,8 @@ case class BinaryExpression(
 case class LogicalExpression(
     operator: LogicalOperator,
     left: Expression,
-    right: Expression
+    right: Expression,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val opDoc = Doc.text(operator.toString)
@@ -141,7 +148,8 @@ case class LogicalExpression(
 case class AssignmentExpression(
     operator: AssignmentOperator,
     left: Expression,
-    right: Expression
+    right: Expression,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val opDoc = Doc.text(operator.toString)
@@ -153,7 +161,8 @@ case class AssignmentExpression(
 case class UnaryExpression(
     operator: UnaryOperator,
     argument: Expression,
-    prefix: Boolean = true
+    prefix: Boolean = true,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val opDoc = Doc.text(operator.toString)
@@ -168,7 +177,8 @@ case class UnaryExpression(
 case class UpdateExpression(
     operator: UpdateOperator,
     argument: Expression,
-    prefix: Boolean
+    prefix: Boolean,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val opDoc = Doc.text(operator.toString)
@@ -179,61 +189,55 @@ case class UpdateExpression(
   }
 }
 
-// Continue with the rest of the AST nodes, ensuring that other operator Strings are replaced by enums
-
-// Other existing nodes remain the same...
-
 // Conditional Expression (Ternary Operator)
 case class ConditionalExpression(
     test: Expression,
     consequent: Expression,
-    alternate: Expression
+    alternate: Expression,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.group(test.toDoc <+> Doc.text("?") <+> consequent.toDoc <+> Doc.text(":") <+> alternate.toDoc)
 }
 
-// For brevity, I'm not including the entirety of the AST.scala file here, but you would replace all operator Strings with the corresponding enums as shown above.
-
-// Ensure to update any pattern matches or usages of the operator fields in your code to account for the new enum types.
-
 // Literals
 sealed trait Literal extends Expression derives ReadWriter
 
-case class NumericLiteral(value: Double) extends Literal {
+case class NumericLiteral(value: Double, meta: Option[Meta] = None) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(value.toString)
 }
 
-case class StringLiteral(value: String) extends Literal {
+case class StringLiteral(value: String, meta: Option[Meta] = None) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("\"" + value + "\"")
 }
 
-case class BooleanLiteral(value: Boolean) extends Literal {
+case class BooleanLiteral(value: Boolean, meta: Option[Meta] = None) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(if (value) "true" else "false")
 }
 
-case object NullLiteral extends Literal {
+case class NullLiteral(meta: Option[Meta] = None) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("null")
 }
 
-case class BigIntLiteral(value: String) extends Literal {
+case class BigIntLiteral(value: String, meta: Option[Meta] = None) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(value + "n")
 }
 
-case class RegExpLiteral(pattern: String, flags: String) extends Literal {
+case class RegExpLiteral(pattern: String, flags: String, meta: Option[Meta] = None) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(s"/$pattern/$flags")
 }
 
 // Template Literals
 case class TemplateLiteral(
     quasis: List[TemplateElement],
-    expressions: List[Expression]
+    expressions: List[Expression],
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
-    val parts = quasis.zipAll(expressions, TemplateElement("", false), NullLiteral)
+    val parts = quasis.zipAll(expressions, TemplateElement("", false, None), NullLiteral())
     val docs = parts.flatMap { case (quasi, expr) =>
       List(quasi.toDoc) ++ (expr match {
-        case NullLiteral => Nil
-        case e           => List(Doc.text("${") <> e.toDoc <> Doc.text("}"))
+        case NullLiteral(_) => Nil
+        case e              => List(Doc.text("${") <> e.toDoc <> Doc.text("}"))
       })
     }
     Doc.text("`") <> Doc.concat(docs) <> Doc.text("`")
@@ -242,7 +246,8 @@ case class TemplateLiteral(
 
 case class TemplateElement(
     value: String,
-    tail: Boolean
+    tail: Boolean,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(value)
 }
@@ -251,7 +256,8 @@ case class TemplateElement(
 case class CallExpression(
     callee: Expression,
     arguments: List[Expression],
-    optional: Boolean = false // For optional chaining
+    optional: Boolean = false, // For optional chaining
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val argsDoc = Doc.sep(Doc.text(","), arguments.map(_.toDoc))
@@ -262,7 +268,8 @@ case class CallExpression(
 
 case class NewExpression(
     callee: Expression,
-    arguments: List[Expression]
+    arguments: List[Expression],
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val argsDoc = Doc.sep(Doc.text(","), arguments.map(_.toDoc))
@@ -274,7 +281,8 @@ case class MemberExpression(
     obj: Expression,
     property: Expression,
     computed: Boolean,
-    optional: Boolean = false // For optional chaining
+    optional: Boolean = false, // For optional chaining
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val optionalChar = if (optional) "?." else "."
@@ -290,9 +298,10 @@ case class OptionalMemberExpression(
     obj: Expression,
     property: Expression,
     computed: Boolean,
-    optional: Boolean = true
+    optional: Boolean = true,
+    meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using options: PrettierOptions): Doc = MemberExpression(obj, property, computed, optional = true).toDoc
+  def toDoc(using options: PrettierOptions): Doc = MemberExpression(obj, property, computed, optional = true, meta).toDoc
 }
 
 case class FunctionExpression(
@@ -301,7 +310,8 @@ case class FunctionExpression(
     returnType: Option[TypeAnnotation] = None,
     body: BlockStatement,
     async: Boolean = false,
-    generator: Boolean = false
+    generator: Boolean = false,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val asyncDoc = if (async) Doc.text("async") <+> Doc.empty else Doc.empty
@@ -317,7 +327,8 @@ case class ArrowFunctionExpression(
     params: List[Parameter],
     returnType: Option[TypeAnnotation] = None,
     body: Either[Expression, BlockStatement],
-    async: Boolean = false
+    async: Boolean = false,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val asyncDoc = if (async) Doc.text("async") <+> Doc.empty else Doc.empty
@@ -342,7 +353,8 @@ case class ClassExpression(
     superClass: Option[Expression] = None,
     implementsInterfaces: Option[List[Expression]] = None,
     body: ClassBody,
-    decorators: Option[List[Decorator]] = None
+    decorators: Option[List[Decorator]] = None,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val decoratorsDoc = decorators.map(ds => Doc.concat(ds.map(_.toDoc))).getOrElse(Doc.empty)
@@ -357,13 +369,14 @@ case class ClassExpression(
   }
 }
 
-case class AwaitExpression(argument: Expression) extends Expression {
+case class AwaitExpression(argument: Expression, meta: Option[Meta] = None) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("await") <+> argument.toDoc
 }
 
 case class YieldExpression(
     argument: Option[Expression],
-    delegate: Boolean = false
+    delegate: Boolean = false,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val delegateDoc = if (delegate) Doc.text("*") else Doc.empty
@@ -374,21 +387,23 @@ case class YieldExpression(
 
 case class TaggedTemplateExpression(
     tag: Expression,
-    quasi: TemplateLiteral
+    quasi: TemplateLiteral,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = tag.toDoc <> quasi.toDoc
 }
 
-case class SequenceExpression(expressions: List[Expression]) extends Expression {
+case class SequenceExpression(expressions: List[Expression], meta: Option[Meta] = None) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.group(Doc.sep(Doc.text(","), expressions.map(_.toDoc)))
 }
 
-case class SpreadElement(argument: Expression) extends Expression {
+case class SpreadElement(argument: Expression, meta: Option[Meta] = None) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("...") <> argument.toDoc
 }
 
 case class ObjectExpression(
-    properties: List[ObjectProperty]
+    properties: List[ObjectProperty],
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val propsDoc = Doc.sep(Doc.text(","), properties.map(_.toDoc))
@@ -401,7 +416,8 @@ case class ObjectProperty(
     value: Expression,
     computed: Boolean = false,
     shorthand: Boolean = false,
-    method: Boolean = false
+    method: Boolean = false,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     val keyDoc = if (computed) Doc.text("[") <> key.toDoc <> Doc.text("]") else key.toDoc
@@ -414,7 +430,8 @@ case class ObjectProperty(
 }
 
 case class ArrayExpression(
-    elements: List[Option[Expression]]
+    elements: List[Option[Expression]],
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(
@@ -433,7 +450,8 @@ sealed trait Pattern extends ASTNode derives ReadWriter
 
 case class ObjectPattern(
     properties: List[PatternProperty],
-    typeAnnotation: Option[TypeAnnotation] = None
+    typeAnnotation: Option[TypeAnnotation] = None,
+    meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using options: PrettierOptions): Doc = {
     val propsDoc = Doc.sep(Doc.text(","), properties.map(_.toDoc))
@@ -444,7 +462,8 @@ case class ObjectPattern(
 
 case class ArrayPattern(
     elements: List[Option[Pattern]],
-    typeAnnotation: Option[TypeAnnotation] = None
+    typeAnnotation: Option[TypeAnnotation] = None,
+    meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using options: PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(
@@ -463,7 +482,8 @@ case class PatternProperty(
     key: Expression,
     value: Pattern,
     computed: Boolean = false,
-    shorthand: Boolean = false
+    shorthand: Boolean = false,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     val keyDoc = if (computed) Doc.text("[") <> key.toDoc <> Doc.text("]") else key.toDoc
@@ -476,14 +496,16 @@ case class PatternProperty(
 }
 
 case class RestElement(
-    argument: Pattern
+    argument: Pattern,
+    meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("...") <> argument.toDoc
 }
 
 case class AssignmentPattern(
     left: Pattern,
-    right: Expression
+    right: Expression,
+    meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using options: PrettierOptions): Doc = Doc.group(left.toDoc <+> Doc.text("=") <+> right.toDoc)
 }
@@ -495,7 +517,8 @@ sealed trait Declaration extends Statement derives ReadWriter
 
 case class VariableDeclaration(
     kind: VariableKind,
-    declarations: List[VariableDeclarator]
+    declarations: List[VariableDeclarator],
+    meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val kindDoc = kind match {
@@ -518,7 +541,8 @@ object VariableKind {
 
 case class VariableDeclarator(
     id: Pattern,
-    init: Option[Expression]
+    init: Option[Expression],
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = init match {
     case Some(expr) => Doc.group(id.toDoc <+> Doc.text("=") <+> expr.toDoc)
@@ -533,7 +557,8 @@ case class FunctionDeclaration(
     body: BlockStatement,
     async: Boolean = false,
     generator: Boolean = false,
-    typeParameters: Option[List[TypeParameter]] = None
+    typeParameters: Option[List[TypeParameter]] = None,
+    meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val asyncDoc = if (async) Doc.text("async") <+> Doc.empty else Doc.empty
@@ -553,18 +578,20 @@ case class FunctionDeclaration(
 }
 
 case class Parameter(
-    id: Pattern
+    id: Pattern,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = id.toDoc
   def isSimple: Boolean = id match {
-    case Identifier(_)         => true
-    case TypedIdentifier(_, _) => true
-    case _                     => false
+    case Identifier(_, _)         => true
+    case TypedIdentifier(_, _, _) => true
+    case _                        => false
   }
 }
 
 case class BlockStatement(
-    body: List[Statement]
+    body: List[Statement],
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = {
     val bodyDoc = Doc.concat(body.map(stmt => stmt.toDoc <> Doc.line))
@@ -573,7 +600,8 @@ case class BlockStatement(
 }
 
 case class ExpressionStatement(
-    expression: Expression
+    expression: Expression,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = expression.toDoc <> Doc.text(";")
 }
@@ -582,7 +610,8 @@ case class ExpressionStatement(
 case class IfStatement(
     test: Expression,
     consequent: Statement,
-    alternate: Option[Statement] = None
+    alternate: Option[Statement] = None,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = {
     val ifDoc = Doc.text("if (") <> test.toDoc <> Doc.text(")") <+> consequent.toDoc
@@ -597,7 +626,8 @@ case class ForStatement(
     init: Option[Either[VariableDeclaration, Expression]],
     test: Option[Expression],
     update: Option[Expression],
-    body: Statement
+    body: Statement,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = {
     val initDoc = init match {
@@ -615,14 +645,16 @@ case class ForStatement(
 
 case class WhileStatement(
     test: Expression,
-    body: Statement
+    body: Statement,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("while (") <> test.toDoc <> Doc.text(")") <+> body.toDoc
 }
 
 case class DoWhileStatement(
     body: Statement,
-    test: Expression
+    test: Expression,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("do") <+> body.toDoc <+> Doc.text("while (") <> test.toDoc <> Doc.text(");")
 }
@@ -630,7 +662,8 @@ case class DoWhileStatement(
 case class ForInStatement(
     left: Either[VariableDeclaration, Expression],
     right: Expression,
-    body: Statement
+    body: Statement,
+    meta: Option[Meta] = None
 ) extends Statement {
   def leftDoc(using options: PrettierOptions): Doc = left match {
     case Left(varDecl) => varDecl.toDoc
@@ -643,7 +676,8 @@ case class ForOfStatement(
     left: Either[VariableDeclaration, Expression],
     right: Expression,
     body: Statement,
-    await: Boolean = false
+    await: Boolean = false,
+    meta: Option[Meta] = None
 ) extends Statement {
   def leftDoc(using options: PrettierOptions): Doc = left match {
     case Left(varDecl) => varDecl.toDoc
@@ -656,7 +690,8 @@ case class ForOfStatement(
 
 case class SwitchStatement(
     discriminant: Expression,
-    cases: List[SwitchCase]
+    cases: List[SwitchCase],
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = {
     val casesDoc = Doc.concat(cases.map(_.toDoc))
@@ -666,7 +701,8 @@ case class SwitchStatement(
 
 case class SwitchCase(
     test: Option[Expression],
-    consequent: List[Statement]
+    consequent: List[Statement],
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     val testDoc = test match {
@@ -679,7 +715,8 @@ case class SwitchCase(
 }
 
 case class BreakStatement(
-    label: Option[Identifier] = None
+    label: Option[Identifier] = None,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = label match {
     case Some(lbl) => Doc.text("break") <+> lbl.toDoc <> Doc.text(";")
@@ -688,7 +725,8 @@ case class BreakStatement(
 }
 
 case class ContinueStatement(
-    label: Option[Identifier] = None
+    label: Option[Identifier] = None,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = label match {
     case Some(lbl) => Doc.text("continue") <+> lbl.toDoc <> Doc.text(";")
@@ -697,7 +735,8 @@ case class ContinueStatement(
 }
 
 case class ReturnStatement(
-    argument: Option[Expression]
+    argument: Option[Expression],
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = argument match {
     case Some(expr) => Doc.text("return") <+> expr.toDoc <> Doc.text(";")
@@ -706,7 +745,8 @@ case class ReturnStatement(
 }
 
 case class ThrowStatement(
-    argument: Expression
+    argument: Expression,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("throw") <+> argument.toDoc <> Doc.text(";")
 }
@@ -714,7 +754,8 @@ case class ThrowStatement(
 case class TryStatement(
     block: BlockStatement,
     handler: Option[CatchClause],
-    finalizer: Option[BlockStatement]
+    finalizer: Option[BlockStatement],
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = {
     val tryDoc = Doc.text("try") <+> block.toDoc
@@ -726,7 +767,8 @@ case class TryStatement(
 
 case class CatchClause(
     param: Option[Pattern],
-    body: BlockStatement
+    body: BlockStatement,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     val paramDoc = param.map(p => Doc.text("(") <> p.toDoc <> Doc.text(")")).getOrElse(Doc.empty)
@@ -741,13 +783,15 @@ case class ClassDeclaration(
     superClass: Option[Expression] = None,
     implementsInterfaces: Option[List[Expression]] = None,
     body: ClassBody,
-    decorators: Option[List[Decorator]] = None
+    decorators: Option[List[Decorator]] = None,
+    meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using options: PrettierOptions): Doc = ClassExpression(Some(id), typeParameters, superClass, implementsInterfaces, body, decorators).toDoc
 }
 
 case class ClassBody(
-    body: List[ClassElement]
+    body: List[ClassElement],
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     val elemsDoc = Doc.concat(body.map(_.toDoc <> Doc.line))
@@ -765,7 +809,8 @@ case class MethodDefinition(
     kind: MethodKind,
     isStatic: Boolean = false,
     computed: Boolean = false,
-    decorators: Option[List[Decorator]] = None
+    decorators: Option[List[Decorator]] = None,
+    meta: Option[Meta] = None
 ) extends ClassElement {
   def toDoc(using options: PrettierOptions): Doc = {
     val staticDoc = if (isStatic) Doc.text("static") <+> Doc.empty else Doc.empty
@@ -792,7 +837,8 @@ case class PropertyDefinition(
     value: Option[Expression] = None,
     isStatic: Boolean = false,
     computed: Boolean = false,
-    decorators: Option[List[Decorator]] = None
+    decorators: Option[List[Decorator]] = None,
+    meta: Option[Meta] = None
 ) extends ClassElement {
   def toDoc(using options: PrettierOptions): Doc = {
     val staticDoc = if (isStatic) Doc.text("static") <+> Doc.empty else Doc.empty
@@ -804,7 +850,8 @@ case class PropertyDefinition(
 }
 
 case class StaticBlock(
-    body: List[Statement]
+    body: List[Statement],
+    meta: Option[Meta] = None
 ) extends ClassElement {
   def toDoc(using options: PrettierOptions): Doc = {
     val bodyDoc = Doc.concat(body.map(stmt => stmt.toDoc <> Doc.line))
@@ -815,7 +862,8 @@ case class StaticBlock(
 // Modules: Import and Export Declarations
 case class ImportDeclaration(
     specifiers: List[ImportSpecifier],
-    source: StringLiteral
+    source: StringLiteral,
+    meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using options: PrettierOptions): Doc = {
     val specsDoc = Doc.sep(Doc.text(","), specifiers.map(_.toDoc))
@@ -826,20 +874,23 @@ case class ImportDeclaration(
 sealed trait ImportSpecifier extends ASTNode derives ReadWriter
 
 case class ImportDefaultSpecifier(
-    local: Identifier
+    local: Identifier,
+    meta: Option[Meta] = None
 ) extends ImportSpecifier {
   def toDoc(using options: PrettierOptions): Doc = local.toDoc
 }
 
 case class ImportNamespaceSpecifier(
-    local: Identifier
+    local: Identifier,
+    meta: Option[Meta] = None
 ) extends ImportSpecifier {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("* as ") <> local.toDoc
 }
 
 case class ImportNamedSpecifier(
     local: Identifier,
-    imported: Identifier
+    imported: Identifier,
+    meta: Option[Meta] = None
 ) extends ImportSpecifier {
   def toDoc(using options: PrettierOptions): Doc = {
     if (local.name == imported.name) {
@@ -855,7 +906,8 @@ sealed trait ExportDeclaration extends Statement derives ReadWriter
 case class ExportNamedDeclaration(
     declaration: Option[Declaration],
     specifiers: List[ExportSpecifier],
-    source: Option[StringLiteral]
+    source: Option[StringLiteral],
+    meta: Option[Meta] = None
 ) extends ExportDeclaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val declDoc = declaration.map(_.toDoc).getOrElse(Doc.empty)
@@ -874,14 +926,16 @@ case class ExportNamedDeclaration(
 }
 
 case class ExportDefaultDeclaration(
-    declaration: Declaration
+    declaration: Declaration,
+    meta: Option[Meta] = None
 ) extends ExportDeclaration {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("export default ") <> declaration.toDoc
 }
 
 case class ExportAllDeclaration(
     source: StringLiteral,
-    exported: Option[Identifier] = None
+    exported: Option[Identifier] = None,
+    meta: Option[Meta] = None
 ) extends ExportDeclaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val exportedDoc = exported.map(e => Doc.text(" as ") <> e.toDoc).getOrElse(Doc.empty)
@@ -891,7 +945,8 @@ case class ExportAllDeclaration(
 
 case class ExportSpecifier(
     local: Identifier,
-    exported: Identifier
+    exported: Identifier,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     if (local.name == exported.name) {
@@ -907,7 +962,8 @@ sealed trait TypeAnnotation extends ASTNode derives ReadWriter
 
 case class TypeReference(
     name: String,
-    typeParameters: Option[List[TypeAnnotation]] = None
+    typeParameters: Option[List[TypeAnnotation]] = None,
+    meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = {
     val paramsDoc = typeParameters
@@ -921,7 +977,8 @@ case class TypeReference(
 
 case class FunctionTypeAnnotation(
     params: List[Parameter],
-    returnType: TypeAnnotation
+    returnType: TypeAnnotation,
+    meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = {
     val paramsDoc = Doc.text("(") <> Doc.sep(Doc.text(","), params.map(_.toDoc)) <> Doc.text(")")
@@ -931,13 +988,15 @@ case class FunctionTypeAnnotation(
 
 // Union and Intersection Types
 case class UnionType(
-    types: List[TypeAnnotation]
+    types: List[TypeAnnotation],
+    meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.sep(Doc.text(" | "), types.map(_.toDoc))
 }
 
 case class IntersectionType(
-    types: List[TypeAnnotation]
+    types: List[TypeAnnotation],
+    meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.sep(Doc.text(" & "), types.map(_.toDoc))
 }
@@ -945,49 +1004,50 @@ case class IntersectionType(
 // Generics
 case class GenericTypeAnnotation(
     id: Identifier,
-    typeParameters: Option[List[TypeAnnotation]] = None
+    typeParameters: Option[List[TypeAnnotation]] = None,
+    meta: Option[Meta] = None
 ) extends TypeAnnotation {
-  def toDoc(using options: PrettierOptions): Doc = TypeReference(id.name, typeParameters).toDoc
+  def toDoc(using options: PrettierOptions): Doc = TypeReference(id.name, typeParameters, meta).toDoc
 }
 
 // Primitive Type Annotations
-case object AnyTypeAnnotation extends TypeAnnotation {
+case class AnyTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("any")
 }
 
-case object UnknownTypeAnnotation extends TypeAnnotation {
+case class UnknownTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("unknown")
 }
 
-case object NumberTypeAnnotation extends TypeAnnotation {
+case class NumberTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("number")
 }
 
-case object StringTypeAnnotation extends TypeAnnotation {
+case class StringTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("string")
 }
 
-case object BooleanTypeAnnotation extends TypeAnnotation {
+case class BooleanTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("boolean")
 }
 
-case object NullTypeAnnotation extends TypeAnnotation {
+case class NullTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("null")
 }
 
-case object UndefinedTypeAnnotation extends TypeAnnotation {
+case class UndefinedTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("undefined")
 }
 
-case object NeverTypeAnnotation extends TypeAnnotation {
+case class NeverTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("never")
 }
 
-case object ObjectTypeAnnotation extends TypeAnnotation {
+case class ObjectTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("object")
 }
 
-case object SymbolTypeAnnotation extends TypeAnnotation {
+case class SymbolTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("symbol")
 }
 
@@ -995,7 +1055,8 @@ case object SymbolTypeAnnotation extends TypeAnnotation {
 case class TypeParameter(
     name: String,
     constraint: Option[TypeAnnotation] = None,
-    default: Option[TypeAnnotation] = None
+    default: Option[TypeAnnotation] = None,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     val constraintDoc = constraint.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
@@ -1007,7 +1068,8 @@ case class TypeParameter(
 // Enums and Type Aliases (TypeScript)
 case class EnumDeclaration(
     id: Identifier,
-    members: List[EnumMember]
+    members: List[EnumMember],
+    meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val membersDoc = Doc.concat(members.map(m => m.toDoc <> Doc.text(",") <> Doc.line))
@@ -1017,7 +1079,8 @@ case class EnumDeclaration(
 
 case class EnumMember(
     id: Identifier,
-    initializer: Option[Expression] = None
+    initializer: Option[Expression] = None,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = initializer match {
     case Some(init) => id.toDoc <> Doc.text(" = ") <> init.toDoc
@@ -1028,7 +1091,8 @@ case class EnumMember(
 case class TypeAliasDeclaration(
     id: Identifier,
     typeParameters: Option[List[TypeParameter]] = None,
-    typeAnnotation: TypeAnnotation
+    typeAnnotation: TypeAnnotation,
+    meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val typeParamsDoc = typeParameters
@@ -1043,27 +1107,31 @@ case class TypeAliasDeclaration(
 // Type Assertions and As Expressions (TypeScript)
 case class TypeAssertion(
     typeAnnotation: TypeAnnotation,
-    expression: Expression
+    expression: Expression,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("<") <> typeAnnotation.toDoc <> Doc.text(">") <> expression.toDoc
 }
 
 case class AsExpression(
     expression: Expression,
-    typeAnnotation: TypeAnnotation
+    typeAnnotation: TypeAnnotation,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = expression.toDoc <+> Doc.text("as ") <> typeAnnotation.toDoc
 }
 
 case class NonNullExpression(
-    expression: Expression
+    expression: Expression,
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = expression.toDoc <> Doc.text("!")
 }
 
 // Decorators (TypeScript)
 case class Decorator(
-    expression: Expression
+    expression: Expression,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("@") <> expression.toDoc
 }
@@ -1080,7 +1148,8 @@ case class AsyncGeneratorFunctionDeclaration(
     params: List[Parameter],
     returnType: Option[TypeAnnotation] = None,
     body: BlockStatement,
-    typeParameters: Option[List[TypeParameter]] = None
+    typeParameters: Option[List[TypeParameter]] = None,
+    meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using options: PrettierOptions): Doc = {
     val idDoc = id.map(_.toDoc).getOrElse(Doc.empty)
@@ -1098,7 +1167,8 @@ case class AsyncGeneratorFunctionDeclaration(
 // Index Signatures and Mapped Types (TypeScript)
 case class IndexSignature(
     parameter: Parameter,
-    typeAnnotation: TypeAnnotation
+    typeAnnotation: TypeAnnotation,
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     Doc.text("[") <> parameter.toDoc <> Doc.text("]") <> Doc.text(":") <+> typeAnnotation.toDoc
@@ -1109,7 +1179,8 @@ case class MappedType(
     typeParameter: TypeParameter,
     typeAnnotation: TypeAnnotation,
     optional: Boolean = false,
-    readonly: Boolean = false
+    readonly: Boolean = false,
+    meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using options: PrettierOptions): Doc = {
     val readonlyDoc = if (readonly) Doc.text("readonly ") else Doc.empty
@@ -1122,7 +1193,8 @@ case class MappedType(
 
 // Symbol Type and Symbol Expressions
 case class SymbolExpression(
-    description: Option[Expression]
+    description: Option[Expression],
+    meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = {
     val descDoc = description.map(d => Doc.text("(") <> d.toDoc <> Doc.text(")")).getOrElse(Doc.empty)
@@ -1131,3 +1203,4 @@ case class SymbolExpression(
 }
 
 // Await and Async Functions already handled in FunctionExpression and FunctionDeclaration
+
