@@ -17,7 +17,7 @@
     "lint": "next lint",
     "copy-js": "cp .js/target/scala-3.6.1/site-opt/main.js .js/target/scala-3.6.1/site-opt/main.js.map scala/",
     "copy-js-mjs": "cp .js/target/scala-3.6.1/site-fastopt/main.mjs .js/target/scala-3.6.1/site-fastopt/main.mjs.map scala/",
-    "format": "prettier --write \"**/*.{ts,tsx}\""
+    "format": "prettier --write \"**/*.{ts,tsx,mjs}\""
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
@@ -48,9 +48,9 @@
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
+    "eslint": "^9.13.0",
     "eslint-config-next": "15.0.0-rc.1",
-    "eslint-config-prettier": "^8.10.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
