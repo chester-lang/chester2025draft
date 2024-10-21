@@ -80,14 +80,14 @@ sealed trait Expr extends WithPos with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
   def descent(f: Expr => Expr): Expr = {
-    descent(f, new SpecialMap {
+    descent(f, new ExprMap {
       def use[T <: Expr](x: T): x.ThisTree = x.descent(f).asInstanceOf[x.ThisTree]
     })
   }
 
-  def descent(f: Expr => Expr, g: SpecialMap): Expr
+  def descent(f: Expr => Expr, g: ExprMap): Expr
 
-  def descent2(f: SpecialMap): ThisTree = descent(x => f.use(x), f).asInstanceOf[ThisTree]
+  def descent2(f: ExprMap): ThisTree = descent(x => f.use(x), f).asInstanceOf[ThisTree]
 
   def inspect(operator: Expr => Unit): Unit = {
     descent { x =>
@@ -142,7 +142,7 @@ sealed trait Expr extends WithPos with ToDoc derives ReadWriter {
   }
 }
 
-trait SpecialMap {
+trait ExprMap {
   def use[T <: Expr](x: T): x.ThisTree
 }
 
@@ -157,7 +157,7 @@ sealed trait MaybeSaltedExpr extends Expr derives ReadWriter {
 case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr derives ReadWriter {
   override type ThisTree = Identifier
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Identifier = this
+  override def descent(f: Expr => Expr, g: ExprMap): Identifier = this
 
   override def toString: String = meta.flatMap(_.sourcePos) match {
     case None      => s"Identifier(\"${encodeString(name)}\")"
@@ -181,7 +181,7 @@ case class ResolvedIdentifier(
 ) extends Expr {
   override type ThisTree = ResolvedIdentifier
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ResolvedIdentifier = this
+  override def descent(f: Expr => Expr, g: ExprMap): ResolvedIdentifier = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
@@ -200,7 +200,7 @@ case class ResolvedLocalVar(
 ) extends Expr {
   override type ThisTree = ResolvedLocalVar
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ResolvedLocalVar = this
+  override def descent(f: Expr => Expr, g: ExprMap): ResolvedLocalVar = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
@@ -214,7 +214,7 @@ case class ResolvedLocalVar(
 case class OpSeq(seq: Vector[Expr], meta: Option[ExprMeta]) extends ParsedExpr with MaybeSaltedExpr {
   override type ThisTree = OpSeq
 
-  override def descent(f: Expr => Expr, g: SpecialMap): OpSeq = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): OpSeq = thisOr {
     OpSeq(seq.map(f), meta)
   }
 
@@ -236,7 +236,7 @@ case class InfixExpr(
 ) extends Expr {
   override type ThisTree = InfixExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): InfixExpr = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): InfixExpr = thisOr {
     copy(
       left = f(left),
       operator = g.use(operator),
@@ -260,7 +260,7 @@ case class PrefixExpr(
 ) extends Expr {
   override type ThisTree = PrefixExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): PrefixExpr = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): PrefixExpr = thisOr {
     copy(
       operator = g.use(operator),
       operand = f(operand)
@@ -283,7 +283,7 @@ case class PostfixExpr(
 ) extends Expr {
   override type ThisTree = PostfixExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): PostfixExpr = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): PostfixExpr = thisOr {
     copy(
       operand = f(operand),
       operator = g.use(operator)
@@ -306,7 +306,7 @@ case class Block(
 ) extends ParsedExpr {
   override type ThisTree = Block
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Block = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): Block = thisOr {
     Block(statements.map(f), result.map(f), meta)
   }
 
@@ -350,7 +350,7 @@ case class Arg(
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Arg =
     copy(meta = updater(meta))
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Arg = {
+  override def descent(f: Expr => Expr, g: ExprMap): Arg = {
     Arg(
       decorations.map(g.use),
       g.use(name),
@@ -387,10 +387,13 @@ case class CallingArg(
     expr: Expr,
     vararg: Boolean = false,
     meta: Option[ExprMeta]
-) extends ToDoc derives ReadWriter {
+) extends Expr derives ReadWriter {
   override type ThisTree = CallingArg
 
-  def descent(f: Expr => Expr, g: SpecialMap): CallingArg = {
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): CallingArg =
+    copy(meta = updater(meta))
+
+  def descent(f: Expr => Expr, g: ExprMap): CallingArg = {
     CallingArg(name.map(g.use), f(expr), vararg, meta)
   }
 
@@ -410,7 +413,7 @@ case class DesaltCallingTelescope(
     with DesaltExpr {
   override type ThisTree = DesaltCallingTelescope
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DesaltCallingTelescope =
+  override def descent(f: Expr => Expr, g: ExprMap): DesaltCallingTelescope =
     thisOr {
       DesaltCallingTelescope(args.map(_.descent(f, g)), implicitly, meta)
     }
@@ -429,17 +432,17 @@ case class DesaltCallingTelescope(
 sealed trait MaybeTelescope extends Expr derives ReadWriter {
   override type ThisTree <: MaybeTelescope
 
-  override def descent(f: Expr => Expr, g: SpecialMap): MaybeTelescope = this
+  override def descent(f: Expr => Expr, g: ExprMap): MaybeTelescope = this
 }
 
 sealed trait ParsedMaybeTelescope extends MaybeTelescope with ParsedExpr derives ReadWriter {
   override type ThisTree <: ParsedMaybeTelescope
 }
 
-case class Tuple(terms: Vector<Expr], meta: Option[ExprMeta]) extends ParsedMaybeTelescope {
+case class Tuple(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedMaybeTelescope {
   override type ThisTree = Tuple
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Tuple = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): Tuple = thisOr {
     Tuple(terms.map(f), meta)
   }
 
@@ -459,7 +462,7 @@ case class DefTelescope(
     with DesaltExpr derives ReadWriter {
   override type ThisTree = DefTelescope
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DefTelescope = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): DefTelescope = thisOr {
     DefTelescope(args.map(_.descent(f, g)), implicitly, meta)
   }
 
@@ -483,7 +486,7 @@ case class FunctionCall(
 ) extends ParsedExpr {
   override type ThisTree = FunctionCall
 
-  override def descent(f: Expr => Expr, g: SpecialMap): FunctionCall = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): FunctionCall = thisOr {
     new FunctionCall(f(function), telescope.descent(f, g), meta)
   }
 
@@ -503,7 +506,7 @@ case class DesaltFunctionCall(
 ) extends DesaltExpr {
   override type ThisTree = DesaltFunctionCall
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DesaltFunctionCall = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): DesaltFunctionCall = thisOr {
     DesaltFunctionCall(
       f(function),
       telescopes.map(_.descent(f, g)),
@@ -528,7 +531,7 @@ case class DotCall(
 ) extends ParsedExpr derives ReadWriter {
   override type ThisTree = DotCall
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DotCall = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): DotCall = thisOr {
     DotCall(
       f(expr),
       f(field),
@@ -578,7 +581,7 @@ sealed trait Literal extends ParsedExpr derives ReadWriter {
 case class IntegerLiteral(value: BigInt, meta: Option[ExprMeta]) extends Literal {
   override type ThisTree = IntegerLiteral
 
-  override def descent(f: Expr => Expr, g: SpecialMap): IntegerLiteral = this
+  override def descent(f: Expr => Expr, g: ExprMap): IntegerLiteral = this
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
     copy(meta = updater(meta))
@@ -590,7 +593,7 @@ case class IntegerLiteral(value: BigInt, meta: Option[ExprMeta]) extends Literal
 case class RationalLiteral(value: Rational, meta: Option[ExprMeta]) extends Literal {
   override type ThisTree = RationalLiteral
 
-  override def descent(f: Expr => Expr, g: SpecialMap): RationalLiteral = this
+  override def descent(f: Expr => Expr, g: ExprMap): RationalLiteral = this
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
     copy(meta = updater(meta))
@@ -602,7 +605,7 @@ case class RationalLiteral(value: Rational, meta: Option[ExprMeta]) extends Lite
 case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal {
   override type ThisTree = StringLiteral
 
-  override def descent(f: Expr => Expr, g: SpecialMap): StringLiteral = this
+  override def descent(f: Expr => Expr, g: ExprMap): StringLiteral = this
 
   override def toString: String = meta.flatMap(_.sourcePos) match {
     case None => s"StringLiteral(\"${encodeString(value)}\")"
@@ -620,7 +623,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
 case class SymbolLiteral(value: String, meta: Option[ExprMeta]) extends Literal {
   override type ThisTree = SymbolLiteral
 
-  override def descent(f: Expr => Expr, g: SpecialMap): SymbolLiteral = this
+  override def descent(f: Expr => Expr, g: ExprMap): SymbolLiteral = this
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
     copy(meta = updater(meta))
@@ -634,7 +637,7 @@ case class SymbolLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
 case class ListExpr(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedMaybeTelescope {
   override type ThisTree = ListExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ListExpr = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): ListExpr = thisOr {
     ListExpr(terms.map(f), meta)
   }
 
@@ -649,7 +652,7 @@ case class ListExpr(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedM
 case class HoleExpr(description: String, meta: Option[ExprMeta]) extends Expr {
   override type ThisTree = HoleExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): HoleExpr = this
+  override def descent(f: Expr => Expr, g: ExprMap): HoleExpr = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
@@ -663,7 +666,7 @@ case class HoleExpr(description: String, meta: Option[ExprMeta]) extends Expr {
 case class TypeAnnotation(expr: Expr, ty: Expr, meta: Option[ExprMeta]) extends DesaltExpr {
   override type ThisTree = TypeAnnotation
 
-  override def descent(f: Expr => Expr, g: SpecialMap): TypeAnnotation = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): TypeAnnotation = thisOr {
     TypeAnnotation(f(expr), f(ty), meta)
   }
 
@@ -684,7 +687,7 @@ case class AnnotatedExpr(
 ) extends ParsedExpr {
   override type ThisTree = AnnotatedExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): AnnotatedExpr = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): AnnotatedExpr = thisOr {
     AnnotatedExpr(
       g.use(annotation),
       telescope.map(_.descent(f, g)),
@@ -704,16 +707,16 @@ case class AnnotatedExpr(
 }
 
 sealed trait ObjectClause derives ReadWriter {
-  def descent(f: Expr => Expr, g: SpecialMap): ObjectClause
+  def descent(f: Expr => Expr, g: ExprMap): ObjectClause
 }
 
 case class ObjectExprClause(key: QualifiedName, value: Expr) extends ObjectClause {
-  override def descent(f: Expr => Expr, g: SpecialMap): ObjectExprClause =
+  override def descent(f: Expr => Expr, g: ExprMap): ObjectExprClause =
     ObjectExprClause(key, f(value))
 }
 
 case class ObjectExprClauseOnValue(key: Expr, value: Expr) extends ObjectClause {
-  override def descent(f: Expr => Expr, g: SpecialMap): ObjectExprClauseOnValue =
+  override def descent(f: Expr => Expr, g: ExprMap): ObjectExprClauseOnValue =
     ObjectExprClauseOnValue(f(key), f(value))
 }
 
@@ -733,7 +736,7 @@ case class ObjectExpr(
     with MaybeSaltedExpr {
   override type ThisTree = ObjectExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ObjectExpr = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): ObjectExpr = thisOr {
     ObjectExpr(clauses.map(_.descent(f, g)), meta)
   }
 
@@ -759,7 +762,7 @@ case class Keyword(
 ) extends ParsedExpr {
   override type ThisTree = Keyword
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Keyword = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): Keyword = thisOr {
     Keyword(key, telescope.map(_.descent(f, g)), meta)
   }
 
@@ -784,7 +787,7 @@ case class DesaltCaseClause(
 ) extends DesaltExpr {
   override type ThisTree = DesaltCaseClause
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DesaltCaseClause = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): DesaltCaseClause = thisOr(
     DesaltCaseClause(f(pattern), f(returning), meta)
   )
 
@@ -803,7 +806,7 @@ case class DesaltMatching(
 ) extends DesaltExpr {
   override type ThisTree = DesaltMatching
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DesaltMatching = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): DesaltMatching = thisOr(
     DesaltMatching(clauses.map(_.descent(f, g)), meta)
   )
 
@@ -826,7 +829,7 @@ case class FunctionExpr(
 ) extends DesaltExpr {
   override type ThisTree = FunctionExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): FunctionExpr = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): FunctionExpr = thisOr(
     FunctionExpr(
       telescope.map(_.descent(f, g)),
       resultTy.map(f),
@@ -859,7 +862,7 @@ case class TypeAnotationNoEffects(
 ) extends DesaltExpr {
   override type ThisTree = TypeAnotationNoEffects
 
-  override def descent(f: Expr => Expr, g: SpecialMap): TypeAnotationNoEffects = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): TypeAnotationNoEffects = thisOr(
     TypeAnotationNoEffects(f(expr), f(ty), meta)
   )
 
@@ -881,7 +884,7 @@ case object EmptyExpr extends ErrorExpr {
 
   override def meta: Option[ExprMeta] = None
 
-  override def descent(f: Expr => Expr, g: SpecialMap): EmptyExpr.type = this
+  override def descent(f: Expr => Expr, g: ExprMap): EmptyExpr.type = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
@@ -899,7 +902,7 @@ case class DesaltFailed(
     with Stmt {
   override type ThisTree = DesaltFailed
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DesaltFailed = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): DesaltFailed = thisOr(
     DesaltFailed(f(origin), error, meta)
   )
 
@@ -917,7 +920,7 @@ case class DesaltFailed(
 sealed trait DesaltPattern extends DesaltExpr derives ReadWriter {
   override type ThisTree <: DesaltPattern
 
-  override def descent(f: Expr => Expr, g: SpecialMap): DesaltPattern = this
+  override def descent(f: Expr => Expr, g: ExprMap): DesaltPattern = this
 
   def bindings: Vector[Identifier] = Vector.empty
 }
@@ -925,7 +928,7 @@ sealed trait DesaltPattern extends DesaltExpr derives ReadWriter {
 case class PatternCompare(literal: Expr, meta: Option[ExprMeta]) extends DesaltPattern {
   override type ThisTree = PatternCompare
 
-  override def descent(f: Expr => Expr, g: SpecialMap): PatternCompare = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): PatternCompare = thisOr(
     PatternCompare(f(literal), meta)
   )
 
@@ -939,7 +942,7 @@ case class PatternCompare(literal: Expr, meta: Option[ExprMeta]) extends DesaltP
 case class PatternBind(name: Identifier, meta: Option[ExprMeta]) extends DesaltPattern {
   override type ThisTree = PatternBind
 
-  override def descent(f: Expr => Expr, g: SpecialMap): PatternBind = this
+  override def descent(f: Expr => Expr, g: ExprMap): PatternBind = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
@@ -970,7 +973,7 @@ sealed trait Stmt extends DesaltExpr derives ReadWriter {
 case class ExprStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
   override type ThisTree = ExprStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ExprStmt = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): ExprStmt = thisOr(
     ExprStmt(f(expr), meta)
   )
 
@@ -996,7 +999,7 @@ case class PrecedenceGroupResolving(
 
   def getName: Option[Name] = Some(name)
 
-  override def descent(f: Expr => Expr, g: SpecialMap): PrecedenceGroupResolving = this
+  override def descent(f: Expr => Expr, g: ExprMap): PrecedenceGroupResolving = this
 
   override def toDoc(using options: PrettierOptions): Doc = group {
     val nameDoc = name.toDoc
@@ -1031,7 +1034,7 @@ case class PrecedenceGroupResolved(
 
   def getName: Option[Name] = Some(name.name)
 
-  override def descent(f: Expr => Expr, g: SpecialMap): PrecedenceGroupResolved = this
+  override def descent(f: Expr => Expr, g: ExprMap): PrecedenceGroupResolved = this
 
   override def toDoc(using options: PrettierOptions): Doc = group {
     val nameDoc = name.toString
@@ -1082,7 +1085,7 @@ case class DefinedFunction(
 case class UnitExpr(meta: Option[ExprMeta]) extends DesaltExpr {
   override type ThisTree = UnitExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): UnitExpr = this
+  override def descent(f: Expr => Expr, g: ExprMap): UnitExpr = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
@@ -1103,7 +1106,7 @@ case class LetDefStmt(
 ) extends Stmt {
   override type ThisTree = LetDefStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): LetDefStmt = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): LetDefStmt = thisOr {
     LetDefStmt(
       kind,
       defined, // Assuming Defined does not need descent
@@ -1148,7 +1151,7 @@ case class TraitStmt(
 ) extends DeclarationStmt {
   override type ThisTree = TraitStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Expr = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): Expr = thisOr(
     copy(
       name = g.use(name),
       extendsClause = extendsClause.map(_.descent(f, g)),
@@ -1178,7 +1181,7 @@ case class InterfaceStmt(
 ) extends DeclarationStmt {
   override type ThisTree = InterfaceStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Expr = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): Expr = thisOr(
     copy(
       name = g.use(name),
       extendsClause = extendsClause.map(_.descent(f, g)),
@@ -1205,7 +1208,7 @@ sealed trait Field extends DesaltExpr derives ReadWriter {
 
   def name: Identifier
   def ty: Option[Expr]
-  override def descent(f: Expr => Expr, g: SpecialMap): Field
+  override def descent(f: Expr => Expr, g: ExprMap): Field
 }
 
 case class RecordField(
@@ -1216,7 +1219,7 @@ case class RecordField(
 ) extends Field {
   override type ThisTree = RecordField
 
-  override def descent(f: Expr => Expr, g: SpecialMap): RecordField = copy(
+  override def descent(f: Expr => Expr, g: ExprMap): RecordField = copy(
     name = g.use(name),
     ty = ty.map(f),
     defaultValue = defaultValue.map(f),
@@ -1237,7 +1240,7 @@ case class RecordField(
 case class ExtendsClause(superTypes: Vector[Expr], meta: Option[ExprMeta]) extends DesaltExpr {
   override type ThisTree = ExtendsClause
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ExtendsClause = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): ExtendsClause = thisOr {
     ExtendsClause(superTypes.map(f), meta)
   }
 
@@ -1260,7 +1263,7 @@ case class RecordStmt(
 ) extends DeclarationStmt {
   override type ThisTree = RecordStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): RecordStmt = copy(
+  override def descent(f: Expr => Expr, g: ExprMap): RecordStmt = copy(
     name = g.use(name),
     fields = fields.map(_.descent(f, g)),
     extendsClause = extendsClause.map(_.descent(f, g)),
@@ -1290,7 +1293,7 @@ case class ObjectStmt(
 ) extends DeclarationStmt {
   override type ThisTree = ObjectStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): Expr = thisOr(
+  override def descent(f: Expr => Expr, g: ExprMap): Expr = thisOr(
     copy(
       name = g.use(name),
       extendsClause = extendsClause.map(_.descent(f, g)),
@@ -1316,7 +1319,7 @@ case class ObjectStmt(
 case class ReturnStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
   override type ThisTree = ReturnStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ReturnStmt = thisOr {
+  override def descent(f: Expr => Expr, g: ExprMap): ReturnStmt = thisOr {
     ReturnStmt(f(expr), meta)
   }
 
@@ -1331,7 +1334,7 @@ case class ReturnStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
 case class ImportStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
   override type ThisTree = ImportStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ImportStmt = this
+  override def descent(f: Expr => Expr, g: ExprMap): ImportStmt = this
 
   override def toDoc(using options: PrettierOptions): Doc = group(
     Doc.text("import") <+> module.toDoc
@@ -1344,7 +1347,7 @@ case class ImportStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
 case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
   override type ThisTree = ModuleStmt
 
-  override def descent(f: Expr => Expr, g: SpecialMap): ModuleStmt = this
+  override def descent(f: Expr => Expr, g: ExprMap): ModuleStmt = this
 
   override def toDoc(using options: PrettierOptions): Doc = group(
     Doc.text("module") <+> module.toDoc
@@ -1357,7 +1360,7 @@ case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
 case class BuiltinExpr(builtin: Builtin, meta: Option[ExprMeta]) extends Expr {
   override type ThisTree = BuiltinExpr
 
-  override def descent(f: Expr => Expr, g: SpecialMap): BuiltinExpr = this
+  override def descent(f: Expr => Expr, g: ExprMap): BuiltinExpr = this
 
   override def updateMeta(
       updater: Option[ExprMeta] => Option[ExprMeta]
