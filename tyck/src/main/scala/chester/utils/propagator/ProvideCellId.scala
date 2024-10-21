@@ -11,7 +11,7 @@ trait ProvideCellId {
 
   def isCId(x: Any): Boolean
 
-  def assumeCId(x: Any): CIdOf[Cell[?]] = x.asInstanceOf[CIdOf[Cell[?]]]
+  def assumeCId(x: Any): CellIdAny = x.asInstanceOf[CIdOf[Cell[?]]]
 
   trait Cell[T] {
     def default: Option[T] = None
