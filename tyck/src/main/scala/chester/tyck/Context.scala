@@ -34,7 +34,7 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
         item: BuiltinItem
     )(using state: StateAbility[Tyck]): (TyAndVal, ContextItem) = {
       val varId = UniqId.generate[ToplevelV]
-      val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId)
+      val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
       val ty1 = state.toId(item.ty)
       (
         new TyAndVal(toTerm(ty1), item.value),

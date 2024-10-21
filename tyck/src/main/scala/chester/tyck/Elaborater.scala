@@ -106,13 +106,13 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             // Check if 'name' refers to an object definition
             localCtx.getTypeDefinition(name) match {
               case Some(objectDef: ObjectStmtTerm) =>
-                val objectCallTerm = ObjectCallTerm(objectDef)
-                unify(ty, ObjectTypeTerm(objectDef), expr)
+                val objectCallTerm = ObjectCallTerm(objectDef, convertMeta(expr.meta))
+                unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
                 objectCallTerm
               case _ =>
                 val problem = UnboundVariable(name, expr)
                 ck.reporter.apply(problem)
-                ErrorTerm(problem)
+                ErrorTerm(problem, convertMeta(expr.meta))
             }
           }
         }
@@ -172,7 +172,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr: Expr => {
         val problem = NotImplemented(expr)
         ck.reporter.apply(problem)
-        ErrorTerm(problem)
+        ErrorTerm(problem, convertMeta(expr.meta))
       }
     }
   }
@@ -198,18 +198,18 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         val fieldType = newType
         val elaboratedValue = elab(valueExpr, fieldType, effects)
         fieldTypeVars += (elaboratedKey -> fieldType)
-        Some(ObjectClauseValueTerm(elaboratedKey, elaboratedValue))
+        Some(ObjectClauseValueTerm(elaboratedKey, elaboratedValue, convertMeta(expr.meta)))
       // Handle other possible clauses
       case _ => ???
     }
 
     // Construct the object term with elaborated fields
-    val objectTerm = ObjectTerm(elaboratedFields)
+    val objectTerm = ObjectTerm(elaboratedFields, convertMeta(expr.meta))
 
     // Construct the expected object type
     val expectedObjectType = ObjectType(elaboratedFields.map { case ObjectClauseValueTerm(keyTerm, _, _) =>
-      ObjectClauseValueTerm(keyTerm, Meta(fieldTypeVars(keyTerm)))
-    })
+      ObjectClauseValueTerm(keyTerm, Meta(fieldTypeVars(keyTerm)), convertMeta(expr.meta))
+    }, meta=convertMeta(expr.meta))
 
     // Unify the expected type with the object's type
     unify(ty, expectedObjectType, expr)

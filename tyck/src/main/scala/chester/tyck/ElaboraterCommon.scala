@@ -43,7 +43,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       copy(effects = effects + (key -> value))
     }
 
-    override def readUnstable: Option[Effects] = Some(Effects(effects))
+    override def readUnstable: Option[Effects] = Some(Effects(effects, None))
   }
 
   case class FixedEffectsCell(effects: Effects) extends EffectsCell with NoFill[Effects] {
@@ -232,26 +232,26 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       }
       x match {
         case IntegerLiteral(value, _) => {
-          if (value.isValidInt && tryUnify(ty_, IntType())) return true
-          if (value > 0 && tryUnify(ty_, NaturalType())) return true
-          val i = Vector(IntegerType()) ++
-            Vector(NaturalType()).filter(x => value > 0) ++
-            Vector(IntType()).filter(x => value.isValidInt) ++
-            Vector(UIntType()).filter(x => value > 0 && value.isValidInt)
-          unify(ty_, Intersection(i.assumeNonEmpty), x)
+          if (value.isValidInt && tryUnify(ty_, IntType(None))) return true
+          if (value > 0 && tryUnify(ty_, NaturalType(None))) return true
+          val i = Vector(IntegerType(None)) ++
+            Vector(NaturalType(None)).filter(x => value > 0) ++
+            Vector(IntType(None)).filter(x => value.isValidInt) ++
+            Vector(UIntType(None)).filter(x => value > 0 && value.isValidInt)
+          unify(ty_, Intersection(i.assumeNonEmpty, None), x)
           return true
         }
         case RationalLiteral(_, _) => {
-          unify(ty_, RationalType(), x)
+          unify(ty_, RationalType(None), x)
           return true
         }
         case StringLiteral(_, _) => {
-          unify(ty_, StringType(), x)
+          unify(ty_, StringType(None), x)
 
           return true
         }
         case SymbolLiteral(_, _) => {
-          unify(ty_, SymbolType(), x)
+          unify(ty_, SymbolType(None), x)
           return true
         }
       }
@@ -263,10 +263,10 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       state.fill(
         tyLhs,
         x match {
-          case IntegerLiteral(_, _)  => IntegerType()
-          case RationalLiteral(_, _) => RationalType()
-          case StringLiteral(_, _)   => StringType()
-          case SymbolLiteral(_, _)   => SymbolType()
+          case IntegerLiteral(_, _)  => IntegerType(None)
+          case RationalLiteral(_, _) => RationalType(None)
+          case StringLiteral(_, _)   => StringType(None)
+          case SymbolLiteral(_, _)   => SymbolType(None)
         }
       )
       ZonkResult.Done
@@ -429,7 +429,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
           true
         }
         case (_, Some(l)) if !l.isInstanceOf[ListType] => {
-          ck.reporter.apply(TypeMismatch(ListType(AnyType0), l, cause))
+          ck.reporter.apply(TypeMismatch(ListType(AnyType0,meta=None), l, cause))
           true
         }
         case (Some(t1), Some(ListType(t2, _))) => {
@@ -441,11 +441,11 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
           true
         }
         case (Some(t1), None) => {
-          unify(this.listTLhs, ListType(t1): Term, cause)
+          unify(this.listTLhs, ListType(t1,meta=None): Term, cause)
           true
         }
         case (None, None) => {
-          unify(this.listTLhs, ListType(Meta(tRhs)): Term, cause)
+          unify(this.listTLhs, ListType(Meta(tRhs),meta=None): Term, cause)
           true
         }
       }
@@ -459,7 +459,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       if (!t1.isDefined) return ZonkResult.Require(Vector(this.tRhs))
       val ty = t1.get
       assert(listT1.isEmpty)
-      state.fill(this.listTLhs, ListType(ty))
+      state.fill(this.listTLhs, ListType(ty,meta=None))
       ZonkResult.Done
     }
   }

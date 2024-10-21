@@ -7,13 +7,13 @@ object BuiltIn {
   case class BuiltinItem(id: Name, value: Term, ty: Term) {}
 
   val builtinItems: Seq[BuiltinItem] = Vector(
-    BuiltinItem("Int", IntType(), Type0),
-    BuiltinItem("Integer", IntegerType(), Type0),
-    BuiltinItem("Float", FloatType(), Type0),
-    BuiltinItem("Rational", RationalType(), Type0),
-    BuiltinItem("String", StringType(), Type0),
-    BuiltinItem("Symbol", SymbolType(), Type0),
-    BuiltinItem("List", ListF(), TyToty)
+    BuiltinItem("Int", IntType(None), Type0),
+    BuiltinItem("Integer", IntegerType(None), Type0),
+    BuiltinItem("Float", FloatType(None), Type0),
+    BuiltinItem("Rational", RationalType(None), Type0),
+    BuiltinItem("String", StringType(None), Type0),
+    BuiltinItem("Symbol", SymbolType(None), Type0),
+    BuiltinItem("List", ListF(None), TyToty)
   )
 
 }

@@ -121,7 +121,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       case expr =>
         implicit val localCtx: Context = ctx
         val ty = newType
-        Vector(ExprStmtTerm(elab(expr, ty, effects), Meta(ty)))
+        Vector(ExprStmtTerm(elab(expr, ty, effects), Meta(ty), convertMeta(expr.meta)))
     }
 
     // Block is needed for implicit locals, don't remove
@@ -228,7 +228,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     merge(defInfo.tyAndVal.valueId, wellTyped)
     val newCtx = ctx.knownAdd(defInfo.localv.uniqId, TyAndVal(toTerm(ty), toTerm(wellTyped)))
     (
-      Vector(DefStmtTerm(defInfo.localv, Meta(wellTyped), toTerm(ty))),
+      Vector(DefStmtTerm(defInfo.localv, Meta(wellTyped), toTerm(ty), convertMeta(expr.meta))),
       newCtx
     )
   }
@@ -269,7 +269,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         case None         => newTypeTerm
       }
       // Create a FieldTerm representing the field in the record
-      FieldTerm(field.name.name, fieldType)
+      FieldTerm(field.name.name, fieldType, convertMeta(expr.meta))
     }
 
     // Elaborate the optional body (if any)
@@ -324,7 +324,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       .add(ContextItem(name, id, localv, ty, Some(r)))
       .knownAdd(id, TyAndVal(ty, wellTyped))
     (
-      Vector(LetStmtTerm(localv, wellTyped, ty)),
+      Vector(LetStmtTerm(localv, wellTyped, ty, convertMeta(expr.meta))),
       newCtx
     )
   }
