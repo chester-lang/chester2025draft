@@ -56,7 +56,7 @@ case class Identifier(
 // List expression trait
 sealed trait ListExpression extends Expression derives ReadWriter {
   val meta: Option[Meta]
-  def elements: Seq[Expression]
+  def elements: Vector[Expression]
 
   def toDoc(using options: PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(Doc.text(" "), elements.map(_.toDoc))
@@ -66,7 +66,7 @@ sealed trait ListExpression extends Expression derives ReadWriter {
 
 // Generic list expression (for general lists)
 case class GenericListExpression(
-    elements: Seq[Expression],
+    elements: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ListExpression
 
@@ -76,18 +76,18 @@ case class DefineExpression(
     value: Expression,
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = Seq(Identifier("define"), name, value)
+  def elements: Vector[Expression] = Vector(Identifier("define"), name, value)
 }
 
 // Lambda expression
 case class LambdaExpression(
-    parameters: List[Identifier],
-    body: List[Expression],
+    parameters: Vector[Identifier],
+    body: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = {
+  def elements: Vector[Expression] = {
     val paramsExpr = GenericListExpression(parameters)
-    Seq(Identifier("lambda"), paramsExpr) ++ body
+    Vector(Identifier("lambda"), paramsExpr) ++ body
   }
 }
 
@@ -98,8 +98,8 @@ case class IfExpression(
     elseBranch: Option[Expression],
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = {
-    Seq(Identifier("if"), condition, thenBranch) ++ elseBranch.toSeq
+  def elements: Vector[Expression] = {
+    Vector(Identifier("if"), condition, thenBranch) ++ elseBranch.toSeq
   }
 }
 
@@ -109,52 +109,52 @@ case class SetExpression(
     value: Expression,
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = Seq(Identifier("set!"), name, value)
+  def elements: Vector[Expression] = Vector(Identifier("set!"), name, value)
 }
 
 // Begin expression
 case class BeginExpression(
-    expressions: List[Expression],
+    expressions: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = Identifier("begin") +: expressions
+  def elements: Vector[Expression] = Identifier("begin") +: expressions
 }
 
 // Let expression
 case class LetExpression(
-    bindings: List[(Identifier, Expression)],
-    body: List[Expression],
+    bindings: Vector[(Identifier, Expression)],
+    body: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = {
+  def elements: Vector[Expression] = {
     val bindingsExpr = bindings.map { case (id, expr) =>
-      GenericListExpression(List(id, expr))
+      GenericListExpression(Vector(id, expr))
     }
-    Seq(Identifier("let"), GenericListExpression(bindingsExpr)) ++ body
+    Vector(Identifier("let"), GenericListExpression(bindingsExpr)) ++ body
   }
 }
 
 // Cond expression
 case class CondExpression(
-    clauses: List[(Expression, List[Expression])],
+    clauses: Vector[(Expression, Vector[Expression])],
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = {
+  def elements: Vector[Expression] = {
     val clausesExpr = clauses.map { case (test, exprs) =>
       GenericListExpression(test +: exprs)
     }
-    Seq(Identifier("cond")) ++ clausesExpr
+    Vector(Identifier("cond")) ++ clausesExpr
   }
 }
 
 // Case expression
 case class CaseExpression(
     key: Expression,
-    clauses: List[(List[Literal], List[Expression])],
-    elseClause: Option[List[Expression]] = None,
+    clauses: Vector[(Vector[Literal], Vector[Expression])],
+    elseClause: Option[Vector[Expression]] = None,
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = {
+  def elements: Vector[Expression] = {
     val clausesExpr = clauses.map { case (datums, exprs) =>
       val datumsExpr = GenericListExpression(datums)
       GenericListExpression(datumsExpr +: exprs)
@@ -162,25 +162,25 @@ case class CaseExpression(
     val elseExpr = elseClause.map { exprs =>
       GenericListExpression(Identifier("else") +: exprs)
     }.toSeq
-    Seq(Identifier("case"), key) ++ clausesExpr ++ elseExpr
+    Vector(Identifier("case"), key) ++ clausesExpr ++ elseExpr
   }
 }
 
 // Do expression
 case class DoExpression(
-    variables: List[(Identifier, Expression, Option[Expression])],
+    variables: Vector[(Identifier, Expression, Option[Expression])],
     test: Expression,
-    commands: List[Expression],
-    body: List[Expression],
+    commands: Vector[Expression],
+    body: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ListExpression {
-  def elements: Seq[Expression] = {
+  def elements: Vector[Expression] = {
     val varsExpr = variables.map { case (id, init, stepOpt) =>
-      val varList = Seq(id, init) ++ stepOpt.toSeq
+      val varList = Vector(id, init) ++ stepOpt.toSeq
       GenericListExpression(varList)
     }
-    val testExpr = GenericListExpression(Seq(test) ++ commands)
-    Seq(Identifier("do"), GenericListExpression(varsExpr), testExpr) ++ body
+    val testExpr = GenericListExpression(Vector(test) ++ commands)
+    Vector(Identifier("do"), GenericListExpression(varsExpr), testExpr) ++ body
   }
 }
 
@@ -194,7 +194,7 @@ case class Quotation(
 
 // Program
 case class Program(
-    expressions: List[Expression],
+    expressions: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
