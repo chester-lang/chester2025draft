@@ -95,8 +95,7 @@ case class Context(
     map: Map[Name, UniqIdOf[ReferenceCall]] = Map.empty[Name, UniqIdOf[ReferenceCall]], // empty[...] are needed because compiler bugs
     contextItems: Map[UniqIdOf[ReferenceCall], ContextItem] =
       Map.empty[UniqIdOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
-    knownMap: Map[UniqIdOf[ReferenceCall], TyAndVal] =
-      Map.empty[UniqIdOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
+    knownMap: Map[UniqIdOf[ReferenceCall], TyAndVal] = Map.empty[UniqIdOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
     typeDefinitionNames: Map[Name, UniqIdOf[TypeDefinition]] = Map.empty,
     typeDefinitions: Map[UniqIdOf[TypeDefinition], TypeDefinition] = Map.empty,
     imports: Imports = Imports.Empty,

@@ -7,7 +7,7 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.error.ProblemUpickle.*
 import chester.syntax.{AbsoluteRef, Name}
-import chester.utils.{*,given}
+import chester.utils.{*, given}
 import chester.utils.doc.*
 import chester.utils.impls.*
 import spire.math.{Rational, Trilean}
