@@ -34,9 +34,9 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
     localCtx.update(_.add(ContextItem(arg.name.name, id, bind, ty, Some(r))))
     default match {
       case Some(defaultValue) =>
-        ArgTerm(bind, ty, Some(defaultValue), arg.vararg,meta=None)
+        ArgTerm(bind, ty, Some(defaultValue), arg.vararg, meta = None)
       case None =>
-        ArgTerm(bind, ty, None, arg.vararg,meta=None)
+        ArgTerm(bind, ty, None, arg.vararg, meta = None)
     }
   }
 
@@ -51,7 +51,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
       elabArg(arg, effects)
     }
 
-    TelescopeTerm(argTerms, telescope.implicitly,meta=None)
+    TelescopeTerm(argTerms, telescope.implicitly, meta = None)
   }
 
   def elabFunction(
@@ -97,11 +97,11 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
 
     // Build the function type by folding over the telescopes
     val functionType =
-      FunctionType(telescopeTerms, returnType, effects = toTerm(effects),meta=None)
+      FunctionType(telescopeTerms, returnType, effects = toTerm(effects), meta = None)
 
     // Unify the expected type with the constructed function type
     unify(ty, functionType, expr)
 
-    Function(functionType, bodyTerm,meta=None)
+    Function(functionType, bodyTerm, meta = None)
   }
 }

@@ -429,7 +429,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
           true
         }
         case (_, Some(l)) if !l.isInstanceOf[ListType] => {
-          ck.reporter.apply(TypeMismatch(ListType(AnyType0,meta=None), l, cause))
+          ck.reporter.apply(TypeMismatch(ListType(AnyType0, meta = None), l, cause))
           true
         }
         case (Some(t1), Some(ListType(t2, _))) => {
@@ -441,11 +441,11 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
           true
         }
         case (Some(t1), None) => {
-          unify(this.listTLhs, ListType(t1,meta=None): Term, cause)
+          unify(this.listTLhs, ListType(t1, meta = None): Term, cause)
           true
         }
         case (None, None) => {
-          unify(this.listTLhs, ListType(Meta(tRhs),meta=None): Term, cause)
+          unify(this.listTLhs, ListType(Meta(tRhs), meta = None): Term, cause)
           true
         }
       }
@@ -459,7 +459,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       if (!t1.isDefined) return ZonkResult.Require(Vector(this.tRhs))
       val ty = t1.get
       assert(listT1.isEmpty)
-      state.fill(this.listTLhs, ListType(ty,meta=None))
+      state.fill(this.listTLhs, ListType(ty, meta = None))
       ZonkResult.Done
     }
   }

@@ -4,7 +4,7 @@ import chester.error.*
 import chester.utils.doc.*
 import upickle.default.*
 
-case class Meta(sourcePos: SourcePos) derives ReadWriter 
+case class Meta(sourcePos: SourcePos) derives ReadWriter
 
 // Base trait for all AST nodes
 sealed trait ASTNode extends ToDoc derives ReadWriter {
@@ -1203,4 +1203,3 @@ case class SymbolExpression(
 }
 
 // Await and Async Functions already handled in FunctionExpression and FunctionDeclaration
-

@@ -41,7 +41,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
             val argTerms = expr.telescopes.flatMap(_.args.map { arg =>
               elab(arg.expr, newTypeTerm, effects)
             })
-            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, argTerms,meta=None)
+            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, argTerms, meta = None)
             // TODO: Unify the type with the expected type
             // unify(ty, recordDefType, expr)
             recordCallTerm
@@ -80,9 +80,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       val callingArgs = telescope.args.map { arg =>
         val argTy = newTypeTerm
         val argTerm = elab(arg.expr, argTy, effects)
-        CallingArgTerm(argTerm, argTy, arg.name.map(_.name), arg.vararg,meta=None)
+        CallingArgTerm(argTerm, argTy, arg.name.map(_.name), arg.vararg, meta = None)
       }
-      Calling(callingArgs, telescope.implicitly,meta=None)
+      Calling(callingArgs, telescope.implicitly, meta = None)
     }
 
     // Create a placeholder for the function call term
@@ -132,7 +132,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
           // Unify the result type
           unify(resultTy, retTy, cause)
           // Construct the function call term with adjusted callings
-          val fCallTerm = FCallTerm(functionTerm, adjustedCallings,meta=None)
+          val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
           state.fill(functionCallTerm, fCallTerm)
           true
         case Some(Meta(id)) =>
@@ -193,7 +193,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
               // For now, throw an exception
               throw new NotImplementedError(s"Implicit parameter with identifier '$argTerm' is not implemented yet.")
             }
-            val calling = Calling(callingArgs, implicitly = true,meta=None)
+            val calling = Calling(callingArgs, implicitly = true, meta = None)
             adjustedCallings = adjustedCallings :+ calling
             // Unify the inferred arguments
             unifyArgs(expectedTele.args, calling.args, cause)

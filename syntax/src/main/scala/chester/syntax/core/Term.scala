@@ -283,7 +283,7 @@ case class MetaTerm(impl: HoldNotReadable[?], meta: OptionTermMeta) extends Term
 
 object MetaTerm {
   @deprecated("meta")
-  def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x),meta=None)
+  def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x), meta = None)
 }
 
 trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
@@ -302,10 +302,10 @@ case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with
 
 object ListTerm {
   @deprecated("meta")
-  def apply(terms: Vector[Term]): ListTerm = new ListTerm(terms,meta=None)
+  def apply(terms: Vector[Term]): ListTerm = new ListTerm(terms, meta = None)
 
   @deprecated("meta")
-  def apply(terms: Seq[Term]): ListTerm = new ListTerm(terms.toVector,meta=None)
+  def apply(terms: Seq[Term]): ListTerm = new ListTerm(terms.toVector, meta = None)
 }
 
 sealed trait TypeTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
@@ -336,7 +336,7 @@ case class Type(level: Term, meta: OptionTermMeta) extends Sort with TypeT[Term]
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
 
-  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(level=f(level)))
+  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(level = f(level)))
 }
 
 trait LevelTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] {
@@ -373,7 +373,7 @@ case class LevelFinite(n: Term, meta: OptionTermMeta) extends Level with LevelFi
     Doc.text("Level(") <> n.toDoc <> Doc.text(")")
 
   override def descent(f: Term => Term, g: SpecialMap): LevelFinite =
-    thisOr(copy(n=f(n)))
+    thisOr(copy(n = f(n)))
 }
 
 trait LevelUnrestrictedC[+Rec <: TermT[Rec]] extends LevelT[Rec] {
@@ -390,12 +390,12 @@ case class LevelUnrestricted(meta: OptionTermMeta) extends Level with LevelUnres
 }
 
 // Define Level0 using LevelFinite
-val Level0 = LevelFinite(IntegerTerm(0,meta=None),meta=None)
+val Level0 = LevelFinite(IntegerTerm(0, meta = None), meta = None)
 
-val Type0 = Type(Level0,meta=None)
+val Type0 = Type(Level0, meta = None)
 
 // Referencing Setω in Agda
-val Typeω = Type(LevelUnrestricted(None),meta=None)
+val Typeω = Type(LevelUnrestricted(None), meta = None)
 
 enum Usage derives ReadWriter {
   case None, Linear, Unrestricted
@@ -409,7 +409,7 @@ trait PropC[+Rec <: TermT[Rec]] extends SortT[Rec] {
 
 case class Prop(level: Term, meta: OptionTermMeta) extends Sort with PropC[Term] {
   override type ThisTree = Prop
-  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(level=f(level)))
+  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(level = f(level)))
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist("Prop" <> Docs.`(`, Docs.`)`)(Vector(level))
@@ -424,7 +424,7 @@ trait FTypeC[+Rec <: TermT[Rec]] extends SortT[Rec] {
 // fibrant types
 case class FType(level: Term, meta: OptionTermMeta) extends Sort with FTypeC[Term] {
   override type ThisTree = FType
-  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(level=f(level)))
+  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(level = f(level)))
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
@@ -466,8 +466,7 @@ trait IntegerTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIn
   override def toTerm: IntegerTerm = IntegerTerm(value, meta)
 }
 
-case class IntegerTerm(value: BigInt, meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term]
-    derives ReadWriter {
+case class IntegerTerm(value: BigInt, meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term] derives ReadWriter {
   override type ThisTree = IntegerTerm
   override def descent(f: Term => Term, g: SpecialMap): Term = this
 
@@ -490,7 +489,7 @@ object AbstractIntTerm {
 object NaturalTerm {
 
   @deprecated("meta")
-  def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm.from(value,meta=None)
+  def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm.from(value, meta = None)
 }
 
 sealed trait WithTypeT[+Rec <: TermT[Rec]] extends TermT[Rec] {
@@ -683,12 +682,12 @@ case class AnyType(level: Term, meta: OptionTermMeta) extends TypeTerm with With
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("Any", ColorProfile.typeColor)
 
-  override def ty: Term = Type(level,meta)
+  override def ty: Term = Type(level, meta)
 }
 
-def AnyType0 = AnyType(Level0,meta=None)
+def AnyType0 = AnyType(Level0, meta = None)
 
-val AnyType0Debug = AnyType(Level0,meta=None)
+val AnyType0Debug = AnyType(Level0, meta = None)
 
 case class NothingType(meta: OptionTermMeta) extends TypeTerm with WithType {
   override type ThisTree = NothingType
@@ -742,12 +741,12 @@ case class ArgTerm(
 object ArgTerm {
 
   @deprecated("meta")
-  def from(bind: LocalV): ArgTerm = ArgTerm(bind, bind.ty,meta=None)
+  def from(bind: LocalV): ArgTerm = ArgTerm(bind, bind.ty, meta = None)
 }
 
 object TelescopeTerm {
   @deprecated("meta")
-  def from(x: ArgTerm*): TelescopeTerm = TelescopeTerm(x.toVector,meta=None)
+  def from(x: ArgTerm*): TelescopeTerm = TelescopeTerm(x.toVector, meta = None)
 }
 
 case class TelescopeTerm(
@@ -843,7 +842,7 @@ object FunctionType {
 
   @deprecated("meta")
   def apply(telescope: TelescopeTerm, resultTy: Term): FunctionType = {
-    new FunctionType(Vector(telescope), resultTy,meta=None)
+    new FunctionType(Vector(telescope), resultTy, meta = None)
   }
 }
 
@@ -1014,14 +1013,14 @@ case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta) extends Ter
   override def collectMeta: Vector[MetaTerm] =
     effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
-  override def replaceMeta(f: MetaTerm => Term): Effects = copy(effects=effects.map { case (a, b) =>
+  override def replaceMeta(f: MetaTerm => Term): Effects = copy(effects = effects.map { case (a, b) =>
     a.replaceMeta(f).asInstanceOf[LocalV] -> b.replaceMeta(f)
   })
 }
 
 object Effects {
   @deprecated("meta")
-  val Empty: Effects = Effects(HashMap.empty,meta=None)
+  val Empty: Effects = Effects(HashMap.empty, meta = None)
 
 }
 
@@ -1212,11 +1211,11 @@ case class BlockTerm(
 object BlockTerm {
   @deprecated("meta")
   def apply(stmts: Vector[StmtTerm], value: Term): BlockTerm =
-    new BlockTerm(stmts, value,meta=None)
+    new BlockTerm(stmts, value, meta = None)
 
   @deprecated("meta")
   def apply(stmts: Seq[StmtTerm], value: Term): BlockTerm =
-    new BlockTerm(stmts.toVector, value,meta=None)
+    new BlockTerm(stmts.toVector, value, meta = None)
 }
 
 case class Annotation(
