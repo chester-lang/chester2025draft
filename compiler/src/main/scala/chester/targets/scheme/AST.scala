@@ -1,10 +1,15 @@
 package chester.targets.scheme
 
+import chester.error.*
 import chester.utils.doc.*
 import upickle.default.*
 
+case class Meta(sourcePos: SourcePos) derives ReadWriter
+
 // Base trait for all AST nodes
-sealed trait ASTNode extends ToDoc derives ReadWriter
+sealed trait ASTNode extends ToDoc derives ReadWriter {
+  val meta: Option[Meta]
+}
 
 // Expressions
 sealed trait Expression extends ASTNode derives ReadWriter
@@ -12,30 +17,45 @@ sealed trait Expression extends ASTNode derives ReadWriter
 // Scheme literals
 sealed trait Literal extends Expression derives ReadWriter
 
-case class StringLiteral(value: String) extends Literal {
+case class StringLiteral(
+    value: String,
+    meta: Option[Meta] = None
+) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(s""""$value"""")
 }
 
-case class NumberLiteral(value: Double) extends Literal {
+case class NumberLiteral(
+    value: Double,
+    meta: Option[Meta] = None
+) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(value.toString)
 }
 
-case class BooleanLiteral(value: Boolean) extends Literal {
+case class BooleanLiteral(
+    value: Boolean,
+    meta: Option[Meta] = None
+) extends Literal {
   def toDoc(using options: PrettierOptions): Doc =
     if (value) Doc.text("#t") else Doc.text("#f")
 }
 
-case object NullLiteral extends Literal {
+case class NullLiteral(
+    meta: Option[Meta] = None
+) extends Literal {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("'()")
 }
 
 // Identifiers
-case class Identifier(name: String) extends Expression {
+case class Identifier(
+    name: String,
+    meta: Option[Meta] = None
+) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
 }
 
 // List expression trait
 sealed trait ListExpression extends Expression derives ReadWriter {
+  val meta: Option[Meta]
   def elements: Seq[Expression]
 
   def toDoc(using options: PrettierOptions): Doc = {
@@ -45,12 +65,16 @@ sealed trait ListExpression extends Expression derives ReadWriter {
 }
 
 // Generic list expression (for general lists)
-case class GenericListExpression(elements: Seq[Expression]) extends ListExpression
+case class GenericListExpression(
+    elements: Seq[Expression],
+    meta: Option[Meta] = None
+) extends ListExpression
 
 // Define expression
 case class DefineExpression(
     name: Identifier,
-    value: Expression
+    value: Expression,
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = Seq(Identifier("define"), name, value)
 }
@@ -58,7 +82,8 @@ case class DefineExpression(
 // Lambda expression
 case class LambdaExpression(
     parameters: List[Identifier],
-    body: List[Expression]
+    body: List[Expression],
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = {
     val paramsExpr = GenericListExpression(parameters)
@@ -70,7 +95,8 @@ case class LambdaExpression(
 case class IfExpression(
     condition: Expression,
     thenBranch: Expression,
-    elseBranch: Option[Expression]
+    elseBranch: Option[Expression],
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = {
     Seq(Identifier("if"), condition, thenBranch) ++ elseBranch.toSeq
@@ -80,14 +106,16 @@ case class IfExpression(
 // Set! expression
 case class SetExpression(
     name: Identifier,
-    value: Expression
+    value: Expression,
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = Seq(Identifier("set!"), name, value)
 }
 
 // Begin expression
 case class BeginExpression(
-    expressions: List[Expression]
+    expressions: List[Expression],
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = Identifier("begin") +: expressions
 }
@@ -95,7 +123,8 @@ case class BeginExpression(
 // Let expression
 case class LetExpression(
     bindings: List[(Identifier, Expression)],
-    body: List[Expression]
+    body: List[Expression],
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = {
     val bindingsExpr = bindings.map { case (id, expr) =>
@@ -107,7 +136,8 @@ case class LetExpression(
 
 // Cond expression
 case class CondExpression(
-    clauses: List[(Expression, List[Expression])]
+    clauses: List[(Expression, List[Expression])],
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = {
     val clausesExpr = clauses.map { case (test, exprs) =>
@@ -121,7 +151,8 @@ case class CondExpression(
 case class CaseExpression(
     key: Expression,
     clauses: List[(List[Literal], List[Expression])],
-    elseClause: Option[List[Expression]] = None
+    elseClause: Option[List[Expression]] = None,
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = {
     val clausesExpr = clauses.map { case (datums, exprs) =>
@@ -140,7 +171,8 @@ case class DoExpression(
     variables: List[(Identifier, Expression, Option[Expression])],
     test: Expression,
     commands: List[Expression],
-    body: List[Expression]
+    body: List[Expression],
+    meta: Option[Meta] = None
 ) extends ListExpression {
   def elements: Seq[Expression] = {
     val varsExpr = variables.map { case (id, init, stepOpt) =>
@@ -153,13 +185,17 @@ case class DoExpression(
 }
 
 // Quotation
-case class Quotation(value: Expression) extends Expression {
+case class Quotation(
+    value: Expression,
+    meta: Option[Meta] = None
+) extends Expression {
   def toDoc(using options: PrettierOptions): Doc = Doc.text("'") <> value.toDoc
 }
 
 // Program
 case class Program(
-    expressions: List[Expression]
+    expressions: List[Expression],
+    meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using options: PrettierOptions): Doc = {
     Doc.concat(expressions.map(_.toDoc <> Doc.line))
