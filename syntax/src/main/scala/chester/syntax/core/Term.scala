@@ -1189,21 +1189,21 @@ case class TupleTerm(values: Vector[Term], meta: OptionTermMeta) extends Term {
 }
 
 case class BlockTerm(
-    stmts: Vector[StmtTerm],
-    value: Term,
-    meta: OptionTermMeta
+                      statements: Vector[StmtTerm],
+                      result: Term,
+                      meta: OptionTermMeta
 ) extends Term derives ReadWriter {
   override type ThisTree = BlockTerm
   override def descent(f: Term => Term, g: SpecialMap): BlockTerm = thisOr(
     copy(
-      stmts = stmts.map(g),
-      value = f(value)
+      statements = statements.map(g),
+      result = f(result)
     )
   )
 
   override def toDoc(using options: PrettierOptions): Doc = {
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ";")(
-      (stmts.map(_.toDoc) :+ value.toDoc)
+      (statements.map(_.toDoc) :+ result.toDoc)
     )
   }
 }
