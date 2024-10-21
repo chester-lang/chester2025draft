@@ -7,7 +7,7 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.error.ProblemUpickle.*
 import chester.syntax.{AbsoluteRef, Name}
-import chester.utils.*
+import chester.utils.{*,given}
 import chester.utils.doc.*
 import chester.utils.impls.*
 import spire.math.{Rational, Trilean}
@@ -264,26 +264,13 @@ sealed trait TermWithUniqId extends Term with TermWithUniqIdT[Term] derives Read
   def switchUniqId(r: UReplacer): TermWithUniqId
 }
 
-// allow to write, not allow read
-given MetaTermHoldRW: ReadWriter[MetaTermHold[?]] =
-  readwriter[MetaTermRW].bimap(
-    _ => MetaTermRW(),
-    _ => {
-      throw new UnsupportedOperationException("Cannot read MetaTerm")
-    }
-  )
-
-case class MetaTermHold[T](inner: T) extends AnyVal
-
-case class MetaTermRW() derives ReadWriter
-
 trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: MetaTermC[Rec]
-  def impl: MetaTermHold[?]
+  def impl: HoldNotReadable[?]
   override def toTerm: MetaTerm = MetaTerm(impl, meta)
 }
 
-case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends Term with MetaTermC[Term] {
+case class MetaTerm(impl: HoldNotReadable[?], meta: OptionTermMeta = None) extends Term with MetaTermC[Term] {
   override type ThisTree = MetaTerm
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
@@ -294,7 +281,7 @@ case class MetaTerm(impl: MetaTermHold[?], meta: OptionTermMeta = None) extends 
 }
 
 object MetaTerm {
-  def from[T](x: T): MetaTerm = MetaTerm(MetaTermHold(x))
+  def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x))
 }
 
 trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
