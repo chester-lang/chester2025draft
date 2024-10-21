@@ -5,13 +5,13 @@ import chester.utils.doc.*
 import upickle.default.*
 
 case class Meta(sourcePos: SourcePos) derives ReadWriter {
-  def link(x: Doc): Doc = Doc.link(this, x)
+  inline def link(x: Doc): Doc = Doc.link(this, x)
 }
 
 extension (m: Option[Meta]) {
   def link(x: Doc): Doc = m match {
     case Some(m) => m.link(x)
-    case None => x
+    case None    => x
   }
 }
 

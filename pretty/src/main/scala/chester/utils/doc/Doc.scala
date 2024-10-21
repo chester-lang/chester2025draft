@@ -106,7 +106,7 @@ object Doc {
   def indented(doc: ToDoc)(using options: PrettierOptions): Doc = doc.indented()
   def indent(doc: ToDoc)(using options: PrettierOptions): Doc = doc.indented()
 
-  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, empty, concat, hardline, line, sep,link}
+  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, empty, concat, hardline, line, sep, link}
 }
 
 implicit class DocOps(doc: Doc) extends AnyVal {
@@ -235,7 +235,7 @@ def hsep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $hse
 def ssep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
 def sep(sep: ToDoc, ds: Seq[ToDoc])(using options: PrettierOptions): Doc = hsep(ds, sep)
 def link(n: AnyRef, d: ToDoc)(using options: PrettierOptions): Doc = $link(HoldOptionNoRead(Some(n)), d.toDoc)
-def link(n:AnyRef,d:Doc):Doc = $link(HoldOptionNoRead(Some(n)), d)
+def link(n: AnyRef, d: Doc): Doc = $link(HoldOptionNoRead(Some(n)), d)
 extension (self: ToDoc)(using options: PrettierOptions) {
   implicit inline def asDoc: Doc = self.toDoc
 
