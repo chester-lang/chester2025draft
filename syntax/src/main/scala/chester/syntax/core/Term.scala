@@ -1189,9 +1189,9 @@ case class TupleTerm(values: Vector[Term], meta: OptionTermMeta) extends Term {
 }
 
 case class BlockTerm(
-                      statements: Vector[StmtTerm],
-                      result: Term,
-                      meta: OptionTermMeta
+    statements: Vector[StmtTerm],
+    result: Term,
+    meta: OptionTermMeta
 ) extends Term derives ReadWriter {
   override type ThisTree = BlockTerm
   override def descent(f: Term => Term, g: SpecialMap): BlockTerm = thisOr(

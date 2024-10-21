@@ -8,22 +8,22 @@ trait MethodExtractor {
   // Extract methods from a concrete syntax (Expr)
   def extractMethodsFromExpr(expr: Expr): Seq[LetDefStmt] = {
     expr match {
-      case record: RecordStmt       => collectMethodsFromBody(record.body)
-      case traitStmt: TraitStmt     => collectMethodsFromBody(traitStmt.body)
+      case record: RecordStmt           => collectMethodsFromBody(record.body)
+      case traitStmt: TraitStmt         => collectMethodsFromBody(traitStmt.body)
       case interfaceStmt: InterfaceStmt => collectMethodsFromBody(interfaceStmt.body)
-      case objectStmt: ObjectStmt   => collectMethodsFromBody(objectStmt.body)
-      case _ => Seq.empty
+      case objectStmt: ObjectStmt       => collectMethodsFromBody(objectStmt.body)
+      case _                            => Seq.empty
     }
   }
 
   // Extract methods from a core syntax (Term)
   def extractMethodsFromTerm(term: Term): Seq[DefStmtTerm] = {
     term match {
-      case record: RecordStmtTerm       => collectMethodsFromBodyTerm(record.body)
-      case traitStmt: TraitStmtTerm     => collectMethodsFromBodyTerm(traitStmt.body)
+      case record: RecordStmtTerm           => collectMethodsFromBodyTerm(record.body)
+      case traitStmt: TraitStmtTerm         => collectMethodsFromBodyTerm(traitStmt.body)
       case interfaceStmt: InterfaceStmtTerm => collectMethodsFromBodyTerm(interfaceStmt.body)
-      case objectStmt: ObjectStmtTerm   => collectMethodsFromBodyTerm(objectStmt.body)
-      case _ => Seq.empty
+      case objectStmt: ObjectStmtTerm       => collectMethodsFromBodyTerm(objectStmt.body)
+      case _                                => Seq.empty
     }
   }
 
@@ -45,8 +45,8 @@ trait MethodExtractor {
   }
 
   private def collectMethodsFromBlockTerm(block: BlockTerm): Seq[DefStmtTerm] = {
-    block.statements.collect {
-      case defStmtTerm: DefStmtTerm => defStmtTerm
+    block.statements.collect { case defStmtTerm: DefStmtTerm =>
+      defStmtTerm
     } ++ collectMethodsFromTerm(block.result)
   }
 

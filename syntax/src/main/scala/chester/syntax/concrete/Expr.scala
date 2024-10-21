@@ -248,9 +248,9 @@ case class PostfixExpr(
   )
 }
 case class Block(
-                  statements: Vector[Expr],
-                  result: Option[Expr],
-                  meta: Option[ExprMeta]
+    statements: Vector[Expr],
+    result: Option[Expr],
+    meta: Option[ExprMeta]
 ) extends ParsedExpr {
   override def descent(operator: Expr => Expr): Block = thisOr {
     Block(statements.map(operator), result.map(operator), meta)
