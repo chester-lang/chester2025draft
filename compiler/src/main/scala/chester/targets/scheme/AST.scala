@@ -53,10 +53,11 @@ case class Identifier(
   def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
 }
 
-// List expression trait
-sealed trait ListExpression extends Expression derives ReadWriter {
-  val meta: Option[Meta]
-  def elements: Vector[Expression]
+// ListExpression as a case class
+case class ListExpression(
+    elements: Vector[Expression],
+    meta: Option[Meta] = None
+) extends Expression derives ReadWriter {
 
   def toDoc(using options: PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(Doc.text(" "), elements.map(_.toDoc))
@@ -64,124 +65,107 @@ sealed trait ListExpression extends Expression derives ReadWriter {
   }
 }
 
-// Generic list expression (for general lists)
-case class GenericListExpression(
-    elements: Vector[Expression],
-    meta: Option[Meta] = None
-) extends ListExpression
-
-// Define expression
-case class DefineExpression(
+// DefineExpression function
+def DefineExpression(
     name: Identifier,
     value: Expression,
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = Vector(Identifier("define"), name, value)
+): ListExpression = {
+  ListExpression(Vector(Identifier("define"), name, value), meta)
 }
 
-// Lambda expression
-case class LambdaExpression(
+// LambdaExpression function
+def LambdaExpression(
     parameters: Vector[Identifier],
     body: Vector[Expression],
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = {
-    val paramsExpr = GenericListExpression(parameters)
-    Vector(Identifier("lambda"), paramsExpr) ++ body
-  }
+): ListExpression = {
+  val paramsExpr = ListExpression(parameters.map(_.asInstanceOf[Expression]))
+  ListExpression(Vector(Identifier("lambda"), paramsExpr) ++ body, meta)
 }
 
-// If expression
-case class IfExpression(
+// IfExpression function
+def IfExpression(
     condition: Expression,
     thenBranch: Expression,
     elseBranch: Option[Expression],
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = {
-    Vector(Identifier("if"), condition, thenBranch) ++ elseBranch.toSeq
-  }
+): ListExpression = {
+  val elsePart = elseBranch.toSeq
+  ListExpression(Vector(Identifier("if"), condition, thenBranch) ++ elsePart, meta)
 }
 
-// Set! expression
-case class SetExpression(
+// SetExpression function
+def SetExpression(
     name: Identifier,
     value: Expression,
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = Vector(Identifier("set!"), name, value)
+): ListExpression = {
+  ListExpression(Vector(Identifier("set!"), name, value), meta)
 }
 
-// Begin expression
-case class BeginExpression(
+// BeginExpression function
+def BeginExpression(
     expressions: Vector[Expression],
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = Identifier("begin") +: expressions
+): ListExpression = {
+  ListExpression(Identifier("begin") +: expressions, meta)
 }
 
-// Let expression
-case class LetExpression(
+// LetExpression function
+def LetExpression(
     bindings: Vector[(Identifier, Expression)],
     body: Vector[Expression],
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = {
-    val bindingsExpr = bindings.map { case (id, expr) =>
-      GenericListExpression(Vector(id, expr))
-    }
-    Vector(Identifier("let"), GenericListExpression(bindingsExpr)) ++ body
+): ListExpression = {
+  val bindingsExpr = bindings.map { case (id, expr) =>
+    ListExpression(Vector(id, expr))
   }
+  ListExpression(Vector(Identifier("let"), ListExpression(bindingsExpr)) ++ body, meta)
 }
 
-// Cond expression
-case class CondExpression(
+// CondExpression function
+def CondExpression(
     clauses: Vector[(Expression, Vector[Expression])],
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = {
-    val clausesExpr = clauses.map { case (test, exprs) =>
-      GenericListExpression(test +: exprs)
-    }
-    Vector(Identifier("cond")) ++ clausesExpr
+): ListExpression = {
+  val clausesExpr = clauses.map { case (test, exprs) =>
+    ListExpression(test +: exprs)
   }
+  ListExpression(Vector(Identifier("cond")) ++ clausesExpr, meta)
 }
 
-// Case expression
-case class CaseExpression(
+// CaseExpression function
+def CaseExpression(
     key: Expression,
     clauses: Vector[(Vector[Literal], Vector[Expression])],
     elseClause: Option[Vector[Expression]] = None,
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = {
-    val clausesExpr = clauses.map { case (datums, exprs) =>
-      val datumsExpr = GenericListExpression(datums)
-      GenericListExpression(datumsExpr +: exprs)
-    }
-    val elseExpr = elseClause.map { exprs =>
-      GenericListExpression(Identifier("else") +: exprs)
-    }.toSeq
-    Vector(Identifier("case"), key) ++ clausesExpr ++ elseExpr
+): ListExpression = {
+  val clausesExpr = clauses.map { case (datums, exprs) =>
+    val datumsExpr = ListExpression(datums.map(_.asInstanceOf[Expression]))
+    ListExpression(datumsExpr +: exprs)
   }
+  val elseExpr = elseClause.map { exprs =>
+    ListExpression(Identifier("else") +: exprs)
+  }.toSeq
+  ListExpression(Vector(Identifier("case"), key) ++ clausesExpr ++ elseExpr, meta)
 }
 
-// Do expression
-case class DoExpression(
+// DoExpression function
+def DoExpression(
     variables: Vector[(Identifier, Expression, Option[Expression])],
     test: Expression,
     commands: Vector[Expression],
     body: Vector[Expression],
     meta: Option[Meta] = None
-) extends ListExpression {
-  def elements: Vector[Expression] = {
-    val varsExpr = variables.map { case (id, init, stepOpt) =>
-      val varList = Vector(id, init) ++ stepOpt.toSeq
-      GenericListExpression(varList)
-    }
-    val testExpr = GenericListExpression(Vector(test) ++ commands)
-    Vector(Identifier("do"), GenericListExpression(varsExpr), testExpr) ++ body
+): ListExpression = {
+  val varsExpr = variables.map { case (id, init, stepOpt) =>
+    val varList = Vector(id, init) ++ stepOpt.toSeq
+    ListExpression(varList)
   }
+  val testExpr = ListExpression(Vector(test) ++ commands)
+  ListExpression(Vector(Identifier("do"), ListExpression(varsExpr), testExpr) ++ body, meta)
 }
 
 // Quotation
