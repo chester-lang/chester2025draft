@@ -21,7 +21,10 @@ trait WithServerity extends Any {
 
 trait Problem extends ToDoc with WithServerity {
   def stage: Problem.Stage
+  // TODO: use this
   def location: Option[SourcePos] = None
+  // TODO: use this
+  def fullDescription: Option[Vector[(ToDoc, SourcePos)]] = None
 }
 
 private case class ProblemSer(

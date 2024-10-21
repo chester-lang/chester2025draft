@@ -80,9 +80,12 @@ sealed trait Expr extends WithPos with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
   def descent(f: Expr => Expr): Expr = {
-    descent(f, new ExprMap {
-      def use[T <: Expr](x: T): x.ThisTree = x.descent(f).asInstanceOf[x.ThisTree]
-    })
+    descent(
+      f,
+      new ExprMap {
+        def use[T <: Expr](x: T): x.ThisTree = x.descent(f).asInstanceOf[x.ThisTree]
+      }
+    )
   }
 
   def descent(f: Expr => Expr, g: ExprMap): Expr
@@ -550,9 +553,9 @@ case class DotCall(
     if (telescope.nonEmpty) return false
     if (!field.isInstanceOf[Identifier]) return false
     expr match {
-      case _: Identifier    => true
-      case dc: DotCall => dc.isQualifiedName
-      case _                   => false
+      case _: Identifier => true
+      case dc: DotCall   => dc.isQualifiedName
+      case _             => false
     }
   }
 
