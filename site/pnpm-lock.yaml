@@ -5,9 +5,10 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  xterm-pty@0.10.2>xterm: npm:@xterm/xterm@^5.5.0
-  xterm-readline@1>xterm: npm:@xterm/xterm@^5.5.0
+  xterm-pty@0.10.2>xterm: npm:@xterm/xterm@5.6.0-beta.67
+  xterm-readline@1>xterm: npm:@xterm/xterm@5.6.0-beta.67
   '@types/react': npm:types-react@19.0.0-rc.1
+  '@xterm/xterm': 5.6.0-beta.67
   '@types/react-dom': npm:types-react-dom@19.0.0-rc.1
 
 importers:
@@ -24,17 +25,17 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2
       '@xterm/addon-fit':
-        specifier: ^0.10.0
-        version: 0.10.0(@xterm/xterm@5.5.0)
+        specifier: 0.11.0-beta.67
+        version: 0.11.0-beta.67(@xterm/xterm@5.6.0-beta.67)
       '@xterm/addon-search':
-        specifier: ^0.15.0
-        version: 0.15.0(@xterm/xterm@5.5.0)
+        specifier: 0.16.0-beta.67
+        version: 0.16.0-beta.67(@xterm/xterm@5.6.0-beta.67)
       '@xterm/addon-web-links':
-        specifier: ^0.11.0
-        version: 0.11.0(@xterm/xterm@5.5.0)
+        specifier: 0.12.0-beta.67
+        version: 0.12.0-beta.67(@xterm/xterm@5.6.0-beta.67)
       '@xterm/xterm':
-        specifier: 5.5.0
-        version: 5.5.0
+        specifier: 5.6.0-beta.67
+        version: 5.6.0-beta.67
       base64-arraybuffer:
         specifier: ^1.0.2
         version: 1.0.2
@@ -66,14 +67,14 @@ importers:
         specifier: ^10.0.4
         version: 10.0.4(react@19.0.0-rc-65a56d0e-20241020)
       xterm:
-        specifier: npm:@xterm/xterm@^5.5.0
-        version: '@xterm/xterm@5.5.0'
+        specifier: npm:@xterm/xterm@5.6.0-beta.67
+        version: '@xterm/xterm@5.6.0-beta.67'
       xterm-pty:
         specifier: ^0.10.2
         version: 0.10.2
       xterm-readline:
         specifier: ^1.1.1
-        version: 1.1.1(@xterm/xterm@5.5.0)
+        version: 1.1.1(@xterm/xterm@5.6.0-beta.67)
     devDependencies:
       '@types/node':
         specifier: ^22.7.8
@@ -521,23 +522,23 @@ packages:
       '@aws-sdk/credential-provider-web-identity':
         optional: true
 
-  '@xterm/addon-fit@0.10.0':
-    resolution: {integrity: sha512-UFYkDm4HUahf2lnEyHvio51TNGiLK66mqP2JoATy7hRZeXaGMRDr00JiSF7m63vR5WKATF605yEggJKsw0JpMQ==}
+  '@xterm/addon-fit@0.11.0-beta.67':
+    resolution: {integrity: sha512-s1rWqn/bbBlJtPGG+QfJD62R2jteqNomW8xxNbtSYKaAOmudF/gkB+aEhA6xOFxokG19//+ZW62bI0+6NOveyA==}
     peerDependencies:
-      '@xterm/xterm': ^5.0.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/addon-search@0.15.0':
-    resolution: {integrity: sha512-ZBZKLQ+EuKE83CqCmSSz5y1tx+aNOCUaA7dm6emgOX+8J9H1FWXZyrKfzjwzV+V14TV3xToz1goIeRhXBS5qjg==}
+  '@xterm/addon-search@0.16.0-beta.67':
+    resolution: {integrity: sha512-0LtX7CHcvvgJYznN5S+LckVgiYFp9LC+jm6PQgjILSVj6AQ9MkcFbgmURRLLncxfZC4G7kCOQaxjUbhSKWJyxw==}
     peerDependencies:
-      '@xterm/xterm': ^5.0.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/addon-web-links@0.11.0':
-    resolution: {integrity: sha512-nIHQ38pQI+a5kXnRaTgwqSHnX7KE6+4SVoceompgHL26unAxdfP6IPqUTSYPQgSwM56hsElfoNrrW5V7BUED/Q==}
+  '@xterm/addon-web-links@0.12.0-beta.67':
+    resolution: {integrity: sha512-XsbWMkWu6Fhv1Zz7k6HndpalmEOTUYhcIa27h58R765iI+inqpM1DQ7SIEl/wqHMbUKC2x5zdTnIywD7gEoqRw==}
     peerDependencies:
-      '@xterm/xterm': ^5.0.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/xterm@5.5.0':
-    resolution: {integrity: sha512-hqJHYaQb5OptNunnyAnkHyM8aCjZ1MEIDTQu1iIbbTD/xops91NB5yq1ZK/dC2JDbVWtF23zUtl9JE2NqwT87A==}
+  '@xterm/xterm@5.6.0-beta.67':
+    resolution: {integrity: sha512-u4kxUR7zjTY0UsuPA0MzoRPfUa9B2yoYwiK8EK+HCZr7rlA6alPtqPQWNRMsI082tdZY87cgvMNuQ9g2zJY1YQ==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -944,8 +945,8 @@ packages:
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
 
-  eslint-plugin-react@7.37.1:
-    resolution: {integrity: sha512-xwTnwDqzbDRA8uJ7BMxPs/EXRB3i8ZfnOIp8BsxEQkT0nHPp+WWceqGgo6rKb9ctNi8GJLDT4Go5HAWELa/WMg==}
+  eslint-plugin-react@7.37.2:
+    resolution: {integrity: sha512-EsTAnj9fLVr/GZleBLFbj/sSuXeWmp1eXIN60ceYnZveqEaUCyW4X+Vh4WTdUhCkW4xutXYqTXCUSyqD4rB75w==}
     engines: {node: '>=4'}
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
@@ -1965,7 +1966,7 @@ packages:
   xterm-readline@1.1.1:
     resolution: {integrity: sha512-f87S2/jKwRZoZTxE2vkPgBCipDl6k6tTkMTb9pmwC4R6XkfR491fWBuToZd/nZasp6seD2u0jdABinUDWsK6dw==}
     peerDependencies:
-      xterm: npm:@xterm/xterm@^5.5.0
+      xterm: npm:@xterm/xterm@5.6.0-beta.67
 
   yaml@2.6.0:
     resolution: {integrity: sha512-a6ae//JvKDEra2kdi1qzCyrJW/WZCgFi8ydDV+eXExl95t+5R+ijnqHJbz9tmMh8FUjx3iv2fCQ4dclAQlO2UQ==}
@@ -2223,7 +2224,7 @@ snapshots:
 
   '@pablo-lion/xterm-react@1.1.2(react-dom@19.0.0-rc-65a56d0e-20241020(react@19.0.0-rc-65a56d0e-20241020))(react@19.0.0-rc-65a56d0e-20241020)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
       react: 19.0.0-rc-65a56d0e-20241020
       react-dom: 19.0.0-rc-65a56d0e-20241020(react@19.0.0-rc-65a56d0e-20241020)
 
@@ -2347,19 +2348,19 @@ snapshots:
 
   '@vercel/functions@1.4.2': {}
 
-  '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
+  '@xterm/addon-fit@0.11.0-beta.67(@xterm/xterm@5.6.0-beta.67)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0)':
+  '@xterm/addon-search@0.16.0-beta.67(@xterm/xterm@5.6.0-beta.67)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/addon-web-links@0.11.0(@xterm/xterm@5.5.0)':
+  '@xterm/addon-web-links@0.12.0-beta.67(@xterm/xterm@5.6.0-beta.67)':
     dependencies:
-      '@xterm/xterm': 5.5.0
+      '@xterm/xterm': 5.6.0-beta.67
 
-  '@xterm/xterm@5.5.0': {}
+  '@xterm/xterm@5.6.0-beta.67': {}
 
   acorn-jsx@5.3.2(acorn@8.13.0):
     dependencies:
@@ -2760,7 +2761,7 @@ snapshots:
       eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@8.11.0(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.31.0)(eslint@9.13.0(jiti@1.21.6))
       eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.11.0(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3))(eslint-import-resolver-typescript@3.6.3)(eslint@9.13.0(jiti@1.21.6))
       eslint-plugin-jsx-a11y: 6.10.1(eslint@9.13.0(jiti@1.21.6))
-      eslint-plugin-react: 7.37.1(eslint@9.13.0(jiti@1.21.6))
+      eslint-plugin-react: 7.37.2(eslint@9.13.0(jiti@1.21.6))
       eslint-plugin-react-hooks: 5.0.0(eslint@9.13.0(jiti@1.21.6))
     optionalDependencies:
       typescript: 5.6.3
@@ -2873,7 +2874,7 @@ snapshots:
     dependencies:
       eslint: 9.13.0(jiti@1.21.6)
 
-  eslint-plugin-react@7.37.1(eslint@9.13.0(jiti@1.21.6)):
+  eslint-plugin-react@7.37.2(eslint@9.13.0(jiti@1.21.6)):
     dependencies:
       array-includes: 3.1.8
       array.prototype.findlast: 1.2.5
@@ -4036,12 +4037,12 @@ snapshots:
 
   xterm-pty@0.10.2:
     dependencies:
-      xterm: '@xterm/xterm@5.5.0'
+      xterm: '@xterm/xterm@5.6.0-beta.67'
 
-  xterm-readline@1.1.1(@xterm/xterm@5.5.0):
+  xterm-readline@1.1.1(@xterm/xterm@5.6.0-beta.67):
     dependencies:
       string-width: 4.2.3
-      xterm: '@xterm/xterm@5.5.0'
+      xterm: '@xterm/xterm@5.6.0-beta.67'
 
   yaml@2.6.0: {}
 
