@@ -138,7 +138,7 @@ class CLI[F[_]](using
 
       val source = FilePath(inputFile)
 
-      implicit object reporter extends Reporter[Problem] {
+      object reporter extends Reporter[Problem] {
         private var varErrors: Boolean = false
 
         override def apply(problem: Problem): Unit = problem.severity match {
@@ -153,6 +153,7 @@ class CLI[F[_]](using
 
         def hasErrors: Boolean = varErrors
       }
+      given reportG: reporter.type = reporter
 
       for {
         // Load TASTs from the specified directories

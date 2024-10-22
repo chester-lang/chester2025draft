@@ -18,7 +18,7 @@ case class ParserInternal(
     sourceOffset: SourceOffset,
     ignoreLocation: Boolean = false,
     defaultIndexer: Option[StringIndex] = None
-)(implicit p: P[?]) {
+)(using p: P[?]) {
   val fileName = sourceOffset.fileName
   val linesOffset = sourceOffset.linesOffset
   val posOffset = sourceOffset.posOffset

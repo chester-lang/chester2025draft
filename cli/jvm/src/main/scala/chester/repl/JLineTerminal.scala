@@ -54,7 +54,6 @@ class JLineTerminal(init: TerminalInit) {
 
         status match {
           case InputStatus.Complete =>
-            (0 until history.size()).map(history.get(_).toString)
             result = LineRead(line)
             continue = false
           case InputStatus.Incomplete =>

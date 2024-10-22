@@ -25,7 +25,7 @@ private def parseFromSource[T](
               SourceOffset(source),
               ignoreLocation = ignoreLocation,
               defaultIndexer = Some(indexer)
-            )(x)
+            )(using x)
           )
       ) match {
         case Parsed.Success(result, _) => Right(result)
