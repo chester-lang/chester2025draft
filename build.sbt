@@ -94,8 +94,9 @@ val scala2Common = Seq(
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
-  scalacOptions++=Seq(
-    "-Wunused:imports","-Ytasty-reader"
+  scalacOptions ++= Seq(
+    "-Wunused:imports",
+    "-Ytasty-reader"
   ),
   excludeDependencies ++= Seq(
     ExclusionRule("com.lihaoyi", "fastparse_3"),
@@ -547,26 +548,27 @@ val fastparse213 = Seq(
 lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .enablePlugins(ShadingPlugin)
   .in(file("compiler213"))
   .dependsOn(syntax, err)
   .settings(
     name := "compiler213",
     scala2Common,
-    libraryDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
-    shadedDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.10.2")
+      .cross(CrossVersion.for3Use2_13)
+      .exclude("org.scalameta", "parsers_2.13")
+      .exclude("org.scalameta", "parsers_sjs1_2.13")
+      .exclude("org.scalameta", "parsers_native0.5_2.13")
   )
+  .jvmSettings(commonJvmLibSettings)
 
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .enablePlugins(ShadingPlugin)
   .in(file("compiler"))
   .dependsOn(base, syntax, err, compiler213)
   .settings(
     name := "compiler",
-    commonSettings,
-    shadedDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
+    commonSettings
     /*
     libraryDependencies ++= Seq(
       ("org.scalameta" %%% "scalameta" % "4.10.2")
@@ -1327,7 +1329,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     utils2,
     base,
     parser,
-    compiler,compiler213,
+    compiler,
+    compiler213,
     syntax,
     err,
     pretty,
