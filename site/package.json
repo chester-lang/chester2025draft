@@ -31,7 +31,7 @@
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.0",
     "next": "15.0.0",
-    "next-intl": "0.0.0-canary-7b3a9a3",
+    "next-intl": "3.22.0",
     "pako": "^2.1.0",
     "react": "19.0.0-rc-65a56d0e-20241020",
     "react-dom": "19.0.0-rc-65a56d0e-20241020",
