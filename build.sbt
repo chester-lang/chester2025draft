@@ -104,7 +104,7 @@ val scala2Common = Seq(
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3)
   ),
   excludeDependencies ++= Seq(
     ExclusionRule("com.lihaoyi", "fastparse_2.13"),
@@ -552,7 +552,7 @@ val fastparse213 = Seq(
     ExclusionRule("com.lihaoyi", "fastparse_sjs1_3")
   )
 )
-
+/*
 lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
@@ -569,12 +569,12 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     libraryDependencies += "org.scala-native" %%% "scala3lib" % (scala3Version+"+0.5.5") cross (CrossVersion.for2_13Use3),
     libraryDependencies += "org.scala-native" %%% "scalalib" % (scala2Version+"+0.5.5") cross (CrossVersion.for3Use2_13)
   )
-
+ */
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("compiler"))
-  .dependsOn(base, syntax, err, compiler213)
+  .dependsOn(base, syntax, err)
   .settings(
     name := "compiler",
     commonSettings
@@ -1339,7 +1339,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     base,
     parser,
     compiler,
-    compiler213,
     syntax,
     err,
     pretty,
