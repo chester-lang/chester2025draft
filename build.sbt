@@ -74,7 +74,42 @@ val commonSettings = Seq(
     "com.lihaoyi" %%% "pprint" % "0.9.0" % Test
     // "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test
   ),
-  testFrameworks += new TestFramework("verify.runner.Framework")
+  testFrameworks += new TestFramework("verify.runner.Framework"),
+  excludeDependencies ++= Seq(
+    ExclusionRule("com.lihaoyi", "fastparse_2.13"),
+    ExclusionRule("com.lihaoyi", "fastparse_sjs1_2.13"),
+    ExclusionRule("com.lihaoyi", "fastparse_native0.5_2.13"),
+    ExclusionRule("com.lihaoyi", "sourcecode_2.13"),
+    ExclusionRule("com.lihaoyi", "sourcecode_sjs1_2.13"),
+    ExclusionRule("com.lihaoyi", "sourcecode_native0.5_2.13"),
+    ExclusionRule("com.lihaoyi", "geny_2.13"),
+    ExclusionRule("com.lihaoyi", "geny_sjs1_2.13"),
+    ExclusionRule("com.lihaoyi", "geny_native0.5_2.13"),
+    ExclusionRule("org.scala-native", "junit-runtime_native0.5_2.13"),
+    ExclusionRule("org.scala-native", "test-interface_native0.5_2.13")
+  )
+)
+val scala2Common = Seq(
+  scalaVersion := scala2Version,
+  resolvers += "jitpack" at "https://jitpack.io",
+  resolvers += Resolver.mavenLocal,
+  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+  scalacOptions++=Seq(
+    "-Wunused:imports","-Ytasty-reader"
+  ),
+  excludeDependencies ++= Seq(
+    ExclusionRule("com.lihaoyi", "fastparse_3"),
+    ExclusionRule("com.lihaoyi", "fastparse_native0.5_3"),
+    ExclusionRule("com.lihaoyi", "fastparse_sjs1_3"),
+    ExclusionRule("com.lihaoyi", "sourcecode_3"),
+    ExclusionRule("com.lihaoyi", "sourcecode_sjs1_3"),
+    ExclusionRule("com.lihaoyi", "sourcecode_native0.5_3"),
+    ExclusionRule("com.lihaoyi", "geny_3"),
+    ExclusionRule("com.lihaoyi", "geny_sjs1_3"),
+    ExclusionRule("com.lihaoyi", "geny_native0.5_3"),
+    ExclusionRule("org.scala-native", "junit-runtime_native0.5_3"),
+    ExclusionRule("org.scala-native", "test-interface_native0.5_3")
+  )
 )
 val commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
@@ -509,16 +544,30 @@ val fastparse213 = Seq(
   )
 )
 
+lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .enablePlugins(ShadingPlugin)
+  .in(file("compiler213"))
+  .dependsOn(syntax, err)
+  .settings(
+    name := "compiler213",
+    scala2Common,
+    libraryDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
+    shadedDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
+  )
+
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(ShadingPlugin)
   .in(file("compiler"))
-  .dependsOn(base, syntax, err)
+  .dependsOn(base, syntax, err, compiler213)
   .settings(
     name := "compiler",
     commonSettings,
     shadedDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
+    /*
     libraryDependencies ++= Seq(
       ("org.scalameta" %%% "scalameta" % "4.10.2")
         .cross(CrossVersion.for3Use2_13)
@@ -541,7 +590,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "com.lihaoyi",
         "sourcecode_native0.5_2.13"
       )
-    )
+    )*/
   )
   .jvmSettings(commonJvmLibSettings)
 
@@ -1278,7 +1327,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     utils2,
     base,
     parser,
-    compiler,
+    compiler,compiler213,
     syntax,
     err,
     pretty,
