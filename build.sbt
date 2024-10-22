@@ -509,49 +509,27 @@ val fastparse213 = Seq(
   )
 )
 
-// parsers, transversers from https://github.com/scalameta/scalameta/commit/0860e1b23e7c828b9e16cecf434763f8352bd440
-// quasiquotes3 from https://github.com/scalameta/scalameta/pull/3347/files https://github.com/jchyb/scalameta/commit/44d1d720074b88224cb2c9c3035d53767dc77e66
-// git clone https://github.com/scalameta/scalameta.git sm && git clone https://github.com/jchyb/scalameta.git sm3
-// mkdir -p scalameta && cp -r sm/scalameta/transversers/* sm/scalameta/parsers/* sm3/scalameta/quasiquotes/* scalameta/
-lazy val scalameta = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Full)
-  .in(file("vendor/scalameta"))
+  .crossType(CrossType.Pure)
+  .enablePlugins(ShadingPlugin)
+  .in(file("compiler"))
+  .dependsOn(base, syntax, err)
   .settings(
-    name := "scalameta",
-    commonVendorSettings,
+    name := "compiler",
+    commonSettings,
+    shadedDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "fastparse" % "3.1.1",
-      "org.scalameta" %%% "trees" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude (
+      ("org.scalameta" %%% "scalameta" % "4.10.2").cross(CrossVersion.for3Use2_13).exclude (
         "org.jline",
         "jline"
-      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude (
+      ).exclude("com.lihaoyi", "sourcecode_2.13").exclude("com.lihaoyi", "sourcecode_sjs1_2.13").exclude(
         "com.lihaoyi",
         "sourcecode_native0.5_2.13"
-      ) exclude ("com.lihaoyi", "fastparse_2.13") exclude ("com.lihaoyi", "fastparse_sjs1_2.13") exclude (
+      ).exclude("com.lihaoyi", "fastparse_2.13").exclude("com.lihaoyi", "fastparse_sjs1_2.13").exclude (
         "com.lihaoyi",
         "fastparse_native0.5_2.13"
-      ) exclude ("org.scalameta", "parsers_2.13") exclude ("org.scalameta", "parsers_sjs1_2.13") exclude ("org.scalameta", "parsers_native0.5_2.13"),
-      "org.scalameta" %%% "common" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude (
-        "org.jline",
-        "jline"
-      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "sourcecode_native0.5_2.13"
-      ) exclude ("com.lihaoyi", "fastparse_2.13") exclude ("com.lihaoyi", "fastparse_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "fastparse_native0.5_2.13"
-      ) exclude ("org.scalameta", "parsers_2.13") exclude ("org.scalameta", "parsers_sjs1_2.13") exclude ("org.scalameta", "parsers_native0.5_2.13"),
-      "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude (
-        "org.jline",
-        "jline"
-      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "sourcecode_native0.5_2.13"
-      ) exclude ("com.lihaoyi", "fastparse_2.13") exclude ("com.lihaoyi", "fastparse_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "fastparse_native0.5_2.13"
-      ) exclude ("org.scalameta", "parsers_2.13") exclude ("org.scalameta", "parsers_sjs1_2.13") exclude ("org.scalameta", "parsers_native0.5_2.13"),
+      ),
       "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1", // for scalameta
       // dependency of scalameta
       "org.scala-lang" % "scalap" % scala2Version exclude (
@@ -562,18 +540,6 @@ lazy val scalameta = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "sourcecode_native0.5_2.13"
       )
     )
-  ).jvmSettings(
-    commonJvmLibSettings
-  )
-
-lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .in(file("compiler"))
-  .dependsOn(base, syntax, err, scalameta)
-  .settings(
-    name := "compiler",
-    commonSettings,
   )
   .jvmSettings(commonJvmLibSettings)
 
@@ -1285,7 +1251,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("."))
   .aggregate(
     ironNative,
-    spireNative,scalameta,
+    spireNative,
     typednode,
     typedstd,
     typedundici,
