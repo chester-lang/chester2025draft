@@ -512,22 +512,14 @@ val fastparse213 = Seq(
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
+  .enablePlugins(ShadingPlugin)
   .in(file("compiler"))
   .dependsOn(base, syntax, err)
   .settings(
     name := "compiler",
     commonSettings,
+    shadedDependencies += "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13),
     libraryDependencies ++= Seq(
-      "org.scalameta" %%% "scalameta" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude (
-        "org.jline",
-        "jline"
-      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "sourcecode_native0.5_2.13"
-      ) exclude ("com.lihaoyi", "fastparse_2.13") exclude ("com.lihaoyi", "fastparse_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "fastparse_native0.5_2.13"
-      ) exclude ("org.scalameta", "parsers_2.13") exclude ("org.scalameta", "parsers_sjs1_2.13") exclude ("org.scalameta", "parsers_native0.5_2.13"),
       "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1", // for scalameta
       // dependency of scalameta
       "org.scala-lang" % "scalap" % scala2Version exclude (
