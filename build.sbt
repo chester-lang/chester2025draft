@@ -547,7 +547,7 @@ val fastparse213 = Seq(
 
 lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .in(file("compiler213"))
   .dependsOn(syntax, err)
   .settings(
@@ -555,9 +555,6 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     scala2Common,
     libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.10.2")
       .cross(CrossVersion.for3Use2_13)
-      .exclude("org.scalameta", "parsers_2.13")
-      .exclude("org.scalameta", "parsers_sjs1_2.13")
-      .exclude("org.scalameta", "parsers_native0.5_2.13")
   )
   .jvmSettings(commonJvmLibSettings)
 
