@@ -13,6 +13,7 @@ case class ParseError(message: String, index: Pos) extends Problem {
   override def stage: Problem.Stage = Problem.Stage.PARSE
 
   override def toDoc(using options: PrettierOptions): Doc = Doc.text(message)
+  def location: Option[SourcePos] = None // TODO
 }
 
 sealed trait ParserSource derives ReadWriter {

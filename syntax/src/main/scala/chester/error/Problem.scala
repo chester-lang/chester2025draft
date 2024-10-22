@@ -22,7 +22,7 @@ trait WithServerity extends Any {
 trait Problem extends ToDoc with WithServerity {
   def stage: Problem.Stage
   // TODO: use this
-  def location: Option[SourcePos] = None
+  def location: Option[SourcePos]
   // TODO: use this
   def fullDescription: Option[Vector[(ToDoc, SourcePos)]] = None
 }
@@ -30,7 +30,8 @@ trait Problem extends ToDoc with WithServerity {
 private case class ProblemSer(
     stage: Problem.Stage,
     severity: Problem.Severity,
-    message: Doc
+    message: Doc,
+    location: Option[SourcePos]
 ) extends Problem derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc = message
 }
@@ -39,7 +40,8 @@ private object ProblemSer {
   def from(problem: Problem): ProblemSer = ProblemSer(
     problem.stage,
     problem.severity,
-    problem.toDoc(using PrettierOptions.Default)
+    problem.toDoc(using PrettierOptions.Default),
+    problem.location
   )
 }
 
