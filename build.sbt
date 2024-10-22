@@ -98,16 +98,24 @@ val scala2Common = Seq(
     "-Wunused:imports",
     "-Ytasty-reader"
   ),
+  libraryDependencies ++= Seq(
+    "org.scalameta" %%% "munit" % "1.0.2" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3),
+  ),
   excludeDependencies ++= Seq(
-    ExclusionRule("com.lihaoyi", "fastparse_3"),
-    ExclusionRule("com.lihaoyi", "fastparse_native0.5_3"),
-    ExclusionRule("com.lihaoyi", "fastparse_sjs1_3"),
-    ExclusionRule("com.lihaoyi", "sourcecode_3"),
-    ExclusionRule("com.lihaoyi", "sourcecode_sjs1_3"),
-    ExclusionRule("com.lihaoyi", "sourcecode_native0.5_3"),
-    ExclusionRule("com.lihaoyi", "geny_3"),
-    ExclusionRule("com.lihaoyi", "geny_sjs1_3"),
-    ExclusionRule("com.lihaoyi", "geny_native0.5_3"),
+    ExclusionRule("com.lihaoyi", "fastparse_2.13"),
+    ExclusionRule("com.lihaoyi", "fastparse_sjs1_2.13"),
+    ExclusionRule("com.lihaoyi", "fastparse_native0.5_2.13"),
+    ExclusionRule("com.lihaoyi", "sourcecode_2.13"),
+    ExclusionRule("com.lihaoyi", "sourcecode_sjs1_2.13"),
+    ExclusionRule("com.lihaoyi", "sourcecode_native0.5_2.13"),
+    ExclusionRule("com.lihaoyi", "geny_2.13"),
+    ExclusionRule("com.lihaoyi", "geny_sjs1_2.13"),
+    ExclusionRule("com.lihaoyi", "geny_native0.5_2.13"),
     ExclusionRule("org.scala-native", "junit-runtime_native0.5_3"),
     ExclusionRule("org.scala-native", "test-interface_native0.5_3")
   )
@@ -557,6 +565,10 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       .cross(CrossVersion.for3Use2_13)
   )
   .jvmSettings(commonJvmLibSettings)
+  .nativeSettings(
+    libraryDependencies += "org.scala-native" %%% "scala3lib" % (scala3Version+"+0.5.5") cross (CrossVersion.for2_13Use3),
+    libraryDependencies += "org.scala-native" %%% "scalalib" % (scala2Version+"+0.5.5") cross (CrossVersion.for3Use2_13)
+  )
 
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
