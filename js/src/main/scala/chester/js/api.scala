@@ -7,7 +7,7 @@ import chester.utils.doc.ColorfulToHtml.colorfulToHtml
 import chester.utils.doc.*
 
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
-  implicit val options: PrettierOptions =
+  given options: PrettierOptions =
     PrettierOptions.Default.updated(LightMode, lightMode)
   Parser.parseTopLevel(
     FileNameAndContent("playground.chester", content)
