@@ -572,7 +572,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
     commonSettings,
     name := "js-for-jvm"
   )
-  .jsConfigure(_.dependsOn(common.js))
+  .jsConfigure(_.dependsOn(platform0.js))
   .jsSettings(
     scalaJSLinkerConfig ~= {
       // Enable ECMAScript module output.
@@ -593,7 +593,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("platform"))
-  .dependsOn(common, compiler)
+  .dependsOn(platform0, compiler)
   .settings(
     name := "platform",
     commonSettings
@@ -991,10 +991,10 @@ lazy val jsTypings = crossProject(JSPlatform)
      */
   )
 
-lazy val common = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val platform0 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("common"))
+  .in(file("platform0"))
   .dependsOn(core, compiler)
   .jsConfigure(
     _.dependsOn(jsTypings.js)
@@ -1017,18 +1017,6 @@ lazy val common = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jsSettings(
   )
 
-lazy val nodejs = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .crossType(CrossType.Pure)
-  .in(file("nodejs"))
-  .dependsOn(js)
-  .settings(
-    name := "nodejs",
-    commonSettings
-  )
-  .jsSettings(
-  )
-
 addCommandAlias("cliReadline", "set ThisBuild / enableCliReadline := true;")
 addCommandAlias("cliSimple", "set ThisBuild / enableCliReadline := false;")
 
@@ -1045,7 +1033,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cli"))
   .jvmEnablePlugins(NativeImagePlugin)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
-  .dependsOn(common, platform, compiler)
+  .dependsOn(platform0, platform, compiler)
   .settings(
     name := "cli",
     Compile / mainClass := Some("chester.cli.Main"),
@@ -1081,7 +1069,6 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       // "org.jline" % "jline-console-ui" % jlineVersion
     )
   )
-  .jsConfigure(_.dependsOn(nodejs.js))
   .jsSettings(
     scalaJSUseMainModuleInitializer := true,
     jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
@@ -1104,7 +1091,7 @@ lazy val js = crossProject(JSPlatform)
   .withoutSuffixFor(JSPlatform)
   .crossType(CrossType.Pure)
   .in(file("js"))
-  .dependsOn(common)
+  .dependsOn(platform0)
   .settings(
     name := "js",
     commonSettings
@@ -1192,7 +1179,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("build-protocol"))
-  .dependsOn(common)
+  .dependsOn(platform0)
   .settings(
     name := "build-protocol",
     commonSettings,
@@ -1303,14 +1290,13 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     platform,
     jsForJvm,
     core,
-    common,
+    platform0,
     cli,
     lsp,
     buildProtocol,
     buildTool,
     eval,
     js,
-    nodejs,
     site,
     docs
   )
