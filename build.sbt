@@ -455,17 +455,6 @@ def useSpire(
       )
     )
 
-lazy val base = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .in(file("base"))
-  .settings(
-    name := "base",
-    commonSettings,
-    baseDeps
-  )
-  .jvmSettings(commonJvmLibSettings)
-
 lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -494,7 +483,7 @@ lazy val syntax = useSpire(
     .withoutSuffixFor(JVMPlatform)
     .crossType(CrossType.Pure)
     .in(file("syntax"))
-    .dependsOn(base, pretty)
+    .dependsOn(utils, pretty)
     .settings(
       name := "syntax",
       commonSettings
@@ -517,7 +506,7 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("tyck"))
-  .dependsOn(base, syntax, err)
+  .dependsOn(utils, syntax, err)
   .settings(
     name := "tyck",
     commonSettings
@@ -541,7 +530,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler"))
-  .dependsOn(base, syntax, err)
+  .dependsOn(utils, syntax, err)
   .jvmConfigure(_.dependsOn(compiler213.jvm))
   .jsConfigure(_.dependsOn(compiler213.js))
   .settings(
@@ -708,7 +697,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
-  .dependsOn(base, parser, syntax, pretty, tyck)
+  .dependsOn(utils, parser, syntax, pretty, tyck)
   .settings(
     name := "core",
     assembly / assemblyOutputPath := file("target") / "chester-core.jar",
@@ -1304,7 +1293,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     effektKiama,
     jsTypings,
     utils,
-    base,
     parser,
     compiler,
     compiler213,
