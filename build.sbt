@@ -387,7 +387,7 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(commonJvmLibSettings)
 
 // split modules trying to increase incremental compilation speed
-lazy val utils = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val utils = useSpire(crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("utils"))
@@ -432,7 +432,7 @@ lazy val utils = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "io.github.iltotore" %%% "iron-cats" % "2.6.0",
       "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
     )
-  )
+  ))
 
 def useSpire(
     project: _root_.sbtcrossproject.CrossProject
@@ -455,19 +455,6 @@ def useSpire(
       )
     )
 
-lazy val utils2 = useSpire(
-  crossProject(JSPlatform, JVMPlatform, NativePlatform)
-    .withoutSuffixFor(JVMPlatform)
-    .crossType(CrossType.Pure)
-    .in(file("utils2"))
-    .settings(
-      name := "utils2",
-      commonSettings,
-      baseDeps
-    )
-    .jvmSettings(commonJvmLibSettings)
-)
-
 lazy val base = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -483,7 +470,7 @@ lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("pretty"))
-  .dependsOn(utils, utils2)
+  .dependsOn(utils)
   .dependsOn(kiamaCore)
   .settings(
     name := "pretty",
@@ -721,7 +708,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
-  .dependsOn(base, parser, syntax, pretty, tyck, utils2)
+  .dependsOn(base, parser, syntax, pretty, tyck)
   .settings(
     name := "core",
     assembly / assemblyOutputPath := file("target") / "chester-core.jar",
@@ -1317,7 +1304,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     effektKiama,
     jsTypings,
     utils,
-    utils2,
     base,
     parser,
     compiler,
