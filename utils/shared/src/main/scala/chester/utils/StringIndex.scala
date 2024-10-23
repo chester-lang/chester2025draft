@@ -1,9 +1,9 @@
 package chester.utils
 
 import fastparse.ParserInput
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.constraint.numeric.*
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 case class LineAndColumn(
     val line: Int :| Positive0,

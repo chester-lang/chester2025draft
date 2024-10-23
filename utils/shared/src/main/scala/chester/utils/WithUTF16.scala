@@ -1,10 +1,10 @@
 package chester.utils
 
 import upickle.default.*
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.constraint.numeric.*
-import io.github.iltotore.iron.upickle.given
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
+import _root_.io.github.iltotore.iron.upickle.given
 
 case class WithUTF16(i: Int :| Positive0, utf16: Int :| Positive0) derives ReadWriter {
   require(i <= utf16, "i must be less than or equal to utf16")

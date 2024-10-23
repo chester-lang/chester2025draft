@@ -4,10 +4,10 @@ import chester.parser.SourceOffset
 import chester.utils.{WithUTF16, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
 import upickle.default.*
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.constraint.numeric.*
-import io.github.iltotore.iron.upickle.given
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
+import _root_.io.github.iltotore.iron.upickle.given
 
 import scala.annotation.tailrec
 

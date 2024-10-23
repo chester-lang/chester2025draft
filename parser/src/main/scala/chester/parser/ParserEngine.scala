@@ -5,8 +5,8 @@ import chester.syntax.concrete.*
 import chester.utils.term.*
 import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
 import fastparse.*
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.numeric.*
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 import scala.util.*
 

@@ -3,9 +3,9 @@ package chester.parser
 import upickle.default.*
 import chester.error.*
 import chester.utils.WithUTF16
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.upickle.given
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
+import _root_.io.github.iltotore.iron.upickle.given
 import chester.utils.doc.{Doc, PrettierOptions}
 
 case class ParseError(message: String, index: Pos) extends Problem {

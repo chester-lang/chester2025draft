@@ -6,7 +6,7 @@ import chester.syntax.core.*
 import chester.tyck.api.*
 import chester.tyck.*
 import chester.utils.{StringIndex, WithUTF16}
-import io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.*
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*

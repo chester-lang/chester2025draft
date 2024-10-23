@@ -4,7 +4,7 @@ import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*
 import chester.error.*
-import io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.*
 
 import scala.collection.immutable
 import scala.util.*

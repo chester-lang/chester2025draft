@@ -1,9 +1,9 @@
 package chester.uniqid
 
 import upickle.default.*
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.all.*
-import io.github.iltotore.iron.constraint.numeric.*
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
 
