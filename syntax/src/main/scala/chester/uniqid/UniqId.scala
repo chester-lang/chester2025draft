@@ -1,22 +1,24 @@
 package chester.uniqid
 
 import upickle.default.*
-
+import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.all.*
+import io.github.iltotore.iron.constraint.numeric.*
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
 
 private val uniqIdCounter = AtomicInteger(0)
 
-opaque type UniqIdOf[+A] = Int
+opaque type UniqIdOf[+A] = Int :| Positive0
 
-opaque type UniqIdOffset = Int
+opaque type UniqIdOffset = Int :| Positive0
 
 private implicit val UniqIdOffsetRW: ReadWriter[UniqIdOffset] =
-  readwriter[java.lang.Integer].bimap(_.toInt, _.toInt)
+  readwriter[java.lang.Integer].bimap(_.toInt, _.toInt.refineUnsafe)
 
 extension (id: UniqIdOffset) {
   def <=(that: UniqIdOffset): Boolean = id <= that
-  private[uniqid] def +(offset: Int): UniqIdOffset = id + offset
+  private[uniqid] def +(offset: Int): UniqIdOffset = (id + offset).refineUnsafe
   private[uniqid] def -(offset: UniqIdOffset): Int = id - offset
 }
 
@@ -24,7 +26,7 @@ extension (id: UniqIdOffset) {
 case class UniqIdRange(start: UniqIdOffset, end: UniqIdOffset) derives ReadWriter {
   require(start <= end, s"Invalid range: $start > $end")
 
-  def size: Int = end - start
+  def size: Int :| Positive0 = (end - start).refineUnsafe
 }
 
 type UniqId = UniqIdOf[Any]
@@ -46,7 +48,7 @@ extension [T](x: UniqIdOf[T]) {
 }
 
 private val rwUniqID: ReadWriter[UniqIdOf[Any]] =
-  readwriter[java.lang.Integer].bimap(_.toInt, _.toInt)
+  readwriter[java.lang.Integer].bimap(_.toInt, _.toInt.refineUnsafe)
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqIdOf[T]] = rwUniqID
 
@@ -78,15 +80,14 @@ trait OnlyHasUniqId extends Any {
 trait HasUniqId extends Any with ContainsUniqId with OnlyHasUniqId {}
 
 object UniqId {
-  def generate[T]: UniqIdOf[T] = uniqIdCounter.getAndIncrement()
+  def generate[T]: UniqIdOf[T] = uniqIdCounter.getAndIncrement().refineUnsafe
 
-  def requireRange(size: Int): UniqIdRange = {
-    require(size > 0, s"Invalid size: $size")
+  def requireRange(size: Int :| Positive0): UniqIdRange = {
     val start = uniqIdCounter.getAndAdd(size)
-    UniqIdRange(start, start + size)
+    UniqIdRange(start.refineUnsafe, (start + size).refineUnsafe)
   }
 
-  def currentOffset(): UniqIdOffset = uniqIdCounter.get()
+  def currentOffset(): UniqIdOffset = uniqIdCounter.get().refineUnsafe
 
   def captureRange[T](f: => T): (UniqIdRange, T) = {
     val start = currentOffset()
@@ -106,7 +107,7 @@ object UniqId {
       }
     }
     x.collectU(collecter)
-    UniqIdRange(currentRangeCollect.min, currentRangeCollect.max + 1)
+    UniqIdRange(currentRangeCollect.min, (currentRangeCollect.max + 1).refineUnsafe)
   }
 
   case class GiveNewRangeResult[T <: ContainsUniqId](
@@ -121,7 +122,7 @@ object UniqId {
     val currentRange = x.uniqIdRange
     val newRange = requireRange(currentRange.size)
     val reranger: UReplacer = new UReplacer {
-      override def apply[T](id: UniqIdOf[T]): UniqIdOf[T] =
+      override def apply[U](id: UniqIdOf[U]): UniqIdOf[U] =
         id.rerange(currentRange, newRange)
     }
     GiveNewRangeResult(currentRange, newRange, x.replaceU(reranger).asInstanceOf[T])
