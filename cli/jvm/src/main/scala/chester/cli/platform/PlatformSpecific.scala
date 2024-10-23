@@ -4,9 +4,6 @@ import chester.cli.Main.CliConfig
 import chester.tyck.SemanticDBGenerator
 import chester.utils.*
 
-def testLoadingJS(): Unit = {
-  println(chester.Js4Jvm.test(chester.Js4Jvm.helloFromJs))
-}
 def genSemanticDB(config: CliConfig): Unit = {
   val inputPath = config.input.getOrElse {
     println("Error: Input path is required.")
@@ -34,4 +31,11 @@ def genSemanticDB(config: CliConfig): Unit = {
   generator.saveSemanticDB(path.toString, outputPath.toString)
 
   println(s"SemanticDB generated at: $outputPath")
+}
+
+def testFunctionalities(): Unit = {
+  println("functionalities test start")
+  println(chester.Js4Jvm.test(chester.Js4Jvm.helloFromJs))
+  chester.scala.Test.callit()
+  println("functionalities test end")
 }

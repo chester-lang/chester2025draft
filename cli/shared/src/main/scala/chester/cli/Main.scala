@@ -23,7 +23,7 @@ object Main {
   )
 
   def main(args: Array[String]): Unit = {
-    if (false) platform.testLoadingJS()
+    chester.cli.platform.testFunctionalities()
 
     val builder = OParser.builder[CliConfig]
     val parser = {
