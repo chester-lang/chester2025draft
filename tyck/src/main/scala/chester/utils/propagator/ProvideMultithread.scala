@@ -1,6 +1,6 @@
 package chester.utils.propagator
 
-import chester.uniqid.{UniqId, UniqIdOf}
+import chester.uniqid.{Uniqid, UniqidOf}
 
 import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
@@ -10,8 +10,8 @@ import scala.jdk.CollectionConverters.*
 trait ProvideMultithread extends ProvideImpl {
 
   class HoldCell[+T <: Cell[?]](
-      val uniqId: UniqIdOf[Impl[?]],
-      initialValue: T
+                                 val uniqId: UniqidOf[Impl[?]],
+                                 initialValue: T
   ) {
     private val storeRef = new AtomicReference[Cell[?]](initialValue)
     val readingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
@@ -42,8 +42,8 @@ trait ProvideMultithread extends ProvideImpl {
     x.asInstanceOf[CIdOf[Cell[?]]]
 
   class HoldPropagator[+T <: Propagator[?]](
-      val uniqId: UniqIdOf[Impl[?]],
-      initialValue: T
+                                             val uniqId: UniqidOf[Impl[?]],
+                                             initialValue: T
   ) {
     private val storeRef = new AtomicReference[Propagator[?]](initialValue)
     private val aliveRef = new AtomicBoolean(true)
@@ -69,7 +69,7 @@ trait ProvideMultithread extends ProvideImpl {
     Impl[Ability]()
 
   class Impl[Ability](
-      val uniqId: UniqIdOf[Impl[Ability]] = UniqId.generate[Impl[Ability]]
+      val uniqId: UniqidOf[Impl[Ability]] = Uniqid.generate[Impl[Ability]]
   ) extends StateAbility[Ability] {
 
     private val propagators =

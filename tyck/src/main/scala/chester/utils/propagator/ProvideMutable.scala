@@ -1,11 +1,11 @@
 package chester.utils.propagator
 
-import chester.uniqid.{UniqId, UniqIdOf}
+import chester.uniqid.{Uniqid, UniqidOf}
 
 import scala.collection.mutable
 
 trait ProvideMutable extends ProvideImpl {
-  class HoldCell[+T <: Cell[?]](val uniqId: UniqIdOf[Impl[?]], value: T) {
+  class HoldCell[+T <: Cell[?]](val uniqId: UniqidOf[Impl[?]], value: T) {
     var store: Cell[?] = value
     var didChange: Boolean = false
     var readingPropagators: Vector[PIdOf[Propagator[?]]] = Vector.empty
@@ -17,8 +17,8 @@ trait ProvideMutable extends ProvideImpl {
   type CIdOf[+T <: Cell[?]] = HoldCell[T]
 
   class HoldPropagator[+T <: Propagator[?]](
-      val uniqId: UniqIdOf[Impl[?]],
-      value: T
+                                             val uniqId: UniqidOf[Impl[?]],
+                                             value: T
   ) {
     var store: Propagator[?] = value
     var alive: Boolean = true
@@ -40,7 +40,7 @@ trait ProvideMutable extends ProvideImpl {
     Impl[Ability]()
 
   class Impl[Ability](
-      val uniqId: UniqIdOf[Impl[Ability]] = UniqId.generate[Impl[Ability]]
+      val uniqId: UniqidOf[Impl[Ability]] = Uniqid.generate[Impl[Ability]]
   ) extends StateAbility[Ability] {
     var didChanged: mutable.ArrayDeque[CIdOf[?]] = mutable.ArrayDeque.empty
 

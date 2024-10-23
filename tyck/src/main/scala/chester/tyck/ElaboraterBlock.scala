@@ -30,29 +30,29 @@ trait ElaboraterBlock extends Elaborater {
 
   // Case class for 'record' declarations
   case class RecordDeclaration(
-      expr: RecordStmt,
-      uniqId: UniqIdOf[RecordStmtTerm],
-      name: Name
+                                expr: RecordStmt,
+                                uniqId: UniqidOf[RecordStmtTerm],
+                                name: Name
   ) extends DeclarationInfo
 
   // New declarations for trait and interface
   case class TraitDeclaration(
-      expr: TraitStmt,
-      uniqId: UniqIdOf[TraitStmtTerm],
-      name: Name
+                               expr: TraitStmt,
+                               uniqId: UniqidOf[TraitStmtTerm],
+                               name: Name
   ) extends DeclarationInfo
 
   case class InterfaceDeclaration(
-      expr: InterfaceStmt,
-      uniqId: UniqIdOf[InterfaceStmtTerm],
-      name: Name
+                                   expr: InterfaceStmt,
+                                   uniqId: UniqidOf[InterfaceStmtTerm],
+                                   name: Name
   ) extends DeclarationInfo
 
   // Add case class for 'object' declarations
   case class ObjectDeclaration(
-      expr: ObjectStmt,
-      uniqId: UniqIdOf[ObjectStmtTerm],
-      name: Name
+                                expr: ObjectStmt,
+                                uniqId: UniqidOf[ObjectStmtTerm],
+                                name: Name
   ) extends DeclarationInfo
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
@@ -152,7 +152,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
           case DefinedPattern(PatternBind(name, _)) => name.name
         }
         val tyAndVal = TyAndVal.create()
-        val id = UniqId.generate[LocalV]
+        val id = Uniqid.generate[LocalV]
         val localv = newLocalv(name, tyAndVal.ty, id, meta)
         val r = parameter.newSymbol(localv, id, expr, localCtx)
         DefDeclaration(
@@ -165,25 +165,25 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       // Collect 'record' declarations
       case expr: RecordStmt =>
         val name = expr.name.name
-        val id = UniqId.generate[RecordStmtTerm]
+        val id = Uniqid.generate[RecordStmtTerm]
         RecordDeclaration(expr, id, name)
 
       // Collect 'trait' declarations
       case expr: TraitStmt =>
         val name = expr.name.name
-        val id = UniqId.generate[TraitStmtTerm]
+        val id = Uniqid.generate[TraitStmtTerm]
         TraitDeclaration(expr, id, name)
 
       // Collect 'interface' declarations
       case expr: InterfaceStmt =>
         val name = expr.name.name
-        val id = UniqId.generate[InterfaceStmtTerm]
+        val id = Uniqid.generate[InterfaceStmtTerm]
         InterfaceDeclaration(expr, id, name)
 
       // Collect 'object' declarations
       case expr: ObjectStmt =>
         val name = expr.name.name
-        val id = UniqId.generate[ObjectStmtTerm]
+        val id = Uniqid.generate[ObjectStmtTerm]
         ObjectDeclaration(expr, id, name)
     }
 
@@ -312,7 +312,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       // TODO: support other defined patterns
       case DefinedPattern(PatternBind(name, _)) => name.name
     }
-    val id = UniqId.generate[LocalV]
+    val id = Uniqid.generate[LocalV]
     val ty = expr.ty match {
       case Some(tyExpr) => checkType(tyExpr)
       case None         => newTypeTerm

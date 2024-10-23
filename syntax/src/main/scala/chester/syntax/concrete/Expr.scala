@@ -197,9 +197,9 @@ case class ResolvedIdentifier(
 
 @deprecated("not used")
 case class ResolvedLocalVar(
-    name: Name,
-    varId: UniqId,
-    meta: Option[ExprMeta]
+                             name: Name,
+                             varId: Uniqid,
+                             meta: Option[ExprMeta]
 ) extends Expr {
   override type ThisTree = ResolvedLocalVar
 

@@ -25,7 +25,7 @@ object TASTPackage {
       ty: Term,
       effects: Effects,
       problems: SeverityMap
-  ) extends ContainsUniqId derives ReadWriter {
+  ) extends ContainsUniqid derives ReadWriter {
     override def collectU(collector: UCollector): Unit = {
       ast.collectU(collector)
       ty.collectU(collector)

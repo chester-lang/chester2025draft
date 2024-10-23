@@ -24,7 +24,7 @@ sealed trait TyckedDefinition {
 @deprecated("deprecated")
 sealed trait TyckedDefinitionNamed extends TyckedDefinition {
   def name: Name
-  def varId: UniqId
+  def varId: Uniqid
 }
 
 @deprecated("deprecated")
@@ -35,16 +35,16 @@ case class RecordMember()
 
 @deprecated("deprecated")
 case class TyckedRecord(
-    name: Name,
-    varId: UniqId,
-    members: Vector[RecordMember],
-    meta: Option[TermMeta] = None
+                         name: Name,
+                         varId: Uniqid,
+                         members: Vector[RecordMember],
+                         meta: Option[TermMeta] = None
 ) extends TyckedDefinitionNamed
 
 @deprecated("deprecated")
 case class TyckedDef(
-    name: Name,
-    varId: UniqId,
-    body: Judge,
-    meta: Option[TermMeta] = None
+                      name: Name,
+                      varId: Uniqid,
+                      body: Judge,
+                      meta: Option[TermMeta] = None
 ) extends TyckedDefinitionNamed

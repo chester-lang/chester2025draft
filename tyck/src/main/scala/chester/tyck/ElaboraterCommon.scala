@@ -530,10 +530,10 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
   }
 
   def newLocalv(
-      name: Name,
-      ty: CellIdOr[Term],
-      id: UniqIdOf[LocalV],
-      meta: Option[ExprMeta]
+                 name: Name,
+                 ty: CellIdOr[Term],
+                 id: UniqidOf[LocalV],
+                 meta: Option[ExprMeta]
   )(using ck: Tyck, state: StateAbility[Tyck]): LocalV = {
     val m = convertMeta(meta)
     LocalV(name, toTerm(ty), id, m)

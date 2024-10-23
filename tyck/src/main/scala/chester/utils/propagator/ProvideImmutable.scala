@@ -3,9 +3,9 @@ package chester.utils.propagator
 import chester.uniqid.*
 
 trait ProvideImmutable extends ProvideImpl {
-  type CIdOf[+T <: Cell[?]] = UniqIdOf[T]
-  type PIdOf[+T <: Propagator[?]] = UniqIdOf[T]
-  override def isCId(x: Any): Boolean = UniqId.is(x)
+  type CIdOf[+T <: Cell[?]] = UniqidOf[T]
+  type PIdOf[+T <: Propagator[?]] = UniqidOf[T]
+  override def isCId(x: Any): Boolean = Uniqid.is(x)
 
   type CellsState = Map[CIdOf[Cell[?]], Cell[?]]
   private val CellsStateEmpty: CellsState = Map.empty
@@ -50,7 +50,7 @@ trait ProvideImmutable extends ProvideImpl {
     }
 
     override def addCell[T <: Cell[?]](cell: T): CIdOf[T] = {
-      val id = UniqId.generate[T]
+      val id = Uniqid.generate[T]
       state = state.copy(cells = state.cells.updated(id, cell))
       id
     }
@@ -58,7 +58,7 @@ trait ProvideImmutable extends ProvideImpl {
     override def addPropagatorGetPid[T <: Propagator[Ability]](
         propagator: T
     )(using more: Ability): PIdOf[T] = {
-      val uniqId = UniqId.generate[T]
+      val uniqId = Uniqid.generate[T]
       state = state.copy(propagators = state.propagators.updated(uniqId, propagator))
       if (propagator.run(using this, more)) {
         state = state.copy(propagators = state.propagators.removed(uniqId))
