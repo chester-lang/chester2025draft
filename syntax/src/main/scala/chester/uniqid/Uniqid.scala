@@ -97,7 +97,10 @@ object Uniqid {
     (UniqIdRange(start, end), result)
   }
 
-  def is(x: Any): Boolean = x.isInstanceOf[Int] || x.isInstanceOf[Integer]
+  def is(x: Any): Boolean = x match {
+    case UniqidOf(_) => true
+    case _ => false
+  }
 
   def calculateRange[T <: ContainsUniqid](x: T): UniqIdRange = {
     val currentRangeCollect = new mutable.ArrayDeque[Uniqid]()
