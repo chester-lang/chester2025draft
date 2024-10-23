@@ -515,6 +515,7 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
+// too hard to compile this for scala nativa, linking problem with scala stdlib
 lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
