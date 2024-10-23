@@ -261,18 +261,7 @@ ThisBuild / assemblyMergeStrategy := {
     MergeStrategy.discard
   case PathList("META-INF", "eclipse.inf")                    => MergeStrategy.discard
   case PathList("META-INF", "groovy-release-info.properties") => MergeStrategy.discard
-  // solved
-  // case PathList("org", "jline", xs @ _*)                          => MergeStrategy.first
-  // case PathList("META-INF", "native-image", "org.jline", xs @ _*) => MergeStrategy.first
-  // solved
-  // case PathList("scala", "tools", xs @ _*) => MergeStrategy.first
-  // case PathList("scala-asm.properties")    => MergeStrategy.discard
-  // case PathList("compiler.properties")     => MergeStrategy.discard
-  // solved
-  // case PathList("org", "osgi", "service", "prefs", xs @ _*) => MergeStrategy.first
-  // solved
-  // case PathList("org", "objectweb", "asm", xs @ _*) => MergeStrategy.first
-  // TODO
+  case PathList("scala","meta","internal","tokenizers",xml) if xml.contains("XmlParser") || xml.contains("ScalaExprPositionParser") => MergeStrategy.preferProject // our overrides
   case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") || xs.contains("reflect-config.json") => MergeStrategy.discard
   case x =>
     val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
