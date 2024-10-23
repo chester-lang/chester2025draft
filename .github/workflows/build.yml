@@ -130,13 +130,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-sbt-
 
-    - name: Build Common JAR with SBT
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 25
-        max_attempts: 2
-        command: sbt common/assembly
-
     - name: Build CLI JAR with SBT
       uses: nick-fields/retry@v3
       with:
@@ -214,7 +207,6 @@ jobs:
       with:
         name: ${{ matrix.release_name }}
         path: |
-          ./target/chester-common.jar
           ./target/chester.jar
           ./target/chester-lsp.jar
           ./cli/js/target/scala-${{ env.SCALA_VERSION }}/chester.js
@@ -229,7 +221,6 @@ jobs:
       with:
         name: ${{ matrix.release_name }}
         path: |
-          ./target/chester-common.jar
           ./target/chester.jar
           ./target/chester-lsp.jar
           ./cli/js/target/scala-${{ env.SCALA_VERSION }}/chester.js
@@ -247,7 +238,6 @@ jobs:
         allowUpdates: true
         prerelease: true
         artifacts: |
-          ./target/chester-common.jar,
           ./target/chester.jar,
           ./target/chester-lsp.jar,
           ./cli/js/target/scala-${{ env.SCALA_VERSION }}/chester.js,
@@ -265,7 +255,6 @@ jobs:
         allowUpdates: true
         prerelease: true
         artifacts: |
-          ./target/chester-common.jar,
           ./target/chester.jar,
           ./target/chester-lsp.jar,
           ./cli/js/target/scala-${{ env.SCALA_VERSION }}/chester.js,
@@ -322,7 +311,6 @@ jobs:
         allowUpdates: true
         prerelease: false
         artifacts: |
-          ./target/chester-common.jar,
           ./target/chester.jar,
           ./target/chester-lsp.jar,
           ./cli/js/target/scala-${{ env.SCALA_VERSION }}/chester.js,
@@ -342,7 +330,6 @@ jobs:
         allowUpdates: true
         prerelease: false
         artifacts: |
-          ./target/chester-common.jar,
           ./target/chester.jar,
           ./target/chester-lsp.jar,
           ./cli/js/target/scala-${{ env.SCALA_VERSION }}/chester.js,
