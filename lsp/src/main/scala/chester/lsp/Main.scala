@@ -8,7 +8,7 @@ import java.io.{InputStream, OutputStream}
 import java.net.ServerSocket
 
 def enableDebug(): Unit = {
-  System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "Trace")
+  val _ = System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "Trace")
 }
 
 object Main {
