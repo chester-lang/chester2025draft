@@ -30,7 +30,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
     val parserSource = parser.FilePath(file.toString)
     implicit val reporter: Reporter[Problem] = StdErrReporter
     // Parse and type-check the source code using parseCheckTAST
-    parseCheckTAST(parserSource, sementicCollector = this)
+    val _ = parseCheckTAST(parserSource, sementicCollector = this)
   }
 
   // Convert CollectedSymbols to SemanticDB TextDocument

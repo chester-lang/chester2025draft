@@ -55,7 +55,7 @@ trait ProvideImmutable extends ProvideImpl {
       id
     }
 
-    override def addPropagator[T <: Propagator[Ability]](
+    override def addPropagatorGetPid[T <: Propagator[Ability]](
         propagator: T
     )(using more: Ability): PIdOf[T] = {
       val uniqId = UniqId.generate[T]

@@ -186,9 +186,15 @@ trait ProvideCellId {
     def requireRemovePropagatorZonking(identify: Any, cell: CellIdAny): Unit =
       ???
 
-    def addPropagator[T <: Propagator[Ability]](propagator: T)(using
+    def addPropagatorGetPid[T <: Propagator[Ability]](propagator: T)(using
         more: Ability
     ): PIdOf[T]
+
+    final def addPropagator[T <: Propagator[Ability]](propagator: T)(using
+        more: Ability
+    ): Unit = {
+      val _ = addPropagatorGetPid(propagator)
+    }
 
     def tick(using more: Ability): Unit
 

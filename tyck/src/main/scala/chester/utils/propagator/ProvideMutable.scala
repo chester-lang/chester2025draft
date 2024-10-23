@@ -65,7 +65,7 @@ trait ProvideMutable extends ProvideImpl {
       id
     }
 
-    override def addPropagator[T <: Propagator[Ability]](
+    override def addPropagatorGetPid[T <: Propagator[Ability]](
         propagator: T
     )(using more: Ability): PIdOf[T] = {
       didSomething = true

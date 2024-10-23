@@ -123,7 +123,7 @@ trait ProvideMultithread extends ProvideImpl {
       new HoldCell[T](uniqId, cell)
     }
 
-    override def addPropagator[T <: Propagator[Ability]](
+    override def addPropagatorGetPid[T <: Propagator[Ability]](
         propagator: T
     )(using Ability): PIdOf[T] = {
       val id = new HoldPropagator[T](uniqId, propagator)
@@ -184,7 +184,7 @@ trait ProvideMultithread extends ProvideImpl {
           }
         }
         if (tasks.nonEmpty) {
-          ForkJoinTask.invokeAll(tasks.asJava)
+          val _ =ForkJoinTask.invokeAll(tasks.asJava)
         }
 
         // Check if all cells have values
@@ -197,7 +197,7 @@ trait ProvideMultithread extends ProvideImpl {
             // Last resort: try default values
             val defaultTasks =
               cellsNeeded.map(c => new DefaultValueTask(c, this))
-            ForkJoinTask.invokeAll(defaultTasks.asJava)
+            val _ =ForkJoinTask.invokeAll(defaultTasks.asJava)
 
             // Check again if all cells have values
             cellsNeeded = cellsNeeded.filter(_.noAnyValue)
