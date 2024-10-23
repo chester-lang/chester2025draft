@@ -387,52 +387,54 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(commonJvmLibSettings)
 
 // split modules trying to increase incremental compilation speed
-lazy val utils = useSpire(crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Full)
-  .in(file("utils"))
-  .settings(
-    name := "utils",
-    commonSettings,
-    baseDeps,
-    libraryDependencies ++= Seq(
-      "org.scala-graph" %%% "graph-core" % "2.0.2"
+lazy val utils = useSpire(
+  crossProject(JSPlatform, JVMPlatform, NativePlatform)
+    .withoutSuffixFor(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("utils"))
+    .settings(
+      name := "utils",
+      commonSettings,
+      baseDeps,
+      libraryDependencies ++= Seq(
+        "org.scala-graph" %%% "graph-core" % "2.0.2"
+      )
     )
-  )
-  .jvmSettings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "os-lib" % "0.11.3"
-    ),
-    commonJvmLibSettings,
-    libraryDependencies ++= Seq(
-      "io.github.iltotore" %%% "iron" % "2.6.0",
-      "io.github.iltotore" %%% "iron-cats" % "2.6.0",
-      "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
-    ),
-    libraryDependencies ++= Seq(
-      "org.scala-js" %% "scalajs-stubs" % "1.1.0"
-    ),
-    libraryDependencies ++= Seq(
-      // "it.unimi.dsi" % "fastutil" % "8.5.14",
-    ),
-    libraryDependencies += "org.graalvm.sdk" % "nativeimage" % graalvmVersion
-  )
-  .nativeSettings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "os-lib" % "0.11.3"
-    ),
-    libraryDependencies ++= Seq(
-      "org.scala-js" %% "scalajs-stubs" % "1.1.0"
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "os-lib" % "0.11.3"
+      ),
+      commonJvmLibSettings,
+      libraryDependencies ++= Seq(
+        "io.github.iltotore" %%% "iron" % "2.6.0",
+        "io.github.iltotore" %%% "iron-cats" % "2.6.0",
+        "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
+      ),
+      libraryDependencies ++= Seq(
+        "org.scala-js" %% "scalajs-stubs" % "1.1.0"
+      ),
+      libraryDependencies ++= Seq(
+        // "it.unimi.dsi" % "fastutil" % "8.5.14",
+      ),
+      libraryDependencies += "org.graalvm.sdk" % "nativeimage" % graalvmVersion
     )
-  )
-  .nativeConfigure(_.dependsOn(ironNative.native))
-  .jsSettings(
-    libraryDependencies ++= Seq(
-      "io.github.iltotore" %%% "iron" % "2.6.0",
-      "io.github.iltotore" %%% "iron-cats" % "2.6.0",
-      "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
+    .nativeSettings(
+      libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "os-lib" % "0.11.3"
+      ),
+      libraryDependencies ++= Seq(
+        "org.scala-js" %% "scalajs-stubs" % "1.1.0"
+      )
     )
-  ))
+    .nativeConfigure(_.dependsOn(ironNative.native))
+    .jsSettings(
+      libraryDependencies ++= Seq(
+        "io.github.iltotore" %%% "iron" % "2.6.0",
+        "io.github.iltotore" %%% "iron-cats" % "2.6.0",
+        "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
+      )
+    )
+)
 
 def useSpire(
     project: _root_.sbtcrossproject.CrossProject
