@@ -261,8 +261,9 @@ ThisBuild / assemblyMergeStrategy := {
     MergeStrategy.discard
   case PathList("META-INF", "eclipse.inf")                    => MergeStrategy.discard
   case PathList("META-INF", "groovy-release-info.properties") => MergeStrategy.discard
-  case PathList("scala","meta","internal","tokenizers",xml) if xml.contains("XmlParser") || xml.contains("ScalaExprPositionParser") => MergeStrategy.preferProject // our overrides
-  case PathList("META-INF", "native-image", xs @ _*) if xs.contains("jni-config.json") || xs.contains("reflect-config.json") => MergeStrategy.discard
+  // our overrides
+  case PathList("scala", "meta", "internal", "tokenizers", xml) if xml.contains("XmlParser") || xml.contains("ScalaExprPositionParser") =>
+    MergeStrategy.preferProject
   case x =>
     val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
     oldStrategy(x)
@@ -515,7 +516,9 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
     scala2Common,
     libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.10.2")
       .cross(CrossVersion.for3Use2_13)
-      .exclude("org.jline", "jline")
+      .exclude("org.jline", "jline"),
+    // scalap is a dependency of scalameta
+    libraryDependencies += ("org.scala-lang" % "scalap" % scala2Version).exclude("org.jline", "jline")
   )
   .jvmSettings(commonJvmLibSettings)
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
@@ -528,30 +531,6 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "compiler",
     commonSettings
-    /*
-    libraryDependencies ++= Seq(
-      ("org.scalameta" %%% "scalameta" % "4.10.2")
-        .cross(CrossVersion.for3Use2_13)
-        .exclude("org.jline", "jline")
-        .exclude("com.lihaoyi", "sourcecode_2.13")
-        .exclude("com.lihaoyi", "sourcecode_sjs1_2.13")
-        .exclude("com.lihaoyi", "sourcecode_native0.5_2.13")
-        .exclude("com.lihaoyi", "fastparse_2.13")
-        .exclude("com.lihaoyi", "fastparse_sjs1_2.13")
-        .exclude("com.lihaoyi", "fastparse_native0.5_2.13")
-        .exclude("org.scalameta", "parsers_2.13")
-        .exclude("org.scalameta", "parsers_sjs1_2.13")
-        .exclude("org.scalameta", "parsers_native0.5_2.13"),
-      "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1", // for scalameta
-      // dependency of scalameta
-      "org.scala-lang" % "scalap" % scala2Version exclude (
-        "org.jline",
-        "jline"
-      ) exclude ("com.lihaoyi", "sourcecode_2.13") exclude ("com.lihaoyi", "sourcecode_sjs1_2.13") exclude (
-        "com.lihaoyi",
-        "sourcecode_native0.5_2.13"
-      )
-    )*/
   )
   .jvmSettings(commonJvmLibSettings)
 

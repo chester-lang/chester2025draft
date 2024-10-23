@@ -12,11 +12,9 @@ import scala.annotation.tailrec
 import fastparse.NoWhitespace._
 import fastparse._
 
-/**
- * Copy-pasta from this lihaoyi comment:
- * [[https://github.com/scalameta/fastparse/pull/1#issuecomment-244940542]] and adapted to more
- * closely match scala-xml and then adapted to fastparse 2.3.1
- */
+/** Copy-pasta from this lihaoyi comment: [[https://github.com/scalameta/fastparse/pull/1#issuecomment-244940542]] and adapted to more closely match
+  * scala-xml and then adapted to fastparse 2.3.1
+  */
 class XmlParser(dialect: Dialect) {
 
   val blockParser = new ScalaExprPositionParser(dialect)
@@ -74,7 +72,8 @@ class XmlParser(dialect: Dialect) {
     def CharB[$: P] = P(!("{" | "}") ~ Char1)
 
     // discard result
-    def Name[$: P]: P0 = P(NameStart ~ NameChar.rep).!.filter(_.last != ':').opaque("Name")
+    def Name[$: P]: P0 = P(NameStart ~ NameChar.rep).!.filter(_.last != ':')
+      .opaque("Name")
       .map(_ => ())
     def NameStart[$: P] = P(CharPred(isNameStart))
     def NameChar[$: P] = P(CharPred(isNameChar))
@@ -91,50 +90,45 @@ class XmlParser(dialect: Dialect) {
     // From `scala.xml.parsing.TokenTests`
     // ======================================================
 
-    /**
-     * {{{
-     *  NameChar ::= Letter | Digit | '.' | '-' | '_' | ':'
-     *             | CombiningChar | Extender
-     * }}}
-     * See [4] and Appendix B of XML 1.0 specification.
-     */
+    /** {{{
+      *  NameChar ::= Letter | Digit | '.' | '-' | '_' | ':'
+      *             | CombiningChar | Extender
+      * }}}
+      * See [4] and Appendix B of XML 1.0 specification.
+      */
     def isNameChar(ch: Char) = {
       import java.lang.Character._
       // The constants represent groups Mc, Me, Mn, Lm, and Nd.
 
       isNameStart(ch) ||
-        (getType(ch).toByte match {
-          case COMBINING_SPACING_MARK | ENCLOSING_MARK | NON_SPACING_MARK | MODIFIER_LETTER |
-               DECIMAL_DIGIT_NUMBER => true
-          case _ => ".-:".contains(ch)
-        })
+      (getType(ch).toByte match {
+        case COMBINING_SPACING_MARK | ENCLOSING_MARK | NON_SPACING_MARK | MODIFIER_LETTER | DECIMAL_DIGIT_NUMBER => true
+        case _                                                                                                   => ".-:".contains(ch)
+      })
     }
 
-    /**
-     * {{{
-     *  NameStart ::= ( Letter | '_' )
-     * }}}
-     * where Letter means in one of the Unicode general categories {{{Ll, Lu, Lo, Lt, Nl}}}.
-     *
-     * We do not allow a name to start with `:`. See [3] and Appendix B of XML 1.0 specification
-     */
+    /** {{{
+      *  NameStart ::= ( Letter | '_' )
+      * }}}
+      * where Letter means in one of the Unicode general categories {{{Ll, Lu, Lo, Lt, Nl}}}.
+      *
+      * We do not allow a name to start with `:`. See [3] and Appendix B of XML 1.0 specification
+      */
     def isNameStart(ch: Char) = {
       import java.lang.Character._
 
       getType(ch).toByte match {
-        case LOWERCASE_LETTER | UPPERCASE_LETTER | OTHER_LETTER | TITLECASE_LETTER |
-             LETTER_NUMBER => true
-        case _ => ch == '_'
+        case LOWERCASE_LETTER | UPPERCASE_LETTER | OTHER_LETTER | TITLECASE_LETTER | LETTER_NUMBER => true
+        case _                                                                                     => ch == '_'
       }
     }
   }
 }
 
-/**
- * Collects start and end positions of scala expressions inside xml literals.
- *
- * Doesn't really parse scala expressions, only reads until the curly brace balance hits 0.
- */
+/** Collects start and end positions of scala expressions inside xml literals.
+  *
+  * Doesn't really parse scala expressions, only reads until the curly brace balance hits 0.
+  */
 class ScalaExprPositionParser(dialect: Dialect) {
   case class XmlTokenRange(from: Int, to: Int) // from is inclusive, to is exclusive
   private val _splicePositions = List.newBuilder[XmlTokenRange]
@@ -156,10 +150,10 @@ class ScalaExprPositionParser(dialect: Dialect) {
           val nextIndex = getNextIndex(ltd)
           _splicePositions += XmlTokenRange(index, nextIndex)
           ctx.freshSuccessUnit(index = nextIndex)
-        case LegacyToken.EOF => ctx.freshFailure(getNextIndex(ltd))
+        case LegacyToken.EOF    => ctx.freshFailure(getNextIndex(ltd))
         case LegacyToken.LBRACE => rec(curlyBraceCount + 1)
         case LegacyToken.RBRACE => rec(curlyBraceCount - 1)
-        case _ => rec(curlyBraceCount)
+        case _                  => rec(curlyBraceCount)
       }
     }
     rec(0)
