@@ -35,16 +35,16 @@ case class RecordMember()
 
 @deprecated("deprecated")
 case class TyckedRecord(
-                         name: Name,
-                         varId: Uniqid,
-                         members: Vector[RecordMember],
-                         meta: Option[TermMeta] = None
+    name: Name,
+    varId: Uniqid,
+    members: Vector[RecordMember],
+    meta: Option[TermMeta] = None
 ) extends TyckedDefinitionNamed
 
 @deprecated("deprecated")
 case class TyckedDef(
-                      name: Name,
-                      varId: Uniqid,
-                      body: Judge,
-                      meta: Option[TermMeta] = None
+    name: Name,
+    varId: Uniqid,
+    body: Judge,
+    meta: Option[TermMeta] = None
 ) extends TyckedDefinitionNamed

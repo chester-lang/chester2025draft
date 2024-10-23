@@ -17,8 +17,8 @@ trait ProvideMutable extends ProvideImpl {
   type CIdOf[+T <: Cell[?]] = HoldCell[T]
 
   class HoldPropagator[+T <: Propagator[?]](
-                                             val uniqId: UniqidOf[Impl[?]],
-                                             value: T
+      val uniqId: UniqidOf[Impl[?]],
+      value: T
   ) {
     var store: Propagator[?] = value
     var alive: Boolean = true

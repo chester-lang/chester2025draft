@@ -10,8 +10,8 @@ import scala.jdk.CollectionConverters.*
 trait ProvideMultithread extends ProvideImpl {
 
   class HoldCell[+T <: Cell[?]](
-                                 val uniqId: UniqidOf[Impl[?]],
-                                 initialValue: T
+      val uniqId: UniqidOf[Impl[?]],
+      initialValue: T
   ) {
     private val storeRef = new AtomicReference[Cell[?]](initialValue)
     val readingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
@@ -42,8 +42,8 @@ trait ProvideMultithread extends ProvideImpl {
     x.asInstanceOf[CIdOf[Cell[?]]]
 
   class HoldPropagator[+T <: Propagator[?]](
-                                             val uniqId: UniqidOf[Impl[?]],
-                                             initialValue: T
+      val uniqId: UniqidOf[Impl[?]],
+      initialValue: T
   ) {
     private val storeRef = new AtomicReference[Propagator[?]](initialValue)
     private val aliveRef = new AtomicBoolean(true)

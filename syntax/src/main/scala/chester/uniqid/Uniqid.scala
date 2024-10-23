@@ -12,13 +12,11 @@ private val uniqIdCounter = AtomicInteger(0)
 type Uniqid = UniqidOf[Any]
 
 private val rwUniqID: ReadWriter[UniqidOf[Any]] =
-  readwriter[java.lang.Integer].bimap(_.id, x=>UniqidOf(x.toInt.refineUnsafe))
+  readwriter[java.lang.Integer].bimap(_.id, x => UniqidOf(x.toInt.refineUnsafe))
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqidOf[T]] = rwUniqID.asInstanceOf[ReadWriter[UniqidOf[T]]]
 
-case class UniqidOf[+A] private[uniqid] (id: Int :| Positive0) extends AnyVal {
-
-}
+case class UniqidOf[+A] private[uniqid] (id: Int :| Positive0) extends AnyVal {}
 type UniqidOffset = Int :| Positive0
 
 private implicit val UniqIdOffsetRW: ReadWriter[UniqidOffset] =
@@ -99,7 +97,7 @@ object Uniqid {
 
   def is(x: Any): Boolean = x match {
     case UniqidOf(_) => true
-    case _ => false
+    case _           => false
   }
 
   def calculateRange[T <: ContainsUniqid](x: T): UniqIdRange = {

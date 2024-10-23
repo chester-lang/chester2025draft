@@ -30,29 +30,29 @@ trait ElaboraterBlock extends Elaborater {
 
   // Case class for 'record' declarations
   case class RecordDeclaration(
-                                expr: RecordStmt,
-                                uniqId: UniqidOf[RecordStmtTerm],
-                                name: Name
+      expr: RecordStmt,
+      uniqId: UniqidOf[RecordStmtTerm],
+      name: Name
   ) extends DeclarationInfo
 
   // New declarations for trait and interface
   case class TraitDeclaration(
-                               expr: TraitStmt,
-                               uniqId: UniqidOf[TraitStmtTerm],
-                               name: Name
+      expr: TraitStmt,
+      uniqId: UniqidOf[TraitStmtTerm],
+      name: Name
   ) extends DeclarationInfo
 
   case class InterfaceDeclaration(
-                                   expr: InterfaceStmt,
-                                   uniqId: UniqidOf[InterfaceStmtTerm],
-                                   name: Name
+      expr: InterfaceStmt,
+      uniqId: UniqidOf[InterfaceStmtTerm],
+      name: Name
   ) extends DeclarationInfo
 
   // Add case class for 'object' declarations
   case class ObjectDeclaration(
-                                expr: ObjectStmt,
-                                uniqId: UniqidOf[ObjectStmtTerm],
-                                name: Name
+      expr: ObjectStmt,
+      uniqId: UniqidOf[ObjectStmtTerm],
+      name: Name
   ) extends DeclarationInfo
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
