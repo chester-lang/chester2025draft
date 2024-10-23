@@ -51,9 +51,10 @@ val commonSettings = Seq(
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
-  // https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
+  // some options can be found at https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
   scalacOptions ++=
     Seq(
+      "-Wsafe-init",
       "-encoding",
       "utf8",
       "-explain-cyclic",
@@ -95,6 +96,8 @@ val scala2Common = Seq(
   resolvers += Resolver.mavenLocal,
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalacOptions ++= Seq(
+    "-encoding",
+    "utf8",
     "-Wunused:imports",
     "-Ytasty-reader"
   ),
