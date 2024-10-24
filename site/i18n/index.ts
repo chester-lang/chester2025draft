@@ -26,13 +26,13 @@ export async function getMessages(locale: string) {
 export const LOCALE_NAMES = {
   'en-nz': 'English',
   'en-us': 'English US',
+  ja: '日本語',
+  de: 'Deutsch',
   fr: 'Français',
   'zh-tw': '漢語',
   'zh-sg': '中文',
-  de: 'Deutsch',
   mi: 'Māori',
   yue: '粵語',
-  ja: '日本語',
   ko: '한국어',
 } as const;
 
