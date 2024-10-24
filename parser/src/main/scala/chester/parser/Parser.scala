@@ -417,11 +417,11 @@ case class ParserInternal(
 
   def objectClause0: P[ObjectClause] =
     (maybeSpace ~ qualifiedName ~ maybeSpace ~ "=" ~ maybeSpace ~ parse() ~ maybeSpace)
-      .map(ObjectExprClause)
+      .map(ObjectExprClause.apply)
 
   def objectClause1: P[ObjectClause] =
     (maybeSpace ~ parse(ctx = ParsingContext(dontallowOpSeq = true)) ~ maybeSpace ~ "=>" ~ maybeSpace ~ parse() ~ maybeSpace)
-      .map(ObjectExprClauseOnValue)
+      .map(ObjectExprClauseOnValue.apply)
 
   def objectParse: P[ParsedExpr] = PwithMeta(
     "{" ~ (objectClause0 | objectClause1).rep(sep = comma) ~ comma.? ~ maybeSpace ~ "}"

@@ -569,6 +569,34 @@ case class RationalTerm(value: Rational, meta: OptionTermMeta) extends LiteralTe
     Doc.text(value.toString, ColorProfile.literalColor)
 }
 
+trait BooleanTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+  override type ThisTree <: BooleanTermC[Rec]
+  def value: Boolean
+  override def toTerm: BooleanTerm = BooleanTerm(value, meta)
+}
+
+case class BooleanTerm(value: Boolean, meta: OptionTermMeta) extends LiteralTerm with BooleanTermC[Term] derives ReadWriter {
+  override type ThisTree = BooleanTerm
+  override def descent(f: Term => Term, g: SpecialMap): BooleanTerm = this
+
+  override def toDoc(using options: PrettierOptions): Doc =
+    Doc.text(value.toString, ColorProfile.literalColor)
+}
+
+trait BooleanTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+  override type ThisTree <: BooleanTypeC[Rec]
+  override def toTerm: BooleanType = BooleanType(meta)
+}
+
+case class BooleanType(meta: OptionTermMeta) extends TypeTerm with WithType with BooleanTypeC[Term] derives ReadWriter {
+  override type ThisTree = BooleanType
+  override def descent(f: Term => Term, g: SpecialMap): BooleanType = this
+
+  override def ty: Term = Type0
+  override def toDoc(using options: PrettierOptions): Doc =
+    Doc.text("Boolean", ColorProfile.typeColor)
+}
+
 trait StringTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: StringTermC[Rec]
   def value: String
