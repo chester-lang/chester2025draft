@@ -93,7 +93,7 @@ sealed trait Expr extends WithPos with ToDoc derives ReadWriter {
   def descent2(f: ExprMap): ThisTree = descent(x => f.use(x), f).asInstanceOf[ThisTree]
 
   def inspect(operator: Expr => Unit): Unit = {
-    descent { x =>
+    val _ = descent { x =>
       operator(x)
       x
     }
