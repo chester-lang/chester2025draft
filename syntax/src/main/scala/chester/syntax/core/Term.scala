@@ -285,13 +285,13 @@ object MetaTerm {
   def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x), meta = None)
 }
 
-trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
+trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: ListTermC[Rec]
   def terms: Vector[Rec]
   override def toTerm: ListTerm = ListTerm(terms.map(_.toTerm), meta)
 }
 
-case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with ListTermC[Term] derives ReadWriter {
+case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with ListTermC[Term] with WHNF derives ReadWriter {
   override type ThisTree = ListTerm
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
@@ -299,11 +299,11 @@ case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with
   override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(terms = terms.map(f)))
 }
 
-sealed trait TypeTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait TypeTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: TypeTermT[Rec]
 }
 
-sealed trait TypeTerm extends Term with TypeTermT[Term] derives ReadWriter {
+sealed trait TypeTerm extends Term with TypeTermT[Term] with WHNF derives ReadWriter {
   override type ThisTree <: TypeTerm
 }
 
