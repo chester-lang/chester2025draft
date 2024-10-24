@@ -21,7 +21,7 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
 
 trait ProvideElaboraterFunction extends ElaboraterFunction {
   // Flag to enable or disable termination checking
-  val terminationCheckEnabled: Boolean = true  // Set to false to disable termination checking
+  val terminationCheckEnabled: Boolean = true // Set to false to disable termination checking
 
   def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
       localCtx: MutableContext,
