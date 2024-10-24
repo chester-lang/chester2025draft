@@ -271,15 +271,20 @@ ThisBuild / assemblyMergeStrategy := {
 
 val supportNativeBuildForTermux = true
 
-ThisBuild / nativeConfig ~= (System.getProperty("os.name").toLowerCase match {
-  case mac if mac.contains("mac") => { // mac has some bugs with optimizations
+ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.getProperty("os.arch").toLowerCase) match {
+  case (mac, _) if mac.contains("mac") => { // mac has some bugs with optimizations
     _.withGC(GC.commix)
+  }
+  case (linux, "aarch64") if linux.contains("linux") => { // Archlinux aarch64 Virtual Machine on Apple Silicon
+    _.withLTO(LTO.thin)
+      .withMode(Mode.releaseFast)
+      .withGC(GC.commix)
+      .withCompileOptions(_ :+ "-fPIC")
   }
   case _ => {
     _.withLTO(LTO.thin)
       .withMode(Mode.releaseFast)
       .withGC(GC.commix)
-      .withCompileOptions(_ :+ "-fPIC") // required by Archlinux aarch64 Virtual Machine on Apple Silicon
   }
 })
 
