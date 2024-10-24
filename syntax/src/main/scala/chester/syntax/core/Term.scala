@@ -297,15 +297,7 @@ case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
 
-  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(ListTerm(terms.map(f)))
-}
-
-object ListTerm {
-  @deprecated("meta")
-  def apply(terms: Vector[Term]): ListTerm = new ListTerm(terms, meta = None)
-
-  @deprecated("meta")
-  def apply(terms: Seq[Term]): ListTerm = new ListTerm(terms.toVector, meta = None)
+  override def descent(f: Term => Term, g: SpecialMap): Term = thisOr(copy(terms = terms.map(f)))
 }
 
 sealed trait TypeTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
@@ -995,7 +987,7 @@ extension (e: EffectsM) {
   }
 }
 
-case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta) extends Term derives ReadWriter {
+case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends Term derives ReadWriter {
   override type ThisTree = Effects
   override def descent(f: Term => Term, g: SpecialMap): Effects = thisOr(
     copy(effects = effects.map { case (k, v) => g(k) -> f(v) })
@@ -1019,9 +1011,7 @@ case class Effects(effects: Map[LocalV, Term], meta: OptionTermMeta) extends Ter
 }
 
 object Effects {
-  @deprecated("meta")
   val Empty: Effects = Effects(HashMap.empty, meta = None)
-
 }
 
 val NoEffect = Effects.Empty
@@ -1064,7 +1054,7 @@ case class LocalV(
   )
 
   override def toDoc(using options: PrettierOptions): Doc =
-    Doc.text(name.toString)
+    Doc.text(name)
 
   override def switchUniqId(r: UReplacer): TermWithUniqid = copy(uniqId = r(uniqId))
 }
@@ -1208,16 +1198,6 @@ case class BlockTerm(
   }
 }
 
-object BlockTerm {
-  @deprecated("meta")
-  def apply(stmts: Vector[StmtTerm], value: Term): BlockTerm =
-    new BlockTerm(stmts, value, meta = None)
-
-  @deprecated("meta")
-  def apply(stmts: Seq[StmtTerm], value: Term): BlockTerm =
-    new BlockTerm(stmts.toVector, value, meta = None)
-}
-
 case class Annotation(
     term: Term,
     ty: Option[Term],
@@ -1332,7 +1312,7 @@ case class TraitStmtTerm(
     val extendsDoc = extendsClause.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
     group(
-      Doc.text("trait ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
+      Doc.text("trait ") <> Doc.text(name) <> extendsDoc <> bodyDoc
     )
   }
 }
@@ -1408,9 +1388,4 @@ case class ObjectTypeTerm(
   override def descent(f: Term => Term, g: SpecialMap): ObjectTypeTerm = thisOr(
     copy(objectDef = g(objectDef))
   )
-}
-case class TodoTerm(meta: OptionTermMeta) extends Term {
-  override def toDoc(using options: PrettierOptions): Doc = Doc.text("TODO")
-  override type ThisTree = TodoTerm
-  override def descent(f: Term => Term, g: SpecialMap): TodoTerm = this
 }

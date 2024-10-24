@@ -80,7 +80,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     var ctx = initialCtx
     val declarationsMap = declarations.map(info => (info.expr, info)).toMap
 
-    val stmts: Seq[StmtTerm] = heads.flatMapOrdered {
+    val stmts: Vector[StmtTerm] = heads.flatMapOrdered {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         val (stmtTerms, newCtx) = processDefLetDefStmt(expr, ctx, declarationsMap, effects)
         ctx = newCtx
@@ -129,7 +129,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       implicit val localCtx: Context = ctx
       val tailExpr = tail.getOrElse(UnitExpr(meta))
       val wellTyped = elab(tailExpr, ty, effects)
-      BlockTerm(stmts, wellTyped)
+      BlockTerm(stmts, wellTyped, meta = convertMeta(expr.meta))
     }
   }
 
