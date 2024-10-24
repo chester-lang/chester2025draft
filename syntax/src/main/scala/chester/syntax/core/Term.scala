@@ -142,7 +142,7 @@ sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives Rea
   }
 
   def inspect(f: Term => Unit): Unit = {
-    descent2(new SpecialMap {
+    val _ = descent2(new SpecialMap {
       def use[T <: Term](x: T): x.ThisTree = { f(x); x.asInstanceOf[x.ThisTree] }
     })
     ()
