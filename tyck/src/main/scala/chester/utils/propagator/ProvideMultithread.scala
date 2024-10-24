@@ -227,7 +227,7 @@ trait ProvideMultithread extends ProvideImpl {
               val done = propagator.run(using state, more)
               if (done) {
                 p.setAlive(false)
-                state.propagators.remove(p)
+                val _ = state.propagators.remove(p)
               }
             }
           }
@@ -253,7 +253,7 @@ trait ProvideMultithread extends ProvideImpl {
               val done = propagator.run(using state, more)
               if (done) {
                 p.setAlive(false)
-                state.propagators.remove(p)
+                val _ = state.propagators.remove(p)
               }
             }
           }
@@ -285,7 +285,7 @@ trait ProvideMultithread extends ProvideImpl {
           zonkResult match {
             case ZonkResult.Done =>
               p.setAlive(false)
-              propagators.remove(p)
+              val _ = propagators.remove(p)
             case ZonkResult.Require(needed) =>
               needed.foreach { n =>
                 if (n.noStableValue) {
