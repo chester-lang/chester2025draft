@@ -101,7 +101,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
 
     // Build the function type by folding over the telescopes
     val functionType =
-      FunctionType(telescopeTerms, returnType, effects = toTerm(effects), meta = None)
+      FunctionType(telescopeTerms, returnType, effects0 = toTerm(effects), meta = None)
 
     // Unify the expected type with the constructed function type
     unify(ty, functionType, expr)

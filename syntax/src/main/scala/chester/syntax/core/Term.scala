@@ -6,6 +6,7 @@ import chester.doc.*
 import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.error.ProblemUpickle.*
+import chester.syntax.core.orm.*
 import chester.syntax.{AbsoluteRef, Name}
 import chester.utils.{*, given}
 import chester.utils.doc.*
@@ -102,14 +103,6 @@ trait SpecialMap {
 }
 
 implicit inline def convertSpecialMap[T <: Term](inline f: SpecialMap): T => T = x => f.use(x).asInstanceOf[T]
-
-/** note that this disallow non normal form terms, so avoid using it when non normal form terms are allowed */
-type OrM[T <: Term] = (T | MetaTerm)
-
-type EffectsM = OrM[Effects]
-
-given OrMRW[T <: Term](using rw: ReadWriter[Term]): ReadWriter[OrM[T]] =
-  rw.asInstanceOf[ReadWriter[OrM[T]]]
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
 sealed trait TermT[+Rec <: TermT[Rec]] {
@@ -691,11 +684,8 @@ case class NothingType(meta: OptionTermMeta) extends TypeTerm with WithType {
   override def ty: Term = Type0
 }
 
-implicit val rwUnionHere: ReadWriter[IntegerTerm | SymbolTerm | StringTerm | RationalTerm] =
-  union4RW[IntegerTerm, SymbolTerm, StringTerm, RationalTerm]
-
 case class LiteralType(
-    literal: IntegerTerm | SymbolTerm | StringTerm | RationalTerm,
+    literal: LiteralTerm,
     meta: OptionTermMeta
 ) extends TypeTerm
     with WithType {
@@ -802,12 +792,14 @@ case class Matching(
 case class FunctionType(
     telescope: Vector[TelescopeTerm],
     resultTy: Term,
-    effects: EffectsM = NoEffect,
+    effects0: Term = NoEffect,
     meta: OptionTermMeta
 ) extends Term {
+  require(EffectsM.is(effects0))
+  def effects: EffectsM = effects0.asInstanceOf[EffectsM]
   override type ThisTree = FunctionType
   override def descent(f: Term => Term, g: SpecialMap): FunctionType = thisOr(
-    copy(telescope = telescope.map(g), resultTy = f(resultTy), effects = g(effects))
+    copy(telescope = telescope.map(g), resultTy = f(resultTy), effects0 = g(effects))
   )
 
   override def toDoc(using options: PrettierOptions): Doc = {
@@ -823,15 +815,6 @@ case class FunctionType(
 }
 
 object FunctionType {
-  def apply(
-      telescope: Vector[TelescopeTerm],
-      resultTy: Term,
-      effects: EffectsM = NoEffect,
-      meta: OptionTermMeta
-  ): FunctionType = {
-    new FunctionType(telescope, resultTy, effects, meta)
-  }
-
   @deprecated("meta")
   def apply(telescope: TelescopeTerm, resultTy: Term): FunctionType = {
     new FunctionType(Vector(telescope), resultTy, meta = None)
@@ -978,13 +961,6 @@ sealed trait Effect extends Term derives ReadWriter {
   def name: String
 
   override def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
-}
-
-extension (e: EffectsM) {
-  def nonEmpty: Boolean = e match {
-    case e: Effects => e.nonEmpty
-    case _          => true
-  }
 }
 
 case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends Term derives ReadWriter {
@@ -1201,9 +1177,10 @@ case class BlockTerm(
 case class Annotation(
     term: Term,
     ty: Option[Term],
-    effects: Option[EffectsM],
+    effects: Option[Term],
     meta: OptionTermMeta
 ) extends Term {
+  effects.foreach(x=>require(EffectsM.is(x)))
   override type ThisTree = Annotation
   override def descent(f: Term => Term, g: SpecialMap): Annotation = thisOr(
     copy(
