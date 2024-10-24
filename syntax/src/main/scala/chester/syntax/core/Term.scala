@@ -1180,7 +1180,7 @@ case class Annotation(
     effects: Option[Term],
     meta: OptionTermMeta
 ) extends Term {
-  effects.foreach(x=>require(EffectsM.is(x)))
+  effects.foreach(x => require(EffectsM.is(x)))
   override type ThisTree = Annotation
   override def descent(f: Term => Term, g: SpecialMap): Annotation = thisOr(
     copy(

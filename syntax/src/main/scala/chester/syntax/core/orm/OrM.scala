@@ -1,7 +1,6 @@
 package chester.syntax.core.orm
 
 import chester.syntax.core.*
-import chester.utils.given
 import upickle.default.*
 
 import scala.language.implicitConversions
@@ -14,9 +13,9 @@ type EffectsM = OrM[Effects]
 
 object EffectsM {
   def is(x: Any): Boolean = x match {
-    case Effects(_,_)=>true
-    case MetaTerm(_,_)=>true
-    case _ => false
+    case Effects(_, _)  => true
+    case MetaTerm(_, _) => true
+    case _              => false
   }
 }
 
