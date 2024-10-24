@@ -1,6 +1,6 @@
 {
   "name": "base.chester",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "Chester base library",
   "files": [
     "src"
