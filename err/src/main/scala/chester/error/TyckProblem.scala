@@ -292,3 +292,9 @@ case class MissingImplicitArgumentWarning(paramTy: Term, cause: Expr) extends Ty
   ): Doc =
     d"Implicit argument of type ${paramTy} is inferred for ${cause}"
 }
+case class PotentialNonterminatingFunction(cause: Expr) extends TyckError {
+  override def toDoc(using
+      options: PrettierOptions
+  ): Doc =
+    t"Potential non-terminating function"
+}

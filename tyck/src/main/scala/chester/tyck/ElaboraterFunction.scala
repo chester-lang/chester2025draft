@@ -3,6 +3,7 @@ package chester.tyck
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
+import chester.error.*
 import chester.uniqid.*
 
 trait ElaboraterFunction extends ProvideCtx with Elaborater {
@@ -19,6 +20,9 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
 }
 
 trait ProvideElaboraterFunction extends ElaboraterFunction {
+  // Flag to enable or disable termination checking
+  val terminationCheckEnabled: Boolean = true  // Set to false to disable termination checking
+
   def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
       localCtx: MutableContext,
       parameter: SemanticCollector,
@@ -82,7 +86,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
     // Process the return type, if provided
     val returnType: Term = expr.resultTy match {
       case Some(rtExpr) =>
-        (checkType((rtExpr))(using mutableCtx.ctx, parameter, ck, state))
+        checkType(rtExpr)(using mutableCtx.ctx, parameter, ck, state)
       case None =>
         newTypeTerm(using ck, state)
     }
@@ -102,6 +106,64 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
     // Unify the expected type with the constructed function type
     unify(ty, functionType, expr)
 
+    // Extract the function name from 'expr.name', if available
+    val functionNameOpt: Option[String] = None // TODO // placeholder
+
+    // Termination check logic (can be easily removed or disabled)
+    if (terminationCheckEnabled) {
+      // placeholder
+      val isTerminating = analyzeTermination(bodyTerm, functionNameOpt)
+      if (!isTerminating) {
+        val problem = PotentialNonterminatingFunction(expr)
+        ck.reporter(problem)
+      }
+    }
+
     Function(functionType, bodyTerm, meta = None)
+  }
+
+  // placeholder, broken code
+  // Simple termination analysis by traversing the Term using inspectRecursive
+  def analyzeTermination(
+      term: Term,
+      functionNameOpt: Option[String]
+  )(using
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Boolean = {
+    // Collect function calls within the term
+    val functionCalls = collectFunctionCalls(term)
+
+    functionNameOpt match {
+      case Some(functionName) =>
+        // If the function calls itself, consider it potentially non-terminating
+        !functionCalls.contains(functionName)
+      case None =>
+        // Cannot determine the function name; assume it terminates
+        true
+    }
+  }
+
+  // Helper function to collect function call names from a Term using inspectRecursive
+  def collectFunctionCalls(term: Term): Set[String] = {
+    val calls = scala.collection.mutable.Set[String]()
+
+    term.inspectRecursive { t =>
+      t match {
+        case FCallTerm(function, _, _) =>
+          function match {
+            // TODO: calls += name
+            case _ =>
+              // Continue traversing the function term
+              function.inspectRecursive {
+                // TODO: calls += name
+                case _ =>
+              }
+          }
+        case _ =>
+      }
+    }
+
+    calls.toSet
   }
 }
