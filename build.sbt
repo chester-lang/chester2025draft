@@ -275,11 +275,18 @@ ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.
   case (mac, _) if mac.contains("mac") => { // mac has some bugs with optimizations
     _.withGC(GC.commix)
   }
-  case (linux, "aarch64") if linux.contains("linux") => { // Archlinux aarch64 Virtual Machine on Apple Silicon
-    _.withLTO(LTO.thin)
-      .withMode(Mode.releaseFast)
+  /*
+
+[error] /usr/bin/ld: /tmp/lto-llvm-7d968c.o: relocation R_AARCH64_ADR_PREL_PG_HI21 against symbol `__stack_chk_guard@@GLIBC_2.17' which may bind externally can not be used when making a shared object; recompile with -fPIC
+[error] /usr/bin/ld: /tmp/lto-llvm-7d968c.o(.text.MutatorThreads_init+0x8): unresolvable R_AARCH64_ADR_PREL_PG_HI21 relocation against symbol `__stack_chk_guard@@GLIBC_2.17'
+[error] /usr/bin/ld: final link failed: bad value
+[error] clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+[info] Total (36687 ms)
+   */
+  // Archlinux aarch64 Virtual Machine on Apple Silicon
+  case (linux, "aarch64") if linux.contains("linux") => {
+    _.withMode(Mode.releaseFast)
       .withGC(GC.commix)
-      .withCompileOptions(_ :+ "-fPIC")
   }
   case _ => {
     _.withLTO(LTO.thin)
