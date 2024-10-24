@@ -1235,7 +1235,7 @@ def UnitType(meta: OptionTermMeta) =
 object UnitTerm {
   def unapply(x: Any): Option[OptionTermMeta] = x match {
     case TupleTerm(Vector(), meta) => Some(meta)
-    case _ => None
+    case _                         => None
   }
   def apply(meta: OptionTermMeta) =
     TupleTerm(Vector.empty, meta = meta)
