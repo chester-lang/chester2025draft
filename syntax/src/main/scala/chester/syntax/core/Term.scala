@@ -258,13 +258,21 @@ sealed trait TermWithUniqid extends Term with TermWithUniqidT[Term] derives Read
   def switchUniqId(r: UReplacer): TermWithUniqid
 }
 
-trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait EffectsMT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+  override type ThisTree <: EffectsMT[Rec]
+}
+
+sealed trait EffectsM extends Term with EffectsMT[Term] derives ReadWriter {
+  override type ThisTree <: EffectsM
+}
+
+trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] with EffectsMT[Rec] {
   override type ThisTree <: MetaTermC[Rec]
   def impl: HoldNotReadable[?]
   override def toTerm: MetaTerm = MetaTerm(impl, meta)
 }
 
-case class MetaTerm(impl: HoldNotReadable[?], meta: OptionTermMeta) extends Term with MetaTermC[Term] {
+case class MetaTerm(impl: HoldNotReadable[?], meta: OptionTermMeta) extends Term with MetaTermC[Term] with EffectsM {
   override type ThisTree = MetaTerm
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
@@ -792,14 +800,12 @@ case class Matching(
 case class FunctionType(
     telescope: Vector[TelescopeTerm],
     resultTy: Term,
-    effects0: Term = NoEffect,
+    effects: EffectsM = NoEffect,
     meta: OptionTermMeta
 ) extends Term {
-  require(EffectsM.is(effects0))
-  def effects: EffectsM = effects0.asInstanceOf[EffectsM]
   override type ThisTree = FunctionType
   override def descent(f: Term => Term, g: SpecialMap): FunctionType = thisOr(
-    copy(telescope = telescope.map(g), resultTy = f(resultTy), effects0 = g(effects))
+    copy(telescope = telescope.map(g), resultTy = f(resultTy), effects = g(effects))
   )
 
   override def toDoc(using options: PrettierOptions): Doc = {
@@ -963,7 +969,7 @@ sealed trait Effect extends Term derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
 }
 
-case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends Term derives ReadWriter {
+case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends Term with EffectsM derives ReadWriter {
   override type ThisTree = Effects
   override def descent(f: Term => Term, g: SpecialMap): Effects = thisOr(
     copy(effects = effects.map { case (k, v) => g(k) -> f(v) })
@@ -1177,10 +1183,9 @@ case class BlockTerm(
 case class Annotation(
     term: Term,
     ty: Option[Term],
-    effects: Option[Term],
+    effects: Option[EffectsM],
     meta: OptionTermMeta
 ) extends Term {
-  effects.foreach(x => require(EffectsM.is(x)))
   override type ThisTree = Annotation
   override def descent(f: Term => Term, g: SpecialMap): Annotation = thisOr(
     copy(
