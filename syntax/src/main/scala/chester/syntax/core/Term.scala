@@ -1230,11 +1230,17 @@ case class Annotation(
   }
 }
 
-// TODO: tuple?
 def UnitType(meta: OptionTermMeta) =
-  ObjectType(Vector.empty, meta = meta)
-def UnitTerm(meta: OptionTermMeta) =
-  ObjectTerm(Vector.empty, meta = meta)
+  TupleType(Vector.empty, meta = meta)
+object UnitTerm {
+  def unapply(x: Any): Option[OptionTermMeta] = x match {
+    case TupleTerm(Vector(), meta) => Some(meta)
+    case _ => None
+  }
+  def apply(meta: OptionTermMeta) =
+    TupleTerm(Vector.empty, meta = meta)
+
+}
 
 case class FieldTerm(
     name: Name,

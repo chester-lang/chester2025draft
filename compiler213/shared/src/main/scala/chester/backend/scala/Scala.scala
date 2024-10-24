@@ -15,6 +15,7 @@ object Scala {
     case StringTerm(s, _) => Lit.String(s)
     case SymbolTerm(s, _) => Lit.Symbol(Symbol(s))
     case BooleanTerm(b, _) => Lit.Boolean(b)
+    case UnitTerm(_) => Lit.Unit()
     case _                => throw new NotImplementedError(s"not implemented ${term.getClass.getName} $term")
   }
 
