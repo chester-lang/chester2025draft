@@ -279,6 +279,7 @@ ThisBuild / nativeConfig ~= (System.getProperty("os.name").toLowerCase match {
     _.withLTO(LTO.thin)
       .withMode(Mode.releaseFast)
       .withGC(GC.commix)
+      .withCompileOptions(_ :+ "-fPIC") // required by Archlinux aarch64 Virtual Machine on Apple Silicon
   }
 })
 

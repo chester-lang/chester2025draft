@@ -18,7 +18,7 @@ function copy_resource(from_file, to_file) {
     console.warn(from_file + ' not found in resources directory');
   }
 }
-copy_resource('favicon.ico', 'app/favicon.ico');
+copy_resource('favicon.ico', 'public/favicon.ico');
 copy_resource('chester-logo.svg', 'chester-logo.svg');
 
 /** @type {import('next').NextConfig} */

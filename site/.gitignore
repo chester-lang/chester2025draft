@@ -35,5 +35,5 @@ yarn-error.log*
 next-env.d.ts
 
 
-app/favicon.ico
+public/favicon.ico
 chester-logo.svg
