@@ -514,7 +514,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "compiler213",
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.10.2")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.11.0")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -639,7 +639,7 @@ object GeneratedJS {
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.10.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.11.0" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
