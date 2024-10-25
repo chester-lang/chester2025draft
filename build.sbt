@@ -10,6 +10,8 @@ import scala.sys.process._
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.24")
 ThisBuild / organization := "com.github.chester-lang"
 
+addCommandAlias("testAll", "rootJVM/test ; rootJS/test ; platform0Native/test")
+
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
 inThisBuild(
@@ -517,8 +519,8 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-// too hard to compile this for scala nativa, linking problem with scala stdlib
-lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
+// compiles with scala native but test / nativeLink for this subproject is broken.
+lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler213"))
@@ -537,9 +539,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler"))
-  .dependsOn(utils, syntax, err)
-  .jvmConfigure(_.dependsOn(compiler213.jvm))
-  .jsConfigure(_.dependsOn(compiler213.js))
+  .dependsOn(utils, syntax, err, compiler213)
   .settings(
     name := "compiler",
     commonSettings

@@ -345,4 +345,4 @@ jobs:
       with:
         timeout_minutes: 25
         max_attempts: 3
-        command: sbt test
+        command: sbt testAll
