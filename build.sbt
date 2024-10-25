@@ -10,7 +10,7 @@ import scala.sys.process._
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.24")
 ThisBuild / organization := "com.github.chester-lang"
 
-addCommandAlias("testAll", "rootJVM/test ; rootJS/test ; platform0Native/test")
+addCommandAlias("testAll", "rootJVM/test ; rootJS/test ; rootNative/test")
 
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
@@ -519,8 +519,8 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-// compiles with scala native but test / nativeLink for this subproject is broken.
-lazy val compiler213 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+// compiles with scala native. XmlParser broken on nativeLink step. will wait for scalameta scala3 migration
+lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler213"))
@@ -539,7 +539,9 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler"))
-  .dependsOn(utils, syntax, err, compiler213)
+  .dependsOn(utils, syntax, err)
+  .jvmConfigure(_.dependsOn(compiler213.jvm))
+  .jsConfigure(_.dependsOn(compiler213.js))
   .settings(
     name := "compiler",
     commonSettings
