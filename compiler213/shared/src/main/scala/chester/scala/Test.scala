@@ -14,6 +14,6 @@ object Test {
   val test: meta.Term.Apply = q"function(argument)"
   def callit(): Unit = {
     println(test)
-    println(Scala.compile(core.BooleanTerm(false, meta = None)))
+    println(Scala.compileExpr(core.BooleanTerm(false, meta = None)))
   }
 }
