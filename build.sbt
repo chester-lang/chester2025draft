@@ -1223,7 +1223,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         (path contains "org.graalvm")
       }
     },
-    // we fork the JVM to pass the Java Options
+    // We fork the JVM to pass the Java Options
     Compile / run / fork := true,
     javaOptions ++= Seq(
       "-Dgraal.Dump=Truffle:1",
@@ -1236,8 +1236,19 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "org.graalvm.truffle" % "truffle-api" % graalvmVersion,
       "org.graalvm.truffle" % "truffle-dsl-processor" % graalvmVersion,
       "org.graalvm.truffle" % "truffle-tck" % graalvmVersion,
-      "org.graalvm.sdk" % "graal-sdk" % graalvmVersion
-    )
+      "org.graalvm.sdk"     % "graal-sdk"    % graalvmVersion
+    ),
+    Compile / javacOptions ++= {
+      val cp = (Compile / dependencyClasspath).value.map(_.data)
+      val processorJars = cp.filter(_.getName.contains("truffle-dsl-processor"))
+      val processorPath = processorJars.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
+      Seq(
+        "-processor", "com.oracle.truffle.dsl.processor.TruffleProcessor",
+        "-processorpath", processorPath,
+        "-source", "17",
+        "-target", "17"
+      )
+    }
   )
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
