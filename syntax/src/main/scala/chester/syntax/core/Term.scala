@@ -105,7 +105,7 @@ trait SpecialMap {
 implicit inline def convertSpecialMap[T <: Term](inline f: SpecialMap): T => T = x => f.use(x).asInstanceOf[T]
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-sealed trait TermT[+Rec <: TermT[Rec]] {
+trait TermT[+Rec <: TermT[Rec]] {
   type ThisTree <: TermT[Rec]
   def meta: OptionTermMeta
   def whnf: Trilean
@@ -421,11 +421,11 @@ case class FType(level: Term, meta: OptionTermMeta) extends Sort with FTypeC[Ter
     Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-sealed trait LiteralTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+trait LiteralTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: LiteralTermT[Rec]
 }
 
-sealed trait LiteralTerm extends Term with LiteralTermT[Term] derives ReadWriter {
+sealed trait LiteralTerm extends Term with LiteralTermT[Term] with WHNF derives ReadWriter {
   override type ThisTree <: LiteralTerm
 }
 

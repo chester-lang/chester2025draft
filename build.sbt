@@ -1201,9 +1201,6 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
-// Define directories for generated sources and classes
-val generatedSourcesDir = file("target") / "generated" / "truffle"
-
 lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
@@ -1246,23 +1243,15 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       val processorJars = cp.filter(_.getName.contains("truffle-dsl-processor"))
       val processorPath = processorJars.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
 
-      // Ensure the directories exist
-      IO.createDirectory(generatedSourcesDir)
-
       Seq(
         "-processorpath",
         processorPath,
-        "-s",
-        generatedSourcesDir.getAbsolutePath,
         "-source",
         "17",
         "-target",
         "17"
       )
     },
-
-    // Add the generated sources to the unmanaged source directories
-    Compile / unmanagedSourceDirectories += generatedSourcesDir
   )
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
