@@ -16,8 +16,8 @@ importers:
         specifier: ^10.0.9
         version: 10.0.9
       '@types/node':
-        specifier: ^20.16.14
-        version: 20.16.14
+        specifier: ^20.17.0
+        version: 20.17.0
       '@types/vscode':
         specifier: ^1.94.0
         version: 1.94.0
@@ -31,8 +31,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1
       '@vscode/vsce':
-        specifier: ^3.2.0
-        version: 3.2.0
+        specifier: ^3.2.1
+        version: 3.2.1
       esbuild:
         specifier: ^0.24.0
         version: 0.24.0
@@ -311,8 +311,8 @@ packages:
   '@types/mocha@10.0.9':
     resolution: {integrity: sha512-sicdRoWtYevwxjOHNMPTl3vSfJM6oyW8o1wXeI7uww6b6xHg8eBznQDNSGBCDJmsE8UMxP05JgZRtsKbTqt//Q==}
 
-  '@types/node@20.16.14':
-    resolution: {integrity: sha512-vtgGzjxLF7QT88qRHtXMzCWpAAmwonE7fwgVjFtXosUva2oSpnIEc3gNO9P7uIfOxKnii2f79/xtOnfreYtDaA==}
+  '@types/node@20.17.0':
+    resolution: {integrity: sha512-a7zRo0f0eLo9K5X9Wp5cAqTUNGzuFLDG2R7C4HY2BhcMAsxgSPuRvAC1ZB6QkuUQXf0YZAgfOX2ZyrBa2n4nHQ==}
 
   '@types/vscode@1.94.0':
     resolution: {integrity: sha512-UyQOIUT0pb14XSqJskYnRwD2aG0QrPVefIfrW1djR+/J4KeFQ0i1+hjZoaAmeNf3Z2jleK+R2hv+EboG/m8ruw==}
@@ -426,8 +426,8 @@ packages:
   '@vscode/vsce-sign@2.0.4':
     resolution: {integrity: sha512-0uL32egStKYfy60IqnynAChMTbL0oqpqk0Ew0YHiIb+fayuGZWADuIPHWUcY1GCnAA+VgchOPDMxnc2R3XGWEA==}
 
-  '@vscode/vsce@3.2.0':
-    resolution: {integrity: sha512-c/AId5Lp50HTszCBDfXfD/Go2djm6qO/WfedP2Y3BpRP+V+ttr8T0mTvZ8WEyTiBp2EfrYnzYUCx0ocB9mHy4Q==}
+  '@vscode/vsce@3.2.1':
+    resolution: {integrity: sha512-AY9vBjwExakK1c0cI/3NN2Ey0EgiKLBye/fxl/ue+o4q6RZ7N+xzd1jAD6eI6eBeMVANi617+V2rxIAkDPco2Q==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -1756,7 +1756,7 @@ snapshots:
 
   '@types/mocha@10.0.9': {}
 
-  '@types/node@20.16.14':
+  '@types/node@20.17.0':
     dependencies:
       undici-types: 6.19.8
 
@@ -1892,7 +1892,7 @@ snapshots:
       '@vscode/vsce-sign-win32-arm64': 2.0.2
       '@vscode/vsce-sign-win32-x64': 2.0.2
 
-  '@vscode/vsce@3.2.0':
+  '@vscode/vsce@3.2.1':
     dependencies:
       '@azure/identity': 4.5.0
       '@vscode/vsce-sign': 2.0.4
