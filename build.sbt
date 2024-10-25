@@ -1201,16 +1201,16 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
-lazy val eval = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("eval"))
+  .in(file("interpreter"))
   .dependsOn(platform)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
-    name := "eval",
-    assembly / assemblyOutputPath := file("target") / "chester-eval.jar"
+    name := "interpreter",
+    assembly / assemblyOutputPath := file("target") / "chester-interpreter.jar"
   )
   .jvmSettings(
     assembly / test := {},
@@ -1282,7 +1282,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     lsp,
     buildProtocol,
     buildTool,
-    eval,
+    interpreter,
     js,
     site,
     docs
