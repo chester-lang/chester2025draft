@@ -19,7 +19,8 @@ object Main {
       targetDir: String = ".",
       version: Boolean = false,
       packages: Seq[String] = Seq(),
-      tastDirs: Seq[String] = Seq()
+      tastDirs: Seq[String] = Seq(),
+      filesToFormat: Seq[String] = Seq()
   )
 
   def main(args: Array[String]): Unit = {
@@ -139,6 +140,22 @@ object Main {
           .action((_, c) => c.copy(command = "self-update"))
           .text("Update Chester CLI to the latest version"),
 
+        cmd("format")  // Added command
+          .action((_, c) => c.copy(command = "format"))
+          .text("Format Chester source files")
+          .children(
+            arg[String]("files...")
+              .unbounded()
+              .required()
+              .validate {
+                case path if fileExists(path) => success
+                case path =>
+                  failure(s"Invalid input. Provide valid file(s). Provided: $path")
+              }
+              .action((x, c) => c.copy(filesToFormat = c.filesToFormat :+ x))
+              .text("Source files to format.")
+          ),
+
         // Handle case where user might omit "run" and just provide input directly
         arg[String]("input")
           .optional()
@@ -151,7 +168,8 @@ object Main {
               )
           }
           .action((x, c) => c.copy(input = Some(x)))
-          .hidden()
+          .hidden(),
+
       )
     }
 
@@ -196,9 +214,13 @@ object Main {
             }
           case "self-update" =>
             SelfUpdateConfig
-          case "genSemanticDB" =>
-            platform.genSemanticDB(cliConfig)
-            return
+          case "format" =>
+            if (cliConfig.filesToFormat.nonEmpty) {
+              FormatConfig(cliConfig.filesToFormat)
+            } else {
+              println("Error: At least one file is required for format command.")
+              return
+            }
           case _ =>
             println("Invalid command")
             return

@@ -61,6 +61,8 @@ class CLI[F[_]](using
             this.addPackages(packages)
           case SelfUpdateConfig =>
             this.selfUpdate()
+          case FormatConfig(files) =>                         // Added case
+            this.formatFiles(files)
         }
       case None =>
         // Arguments are bad, error message will have been displayed
@@ -232,4 +234,12 @@ class CLI[F[_]](using
   def selfUpdate(): F[Unit] = for {
     _ <- IO.call(Vector("proto", "install", "chester"))
   } yield ()
+
+  def formatFiles(files: Seq[String]): F[Unit] = {
+    for {
+      _ <- IO.println(s"Formatting files: ${files.mkString(", ")}")
+      _ <- IO.println(s"WIP")
+      _ <- Runner.pure(())
+    } yield ()
+  }
 }
