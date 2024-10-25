@@ -1251,7 +1251,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "-target",
         "17"
       )
-    },
+    }
   )
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)

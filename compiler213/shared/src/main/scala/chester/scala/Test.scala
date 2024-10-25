@@ -5,8 +5,6 @@ import chester.backend.scala.Scala
 import scala.meta
 import chester.syntax.core
 
-import scala.meta._
-import chester.syntax.core._
 
 import scala.meta._
 

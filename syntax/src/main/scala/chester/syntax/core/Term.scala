@@ -1237,7 +1237,7 @@ object UnitTerm {
     case TupleTerm(Vector(), meta) => Some(meta)
     case _                         => None
   }
-  def apply(meta: OptionTermMeta) =
+  def apply(meta: OptionTermMeta): TupleTerm =
     TupleTerm(Vector.empty, meta = meta)
 
 }
