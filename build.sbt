@@ -1242,13 +1242,19 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       val cp = (Compile / dependencyClasspath).value.map(_.data)
       val processorJars = cp.filter(_.getName.contains("truffle-dsl-processor"))
       val processorPath = processorJars.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
+      val generatedSourcesDir = (Compile / sourceManaged).value / "generated" / "truffle"
+      println(s"processorJars: $processorJars")
+      println(s"processorPath: $processorPath")
+      println(s"generatedSourcesDir: $generatedSourcesDir")
       Seq(
         "-processor", "com.oracle.truffle.dsl.processor.TruffleProcessor",
         "-processorpath", processorPath,
+        "-s", generatedSourcesDir.getAbsolutePath,
         "-source", "17",
         "-target", "17"
       )
-    }
+    },
+    Compile / unmanagedSourceDirectories += (Compile / sourceManaged).value / "generated" / "truffle"
   )
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
