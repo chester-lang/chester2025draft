@@ -1201,16 +1201,18 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
-lazy val eval = crossProject(JVMPlatform)
+lazy val eval = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .in(file("eval"))
-  .dependsOn(core)
+  .dependsOn(platform)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
     name := "eval",
-    assembly / assemblyOutputPath := file("target") / "chester-eval.jar",
+    assembly / assemblyOutputPath := file("target") / "chester-eval.jar"
+  )
+  .jvmSettings(
     assembly / test := {},
     assembly / assemblyExcludedJars := {
       val cp = (assembly / fullClasspath).value
