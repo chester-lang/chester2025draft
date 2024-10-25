@@ -1201,6 +1201,9 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
+// Define directories for generated sources and classes
+val generatedSourcesDir = file("target") / "generated" / "truffle"
+
 lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
@@ -1236,25 +1239,30 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "org.graalvm.truffle" % "truffle-api" % graalvmVersion,
       "org.graalvm.truffle" % "truffle-dsl-processor" % graalvmVersion,
       "org.graalvm.truffle" % "truffle-tck" % graalvmVersion,
-      "org.graalvm.sdk"     % "graal-sdk"    % graalvmVersion
+      "org.graalvm.sdk" % "graal-sdk" % graalvmVersion
     ),
     Compile / javacOptions ++= {
       val cp = (Compile / dependencyClasspath).value.map(_.data)
       val processorJars = cp.filter(_.getName.contains("truffle-dsl-processor"))
       val processorPath = processorJars.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
-      val generatedSourcesDir = (Compile / sourceManaged).value / "generated" / "truffle"
-      println(s"processorJars: $processorJars")
-      println(s"processorPath: $processorPath")
-      println(s"generatedSourcesDir: $generatedSourcesDir")
+
+      // Ensure the directories exist
+      IO.createDirectory(generatedSourcesDir)
+
       Seq(
-        "-processor", "com.oracle.truffle.dsl.processor.TruffleProcessor",
-        "-processorpath", processorPath,
-        "-s", generatedSourcesDir.getAbsolutePath,
-        "-source", "17",
-        "-target", "17"
+        "-processorpath",
+        processorPath,
+        "-s",
+        generatedSourcesDir.getAbsolutePath,
+        "-source",
+        "17",
+        "-target",
+        "17"
       )
     },
-    Compile / unmanagedSourceDirectories += (Compile / sourceManaged).value / "generated" / "truffle"
+
+    // Add the generated sources to the unmanaged source directories
+    Compile / unmanagedSourceDirectories += generatedSourcesDir
   )
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
