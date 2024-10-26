@@ -35,7 +35,7 @@ trait Tree {
     f(descent { a =>
       implicit val ev0: (a.RootTree =:= Tree.this.RootTree) = ev2(using a)
       implicit val ev1: (Tree.this.RootTree =:= a.RootTree) = ev0.flip
-      a.descentRecursive (f(_))
+      a.descentRecursive(f(_))
     })
   }
 
@@ -47,11 +47,12 @@ trait Tree {
   }
 
   def inspectRecursive(operator: RootTree => Unit): Unit = {
-    inspect{a=>
+    inspect { a =>
       implicit val ev0: (a.RootTree =:= Tree.this.RootTree) = ev2(using a)
       implicit val ev1: (Tree.this.RootTree =:= a.RootTree) = ev0.flip
-      
-      a.inspectRecursive(operator(_))}
+
+      a.inspectRecursive(operator(_))
+    }
     operator(this.asInstanceOf[RootTree])
   }
 
