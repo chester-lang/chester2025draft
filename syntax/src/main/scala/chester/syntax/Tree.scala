@@ -1,11 +1,15 @@
 package chester.syntax
 
 import chester.syntax.core.Term
+import chester.utils.reuse
 
 trait Tree {
   type RootTree <: Tree
   type ThisTree <: Tree
 
+  // this utility method is not that type safe
+  protected final inline def thisOr[T <: RootTree](inline x: T): T =
+    reuse(this.asInstanceOf[T], x)
 
   def descent(f: RootTree => RootTree, g: TreeMap[RootTree]): RootTree
 }

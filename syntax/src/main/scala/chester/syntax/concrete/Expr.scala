@@ -110,10 +110,6 @@ sealed trait Expr extends WithPos with Tree with ToDoc derives ReadWriter {
     operator(this.descent(_.descentRecursive(operator)))
   }
 
-  // Shouldn't use this.type
-  protected final inline def thisOr[T <: Expr](inline x: T): T =
-    reuse(this.asInstanceOf[T], x)
-
   /** Every Expr has meta to trace compile time errors, type checking errors */
   def meta: Option[ExprMeta]
   final def sourcePos: Option[SourcePos] = meta.flatMap(_.sourcePos)

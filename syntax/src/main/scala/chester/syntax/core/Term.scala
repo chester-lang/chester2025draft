@@ -117,9 +117,6 @@ sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives Rea
 
   def whnf: Trilean = ???
 
-  protected final inline def thisOr[T <: Term](inline x: T): T =
-    reuse(this.asInstanceOf[T], x)
-
   def descent(f: Term => Term, g: TreeMap[Term]): Term
   final def descent(f: Term => Term): Term = descent(
     f,
