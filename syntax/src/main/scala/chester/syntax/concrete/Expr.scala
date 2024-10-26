@@ -80,18 +80,7 @@ sealed trait Expr extends WithPos with Tree with ToDoc derives ReadWriter {
   final type RootTree = Expr
   type ThisTree <: Expr
 
-  def descent(f: Expr => Expr): Expr = {
-    descent(
-      f,
-      new TreeMap[Expr] {
-        def use[T <: Expr](x: T): x.ThisTree = x.descent(f).asInstanceOf[x.ThisTree]
-      }
-    )
-  }
-
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
-
-  def descent2(f: TreeMap[Expr]): ThisTree = descent(x => f.use(x), f).asInstanceOf[ThisTree]
 
   def inspect(operator: Expr => Unit): Unit = {
     val _ = descent { x =>

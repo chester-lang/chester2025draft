@@ -5,13 +5,21 @@ import chester.utils.reuse
 
 trait Tree {
   type RootTree <: Tree
-  type ThisTree <: Tree
+  type ThisTree <: Tree // it could cause problems if I write `ThisTree <: RootTree` here
 
   // this utility method is not that type safe
   protected final inline def thisOr[T <: RootTree](inline x: T): T =
     reuse(this.asInstanceOf[T], x)
 
   def descent(f: RootTree => RootTree, g: TreeMap[RootTree]): RootTree
+  final def descent(f: RootTree => RootTree): RootTree = descent(
+    f,
+    new TreeMap[RootTree] {
+      def use[T <: RootTree](x: T): x.ThisTree = x.descent(f.asInstanceOf[x.RootTree=>x.RootTree]).asInstanceOf[x.ThisTree]
+    }
+  )
+  final def descent2(f: TreeMap[RootTree]): ThisTree = descent(x => f.use(x).asInstanceOf[RootTree], f).asInstanceOf[ThisTree]
+
 }
 
 /** means not changing the subtype of Term */
