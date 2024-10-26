@@ -22,9 +22,11 @@ libraryDependencies ++= Seq(
 )
 
 // cli tools
+resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 addDependencyTreePlugin
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.3")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0+9-d2c99b38-SNAPSHOT")
 addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.6.1")
-resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+libraryDependencies ++= Seq("com.google.googlejavaformat" % "google-java-format" % "1.24.0")
+addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.8.0")
