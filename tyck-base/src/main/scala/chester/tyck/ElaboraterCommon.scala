@@ -5,9 +5,9 @@ import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.syntax.Name
 import chester.syntax.concrete.*
 import chester.syntax.core.*
+import chester.uniqid.*
 import chester.utils.*
 import chester.utils.propagator.CommonPropagator
-import chester.uniqid.*
 
 trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[Tyck] {
 

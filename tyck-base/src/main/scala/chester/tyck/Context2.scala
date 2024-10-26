@@ -1,13 +1,10 @@
 package chester.tyck
 
-import chester.syntax.accociativity.OperatorsContext
 import chester.syntax.*
 import chester.syntax.core.*
-import chester.syntax.Name
 import chester.tyck.BuiltIn.BuiltinItem
-import chester.tyck.api.SymbolCollector
-import chester.utils.propagator.*
 import chester.uniqid.*
+import chester.utils.propagator.*
 
 trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 

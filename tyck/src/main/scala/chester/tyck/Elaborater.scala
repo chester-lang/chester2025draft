@@ -12,8 +12,6 @@ import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
 
-type Tyck = Get[TyckProblem, Unit]
-
 trait Elaborater extends ProvideCtx with ElaboraterCommon {
 
   def checkType(expr: Expr)(using
