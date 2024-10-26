@@ -46,6 +46,11 @@ proto install chester
 
 + Scala2-like C-family syntax
 + Lexically scoped effect handlers - Effekt
++ REPL highlighting color schema - Idris1
+
+## They are being copied from other programming languages
+
++ Two-Level Type Theory - Agda
 
 ## Example
 
