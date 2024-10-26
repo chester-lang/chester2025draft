@@ -42,6 +42,11 @@ proto install chester
 + [Optional] GraalVM
 + [Optional] Clang
 
+## They are copied from other programming languages
+
++ Scala2-like C-family syntax
++ Lexically scoped effect handlers - Effekt
+
 ## Example
 
 It might look like?
