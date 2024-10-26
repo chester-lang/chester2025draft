@@ -118,16 +118,6 @@ sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives Rea
   def whnf: Trilean = ???
 
   def descent(f: Term => Term, g: TreeMap[Term]): Term
-  final def descentRecursive(f: Term => Term): Term = thisOr {
-    f(descent(_.descentRecursive(f)))
-  }
-
-  def inspect(f: Term => Unit): Unit = {
-    val _ = descent2(new TreeMap[Term] {
-      def use[T <: Term](x: T): x.ThisTree = { f(x); x.asInstanceOf[x.ThisTree] }
-    })
-    ()
-  }
 
   def inspectRecursive(f: Term => Unit): Unit = {
     inspect(_.inspectRecursive(f))

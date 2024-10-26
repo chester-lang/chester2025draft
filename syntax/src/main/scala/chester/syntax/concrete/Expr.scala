@@ -82,21 +82,9 @@ sealed trait Expr extends WithPos with Tree with ToDoc derives ReadWriter {
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
 
-  def inspect(operator: Expr => Unit): Unit = {
-    val _ = descent { x =>
-      operator(x)
-      x
-    }
-    ()
-  }
-
   def foreach(operator: Expr => Unit): Unit = {
     inspect(_.foreach(operator))
     operator(this)
-  }
-
-  final def descentRecursive(operator: Expr => Expr): Expr = {
-    operator(this.descent(_.descentRecursive(operator)))
   }
 
   /** Every Expr has meta to trace compile time errors, type checking errors */
