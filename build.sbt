@@ -1244,6 +1244,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       val processorPath = processorJars.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
 
       Seq(
+        "-Xlint:unchecked",
         "-processorpath",
         processorPath,
         "-source",
