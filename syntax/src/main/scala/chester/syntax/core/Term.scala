@@ -107,7 +107,7 @@ trait TermT[Rec <: TermT[Rec]] extends Tree[Rec] {
 
 type AnyTerm = TermT[?]
 
-sealed trait Term extends ToDoc  with TermT[Term]  with ContainsUniqid derives ReadWriter {
+sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives ReadWriter {
   type ThisTree <: Term
   def meta: OptionTermMeta
 
