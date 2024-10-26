@@ -4,7 +4,7 @@ import chester.syntax.core.Term
 import chester.utils.reuse
 
 trait Tree[RootTree <: Tree[RootTree]] {
-  type ThisTree <: Tree[RootTree] // it could cause problems if I write `ThisTree <: RootTree` here
+  type ThisTree <: Tree[RootTree]
   // it is too hard to verify following properties in scala type system, so we just assume them
   implicit val ev: ThisTree <:< RootTree = implicitly[RootTree <:< RootTree].asInstanceOf[ThisTree <:< RootTree]
   implicit val ev1: Tree[RootTree] =:= RootTree = implicitly[RootTree =:= RootTree].asInstanceOf[Tree[RootTree] =:= RootTree]
