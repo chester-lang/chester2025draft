@@ -95,8 +95,8 @@ object Bind {
 }
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-trait TermT[+Rec <: TermT[Rec]] extends Tree {
-  type RootTree <: TermT[Rec]
+trait TermT[Rec <: TermT[Rec]] extends Tree {
+  implicit def ev11[T <: TermT[Rec]]: (T <:< RootTree) = implicitly[RootTree <:< RootTree].asInstanceOf[T <:< RootTree]
   def meta: OptionTermMeta
   def whnf: Trilean
   def toTerm: Term = {
@@ -108,7 +108,7 @@ trait TermT[+Rec <: TermT[Rec]] extends Tree {
 
 type AnyTerm = TermT[?]
 
-sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives ReadWriter {
+sealed trait Term extends ToDoc  with TermT[Term]  with ContainsUniqid derives ReadWriter {
   final override type RootTree = Term
   type ThisTree <: Term
   def meta: OptionTermMeta
@@ -186,7 +186,7 @@ sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives Rea
   }
 }
 
-sealed trait WHNFT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait WHNFT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: WHNFT[Rec]
   override def whnf: Trilean = True
 }
@@ -195,7 +195,7 @@ sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
   override type ThisTree <: WHNF
 }
 
-sealed trait UnevalT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait UnevalT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: UnevalT[Rec]
   override def whnf: Trilean = False
 }
@@ -203,7 +203,7 @@ sealed trait UnevalT[+Rec <: TermT[Rec]] extends TermT[Rec] {
 sealed trait Uneval extends Term with UnevalT[Term] derives ReadWriter {
   override type ThisTree <: Uneval
 }
-sealed trait SpecialTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait SpecialTermT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: SpecialTermT[Rec]
   override def whnf: Trilean = Unknown
 }
@@ -211,7 +211,7 @@ sealed trait SpecialTermT[+Rec <: TermT[Rec]] extends TermT[Rec] {
 sealed trait SpecialTerm extends Term with SpecialTermT[Term] derives ReadWriter {
   override type ThisTree <: SpecialTerm
 }
-sealed trait TermWithUniqidT[+Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqid {
+sealed trait TermWithUniqidT[Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqid {
   override type ThisTree <: TermWithUniqidT[Rec]
   override def uniqId: UniqidOf[Rec]
 }
@@ -222,7 +222,7 @@ sealed trait TermWithUniqid extends Term with TermWithUniqidT[Term] derives Read
   def switchUniqId(r: UReplacer): TermWithUniqid
 }
 
-sealed trait EffectsMT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait EffectsMT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: EffectsMT[Rec]
 }
 
@@ -230,7 +230,7 @@ sealed trait EffectsM extends Term with EffectsMT[Term] derives ReadWriter {
   override type ThisTree <: EffectsM
 }
 
-trait MetaTermC[+Rec <: TermT[Rec]] extends TermT[Rec] with EffectsMT[Rec] with SpecialTermT[Rec] {
+trait MetaTermC[Rec <: TermT[Rec]] extends TermT[Rec] with EffectsMT[Rec] with SpecialTermT[Rec] {
   override type ThisTree <: MetaTermC[Rec]
   def impl: HoldNotReadable[?]
   override def toTerm: MetaTerm = MetaTerm(impl, meta)
@@ -251,7 +251,7 @@ object MetaTerm {
   def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x), meta = None)
 }
 
-trait ListTermC[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
+trait ListTermC[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: ListTermC[Rec]
   def terms: Vector[Rec]
   override def toTerm: ListTerm = ListTerm(terms.map(_.toTerm), meta)
@@ -265,7 +265,7 @@ case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(terms = terms.map(f)))
 }
 
-sealed trait TypeTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
+sealed trait TypeTermT[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: TypeTermT[Rec]
 }
 
@@ -273,7 +273,7 @@ sealed trait TypeTerm extends Term with TypeTermT[Term] with WHNF derives ReadWr
   override type ThisTree <: TypeTerm
 }
 
-sealed trait SortT[+Rec <: TermT[Rec]] extends TypeTermT[Rec] {
+sealed trait SortT[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
   override type ThisTree <: SortT[Rec]
   def level: TermT[Rec]
 }
@@ -283,7 +283,7 @@ sealed trait Sort extends TypeTerm with SortT[Term] derives ReadWriter {
   def level: Term
 }
 
-sealed trait TypeT[+Rec <: TermT[Rec]] extends SortT[Rec] {
+sealed trait TypeT[Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: TypeT[Rec]
   def level: Rec
 }
@@ -296,7 +296,7 @@ case class Type(level: Term, meta: OptionTermMeta) extends Sort with TypeT[Term]
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
 }
 
-trait LevelTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] {
+trait LevelTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
   override type ThisTree <: LevelTypeC[Rec]
 }
 
@@ -310,7 +310,7 @@ case class LevelType(meta: OptionTermMeta) extends TypeTerm with WithType with L
   override def ty: Term = Type0
 }
 
-sealed trait LevelT[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WHNFT[Rec] {
+sealed trait LevelT[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: LevelT[Rec]
 }
 
@@ -318,7 +318,7 @@ sealed trait Level extends Term with LevelT[Term] with WHNF derives ReadWriter {
   type ThisTree <: Level
 }
 
-trait LevelFiniteC[+Rec <: TermT[Rec]] extends LevelT[Rec] {
+trait LevelFiniteC[Rec <: TermT[Rec]] extends LevelT[Rec] {
   override type ThisTree <: LevelFiniteC[Rec]
   def n: Rec
   override def toTerm: LevelFinite = LevelFinite(n.toTerm, meta)
@@ -333,7 +333,7 @@ case class LevelFinite(n: Term, meta: OptionTermMeta) extends Level with LevelFi
     thisOr(copy(n = f(n)))
 }
 
-trait LevelUnrestrictedC[+Rec <: TermT[Rec]] extends LevelT[Rec] {
+trait LevelUnrestrictedC[Rec <: TermT[Rec]] extends LevelT[Rec] {
   override type ThisTree <: LevelUnrestrictedC[Rec]
   override def toTerm: LevelUnrestricted = LevelUnrestricted(meta)
 }
@@ -358,7 +358,7 @@ enum Usage derives ReadWriter {
   case None, Linear, Unrestricted
 }
 
-trait PropC[+Rec <: TermT[Rec]] extends SortT[Rec] {
+trait PropC[Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: PropC[Rec]
   def level: Rec
   override def toTerm: Prop = Prop(level.toTerm, meta)
@@ -372,7 +372,7 @@ case class Prop(level: Term, meta: OptionTermMeta) extends Sort with PropC[Term]
     Doc.wrapperlist("Prop" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-trait FTypeC[+Rec <: TermT[Rec]] extends SortT[Rec] {
+trait FTypeC[Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: FTypeC[Rec]
   def level: Rec
   override def toTerm: FType = FType(level.toTerm, meta)
@@ -387,7 +387,7 @@ case class FType(level: Term, meta: OptionTermMeta) extends Sort with FTypeC[Ter
     Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-trait LiteralTermT[+Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
+trait LiteralTermT[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: LiteralTermT[Rec]
 }
 
@@ -395,7 +395,7 @@ sealed trait LiteralTerm extends Term with LiteralTermT[Term] with WHNF derives 
   override type ThisTree <: LiteralTerm
 }
 
-sealed trait AbstractIntTermT[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+sealed trait AbstractIntTermT[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: AbstractIntTermT[Rec]
 }
 
@@ -403,7 +403,7 @@ sealed trait AbstractIntTerm extends LiteralTerm with AbstractIntTermT[Term] der
   override type ThisTree <: AbstractIntTerm
 }
 
-trait IntTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
+trait IntTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
   override type ThisTree <: IntTermC[Rec]
   def value: Int
   override def toTerm: IntTerm = IntTerm(value, meta)
@@ -417,7 +417,7 @@ case class IntTerm(value: Int, meta: OptionTermMeta) extends LiteralTerm with Ab
     Doc.text(value.toString, ColorProfile.literalColor)
 }
 
-trait IntegerTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
+trait IntegerTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
   override type ThisTree <: IntegerTermC[Rec]
   def value: BigInt
   override def toTerm: IntegerTerm = IntegerTerm(value, meta)
@@ -449,7 +449,7 @@ object NaturalTerm {
   def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm.from(value, meta = None)
 }
 
-sealed trait WithTypeT[+Rec <: TermT[Rec]] extends TermT[Rec] {
+sealed trait WithTypeT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: WithTypeT[Rec]
   def ty: Rec
 }
@@ -459,7 +459,7 @@ sealed trait WithType extends Term with WithTypeT[Term] derives ReadWriter {
   def ty: Term
 }
 
-trait IntegerTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait IntegerTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: IntegerTypeC[Rec]
   override def toTerm: IntegerType = IntegerType(meta)
 }
@@ -474,7 +474,7 @@ case class IntegerType(meta: OptionTermMeta) extends TypeTerm with WithType with
   override def ty: Term = Type0
 }
 
-trait IntTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait IntTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: IntTypeC[Rec]
   override def toTerm: IntType = IntType(meta)
 }
@@ -490,7 +490,7 @@ case class IntType(meta: OptionTermMeta) extends TypeTerm with WithType with Int
   override def ty: Term = Type0
 }
 
-trait UIntTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait UIntTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: UIntTypeC[Rec]
   override def toTerm: UIntType = UIntType(meta)
 }
@@ -506,7 +506,7 @@ case class UIntType(meta: OptionTermMeta) extends TypeTerm with WithType with UI
   override def ty: Term = Type0
 }
 
-trait NaturalTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait NaturalTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: NaturalTypeC[Rec]
   override def toTerm: NaturalType = NaturalType(meta)
 }
@@ -521,7 +521,7 @@ case class NaturalType(meta: OptionTermMeta) extends TypeTerm with WithType with
   override def ty: Term = Type0
 }
 
-trait RationalTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+trait RationalTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: RationalTermC[Rec]
   def value: Rational
   override def toTerm: RationalTerm = RationalTerm(value, meta)
@@ -535,10 +535,12 @@ case class RationalTerm(value: Rational, meta: OptionTermMeta) extends LiteralTe
     Doc.text(value.toString, ColorProfile.literalColor)
 }
 
-trait BooleanTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+trait BooleanTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: BooleanTermC[Rec]
   def value: Boolean
   override def toTerm: BooleanTerm = BooleanTerm(value, meta)
+
+  override def descent(f: RootTree => RootTree, g: TreeMap[RootTree]): RootTree = this
 }
 
 case class BooleanTerm(value: Boolean, meta: OptionTermMeta) extends LiteralTerm with BooleanTermC[Term] derives ReadWriter {
@@ -549,7 +551,7 @@ case class BooleanTerm(value: Boolean, meta: OptionTermMeta) extends LiteralTerm
     Doc.text(value.toString, ColorProfile.literalColor)
 }
 
-trait BooleanTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait BooleanTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: BooleanTypeC[Rec]
   override def toTerm: BooleanType = BooleanType(meta)
 }
@@ -563,7 +565,7 @@ case class BooleanType(meta: OptionTermMeta) extends TypeTerm with WithType with
     Doc.text("Boolean", ColorProfile.typeColor)
 }
 
-trait StringTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+trait StringTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: StringTermC[Rec]
   def value: String
   override def toTerm: StringTerm = StringTerm(value, meta)
@@ -577,7 +579,7 @@ case class StringTerm(value: String, meta: OptionTermMeta) extends LiteralTerm w
     Doc.text("\"" + encodeString(value) + "\"", ColorProfile.literalColor)
 }
 
-trait SymbolTermC[+Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+trait SymbolTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: SymbolTermC[Rec]
   def value: String
   override def toTerm: SymbolTerm = SymbolTerm(value, meta)
@@ -591,7 +593,7 @@ case class SymbolTerm(value: String, meta: OptionTermMeta) extends LiteralTerm w
     Doc.text("'" + value, ColorProfile.literalColor)
 }
 
-trait RationalTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait RationalTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: RationalTypeC[Rec]
   override def toTerm: RationalType = RationalType(meta)
 }
@@ -606,7 +608,7 @@ case class RationalType(meta: OptionTermMeta) extends TypeTerm with WithType wit
   override def ty: Term = Type0
 }
 
-trait FloatTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait FloatTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: FloatTypeC[Rec]
   override def toTerm: FloatType = FloatType(meta)
 }
@@ -622,7 +624,7 @@ case class FloatType(meta: OptionTermMeta) extends TypeTerm with WithType with F
   override def ty: Term = Type0
 }
 
-trait StringTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait StringTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: StringTypeC[Rec]
   override def toTerm: StringType = StringType(meta)
 }
@@ -637,7 +639,7 @@ case class StringType(meta: OptionTermMeta) extends TypeTerm with WithType with 
   override def ty: Term = Type0
 }
 
-trait SymbolTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait SymbolTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: SymbolTypeC[Rec]
   override def toTerm: SymbolType = SymbolType(meta)
 }
@@ -652,7 +654,7 @@ case class SymbolType(meta: OptionTermMeta) extends TypeTerm with WithType with 
   override def ty: Term = Type0
 }
 
-trait AnyTypeC[+Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
+trait AnyTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
   override type ThisTree <: AnyTypeC[Rec]
   def level: Rec
   override def toTerm: AnyType = AnyType(level.toTerm, meta)
