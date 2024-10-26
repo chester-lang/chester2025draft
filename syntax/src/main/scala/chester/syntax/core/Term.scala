@@ -95,8 +95,7 @@ object Bind {
 }
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-trait TermT[Rec <: TermT[Rec]] extends Tree {
-  implicit def ev11[T <: TermT[Rec]]: (T <:< RootTree) = implicitly[RootTree <:< RootTree].asInstanceOf[T <:< RootTree]
+trait TermT[Rec <: TermT[Rec]] extends Tree[Rec] {
   def meta: OptionTermMeta
   def whnf: Trilean
   def toTerm: Term = {
@@ -109,7 +108,6 @@ trait TermT[Rec <: TermT[Rec]] extends Tree {
 type AnyTerm = TermT[?]
 
 sealed trait Term extends ToDoc  with TermT[Term]  with ContainsUniqid derives ReadWriter {
-  final override type RootTree = Term
   type ThisTree <: Term
   def meta: OptionTermMeta
 
@@ -540,7 +538,7 @@ trait BooleanTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   def value: Boolean
   override def toTerm: BooleanTerm = BooleanTerm(value, meta)
 
-  override def descent(f: RootTree => RootTree, g: TreeMap[RootTree]): RootTree = this
+  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = this
 }
 
 case class BooleanTerm(value: Boolean, meta: OptionTermMeta) extends LiteralTerm with BooleanTermC[Term] derives ReadWriter {

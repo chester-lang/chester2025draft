@@ -76,8 +76,7 @@ object MetaFactory {
     }
 }
 
-sealed trait Expr extends WithPos with Tree with ToDoc derives ReadWriter {
-  final type RootTree = Expr
+sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
