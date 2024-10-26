@@ -95,7 +95,7 @@ object Bind {
 }
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-trait TermT[Rec <: TermT[Rec]] extends Tree[Rec] {
+trait TermT[Rec <: TermT[Rec]] extends Any with ToDoc with Tree[Rec] {
   def meta: OptionTermMeta
   def whnf: Trilean
   def toTerm: Term = {
@@ -232,16 +232,16 @@ trait MetaTermC[Rec <: TermT[Rec]] extends TermT[Rec] with EffectsMT[Rec] with S
   override type ThisTree <: MetaTermC[Rec]
   def impl: HoldNotReadable[?]
   override def toTerm: MetaTerm = MetaTerm(impl, meta)
+  override def toDoc(using options: PrettierOptions): Doc =
+    Doc.group("Meta" <> Doc.text(impl.toString))
+
+  def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
+
+  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = this
 }
 
 case class MetaTerm(impl: HoldNotReadable[?], meta: OptionTermMeta) extends Term with MetaTermC[Term] with EffectsM with SpecialTerm {
   override type ThisTree = MetaTerm
-  def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
-
-  override def toDoc(using options: PrettierOptions): Doc =
-    Doc.group("Meta" <> Doc.text(impl.toString))
-
-  override def descent(f: Term => Term, g: TreeMap[Term]): MetaTerm = this
 }
 
 object MetaTerm {
@@ -373,16 +373,17 @@ case class Prop(level: Term, meta: OptionTermMeta) extends Sort with PropC[Term]
 trait FTypeC[Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: FTypeC[Rec]
   def level: Rec
+  def copy(level: Rec = level, meta:  OptionTermMeta = meta): ThisTree
   override def toTerm: FType = FType(level.toTerm, meta)
+  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(copy(level = f(level)))
+
+  override def toDoc(using options: PrettierOptions): Doc =
+    Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
 // fibrant types
 case class FType(level: Term, meta: OptionTermMeta) extends Sort with FTypeC[Term] {
   override type ThisTree = FType
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
-
-  override def toDoc(using options: PrettierOptions): Doc =
-    Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
 trait LiteralTermT[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
@@ -539,14 +540,15 @@ trait BooleanTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override def toTerm: BooleanTerm = BooleanTerm(value, meta)
 
   override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = this
+
+  override def toDoc(using options: PrettierOptions): Doc =
+    Doc.text(value.toString, ColorProfile.literalColor)
 }
 
 case class BooleanTerm(value: Boolean, meta: OptionTermMeta) extends LiteralTerm with BooleanTermC[Term] derives ReadWriter {
   override type ThisTree = BooleanTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): BooleanTerm = this
 
-  override def toDoc(using options: PrettierOptions): Doc =
-    Doc.text(value.toString, ColorProfile.literalColor)
 }
 
 trait BooleanTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {

@@ -3,11 +3,10 @@ package chester.syntax
 import chester.syntax.core.Term
 import chester.utils.reuse
 
-trait Tree[RootTree <: Tree[RootTree]] {
+trait Tree[RootTree <: Tree[RootTree]] extends Any {
   type ThisTree <: Tree[RootTree]
   // it is too hard to verify following properties in scala type system, so we just assume them
-  implicit val ev: ThisTree <:< RootTree = implicitly[RootTree <:< RootTree].asInstanceOf[ThisTree <:< RootTree]
-  implicit val ev1: Tree[RootTree] =:= RootTree = implicitly[RootTree =:= RootTree].asInstanceOf[Tree[RootTree] =:= RootTree]
+  implicit val ev1: Tree[RootTree] <:< RootTree = implicitly[RootTree =:= RootTree].asInstanceOf[Tree[RootTree] <:< RootTree]
   given ev3[T <: RootTree](using x: T): (x.ThisTree <:< RootTree) = implicitly[RootTree <:< RootTree].asInstanceOf[x.ThisTree <:< RootTree]
 
   // this utility method is not that type safe
