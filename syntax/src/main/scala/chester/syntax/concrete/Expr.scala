@@ -82,11 +82,6 @@ sealed trait Expr extends WithPos with Tree with ToDoc derives ReadWriter {
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
 
-  def foreach(operator: Expr => Unit): Unit = {
-    inspect(_.foreach(operator))
-    operator(this)
-  }
-
   /** Every Expr has meta to trace compile time errors, type checking errors */
   def meta: Option[ExprMeta]
   final def sourcePos: Option[SourcePos] = meta.flatMap(_.sourcePos)

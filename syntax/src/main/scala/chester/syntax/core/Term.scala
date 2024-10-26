@@ -119,11 +119,6 @@ sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives Rea
 
   def descent(f: Term => Term, g: TreeMap[Term]): Term
 
-  def inspectRecursive(f: Term => Unit): Unit = {
-    inspect(_.inspectRecursive(f))
-    f(this)
-  }
-
   def mapFlatten[B](f: Term => Seq[B]): Vector[B] = {
     var result = Vector.empty[B]
     inspectRecursive { term =>
