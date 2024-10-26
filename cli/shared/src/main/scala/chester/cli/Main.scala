@@ -139,8 +139,7 @@ object Main {
         cmd("self-update")
           .action((_, c) => c.copy(command = "self-update"))
           .text("Update Chester CLI to the latest version"),
-
-        cmd("format")  // Added command
+        cmd("format") // Added command
           .action((_, c) => c.copy(command = "format"))
           .text("Format Chester source files")
           .children(
@@ -168,8 +167,7 @@ object Main {
               )
           }
           .action((x, c) => c.copy(input = Some(x)))
-          .hidden(),
-
+          .hidden()
       )
     }
 

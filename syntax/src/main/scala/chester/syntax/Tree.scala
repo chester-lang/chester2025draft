@@ -6,9 +6,10 @@ import chester.utils.reuse
 trait Tree {
   type RootTree <: Tree
   type ThisTree <: Tree // it could cause problems if I write `ThisTree <: RootTree` here
+  // it is too hard to verify following properties in scala type system, so we just assume them
   private val ev: ThisTree <:< RootTree = implicitly[RootTree <:< RootTree].asInstanceOf[ThisTree <:< RootTree]
-  private given ev2[T <: RootTree](using x:T): (x.RootTree =:= RootTree) = implicitly[RootTree =:= RootTree].asInstanceOf[x.RootTree =:= RootTree]
-  private given ev3[T <: RootTree](using x:T): (x.ThisTree <:< RootTree) = implicitly[RootTree <:< RootTree].asInstanceOf[x.ThisTree <:< RootTree]
+  private given ev2[T <: RootTree](using x: T): (x.RootTree =:= RootTree) = implicitly[RootTree =:= RootTree].asInstanceOf[x.RootTree =:= RootTree]
+  private given ev3[T <: RootTree](using x: T): (x.ThisTree <:< RootTree) = implicitly[RootTree <:< RootTree].asInstanceOf[x.ThisTree <:< RootTree]
 
   // this utility method is not that type safe
   protected final inline def thisOr[T <: RootTree](inline x: T): T =
@@ -18,20 +19,26 @@ trait Tree {
   final def descent(f: RootTree => RootTree): RootTree = descent(
     f,
     new TreeMap[RootTree] {
-      def use[T <: RootTree](x: T): x.ThisTree = x.descent(f.asInstanceOf[x.RootTree=>x.RootTree]).asInstanceOf[x.ThisTree]
+      def use[T <: RootTree](x: T): x.ThisTree = x.descent(f.asInstanceOf[x.RootTree => x.RootTree]).asInstanceOf[x.ThisTree]
     }
   )
-  final def descent2(f: TreeMap[RootTree]): ThisTree = descent({x =>
-    implicit val ev0: (x.RootTree <:< Tree.this.RootTree) = ev2(using x)
-    implicit val ev1: (x.ThisTree <:< Tree.this.RootTree) = ev3(using x)
-    f.use(x)}, f).asInstanceOf[ThisTree]
+  final def descent2(f: TreeMap[RootTree]): ThisTree = descent(
+    { x =>
+      implicit val ev0: (x.RootTree <:< Tree.this.RootTree) = ev2(using x)
+      implicit val ev1: (x.ThisTree <:< Tree.this.RootTree) = ev3(using x)
+      f.use(x)
+    },
+    f
+  ).asInstanceOf[ThisTree]
 
   final def descentRecursive(f: RootTree => RootTree): RootTree = thisOr {
-    f(descent{a=>
+    f(descent { a =>
       implicit val ev0: (a.RootTree =:= Tree.this.RootTree) = ev2(using a)
       implicit val ev1: (Tree.this.RootTree =:= a.RootTree) = ev0.flip
-      a.descentRecursive{x=>
-      f(x)}})
+      a.descentRecursive { x =>
+        f(x)
+      }
+    })
   }
 
   def inspect(f: RootTree => Unit): Unit = {

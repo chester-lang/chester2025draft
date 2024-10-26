@@ -5,7 +5,6 @@ import chester.backend.scala.Scala
 import scala.meta
 import chester.syntax.core
 
-
 import scala.meta._
 
 object Test {

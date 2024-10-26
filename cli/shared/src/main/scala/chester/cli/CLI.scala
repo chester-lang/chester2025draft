@@ -61,7 +61,7 @@ class CLI[F[_]](using
             this.addPackages(packages)
           case SelfUpdateConfig =>
             this.selfUpdate()
-          case FormatConfig(files) =>                         // Added case
+          case FormatConfig(files) => // Added case
             this.formatFiles(files)
         }
       case None =>
