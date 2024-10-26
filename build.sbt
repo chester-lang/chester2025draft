@@ -508,11 +508,22 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
+lazy val tyckBase = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("tyck-base"))
+  .dependsOn(utils, syntax, err)
+  .settings(
+    name := "tyck-base",
+    commonSettings
+  )
+  .jvmSettings(commonJvmLibSettings)
+
 lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("tyck"))
-  .dependsOn(utils, syntax, err)
+  .dependsOn(utils, syntax, err, tyckBase, interpreter)
   .settings(
     name := "tyck",
     commonSettings
@@ -1205,7 +1216,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("interpreter"))
-  .dependsOn(platform)
+  .dependsOn(tyckBase)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
@@ -1289,6 +1300,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     err,
     pretty,
     tyck,
+    tyckBase,
     platform,
     jsForJvm,
     core,
