@@ -51,6 +51,7 @@ proto install chester
 ## They are being copied from other programming languages
 
 + Two-Level Type Theory - Agda
++ Evil implicit conversion and implicit parameters - Scala2
 
 ## Example
 
