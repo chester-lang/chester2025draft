@@ -96,7 +96,7 @@ object Bind {
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
 trait TermT[+Rec <: TermT[Rec]] extends Tree {
-  type ThisTree <: TermT[Rec]
+  type RootTree <: TermT[Rec]
   def meta: OptionTermMeta
   def whnf: Trilean
   def toTerm: Term = {
@@ -109,6 +109,7 @@ trait TermT[+Rec <: TermT[Rec]] extends Tree {
 type AnyTerm = TermT[?]
 
 sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives ReadWriter {
+  final override type RootTree = Term
   type ThisTree <: Term
   def meta: OptionTermMeta
 

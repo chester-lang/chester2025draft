@@ -3,7 +3,11 @@ package chester.syntax
 import chester.syntax.core.Term
 
 trait Tree {
-  type ThisTree
+  type RootTree <: Tree
+  type ThisTree <: Tree
+
+
+  def descent(f: RootTree => RootTree, g: TreeMap[RootTree]): RootTree
 }
 
 /** means not changing the subtype of Term */
