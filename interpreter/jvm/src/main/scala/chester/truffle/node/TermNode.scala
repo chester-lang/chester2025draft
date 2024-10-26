@@ -7,7 +7,5 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import scala.Function1
 
 abstract class TermNode extends ChesterNode with TermT[TermNode] {
-  override final type RootTree = TermNode
-  override def descent(f: TermNode => TermNode, g: TreeMap[TermNode]): TermNode
   def executeGeneric(frame: VirtualFrame): AnyRef
 }
