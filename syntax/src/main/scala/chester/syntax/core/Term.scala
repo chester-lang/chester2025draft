@@ -975,7 +975,12 @@ case class Function(
 }
 
 @deprecated("not used")
-case class MatchingClause() derives ReadWriter {}
+case class MatchingClause(meta: OptionTermMeta) extends WHNF {
+    override type ThisTree = MatchingClause
+    override def descent(f: Term => Term, g: TreeMap[Term]): MatchingClause = this
+  override def toDoc(using options: PrettierOptions): Doc = toString // TODO
+
+}
 
 case class Matching(
     ty: FunctionType,
