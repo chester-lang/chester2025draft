@@ -64,8 +64,7 @@ case class CallingArgTerm(
     vararg: Boolean = false,
     meta: OptionTermMeta
 ) extends WHNF
-    with CallingArgTermC[Term]
-    derives ReadWriter {
+    with CallingArgTermC[Term] derives ReadWriter {
   override def cons: CallingArgTermF[Term, ThisTree] = this.copy
   override type ThisTree = CallingArgTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): CallingArgTerm =
@@ -106,8 +105,7 @@ case class Calling(
     implicitly: Boolean = false,
     meta: OptionTermMeta
 ) extends WHNF
-    with CallingC[Term]
-    derives ReadWriter {
+    with CallingC[Term] derives ReadWriter {
   override type ThisTree = Calling
   override def cons: CallingF[Term, ThisTree] = this.copy
   override def descent(f: Term => Term, g: TreeMap[Term]): Calling =
@@ -1105,8 +1103,7 @@ case class ObjectClauseValueTerm(
     value: Term,
     meta: OptionTermMeta
 ) extends WHNF
-    with ObjectClauseValueTermC[Term]
-    derives ReadWriter {
+    with ObjectClauseValueTermC[Term] derives ReadWriter {
   override type ThisTree = ObjectClauseValueTerm
   override def cons: ObjectClauseValueTermF[Term, ThisTree] = this.copy
 
@@ -1722,8 +1719,7 @@ case class BlockTerm(
     result: Term,
     meta: OptionTermMeta
 ) extends Uneval
-    with BlockTermC[Term]
-    derives ReadWriter {
+    with BlockTermC[Term] derives ReadWriter {
   override type ThisTree = BlockTerm
   override def cons: BlockTermF[Term, ThisTree] = this.copy
 
@@ -1762,7 +1758,7 @@ trait AnnotationC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
     cpy(
       term = f(term),
       ty = ty.map(f),
-      effects = effects.map(x=>g(x).asInstanceOf[EffectsM])
+      effects = effects.map(x => g(x).asInstanceOf[EffectsM])
     )
   )
 }
@@ -1828,8 +1824,7 @@ case class FieldTerm(
     ty: Term,
     meta: OptionTermMeta
 ) extends WHNF
-    with FieldTermC[Term]
-    derives ReadWriter {
+    with FieldTermC[Term] derives ReadWriter {
   override type ThisTree = FieldTerm
   override def cons: FieldTermF[Term, ThisTree] = this.copy
 
@@ -1853,7 +1848,13 @@ sealed trait TypeDefinition extends StmtTerm with TermWithUniqid with TypeDefini
 
 @FunctionalInterface
 trait RecordStmtTermF[Rec <: TermT[Rec], ThisTree <: RecordStmtTermC[Rec]] {
-  def apply(name: Name, uniqId: UniqidOf[RecordStmtTermC[Rec]], fields: Vector[FieldTermC[Rec]], body: Option[BlockTermC[Rec]], meta: OptionTermMeta): ThisTree
+  def apply(
+      name: Name,
+      uniqId: UniqidOf[RecordStmtTermC[Rec]],
+      fields: Vector[FieldTermC[Rec]],
+      body: Option[BlockTermC[Rec]],
+      meta: OptionTermMeta
+  ): ThisTree
 }
 
 trait RecordStmtTermC[Rec <: TermT[Rec]] extends TypeDefinitionT[Rec] with StmtTermT[Rec] {
@@ -1863,7 +1864,8 @@ trait RecordStmtTermC[Rec <: TermT[Rec]] extends TypeDefinitionT[Rec] with StmtT
   def fields: Vector[FieldTermC[Rec]]
   def body: Option[BlockTermC[Rec]]
   def cons: RecordStmtTermF[Rec, ThisTree]
-  override def toTerm: RecordStmtTerm = RecordStmtTerm(name, uniqId.asInstanceOf[UniqidOf[RecordStmtTerm]], fields.map(_.toTerm), body.map(_.toTerm), meta)
+  override def toTerm: RecordStmtTerm =
+    RecordStmtTerm(name, uniqId.asInstanceOf[UniqidOf[RecordStmtTerm]], fields.map(_.toTerm), body.map(_.toTerm), meta)
 
   override def toDoc(using options: PrettierOptions): Doc = {
     val fieldsDoc = fields.map(_.toDoc).reduceOption(_ <> Doc.text(", ") <> _).getOrElse(Doc.empty)
@@ -1876,7 +1878,13 @@ trait RecordStmtTermC[Rec <: TermT[Rec]] extends TypeDefinitionT[Rec] with StmtT
     )
   }
 
-  def cpy(name: Name = name, uniqId: UniqidOf[RecordStmtTermC[Rec]] = uniqId, fields: Vector[FieldTermC[Rec]] = fields, body: Option[BlockTermC[Rec]] = body, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(
+      name: Name = name,
+      uniqId: UniqidOf[RecordStmtTermC[Rec]] = uniqId,
+      fields: Vector[FieldTermC[Rec]] = fields,
+      body: Option[BlockTermC[Rec]] = body,
+      meta: OptionTermMeta = meta
+  ): ThisTree =
     cons.apply(name, uniqId, fields, body, meta)
 
   override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
