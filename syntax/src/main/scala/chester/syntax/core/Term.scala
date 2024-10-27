@@ -23,6 +23,7 @@ case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
 type OptionTermMeta = Option[TermMeta]
 
+@FunctionalInterface
 trait CallingArgTermF[Rec <: TermT[Rec], ThisTree <: CallingArgTermC[Rec]] {
   def apply(value: Rec, ty: Rec, name: Option[Name], vararg: Boolean, meta: OptionTermMeta): ThisTree
 }
@@ -63,6 +64,7 @@ case class CallingArgTerm(
     copy(value = f(value), ty = f(ty))
 }
 
+@FunctionalInterface
 trait CallingF[Rec <: TermT[Rec], ThisTree <: CallingC[Rec]] {
   def apply(args: Vector[CallingArgTermC[Rec]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
 }
@@ -97,6 +99,7 @@ case class Calling(
   override def descent(f: Term => Term, g: TreeMap[Term]): Calling = copy(args = args.map(g))
 }
 
+@FunctionalInterface
 trait FCallTermF[Rec <: TermT[Rec], ThisTree <: FCallTermC[Rec]] {
   def apply(f: Rec, args: Vector[CallingC[Rec]], meta: OptionTermMeta): ThisTree
 }
