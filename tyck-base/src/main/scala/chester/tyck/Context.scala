@@ -7,20 +7,20 @@ import chester.tyck.api.SymbolCollector
 import chester.uniqid.UniqidOf
 
 case class TyAndVal(
-                     ty: Term,
-                     value: Term
-                   ) {}
+    ty: Term,
+    value: Term
+) {}
 
 object TyAndVal {}
 
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
-                        name: Name,
-                        uniqId: UniqidOf[ReferenceCall],
-                        ref: ReferenceCall,
-                        ty: Term,
-                        reference: Option[SymbolCollector] = None
-                      )
+    name: Name,
+    uniqId: UniqidOf[ReferenceCall],
+    ref: ReferenceCall,
+    ty: Term,
+    reference: Option[SymbolCollector] = None
+)
 object ContextItem {}
 case class Imports()
 
@@ -29,17 +29,17 @@ object Imports {
 }
 
 case class Context(
-                    map: Map[Name, UniqidOf[ReferenceCall]] = Map.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
-                    contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
-                    Map.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
-                    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = Map.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
-                    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = Map.empty,
-                    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = Map.empty,
-                    imports: Imports = Imports.Empty,
-                    loadedModules: LoadedModules = LoadedModules.Empty,
-                    operators: OperatorsContext = OperatorsContext.Default,
-                    currentModule: ModuleRef = DefaultModule
-                  ) {
+    map: Map[Name, UniqidOf[ReferenceCall]] = Map.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
+    contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
+      Map.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
+    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = Map.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
+    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = Map.empty,
+    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = Map.empty,
+    imports: Imports = Imports.Empty,
+    loadedModules: LoadedModules = LoadedModules.Empty,
+    operators: OperatorsContext = OperatorsContext.Default,
+    currentModule: ModuleRef = DefaultModule
+) {
   def updateModule(module: ModuleRef): Context = copy(currentModule = module)
 
   def getKnown(x: ReferenceCall): Option[TyAndVal] =
@@ -52,8 +52,8 @@ case class Context(
     knownAdd(Seq(id -> y))
 
   def knownAdd(
-                seq: Seq[(UniqidOf[ReferenceCall], TyAndVal)]
-              ): Context = {
+      seq: Seq[(UniqidOf[ReferenceCall], TyAndVal)]
+  ): Context = {
     val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
       assert(!acc.contains(item._1), s"Duplicate key ${item._1}")
       acc + item

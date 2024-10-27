@@ -36,7 +36,7 @@ trait CallingArgTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   def vararg: Boolean
   override def toTerm: CallingArgTerm = CallingArgTerm(value.toTerm, ty.toTerm, name, vararg, meta)
   def cons: CallingArgTermF[Rec, ThisTree]
-  
+
   override def toDoc(using options: PrettierOptions): Doc = {
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
     val nameDoc = name.map(_.toDoc <+> Docs.`:`).getOrElse(Doc.empty)
@@ -57,7 +57,8 @@ case class CallingArgTerm(
     name: Option[Name] = None,
     vararg: Boolean = false,
     meta: OptionTermMeta
-) extends WHNF with CallingArgTermC[Term] derives ReadWriter {
+) extends WHNF
+    with CallingArgTermC[Term] derives ReadWriter {
   override def cons = this.copy
   override type ThisTree = CallingArgTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): CallingArgTerm =
@@ -74,8 +75,8 @@ trait CallingC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   def args: Vector[CallingArgTermC[Rec]]
   def implicitly: Boolean
   override def toTerm: Calling = Calling(args.map(_.toTerm), implicitly, meta)
-    def cons: CallingF[Rec, ThisTree]
-  
+  def cons: CallingF[Rec, ThisTree]
+
   override def toDoc(using options: PrettierOptions): Doc = {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
@@ -93,7 +94,8 @@ case class Calling(
     args: Vector[CallingArgTerm],
     implicitly: Boolean = false,
     meta: OptionTermMeta
-) extends WHNF with CallingC[Term] derives ReadWriter {
+) extends WHNF
+    with CallingC[Term] derives ReadWriter {
   override type ThisTree = Calling
   override def cons = this.copy
   override def descent(f: Term => Term, g: TreeMap[Term]): Calling = copy(args = args.map(g))
@@ -110,7 +112,7 @@ trait FCallTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   def args: Vector[CallingC[Rec]]
   override def toTerm: FCallTerm = FCallTerm(f.toTerm, args.map(_.toTerm), meta)
   def cons: FCallTermF[Rec, ThisTree]
-  
+
   override def toDoc(using options: PrettierOptions): Doc = {
     val fDoc = f.toDoc
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
@@ -129,7 +131,8 @@ case class FCallTerm(
     f: Term,
     args: Vector[Calling],
     meta: OptionTermMeta
-) extends WHNF with FCallTermC[Term] {
+) extends WHNF
+    with FCallTermC[Term] {
   override type ThisTree = FCallTerm
   override def cons = this.copy
   override def descent(a: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
@@ -172,7 +175,8 @@ case class Bind(
     bind: LocalV,
     ty: Term,
     meta: OptionTermMeta
-) extends Pat with BindC[Term] {
+) extends Pat
+    with BindC[Term] {
   override type ThisTree = Bind
   override def cons = this.copy
 
@@ -463,7 +467,7 @@ case class Prop(level: Term, meta: OptionTermMeta) extends Sort with PropC[Term]
 trait FTypeC[Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: FTypeC[Rec]
   def level: Rec
-  def copy(level: Rec = level, meta:  OptionTermMeta = meta): ThisTree
+  def copy(level: Rec = level, meta: OptionTermMeta = meta): ThisTree
   override def toTerm: FType = FType(level.toTerm, meta)
   override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(copy(level = f(level)))
 
@@ -829,7 +833,8 @@ case class ArgTerm(
     default: Option[Term] = None,
     vararg: Boolean = false,
     meta: OptionTermMeta
-) extends WHNF with ArgTermC[Term] {
+) extends WHNF
+    with ArgTermC[Term] {
   override type ThisTree = ArgTerm
   override def cons = this.copy
 
@@ -847,9 +852,9 @@ object ArgTerm {
 @FunctionalInterface
 trait TelescopeTermF[Rec <: TermT[Rec], ThisTree <: TelescopeTermC[Rec]] {
   def apply(
-    args: Vector[ArgTermC[Rec]],
-    implicitly: Boolean,
-    meta: OptionTermMeta
+      args: Vector[ArgTermC[Rec]],
+      implicitly: Boolean,
+      meta: OptionTermMeta
   ): ThisTree
 }
 
@@ -860,7 +865,7 @@ trait TelescopeTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   def cons: TelescopeTermF[Rec, ThisTree]
 
   override def toTerm: TelescopeTerm = TelescopeTerm(args.map(_.toTerm), implicitly, meta)
-  
+
   override def toDoc(using options: PrettierOptions): Doc = {
     val argsDoc =
       args.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
@@ -872,9 +877,9 @@ trait TelescopeTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   }
 
   def cpy(
-    args: Vector[ArgTermC[Rec]] = args,
-    implicitly: Boolean = implicitly,
-    meta: OptionTermMeta = meta
+      args: Vector[ArgTermC[Rec]] = args,
+      implicitly: Boolean = implicitly,
+      meta: OptionTermMeta = meta
   ): ThisTree = cons.apply(args, implicitly, meta)
 
   override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
@@ -891,7 +896,8 @@ case class TelescopeTerm(
     args: Vector[ArgTerm],
     implicitly: Boolean = false,
     meta: OptionTermMeta
-) extends WHNF with TelescopeTermC[Term] {
+) extends WHNF
+    with TelescopeTermC[Term] {
   override type ThisTree = TelescopeTerm
   override def cons = this.copy
 
@@ -935,7 +941,8 @@ case class Function(
     ty: FunctionType,
     body: Term,
     meta: OptionTermMeta
-) extends WHNF with FunctionC[Term] {
+) extends WHNF
+    with FunctionC[Term] {
   override type ThisTree = Function
   override def cons = this.copy
 
@@ -961,10 +968,10 @@ case class Matching(
 @FunctionalInterface
 trait FunctionTypeF[Rec <: TermT[Rec], ThisTree <: FunctionTypeC[Rec]] {
   def apply(
-    telescope: Vector[TelescopeTermC[Rec]],
-    resultTy: Rec,
-    effects: EffectsM,
-    meta: OptionTermMeta
+      telescope: Vector[TelescopeTermC[Rec]],
+      resultTy: Rec,
+      effects: EffectsM,
+      meta: OptionTermMeta
   ): ThisTree
 }
 
@@ -995,10 +1002,10 @@ trait FunctionTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   }
 
   def cpy(
-    telescope: Vector[TelescopeTermC[Rec]] = telescope,
-    resultTy: Rec = resultTy,
-    effects: EffectsM = effects,
-    meta: OptionTermMeta = meta
+      telescope: Vector[TelescopeTermC[Rec]] = telescope,
+      resultTy: Rec = resultTy,
+      effects: EffectsM = effects,
+      meta: OptionTermMeta = meta
   ): ThisTree = cons.apply(telescope, resultTy, effects, meta)
 
   override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
@@ -1011,11 +1018,12 @@ trait FunctionTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
 }
 
 case class FunctionType(
-  telescope: Vector[TelescopeTerm],
-  resultTy: Term,
-  effects: EffectsM = NoEffect,
-  meta: OptionTermMeta
-) extends WHNF with FunctionTypeC[Term] {
+    telescope: Vector[TelescopeTerm],
+    resultTy: Term,
+    effects: EffectsM = NoEffect,
+    meta: OptionTermMeta
+) extends WHNF
+    with FunctionTypeC[Term] {
   override type ThisTree = FunctionType
   override def cons = this.copy
 
@@ -1180,7 +1188,7 @@ sealed trait Effect extends WHNF derives ReadWriter {
 case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM derives ReadWriter {
   override type ThisTree = Effects
   override def descent(f: Term => Term, g: TreeMap[Term]): Effects = thisOr(
-    copy(effects = effects.map { case (k, v) => (g(k) , f(v)) })
+    copy(effects = effects.map { case (k, v) => (g(k), f(v)) })
   )
 
   override def toDoc(using options: PrettierOptions): Doc =
@@ -1196,7 +1204,7 @@ case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermM
     effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
   override def replaceMeta(f: MetaTerm => Term): Effects = copy(effects = effects.map { case (a, b) =>
-    (a.replaceMeta(f).asInstanceOf[LocalV] , b.replaceMeta(f))
+    (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
   })
 }
 
@@ -1262,14 +1270,15 @@ trait LocalVC[Rec <: TermT[Rec]] extends ReferenceCallC[Rec] {
   override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(cpy(ty = f(ty)))
 }
 
-implicit def LocalVConversion[Rec <: TermT[Rec]] (x: UniqidOf[LocalVC[Rec]]): UniqidOf[LocalV] = x.asInstanceOf[UniqidOf[LocalV]]
+implicit def LocalVConversion[Rec <: TermT[Rec]](x: UniqidOf[LocalVC[Rec]]): UniqidOf[LocalV] = x.asInstanceOf[UniqidOf[LocalV]]
 
 case class LocalV(
     name: Name,
     ty: Term,
     uniqId: UniqidOf[LocalV],
     meta: OptionTermMeta
-) extends ReferenceCall with LocalVC[Term] {
+) extends ReferenceCall
+    with LocalVC[Term] {
   override type ThisTree = LocalV
   override def cons = this.copy
 
@@ -1306,14 +1315,15 @@ trait ToplevelVC[Rec <: TermT[Rec]] extends ReferenceCallC[Rec] {
   def name = id.name
 }
 
-implicit def conversionTop[Rec <: TermT[Rec]] (x: UniqidOf[ToplevelVC[Rec]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
+implicit def conversionTop[Rec <: TermT[Rec]](x: UniqidOf[ToplevelVC[Rec]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
 
 case class ToplevelV(
     id: AbsoluteRef,
     ty: Term,
     uniqId: UniqidOf[ToplevelV],
     meta: OptionTermMeta
-) extends ReferenceCall with ToplevelVC[Term] {
+) extends ReferenceCall
+    with ToplevelVC[Term] {
   override type ThisTree = ToplevelV
   override def cons = this.copy
 
