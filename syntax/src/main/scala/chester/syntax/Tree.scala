@@ -1,6 +1,5 @@
 package chester.syntax
 
-import chester.syntax.core.Term
 import chester.utils.reuse
 
 trait Tree[RootTree <: Tree[RootTree]] extends Any {
@@ -22,7 +21,7 @@ trait Tree[RootTree <: Tree[RootTree]] extends Any {
   )
   final def descent2(f: TreeMap[RootTree]): ThisTree = descent(
     { x =>
-      implicit val ev33 = ev3(using x)
+      implicit val ev33: ThisTree <:< RootTree = ev3(using x)
       f.use(x)
     },
     f

@@ -238,7 +238,7 @@ class CLI[F[_]](using
   def formatFiles(files: Seq[String]): F[Unit] = {
     for {
       _ <- IO.println(s"Formatting files: ${files.mkString(", ")}")
-      _ <- IO.println(s"WIP")
+      _ <- IO.println("WIP")
       _ <- Runner.pure(())
     } yield ()
   }

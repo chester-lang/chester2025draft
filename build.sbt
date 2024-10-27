@@ -12,6 +12,7 @@ ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("testAll", "rootJVM/test ; rootJS/test ; rootNative/test")
 
+addCommandAlias("format0", "scalafmtAll ; scalafmtSbt ; rootJVM/scalafixAll")
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
 inThisBuild(

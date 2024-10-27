@@ -59,7 +59,7 @@ case class CallingArgTerm(
     meta: OptionTermMeta
 ) extends WHNF
     with CallingArgTermC[Term] derives ReadWriter {
-  override def cons = this.copy
+  override def cons: CallingArgTermF[Term, ThisTree] = this.copy
   override type ThisTree = CallingArgTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): CallingArgTerm =
     copy(value = f(value), ty = f(ty))
@@ -97,7 +97,7 @@ case class Calling(
 ) extends WHNF
     with CallingC[Term] derives ReadWriter {
   override type ThisTree = Calling
-  override def cons = this.copy
+  override def cons: CallingF[Term, ThisTree] = this.copy
   override def descent(f: Term => Term, g: TreeMap[Term]): Calling = copy(args = args.map(g))
 }
 
@@ -134,7 +134,7 @@ case class FCallTerm(
 ) extends WHNF
     with FCallTermC[Term] {
   override type ThisTree = FCallTerm
-  override def cons = this.copy
+  override def cons: FCallTermF[Term, ThisTree] = this.copy
   override def descent(a: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
     copy(f = a(f), args = args.map(g))
   )
@@ -178,7 +178,7 @@ case class Bind(
 ) extends Pat
     with BindC[Term] {
   override type ThisTree = Bind
-  override def cons = this.copy
+  override def cons: BindF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(bind = g(bind), ty = f(ty)))
 }
@@ -836,7 +836,7 @@ case class ArgTerm(
 ) extends WHNF
     with ArgTermC[Term] {
   override type ThisTree = ArgTerm
-  override def cons = this.copy
+  override def cons: ArgTermF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): ArgTerm = thisOr(
     copy(bind = g(bind), ty = f(ty), default = default.map(f))
@@ -899,7 +899,7 @@ case class TelescopeTerm(
 ) extends WHNF
     with TelescopeTermC[Term] {
   override type ThisTree = TelescopeTerm
-  override def cons = this.copy
+  override def cons: TelescopeTermF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): TelescopeTerm = thisOr(
     copy(args = args.map(g))
@@ -944,7 +944,7 @@ case class Function(
 ) extends WHNF
     with FunctionC[Term] {
   override type ThisTree = Function
-  override def cons = this.copy
+  override def cons: FunctionF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Function = thisOr(copy(ty = g(ty), body = f(body)))
 }
@@ -1025,7 +1025,7 @@ case class FunctionType(
 ) extends WHNF
     with FunctionTypeC[Term] {
   override type ThisTree = FunctionType
-  override def cons = this.copy
+  override def cons: FunctionTypeF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): FunctionType = thisOr(
     copy(
@@ -1280,7 +1280,7 @@ case class LocalV(
 ) extends ReferenceCall
     with LocalVC[Term] {
   override type ThisTree = LocalV
-  override def cons = this.copy
+  override def cons: LocalVF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): LocalV = thisOr(copy(ty = f(ty)))
 
@@ -1325,7 +1325,7 @@ case class ToplevelV(
 ) extends ReferenceCall
     with ToplevelVC[Term] {
   override type ThisTree = ToplevelV
-  override def cons = this.copy
+  override def cons: ToplevelVF[Term, ThisTree] = this.copy
 
   override def descent(f: Term => Term, g: TreeMap[Term]): ToplevelV = thisOr(copy(ty = f(ty)))
 
