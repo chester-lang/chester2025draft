@@ -58,4 +58,6 @@ trait TreeMap[Tre <: Tree[Tre]] {
   final inline def apply[T <: Tre](x: T): T = use(x).asInstanceOf[T]
 }
 
-implicit inline def convertSpecialMap[T <: Term](inline f: TreeMap[Term]): T => T = x => f.use(x).asInstanceOf[T]
+implicit  def convertSpecialMap2[A <: Tree[A], T <: A]( f: TreeMap[A]): Tree[A] => T = x => f.use(x.asInstanceOf[T]).asInstanceOf[T]
+
+implicit  def conversion1[A <: Tree[A], T <: Tree[A], U <:T](x:Vector[T]): Vector[U] = x.asInstanceOf[Vector[U]]

@@ -23,53 +23,114 @@ case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
 type OptionTermMeta = Option[TermMeta]
 
-case class CallingArgTerm(
-    value: Term,
-    ty: Term,
-    name: Option[Name] = None,
-    vararg: Boolean = false,
-    meta: OptionTermMeta
-) extends WHNF derives ReadWriter {
+trait CallingArgTermF[Rec <: TermT[Rec], ThisTree <: CallingArgTermC[Rec]] {
+  def apply(value: Rec, ty: Rec, name: Option[Name], vararg: Boolean, meta: OptionTermMeta): ThisTree
+}
+
+trait CallingArgTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
+  override type ThisTree <: CallingArgTermC[Rec]
+  def value: Rec
+  def ty: Rec
+  def name: Option[Name]
+  def vararg: Boolean
+  override def toTerm: CallingArgTerm = CallingArgTerm(value.toTerm, ty.toTerm, name, vararg, meta)
+  def cons: CallingArgTermF[Rec, ThisTree]
+  
   override def toDoc(using options: PrettierOptions): Doc = {
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
     val nameDoc = name.map(_.toDoc <+> Docs.`:`).getOrElse(Doc.empty)
     group(nameDoc <+> value.toDoc <+> varargDoc <+> Docs.`:` <+> ty.toDoc)
   }
 
+  def cpy(value: Rec = value, ty: Rec = ty, name: Option[Name] = name, vararg: Boolean = vararg, meta: OptionTermMeta = meta): ThisTree =
+    cons.apply(value, ty, name, vararg, meta)
+
+  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+    cpy(value = f(value), ty = f(ty))
+  )
+}
+
+case class CallingArgTerm(
+    value: Term,
+    ty: Term,
+    name: Option[Name] = None,
+    vararg: Boolean = false,
+    meta: OptionTermMeta
+) extends WHNF with CallingArgTermC[Term] derives ReadWriter {
+  override def cons = this.copy
   override type ThisTree = CallingArgTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): CallingArgTerm =
     copy(value = f(value), ty = f(ty))
+}
+
+trait CallingF[Rec <: TermT[Rec], ThisTree <: CallingC[Rec]] {
+  def apply(args: Vector[CallingArgTermC[Rec]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
+}
+
+trait CallingC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
+  override type ThisTree <: CallingC[Rec]
+  def args: Vector[CallingArgTermC[Rec]]
+  def implicitly: Boolean
+  override def toTerm: Calling = Calling(args.map(_.toTerm), implicitly, meta)
+    def cons: CallingF[Rec, ThisTree]
+  
+  override def toDoc(using options: PrettierOptions): Doc = {
+    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
+    if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
+  }
+  
+  def cpy(args: Vector[CallingArgTermC[Rec]] = args, implicitly: Boolean = implicitly, meta: OptionTermMeta = meta): ThisTree =
+    cons.apply(args, implicitly, meta)
+
+  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+    cpy(args = args.map(g))
+  )
 }
 
 case class Calling(
     args: Vector[CallingArgTerm],
     implicitly: Boolean = false,
     meta: OptionTermMeta
-) extends WHNF derives ReadWriter {
-  override def toDoc(using options: PrettierOptions): Doc = {
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
-  }
-
+) extends WHNF with CallingC[Term] derives ReadWriter {
   override type ThisTree = Calling
-  def descent(f: Term => Term, g: TreeMap[Term]): Calling = copy(args = args.map(g))
+  override def cons = this.copy
+  override def descent(f: Term => Term, g: TreeMap[Term]): Calling = copy(args = args.map(g))
+}
+
+trait FCallTermF[Rec <: TermT[Rec], ThisTree <: FCallTermC[Rec]] {
+  def apply(f: Rec, args: Vector[CallingC[Rec]], meta: OptionTermMeta): ThisTree
+}
+
+trait FCallTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
+  override type ThisTree <: FCallTermC[Rec]
+  def f: Rec
+  def args: Vector[CallingC[Rec]]
+  override def toTerm: FCallTerm = FCallTerm(f.toTerm, args.map(_.toTerm), meta)
+  def cons: FCallTermF[Rec, ThisTree]
+  
+  override def toDoc(using options: PrettierOptions): Doc = {
+    val fDoc = f.toDoc
+    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
+    group(fDoc <+> argsDoc)
+  }
+  
+  def cpy(f: Rec = f, args: Vector[CallingC[Rec]] = args, meta: OptionTermMeta = meta): ThisTree =
+    cons.apply(f, args, meta)
+
+  def descent(a: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+    cpy(f = a(f), args = args.map(g))
+  )
 }
 
 case class FCallTerm(
     f: Term,
     args: Vector[Calling],
     meta: OptionTermMeta
-) extends WHNF {
+) extends WHNF with FCallTermC[Term] {
   override type ThisTree = FCallTerm
-
-  override def toDoc(using options: PrettierOptions): Doc = {
-    val fDoc = f.toDoc
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    group(fDoc <+> argsDoc)
-  }
-
-  override def descent(op: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
-    copy(f = op(f), args = args.map(g))
+  override def cons = this.copy
+  override def descent(a: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
+    copy(f = a(f), args = args.map(g))
   )
 }
 
@@ -184,7 +245,7 @@ sealed trait Term extends ToDoc with TermT[Term] with ContainsUniqid derives Rea
   }
 }
 
-sealed trait WHNFT[Rec <: TermT[Rec]] extends TermT[Rec] {
+trait WHNFT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: WHNFT[Rec]
   override def whnf: Trilean = True
 }
@@ -193,7 +254,7 @@ sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
   override type ThisTree <: WHNF
 }
 
-sealed trait UnevalT[Rec <: TermT[Rec]] extends TermT[Rec] {
+trait UnevalT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: UnevalT[Rec]
   override def whnf: Trilean = False
 }
@@ -201,7 +262,7 @@ sealed trait UnevalT[Rec <: TermT[Rec]] extends TermT[Rec] {
 sealed trait Uneval extends Term with UnevalT[Term] derives ReadWriter {
   override type ThisTree <: Uneval
 }
-sealed trait SpecialTermT[Rec <: TermT[Rec]] extends TermT[Rec] {
+trait SpecialTermT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: SpecialTermT[Rec]
   override def whnf: Trilean = Unknown
 }
@@ -209,7 +270,7 @@ sealed trait SpecialTermT[Rec <: TermT[Rec]] extends TermT[Rec] {
 sealed trait SpecialTerm extends Term with SpecialTermT[Term] derives ReadWriter {
   override type ThisTree <: SpecialTerm
 }
-sealed trait TermWithUniqidT[Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqid {
+trait TermWithUniqidT[Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqid {
   override type ThisTree <: TermWithUniqidT[Rec]
   override def uniqId: UniqidOf[Rec]
 }
@@ -220,7 +281,7 @@ sealed trait TermWithUniqid extends Term with TermWithUniqidT[Term] derives Read
   def switchUniqId(r: UReplacer): TermWithUniqid
 }
 
-sealed trait EffectsMT[Rec <: TermT[Rec]] extends TermT[Rec] {
+trait EffectsMT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: EffectsMT[Rec]
 }
 
@@ -263,7 +324,7 @@ case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(terms = terms.map(f)))
 }
 
-sealed trait TypeTermT[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
+trait TypeTermT[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: TypeTermT[Rec]
 }
 
@@ -271,7 +332,7 @@ sealed trait TypeTerm extends Term with TypeTermT[Term] with WHNF derives ReadWr
   override type ThisTree <: TypeTerm
 }
 
-sealed trait SortT[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
+trait SortT[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
   override type ThisTree <: SortT[Rec]
   def level: TermT[Rec]
 }
@@ -281,7 +342,7 @@ sealed trait Sort extends TypeTerm with SortT[Term] derives ReadWriter {
   def level: Term
 }
 
-sealed trait TypeT[Rec <: TermT[Rec]] extends SortT[Rec] {
+trait TypeT[Rec <: TermT[Rec]] extends SortT[Rec] {
   override type ThisTree <: TypeT[Rec]
   def level: Rec
 }
@@ -308,7 +369,7 @@ case class LevelType(meta: OptionTermMeta) extends TypeTerm with WithType with L
   override def ty: Term = Type0
 }
 
-sealed trait LevelT[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WHNFT[Rec] {
+trait LevelT[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WHNFT[Rec] {
   override type ThisTree <: LevelT[Rec]
 }
 
@@ -394,7 +455,7 @@ sealed trait LiteralTerm extends Term with LiteralTermT[Term] with WHNF derives 
   override type ThisTree <: LiteralTerm
 }
 
-sealed trait AbstractIntTermT[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
+trait AbstractIntTermT[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
   override type ThisTree <: AbstractIntTermT[Rec]
 }
 
@@ -448,7 +509,7 @@ object NaturalTerm {
   def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm.from(value, meta = None)
 }
 
-sealed trait WithTypeT[Rec <: TermT[Rec]] extends TermT[Rec] {
+trait WithTypeT[Rec <: TermT[Rec]] extends TermT[Rec] {
   override type ThisTree <: WithTypeT[Rec]
   def ty: Rec
 }
