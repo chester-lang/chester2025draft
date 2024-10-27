@@ -55,9 +55,10 @@ trait TreeMap[Tre <: Tree[Tre]] {
 
   /** note that special rules might apply when x is MetaTerm, which is hard to represent in scala type system */
   def use[T <: Tre](x: T): x.ThisTree
-  final inline def apply[T <: Tre](x: T): T = use(x).asInstanceOf[T]
+  final def apply[T <: Tre](x: T): T = use(x).asInstanceOf[T]
 }
 
 implicit  def convertSpecialMap2[A <: Tree[A], T <: A]( f: TreeMap[A]): Tree[A] => T = x => f.use(x.asInstanceOf[T]).asInstanceOf[T]
-
 implicit  def conversion1[A <: Tree[A], T <: Tree[A], U <:T](x:Vector[T]): Vector[U] = x.asInstanceOf[Vector[U]]
+implicit  def conversion11[A <: Tree[A], T <: Tree[A], U <:T](x:T): U = x.asInstanceOf[U]
+//implicit  def conversion2[A <: Tree[A], T <: Tree[A]](x:T): A&T = x.asInstanceOf[A&T]

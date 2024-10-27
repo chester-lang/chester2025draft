@@ -195,7 +195,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         val elaboratedKey = elab(keyExpr, newType, effects)
         val fieldType = newType
         val elaboratedValue = elab(valueExpr, fieldType, effects)
-        fieldTypeVars += (elaboratedKey -> fieldType)
+        val _ = fieldTypeVars.put(elaboratedKey , fieldType)
         Some(ObjectClauseValueTerm(elaboratedKey, elaboratedValue, convertMeta(expr.meta)))
       // Handle other possible clauses
       case _ => ???
