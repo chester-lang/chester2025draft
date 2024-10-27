@@ -140,9 +140,11 @@ case class FCallTerm(
 object FCallTerm {}
 
 sealed trait Pat extends SpecialTerm derives ReadWriter {
+  override type ThisTree <: Pat
 }
 
 case class Bind(bind: LocalV, ty: Term, meta: OptionTermMeta) extends Pat {
+  override type ThisTree = Bind
   override def toDoc(using options: PrettierOptions): Doc = bind.toDoc <+> Docs.`:` <+> ty.toDoc
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(bind=g(bind), ty = f(ty)))
 }
