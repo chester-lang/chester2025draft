@@ -1991,6 +1991,76 @@ case class InterfaceStmtTerm(
   }
 }
 
+@FunctionalInterface
+trait ObjectCallTermF[Rec <: TermT[Rec], ThisTree <: ObjectCallTermC[Rec]] {
+  def apply(objectRef: Rec, meta: OptionTermMeta): ThisTree
+}
+
+trait ObjectCallTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
+  override type ThisTree <: ObjectCallTermC[Rec]
+  def objectRef: Rec
+  def cons: ObjectCallTermF[Rec, ThisTree]
+  
+  override def toTerm: ObjectCallTerm = ObjectCallTerm(objectRef.toTerm, meta)
+  
+  override def toDoc(using options: PrettierOptions): Doc =
+    group("ObjectCall" <+> objectRef.toDoc)
+    
+  def cpy(objectRef: Rec = objectRef, meta: OptionTermMeta = meta): ThisTree =
+    cons.apply(objectRef, meta)
+    
+  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+    cpy(objectRef = f(objectRef))
+  )
+}
+
+case class ObjectCallTerm(
+    objectRef: Term,
+    meta: OptionTermMeta
+) extends Uneval with ObjectCallTermC[Term] {
+  override type ThisTree = ObjectCallTerm
+  override def cons: ObjectCallTermF[Term, ThisTree] = this.copy
+  
+  override def descent(f: Term => Term, g: TreeMap[Term]): ObjectCallTerm = thisOr(
+    copy(objectRef = f(objectRef))
+  )
+}
+
+@FunctionalInterface
+trait ObjectTypeTermF[Rec <: TermT[Rec], ThisTree <: ObjectTypeTermC[Rec]] {
+  def apply(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ThisTree  
+}
+
+trait ObjectTypeTermC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
+  override type ThisTree <: ObjectTypeTermC[Rec]
+  def objectDef: ObjectStmtTerm
+  def cons: ObjectTypeTermF[Rec, ThisTree]
+  
+  override def toTerm: ObjectTypeTerm = ObjectTypeTerm(objectDef, meta)
+  
+  override def toDoc(using options: PrettierOptions): Doc =
+    Doc.text("ObjectType(") <> objectDef.name.toDoc <> Doc.text(")")
+    
+  def cpy(objectDef: ObjectStmtTerm = objectDef, meta: OptionTermMeta = meta): ThisTree =
+    cons.apply(objectDef, meta)
+    
+  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+    cpy(objectDef = g(objectDef))
+  )
+}
+
+case class ObjectTypeTerm(
+    objectDef: ObjectStmtTerm,
+    meta: OptionTermMeta
+) extends TypeTerm with ObjectTypeTermC[Term] {
+  override type ThisTree = ObjectTypeTerm
+  override def cons: ObjectTypeTermF[Term, ThisTree] = this.copy
+  
+  override def descent(f: Term => Term, g: TreeMap[Term]): ObjectTypeTerm = thisOr(
+    copy(objectDef = g(objectDef))
+  )
+}
+
 case class ObjectStmtTerm(
     name: Name,
     uniqId: UniqidOf[ObjectStmtTerm],
@@ -2011,30 +2081,5 @@ case class ObjectStmtTerm(
       extendsClause = extendsClause.map(f),
       body = body.map(g)
     )
-  )
-}
-
-case class ObjectCallTerm(
-    objectRef: Term,
-    meta: OptionTermMeta
-) extends Uneval {
-  override def toDoc(using options: PrettierOptions): Doc =
-    group("ObjectCall" <+> objectRef.toDoc)
-
-  override type ThisTree = ObjectCallTerm
-  override def descent(f: Term => Term, g: TreeMap[Term]): ObjectCallTerm = thisOr(
-    copy(objectRef = f(objectRef))
-  )
-}
-case class ObjectTypeTerm(
-    objectDef: ObjectStmtTerm,
-    meta: OptionTermMeta
-) extends TypeTerm {
-  override def toDoc(using options: PrettierOptions): Doc =
-    Doc.text("ObjectType(") <> objectDef.name.toDoc <> Doc.text(")")
-
-  override type ThisTree = ObjectTypeTerm
-  override def descent(f: Term => Term, g: TreeMap[Term]): ObjectTypeTerm = thisOr(
-    copy(objectDef = g(objectDef))
   )
 }
