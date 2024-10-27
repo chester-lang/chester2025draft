@@ -19,6 +19,29 @@ import chester.uniqid.*
 import scala.collection.immutable.HashMap
 import scala.language.implicitConversions
 
+/* Type Hierarchy Naming Conventions:
+ *
+ * The codebase follows these suffix patterns:
+ * 
+ * - *C (e.g. LocalVC): Abstract "case class-like" traits that define the structure and behavior
+ *   for a specific term type. These contain the common fields and methods that will be 
+ *   implemented by concrete case classes.
+ *
+ * - *F (e.g. LocalVF): Function interfaces used for constructing terms. These define
+ *   factory methods that create instances of the corresponding *C types.
+ *   They enable flexible term construction while maintaining type safety.
+ *
+ * - *T (e.g. TermT): Abstract "trait-like" interfaces that define the core behavior
+ *   for a category of terms. These represent the fundamental abstractions and typically
+ *   extend other trait hierarchies.
+ *
+ * Example hierarchy:
+ * - TermT[Rec] - Base trait for all terms
+ *   - LocalVC[Rec] - Structure for local variables
+ *     - LocalV - Concrete implementation
+ *   - LocalVF[Rec, ThisTree] - Factory for creating LocalV instances
+ */
+
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
 type OptionTermMeta = Option[TermMeta]
