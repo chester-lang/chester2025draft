@@ -80,7 +80,7 @@ trait CallingC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
   }
-  
+
   def cpy(args: Vector[CallingArgTermC[Rec]] = args, implicitly: Boolean = implicitly, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(args, implicitly, meta)
 
@@ -116,7 +116,7 @@ trait FCallTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     group(fDoc <+> argsDoc)
   }
-  
+
   def cpy(f: Rec = f, args: Vector[CallingC[Rec]] = args, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(f, args, meta)
 
@@ -139,18 +139,12 @@ case class FCallTerm(
 
 object FCallTerm {}
 
-sealed trait Pat extends ToDoc derives ReadWriter {
-  override def toDoc(using options: PrettierOptions): Doc = toString
-
-  def descent(patOp: Pat => Pat, termOp: Term => Term): Pat = this
-
-  def thisOr(x: Pat): this.type = reuse(this, x.asInstanceOf[this.type])
+sealed trait Pat extends SpecialTerm derives ReadWriter {
 }
 
 case class Bind(bind: LocalV, ty: Term, meta: OptionTermMeta) extends Pat {
-  override def descent(patOp: Pat => Pat, termOp: Term => Term): Pat = thisOr(
-    copy(ty = termOp(ty))
-  )
+  override def toDoc(using options: PrettierOptions): Doc = bind.toDoc <+> Docs.`:` <+> ty.toDoc
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(bind=g(bind), ty = f(ty)))
 }
 
 object Bind {
