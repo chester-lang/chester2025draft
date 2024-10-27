@@ -56,11 +56,9 @@ object TyckResult {
         Some(
           (
             x.problems
-              .filter(_.isInstanceOf[TyckError])
-              .asInstanceOf[Vector[TyckError]],
+              .collect { case e: TyckError => e },
             x.problems
-              .filter(_.isInstanceOf[TyckWarning])
-              .asInstanceOf[Vector[TyckWarning]],
+              .collect { case w: TyckWarning => w },
             x.state,
             x.result
           )
