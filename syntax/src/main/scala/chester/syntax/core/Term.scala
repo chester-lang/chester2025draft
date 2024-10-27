@@ -2106,3 +2106,84 @@ case class ObjectStmtTerm(
     )
   )
 }
+sealed trait NodeKind derives ReadWriter
+sealed trait AbstractNodeKind extends NodeKind derives ReadWriter
+sealed trait ConcreteNodeKind extends NodeKind derives ReadWriter
+
+object NodeKind {
+  // AbstractNodeKinds
+  case object Term extends AbstractNodeKind
+  case object WHNF extends AbstractNodeKind
+  case object Uneval extends AbstractNodeKind
+  case object SpecialTerm extends AbstractNodeKind
+  case object TermWithUniqid extends AbstractNodeKind
+  case object EffectsM extends AbstractNodeKind
+  case object Pat extends AbstractNodeKind
+  case object TypeTerm extends AbstractNodeKind
+  case object Sort extends AbstractNodeKind
+  case object Level extends AbstractNodeKind
+  case object LiteralTerm extends AbstractNodeKind
+  case object AbstractIntTerm extends AbstractNodeKind
+  case object WithType extends AbstractNodeKind
+  case object ReferenceCall extends AbstractNodeKind
+  case object ErrorTerm extends AbstractNodeKind
+  case object StmtTerm extends AbstractNodeKind
+  case object TypeDefinition extends AbstractNodeKind
+
+  // ConcreteNodeKinds
+  case object MetaTerm extends ConcreteNodeKind
+  case object ListTerm extends ConcreteNodeKind
+  case object Type extends ConcreteNodeKind
+  case object Prop extends ConcreteNodeKind
+  case object LevelFinite extends ConcreteNodeKind
+  case object LevelUnrestricted extends ConcreteNodeKind
+  case object IntTerm extends ConcreteNodeKind
+  case object IntegerTerm extends ConcreteNodeKind
+  case object RationalTerm extends ConcreteNodeKind
+  case object BooleanTerm extends ConcreteNodeKind
+  case object StringTerm extends ConcreteNodeKind
+  case object SymbolTerm extends ConcreteNodeKind
+  case object IntegerType extends ConcreteNodeKind
+  case object IntType extends ConcreteNodeKind
+  case object UIntType extends ConcreteNodeKind
+  case object NaturalType extends ConcreteNodeKind
+  case object RationalType extends ConcreteNodeKind
+  case object FloatType extends ConcreteNodeKind
+  case object StringType extends ConcreteNodeKind
+  case object SymbolType extends ConcreteNodeKind
+  case object AnyType extends ConcreteNodeKind
+  case object LiteralType extends ConcreteNodeKind
+  case object BooleanType extends ConcreteNodeKind
+  case object LevelType extends ConcreteNodeKind
+  case object ArgTerm extends ConcreteNodeKind
+  case object TelescopeTerm extends ConcreteNodeKind
+  case object Function extends ConcreteNodeKind
+  case object FunctionType extends ConcreteNodeKind
+  case object ObjectClauseValueTerm extends ConcreteNodeKind
+  case object ObjectTerm extends ConcreteNodeKind
+  case object ObjectType extends ConcreteNodeKind
+  case object Union extends ConcreteNodeKind
+  case object Intersection extends ConcreteNodeKind
+  case object ExceptionEffect extends ConcreteNodeKind
+  case object DivergeEffect extends ConcreteNodeKind
+  case object IOEffect extends ConcreteNodeKind
+  case object STEffect extends ConcreteNodeKind
+  case object LocalV extends ConcreteNodeKind
+  case object ToplevelV extends ConcreteNodeKind
+  case object LetStmtTerm extends ConcreteNodeKind
+  case object DefStmtTerm extends ConcreteNodeKind
+  case object ExprStmtTerm extends ConcreteNodeKind
+  case object NonlocalOrLocalReturn extends ConcreteNodeKind
+  case object TupleType extends ConcreteNodeKind
+  case object TupleTerm extends ConcreteNodeKind
+  case object BlockTerm extends ConcreteNodeKind
+  case object Annotation extends ConcreteNodeKind
+  case object FieldTerm extends ConcreteNodeKind
+  case object RecordStmtTerm extends ConcreteNodeKind
+  case object RecordConstructorCallTerm extends ConcreteNodeKind
+  case object TraitStmtTerm extends ConcreteNodeKind
+  case object InterfaceStmtTerm extends ConcreteNodeKind
+  case object ObjectCallTerm extends ConcreteNodeKind
+  case object ObjectTypeTerm extends ConcreteNodeKind
+  case object ObjectStmtTerm extends ConcreteNodeKind
+}
