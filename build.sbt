@@ -22,6 +22,28 @@ inThisBuild(
   )
 )
 
+lazy val up = inputKey[Unit]("Run pnpm install and update in site and vscode folders")
+up := {
+  val log = streams.value.log
+  val folders = Seq(
+    file("site"),
+    file("vscode"),
+    file("js-for-jvm")
+  )
+
+  folders.foreach { dir =>
+    if (dir.exists()) {
+      log.info(s"Updating dependencies in ${dir.getName}...")
+      Process("pnpm install", dir) ! log
+      Process("pnpm update", dir) ! log
+    } else {
+      log.warn(s"Directory ${dir.getName} does not exist, skipping")
+    }
+  }
+  
+  log.success("Finished updating all dependencies")
+}
+
 val scala3Version = "3.5.2"
 val scala2Version = "2.13.15"
 
