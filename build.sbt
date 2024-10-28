@@ -1282,9 +1282,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "-Xlint:unchecked",
         "-processorpath",
         processorPath,
-        "-source",
-        "17",
-        "-target",
+        "--release",
         "17"
       )
     }
