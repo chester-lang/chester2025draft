@@ -30,6 +30,8 @@ implicit object DefaultIO extends IO[Future] {
   inline override def println(x: String): Future[Unit] =
     Future.successful(Predef.println(x))
 
+  override inline def ask(x: String): String = ???
+
   inline override def readString(path: String): Future[String] =
     fsPromisesMod.readFile(path, BufferEncoding.utf8)
 
@@ -59,7 +61,7 @@ implicit object DefaultIO extends IO[Future] {
       false
     }
 
-  inline override def pwd: Future[String] =
+  inline override def workingDir: Future[String] =
     Future.successful(processMod.^.cwd())
 
   inline override def getHomeDir: Future[String] =

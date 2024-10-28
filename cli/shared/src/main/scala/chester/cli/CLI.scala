@@ -216,7 +216,7 @@ class CLI[F[_]](using
        |}""".stripMargin
   def initializePackageJson(): F[Unit] = {
     for {
-      currentDir <- IO.pwd
+      currentDir <- IO.workingDir
       packageJsonPath = io.pathOps.join(currentDir, "package.json")
       _ <- IO.writeString(packageJsonPath, content(io.pathOps.baseName(currentDir)))
       _ <- IO.println("Initialized package.json in the current directory.")

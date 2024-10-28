@@ -22,9 +22,9 @@ import scala.language.implicitConversions
 /* Type Hierarchy Naming Conventions:
  *
  * The codebase follows these suffix patterns:
- * 
+ *
  * - *C (e.g. LocalVC): Abstract "case class-like" traits that define the structure and behavior
- *   for a specific term type. These contain the common fields and methods that will be 
+ *   for a specific term type. These contain the common fields and methods that will be
  *   implemented by concrete case classes.
  *
  * - *F (e.g. LocalVF): Function interfaces used for constructing terms. These define
@@ -999,8 +999,8 @@ case class Function(
 
 @deprecated("not used")
 case class MatchingClause(meta: OptionTermMeta) extends WHNF {
-    override type ThisTree = MatchingClause
-    override def descent(f: Term => Term, g: TreeMap[Term]): MatchingClause = this
+  override type ThisTree = MatchingClause
+  override def descent(f: Term => Term, g: TreeMap[Term]): MatchingClause = this
   override def toDoc(using options: PrettierOptions): Doc = toString // TODO
 
 }
@@ -2023,15 +2023,15 @@ trait ObjectCallTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
   override type ThisTree <: ObjectCallTermC[Rec]
   def objectRef: Rec
   def cons: ObjectCallTermF[Rec, ThisTree]
-  
+
   override def toTerm: ObjectCallTerm = ObjectCallTerm(objectRef.toTerm, meta)
-  
+
   override def toDoc(using options: PrettierOptions): Doc =
     group("ObjectCall" <+> objectRef.toDoc)
-    
+
   def cpy(objectRef: Rec = objectRef, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(objectRef, meta)
-    
+
   def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
     cpy(objectRef = f(objectRef))
   )
@@ -2040,10 +2040,11 @@ trait ObjectCallTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
 case class ObjectCallTerm(
     objectRef: Term,
     meta: OptionTermMeta
-) extends Uneval with ObjectCallTermC[Term] {
+) extends Uneval
+    with ObjectCallTermC[Term] {
   override type ThisTree = ObjectCallTerm
   override def cons: ObjectCallTermF[Term, ThisTree] = this.copy
-  
+
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectCallTerm = thisOr(
     copy(objectRef = f(objectRef))
   )
@@ -2051,22 +2052,22 @@ case class ObjectCallTerm(
 
 @FunctionalInterface
 trait ObjectTypeTermF[Rec <: TermT[Rec], ThisTree <: ObjectTypeTermC[Rec]] {
-  def apply(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ThisTree  
+  def apply(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ThisTree
 }
 
 trait ObjectTypeTermC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
   override type ThisTree <: ObjectTypeTermC[Rec]
   def objectDef: ObjectStmtTerm
   def cons: ObjectTypeTermF[Rec, ThisTree]
-  
+
   override def toTerm: ObjectTypeTerm = ObjectTypeTerm(objectDef, meta)
-  
+
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("ObjectType(") <> objectDef.name.toDoc <> Doc.text(")")
-    
+
   def cpy(objectDef: ObjectStmtTerm = objectDef, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(objectDef, meta)
-    
+
   def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
     cpy(objectDef = g(objectDef))
   )
@@ -2075,10 +2076,11 @@ trait ObjectTypeTermC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
 case class ObjectTypeTerm(
     objectDef: ObjectStmtTerm,
     meta: OptionTermMeta
-) extends TypeTerm with ObjectTypeTermC[Term] {
+) extends TypeTerm
+    with ObjectTypeTermC[Term] {
   override type ThisTree = ObjectTypeTerm
   override def cons: ObjectTypeTermF[Term, ThisTree] = this.copy
-  
+
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectTypeTerm = thisOr(
     copy(objectDef = g(objectDef))
   )

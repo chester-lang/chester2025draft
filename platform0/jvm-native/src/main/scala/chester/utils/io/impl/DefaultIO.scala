@@ -53,14 +53,18 @@ implicit object DefaultIO extends IO[Id] {
   override inline def pathOps = DefaultPathOps
 
   override inline def println(x: String): Unit = Predef.println(x)
+  override inline def ask(x: String): String = {
+    Predef.print(x)
+    scala.io.StdIn.readLine()
+  }
 
-  override def pwd: os.Path = os2.pwd
+  override def workingDir: os.Path = os2.pwd
 
   override inline def readString(path: Path): String =
-    os.read(path.resolveFrom(pwd))
+    os.read(path.resolveFrom(workingDir))
 
   override inline def read(path: Path): Array[Byte] =
-    os.read.bytes(path.resolveFrom(pwd))
+    os.read.bytes(path.resolveFrom(workingDir))
 
   override inline def writeString(
       path: Path,
@@ -68,18 +72,18 @@ implicit object DefaultIO extends IO[Id] {
       append: Boolean = false
   ): Unit = {
     if (append) {
-      os.write.append(path.resolveFrom(pwd), content)
+      os.write.append(path.resolveFrom(workingDir), content)
     } else {
-      os.write(path.resolveFrom(pwd), content)
+      os.write(path.resolveFrom(workingDir), content)
     }
   }
 
   override inline def write(path: Path, content: Array[Byte]): Unit = {
-    os.write(path.resolveFrom(pwd), content)
+    os.write(path.resolveFrom(workingDir), content)
   }
 
   override inline def removeWhenExists(path: Path): Boolean = {
-    os.remove(path.resolveFrom(pwd), true)
+    os.remove(path.resolveFrom(workingDir), true)
   }
 
   override inline def getHomeDir: Path = FilePath(
@@ -87,10 +91,10 @@ implicit object DefaultIO extends IO[Id] {
   )
 
   override inline def exists(path: Path): Boolean =
-    os.exists(path.resolveFrom(pwd))
+    os.exists(path.resolveFrom(workingDir))
 
   override inline def createDirRecursiveIfNotExists(path: Path): Unit = {
-    os.makeDir.all(path.resolveFrom(pwd))
+    os.makeDir.all(path.resolveFrom(workingDir))
   }
 
   override inline def downloadToFile(url: String, path: Path): Unit =
@@ -104,7 +108,7 @@ implicit object DefaultIO extends IO[Id] {
     Files.setPosixFilePermissions(path.toNIO, perms)
   }
 
-  override inline def getAbsolutePath(path: Path): Path = path.resolveFrom(pwd)
+  override inline def getAbsolutePath(path: Path): Path = path.resolveFrom(workingDir)
 
   @ifndef("scalaNativeForTermux")
   override inline def call(command: Seq[String]): CommandOutput = {
@@ -119,10 +123,10 @@ implicit object DefaultIO extends IO[Id] {
   }
 
   override def listFiles(path: Path): Id[Seq[Path]] = {
-    os.list(path.resolveFrom(pwd))
+    os.list(path.resolveFrom(workingDir))
   }
 
   override def isDirectory(path: Path): Id[Boolean] = {
-    os.isDir(path.resolveFrom(pwd))
+    os.isDir(path.resolveFrom(workingDir))
   }
 }

@@ -40,7 +40,7 @@ up := {
       log.warn(s"Directory ${dir.getName} does not exist, skipping")
     }
   }
-  
+
   log.success("Finished updating all dependencies")
 }
 

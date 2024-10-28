@@ -24,11 +24,12 @@ implicit inline def summonPathOpsFromIO[F[_]](using
 trait IO[F[_]] {
   type Path
 
-  def pwd: F[Path]
+  def workingDir: F[Path]
 
   def pathOps: PathOps[Path]
 
   def println(x: String): F[Unit]
+  def ask(x: String): F[String]
 
   def readString(path: Path): F[String]
 
@@ -84,7 +85,8 @@ object IO {
 }
 
 extension [F[_]](_io: IO.type)(using io: IO[F]) {
-  inline def pwd: F[io.Path] = io.pwd
+  inline def ask(inline x: String): F[String] = io.ask(x)
+  inline def workingDir: F[io.Path] = io.workingDir
   inline def readString(inline path: io.Path): F[String] = io.readString(path)
   inline def read(inline path: io.Path): F[Array[Byte]] = io.read(path)
   inline def writeString(
