@@ -195,7 +195,7 @@ jobs:
 
     - name: Install Node.js dependencies
       working-directory: vscode
-      run: pnpm install
+      run: pnpm install --frozen-lockfile
 
     - name: Build VSCode Extension
       working-directory: vscode

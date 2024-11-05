@@ -76,7 +76,7 @@ jobs:
         working-directory: ./site
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
         working-directory: ./site
 
       - name: Build with sbt
