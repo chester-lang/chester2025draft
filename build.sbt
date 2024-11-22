@@ -44,7 +44,7 @@ up := {
   log.success("Finished updating all dependencies")
 }
 
-val scala3Version = "3.6.2-RC1"
+val scala3Version = "3.5.2"
 val scala2Version = "2.13.15"
 
 val graalVm = "graalvm-java23"
