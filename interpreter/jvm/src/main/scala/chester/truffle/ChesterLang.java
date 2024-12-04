@@ -16,7 +16,7 @@ public final class ChesterLang extends TruffleLanguage<ChesterContext> {
     }
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return Utils.parse(request);
     }
 
     @Override

@@ -547,7 +547,7 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("tyck"))
-  .dependsOn(utils, syntax, err, tyckBase, interpreter)
+  .dependsOn(utils, syntax, err, tyckBase, eval)
   .settings(
     name := "tyck",
     commonSettings
@@ -1236,11 +1236,22 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
+lazy val eval = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("eval"))
+  .dependsOn(tyckBase)
+  .settings(
+    name := "eval",
+    commonSettings
+  )
+  .jvmSettings(commonJvmLibSettings)
+
 lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("interpreter"))
-  .dependsOn(tyckBase)
+  .dependsOn(eval, parser)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
@@ -1332,6 +1343,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     lsp,
     buildProtocol,
     buildTool,
+    eval,
     interpreter,
     js,
     site,
