@@ -17,11 +17,6 @@ public final class BooleanNode extends LiteralNode implements BooleanTermC<TermN
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return value;
-    }
-
-    @Override
     public boolean value() {
         return value;
     }
