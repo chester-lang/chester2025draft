@@ -592,7 +592,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
     commonSettings,
     name := "js-for-jvm"
   )
-  .jsConfigure(_.dependsOn(platform0.js))
+  .jsConfigure(_.dependsOn(utils.js))
   .jsSettings(
     scalaJSLinkerConfig ~= {
       // Enable ECMAScript module output.
