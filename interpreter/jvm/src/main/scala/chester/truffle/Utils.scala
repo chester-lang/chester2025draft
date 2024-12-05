@@ -2,11 +2,17 @@ package chester.truffle
 
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.parser.*
+import chester.tyck.*
 
 object Utils {
   @throws[Exception]
   def parse(request: TruffleLanguage.ParsingRequest): CallTarget = {
-    val parsed = Parser.parseExpr(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString))
-    ???
+    Parser.parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString)) match {
+      case Left(err) => ???
+      case Right(result) => Tycker.check(parsedBlock) match {
+        case TyckResult.Success(result, _, _) => ???
+        case TyckResult.Failure(errors, _, _, _) => ???
+      }
+    }
   }
 }
