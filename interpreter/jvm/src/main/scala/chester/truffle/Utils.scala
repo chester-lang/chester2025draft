@@ -9,7 +9,7 @@ object Utils {
   def parse(request: TruffleLanguage.ParsingRequest): CallTarget = {
     Parser.parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString)) match {
       case Left(err) => ???
-      case Right(result) => Tycker.check(parsedBlock) match {
+      case Right(parsedBlock) => Tycker.check(parsedBlock) match {
         case TyckResult.Success(result, _, _) => ???
         case TyckResult.Failure(errors, _, _, _) => ???
       }
