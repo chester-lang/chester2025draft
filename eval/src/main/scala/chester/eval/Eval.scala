@@ -5,10 +5,10 @@ import chester.syntax.core.*
 
 case class EvalContext()
 
-case class Eval[Term<:TermT[Term]]() {
+case class Eval[Term <: TermT[Term]]() {
   type BooleanTerm = BooleanTermC[Term]
-  def evalNoEffect( code: Term, ctx: EvalContext =  EvalContext()): Value = code match {
+  def evalNoEffect(code: Term, ctx: EvalContext = EvalContext()): Value = code match {
     case b: BooleanTerm => Value(b.value)
-    case _ => ???
+    case _              => ???
   }
 }
