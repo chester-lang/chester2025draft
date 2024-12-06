@@ -1,22 +1,18 @@
 // TODO: More correctly implement toDoc
 package chester.syntax.core
 
-import cats.data.*
 import chester.doc.*
 import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
-import chester.error.ProblemUpickle.*
 import chester.syntax.core.orm.*
 import chester.syntax.*
-import chester.utils.{*, given}
+import chester.utils.*
 import chester.utils.doc.*
-import chester.utils.impls.*
 import spire.math.{Rational, Trilean}
 import spire.math.Trilean.*
 import upickle.default.*
 import chester.uniqid.*
 
-import scala.collection.immutable.HashMap
 import scala.language.implicitConversions
 
 /* Type Hierarchy Naming Conventions:

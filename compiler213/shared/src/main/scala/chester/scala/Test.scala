@@ -3,11 +3,8 @@ package chester.scala
 import chester.backend.scala.Scala
 
 import scala.meta
-import chester.syntax.core
 
-import scala.meta._
 
-import chester.syntax.core._
 import chester.syntax.core.simple._
 object Test {
   val test: meta.Term.Apply = q"function(argument)"

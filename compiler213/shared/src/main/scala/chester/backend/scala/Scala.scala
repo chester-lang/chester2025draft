@@ -1,7 +1,6 @@
 package chester.backend.scala
 
 import scala.meta
-import chester.syntax.core._
 import chester.syntax.core.simple._
 object Scala {
   case class ScalaContext()
