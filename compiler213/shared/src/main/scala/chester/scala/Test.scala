@@ -7,10 +7,12 @@ import chester.syntax.core
 
 import scala.meta._
 
+import chester.syntax.core._
+import chester.syntax.core.simple._
 object Test {
   val test: meta.Term.Apply = q"function(argument)"
   def callit(): Unit = {
     println(test)
-    println(Scala.compileExpr(core.BooleanTerm(false, meta = None)))
+    println(Scala.compileExpr(BooleanTerm(false, meta = None)))
   }
 }

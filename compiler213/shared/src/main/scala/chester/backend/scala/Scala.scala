@@ -1,7 +1,8 @@
 package chester.backend.scala
 
 import scala.meta
-import chester.syntax.core.*
+import chester.syntax.core._
+import chester.syntax.core.simple._
 object Scala {
   case class ScalaContext()
   def compileExpr(term: Term)(implicit ctx: ScalaContext = null): meta.Term = term match {
@@ -23,9 +24,9 @@ object Scala {
     case SymbolType(_)  => meta.Type.Name("Symbol")
     case _              => throw new NotImplementedError(s"not implemented ${ty.getClass.getName} $ty")
   }
-  def compileStmt(stmt: core.StmtTerm)(implicit ctx: ScalaContext = null): meta.Stat = stmt match {
+  def compileStmt(stmt: StmtTerm)(implicit ctx: ScalaContext = null): meta.Stat = stmt match {
     case LetStmtTerm(localv, value, ty, m) =>
-      Defn.Val(
+      meta.Defn.Val(
         mods = Nil,
         pats = List(meta.Pat.Var(name = meta.Term.Name(localv.name))),
         decltpe = Some(compileTy(ty)),
