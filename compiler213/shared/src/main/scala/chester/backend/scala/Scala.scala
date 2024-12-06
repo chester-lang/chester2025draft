@@ -1,24 +1,22 @@
 package chester.backend.scala
 
 import scala.meta
-import chester.syntax.core
-import scala.meta._
-import chester.syntax.core._
+import chester.syntax.core.*
 object Scala {
   case class ScalaContext()
-  def compileExpr(term: core.Term)(implicit ctx: ScalaContext = null): meta.Term = term match {
+  def compileExpr(term: Term)(implicit ctx: ScalaContext = null): meta.Term = term match {
     case IntegerTerm(i, _) => {
       require(i.isValidInt)
-      Lit.Int(i.toInt)
+      meta.Lit.Int(i.toInt)
     }
-    case IntTerm(i, _)     => Lit.Int(i)
-    case StringTerm(s, _)  => Lit.String(s)
-    case SymbolTerm(s, _)  => Lit.Symbol(Symbol(s))
-    case BooleanTerm(b, _) => Lit.Boolean(b)
-    case UnitTerm(_)       => Lit.Unit()
+    case IntTerm(i, _)     => meta.Lit.Int(i)
+    case StringTerm(s, _)  => meta.Lit.String(s)
+    case SymbolTerm(s, _)  => meta.Lit.Symbol(Symbol(s))
+    case BooleanTerm(b, _) => meta.Lit.Boolean(b)
+    case UnitTerm(_)       => meta.Lit.Unit()
     case _                 => throw new NotImplementedError(s"not implemented ${term.getClass.getName} $term")
   }
-  def compileTy(ty: core.Term)(implicit ctx: ScalaContext = null): meta.Type = ty match {
+  def compileTy(ty: Term)(implicit ctx: ScalaContext = null): meta.Type = ty match {
     case IntegerType(_) => meta.Type.Name("Int")
     case IntType(_)     => meta.Type.Name("Int")
     case StringType(_)  => meta.Type.Name("String")
