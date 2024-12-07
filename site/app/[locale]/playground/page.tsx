@@ -27,7 +27,11 @@ x`);
   const updateUrlHash = (code: string) => {
     if (typeof window !== 'undefined') {
       const compressed = deflate(code);
-      const encodedCode = base64Encode(compressed.buffer);
+      // Create a new ArrayBuffer with the compressed data
+      const arrayBuffer = new ArrayBuffer(compressed.length);
+      const view = new Uint8Array(arrayBuffer);
+      view.set(compressed);
+      const encodedCode = base64Encode(arrayBuffer);
       window.location.hash = encodedCode;
     }
   };
