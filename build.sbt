@@ -94,7 +94,7 @@ val commonSettings0 = Seq(
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.4-migration"),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.0.2" % Test,
+    "org.scalameta" %%% "munit" % "1.0.3" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
@@ -136,7 +136,7 @@ val scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.0.2" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalameta" %%% "munit" % "1.0.3" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
@@ -356,7 +356,7 @@ lazy val effektKiama = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "jline" % "jline" % "2.14.6",
-      "org.rogach" %% "scallop" % "5.1.0",
+      "org.rogach" %% "scallop" % "5.2.0",
       "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
       "com.google.code.gson" % "gson" % "2.11.0"
     )
@@ -438,7 +438,7 @@ lazy val utils = useSpire(
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M2"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4-M3"
       ),
       commonJvmLibSettings,
       libraryDependencies ++= Seq(
@@ -456,7 +456,7 @@ lazy val utils = useSpire(
     )
     .nativeSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M2"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4-M3"
       ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
