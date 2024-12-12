@@ -7,6 +7,8 @@ import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
 
+import sbt.dsl.LinterLevel.Ignore
+
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.25")
 ThisBuild / organization := "com.github.chester-lang"
 
@@ -44,7 +46,8 @@ up := {
   log.success("Finished updating all dependencies")
 }
 
-val scala3Version = "3.5.2"
+val scala3Version = "3.6.2"
+val scala3Lib = "3.5.2"
 val scala2Version = "2.13.15"
 
 val graalVm = "graalvm-java23"
@@ -70,8 +73,7 @@ val jdk17ClassVersion = 61.0f
 val jdk17: Boolean = false /* because of -java-output-version 8 */
 // classVersion >= jdk17ClassVersion
 
-val commonSettings = Seq(
-  scalaVersion := scala3Version,
+val commonSettings0 = Seq(
   // githubTokenSource := TokenSource.GitConfig("github.token") || TokenSource.Environment("GITHUB_TOKEN"),
   // resolvers += Resolver.githubPackages("edadma", "readline"),
   resolvers += "jitpack" at "https://jitpack.io",
@@ -116,6 +118,12 @@ val commonSettings = Seq(
     ExclusionRule("org.scala-native", "test-interface_native0.5_2.13")
   )
 )
+val commonSettings = commonSettings0 ++ Seq(
+  scalaVersion := scala3Version,
+)
+val commonLibSettings = commonSettings0 ++ Seq(
+  scalaVersion := scala3Lib,
+)
 val scala2Common = Seq(
   scalaVersion := scala2Version,
   resolvers += "jitpack" at "https://jitpack.io",
@@ -151,7 +159,7 @@ val scala2Common = Seq(
 )
 val commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
-  scalaVersion := scala3Version,
+  scalaVersion := scala3Lib,
   scalacOptions ++= Seq("-java-output-version", "11"),
   scalacOptions += "-nowarn"
 )
@@ -422,7 +430,7 @@ lazy val utils = useSpire(
     .in(file("utils"))
     .settings(
       name := "utils",
-      commonSettings,
+      commonLibSettings,
       baseDeps,
       libraryDependencies ++= Seq(
         "org.scala-graph" %%% "graph-core" % "2.0.2"
@@ -493,7 +501,7 @@ lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .dependsOn(kiamaCore)
   .settings(
     name := "pretty",
-    commonSettings
+    commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
 
@@ -504,7 +512,7 @@ lazy val parser = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .dependsOn(utils, syntax)
   .settings(
     name := "parser",
-    commonSettings
+    commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
 
@@ -516,7 +524,7 @@ lazy val syntax = useSpire(
     .dependsOn(utils, pretty)
     .settings(
       name := "syntax",
-      commonSettings
+      commonLibSettings
     )
     .jvmSettings(commonJvmLibSettings)
 )
@@ -528,7 +536,7 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .dependsOn(syntax)
   .settings(
     name := "err",
-    commonSettings
+    commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
 
