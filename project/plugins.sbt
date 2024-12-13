@@ -15,7 +15,7 @@ addSbtPlugin("com.eed3si9n.ifdef" % "sbt-ifdef" % "0.3.0")
 //addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 //addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.1.1")
 //addSbtPlugin("com.github.sbt" % "sbt-proguard" % "0.5.0")
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.12.0")
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 //addSbtPlugin("io.get-coursier" % "sbt-shading" % "2.1.5")
 
 libraryDependencies ++= Seq(
@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
 // cli tools
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 addDependencyTreePlugin
-addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.3")
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0+9-d2c99b38-SNAPSHOT")
-addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.6.1")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0+25-ce9fb4e7-SNAPSHOT")
+//addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.7.0")

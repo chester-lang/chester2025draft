@@ -30,9 +30,9 @@
     "@xterm/xterm": "5.6.0-beta.70",
     "base64-arraybuffer": "^1.0.2",
     "deepmerge": "^4.3.1",
-    "monaco-editor": "^0.52.0",
+    "monaco-editor": "^0.52.2",
     "next": "15.0.4",
-    "next-intl": "^3.26.0",
+    "next-intl": "^3.26.1",
     "pako": "^2.1.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -43,7 +43,7 @@
     "xterm-readline": "^1.1.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.10.2",
     "@types/pako": "^2.0.3",
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.1",
