@@ -505,13 +505,13 @@ lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-lazy val parser = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("parser"))
+  .in(file("reader"))
   .dependsOn(utils, syntax)
   .settings(
-    name := "parser",
+    name := "reader",
     commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
@@ -725,7 +725,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
-  .dependsOn(utils, parser, syntax, pretty, tyck)
+  .dependsOn(utils, reader, syntax, pretty, tyck)
   .settings(
     name := "core",
     assembly / assemblyOutputPath := file("target") / "chester-core.jar",
@@ -1259,7 +1259,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("interpreter"))
-  .dependsOn(eval, parser, tyck)
+  .dependsOn(eval, reader, tyck)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
@@ -1335,7 +1335,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     effektKiama,
     jsTypings,
     utils,
-    parser,
+    reader,
     compiler,
     compiler213,
     syntax,
