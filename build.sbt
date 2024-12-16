@@ -571,7 +571,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "compiler213",
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.12.0")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.12.1")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -696,7 +696,7 @@ object GeneratedJS {
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.12.0" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.12.1" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
@@ -1054,7 +1054,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.27.1"
+val jlineVersion = "3.28.0"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
@@ -1224,7 +1224,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-val jgitVersion = "7.0.0.202409031743-r"
+val jgitVersion = "7.1.0.202411261347-r"
 lazy val buildTool = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
