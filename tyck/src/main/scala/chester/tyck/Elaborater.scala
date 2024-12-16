@@ -11,13 +11,12 @@ import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariabl
 import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
-import language.experimental.captureChecking
 
 trait Elaborater extends ProvideCtx with ElaboraterCommon {
 
   def checkType(expr: Expr)(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
@@ -29,7 +28,7 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
 
   def checkTypeId(expr: Expr)(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): CellId[Term] = {
@@ -38,7 +37,7 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
 
   def elabTy(expr: Option[Expr])(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term =
@@ -49,14 +48,14 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
 
   def elab(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term
 
   def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): CellId[Term] = {
@@ -86,7 +85,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       effects: CIdOf[EffectsCell]
   )(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = toTerm {
@@ -184,7 +183,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       effects: CIdOf[EffectsCell]
   )(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {

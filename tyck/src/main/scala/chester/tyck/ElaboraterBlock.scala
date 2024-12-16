@@ -10,7 +10,6 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
-import language.experimental.captureChecking
 
 trait ElaboraterBlock extends Elaborater {
   // Sealed trait for declaration information, for forwarding references
@@ -58,7 +57,7 @@ trait ElaboraterBlock extends Elaborater {
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): BlockTerm
@@ -67,7 +66,7 @@ trait ElaboraterBlock extends Elaborater {
 trait ProvideElaboraterBlock extends ElaboraterBlock {
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): BlockTerm = {
@@ -139,7 +138,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       meta: Option[ExprMeta]
   )(using
       localCtx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[DeclarationInfo], Seq[Name], Context) = {
@@ -212,7 +211,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
@@ -240,7 +239,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
@@ -304,7 +303,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       effects: CIdOf[EffectsCell],
       meta: Option[ExprMeta]
   )(using
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
@@ -336,7 +335,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
@@ -376,7 +375,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
@@ -416,7 +415,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {

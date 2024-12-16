@@ -5,7 +5,6 @@ import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 import chester.error.*
 import chester.uniqid.*
-import language.experimental.captureChecking
 
 trait ElaboraterFunction extends ProvideCtx with Elaborater {
   def elabFunction(
@@ -14,7 +13,7 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
       outerEffects: CIdOf[EffectsCell]
   )(using
       ctx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term
@@ -26,7 +25,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
 
   def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
       localCtx: MutableContext,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): ArgTerm = {
@@ -47,7 +46,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
 
   def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
       localCtx: MutableContext,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): TelescopeTerm = {
@@ -65,7 +64,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
       outerEffects: CIdOf[EffectsCell]
   )(using
       ctx: Context,
-      parameter: SemanticCollector^,
+      parameter: SemanticCollector,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
