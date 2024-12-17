@@ -3,12 +3,11 @@ package chester.syntax.core
 import chester.doc.*
 import chester.error.*
 import chester.error.ProblemUpickle.*
-import chester.utils.{given}
+import chester.utils.given
 import chester.utils.impls.*
 import upickle.default.*
 
 import scala.language.implicitConversions
-
 import cats.data.*
 import chester.doc.const.*
 import chester.error.Problem
@@ -18,19 +17,24 @@ import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
 import spire.math.*
+import chester.syntax.TreeMap
+import chester.syntax.core.simple.Term
+import com.oracle.truffle.api.frame.VirtualFrame
 
 import scala.collection.immutable.HashMap
 
-object simple {
+object truffle {
+  type ExecuteGeneric = (VirtualFrame, Term) => Object
+  var globalExecuteGeneric: ExecuteGeneric = (_: VirtualFrame, _: Term) => ???
 
   case class CallingArgTerm(
-      value: Term,
-      ty: Term,
-      name: Option[Name] = None,
-      vararg: Boolean = false,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with CallingArgTermC[Term] derives ReadWriter {
+                             value: Term,
+                             ty: Term,
+                             name: Option[Name] = None,
+                             vararg: Boolean = false,
+                             meta: OptionTermMeta
+                           ) extends WHNF
+    with CallingArgTermC[Term] derives ReadWriter {
     override def cons: CallingArgTermF[Term, ThisTree] = this.copy
 
     override type ThisTree = CallingArgTerm
@@ -40,11 +44,11 @@ object simple {
   }
 
   case class Calling(
-      args: Vector[CallingArgTerm],
-      implicitly: Boolean = false,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with CallingC[Term] derives ReadWriter {
+                      args: Vector[CallingArgTerm],
+                      implicitly: Boolean = false,
+                      meta: OptionTermMeta
+                    ) extends WHNF
+    with CallingC[Term] derives ReadWriter {
     override type ThisTree = Calling
 
     override def cons: CallingF[Term, ThisTree] = this.copy
@@ -54,11 +58,11 @@ object simple {
   }
 
   case class FCallTerm(
-      f: Term,
-      args: Vector[Calling],
-      meta: OptionTermMeta
-  ) extends WHNF
-      with FCallTermC[Term] {
+                        f: Term,
+                        args: Vector[Calling],
+                        meta: OptionTermMeta
+                      ) extends WHNF
+    with FCallTermC[Term] {
     override type ThisTree = FCallTerm
 
     override def cons: FCallTermF[Term, ThisTree] = this.copy
@@ -75,11 +79,11 @@ object simple {
   }
 
   case class Bind(
-      bind: LocalV,
-      ty: Term,
-      meta: OptionTermMeta
-  ) extends Pat
-      with BindC[Term] {
+                   bind: LocalV,
+                   ty: Term,
+                   meta: OptionTermMeta
+                 ) extends Pat
+    with BindC[Term] {
     override type ThisTree = Bind
 
     override def cons: BindF[Term, ThisTree] = this.copy
@@ -92,66 +96,9 @@ object simple {
     def from(bind: LocalV): Bind = Bind(bind, bind.ty, None)
   }
 
-  sealed trait Term extends  TermT[Term]  with ContainsUniqid  derives ReadWriter {
+  sealed trait Term extends com.oracle.truffle.api.nodes.Node  with TermT[Term] derives ReadWriter {
     type ThisTree <: Term
-
-    def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
-
-    final def elevate(level: IntegerTerm): Term = {
-      require(level.value >= 0)
-      if (level.value == 0) this else doElevate(level)
-    }
-
-    // TODO: optimize
-    final def substitute[A <: TermWithUniqid](mapping: Seq[(A, Term)]): Term = {
-      mapping.foldLeft(this) { case (acc, (from, to)) =>
-        acc.substitute(from, to)
-      }
-    }
-
-    final def substitute(from: TermWithUniqid, to: Term): Term = {
-      if (from == to) return this
-      if (
-        to match {
-          case to: TermWithUniqid => from.uniqId == to.uniqId
-          case _                  => false
-        }
-      ) return this
-      descentRecursive {
-        case x: TermWithUniqid if x.uniqId == from.uniqId => to
-        case x                                            => x
-      }
-    }
-
-    def collectMeta: Vector[MetaTerm] = {
-      this match {
-        case term: MetaTerm => return Vector(term)
-        case _              =>
-      }
-      var result = Vector.empty[MetaTerm]
-      inspect { x => result ++= x.collectMeta }
-      result
-    }
-
-    def replaceMeta(f: MetaTerm => Term): Term = thisOr {
-      this match {
-        case term: MetaTerm => f(term)
-        case _ =>
-          descent2(new TreeMap[Term] {
-            def use[T <: Term](x: T): x.ThisTree = x.replaceMeta(f).asInstanceOf[x.ThisTree]
-          })
-      }
-    }
-
-    final override def collectU(collector: UCollector): Unit = inspectRecursive {
-      case x: TermWithUniqid => collector(x.uniqId)
-      case _                 =>
-    }
-
-    final override def replaceU(reranger: UReplacer): Term = descentRecursive {
-      case x: TermWithUniqid => x.switchUniqId(reranger)
-      case x                 => x
-    }
+    final def executeGeneric(frame: VirtualFrame) = globalExecuteGeneric(frame, this)
   }
 
   sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
@@ -475,11 +422,11 @@ object simple {
   val AnyType0Debug: AnyType = AnyType(Level0, meta = None)
 
   case class LiteralType(
-      literal: LiteralTerm,
-      meta: OptionTermMeta
-  ) extends TypeTerm
-      with WithType
-      with LiteralTypeC[Term] {
+                          literal: LiteralTerm,
+                          meta: OptionTermMeta
+                        ) extends TypeTerm
+    with WithType
+    with LiteralTypeC[Term] {
     override type ThisTree = LiteralType
 
     override def descent(f: Term => Term, g: TreeMap[Term]): LiteralType =
@@ -492,13 +439,13 @@ object simple {
   }
 
   case class ArgTerm(
-      bind: LocalV,
-      ty: Term,
-      default: Option[Term] = None,
-      vararg: Boolean = false,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with ArgTermC[Term] {
+                      bind: LocalV,
+                      ty: Term,
+                      default: Option[Term] = None,
+                      vararg: Boolean = false,
+                      meta: OptionTermMeta
+                    ) extends WHNF
+    with ArgTermC[Term] {
     override type ThisTree = ArgTerm
 
     override def cons: ArgTermF[Term, ThisTree] = this.copy
@@ -517,10 +464,10 @@ object simple {
   @FunctionalInterface
   trait TelescopeTermF[Rec <: TermT[Rec], ThisTree <: TelescopeTermC[Rec]] {
     def newTelescope(
-        args: Vector[ArgTermC[Rec]],
-        implicitly: Boolean,
-        meta: OptionTermMeta
-    ): ThisTree
+                      args: Vector[ArgTermC[Rec]],
+                      implicitly: Boolean,
+                      meta: OptionTermMeta
+                    ): ThisTree
   }
 
   object TelescopeTerm {
@@ -529,11 +476,11 @@ object simple {
   }
 
   case class TelescopeTerm(
-      args: Vector[ArgTerm],
-      implicitly: Boolean = false,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with TelescopeTermC[Term] {
+                            args: Vector[ArgTerm],
+                            implicitly: Boolean = false,
+                            meta: OptionTermMeta
+                          ) extends WHNF
+    with TelescopeTermC[Term] {
     override type ThisTree = TelescopeTerm
 
     override def cons: TelescopeTermF[Term, ThisTree] = this.copy
@@ -544,11 +491,11 @@ object simple {
   }
 
   case class Function(
-      ty: FunctionType,
-      body: Term,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with FunctionC[Term] {
+                       ty: FunctionType,
+                       body: Term,
+                       meta: OptionTermMeta
+                     ) extends WHNF
+    with FunctionC[Term] {
     override type ThisTree = Function
 
     override def cons: FunctionF[Term, ThisTree] = this.copy
@@ -567,10 +514,10 @@ object simple {
   }
 
   case class Matching(
-      ty: FunctionType,
-      clauses: NonEmptyVector[MatchingClause],
-      meta: OptionTermMeta
-  ) extends WHNF {
+                       ty: FunctionType,
+                       clauses: NonEmptyVector[MatchingClause],
+                       meta: OptionTermMeta
+                     ) extends WHNF {
     override type ThisTree = Matching
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Matching = thisOr(
@@ -581,12 +528,12 @@ object simple {
   }
 
   case class FunctionType(
-      telescope: Vector[TelescopeTerm],
-      resultTy: Term,
-      effects: EffectsM = NoEffect,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with FunctionTypeC[Term] {
+                           telescope: Vector[TelescopeTerm],
+                           resultTy: Term,
+                           effects: EffectsM = NoEffect,
+                           meta: OptionTermMeta
+                         ) extends WHNF
+    with FunctionTypeC[Term] {
     override type ThisTree = FunctionType
 
     override def cons: FunctionTypeF[Term, ThisTree] = this.copy
@@ -613,25 +560,25 @@ object simple {
   }
 
   case class ObjectClauseValueTerm(
-      key: Term,
-      value: Term,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with ObjectClauseValueTermC[Term] derives ReadWriter {
+                                    key: Term,
+                                    value: Term,
+                                    meta: OptionTermMeta
+                                  ) extends WHNF
+    with ObjectClauseValueTermC[Term] derives ReadWriter {
     override type ThisTree = ObjectClauseValueTerm
 
     override def cons: ObjectClauseValueTermF[Term, ThisTree] = this.copy
 
     override def descent(f: Term => Term, g: TreeMap[Term]): ObjectClauseValueTerm = (
       copy(key = f(key), value = f(value))
-    )
+      )
   }
 
   case class ObjectTerm(
-      clauses: Vector[ObjectClauseValueTerm],
-      meta: OptionTermMeta
-  ) extends WHNF
-      with ObjectTermC[Term] {
+                         clauses: Vector[ObjectClauseValueTerm],
+                         meta: OptionTermMeta
+                       ) extends WHNF
+    with ObjectTermC[Term] {
     override type ThisTree = ObjectTerm
 
     override def cons: ObjectTermF[Term, ThisTree] = this.copy
@@ -642,11 +589,11 @@ object simple {
   }
 
   case class ObjectType(
-      fieldTypes: Vector[ObjectClauseValueTerm],
-      exactFields: Boolean = false,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with ObjectTypeC[Term] {
+                         fieldTypes: Vector[ObjectClauseValueTerm],
+                         exactFields: Boolean = false,
+                         meta: OptionTermMeta
+                       ) extends WHNF
+    with ObjectTypeC[Term] {
     override type ThisTree = ObjectType
 
     override def cons: ObjectTypeF[Term, ThisTree] = this.copy
@@ -687,10 +634,10 @@ object simple {
   }
 
   private inline def flatList[T <: Term](
-      inline constructor: Vector[Term] => T,
-      inline unapply: Term => Option[Vector[Term]],
-      inline post: Vector[Term] => Vector[Term] = x => x
-  )(inline xs: Vector[Term]) = {
+                                          inline constructor: Vector[Term] => T,
+                                          inline unapply: Term => Option[Vector[Term]],
+                                          inline post: Vector[Term] => Vector[Term] = x => x
+                                        )(inline xs: Vector[Term]) = {
     val flattened = post(xs.flatMap { item =>
       unapply(item).getOrElse(Vector(item))
     })
@@ -743,7 +690,7 @@ object simple {
   }
 
   /** Effect needs to have reasonable equals and hashcode for simple comparison, whereas they are not requirements for other Terms
-    */
+   */
   sealed trait Effect extends WHNF derives ReadWriter {
     override type ThisTree <: Effect
 
@@ -771,10 +718,10 @@ object simple {
     def nonEmpty: Boolean = (effects ne NoEffect.effects) && effects.nonEmpty
 
     override def collectMeta: Vector[MetaTerm] =
-      effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
+      ??? // TODO // effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
     override def replaceMeta(f: MetaTerm => Term): Effects = copy(effects = effects.map { case (a, b) =>
-      (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
+      ??? // TODO // (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
     })
   }
 
@@ -810,12 +757,12 @@ object simple {
   implicit def LocalVConversion[Rec <: TermT[Rec]](x: UniqidOf[LocalVC[Rec]]): UniqidOf[LocalV] = x.asInstanceOf[UniqidOf[LocalV]]
 
   case class LocalV(
-      name: Name,
-      ty: Term,
-      uniqId: UniqidOf[LocalV],
-      meta: OptionTermMeta
-  ) extends ReferenceCall
-      with LocalVC[Term] {
+                     name: Name,
+                     ty: Term,
+                     uniqId: UniqidOf[LocalV],
+                     meta: OptionTermMeta
+                   ) extends ReferenceCall
+    with LocalVC[Term] {
     override type ThisTree = LocalV
 
     override def cons: LocalVF[Term, ThisTree] = this.copy
@@ -828,12 +775,12 @@ object simple {
   implicit def conversionTop[Rec <: TermT[Rec]](x: UniqidOf[ToplevelVC[Rec]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
 
   case class ToplevelV(
-      id: AbsoluteRef,
-      ty: Term,
-      uniqId: UniqidOf[ToplevelV],
-      meta: OptionTermMeta
-  ) extends ReferenceCall
-      with ToplevelVC[Term] {
+                        id: AbsoluteRef,
+                        ty: Term,
+                        uniqId: UniqidOf[ToplevelV],
+                        meta: OptionTermMeta
+                      ) extends ReferenceCall
+    with ToplevelVC[Term] {
     override type ThisTree = ToplevelV
 
     override def cons: ToplevelVF[Term, ThisTree] = this.copy
@@ -855,12 +802,12 @@ object simple {
   }
 
   case class LetStmtTerm(
-      localv: LocalV,
-      value: Term,
-      ty: Term,
-      meta: OptionTermMeta
-  ) extends StmtTerm
-      with LetStmtTermC[Term] {
+                          localv: LocalV,
+                          value: Term,
+                          ty: Term,
+                          meta: OptionTermMeta
+                        ) extends StmtTerm
+    with LetStmtTermC[Term] {
     override type ThisTree = LetStmtTerm
 
     override def cons: LetStmtTermF[Term, ThisTree] = this.copy
@@ -875,12 +822,12 @@ object simple {
   }
 
   case class DefStmtTerm(
-      localv: LocalV,
-      value: Term,
-      ty: Term,
-      meta: OptionTermMeta
-  ) extends StmtTerm
-      with DefStmtTermC[Term] {
+                          localv: LocalV,
+                          value: Term,
+                          ty: Term,
+                          meta: OptionTermMeta
+                        ) extends StmtTerm
+    with DefStmtTermC[Term] {
     override type ThisTree = DefStmtTerm
 
     override def cons: DefStmtTermF[Term, ThisTree] = this.copy
@@ -895,11 +842,11 @@ object simple {
   }
 
   case class ExprStmtTerm(
-      expr: Term,
-      ty: Term = AnyType0,
-      meta: OptionTermMeta
-  ) extends StmtTerm
-      with ExprStmtTermC[Term] {
+                           expr: Term,
+                           ty: Term = AnyType0,
+                           meta: OptionTermMeta
+                         ) extends StmtTerm
+    with ExprStmtTermC[Term] {
     override type ThisTree = ExprStmtTerm
 
     override def cons: ExprStmtTermF[Term, ThisTree] = this.copy
@@ -940,11 +887,11 @@ object simple {
   }
 
   case class BlockTerm(
-      statements: Vector[StmtTerm],
-      result: Term,
-      meta: OptionTermMeta
-  ) extends Uneval
-      with BlockTermC[Term] derives ReadWriter {
+                        statements: Vector[StmtTerm],
+                        result: Term,
+                        meta: OptionTermMeta
+                      ) extends Uneval
+    with BlockTermC[Term] derives ReadWriter {
     override type ThisTree = BlockTerm
 
     override def cons: BlockTermF[Term, ThisTree] = this.copy
@@ -958,12 +905,12 @@ object simple {
   }
 
   case class Annotation(
-      term: Term,
-      ty: Option[Term],
-      effects: Option[EffectsM],
-      meta: OptionTermMeta
-  ) extends Uneval
-      with AnnotationC[Term] {
+                         term: Term,
+                         ty: Option[Term],
+                         effects: Option[EffectsM],
+                         meta: OptionTermMeta
+                       ) extends Uneval
+    with AnnotationC[Term] {
     override type ThisTree = Annotation
 
     override def cons: AnnotationF[Term, ThisTree] = this.copy
@@ -994,11 +941,11 @@ object simple {
   }
 
   case class FieldTerm(
-      name: Name,
-      ty: Term,
-      meta: OptionTermMeta
-  ) extends WHNF
-      with FieldTermC[Term] derives ReadWriter {
+                        name: Name,
+                        ty: Term,
+                        meta: OptionTermMeta
+                      ) extends WHNF
+    with FieldTermC[Term] derives ReadWriter {
     override type ThisTree = FieldTerm
 
     override def cons: FieldTermF[Term, ThisTree] = this.copy
@@ -1013,13 +960,13 @@ object simple {
   implicit def c1(x: Option[BlockTermC[Term]]): Option[BlockTerm] = x.asInstanceOf[Option[BlockTerm]]
 
   case class RecordStmtTerm(
-      name: Name,
-      uniqId: UniqidOf[RecordStmtTerm] = Uniqid.generate[RecordStmtTerm],
-      fields: Vector[FieldTerm],
-      body: Option[BlockTerm],
-      meta: OptionTermMeta
-  ) extends TypeDefinition
-      with RecordStmtTermC[Term] {
+                             name: Name,
+                             uniqId: UniqidOf[RecordStmtTerm] = Uniqid.generate[RecordStmtTerm],
+                             fields: Vector[FieldTerm],
+                             body: Option[BlockTerm],
+                             meta: OptionTermMeta
+                           ) extends TypeDefinition
+    with RecordStmtTermC[Term] {
     override type ThisTree = RecordStmtTerm
 
     override def cons: RecordStmtTermF[Term, ThisTree] = this.copy
@@ -1035,10 +982,10 @@ object simple {
   }
 
   case class RecordConstructorCallTerm(
-      recordName: Name,
-      args: Vector[Term],
-      meta: OptionTermMeta
-  ) extends Uneval {
+                                        recordName: Name,
+                                        args: Vector[Term],
+                                        meta: OptionTermMeta
+                                      ) extends Uneval {
     override type ThisTree = RecordConstructorCallTerm
 
     override def descent(f: Term => Term, g: TreeMap[Term]): RecordConstructorCallTerm = thisOr(
@@ -1052,12 +999,12 @@ object simple {
   }
 
   case class TraitStmtTerm(
-      name: Name,
-      uniqId: UniqidOf[TraitStmtTerm] = Uniqid.generate[TraitStmtTerm],
-      extendsClause: Option[Term] = None,
-      body: Option[BlockTerm] = None,
-      meta: OptionTermMeta
-  ) extends TypeDefinition derives ReadWriter {
+                            name: Name,
+                            uniqId: UniqidOf[TraitStmtTerm] = Uniqid.generate[TraitStmtTerm],
+                            extendsClause: Option[Term] = None,
+                            body: Option[BlockTerm] = None,
+                            meta: OptionTermMeta
+                          ) extends TypeDefinition derives ReadWriter {
     override type ThisTree = TraitStmtTerm
 
     override def switchUniqId(r: UReplacer): TraitStmtTerm = copy(uniqId = r(uniqId))
@@ -1079,12 +1026,12 @@ object simple {
   }
 
   case class InterfaceStmtTerm(
-      name: Name,
-      uniqId: UniqidOf[InterfaceStmtTerm] = Uniqid.generate[InterfaceStmtTerm],
-      extendsClause: Option[Term] = None,
-      body: Option[BlockTerm] = None,
-      meta: OptionTermMeta
-  ) extends TypeDefinition derives ReadWriter {
+                                name: Name,
+                                uniqId: UniqidOf[InterfaceStmtTerm] = Uniqid.generate[InterfaceStmtTerm],
+                                extendsClause: Option[Term] = None,
+                                body: Option[BlockTerm] = None,
+                                meta: OptionTermMeta
+                              ) extends TypeDefinition derives ReadWriter {
     override type ThisTree = InterfaceStmtTerm
 
     override def switchUniqId(r: UReplacer): InterfaceStmtTerm = copy(uniqId = r(uniqId))
@@ -1106,10 +1053,10 @@ object simple {
   }
 
   case class ObjectCallTerm(
-      objectRef: Term,
-      meta: OptionTermMeta
-  ) extends Uneval
-      with ObjectCallTermC[Term] {
+                             objectRef: Term,
+                             meta: OptionTermMeta
+                           ) extends Uneval
+    with ObjectCallTermC[Term] {
     override type ThisTree = ObjectCallTerm
 
     override def cons: ObjectCallTermF[Term, ThisTree] = this.copy
@@ -1120,10 +1067,10 @@ object simple {
   }
 
   case class ObjectTypeTerm(
-      objectDef: ObjectStmtTerm,
-      meta: OptionTermMeta
-  ) extends TypeTerm
-      with ObjectTypeTermC[Term] {
+                             objectDef: ObjectStmtTerm,
+                             meta: OptionTermMeta
+                           ) extends TypeTerm
+    with ObjectTypeTermC[Term] {
     override type ThisTree = ObjectTypeTerm
 
     override def cons: ObjectTypeTermF[Term, ThisTree] = this.copy
@@ -1134,12 +1081,12 @@ object simple {
   }
 
   case class ObjectStmtTerm(
-      name: Name,
-      uniqId: UniqidOf[ObjectStmtTerm],
-      extendsClause: Option[Term],
-      body: Option[BlockTerm],
-      meta: OptionTermMeta
-  ) extends TypeDefinition derives ReadWriter {
+                             name: Name,
+                             uniqId: UniqidOf[ObjectStmtTerm],
+                             extendsClause: Option[Term],
+                             body: Option[BlockTerm],
+                             meta: OptionTermMeta
+                           ) extends TypeDefinition derives ReadWriter {
     override def switchUniqId(r: UReplacer): ObjectStmtTerm = copy(uniqId = r(uniqId))
 
     override def toDoc(using options: PrettierOptions): Doc = {

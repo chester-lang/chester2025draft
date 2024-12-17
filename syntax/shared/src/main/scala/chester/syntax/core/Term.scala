@@ -157,7 +157,19 @@ trait BindC[Rec <: TermT[Rec]] extends PatT[Rec] {
 }
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-trait TermT[Rec <: TermT[Rec]] extends Any with ToDoc with Tree[Rec] {
+trait TermT[Rec <: TermT[Rec]] extends Any with ToDoc with Tree[Rec]{
+  override def toDoc(using options: PrettierOptions): Doc = toString
+
+  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec
+
+  def mapFlatten[B](f: Rec => Seq[B]): Vector[B] = {
+    var result = Vector.empty[B]
+    inspectRecursive { term =>
+      result ++= f(term)
+    }
+    result
+  }
+
   def meta: OptionTermMeta
   def whnf: Trilean
   def toTerm: Term = {
