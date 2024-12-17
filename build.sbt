@@ -119,10 +119,10 @@ val commonSettings0 = Seq(
   )
 )
 val commonSettings = commonSettings0 ++ Seq(
-  scalaVersion := scala3Version,
+  scalaVersion := scala3Version
 )
 val commonLibSettings = commonSettings0 ++ Seq(
-  scalaVersion := scala3Lib,
+  scalaVersion := scala3Lib
 )
 val scala2Common = Seq(
   scalaVersion := scala2Version,
@@ -522,7 +522,7 @@ val dependOnGraal = Seq(
     "org.graalvm.truffle" % "truffle-dsl-processor" % graalvmVersion,
     "org.graalvm.truffle" % "truffle-tck" % graalvmVersion,
     "org.graalvm.sdk" % "graal-sdk" % graalvmVersion
-  ),
+  )
 )
 
 lazy val syntax = useSpire(

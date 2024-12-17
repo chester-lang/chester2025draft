@@ -23,7 +23,7 @@ import scala.collection.immutable.HashMap
 
 object simple {
 
-  sealed trait Term extends  TermT[Term]  with ContainsUniqid  derives ReadWriter {
+  sealed trait Term extends TermT[Term] with ContainsUniqid derives ReadWriter {
     type ThisTree <: Term
 
     def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))

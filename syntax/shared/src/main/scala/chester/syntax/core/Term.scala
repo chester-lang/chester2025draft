@@ -157,7 +157,7 @@ trait BindC[Term <: TermT[Term]] extends PatT[Term] {
 }
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-trait TermT[Term <: TermT[Term]] extends Any with ToDoc with Tree[Term]{
+trait TermT[Term <: TermT[Term]] extends Any with ToDoc with Tree[Term] {
   override def toDoc(using options: PrettierOptions): Doc = toString
 
   def descent(f: Term => Term, g: TreeMap[Term]): Term
