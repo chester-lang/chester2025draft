@@ -4,14 +4,14 @@ package chester.syntax.core
 import chester.doc.*
 import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
-import chester.syntax.core.orm.*
 import chester.syntax.*
+import chester.syntax.core.orm.*
+import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
-import spire.math.{Rational, Trilean}
 import spire.math.Trilean.*
+import spire.math.{Rational, Trilean}
 import upickle.default.*
-import chester.uniqid.*
 
 import scala.language.implicitConversions
 

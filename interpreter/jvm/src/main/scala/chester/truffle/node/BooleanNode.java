@@ -2,7 +2,6 @@ package chester.truffle.node;
 
 import chester.syntax.core.BooleanTermC;
 import chester.syntax.core.TermMeta;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import scala.Option;
 
