@@ -23,6 +23,68 @@ import scala.collection.immutable.HashMap
 
 object simple {
 
+  sealed trait Term extends  TermT[Term]  with ContainsUniqid  derives ReadWriter {
+    type ThisTree <: Term
+
+    def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
+
+    final def elevate(level: IntegerTerm): Term = {
+      require(level.value >= 0)
+      if (level.value == 0) this else doElevate(level)
+    }
+
+    // TODO: optimize
+    final def substitute[A <: TermWithUniqid](mapping: Seq[(A, Term)]): Term = {
+      mapping.foldLeft(this) { case (acc, (from, to)) =>
+        acc.substitute(from, to)
+      }
+    }
+
+    final def substitute(from: TermWithUniqid, to: Term): Term = {
+      if (from == to) return this
+      if (
+        to match {
+          case to: TermWithUniqid => from.uniqId == to.uniqId
+          case _                  => false
+        }
+      ) return this
+      descentRecursive {
+        case x: TermWithUniqid if x.uniqId == from.uniqId => to
+        case x                                            => x
+      }
+    }
+
+    def collectMeta: Vector[MetaTerm] = {
+      this match {
+        case term: MetaTerm => return Vector(term)
+        case _              =>
+      }
+      var result = Vector.empty[MetaTerm]
+      inspect { x => result ++= x.collectMeta }
+      result
+    }
+
+    def replaceMeta(f: MetaTerm => Term): Term = thisOr {
+      this match {
+        case term: MetaTerm => f(term)
+        case _ =>
+          descent2(new TreeMap[Term] {
+            def use[T <: Term](x: T): x.ThisTree = x.replaceMeta(f).asInstanceOf[x.ThisTree]
+          })
+      }
+    }
+
+    final override def collectU(collector: UCollector): Unit = inspectRecursive {
+      case x: TermWithUniqid => collector(x.uniqId)
+      case _                 =>
+    }
+
+    final override def replaceU(reranger: UReplacer): Term = descentRecursive {
+      case x: TermWithUniqid => x.switchUniqId(reranger)
+      case x                 => x
+    }
+  }
+
   case class CallingArgTerm(
       value: Term,
       ty: Term,
@@ -90,68 +152,6 @@ object simple {
   object Bind {
     @deprecated("meta")
     def from(bind: LocalV): Bind = Bind(bind, bind.ty, None)
-  }
-
-  sealed trait Term extends  TermT[Term]  with ContainsUniqid  derives ReadWriter {
-    type ThisTree <: Term
-
-    def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
-
-    final def elevate(level: IntegerTerm): Term = {
-      require(level.value >= 0)
-      if (level.value == 0) this else doElevate(level)
-    }
-
-    // TODO: optimize
-    final def substitute[A <: TermWithUniqid](mapping: Seq[(A, Term)]): Term = {
-      mapping.foldLeft(this) { case (acc, (from, to)) =>
-        acc.substitute(from, to)
-      }
-    }
-
-    final def substitute(from: TermWithUniqid, to: Term): Term = {
-      if (from == to) return this
-      if (
-        to match {
-          case to: TermWithUniqid => from.uniqId == to.uniqId
-          case _                  => false
-        }
-      ) return this
-      descentRecursive {
-        case x: TermWithUniqid if x.uniqId == from.uniqId => to
-        case x                                            => x
-      }
-    }
-
-    def collectMeta: Vector[MetaTerm] = {
-      this match {
-        case term: MetaTerm => return Vector(term)
-        case _              =>
-      }
-      var result = Vector.empty[MetaTerm]
-      inspect { x => result ++= x.collectMeta }
-      result
-    }
-
-    def replaceMeta(f: MetaTerm => Term): Term = thisOr {
-      this match {
-        case term: MetaTerm => f(term)
-        case _ =>
-          descent2(new TreeMap[Term] {
-            def use[T <: Term](x: T): x.ThisTree = x.replaceMeta(f).asInstanceOf[x.ThisTree]
-          })
-      }
-    }
-
-    final override def collectU(collector: UCollector): Unit = inspectRecursive {
-      case x: TermWithUniqid => collector(x.uniqId)
-      case _                 =>
-    }
-
-    final override def replaceU(reranger: UReplacer): Term = descentRecursive {
-      case x: TermWithUniqid => x.switchUniqId(reranger)
-      case x                 => x
-    }
   }
 
   sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {

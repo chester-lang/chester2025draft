@@ -32,10 +32,10 @@ import scala.language.implicitConversions
  *   extend other trait hierarchies.
  *
  * Example hierarchy:
- * - TermT[Rec] - Base trait for all terms
- *   - LocalVC[Rec] - Structure for local variables
+ * - TermT[Term] - Base trait for all terms
+ *   - LocalVC[Term] - Structure for local variables
  *     - LocalV - Concrete implementation
- *   - LocalVF[Rec, ThisTree] - Factory for creating LocalV instances
+ *   - LocalVF[Term, ThisTree] - Factory for creating LocalV instances
  */
 
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
@@ -43,18 +43,18 @@ case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 type OptionTermMeta = Option[TermMeta]
 
 @FunctionalInterface
-trait CallingArgTermF[Rec <: TermT[Rec], ThisTree <: CallingArgTermC[Rec]] {
-  def newCallingArgTerm(value: Rec, ty: Rec, name: Option[Name], vararg: Boolean, meta: OptionTermMeta): ThisTree
+trait CallingArgTermF[Term <: TermT[Term], ThisTree <: CallingArgTermC[Term]] {
+  def newCallingArgTerm(value: Term, ty: Term, name: Option[Name], vararg: Boolean, meta: OptionTermMeta): ThisTree
 }
 
-trait CallingArgTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: CallingArgTermC[Rec]
-  def value: Rec
-  def ty: Rec
+trait CallingArgTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: CallingArgTermC[Term]
+  def value: Term
+  def ty: Term
   def name: Option[Name]
   def vararg: Boolean
   override def toTerm: CallingArgTerm = CallingArgTerm(value.toTerm, ty.toTerm, name, vararg, meta)
-  def cons: CallingArgTermF[Rec, ThisTree]
+  def cons: CallingArgTermF[Term, ThisTree]
 
   override def toDoc(using options: PrettierOptions): Doc = {
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
@@ -63,30 +63,30 @@ trait CallingArgTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   }
 
   def cpy(
-      value: Rec = value,
-      ty: Rec = ty,
+      value: Term = value,
+      ty: Term = ty,
       name: Option[Name] = name,
       vararg: Boolean = vararg,
       meta: OptionTermMeta = meta
   ): ThisTree =
     cons.newCallingArgTerm(value, ty, name, vararg, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(value = f(value), ty = f(ty))
   )
 }
 
 @FunctionalInterface
-trait CallingF[Rec <: TermT[Rec], ThisTree <: CallingC[Rec]] {
-  def newCalling(args: Vector[CallingArgTermC[Rec]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
+trait CallingF[Term <: TermT[Term], ThisTree <: CallingC[Term]] {
+  def newCalling(args: Vector[CallingArgTermC[Term]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
 }
 
-trait CallingC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: CallingC[Rec]
-  def args: Vector[CallingArgTermC[Rec]]
+trait CallingC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: CallingC[Term]
+  def args: Vector[CallingArgTermC[Term]]
   def implicitly: Boolean
   override def toTerm: Calling = Calling(args.map(_.toTerm), implicitly, meta)
-  def cons: CallingF[Rec, ThisTree]
+  def cons: CallingF[Term, ThisTree]
 
   override def toDoc(using options: PrettierOptions): Doc = {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
@@ -94,28 +94,28 @@ trait CallingC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   }
 
   def cpy(
-      args: Vector[CallingArgTermC[Rec]] = args,
+      args: Vector[CallingArgTermC[Term]] = args,
       implicitly: Boolean = implicitly,
       meta: OptionTermMeta = meta
   ): ThisTree =
     cons.newCalling(args, implicitly, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(args = args.map(g))
   )
 }
 
 @FunctionalInterface
-trait FCallTermF[Rec <: TermT[Rec], ThisTree <: FCallTermC[Rec]] {
-  def newFCallTerm(f: Rec, args: Vector[CallingC[Rec]], meta: OptionTermMeta): ThisTree
+trait FCallTermF[Term <: TermT[Term], ThisTree <: FCallTermC[Term]] {
+  def newFCallTerm(f: Term, args: Vector[CallingC[Term]], meta: OptionTermMeta): ThisTree
 }
 
-trait FCallTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: FCallTermC[Rec]
-  def f: Rec
-  def args: Vector[CallingC[Rec]]
+trait FCallTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: FCallTermC[Term]
+  def f: Term
+  def args: Vector[CallingC[Term]]
   override def toTerm: FCallTerm = FCallTerm(f.toTerm, args.map(_.toTerm), meta)
-  def cons: FCallTermF[Rec, ThisTree]
+  def cons: FCallTermF[Term, ThisTree]
 
   override def toDoc(using options: PrettierOptions): Doc = {
     val fDoc = f.toDoc
@@ -123,46 +123,46 @@ trait FCallTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
     group(fDoc <+> argsDoc)
   }
 
-  def cpy(f: Rec = f, args: Vector[CallingC[Rec]] = args, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(f: Term = f, args: Vector[CallingC[Term]] = args, meta: OptionTermMeta = meta): ThisTree =
     cons.newFCallTerm(f, args, meta)
 
-  def descent(a: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(a: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(f = a(f), args = args.map(g))
   )
 }
 
-trait PatT[Rec <: TermT[Rec]] extends SpecialTermT[Rec] {
-  override type ThisTree <: PatT[Rec]
+trait PatT[Term <: TermT[Term]] extends SpecialTermT[Term] {
+  override type ThisTree <: PatT[Term]
 }
 
 @FunctionalInterface
-trait BindF[Rec <: TermT[Rec], ThisTree <: BindC[Rec]] {
-  def newBind(bind: LocalVC[Rec], ty: Rec, meta: OptionTermMeta): ThisTree
+trait BindF[Term <: TermT[Term], ThisTree <: BindC[Term]] {
+  def newBind(bind: LocalVC[Term], ty: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait BindC[Rec <: TermT[Rec]] extends PatT[Rec] {
-  override type ThisTree <: BindC[Rec]
+trait BindC[Term <: TermT[Term]] extends PatT[Term] {
+  override type ThisTree <: BindC[Term]
 
-  def bind: LocalVC[Rec]
-  def ty: Rec
-  def cons: BindF[Rec, ThisTree]
+  def bind: LocalVC[Term]
+  def ty: Term
+  def cons: BindF[Term, ThisTree]
 
   override def toTerm: Bind = Bind(bind.toTerm, ty.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc = bind.toDoc <+> Docs.`:` <+> ty.toDoc
 
-  def cpy(bind: LocalVC[Rec] = bind, ty: Rec = ty, meta: OptionTermMeta = meta): ThisTree = cons.newBind(bind, ty, meta)
+  def cpy(bind: LocalVC[Term] = bind, ty: Term = ty, meta: OptionTermMeta = meta): ThisTree = cons.newBind(bind, ty, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(cpy(bind = g(bind), ty = f(ty)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(bind = g(bind), ty = f(ty)))
 }
 
 /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-trait TermT[Rec <: TermT[Rec]] extends Any with ToDoc with Tree[Rec]{
+trait TermT[Term <: TermT[Term]] extends Any with ToDoc with Tree[Term]{
   override def toDoc(using options: PrettierOptions): Doc = toString
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec
+  def descent(f: Term => Term, g: TreeMap[Term]): Term
 
-  def mapFlatten[B](f: Rec => Seq[B]): Vector[B] = {
+  def mapFlatten[B](f: Term => Seq[B]): Vector[B] = {
     var result = Vector.empty[B]
     inspectRecursive { term =>
       result ++= f(term)
@@ -172,41 +172,41 @@ trait TermT[Rec <: TermT[Rec]] extends Any with ToDoc with Tree[Rec]{
 
   def meta: OptionTermMeta
   def whnf: Trilean
-  def toTerm: Term = {
-    assert(this.isInstanceOf[Term], "forgot to implement toTerm?")
-    this.asInstanceOf[Term]
+  def toTerm: simple.Term = {
+    assert(this.isInstanceOf[simple.Term], "forgot to implement toTerm?")
+    this.asInstanceOf[simple.Term]
   }
   def sourcePos: Option[SourcePos] = meta.map(_.sourcePos)
 }
 
 type AnyTerm = TermT[?]
 
-trait WHNFT[Rec <: TermT[Rec]] extends TermT[Rec] {
-  override type ThisTree <: WHNFT[Rec]
+trait WHNFT[Term <: TermT[Term]] extends TermT[Term] {
+  override type ThisTree <: WHNFT[Term]
   override def whnf: Trilean = True
 }
 
-trait UnevalT[Rec <: TermT[Rec]] extends TermT[Rec] {
-  override type ThisTree <: UnevalT[Rec]
+trait UnevalT[Term <: TermT[Term]] extends TermT[Term] {
+  override type ThisTree <: UnevalT[Term]
   override def whnf: Trilean = False
 }
 
-trait SpecialTermT[Rec <: TermT[Rec]] extends TermT[Rec] {
-  override type ThisTree <: SpecialTermT[Rec]
+trait SpecialTermT[Term <: TermT[Term]] extends TermT[Term] {
+  override type ThisTree <: SpecialTermT[Term]
   override def whnf: Trilean = Unknown
 }
 
-trait TermWithUniqidT[Rec <: TermT[Rec]] extends TermT[Rec] with HasUniqid {
-  override type ThisTree <: TermWithUniqidT[Rec]
-  override def uniqId: UniqidOf[TermT[Rec]]
+trait TermWithUniqidT[Term <: TermT[Term]] extends TermT[Term] with HasUniqid {
+  override type ThisTree <: TermWithUniqidT[Term]
+  override def uniqId: UniqidOf[TermT[Term]]
 }
 
-trait EffectsMT[Rec <: TermT[Rec]] extends TermT[Rec] {
-  override type ThisTree <: EffectsMT[Rec]
+trait EffectsMT[Term <: TermT[Term]] extends TermT[Term] {
+  override type ThisTree <: EffectsMT[Term]
 }
 
-trait MetaTermC[Rec <: TermT[Rec]] extends TermT[Rec] with EffectsMT[Rec] with SpecialTermT[Rec] {
-  override type ThisTree <: MetaTermC[Rec]
+trait MetaTermC[Term <: TermT[Term]] extends TermT[Term] with EffectsMT[Term] with SpecialTermT[Term] {
+  override type ThisTree <: MetaTermC[Term]
   def impl: HoldNotReadable[?]
   override def toTerm: MetaTerm = MetaTerm(impl, meta)
   override def toDoc(using options: PrettierOptions): Doc =
@@ -214,47 +214,47 @@ trait MetaTermC[Rec <: TermT[Rec]] extends TermT[Rec] with EffectsMT[Rec] with S
 
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = this
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 
-trait ListTermC[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
-  override type ThisTree <: ListTermC[Rec]
-  def terms: Vector[Rec]
+trait ListTermC[Term <: TermT[Term]] extends TermT[Term] with WHNFT[Term] {
+  override type ThisTree <: ListTermC[Term]
+  def terms: Vector[Term]
   override def toTerm: ListTerm = ListTerm(terms.map(_.toTerm), meta)
 }
 
-trait TypeTermT[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: TypeTermT[Rec]
+trait TypeTermT[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: TypeTermT[Term]
 }
 
-trait SortT[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
-  override type ThisTree <: SortT[Rec]
-  def level: TermT[Rec]
+trait SortT[Term <: TermT[Term]] extends TypeTermT[Term] {
+  override type ThisTree <: SortT[Term]
+  def level: TermT[Term]
 }
 
-trait TypeT[Rec <: TermT[Rec]] extends SortT[Rec] {
-  override type ThisTree <: TypeT[Rec]
-  def level: Rec
+trait TypeT[Term <: TermT[Term]] extends SortT[Term] {
+  override type ThisTree <: TypeT[Term]
+  def level: Term
   override def toTerm: Type = Type(level.toTerm, meta)
 }
 
-trait LevelTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: LevelTypeC[Rec]
+trait LevelTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: LevelTypeC[Term]
   override def toTerm: LevelType = LevelType(meta)
 }
 
-trait LevelT[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WHNFT[Rec] {
-  override type ThisTree <: LevelT[Rec]
+trait LevelT[Term <: TermT[Term]] extends TypeTermT[Term] with WHNFT[Term] {
+  override type ThisTree <: LevelT[Term]
 }
 
-trait LevelFiniteC[Rec <: TermT[Rec]] extends LevelT[Rec] {
-  override type ThisTree <: LevelFiniteC[Rec]
-  def n: Rec
+trait LevelFiniteC[Term <: TermT[Term]] extends LevelT[Term] {
+  override type ThisTree <: LevelFiniteC[Term]
+  def n: Term
   override def toTerm: LevelFinite = LevelFinite(n.toTerm, meta)
 }
 
-trait LevelUnrestrictedC[Rec <: TermT[Rec]] extends LevelT[Rec] {
-  override type ThisTree <: LevelUnrestrictedC[Rec]
+trait LevelUnrestrictedC[Term <: TermT[Term]] extends LevelT[Term] {
+  override type ThisTree <: LevelUnrestrictedC[Term]
   override def toTerm: LevelUnrestricted = LevelUnrestricted(meta)
 }
 
@@ -262,152 +262,152 @@ enum Usage derives ReadWriter {
   case None, Linear, Unrestricted
 }
 
-trait PropC[Rec <: TermT[Rec]] extends SortT[Rec] {
-  override type ThisTree <: PropC[Rec]
-  def level: Rec
+trait PropC[Term <: TermT[Term]] extends SortT[Term] {
+  override type ThisTree <: PropC[Term]
+  def level: Term
   override def toTerm: Prop = Prop(level.toTerm, meta)
 }
 
-trait FTypeC[Rec <: TermT[Rec]] extends SortT[Rec] {
-  override type ThisTree <: FTypeC[Rec]
-  def level: Rec
-  def copy(level: Rec = level, meta: OptionTermMeta = meta): ThisTree
+trait FTypeC[Term <: TermT[Term]] extends SortT[Term] {
+  override type ThisTree <: FTypeC[Term]
+  def level: Term
+  def copy(level: Term = level, meta: OptionTermMeta = meta): ThisTree
   override def toTerm: FType = FType(level.toTerm, meta)
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(copy(level = f(level)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 
-trait LiteralTermT[Rec <: TermT[Rec]] extends TermT[Rec] with WHNFT[Rec] {
-  override type ThisTree <: LiteralTermT[Rec]
+trait LiteralTermT[Term <: TermT[Term]] extends TermT[Term] with WHNFT[Term] {
+  override type ThisTree <: LiteralTermT[Term]
 }
 
-trait AbstractIntTermT[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
-  override type ThisTree <: AbstractIntTermT[Rec]
+trait AbstractIntTermT[Term <: TermT[Term]] extends LiteralTermT[Term] {
+  override type ThisTree <: AbstractIntTermT[Term]
 }
 
-trait IntTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
-  override type ThisTree <: IntTermC[Rec]
+trait IntTermC[Term <: TermT[Term]] extends LiteralTermT[Term] with AbstractIntTermT[Term] {
+  override type ThisTree <: IntTermC[Term]
   def value: Int
   override def toTerm: IntTerm = IntTerm(value, meta)
 }
 
-trait IntegerTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] with AbstractIntTermT[Rec] {
-  override type ThisTree <: IntegerTermC[Rec]
+trait IntegerTermC[Term <: TermT[Term]] extends LiteralTermT[Term] with AbstractIntTermT[Term] {
+  override type ThisTree <: IntegerTermC[Term]
   def value: BigInt
   override def toTerm: IntegerTerm = IntegerTerm(value, meta)
 }
 
-trait WithTypeT[Rec <: TermT[Rec]] extends TermT[Rec] {
-  override type ThisTree <: WithTypeT[Rec]
-  def ty: Rec
+trait WithTypeT[Term <: TermT[Term]] extends TermT[Term] {
+  override type ThisTree <: WithTypeT[Term]
+  def ty: Term
 }
 
-trait IntegerTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: IntegerTypeC[Rec]
+trait IntegerTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: IntegerTypeC[Term]
   override def toTerm: IntegerType = IntegerType(meta)
 }
 
-trait IntTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: IntTypeC[Rec]
+trait IntTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: IntTypeC[Term]
   override def toTerm: IntType = IntType(meta)
 }
 
-trait UIntTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: UIntTypeC[Rec]
+trait UIntTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: UIntTypeC[Term]
   override def toTerm: UIntType = UIntType(meta)
 }
 
-trait NaturalTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: NaturalTypeC[Rec]
+trait NaturalTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: NaturalTypeC[Term]
   override def toTerm: NaturalType = NaturalType(meta)
 }
 
-trait RationalTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
-  override type ThisTree <: RationalTermC[Rec]
+trait RationalTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
+  override type ThisTree <: RationalTermC[Term]
   def value: Rational
   override def toTerm: RationalTerm = RationalTerm(value, meta)
 }
 
-trait BooleanTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
-  override type ThisTree <: BooleanTermC[Rec]
+trait BooleanTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
+  override type ThisTree <: BooleanTermC[Term]
   def value: Boolean
   override def toTerm: BooleanTerm = BooleanTerm(value, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = this
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
 
-trait BooleanTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: BooleanTypeC[Rec]
+trait BooleanTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: BooleanTypeC[Term]
   override def toTerm: BooleanType = BooleanType(meta)
 }
 
-trait StringTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
-  override type ThisTree <: StringTermC[Rec]
+trait StringTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
+  override type ThisTree <: StringTermC[Term]
   def value: String
   override def toTerm: StringTerm = StringTerm(value, meta)
 }
 
-trait SymbolTermC[Rec <: TermT[Rec]] extends LiteralTermT[Rec] {
-  override type ThisTree <: SymbolTermC[Rec]
+trait SymbolTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
+  override type ThisTree <: SymbolTermC[Term]
   def value: String
   override def toTerm: SymbolTerm = SymbolTerm(value, meta)
 }
 
-trait RationalTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: RationalTypeC[Rec]
+trait RationalTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: RationalTypeC[Term]
   override def toTerm: RationalType = RationalType(meta)
 }
 
-trait FloatTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: FloatTypeC[Rec]
+trait FloatTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: FloatTypeC[Term]
   override def toTerm: FloatType = FloatType(meta)
 }
 
-trait StringTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: StringTypeC[Rec]
+trait StringTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: StringTypeC[Term]
   override def toTerm: StringType = StringType(meta)
 }
 
-trait SymbolTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: SymbolTypeC[Rec]
+trait SymbolTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: SymbolTypeC[Term]
   override def toTerm: SymbolType = SymbolType(meta)
 }
 
-trait AnyTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: AnyTypeC[Rec]
-  def level: Rec
+trait AnyTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: AnyTypeC[Term]
+  def level: Term
   override def toTerm: AnyType = AnyType(level.toTerm, meta)
 }
 
-trait NothingTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: NothingTypeC[Rec]
+trait NothingTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: NothingTypeC[Term]
   override def toTerm: NothingType = NothingType(meta)
 }
 
-trait LiteralTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] with WithTypeT[Rec] {
-  override type ThisTree <: LiteralTypeC[Rec]
-  def literal: LiteralTermT[Rec]
+trait LiteralTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  override type ThisTree <: LiteralTypeC[Term]
+  def literal: LiteralTermT[Term]
   override def toTerm: LiteralType = LiteralType(literal.toTerm.asInstanceOf[LiteralTerm], meta)
 }
 
 @FunctionalInterface
-trait ArgTermF[Rec <: TermT[Rec], ThisTree <: ArgTermC[Rec]] {
-  def newArgTerm(bind: LocalV, ty: Rec, default: Option[Rec], vararg: Boolean, meta: OptionTermMeta): ThisTree
+trait ArgTermF[Term <: TermT[Term], ThisTree <: ArgTermC[Term]] {
+  def newArgTerm(bind: LocalV, ty: Term, default: Option[Term], vararg: Boolean, meta: OptionTermMeta): ThisTree
 }
 
-trait ArgTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: ArgTermC[Rec]
+trait ArgTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: ArgTermC[Term]
 
   def bind: LocalV
-  def ty: Rec
-  def default: Option[Rec]
+  def ty: Term
+  def default: Option[Term]
   def vararg: Boolean
-  def cons: ArgTermF[Rec, ThisTree]
+  def cons: ArgTermF[Term, ThisTree]
 
   override def toTerm: ArgTerm = ArgTerm(bind, ty.toTerm, default.map(_.toTerm), vararg, meta)
 
@@ -417,21 +417,21 @@ trait ArgTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
     bind.toDoc <> varargDoc <> Docs.`:` <+> ty.toDoc <> defaultDoc
   }
 
-  def cpy(bind: LocalV = bind, ty: Rec = ty, default: Option[Rec] = default, vararg: Boolean = vararg, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(bind: LocalV = bind, ty: Term = ty, default: Option[Term] = default, vararg: Boolean = vararg, meta: OptionTermMeta = meta): ThisTree =
     cons.newArgTerm(bind, ty, default, vararg, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(bind = g(bind), ty = f(ty), default = default.map(f))
   )
 
   def name = bind.name
 }
 
-trait TelescopeTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: TelescopeTermC[Rec]
-  def args: Vector[ArgTermC[Rec]]
+trait TelescopeTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: TelescopeTermC[Term]
+  def args: Vector[ArgTermC[Term]]
   def implicitly: Boolean
-  def cons: TelescopeTermF[Rec, ThisTree]
+  def cons: TelescopeTermF[Term, ThisTree]
 
   override def toTerm: TelescopeTerm = TelescopeTerm(args.map(_.toTerm), implicitly, meta)
 
@@ -446,27 +446,27 @@ trait TelescopeTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   }
 
   def cpy(
-      args: Vector[ArgTermC[Rec]] = args,
+      args: Vector[ArgTermC[Term]] = args,
       implicitly: Boolean = implicitly,
       meta: OptionTermMeta = meta
   ): ThisTree = cons.newTelescope(args, implicitly, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(args = args.map(g))
   )
 }
 
 @FunctionalInterface
-trait FunctionF[Rec <: TermT[Rec], ThisTree <: FunctionC[Rec]] {
-  def newFunction(ty: FunctionTypeC[Rec], body: Rec, meta: OptionTermMeta): ThisTree
+trait FunctionF[Term <: TermT[Term], ThisTree <: FunctionC[Term]] {
+  def newFunction(ty: FunctionTypeC[Term], body: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait FunctionC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: FunctionC[Rec]
+trait FunctionC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: FunctionC[Term]
 
-  def ty: FunctionTypeC[Rec]
-  def body: Rec
-  def cons: FunctionF[Rec, ThisTree]
+  def ty: FunctionTypeC[Term]
+  def body: Term
+  def cons: FunctionF[Term, ThisTree]
 
   override def toTerm: Function = Function(ty.toTerm, body.toTerm, meta)
 
@@ -482,28 +482,28 @@ trait FunctionC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
     group(paramsDoc <> returnTypeDoc <+> Docs.`=>` <+> bodyDoc <> effectsDoc)
   }
 
-  def cpy(ty: FunctionTypeC[Rec] = ty, body: Rec = body, meta: OptionTermMeta = meta): ThisTree = cons.newFunction(ty, body, meta)
+  def cpy(ty: FunctionTypeC[Term] = ty, body: Term = body, meta: OptionTermMeta = meta): ThisTree = cons.newFunction(ty, body, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(cpy(ty = g(ty), body = f(body)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(ty = g(ty), body = f(body)))
 }
 
 @FunctionalInterface
-trait FunctionTypeF[Rec <: TermT[Rec], ThisTree <: FunctionTypeC[Rec]] {
+trait FunctionTypeF[Term <: TermT[Term], ThisTree <: FunctionTypeC[Term]] {
   def newFunctionType(
-      telescope: Vector[TelescopeTermC[Rec]],
-      resultTy: Rec,
+      telescope: Vector[TelescopeTermC[Term]],
+      resultTy: Term,
       effects: EffectsM,
       meta: OptionTermMeta
   ): ThisTree
 }
 
-trait FunctionTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: FunctionTypeC[Rec]
+trait FunctionTypeC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: FunctionTypeC[Term]
 
-  def telescope: Vector[TelescopeTermC[Rec]]
-  def resultTy: Rec
+  def telescope: Vector[TelescopeTermC[Term]]
+  def resultTy: Term
   def effects: EffectsM
-  def cons: FunctionTypeF[Rec, ThisTree]
+  def cons: FunctionTypeF[Term, ThisTree]
 
   override def toTerm: FunctionType = FunctionType(
     telescope.map(_.toTerm),
@@ -524,13 +524,13 @@ trait FunctionTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
   }
 
   def cpy(
-      telescope: Vector[TelescopeTermC[Rec]] = telescope,
-      resultTy: Rec = resultTy,
+      telescope: Vector[TelescopeTermC[Term]] = telescope,
+      resultTy: Term = resultTy,
       effects: EffectsM = effects,
       meta: OptionTermMeta = meta
   ): ThisTree = cons.newFunctionType(telescope, resultTy, effects, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       telescope = telescope.map(g),
       resultTy = f(resultTy),
@@ -540,15 +540,15 @@ trait FunctionTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
 }
 
 @FunctionalInterface
-trait ObjectClauseValueTermF[Rec <: TermT[Rec], ThisTree <: ObjectClauseValueTermC[Rec]] {
-  def newObjectClauseValueTerm(key: Rec, value: Rec, meta: OptionTermMeta): ThisTree
+trait ObjectClauseValueTermF[Term <: TermT[Term], ThisTree <: ObjectClauseValueTermC[Term]] {
+  def newObjectClauseValueTerm(key: Term, value: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait ObjectClauseValueTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: ObjectClauseValueTermC[Rec]
-  def key: Rec
-  def value: Rec
-  def cons: ObjectClauseValueTermF[Rec, ThisTree]
+trait ObjectClauseValueTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: ObjectClauseValueTermC[Term]
+  def key: Term
+  def value: Term
+  def cons: ObjectClauseValueTermF[Term, ThisTree]
 
   override def toTerm: ObjectClauseValueTerm = ObjectClauseValueTerm(key.toTerm, value.toTerm, meta)
 
@@ -556,48 +556,48 @@ trait ObjectClauseValueTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
     key.toDoc <+> Doc.text("=") <+> value.toDoc
   )
 
-  def cpy(key: Rec = key, value: Rec = value, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(key: Term = key, value: Term = value, meta: OptionTermMeta = meta): ThisTree =
     cons.newObjectClauseValueTerm(key, value, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(key = f(key), value = f(value))
   )
 }
 
 @FunctionalInterface
-trait ObjectTermF[Rec <: TermT[Rec], ThisTree <: ObjectTermC[Rec]] {
-  def newObjectTerm(clauses: Vector[ObjectClauseValueTermC[Rec]], meta: OptionTermMeta): ThisTree
+trait ObjectTermF[Term <: TermT[Term], ThisTree <: ObjectTermC[Term]] {
+  def newObjectTerm(clauses: Vector[ObjectClauseValueTermC[Term]], meta: OptionTermMeta): ThisTree
 }
 
-trait ObjectTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: ObjectTermC[Rec]
-  def clauses: Vector[ObjectClauseValueTermC[Rec]]
-  def cons: ObjectTermF[Rec, ThisTree]
+trait ObjectTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: ObjectTermC[Term]
+  def clauses: Vector[ObjectClauseValueTermC[Term]]
+  def cons: ObjectTermF[Term, ThisTree]
 
   override def toTerm: ObjectTerm = ObjectTerm(clauses.map(_.toTerm), meta)
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ",")(clauses.map(_.toDoc))
 
-  def cpy(clauses: Vector[ObjectClauseValueTermC[Rec]] = clauses, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(clauses: Vector[ObjectClauseValueTermC[Term]] = clauses, meta: OptionTermMeta = meta): ThisTree =
     cons.newObjectTerm(clauses, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(clauses = clauses.map(g))
   )
 }
 
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
 @FunctionalInterface
-trait ObjectTypeF[Rec <: TermT[Rec], ThisTree <: ObjectTypeC[Rec]] {
-  def newObjectType(fieldTypes: Vector[ObjectClauseValueTermC[Rec]], exactFields: Boolean, meta: OptionTermMeta): ThisTree
+trait ObjectTypeF[Term <: TermT[Term], ThisTree <: ObjectTypeC[Term]] {
+  def newObjectType(fieldTypes: Vector[ObjectClauseValueTermC[Term]], exactFields: Boolean, meta: OptionTermMeta): ThisTree
 }
 
-trait ObjectTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: ObjectTypeC[Rec]
-  def fieldTypes: Vector[ObjectClauseValueTermC[Rec]]
+trait ObjectTypeC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: ObjectTypeC[Term]
+  def fieldTypes: Vector[ObjectClauseValueTermC[Term]]
   def exactFields: Boolean
-  def cons: ObjectTypeF[Rec, ThisTree]
+  def cons: ObjectTypeF[Term, ThisTree]
 
   override def toTerm: ObjectType = ObjectType(fieldTypes.map(_.toTerm), exactFields, meta)
 
@@ -606,59 +606,59 @@ trait ObjectTypeC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
       fieldTypes.map(_.toDoc)
     )
 
-  def cpy(fieldTypes: Vector[ObjectClauseValueTermC[Rec]] = fieldTypes, exactFields: Boolean = exactFields, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(fieldTypes: Vector[ObjectClauseValueTermC[Term]] = fieldTypes, exactFields: Boolean = exactFields, meta: OptionTermMeta = meta): ThisTree =
     cons.newObjectType(fieldTypes, exactFields, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(fieldTypes = fieldTypes.map(g))
   )
 }
 
-trait ReferenceCallC[Rec <: TermT[Rec]] extends UnevalT[Rec] with TermWithUniqidT[Rec] {
-  override type ThisTree <: ReferenceCallC[Rec]
+trait ReferenceCallC[Term <: TermT[Term]] extends UnevalT[Term] with TermWithUniqidT[Term] {
+  override type ThisTree <: ReferenceCallC[Term]
   @deprecated("dont use")
   def name: Name
-  def ty: Rec
+  def ty: Term
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term
 }
 
 @FunctionalInterface
-trait LocalVF[Rec <: TermT[Rec], ThisTree <: LocalVC[Rec]] {
-  def newLocalV(name: Name, ty: Rec, uniqId: UniqidOf[LocalVC[Rec]], meta: OptionTermMeta): ThisTree
+trait LocalVF[Term <: TermT[Term], ThisTree <: LocalVC[Term]] {
+  def newLocalV(name: Name, ty: Term, uniqId: UniqidOf[LocalVC[Term]], meta: OptionTermMeta): ThisTree
 }
 
-trait LocalVC[Rec <: TermT[Rec]] extends ReferenceCallC[Rec] {
-  override type ThisTree <: LocalVC[Rec]
+trait LocalVC[Term <: TermT[Term]] extends ReferenceCallC[Term] {
+  override type ThisTree <: LocalVC[Term]
 
   @deprecated("dont use")
   def name: Name
-  def ty: Rec
-  def uniqId: UniqidOf[LocalVC[Rec]]
-  def cons: LocalVF[Rec, ThisTree]
+  def ty: Term
+  def uniqId: UniqidOf[LocalVC[Term]]
+  def cons: LocalVF[Term, ThisTree]
 
   override def toTerm: LocalV = LocalV(name, ty.toTerm, uniqId, meta)
 
   override def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
 
-  def cpy(name: Name = name, ty: Rec = ty, uniqId: UniqidOf[LocalVC[Rec]] = uniqId, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(name: Name = name, ty: Term = ty, uniqId: UniqidOf[LocalVC[Term]] = uniqId, meta: OptionTermMeta = meta): ThisTree =
     cons.newLocalV(name, ty, uniqId, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(cpy(ty = f(ty)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(ty = f(ty)))
 }
 
 @FunctionalInterface
-trait ToplevelVF[Rec <: TermT[Rec], ThisTree <: ToplevelVC[Rec]] {
-  def newToplevelV(id: AbsoluteRef, ty: Rec, uniqId: UniqidOf[ToplevelVC[Rec]], meta: OptionTermMeta): ThisTree
+trait ToplevelVF[Term <: TermT[Term], ThisTree <: ToplevelVC[Term]] {
+  def newToplevelV(id: AbsoluteRef, ty: Term, uniqId: UniqidOf[ToplevelVC[Term]], meta: OptionTermMeta): ThisTree
 }
 
-trait ToplevelVC[Rec <: TermT[Rec]] extends ReferenceCallC[Rec] {
-  override type ThisTree <: ToplevelVC[Rec]
+trait ToplevelVC[Term <: TermT[Term]] extends ReferenceCallC[Term] {
+  override type ThisTree <: ToplevelVC[Term]
 
   def id: AbsoluteRef
-  def ty: Rec
-  def uniqId: UniqidOf[ToplevelVC[Rec]]
-  def cons: ToplevelVF[Rec, ThisTree]
+  def ty: Term
+  def uniqId: UniqidOf[ToplevelVC[Term]]
+  def cons: ToplevelVF[Term, ThisTree]
 
   override def toTerm: ToplevelV = ToplevelV(id, ty.toTerm, uniqId, meta)
 
@@ -666,50 +666,50 @@ trait ToplevelVC[Rec <: TermT[Rec]] extends ReferenceCallC[Rec] {
     id.toDoc <+> Docs.`.` <+> ty.toDoc
   )
 
-  def cpy(id: AbsoluteRef = id, ty: Rec = ty, uniqId: UniqidOf[ToplevelVC[Rec]] = uniqId, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(id: AbsoluteRef = id, ty: Term = ty, uniqId: UniqidOf[ToplevelVC[Term]] = uniqId, meta: OptionTermMeta = meta): ThisTree =
     cons.newToplevelV(id, ty, uniqId, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(cpy(ty = f(ty)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(ty = f(ty)))
 
   @deprecated("dont use")
   def name = id.name
 }
 
-trait ErrorTermC[Rec <: TermT[Rec]] extends SpecialTermT[Rec] {
-  override type ThisTree <: ErrorTermC[Rec]
+trait ErrorTermC[Term <: TermT[Term]] extends SpecialTermT[Term] {
+  override type ThisTree <: ErrorTermC[Term]
   def problem: Problem
   override def toTerm: ErrorTerm = ErrorTerm(problem, meta)
 
   override def toDoc(using options: PrettierOptions): Doc = problem.toDoc
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = this
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 
-trait StmtTermT[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: StmtTermT[Rec]
+trait StmtTermT[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: StmtTermT[Term]
 }
 
 @FunctionalInterface
-trait LetStmtTermF[Rec <: TermT[Rec], ThisTree <: LetStmtTermC[Rec]] {
-  def newLetStmt(localv: LocalVC[Rec], value: Rec, ty: Rec, meta: OptionTermMeta): ThisTree
+trait LetStmtTermF[Term <: TermT[Term], ThisTree <: LetStmtTermC[Term]] {
+  def newLetStmt(localv: LocalVC[Term], value: Term, ty: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait LetStmtTermC[Rec <: TermT[Rec]] extends StmtTermT[Rec] {
-  override type ThisTree <: LetStmtTermC[Rec]
-  def localv: LocalVC[Rec]
-  def value: Rec
-  def ty: Rec
-  def cons: LetStmtTermF[Rec, ThisTree]
+trait LetStmtTermC[Term <: TermT[Term]] extends StmtTermT[Term] {
+  override type ThisTree <: LetStmtTermC[Term]
+  def localv: LocalVC[Term]
+  def value: Term
+  def ty: Term
+  def cons: LetStmtTermF[Term, ThisTree]
   override def toTerm: LetStmtTerm = LetStmtTerm(localv.toTerm, value.toTerm, ty.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc = {
     Doc.text("let ") <> localv.toDoc <> Doc.text(": ") <> ty.toDoc <> Doc.text(" = ") <> value.toDoc
   }
 
-  def cpy(localv: LocalVC[Rec] = localv, value: Rec = value, ty: Rec = ty, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(localv: LocalVC[Term] = localv, value: Term = value, ty: Term = ty, meta: OptionTermMeta = meta): ThisTree =
     cons.newLetStmt(localv, value, ty, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       localv = g(localv),
       value = f(value),
@@ -719,26 +719,26 @@ trait LetStmtTermC[Rec <: TermT[Rec]] extends StmtTermT[Rec] {
 }
 
 @FunctionalInterface
-trait DefStmtTermF[Rec <: TermT[Rec], ThisTree <: DefStmtTermC[Rec]] {
-  def newDefStmt(localv: LocalVC[Rec], value: Rec, ty: Rec, meta: OptionTermMeta): ThisTree
+trait DefStmtTermF[Term <: TermT[Term], ThisTree <: DefStmtTermC[Term]] {
+  def newDefStmt(localv: LocalVC[Term], value: Term, ty: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait DefStmtTermC[Rec <: TermT[Rec]] extends StmtTermT[Rec] {
-  override type ThisTree <: DefStmtTermC[Rec]
-  def localv: LocalVC[Rec]
-  def value: Rec
-  def ty: Rec
-  def cons: DefStmtTermF[Rec, ThisTree]
+trait DefStmtTermC[Term <: TermT[Term]] extends StmtTermT[Term] {
+  override type ThisTree <: DefStmtTermC[Term]
+  def localv: LocalVC[Term]
+  def value: Term
+  def ty: Term
+  def cons: DefStmtTermF[Term, ThisTree]
   override def toTerm: DefStmtTerm = DefStmtTerm(localv.toTerm, value.toTerm, ty.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc = {
     Doc.text("def ") <> localv.toDoc <> Doc.text(": ") <> ty.toDoc <> Doc.text(" = ") <> value.toDoc
   }
 
-  def cpy(localv: LocalVC[Rec] = localv, value: Rec = value, ty: Rec = ty, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(localv: LocalVC[Term] = localv, value: Term = value, ty: Term = ty, meta: OptionTermMeta = meta): ThisTree =
     cons.newDefStmt(localv, value, ty, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       localv = g(localv),
       value = f(value),
@@ -748,109 +748,109 @@ trait DefStmtTermC[Rec <: TermT[Rec]] extends StmtTermT[Rec] {
 }
 
 @FunctionalInterface
-trait ExprStmtTermF[Rec <: TermT[Rec], ThisTree <: ExprStmtTermC[Rec]] {
-  def newExprStmt(expr: Rec, ty: Rec, meta: OptionTermMeta): ThisTree
+trait ExprStmtTermF[Term <: TermT[Term], ThisTree <: ExprStmtTermC[Term]] {
+  def newExprStmt(expr: Term, ty: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait ExprStmtTermC[Rec <: TermT[Rec]] extends StmtTermT[Rec] {
-  override type ThisTree <: ExprStmtTermC[Rec]
-  def expr: Rec
-  def ty: Rec
-  def cons: ExprStmtTermF[Rec, ThisTree]
+trait ExprStmtTermC[Term <: TermT[Term]] extends StmtTermT[Term] {
+  override type ThisTree <: ExprStmtTermC[Term]
+  def expr: Term
+  def ty: Term
+  def cons: ExprStmtTermF[Term, ThisTree]
 
   override def toTerm: ExprStmtTerm = ExprStmtTerm(expr.toTerm, ty.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc = expr.toDoc
 
-  def cpy(expr: Rec = expr, ty: Rec = ty, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(expr: Term = expr, ty: Term = ty, meta: OptionTermMeta = meta): ThisTree =
     cons.newExprStmt(expr, ty, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(expr = f(expr), ty = f(ty))
   )
 }
 
 @FunctionalInterface
-trait NonlocalOrLocalReturnF[Rec <: TermT[Rec], ThisTree <: NonlocalOrLocalReturnC[Rec]] {
-  def newNonlocalOrLocalReturn(value: Rec, meta: OptionTermMeta): ThisTree
+trait NonlocalOrLocalReturnF[Term <: TermT[Term], ThisTree <: NonlocalOrLocalReturnC[Term]] {
+  def newNonlocalOrLocalReturn(value: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait NonlocalOrLocalReturnC[Rec <: TermT[Rec]] extends StmtTermT[Rec] {
-  override type ThisTree <: NonlocalOrLocalReturnC[Rec]
-  def value: Rec
-  def cons: NonlocalOrLocalReturnF[Rec, ThisTree]
+trait NonlocalOrLocalReturnC[Term <: TermT[Term]] extends StmtTermT[Term] {
+  override type ThisTree <: NonlocalOrLocalReturnC[Term]
+  def value: Term
+  def cons: NonlocalOrLocalReturnF[Term, ThisTree]
 
   override def toTerm: NonlocalOrLocalReturn = NonlocalOrLocalReturn(value.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text("return") <+> value.toDoc
 
-  def cpy(value: Rec = value, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(value: Term = value, meta: OptionTermMeta = meta): ThisTree =
     cons.newNonlocalOrLocalReturn(value, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(value = f(value))
   )
 }
 
-trait TupleTypeC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
-  override type ThisTree <: TupleTypeC[Rec]
-  def types: Vector[Rec]
+trait TupleTypeC[Term <: TermT[Term]] extends TypeTermT[Term] {
+  override type ThisTree <: TupleTypeC[Term]
+  def types: Vector[Term]
   override def toTerm: TupleType = TupleType(types.map(_.toTerm), meta)
 
   override def toDoc(using options: PrettierOptions): Doc = {
     Doc.wrapperlist("Tuple" <> Docs.`[`, Docs.`]`, ",")(types)
   }
 
-  def cpy(types: Vector[Rec] = types, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(types: Vector[Term] = types, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(types, meta)
 
-  def cons: TupleTypeF[Rec, ThisTree]
+  def cons: TupleTypeF[Term, ThisTree]
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(types = types.map(f))
   )
 }
 
 @FunctionalInterface
-trait TupleTypeF[Rec <: TermT[Rec], ThisTree <: TupleTypeC[Rec]] {
-  def apply(types: Vector[Rec], meta: OptionTermMeta): ThisTree
+trait TupleTypeF[Term <: TermT[Term], ThisTree <: TupleTypeC[Term]] {
+  def apply(types: Vector[Term], meta: OptionTermMeta): ThisTree
 }
 
-trait TupleTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: TupleTermC[Rec]
-  def values: Vector[Rec]
+trait TupleTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: TupleTermC[Term]
+  def values: Vector[Term]
   override def toTerm: TupleTerm = TupleTerm(values.map(_.toTerm), meta)
 
   override def toDoc(using options: PrettierOptions): Doc = {
     Doc.wrapperlist(Docs.`(`, Docs.`)`, ",")(values)
   }
 
-  def cpy(values: Vector[Rec] = values, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(values: Vector[Term] = values, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(values, meta)
 
-  def cons: TupleTermF[Rec, ThisTree]
+  def cons: TupleTermF[Term, ThisTree]
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(values = values.map(f))
   )
 }
 
 @FunctionalInterface
-trait TupleTermF[Rec <: TermT[Rec], ThisTree <: TupleTermC[Rec]] {
-  def apply(values: Vector[Rec], meta: OptionTermMeta): ThisTree
+trait TupleTermF[Term <: TermT[Term], ThisTree <: TupleTermC[Term]] {
+  def apply(values: Vector[Term], meta: OptionTermMeta): ThisTree
 }
 
 @FunctionalInterface
-trait BlockTermF[Rec <: TermT[Rec], ThisTree <: BlockTermC[Rec]] {
-  def newBlockTerm(statements: Vector[StmtTermT[Rec]], result: Rec, meta: OptionTermMeta): ThisTree
+trait BlockTermF[Term <: TermT[Term], ThisTree <: BlockTermC[Term]] {
+  def newBlockTerm(statements: Vector[StmtTermT[Term]], result: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait BlockTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
-  override type ThisTree <: BlockTermC[Rec]
-  def statements: Vector[StmtTermT[Rec]]
-  def result: Rec
-  def cons: BlockTermF[Rec, ThisTree]
+trait BlockTermC[Term <: TermT[Term]] extends UnevalT[Term] {
+  override type ThisTree <: BlockTermC[Term]
+  def statements: Vector[StmtTermT[Term]]
+  def result: Term
+  def cons: BlockTermF[Term, ThisTree]
 
   override def toTerm: BlockTerm = BlockTerm(statements.map(_.toTerm), result.toTerm, meta)
 
@@ -860,10 +860,10 @@ trait BlockTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
     )
   }
 
-  def cpy(statements: Vector[StmtTermT[Rec]] = statements, result: Rec = result, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(statements: Vector[StmtTermT[Term]] = statements, result: Term = result, meta: OptionTermMeta = meta): ThisTree =
     cons.newBlockTerm(statements, result, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       statements = statements.map(g),
       result = f(result)
@@ -872,16 +872,16 @@ trait BlockTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
 }
 
 @FunctionalInterface
-trait AnnotationF[Rec <: TermT[Rec], ThisTree <: AnnotationC[Rec]] {
-  def newAnnotation(term: Rec, ty: Option[Rec], effects: Option[EffectsM], meta: OptionTermMeta): ThisTree
+trait AnnotationF[Term <: TermT[Term], ThisTree <: AnnotationC[Term]] {
+  def newAnnotation(term: Term, ty: Option[Term], effects: Option[EffectsM], meta: OptionTermMeta): ThisTree
 }
 
-trait AnnotationC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
-  override type ThisTree <: AnnotationC[Rec]
-  def term: Rec
-  def ty: Option[Rec]
+trait AnnotationC[Term <: TermT[Term]] extends UnevalT[Term] {
+  override type ThisTree <: AnnotationC[Term]
+  def term: Term
+  def ty: Option[Term]
   def effects: Option[EffectsM]
-  def cons: AnnotationF[Rec, ThisTree]
+  def cons: AnnotationF[Term, ThisTree]
 
   override def toTerm: Annotation = Annotation(term.toTerm, ty.map(_.toTerm), effects, meta)
 
@@ -891,10 +891,10 @@ trait AnnotationC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
     term.toDoc <> tyDoc <> effectsDoc
   }
 
-  def cpy(term: Rec = term, ty: Option[Rec] = ty, effects: Option[EffectsM] = effects, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(term: Term = term, ty: Option[Term] = ty, effects: Option[EffectsM] = effects, meta: OptionTermMeta = meta): ThisTree =
     cons.newAnnotation(term, ty, effects, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       term = f(term),
       ty = ty.map(f),
@@ -903,53 +903,53 @@ trait AnnotationC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
   )
 }
 
-trait FieldTermC[Rec <: TermT[Rec]] extends WHNFT[Rec] {
-  override type ThisTree <: FieldTermC[Rec]
+trait FieldTermC[Term <: TermT[Term]] extends WHNFT[Term] {
+  override type ThisTree <: FieldTermC[Term]
   def name: Name
-  def ty: Rec
-  def cons: FieldTermF[Rec, ThisTree]
+  def ty: Term
+  def cons: FieldTermF[Term, ThisTree]
   override def toTerm: FieldTerm = FieldTerm(name, ty.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc =
     Doc.text(name) <> Doc.text(": ") <> ty.toDoc
 
-  def cpy(name: Name = name, ty: Rec = ty, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(name: Name = name, ty: Term = ty, meta: OptionTermMeta = meta): ThisTree =
     cons.apply(name, ty, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(ty = f(ty))
   )
 }
 
 @FunctionalInterface
-trait FieldTermF[Rec <: TermT[Rec], ThisTree <: FieldTermC[Rec]] {
-  def apply(name: Name, ty: Rec, meta: OptionTermMeta): ThisTree
+trait FieldTermF[Term <: TermT[Term], ThisTree <: FieldTermC[Term]] {
+  def apply(name: Name, ty: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait TypeDefinitionT[Rec <: TermT[Rec]] extends StmtTermT[Rec] with TermWithUniqidT[Rec] {
+trait TypeDefinitionT[Term <: TermT[Term]] extends StmtTermT[Term] with TermWithUniqidT[Term] {
   @deprecated("dont use")
   def name: Name
-  override type ThisTree <: TypeDefinitionT[Rec]
+  override type ThisTree <: TypeDefinitionT[Term]
 }
 
 @FunctionalInterface
-trait RecordStmtTermF[Rec <: TermT[Rec], ThisTree <: RecordStmtTermC[Rec]] {
+trait RecordStmtTermF[Term <: TermT[Term], ThisTree <: RecordStmtTermC[Term]] {
   def newRecordStmt(
       name: Name,
-      uniqId: UniqidOf[RecordStmtTermC[Rec]],
-      fields: Vector[FieldTermC[Rec]],
-      body: Option[BlockTermC[Rec]],
+      uniqId: UniqidOf[RecordStmtTermC[Term]],
+      fields: Vector[FieldTermC[Term]],
+      body: Option[BlockTermC[Term]],
       meta: OptionTermMeta
   ): ThisTree
 }
 
-trait RecordStmtTermC[Rec <: TermT[Rec]] extends TypeDefinitionT[Rec] with StmtTermT[Rec] {
-  override type ThisTree <: RecordStmtTermC[Rec]
+trait RecordStmtTermC[Term <: TermT[Term]] extends TypeDefinitionT[Term] with StmtTermT[Term] {
+  override type ThisTree <: RecordStmtTermC[Term]
   def name: Name
-  def uniqId: UniqidOf[RecordStmtTermC[Rec]]
-  def fields: Vector[FieldTermC[Rec]]
-  def body: Option[BlockTermC[Rec]]
-  def cons: RecordStmtTermF[Rec, ThisTree]
+  def uniqId: UniqidOf[RecordStmtTermC[Term]]
+  def fields: Vector[FieldTermC[Term]]
+  def body: Option[BlockTermC[Term]]
+  def cons: RecordStmtTermF[Term, ThisTree]
   override def toTerm: RecordStmtTerm =
     RecordStmtTerm(name, uniqId.asInstanceOf[UniqidOf[RecordStmtTerm]], fields.map(_.toTerm), body.map(_.toTerm), meta)
 
@@ -966,14 +966,14 @@ trait RecordStmtTermC[Rec <: TermT[Rec]] extends TypeDefinitionT[Rec] with StmtT
 
   def cpy(
       name: Name = name,
-      uniqId: UniqidOf[RecordStmtTermC[Rec]] = uniqId,
-      fields: Vector[FieldTermC[Rec]] = fields,
-      body: Option[BlockTermC[Rec]] = body,
+      uniqId: UniqidOf[RecordStmtTermC[Term]] = uniqId,
+      fields: Vector[FieldTermC[Term]] = fields,
+      body: Option[BlockTermC[Term]] = body,
       meta: OptionTermMeta = meta
   ): ThisTree =
     cons.newRecordStmt(name, uniqId, fields, body, meta)
 
-  override def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       fields = fields.map(g),
       body = body.map(g)
@@ -983,37 +983,37 @@ trait RecordStmtTermC[Rec <: TermT[Rec]] extends TypeDefinitionT[Rec] with StmtT
 }
 
 @FunctionalInterface
-trait ObjectCallTermF[Rec <: TermT[Rec], ThisTree <: ObjectCallTermC[Rec]] {
-  def newObjectCallTerm(objectRef: Rec, meta: OptionTermMeta): ThisTree
+trait ObjectCallTermF[Term <: TermT[Term], ThisTree <: ObjectCallTermC[Term]] {
+  def newObjectCallTerm(objectRef: Term, meta: OptionTermMeta): ThisTree
 }
 
-trait ObjectCallTermC[Rec <: TermT[Rec]] extends UnevalT[Rec] {
-  override type ThisTree <: ObjectCallTermC[Rec]
-  def objectRef: Rec
-  def cons: ObjectCallTermF[Rec, ThisTree]
+trait ObjectCallTermC[Term <: TermT[Term]] extends UnevalT[Term] {
+  override type ThisTree <: ObjectCallTermC[Term]
+  def objectRef: Term
+  def cons: ObjectCallTermF[Term, ThisTree]
 
   override def toTerm: ObjectCallTerm = ObjectCallTerm(objectRef.toTerm, meta)
 
   override def toDoc(using options: PrettierOptions): Doc =
     group("ObjectCall" <+> objectRef.toDoc)
 
-  def cpy(objectRef: Rec = objectRef, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(objectRef: Term = objectRef, meta: OptionTermMeta = meta): ThisTree =
     cons.newObjectCallTerm(objectRef, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(objectRef = f(objectRef))
   )
 }
 
 @FunctionalInterface
-trait ObjectTypeTermF[Rec <: TermT[Rec], ThisTree <: ObjectTypeTermC[Rec]] {
+trait ObjectTypeTermF[Term <: TermT[Term], ThisTree <: ObjectTypeTermC[Term]] {
   def newObjectTypeTerm(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ThisTree
 }
 
-trait ObjectTypeTermC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
-  override type ThisTree <: ObjectTypeTermC[Rec]
+trait ObjectTypeTermC[Term <: TermT[Term]] extends TypeTermT[Term] {
+  override type ThisTree <: ObjectTypeTermC[Term]
   def objectDef: ObjectStmtTerm
-  def cons: ObjectTypeTermF[Rec, ThisTree]
+  def cons: ObjectTypeTermF[Term, ThisTree]
 
   override def toTerm: ObjectTypeTerm = ObjectTypeTerm(objectDef, meta)
 
@@ -1023,7 +1023,7 @@ trait ObjectTypeTermC[Rec <: TermT[Rec]] extends TypeTermT[Rec] {
   def cpy(objectDef: ObjectStmtTerm = objectDef, meta: OptionTermMeta = meta): ThisTree =
     cons.newObjectTypeTerm(objectDef, meta)
 
-  def descent(f: Rec => Rec, g: TreeMap[Rec]): Rec = thisOr(
+  def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(objectDef = g(objectDef))
   )
 }
