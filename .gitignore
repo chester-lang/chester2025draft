@@ -59,3 +59,5 @@ node_modules
 !.vscode/tasks.json
 
 *.iml
+
+sbt-launch.jar
