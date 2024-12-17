@@ -516,10 +516,19 @@ lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
+val dependOnGraal = Seq(
+  libraryDependencies ++= Seq(
+    "org.graalvm.truffle" % "truffle-api" % graalvmVersion,
+    "org.graalvm.truffle" % "truffle-dsl-processor" % graalvmVersion,
+    "org.graalvm.truffle" % "truffle-tck" % graalvmVersion,
+    "org.graalvm.sdk" % "graal-sdk" % graalvmVersion
+  ),
+)
+
 lazy val syntax = useSpire(
   crossProject(JSPlatform, JVMPlatform, NativePlatform)
     .withoutSuffixFor(JVMPlatform)
-    .crossType(CrossType.Pure)
+    .crossType(CrossType.Full)
     .in(file("syntax"))
     .dependsOn(utils, pretty)
     .settings(
@@ -527,6 +536,7 @@ lazy val syntax = useSpire(
       commonLibSettings
     )
     .jvmSettings(commonJvmLibSettings)
+    .jvmSettings(dependOnGraal)
 )
 
 lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
@@ -1287,12 +1297,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "-Dgraal.TraceTruffleCompilationDetails=true",
       "-XX:-UseJVMCIClassLoader"
     ),
-    libraryDependencies ++= Seq(
-      "org.graalvm.truffle" % "truffle-api" % graalvmVersion,
-      "org.graalvm.truffle" % "truffle-dsl-processor" % graalvmVersion,
-      "org.graalvm.truffle" % "truffle-tck" % graalvmVersion,
-      "org.graalvm.sdk" % "graal-sdk" % graalvmVersion
-    ),
+    dependOnGraal,
     Compile / javacOptions ++= {
       val cp = (Compile / dependencyClasspath).value.map(_.data)
       val processorJars = cp.filter(_.getName.contains("truffle-dsl-processor"))
