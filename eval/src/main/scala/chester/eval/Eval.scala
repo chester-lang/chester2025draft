@@ -2,6 +2,7 @@ package chester.eval
 
 import chester.runtime.Value
 import chester.syntax.core.*
+import chester.syntax.core.interface.{BooleanTermC, TermT}
 
 case class EvalContext()
 
