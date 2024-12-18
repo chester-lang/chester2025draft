@@ -13,7 +13,7 @@ import chester.doc.const.*
 import chester.error.Problem
 import chester.syntax.*
 import chester.syntax.core.*
-import chester.syntax.core.interface.*
+import chester.syntax.core.spec.*
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
