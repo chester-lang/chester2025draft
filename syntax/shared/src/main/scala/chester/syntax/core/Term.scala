@@ -294,6 +294,13 @@ object spec {
     override type ThisTree <: ListTermC[Term]
 
     def terms: Vector[Term]
+
+    def cpy(terms: Vector[Term] = this.terms, meta: OptionTermMeta = this.meta): ThisTree =
+      cons.apply(terms, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
+      cpy(terms = terms.map(f))
+    )
   }
 
   trait TypeTermT[Term <: TermT[Term]] extends WHNFT[Term] {
