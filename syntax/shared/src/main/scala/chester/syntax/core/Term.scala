@@ -320,14 +320,34 @@ object spec {
     def level: TermT[Term]
   }
 
-  trait TypeT[Term <: TermT[Term]] extends SortT[Term] {
-    override type ThisTree <: TypeT[Term]
+  trait TypeF[Term <: TermT[Term], ThisTree <: TypeC[Term]] {
+    def newType(level: Term, meta: OptionTermMeta): ThisTree
+  }
+
+  trait TypeC[Term <: TermT[Term]] extends SortT[Term] {
+    override type ThisTree <: TypeC[Term]
 
     def level: Term
+
+    def cons: TypeF[Term, ThisTree]
+
+    def cpy(level: Term = level, meta: OptionTermMeta = meta): ThisTree = cons.newType(level, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(level = f(level)))
+  }
+  @FunctionalInterface
+  trait LevelTypeF[Term <: TermT[Term], ThisTree <: LevelTypeC[Term]] {
+    def newLevelType(meta: OptionTermMeta): ThisTree
   }
 
   trait LevelTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
     override type ThisTree <: LevelTypeC[Term]
+
+    def cons: LevelTypeF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newLevelType(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
   trait LevelT[Term <: TermT[Term]] extends TypeTermT[Term] with WHNFT[Term] {

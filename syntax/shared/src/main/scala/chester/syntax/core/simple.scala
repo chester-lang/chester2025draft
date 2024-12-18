@@ -141,8 +141,10 @@ object simple {
     def level: Term
   }
 
-  case class Type(level: Term, meta: OptionTermMeta) extends Sort with TypeT[Term] {
+  case class Type(level: Term, meta: OptionTermMeta) extends Sort with TypeC[Term] {
     override type ThisTree = Type
+    
+    override def cons: TypeF[Term, ThisTree] = this.copy
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
@@ -151,6 +153,8 @@ object simple {
 
   case class LevelType(meta: OptionTermMeta) extends TypeTerm with WithType with LevelTypeC[Term] {
     override type ThisTree = LevelType
+
+    override def cons: LevelTypeF[Term, ThisTree] = this.copy
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text("LevelType")
