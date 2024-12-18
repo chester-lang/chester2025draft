@@ -40,7 +40,7 @@ import scala.language.implicitConversions
  */
 object spec {
 
-  case class TermMeta(sourcePos: SourcePos)derives ReadWriter
+  case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
   type OptionTermMeta = Option[TermMeta]
 
@@ -69,12 +69,12 @@ object spec {
     }
 
     def cpy(
-             value: Term = value,
-             ty: Term = ty,
-             name: Option[Name] = name,
-             vararg: Boolean = vararg,
-             meta: OptionTermMeta = meta
-           ): ThisTree =
+        value: Term = value,
+        ty: Term = ty,
+        name: Option[Name] = name,
+        vararg: Boolean = vararg,
+        meta: OptionTermMeta = meta
+    ): ThisTree =
       cons.newCallingArgTerm(value, ty, name, vararg, meta)
 
     def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -102,10 +102,10 @@ object spec {
     }
 
     def cpy(
-             args: Vector[CallingArgTermC[Term]] = args,
-             implicitly: Boolean = implicitly,
-             meta: OptionTermMeta = meta
-           ): ThisTree =
+        args: Vector[CallingArgTermC[Term]] = args,
+        implicitly: Boolean = implicitly,
+        meta: OptionTermMeta = meta
+    ): ThisTree =
       cons.newCalling(args, implicitly, meta)
 
     def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -424,7 +424,13 @@ object spec {
       bind.toDoc <> varargDoc <> Docs.`:` <+> ty.toDoc <> defaultDoc
     }
 
-    def cpy(bind: LocalVC[Term] = bind, ty: Term = ty, default: Option[Term] = default, vararg: Boolean = vararg, meta: OptionTermMeta = meta): ThisTree =
+    def cpy(
+        bind: LocalVC[Term] = bind,
+        ty: Term = ty,
+        default: Option[Term] = default,
+        vararg: Boolean = vararg,
+        meta: OptionTermMeta = meta
+    ): ThisTree =
       cons.newArgTerm(bind, ty, default, vararg, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -454,10 +460,10 @@ object spec {
     }
 
     def cpy(
-             args: Vector[ArgTermC[Term]] = args,
-             implicitly: Boolean = implicitly,
-             meta: OptionTermMeta = meta
-           ): ThisTree = cons.newTelescope(args, implicitly, meta)
+        args: Vector[ArgTermC[Term]] = args,
+        implicitly: Boolean = implicitly,
+        meta: OptionTermMeta = meta
+    ): ThisTree = cons.newTelescope(args, implicitly, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
       cpy(args = args.map(g))
@@ -498,11 +504,11 @@ object spec {
   @FunctionalInterface
   trait FunctionTypeF[Term <: TermT[Term], ThisTree <: FunctionTypeC[Term]] {
     def newFunctionType(
-                         telescope: Vector[TelescopeTermC[Term]],
-                         resultTy: Term,
-                         effects: EffectsMT[Term],
-                         meta: OptionTermMeta
-                       ): ThisTree
+        telescope: Vector[TelescopeTermC[Term]],
+        resultTy: Term,
+        effects: EffectsMT[Term],
+        meta: OptionTermMeta
+    ): ThisTree
   }
 
   trait FunctionTypeC[Term <: TermT[Term]] extends WHNFT[Term] {
@@ -528,11 +534,11 @@ object spec {
     }
 
     def cpy(
-             telescope: Vector[TelescopeTermC[Term]] = telescope,
-             resultTy: Term = resultTy,
-             effects: EffectsMT[Term] = effects,
-             meta: OptionTermMeta = meta
-           ): ThisTree = cons.newFunctionType(telescope, resultTy, effects, meta)
+        telescope: Vector[TelescopeTermC[Term]] = telescope,
+        resultTy: Term = resultTy,
+        effects: EffectsMT[Term] = effects,
+        meta: OptionTermMeta = meta
+    ): ThisTree = cons.newFunctionType(telescope, resultTy, effects, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
       cpy(
@@ -612,7 +618,11 @@ object spec {
         fieldTypes.map(_.toDoc)
       )
 
-    def cpy(fieldTypes: Vector[ObjectClauseValueTermC[Term]] = fieldTypes, exactFields: Boolean = exactFields, meta: OptionTermMeta = meta): ThisTree =
+    def cpy(
+        fieldTypes: Vector[ObjectClauseValueTermC[Term]] = fieldTypes,
+        exactFields: Boolean = exactFields,
+        meta: OptionTermMeta = meta
+    ): ThisTree =
       cons.newObjectType(fieldTypes, exactFields, meta)
 
     def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -958,12 +968,12 @@ object spec {
   @FunctionalInterface
   trait RecordStmtTermF[Term <: TermT[Term], ThisTree <: RecordStmtTermC[Term]] {
     def newRecordStmt(
-                       name: Name,
-                       uniqId: UniqidOf[RecordStmtTermC[Term]],
-                       fields: Vector[FieldTermC[Term]],
-                       body: Option[BlockTermC[Term]],
-                       meta: OptionTermMeta
-                     ): ThisTree
+        name: Name,
+        uniqId: UniqidOf[RecordStmtTermC[Term]],
+        fields: Vector[FieldTermC[Term]],
+        body: Option[BlockTermC[Term]],
+        meta: OptionTermMeta
+    ): ThisTree
   }
 
   trait RecordStmtTermC[Term <: TermT[Term]] extends TypeDefinitionT[Term] with StmtTermT[Term] {
@@ -991,12 +1001,12 @@ object spec {
     }
 
     def cpy(
-             name: Name = name,
-             uniqId: UniqidOf[RecordStmtTermC[Term]] = uniqId,
-             fields: Vector[FieldTermC[Term]] = fields,
-             body: Option[BlockTermC[Term]] = body,
-             meta: OptionTermMeta = meta
-           ): ThisTree =
+        name: Name = name,
+        uniqId: UniqidOf[RecordStmtTermC[Term]] = uniqId,
+        fields: Vector[FieldTermC[Term]] = fields,
+        body: Option[BlockTermC[Term]] = body,
+        meta: OptionTermMeta = meta
+    ): ThisTree =
       cons.newRecordStmt(name, uniqId, fields, body, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -1057,10 +1067,10 @@ object spec {
   @FunctionalInterface
   trait TelescopeTermF[Term <: TermT[Term], ThisTree <: TelescopeTermC[Term]] {
     def newTelescope(
-                      args: Vector[ArgTermC[Term]],
-                      implicitly: Boolean,
-                      meta: OptionTermMeta
-                    ): ThisTree
+        args: Vector[ArgTermC[Term]],
+        implicitly: Boolean,
+        meta: OptionTermMeta
+    ): ThisTree
   }
 
 }
