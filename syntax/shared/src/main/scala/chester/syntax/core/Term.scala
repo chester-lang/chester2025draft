@@ -6,7 +6,7 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.syntax.*
 import chester.syntax.core.orm.*
-import chester.syntax.core.simple.ObjectStmtTerm
+import chester.syntax.core.simple.{ObjectStmtTerm, Term, TermWithUniqid}
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
@@ -167,7 +167,7 @@ object spec {
   }
 
   /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-  trait TermT[Term <: TermT[Term]] extends Any with ToDoc with Tree[Term] {
+  trait TermT[Term <: TermT[Term]] extends Any with ToDoc with ContainsUniqid with Tree[Term] {
     override def toDoc(using options: PrettierOptions): Doc = toString
 
     def descent(f: Term => Term, g: TreeMap[Term]): Term
@@ -185,6 +185,65 @@ object spec {
     def whnf: Trilean
 
     def sourcePos: Option[SourcePos] = meta.map(_.sourcePos)
+
+
+    def doElevate(level: IntegerTermC[Term]): Term = descent(_.doElevate(level))
+
+    final def elevate(level:  IntegerTermC[Term]): Term = {
+      require(level.value >= 0)
+      if (level.value == 0) this else doElevate(level)
+    }
+
+    // TODO: optimize
+    final def substitute[A <: TermWithUniqidT[Term]](mapping: Seq[(A, Term)]): Term = {
+      mapping.foldLeft(this) { case (acc, (from, to)) =>
+        acc.substitute(from, to)
+      }
+    }
+
+    final def substitute(from: TermWithUniqidT[Term], to: Term): Term = {
+      if (from == to) return this
+      if (
+        to match {
+          case to: TermWithUniqidT[Term] => from.uniqId == to.uniqId
+          case _                  => false
+        }
+      ) return this
+      descentRecursive {
+        case x: TermWithUniqidT[Term] if x.uniqId == from.uniqId => to
+        case x                                            => x
+      }
+    }
+
+    def collectMeta: Vector[MetaTerm] = {
+      this match {
+        case term: MetaTerm => return Vector(term)
+        case _              =>
+      }
+      var result = Vector.empty[MetaTerm]
+      inspect { x => result ++= x.collectMeta }
+      result
+    }
+
+    def replaceMeta(f: MetaTerm => Term): Term = thisOr {
+      this match {
+        case term: MetaTerm => f(term)
+        case _ =>
+          descent2(new TreeMap[Term] {
+            def use[T <: Term](x: T): x.ThisTree = x.replaceMeta(f).asInstanceOf[x.ThisTree]
+          })
+      }
+    }
+
+    final override def collectU(collector: UCollector): Unit = inspectRecursive {
+      case x: TermWithUniqidT[Term] => collector(x.uniqId)
+      case _                 =>
+    }
+
+    final override def replaceU(reranger: UReplacer): Term = descentRecursive {
+      case x: TermWithUniqidT[Term] => x.switchUniqId(reranger)
+      case x                 => x
+    }
   }
 
   type AnyTerm = TermT[?]
@@ -211,6 +270,8 @@ object spec {
     override type ThisTree <: TermWithUniqidT[Term]
 
     override def uniqId: UniqidOf[TermT[Term]]
+
+    def switchUniqId(r: UReplacer): TermWithUniqidT[Term]
   }
 
   trait EffectsMT[Term <: TermT[Term]] extends TermT[Term] {
