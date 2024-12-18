@@ -354,24 +354,62 @@ object spec {
     override type ThisTree <: LevelT[Term]
   }
 
+  @FunctionalInterface
+  trait LevelFiniteF[Term <: TermT[Term], ThisTree <: LevelFiniteC[Term]] {
+    def newLevelFinite(n: Term, meta: OptionTermMeta): ThisTree
+  }
+
   trait LevelFiniteC[Term <: TermT[Term]] extends LevelT[Term] {
     override type ThisTree <: LevelFiniteC[Term]
 
     def n: Term
+
+    def cons: LevelFiniteF[Term, ThisTree]
+
+    def cpy(n: Term = n, meta: OptionTermMeta = meta): ThisTree = cons.newLevelFinite(n, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(n = f(n)))
+  }
+
+  @FunctionalInterface
+  trait LevelUnrestrictedF[Term <: TermT[Term], ThisTree <: LevelUnrestrictedC[Term]] {
+    def newLevelUnrestricted(meta: OptionTermMeta): ThisTree
   }
 
   trait LevelUnrestrictedC[Term <: TermT[Term]] extends LevelT[Term] {
     override type ThisTree <: LevelUnrestrictedC[Term]
+
+    def cons: LevelUnrestrictedF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newLevelUnrestricted(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
   enum Usage derives ReadWriter {
     case None, Linear, Unrestricted
   }
 
+  @FunctionalInterface
+  trait PropF[Term <: TermT[Term], ThisTree <: PropC[Term]] {
+    def newProp(level: Term, meta: OptionTermMeta): ThisTree
+  }
+
   trait PropC[Term <: TermT[Term]] extends SortT[Term] {
     override type ThisTree <: PropC[Term]
 
     def level: Term
+
+    def cons: PropF[Term, ThisTree]
+
+    def cpy(level: Term = level, meta: OptionTermMeta = meta): ThisTree = cons.newProp(level, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(level = f(level)))
+  }
+
+  @FunctionalInterface
+  trait FTypeF[Term <: TermT[Term], ThisTree <: FTypeC[Term]] {
+    def newFType(level: Term, meta: OptionTermMeta): ThisTree
   }
 
   trait FTypeC[Term <: TermT[Term]] extends SortT[Term] {
@@ -379,9 +417,11 @@ object spec {
 
     def level: Term
 
-    def copy(level: Term = level, meta: OptionTermMeta = meta): ThisTree
+    def cons: FTypeF[Term, ThisTree]
 
-    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
+    def cpy(level: Term = level, meta: OptionTermMeta = meta): ThisTree = cons.newFType(level, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(level = f(level)))
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.wrapperlist("FType" <> Docs.`(`, Docs.`)`)(Vector(level))

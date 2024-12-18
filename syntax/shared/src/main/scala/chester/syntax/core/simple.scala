@@ -169,6 +169,8 @@ object simple {
   case class LevelFinite(n: Term, meta: OptionTermMeta) extends Level with LevelFiniteC[Term] {
     override type ThisTree = LevelFinite
 
+    override def cons: LevelFiniteF[Term, ThisTree] = this.copy
+
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text("Level(") <> n.toDoc <> Doc.text(")")
 
@@ -176,6 +178,8 @@ object simple {
 
   case class LevelUnrestricted(meta: OptionTermMeta) extends Level with LevelUnrestrictedC[Term] {
     override type ThisTree = LevelUnrestricted
+
+    override def cons: LevelUnrestrictedF[Term, ThisTree] = this.copy
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text("Levelω")
@@ -195,11 +199,15 @@ object simple {
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.wrapperlist("Prop" <> Docs.`(`, Docs.`)`)(Vector(level))
+
+    override def cons: PropF[Term, ThisTree] = this.copy
   }
 
   // fibrant types
   case class FType(level: Term, meta: OptionTermMeta) extends Sort with FTypeC[Term] {
     override type ThisTree = FType
+
+    override def cons: FTypeF[Term, ThisTree] = this.copy
   }
 
   sealed trait LiteralTerm extends Term with LiteralTermT[Term] with WHNF derives ReadWriter {
