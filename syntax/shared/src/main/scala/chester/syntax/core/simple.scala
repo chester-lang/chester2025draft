@@ -514,15 +514,6 @@ object simple {
     def from(bind: LocalV): ArgTerm = ArgTerm(bind, bind.ty, meta = None)
   }
 
-  @FunctionalInterface
-  trait TelescopeTermF[Rec <: TermT[Rec], ThisTree <: TelescopeTermC[Rec]] {
-    def newTelescope(
-        args: Vector[ArgTermC[Rec]],
-        implicitly: Boolean,
-        meta: OptionTermMeta
-    ): ThisTree
-  }
-
   object TelescopeTerm {
     @deprecated("meta")
     def from(x: ArgTerm*): TelescopeTerm = TelescopeTerm(x.toVector, meta = None)
@@ -807,7 +798,7 @@ object simple {
     override type ThisTree <: ReferenceCall
   }
 
-  implicit def LocalVConversion[Rec <: TermT[Rec]](x: UniqidOf[LocalVC[Rec]]): UniqidOf[LocalV] = x.asInstanceOf[UniqidOf[LocalV]]
+  implicit def LocalVConversion[Term <: TermT[Term]](x: UniqidOf[LocalVC[Term]]): UniqidOf[LocalV] = x.asInstanceOf[UniqidOf[LocalV]]
 
   case class LocalV(
       name: Name,
@@ -825,7 +816,7 @@ object simple {
     override def switchUniqId(r: UReplacer): LocalV = copy(uniqId = r(uniqId))
   }
 
-  implicit def conversionTop[Rec <: TermT[Rec]](x: UniqidOf[ToplevelVC[Rec]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
+  implicit def conversionTop[Term <: TermT[Term]](x: UniqidOf[ToplevelVC[Term]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
 
   case class ToplevelV(
       id: AbsoluteRef,

@@ -6,7 +6,7 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.syntax.*
 import chester.syntax.core.orm.*
-import chester.syntax.core.simple.{ObjectStmtTerm, TelescopeTermF}
+import chester.syntax.core.simple.{ObjectStmtTerm}
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
@@ -955,4 +955,13 @@ trait ObjectTypeTermC[Term <: TermT[Term]] extends TypeTermT[Term] {
   def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(objectDef = g(objectDef))
   )
+}
+
+@FunctionalInterface
+trait TelescopeTermF[Term <: TermT[Term], ThisTree <: TelescopeTermC[Term]] {
+  def newTelescope(
+                    args: Vector[ArgTermC[Term]],
+                    implicitly: Boolean,
+                    meta: OptionTermMeta
+                  ): ThisTree
 }
