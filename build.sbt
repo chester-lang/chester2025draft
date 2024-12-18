@@ -1302,7 +1302,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 // Useful for Intellij IDEA development purposes
 lazy val allprojects = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("allprojects"))
+  .in(file("project/allprojects"))
   .dependsOn(lsp, cli, platform, core)
   .settings(
     commonSettings
@@ -1310,7 +1310,7 @@ lazy val allprojects = crossProject(JVMPlatform)
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
-  .in(file("."))
+  .in(file("project/root"))
   .aggregate(
     allprojects,
     ironNative,
