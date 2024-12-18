@@ -6,7 +6,7 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.syntax.*
 import chester.syntax.core.orm.*
-import chester.syntax.core.simple.{EffectsM, ObjectStmtTerm, TelescopeTermF}
+import chester.syntax.core.simple.{ObjectStmtTerm, TelescopeTermF}
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
@@ -458,7 +458,7 @@ trait FunctionTypeF[Term <: TermT[Term], ThisTree <: FunctionTypeC[Term]] {
   def newFunctionType(
       telescope: Vector[TelescopeTermC[Term]],
       resultTy: Term,
-      effects: EffectsM,
+      effects: EffectsMT[Term],
       meta: OptionTermMeta
   ): ThisTree
 }
@@ -468,7 +468,7 @@ trait FunctionTypeC[Term <: TermT[Term]] extends WHNFT[Term] {
 
   def telescope: Vector[TelescopeTermC[Term]]
   def resultTy: Term
-  def effects: EffectsM
+  def effects: EffectsMT[Term]
   def cons: FunctionTypeF[Term, ThisTree]
 
   override def toDoc(using options: PrettierOptions): Doc = {
@@ -485,7 +485,7 @@ trait FunctionTypeC[Term <: TermT[Term]] extends WHNFT[Term] {
   def cpy(
       telescope: Vector[TelescopeTermC[Term]] = telescope,
       resultTy: Term = resultTy,
-      effects: EffectsM = effects,
+      effects: EffectsMT[Term] = effects,
       meta: OptionTermMeta = meta
   ): ThisTree = cons.newFunctionType(telescope, resultTy, effects, meta)
 
@@ -811,14 +811,14 @@ trait BlockTermC[Term <: TermT[Term]] extends UnevalT[Term] {
 
 @FunctionalInterface
 trait AnnotationF[Term <: TermT[Term], ThisTree <: AnnotationC[Term]] {
-  def newAnnotation(term: Term, ty: Option[Term], effects: Option[EffectsM], meta: OptionTermMeta): ThisTree
+  def newAnnotation(term: Term, ty: Option[Term], effects: Option[EffectsMT[Term]], meta: OptionTermMeta): ThisTree
 }
 
 trait AnnotationC[Term <: TermT[Term]] extends UnevalT[Term] {
   override type ThisTree <: AnnotationC[Term]
   def term: Term
   def ty: Option[Term]
-  def effects: Option[EffectsM]
+  def effects: Option[EffectsMT[Term]]
   def cons: AnnotationF[Term, ThisTree]
 
   override def toDoc(using options: PrettierOptions): Doc = {
@@ -827,14 +827,14 @@ trait AnnotationC[Term <: TermT[Term]] extends UnevalT[Term] {
     term.toDoc <> tyDoc <> effectsDoc
   }
 
-  def cpy(term: Term = term, ty: Option[Term] = ty, effects: Option[EffectsM] = effects, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(term: Term = term, ty: Option[Term] = ty, effects: Option[EffectsMT[Term]] = effects, meta: OptionTermMeta = meta): ThisTree =
     cons.newAnnotation(term, ty, effects, meta)
 
   def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     cpy(
       term = f(term),
       ty = ty.map(f),
-      effects = effects.map(x => g(x).asInstanceOf[EffectsM])
+      effects = effects.map(x => g(x).asInstanceOf[EffectsMT[Term]])
     )
   )
 }

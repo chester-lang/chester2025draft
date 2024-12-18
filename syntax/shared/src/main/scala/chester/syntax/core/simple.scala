@@ -956,6 +956,7 @@ object simple {
       )
     )
   }
+  implicit inline def effectsMConv(x: Option[EffectsMT[Term]]): Option[EffectsM] = x.asInstanceOf[Option[chester.syntax.core.simple.EffectsM]]
 
   case class Annotation(
       term: Term,
