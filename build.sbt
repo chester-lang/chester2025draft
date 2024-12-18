@@ -429,7 +429,6 @@ lazy val utils = useSpire(
     .crossType(CrossType.Full)
     .in(file("utils"))
     .settings(
-      name := "utils",
       commonLibSettings,
       baseDeps,
       libraryDependencies ++= Seq(
@@ -500,7 +499,6 @@ lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .dependsOn(utils)
   .dependsOn(kiamaCore)
   .settings(
-    name := "pretty",
     commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
@@ -511,7 +509,6 @@ lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("reader"))
   .dependsOn(utils, syntax)
   .settings(
-    name := "reader",
     commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
@@ -532,7 +529,6 @@ lazy val syntax = useSpire(
     .in(file("syntax"))
     .dependsOn(utils, pretty)
     .settings(
-      name := "syntax",
       commonLibSettings
     )
     .jvmSettings(commonJvmLibSettings)
@@ -545,7 +541,6 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("err"))
   .dependsOn(syntax)
   .settings(
-    name := "err",
     commonLibSettings
   )
   .jvmSettings(commonJvmLibSettings)
@@ -567,7 +562,6 @@ lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("tyck"))
   .dependsOn(utils, syntax, err, tyckBase, eval)
   .settings(
-    name := "tyck",
     commonSettings
   )
   .jvmSettings(commonJvmLibSettings)
@@ -579,7 +573,6 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .in(file("compiler213"))
   .dependsOn(syntax, err)
   .settings(
-    name := "compiler213",
     scala2Common,
     libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.12.1")
       .cross(CrossVersion.for3Use2_13)
@@ -1073,7 +1066,6 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
   .dependsOn(platform0, platform, compiler)
   .settings(
-    name := "cli",
     Compile / mainClass := Some("chester.cli.Main"),
     assembly / assemblyOutputPath := file("target") / "chester.jar",
     libraryDependencies ++= Seq(
@@ -1131,7 +1123,6 @@ lazy val js = crossProject(JSPlatform)
   .in(file("js"))
   .dependsOn(platform0)
   .settings(
-    name := "js",
     commonSettings
   )
   .jsSettings(
@@ -1143,7 +1134,6 @@ lazy val site = crossProject(JSPlatform)
   .in(file("site"))
   .dependsOn(js)
   .settings(
-    name := "site",
     commonSettings
   )
   .jsSettings(
@@ -1166,7 +1156,6 @@ lazy val docs = crossProject(JSPlatform)
   .in(file("docs"))
   .dependsOn(js)
   .settings(
-    name := "docs",
     commonSettings
   )
   .jsSettings(
@@ -1182,7 +1171,6 @@ lazy val lsp = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
     ),
-    name := "lsp",
     Compile / mainClass := Some("chester.lsp.Main"),
     libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
     assembly / assemblyOutputPath := file("target") / "chester-lsp.jar",
@@ -1260,7 +1248,6 @@ lazy val eval = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("eval"))
   .dependsOn(tyckBase)
   .settings(
-    name := "eval",
     commonSettings
   )
   .jvmSettings(commonJvmLibSettings)
@@ -1273,7 +1260,6 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
-    name := "interpreter",
     assembly / assemblyOutputPath := file("target") / "chester-interpreter.jar"
   )
   .jvmSettings(
@@ -1313,10 +1299,20 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     }
   )
 
+// Useful for Intellij IDEA development purposes
+lazy val allprojects = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("allprojects"))
+  .dependsOn(lsp, cli, platform, core)
+  .settings(
+    commonSettings
+  )
+
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .in(file("."))
   .aggregate(
+    allprojects,
     ironNative,
     spireNative,
     typednode,
@@ -1363,7 +1359,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     docs
   )
   .settings(
-    name := "ChesterRoot",
     scalaVersion := scala3Version
   )
 

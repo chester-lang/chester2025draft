@@ -508,7 +508,7 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
       state.readUnstable(x) match {
         case Some(x @ Meta(id)) => rec(id, x).asInstanceOf[T | MetaTerm]
         case Some(x)            => x
-        case None               => MetaTerm.from(x)
+        case None               => MetaTerm(HoldNotReadable(x), meta = None)
       }
     }
 

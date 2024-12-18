@@ -186,10 +186,9 @@ object spec {
 
     def sourcePos: Option[SourcePos] = meta.map(_.sourcePos)
 
-
     def doElevate(level: IntegerTermC[Term]): Term = descent(_.doElevate(level))
 
-    final def elevate(level:  IntegerTermC[Term]): Term = {
+    final def elevate(level: IntegerTermC[Term]): Term = {
       require(level.value >= 0)
       if (level.value == 0) this else doElevate(level)
     }
@@ -206,12 +205,12 @@ object spec {
       if (
         to match {
           case to: TermWithUniqidT[Term] => from.uniqId == to.uniqId
-          case _                  => false
+          case _                         => false
         }
       ) return this
       descentRecursive {
         case x: TermWithUniqidT[Term] if x.uniqId == from.uniqId => to
-        case x                                            => x
+        case x                                                   => x
       }
     }
 
@@ -237,12 +236,12 @@ object spec {
 
     final override def collectU(collector: UCollector): Unit = inspectRecursive {
       case x: TermWithUniqidT[Term] => collector(x.uniqId)
-      case _                 =>
+      case _                        =>
     }
 
     final override def replaceU(reranger: UReplacer): Term = descentRecursive {
       case x: TermWithUniqidT[Term] => x.switchUniqId(reranger)
-      case x                 => x
+      case x                        => x
     }
   }
 
