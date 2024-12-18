@@ -124,6 +124,8 @@ object simple {
   case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with ListTermC[Term] with WHNF derives ReadWriter {
     override final type ThisTree = ListTerm
 
+    override def cons: ListTermF[Term, ThisTree] = this.copy
+
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
 

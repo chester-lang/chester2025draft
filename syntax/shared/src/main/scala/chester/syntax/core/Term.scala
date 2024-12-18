@@ -290,13 +290,20 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
+  @FunctionalInterface
+  trait ListTermF[Term <: TermT[Term], ThisTree <: ListTermC[Term]] {
+    def newListTerm(terms: Vector[Term], meta: OptionTermMeta): ThisTree
+  }
+
   trait ListTermC[Term <: TermT[Term]] extends TermT[Term] with WHNFT[Term] {
     override type ThisTree <: ListTermC[Term]
 
     def terms: Vector[Term]
 
+    def cons: ListTermF[Term, ThisTree]
+
     def cpy(terms: Vector[Term] = this.terms, meta: OptionTermMeta = this.meta): ThisTree =
-      cons.apply(terms, meta)
+      cons.newListTerm(terms, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
       cpy(terms = terms.map(f))
