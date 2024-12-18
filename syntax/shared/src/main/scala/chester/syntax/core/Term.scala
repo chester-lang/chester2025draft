@@ -435,16 +435,41 @@ object spec {
     override type ThisTree <: AbstractIntTermT[Term]
   }
 
+  @FunctionalInterface
+  trait IntTermF[Term <: TermT[Term], ThisTree <: IntTermC[Term]] {
+    def newIntTerm(value: Int, meta: OptionTermMeta): ThisTree
+  }
+
   trait IntTermC[Term <: TermT[Term]] extends LiteralTermT[Term] with AbstractIntTermT[Term] {
     override type ThisTree <: IntTermC[Term]
 
     def value: Int
+    def cons: IntTermF[Term, ThisTree]
+    def cpy(value: Int = value, meta: OptionTermMeta = meta): ThisTree = cons.newIntTerm(value, meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  }
+
+  @FunctionalInterface
+  trait IntegerTermF[Term <: TermT[Term], ThisTree <: IntegerTermC[Term]] {
+    def newIntegerTerm(value: BigInt, meta: OptionTermMeta): ThisTree
+  }
+  
+  object IntegerTermF {
+    def apply[Term <: TermT[Term],ThisTree <: IntegerTermC[Term]](value: BigInt, meta: OptionTermMeta)(using f:IntegerTermF[Term, ThisTree]): ThisTree =
+      f.newIntegerTerm(value, meta)
+      
   }
 
   trait IntegerTermC[Term <: TermT[Term]] extends LiteralTermT[Term] with AbstractIntTermT[Term] {
     override type ThisTree <: IntegerTermC[Term]
 
     def value: BigInt
+
+    def cons: IntegerTermF[Term, ThisTree]
+
+    def cpy(value: BigInt = value, meta: OptionTermMeta = meta): ThisTree = cons.newIntegerTerm(value, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
   trait WithTypeT[Term <: TermT[Term]] extends TermT[Term] {
@@ -453,8 +478,19 @@ object spec {
     def ty: Term
   }
 
+  @FunctionalInterface
+  trait IntegerTypeF[Term <: TermT[Term], ThisTree <: IntegerTypeC[Term]] {
+    def newIntegerType(meta: OptionTermMeta): ThisTree
+  }
+
   trait IntegerTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
     override type ThisTree <: IntegerTypeC[Term]
+
+    def cons: IntegerTypeF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newIntegerType(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
   trait IntTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {

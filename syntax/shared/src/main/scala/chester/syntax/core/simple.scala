@@ -166,6 +166,8 @@ object simple {
     type ThisTree <: Level
   }
 
+  given aLevelFiniteF: LevelFiniteF[Term, LevelFinite] = LevelFinite(IntegerTerm(0, meta = None), meta = None).cons
+
   case class LevelFinite(n: Term, meta: OptionTermMeta) extends Level with LevelFiniteC[Term] {
     override type ThisTree = LevelFinite
 
@@ -221,15 +223,21 @@ object simple {
   case class IntTerm(value: Int, meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntTermC[Term] derives ReadWriter {
     override type ThisTree = IntTerm
 
+    override def cons: IntTermF[Term, ThisTree] = this.copy
+
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text(value.toString, ColorProfile.literalColor)
   }
+  
+  given aIntegerTerm: IntegerTermF[Term, IntegerTerm] = IntegerTerm(0, meta = None).cons
 
   case class IntegerTerm(value: BigInt, meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term] derives ReadWriter {
     override type ThisTree = IntegerTerm
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text(value.toString, ColorProfile.literalColor)
+
+    override def cons: IntegerTermF[Term, ThisTree] = this.copy
   }
 
   object AbstractIntTerm {
@@ -263,6 +271,8 @@ object simple {
       Doc.text("Integer", ColorProfile.typeColor)
 
     override def ty: Term = Type0
+
+    override def cons: IntegerTypeF[Term, ThisTree] = this.copy
   }
 
   // int of 64 bits or more

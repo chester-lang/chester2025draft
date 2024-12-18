@@ -2,49 +2,50 @@ package chester.syntax
 
 import chester.utils.reuse
 
-trait Tree[RootTree <: Tree[RootTree]] extends Any {
-  type ThisTree <: Tree[RootTree]
+trait Tree[A <: Tree[A]] extends Any {
+  type RootTree = A
+  type ThisTree <: Tree[A]
   // it is too hard to verify following properties in scala type system, so we just assume them
-  implicit val ev1: Tree[RootTree] <:< RootTree = implicitly[RootTree =:= RootTree].asInstanceOf[Tree[RootTree] <:< RootTree]
-  given ev3[T <: RootTree](using x: T): (x.ThisTree <:< RootTree) = implicitly[RootTree <:< RootTree].asInstanceOf[x.ThisTree <:< RootTree]
+  implicit val ev1: Tree[A] <:< A = implicitly[A =:= A].asInstanceOf[Tree[A] <:< A]
+  given ev3[T <: A](using x: T): (x.ThisTree <:< A) = implicitly[A <:< A].asInstanceOf[x.ThisTree <:< A]
 
   // this utility method is not that type safe
-  protected final inline def thisOr[T <: RootTree](inline x: T): T =
+  protected final inline def thisOr[T <: A](inline x: T): T =
     reuse(this.asInstanceOf[T], x)
 
-  def descent(f: RootTree => RootTree, g: TreeMap[RootTree]): RootTree
-  final def descent(f: RootTree => RootTree): RootTree = descent(
+  def descent(f: A => A, g: TreeMap[A]): A
+  final def descent(f: A => A): A = descent(
     f,
-    new TreeMap[RootTree] {
-      def use[T <: RootTree](x: T): x.ThisTree = x.descent(f.asInstanceOf).asInstanceOf[x.ThisTree]
+    new TreeMap[A] {
+      def use[T <: A](x: T): x.ThisTree = x.descent(f.asInstanceOf).asInstanceOf[x.ThisTree]
     }
   )
-  final def descent2(f: TreeMap[RootTree]): ThisTree = descent(
+  final def descent2(f: TreeMap[A]): ThisTree = descent(
     { x =>
-      implicit val ev33: x.ThisTree <:< RootTree = ev3(using x)
+      implicit val ev33: x.ThisTree <:< A = ev3(using x)
       f.use(x)
     },
     f
   ).asInstanceOf[ThisTree]
 
-  final def descentRecursive(f: RootTree => RootTree): RootTree = thisOr {
+  final def descentRecursive(f: A => A): A = thisOr {
     f(descent { a =>
       a.descentRecursive(f(_))
     })
   }
 
-  def inspect(f: RootTree => Unit): Unit = {
-    val _ = descent2(new TreeMap[RootTree] {
-      def use[T <: RootTree](x: T): x.ThisTree = { f(x); x.asInstanceOf[x.ThisTree] }
+  def inspect(f: A => Unit): Unit = {
+    val _ = descent2(new TreeMap[A] {
+      def use[T <: A](x: T): x.ThisTree = { f(x); x.asInstanceOf[x.ThisTree] }
     })
     ()
   }
 
-  def inspectRecursive(operator: RootTree => Unit): Unit = {
+  def inspectRecursive(operator: A => Unit): Unit = {
     inspect { a =>
       a.inspectRecursive(operator(_))
     }
-    operator(this.asInstanceOf[RootTree])
+    operator(this.asInstanceOf[A])
   }
 
 }
