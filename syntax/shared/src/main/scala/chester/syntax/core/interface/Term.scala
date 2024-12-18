@@ -6,7 +6,7 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.syntax.*
 import chester.syntax.core.orm.*
-import chester.syntax.core.simple.{EffectsM, LocalV, ObjectStmtTerm, TelescopeTermF}
+import chester.syntax.core.simple.{EffectsM, ObjectStmtTerm, TelescopeTermF}
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
@@ -369,13 +369,13 @@ trait LiteralTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[T
 
 @FunctionalInterface
 trait ArgTermF[Term <: TermT[Term], ThisTree <: ArgTermC[Term]] {
-  def newArgTerm(bind: LocalV, ty: Term, default: Option[Term], vararg: Boolean, meta: OptionTermMeta): ThisTree
+  def newArgTerm(bind: LocalVC[Term], ty: Term, default: Option[Term], vararg: Boolean, meta: OptionTermMeta): ThisTree
 }
 
 trait ArgTermC[Term <: TermT[Term]] extends WHNFT[Term] {
   override type ThisTree <: ArgTermC[Term]
 
-  def bind: LocalV
+  def bind: LocalVC[Term]
   def ty: Term
   def default: Option[Term]
   def vararg: Boolean
@@ -387,7 +387,7 @@ trait ArgTermC[Term <: TermT[Term]] extends WHNFT[Term] {
     bind.toDoc <> varargDoc <> Docs.`:` <+> ty.toDoc <> defaultDoc
   }
 
-  def cpy(bind: LocalV = bind, ty: Term = ty, default: Option[Term] = default, vararg: Boolean = vararg, meta: OptionTermMeta = meta): ThisTree =
+  def cpy(bind: LocalVC[Term] = bind, ty: Term = ty, default: Option[Term] = default, vararg: Boolean = vararg, meta: OptionTermMeta = meta): ThisTree =
     cons.newArgTerm(bind, ty, default, vararg, meta)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
