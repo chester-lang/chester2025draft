@@ -353,10 +353,7 @@ object simple {
   case class NothingType(meta: OptionTermMeta) extends TypeTerm with NothingTypeC[Term] {
     override type ThisTree = NothingType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Nothing", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: NothingTypeF[Term, ThisTree] = this.copy
   }
 
   case class LiteralType(
@@ -367,8 +364,7 @@ object simple {
       with LiteralTypeC[Term] {
     override type ThisTree = LiteralType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text(literal.toString, ColorProfile.typeColor)
+    override def cons: LiteralTypeF[Term, ThisTree] = this.copy
   }
 
   case class ArgTerm(
@@ -704,7 +700,7 @@ object simple {
 
   case class ExprStmtTerm(
       expr: Term,
-      ty: Term = AnyType0,
+      ty: Term = t AnyType0,
       meta: OptionTermMeta
   ) extends StmtTerm
       with ExprStmtTermC[Term] {

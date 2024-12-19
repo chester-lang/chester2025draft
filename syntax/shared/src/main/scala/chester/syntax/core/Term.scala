@@ -713,10 +713,20 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
+  @FunctionalInterface
+  trait LiteralTypeF[Term <: TermT[Term], ThisTree <: LiteralTypeC[Term]] {
+    def newLiteralType(literal: LiteralTermT[Term], meta: OptionTermMeta): ThisTree
+  }
+
   trait LiteralTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: LiteralTypeC[Term]
 
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text(literal.toString, ColorProfile.typeColor)
     def literal: LiteralTermT[Term]
+    def cons: LiteralTypeF[Term, ThisTree]
+    def cpy(literal: LiteralTermT[Term] = literal, meta: OptionTermMeta = meta): ThisTree = cons.newLiteralType(literal, meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
   @FunctionalInterface
