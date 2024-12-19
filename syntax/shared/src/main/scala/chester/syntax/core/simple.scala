@@ -157,8 +157,6 @@ object simple {
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text("LevelType")
-
-    override def ty: Term = Type0
   }
 
   sealed trait Level extends Term with LevelT[Term] with WHNF derives ReadWriter {
@@ -552,24 +550,11 @@ object simple {
     override type ThisTree <: Effect
   }
 
-  case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM derives ReadWriter {
+  case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM with EffectsC[Term] derives ReadWriter {
     override type ThisTree = Effects
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.wrapperlist(Docs.`{`, Docs.`}`, ",")(effects.map { case (k, v) =>
-        k.toDoc <+> Docs.`:` <+> v.toDoc
-      })
+    override def cons: EffectsF[Term, ThisTree] = this.copy
 
-    def isEmpty: Boolean = (effects eq NoEffect.effects) || effects.isEmpty
-
-    def nonEmpty: Boolean = (effects ne NoEffect.effects) && effects.nonEmpty
-
-    override def collectMeta: Vector[MetaTerm] =
-      effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
-
-    override def replaceMeta(f: MetaTerm => Term): Effects = copy(effects = effects.map { case (a, b) =>
-      (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
-    })
   }
 
   object Effects {
@@ -762,22 +747,16 @@ object simple {
 
     override def cons: RecordStmtTermF[Term, ThisTree] = this.copy
 
-    override def switchUniqId(r: UReplacer): RecordStmtTerm = copy(uniqId = r(uniqId))
-
   }
 
   case class RecordConstructorCallTerm(
       recordName: Name,
       args: Vector[Term],
       meta: OptionTermMeta
-  ) extends Uneval {
+  ) extends Uneval with RecordConstructorCallTermC[Term] {
     override type ThisTree = RecordConstructorCallTerm
 
-
-    override def toDoc(using options: PrettierOptions): Doc = {
-      val argsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,`)(args.map(_.toDoc))
-      Doc.text(recordName) <> argsDoc
-    }
+    override def cons: RecordConstructorCallTermF[Term, ThisTree] = this.copy
   }
 
   case class TraitStmtTerm(
@@ -786,19 +765,10 @@ object simple {
       extendsClause: Option[Term] = None,
       body: Option[BlockTerm] = None,
       meta: OptionTermMeta
-  ) extends TypeDefinition derives ReadWriter {
+  ) extends TypeDefinition with TraitStmtTermC[Term] derives ReadWriter {
     override type ThisTree = TraitStmtTerm
 
-    override def switchUniqId(r: UReplacer): TraitStmtTerm = copy(uniqId = r(uniqId))
-
-
-    override def toDoc(using options: PrettierOptions): Doc = {
-      val extendsDoc = extendsClause.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
-      val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
-      group(
-        Doc.text("trait ") <> Doc.text(name) <> extendsDoc <> bodyDoc
-      )
-    }
+    override def cons: TraitStmtTermF[Term, ThisTree] = this.copy
   }
 
   case class InterfaceStmtTerm(
@@ -807,19 +777,10 @@ object simple {
       extendsClause: Option[Term] = None,
       body: Option[BlockTerm] = None,
       meta: OptionTermMeta
-  ) extends TypeDefinition derives ReadWriter {
+  ) extends TypeDefinition with InterfaceStmtTermC[Term] derives ReadWriter {
     override type ThisTree = InterfaceStmtTerm
 
-    override def switchUniqId(r: UReplacer): InterfaceStmtTerm = copy(uniqId = r(uniqId))
-
-
-    override def toDoc(using options: PrettierOptions): Doc = {
-      val extendsDoc = extendsClause.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
-      val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
-      group(
-        Doc.text("interface ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
-      )
-    }
+    override def cons: InterfaceStmtTermF[Term, ThisTree] = this.copy
   }
 
   case class ObjectCallTerm(
@@ -850,25 +811,15 @@ object simple {
       extendsClause: Option[Term],
       body: Option[BlockTerm],
       meta: OptionTermMeta
-  ) extends TypeDefinition derives ReadWriter {
-    override def switchUniqId(r: UReplacer): ObjectStmtTerm = copy(uniqId = r(uniqId))
-
-    override def toDoc(using options: PrettierOptions): Doc = {
-      val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
-      val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
-      Doc.text("object") <+> Doc.text(name) <+> extendsDoc <+> bodyDoc
-    }
-
+  ) extends TypeDefinition with ObjectStmtTermC[Term] derives ReadWriter {
     override type ThisTree = ObjectStmtTerm
+
+    override def cons: ObjectStmtTermF[Term, ThisTree] = this.copy
 
   }
 
   sealed trait TypeDefinition extends StmtTerm with TermWithUniqid with TypeDefinitionT[Term] derives ReadWriter {
     override type ThisTree <: TypeDefinition
-
-    def uniqId: UniqidOf[TypeDefinition]
-
-    override def switchUniqId(r: UReplacer): TypeDefinition
   }
 
 }
