@@ -12,7 +12,7 @@ case class Judge(wellTyped: Term, ty: Term, effects: Effects = NoEffect) extends
   def collectMeta: Vector[MetaTerm] =
     wellTyped.collectMeta ++ ty.collectMeta ++ effects.collectMeta
   def replaceMeta(f: MetaTerm => Term): Judge =
-    Judge(wellTyped.replaceMeta(f), ty.replaceMeta(f), effects.replaceMeta(f))
+    Judge(wellTyped.replaceMeta(f), ty.replaceMeta(f), effects.replaceMeta(f).asInstanceOf[Effects])
 
   override def collectU(collector: UCollector): Unit = {
     wellTyped.collectU(collector)

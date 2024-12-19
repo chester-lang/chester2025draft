@@ -1069,12 +1069,15 @@ object spec {
 
   implicit inline def convert000[Term <: TermT[Term], LocalV <: LocalVC[Term]](x:Map[LocalVC[Term],Term]):Map[LocalV,Term] = x.asInstanceOf[Map[LocalV,Term]]
 
+
+  implicit inline def converta0[Term <: TermT[Term], LocalV <: LocalVC[Term]](x:Map[LocalV,Term]):Map[LocalVC[Term],Term] = x.asInstanceOf[Map[LocalVC[Term],Term]]
+
   @FunctionalInterface
   trait EffectsF[Term <: TermT[Term], ThisTree <: EffectsC[Term]] {
     def newEffects(effects: Map[LocalVC[Term], Term], meta: OptionTermMeta): ThisTree
   }
 
-  trait EffectsC[Term <: TermT[Term]] extends EffectT[Term] {
+  trait EffectsC[Term <: TermT[Term]] extends WHNFT[Term] with EffectsMT[Term] {
     override type ThisTree <: EffectsC[Term]
 
     def effects: Map[LocalVC[Term], Term]
@@ -1093,7 +1096,7 @@ object spec {
     override def collectMeta: Vector[MetaTermC[Term]] =
       effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
-    override def replaceMeta(f: MetaTermC[Term] => Term): ThisTree = cpy(effects = effects.map { case (a, b) =>
+    override def replaceMeta(f: MetaTermC[Term] => Term): Term = cpy(effects = effects.map { case (a, b) =>
       (a.replaceMeta(f).asInstanceOf[LocalVC[Term]], b.replaceMeta(f))
     })
     def cpy(effects: Map[LocalVC[Term], Term] = effects, meta: OptionTermMeta = meta): ThisTree = cons.newEffects(effects, meta)
@@ -1515,6 +1518,7 @@ object spec {
     def extendsClause: Option[Term]
     def body: Option[BlockTermC[Term]]
 
+override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
 
 
     override def toDoc(using options: PrettierOptions): Doc = {

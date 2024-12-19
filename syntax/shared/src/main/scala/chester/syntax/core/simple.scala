@@ -103,7 +103,6 @@ object simple {
   sealed trait TermWithUniqid extends Term with TermWithUniqidT[Term] derives ReadWriter {
     override type ThisTree <: TermWithUniqid
 
-    override def uniqId: UniqidOf[Term]
 
   }
 
@@ -524,6 +523,8 @@ object simple {
   case class Intersection(xs: NonEmptyVector[Term], meta: OptionTermMeta) extends TypeTerm with IntersectionC[Term] derives ReadWriter {
     override type ThisTree = Intersection
 
+    override def cons: IntersectionF[Term, ThisTree] = this.copy
+
   }
 
   object Intersection {
@@ -547,7 +548,8 @@ object simple {
     override type ThisTree <: Effect
   }
 
-  case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM with EffectsC[Term] derives ReadWriter {
+  case class Effects(effectss: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM with EffectsC[Term] derives ReadWriter {
+    override def effects = effectss
     override type ThisTree = Effects
 
     override def cons: EffectsF[Term, ThisTree] = this.copy
