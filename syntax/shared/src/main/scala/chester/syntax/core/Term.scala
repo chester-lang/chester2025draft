@@ -169,6 +169,7 @@ object spec {
 
   /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
   trait TermT[Term <: TermT[Term]] extends Any with ToDoc with ContainsUniqid with Tree[Term] {
+    override type ThisTree <: TermT[Term]
     override def toDoc(using options: PrettierOptions): Doc = toString
 
      override def descent(f: Term => Term, g: TreeMap[Term]): Term
@@ -1116,6 +1117,9 @@ object spec {
     val name = "Exception"
 
     override def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newExceptionEffect(meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
   // todo: may not terminate
 
@@ -1478,7 +1482,7 @@ object spec {
     def extendsClause: Option[Term]
 
     def body: Option[BlockTermC[Term]]
-    override def switchUniqId(r: UReplacer): ObjectStmtTerm = cpy(uniqId = r(uniqId))
+    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
 
     override def toDoc(using options: PrettierOptions): Doc = {
       val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
@@ -1511,8 +1515,6 @@ object spec {
     def extendsClause: Option[Term]
     def body: Option[BlockTermC[Term]]
 
-
-    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
 
 
     override def toDoc(using options: PrettierOptions): Doc = {
