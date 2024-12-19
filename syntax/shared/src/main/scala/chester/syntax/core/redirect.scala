@@ -1,3 +1,3 @@
 package chester.syntax.core
 
-export chester.syntax.core.spec.*
+export chester.syntax.core.spec.spec.*

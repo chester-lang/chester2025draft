@@ -12,7 +12,7 @@ import cats.data.*
 import chester.doc.const.*
 import chester.error.Problem
 import chester.syntax.*
-import chester.syntax.core.spec.*
+import chester.syntax.core.spec.spec.*
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*

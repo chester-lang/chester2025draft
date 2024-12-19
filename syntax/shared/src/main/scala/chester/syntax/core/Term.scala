@@ -1,5 +1,5 @@
 // TODO: More correctly implement toDoc
-package chester.syntax.core
+package chester.syntax.core.spec
 
 import cats.data.*
 import chester.doc.*
@@ -36,8 +36,8 @@ import scala.language.implicitConversions
  * Example hierarchy:
  * - TermT[Term] - Base trait for all terms
  *   - LocalVC[Term] - Structure for local variables
- *     - LocalV - Concrete implementation
- *   - LocalVF[Term, ThisTree] - Factory for creating LocalV instances
+ *     - LocalVC[Term] - Concrete implementation
+ *   - LocalVF[Term, ThisTree] - Factory for creating LocalVC[Term] instances
  */
 object spec {
 
@@ -290,6 +290,8 @@ object spec {
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
+
+  implicit def metaVec[Term <: TermT[Term], ThisTree <: MetaTermC[Term]](x: Vector[MetaTermC[Term]]): Vector[ThisTree] = x.asInstanceOf[Vector[ThisTree]]
 
   @FunctionalInterface
   trait ListTermF[Term <: TermT[Term], ThisTree <: ListTermC[Term]] {
@@ -1059,13 +1061,13 @@ object spec {
 
   @FunctionalInterface
   trait EffectsF[Term <: TermT[Term], ThisTree <: EffectsC[Term]] {
-    def newEffects(effects: Map[LocalV, Term], meta: OptionTermMeta): ThisTree
+    def newEffects(effects: Map[LocalVC[Term], Term], meta: OptionTermMeta): ThisTree
   }
 
   trait EffectsC[Term <: TermT[Term]] extends EffectT[Term] {
     override type ThisTree <: EffectsC[Term]
 
-    def effects: Map[LocalV, Term]
+    def effects: Map[LocalVC[Term], Term]
 
     def cons: EffectsF[Term, ThisTree]
 
@@ -1081,14 +1083,17 @@ object spec {
     override def collectMeta: Vector[MetaTermC[Term]] =
       effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
-    override def replaceMeta(f: MetaTermC[Term] => Term): Effects = cpy(effects = effects.map { case (a, b) =>
-      (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
+    override def replaceMeta(f: MetaTermC[Term] => Term): ThisTree = cpy(effects = effects.map { case (a, b) =>
+      (a.replaceMeta(f).asInstanceOf[LocalVC[Term]], b.replaceMeta(f))
     })
-    def cpy(effects: Map[LocalV, Term] = effects, meta: OptionTermMeta = meta): ThisTree = cons.newEffects(effects, meta)
+    def cpy(effects: Map[LocalVC[Term], Term] = effects, meta: OptionTermMeta = meta): ThisTree = cons.newEffects(effects, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(effects = effects.map { case (k, v) => (k, f(v)) }))
   }
 
+  implicit def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: MetaTerm): MetaTermC[Term] = x.asInstanceOf[MetaTermC[Term]]
+
+  implicit def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: (MetaTerm=>Term)): (MetaTermC[Term]=>Term) = x.asInstanceOf[(MetaTermC[Term]=>Term)  ]
   @FunctionalInterface
   trait ExceptionEffectF[Term <: TermT[Term], ThisTree <: ExceptionEffectC[Term]] {
     def newExceptionEffect(meta: OptionTermMeta): ThisTree
@@ -1464,13 +1469,15 @@ object spec {
     def extendsClause: Option[Term]
 
     def body: Option[BlockTermC[Term]]
-    override def switchUniqId(r: UReplacer): ObjectStmtTerm = copy(uniqId = r(uniqId))
+    override def switchUniqId(r: UReplacer): ObjectStmtTerm = cpy(uniqId = r(uniqId))
 
     override def toDoc(using options: PrettierOptions): Doc = {
       val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
       val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
       Doc.text("object") <+> Doc.text(name) <+> extendsDoc <+> bodyDoc
     }
+
+    def cons: ObjectStmtTermF[Term, ThisTree]
 
     def cpy(name: Name = name, uniqId: UniqidOf[ObjectStmtTermC[Term]] = uniqId, extendsClause: Option[Term] = extendsClause, body: Option[BlockTermC[Term]] = body, meta: OptionTermMeta = meta): ThisTree =
       cons.newObjectStmt(name, uniqId, extendsClause, body, meta)
@@ -1496,7 +1503,7 @@ object spec {
     def body: Option[BlockTermC[Term]]
 
 
-    override def switchUniqId(r: UReplacer): InterfaceStmtTerm = cpy(uniqId = r(uniqId))
+    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
 
 
     override def toDoc(using options: PrettierOptions): Doc = {
@@ -1506,6 +1513,8 @@ object spec {
         Doc.text("interface ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
       )
     }
+
+    def cons: InterfaceStmtTermF[Term, ThisTree]
 
     def cpy(name: Name = name, uniqId: UniqidOf[InterfaceStmtTermC[Term]] = uniqId, extendsClause: Option[Term] = extendsClause, body: Option[BlockTermC[Term]] = body, meta: OptionTermMeta = meta): ThisTree =
       cons.newInterfaceStmt(name, uniqId, extendsClause, body, meta)
@@ -1531,7 +1540,7 @@ object spec {
     def extendsClause: Option[Term]
     def body: Option[BlockTermC[Term]]
 
-    override def switchUniqId(r: UReplacer): TraitStmtTerm = cpy(uniqId = r(uniqId))
+    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
 
 
     override def toDoc(using options: PrettierOptions): Doc = {
@@ -1542,6 +1551,7 @@ object spec {
       )
     }
 
+    def cons: TraitStmtTermF[Term, ThisTree]
     def cpy(name: Name = name, uniqId: UniqidOf[TraitStmtTermC[Term]] = uniqId, extendsClause: Option[Term] = extendsClause, body: Option[BlockTermC[Term]] = body, meta: OptionTermMeta = meta): ThisTree =
       cons.newTraitStmt(name, uniqId, extendsClause, body, meta)
 
@@ -1574,7 +1584,7 @@ object spec {
 
     def cons: RecordStmtTermF[Term, ThisTree]
 
-    override def switchUniqId(r: UReplacer): RecordStmtTerm = cpy(uniqId = r(uniqId))
+    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
 
     override def toDoc(using options: PrettierOptions): Doc = {
       val fieldsDoc = fields.map(_.toDoc).reduceOption(_ <> Doc.text(", ") <> _).getOrElse(Doc.empty)
