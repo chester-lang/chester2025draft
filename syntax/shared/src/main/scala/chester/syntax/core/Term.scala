@@ -1467,6 +1467,12 @@ object spec {
 
     override type ThisTree <: TypeDefinitionT[Term]
   }
+  
+   implicit inline def tyaaa[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x:TypeDefinitionT[Term]):ThisTree = x.asInstanceOf[ThisTree]
+
+  implicit inline def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x: UniqidOf[TypeDefinitionT[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
+
+  implicit inline def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x: (UniqidOf[TypeDefinitionT[Term]],TypeDefinitionT[Term])): (UniqidOf[ThisTree],ThisTree) = x.asInstanceOf[(UniqidOf[ThisTree],ThisTree)]
 
   implicit inline def uniqOb[Term <: TermT[Term], ThisTree <: ObjectStmtTermC[Term]](x:  UniqidOf[ObjectStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
 
