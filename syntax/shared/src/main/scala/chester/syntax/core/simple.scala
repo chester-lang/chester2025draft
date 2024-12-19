@@ -12,7 +12,6 @@ import cats.data.*
 import chester.doc.const.*
 import chester.error.Problem
 import chester.syntax.*
-import chester.syntax.core.*
 import chester.syntax.core.spec.*
 import chester.uniqid.*
 import chester.utils.*
@@ -416,24 +415,6 @@ object simple {
 
     }
 
-  @deprecated("not used")
-  case class MatchingClause(meta: OptionTermMeta) extends WHNF {
-    override type ThisTree = MatchingClause
-
-    override def toDoc(using options: PrettierOptions): Doc = toString // TODO
-
-  }
-
-  case class Matching(
-      ty: FunctionType,
-      clauses: NonEmptyVector[MatchingClause],
-      meta: OptionTermMeta
-  ) extends WHNF {
-    override type ThisTree = Matching
-
-    override def toDoc(using options: PrettierOptions): Doc = toString // TODO
-  }
-
   case class FunctionType(
       telescope: Vector[TelescopeTerm],
       resultTy: Term,
@@ -494,28 +475,27 @@ object simple {
 
   }
 
-  case class ListF(meta: OptionTermMeta) extends Builtin {
+  case class ListF(meta: OptionTermMeta) extends Builtin with ListFC[Term] {
     override type ThisTree = ListF
 
-    override def toDoc(using options: PrettierOptions): Doc = "List"
+    override def cons: ListFF[Term, ThisTree] = this.copy
+
   }
 
-  sealed trait Constructed extends WHNF derives ReadWriter {
+  sealed trait Constructed extends WHNF with ConstructedT[Term] derives ReadWriter {
     type ThisTree <: Constructed
   }
 
-  case class ListType(ty: Term, meta: OptionTermMeta) extends Constructed with TypeTerm {
+  case class ListType(ty: Term, meta: OptionTermMeta) extends Constructed with ListTypeC[Term] with TypeTerm {
     override type ThisTree = ListType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("List") <> Docs.`(` <> ty <> Docs.`)`
+    override def cons: ListTypeF[Term, ThisTree] = this.copy
   }
 
-  case class Union(xs: NonEmptyVector[Term], meta: OptionTermMeta) extends TypeTerm {
+  case class Union(xs: NonEmptyVector[Term], meta: OptionTermMeta) extends TypeTerm with UnionC[Term] {
     override type ThisTree = Union
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.wrapperlist(Docs.`(`, Docs.`)`, " | ")(xs)
+    override def cons: UnionF[Term, ThisTree] = this.copy
   }
 
   private inline def flatList[T <: Term](
@@ -546,11 +526,9 @@ object simple {
     }
   }
 
-  case class Intersection(xs: NonEmptyVector[Term], meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+  case class Intersection(xs: NonEmptyVector[Term], meta: OptionTermMeta) extends TypeTerm with IntersectionC[Term] derives ReadWriter {
     override type ThisTree = Intersection
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.wrapperlist(Docs.`(`, Docs.`)`, " & ")(xs)
   }
 
   object Intersection {
@@ -566,18 +544,12 @@ object simple {
     }
   }
 
-  sealed trait Builtin extends WHNF derives ReadWriter {
+  sealed trait Builtin extends WHNF with BuiltinT[Term] derives ReadWriter {
     override type ThisTree <: Builtin
   }
 
-  /** Effect needs to have reasonable equals and hashcode for simple comparison, whereas they are not requirements for other Terms
-    */
-  sealed trait Effect extends WHNF derives ReadWriter {
+  sealed trait Effect extends WHNF with EffectT[Term] derives ReadWriter {
     override type ThisTree <: Effect
-
-    def name: String
-
-    override def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
   }
 
   case class Effects(effects: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM derives ReadWriter {
@@ -606,24 +578,12 @@ object simple {
 
   val NoEffect = Effects.Empty
 
-  // may raise an exception
-  case class ExceptionEffect(meta: OptionTermMeta) extends Effect {
-    val name = "Exception"
+  case class ExceptionEffect(meta: OptionTermMeta) extends Effect with ExceptionEffectC[Term] {
+    override type ThisTree = ExceptionEffect
+
+    override def cons: ExceptionEffectF[Term, ThisTree] = this.copy
   }
 
-  // may not terminate
-  case class DivergeEffect(meta: OptionTermMeta) extends Effect {
-    val name = "Diverge"
-  }
-
-  // whatever IO: console, file, network, ...
-  case class IOEffect(meta: OptionTermMeta) extends Effect {
-    val name = "IO"
-  }
-
-  case class STEffect(meta: OptionTermMeta) extends Effect {
-    val name = "ST"
-  }
 
   sealed trait ReferenceCall extends Term with Uneval with TermWithUniqid with ReferenceCallC[Term] derives ReadWriter {
     override type ThisTree <: ReferenceCall
@@ -700,7 +660,7 @@ object simple {
 
   case class ExprStmtTerm(
       expr: Term,
-      ty: Term = t AnyType0,
+      ty: Term = AnyType0,
       meta: OptionTermMeta
   ) extends StmtTerm
       with ExprStmtTermC[Term] {

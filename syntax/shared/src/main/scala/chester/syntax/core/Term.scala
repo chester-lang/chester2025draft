@@ -1,6 +1,7 @@
 // TODO: More correctly implement toDoc
 package chester.syntax.core
 
+import cats.data.*
 import chester.doc.*
 import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
@@ -320,6 +321,7 @@ object spec {
     def level: TermT[Term]
   }
 
+  @FunctionalInterface
   trait TypeF[Term <: TermT[Term], ThisTree <: TypeC[Term]] {
     def newType(level: Term, meta: OptionTermMeta): ThisTree
   }
@@ -556,6 +558,9 @@ object spec {
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text(value.toString, ColorProfile.literalColor)
     def value: Rational
+    def cons: RationalTermF[Term, ThisTree]
+    def cpy(value: Rational = value, meta: OptionTermMeta = meta): ThisTree = cons.newRationalTerm(value, meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
   @FunctionalInterface
@@ -567,6 +572,10 @@ object spec {
     override type ThisTree <: BooleanTermC[Term]
 
     def value: Boolean
+
+    def cons: BooleanTermF[Term, ThisTree]
+
+    def cpy(value: Boolean = value, meta: OptionTermMeta = meta): ThisTree = cons.newBooleanTerm(value, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 
@@ -958,6 +967,107 @@ object spec {
       cpy(fieldTypes = fieldTypes.map(g))
     )
   }
+
+  @FunctionalInterface
+  trait ListFF[Term <: TermT[Term], ThisTree <: ListFC[Term]] {
+    def newListF(meta: OptionTermMeta): ThisTree
+  }
+  trait ListFC[Term <: TermT[Term]] extends WHNFT[Term] {
+    override type ThisTree <: ListFC[Term]
+
+    def cons: ListFF[Term, ThisTree]
+    override def toDoc(using options: PrettierOptions): Doc = "List"
+  }
+
+  trait BuiltinT[Term <: TermT[Term]] extends WHNFT[Term] {
+    override type ThisTree <: BuiltinT[Term]
+
+  }
+
+  trait ConstructedT[Term <: TermT[Term]] extends WHNFT[Term] {
+    override type ThisTree <: ConstructedT[Term]
+  }
+
+  @FunctionalInterface
+  trait ListTypeF[Term <: TermT[Term], ThisTree <: ListTypeC[Term]] {
+    def newListType(ty: Term, meta: OptionTermMeta): ThisTree
+  }
+
+  trait ListTypeC[Term <: TermT[Term]] extends ConstructedT[Term] {
+    override type ThisTree <: ListTypeC[Term]
+
+    def ty: Term
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("List") <> Docs.`(` <> ty <> Docs.`)`
+    def cons: ListTypeF[Term, ThisTree]
+
+    def cpy(ty: Term = ty, meta: OptionTermMeta = meta): ThisTree = cons.newListType(ty, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(ty = f(ty)))
+  }
+
+  @FunctionalInterface
+  trait UnionF[Term <: TermT[Term], ThisTree <: UnionC[Term]] {
+    def newUnion(xs: NonEmptyVector[Term], meta: OptionTermMeta): ThisTree
+  }
+
+  trait UnionC[Term <: TermT[Term]] extends ConstructedT[Term] {
+    override type ThisTree <: UnionC[Term]
+
+    def xs: NonEmptyVector[Term]
+
+    def cons: UnionF[Term, ThisTree]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.wrapperlist(Docs.`(`, Docs.`)`, "|")(xs)
+
+    def cpy(xs: NonEmptyVector[Term] = xs, meta: OptionTermMeta = meta): ThisTree =
+      cons.newUnion(xs, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
+      cpy(xs = xs.map(f))
+    )
+  }
+
+  @FunctionalInterface
+  trait IntersectionF[Term <: TermT[Term], ThisTree <: IntersectionC[Term]] {
+    def newIntersection(xs: NonEmptyVector[Term], meta: OptionTermMeta): ThisTree
+  }
+  trait IntersectionC[Term <: TermT[Term]] extends ConstructedT[Term] {
+    override type ThisTree <: IntersectionC[Term]
+
+    def xs: NonEmptyVector[Term]
+
+    def cons: IntersectionF[Term, ThisTree]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.wrapperlist(Docs.`(`, Docs.`)`, "&")(xs)
+  }
+
+  /** Effect needs to have reasonable equals and hashcode for simple comparison, whereas they are not requirements for other Terms
+    */
+  trait EffectT[Term <: TermT[Term]] extends WHNFT[Term] {
+    override type ThisTree <: EffectT[Term]
+  }
+
+  @FunctionalInterface
+  trait ExceptionEffectF[Term <: TermT[Term], ThisTree <: ExceptionEffectC[Term]] {
+    def newExceptionEffect(meta: OptionTermMeta): ThisTree
+  }
+
+  // may raise an exception
+  trait ExceptionEffectC[Term <: TermT[Term]] extends EffectT[Term] {
+    override type ThisTree <: ExceptionEffectC[Term]
+
+    def cons: ExceptionEffectF[Term, ThisTree]
+    val name = "Exception"
+
+    override def toDoc(using options: PrettierOptions): Doc = Doc.text(name)
+  }
+  // todo: may not terminate
+
+  // todo:  whatever IO: console, file, network, ...
 
   trait ReferenceCallC[Term <: TermT[Term]] extends UnevalT[Term] with TermWithUniqidT[Term] {
     override type ThisTree <: ReferenceCallC[Term]
