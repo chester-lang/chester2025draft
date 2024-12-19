@@ -707,7 +707,14 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
   
-  def AnyType0[Term <: TermT[Term], ThisTree <: AnyTypeC[Term]](using aAnyTypeF: AnyTypeF[Term, ThisTree]): ThisTree = aAnyTypeF.newAnyType(Level0, meta = None)
+  def Level0[Term <: TermT[Term], LevelFinite <: LevelFiniteC[Term], IntegerTerm <: IntegerTermC[Term]]
+  (using aLevelFiniteF: LevelFiniteF[Term, LevelFinite], aIntegerTermF: IntegerTermF[Term, IntegerTerm]): LevelFinite = aLevelFiniteF.newLevelFinite(aIntegerTermF.newIntegerTerm(0, meta = None), meta = None)
+
+  def Type0[Term <: TermT[Term], Type <: TypeC[Term], LevelFinite <: LevelFiniteC[Term], IntegerTerm <: IntegerTermC[Term]]
+  (using aTypeF: TypeF[Term, Type], x0: LevelFiniteF[Term, LevelFinite], x1: IntegerTermF[Term, IntegerTerm]): Type = aTypeF.newType(Level0[Term, LevelFinite, IntegerTerm](using x0, x1), meta = None)
+
+  def AnyType0[Term <: TermT[Term], AnyType <: AnyTypeC[Term], LevelFinite <: LevelFiniteC[Term], IntegerTerm <: IntegerTermC[Term]]
+  (using aAnyTypeF: AnyTypeF[Term, AnyType], x0: LevelFiniteF[Term, LevelFinite], x1:IntegerTermF[Term, IntegerTerm]): AnyType = aAnyTypeF.newAnyType(Level0[Term, LevelFinite, IntegerTerm](using x0, x1), meta = None)
 
   @FunctionalInterface
   trait NothingTypeF[Term <: TermT[Term], ThisTree <: NothingTypeC[Term]] {
@@ -1059,6 +1066,8 @@ object spec {
     override type ThisTree <: EffectT[Term]
   }
 
+  implicit inline def convert000[Term <: TermT[Term], LocalV <: LocalVC[Term]](x:Map[LocalVC[Term],Term]):Map[LocalV,Term] = x.asInstanceOf[Map[LocalV,Term]]
+
   @FunctionalInterface
   trait EffectsF[Term <: TermT[Term], ThisTree <: EffectsC[Term]] {
     def newEffects(effects: Map[LocalVC[Term], Term], meta: OptionTermMeta): ThisTree
@@ -1091,9 +1100,9 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(effects = effects.map { case (k, v) => (k, f(v)) }))
   }
 
-  implicit def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: MetaTerm): MetaTermC[Term] = x.asInstanceOf[MetaTermC[Term]]
+  implicit inline def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: MetaTerm): MetaTermC[Term] = x.asInstanceOf[MetaTermC[Term]]
 
-  implicit def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: (MetaTerm=>Term)): (MetaTermC[Term]=>Term) = x.asInstanceOf[(MetaTermC[Term]=>Term)  ]
+  implicit inline def convertF2[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: (MetaTerm=>Term)): (MetaTermC[Term]=>Term) = x.asInstanceOf[(MetaTermC[Term]=>Term)  ]
   @FunctionalInterface
   trait ExceptionEffectF[Term <: TermT[Term], ThisTree <: ExceptionEffectC[Term]] {
     def newExceptionEffect(meta: OptionTermMeta): ThisTree
@@ -1452,7 +1461,7 @@ object spec {
     override type ThisTree <: TypeDefinitionT[Term]
   }
 
-  implicit def uniqOb[Term <: TermT[Term], ThisTree <: ObjectStmtTermC[Term]](x:  UniqidOf[ObjectStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
+  implicit inline def uniqOb[Term <: TermT[Term], ThisTree <: ObjectStmtTermC[Term]](x:  UniqidOf[ObjectStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
 
   @FunctionalInterface
   trait ObjectStmtTermF[Term <: TermT[Term], ThisTree <: ObjectStmtTermC[Term]] {
@@ -1487,7 +1496,7 @@ object spec {
     )
   }
 
-  implicit def uniqInterface[Term <: TermT[Term], ThisTree <: InterfaceStmtTermC[Term]](x:  UniqidOf[InterfaceStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
+  implicit inline def uniqInterface[Term <: TermT[Term], ThisTree <: InterfaceStmtTermC[Term]](x:  UniqidOf[InterfaceStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
 
   @FunctionalInterface
   trait InterfaceStmtTermF[Term <: TermT[Term], ThisTree <: InterfaceStmtTermC[Term]] {
@@ -1524,7 +1533,7 @@ object spec {
     )
   }
 
-  implicit def uniqTrait[Term <: TermT[Term], ThisTree <: TraitStmtTermC[Term]](x:  UniqidOf[TraitStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
+  implicit inline def uniqTrait[Term <: TermT[Term], ThisTree <: TraitStmtTermC[Term]](x:  UniqidOf[TraitStmtTermC[Term]]): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
 
   @FunctionalInterface
   trait TraitStmtTermF[Term <: TermT[Term], ThisTree <: TraitStmtTermC[Term]] {

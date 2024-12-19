@@ -140,6 +140,8 @@ object simple {
     def level: Term
   }
 
+  given aTypeF: TypeF[Term, Type] = Type(Level0, meta = None).cons
+
   case class Type(level: Term, meta: OptionTermMeta) extends Sort with TypeC[Term] {
     override type ThisTree = Type
     
@@ -184,11 +186,6 @@ object simple {
       Doc.text("Levelω")
 
    }
-
-  // Define Level0 using LevelFinite
-  val Level0: LevelFinite = LevelFinite(IntegerTerm(0, meta = None), meta = None)
-
-  val Type0: Type = Type(Level0, meta = None)
 
   // Referencing Setω in Agda
   val Typeω: Type = Type(LevelUnrestricted(None), meta = None)
