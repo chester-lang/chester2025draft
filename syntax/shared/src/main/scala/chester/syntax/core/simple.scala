@@ -151,7 +151,7 @@ object simple {
 
    }
 
-  case class LevelType(meta: OptionTermMeta) extends TypeTerm with WithType with LevelTypeC[Term] {
+  case class LevelType(meta: OptionTermMeta) extends TypeTerm with LevelTypeC[Term] {
     override type ThisTree = LevelType
 
     override def cons: LevelTypeF[Term, ThisTree] = this.copy
@@ -258,149 +258,117 @@ object simple {
     def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm.from(value, meta = None)
   }
 
-  sealed trait WithType extends Term with WithTypeT[Term] derives ReadWriter {
-    override type ThisTree <: WithType
-
-    def ty: Term
-  }
-
-  case class IntegerType(meta: OptionTermMeta) extends TypeTerm with WithType with IntegerTypeC[Term] derives ReadWriter {
+  case class IntegerType(meta: OptionTermMeta) extends TypeTerm with IntegerTypeC[Term] derives ReadWriter {
     override type ThisTree = IntegerType
-
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Integer", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
 
     override def cons: IntegerTypeF[Term, ThisTree] = this.copy
   }
 
   // int of 64 bits or more
-  case class IntType(meta: OptionTermMeta) extends TypeTerm with WithType with IntTypeC[Term] derives ReadWriter {
+  case class IntType(meta: OptionTermMeta) extends TypeTerm with IntTypeC[Term] derives ReadWriter {
     override type ThisTree = IntType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Int", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: IntTypeF[Term, ThisTree] = this.copy
   }
 
   // unsigned int of 64 bits or more
-  case class UIntType(meta: OptionTermMeta) extends TypeTerm with WithType with UIntTypeC[Term] derives ReadWriter {
+  case class UIntType(meta: OptionTermMeta) extends TypeTerm with UIntTypeC[Term] derives ReadWriter {
     override type ThisTree = UIntType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("UInt", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: UIntTypeF[Term, ThisTree] = this.copy
   }
 
-  case class NaturalType(meta: OptionTermMeta) extends TypeTerm with WithType with NaturalTypeC[Term] derives ReadWriter {
+  case class NaturalType(meta: OptionTermMeta) extends TypeTerm with NaturalTypeC[Term] derives ReadWriter {
     override type ThisTree = NaturalType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Natural", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: NaturalTypeF[Term, ThisTree] = this.copy
   }
 
   case class RationalTerm(value: Rational, meta: OptionTermMeta) extends LiteralTerm with RationalTermC[Term] derives ReadWriter {
     override type ThisTree = RationalTerm
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text(value.toString, ColorProfile.literalColor)
+    override def cons: RationalTermF[Term, ThisTree] = this.copy
   }
 
   case class BooleanTerm(value: Boolean, meta: OptionTermMeta) extends LiteralTerm with BooleanTermC[Term] derives ReadWriter {
     override type ThisTree = BooleanTerm
 
+    override def cons: BooleanTermF[Term, ThisTree] = this.copy
+
   }
 
-  case class BooleanType(meta: OptionTermMeta) extends TypeTerm with WithType with BooleanTypeC[Term] derives ReadWriter {
+  case class BooleanType(meta: OptionTermMeta) extends TypeTerm with BooleanTypeC[Term] derives ReadWriter {
     override type ThisTree = BooleanType
-    override def ty: Term = Type0
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Boolean", ColorProfile.typeColor)
+    override def cons: BooleanTypeF[Term, ThisTree] = this.copy
   }
 
   case class StringTerm(value: String, meta: OptionTermMeta) extends LiteralTerm with StringTermC[Term] derives ReadWriter {
     override type ThisTree = StringTerm
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("\"" + encodeString(value) + "\"", ColorProfile.literalColor)
+    override def cons: StringTermF[Term, ThisTree] = this.copy
+
   }
 
   case class SymbolTerm(value: String, meta: OptionTermMeta) extends LiteralTerm with SymbolTermC[Term] derives ReadWriter {
     override type ThisTree = SymbolTerm
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("'" + value, ColorProfile.literalColor)
+    override def cons: SymbolTermF[Term, ThisTree] = this.copy
   }
 
-  case class RationalType(meta: OptionTermMeta) extends TypeTerm with WithType with RationalTypeC[Term] derives ReadWriter {
+  case class RationalType(meta: OptionTermMeta) extends TypeTerm with RationalTypeC[Term] derives ReadWriter {
     override type ThisTree = RationalType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Rational", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: RationalTypeF[Term, ThisTree] = this.copy
   }
 
   // float of 32 bits or more
-  case class FloatType(meta: OptionTermMeta) extends TypeTerm with WithType with FloatTypeC[Term] derives ReadWriter {
+  case class FloatType(meta: OptionTermMeta) extends TypeTerm with FloatTypeC[Term] derives ReadWriter {
     override type ThisTree = FloatType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Float", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: FloatTypeF[Term, ThisTree] = this.copy
   }
 
-  case class StringType(meta: OptionTermMeta) extends TypeTerm with WithType with StringTypeC[Term] derives ReadWriter {
+  case class StringType(meta: OptionTermMeta) extends TypeTerm with StringTypeC[Term] derives ReadWriter {
     override type ThisTree = StringType
 
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("String", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
+    override def cons: StringTypeF[Term, ThisTree] = this.copy
   }
 
-  case class SymbolType(meta: OptionTermMeta) extends TypeTerm with WithType with SymbolTypeC[Term] derives ReadWriter {
+  case class SymbolType(meta: OptionTermMeta) extends TypeTerm with SymbolTypeC[Term] derives ReadWriter {
     override type ThisTree = SymbolType
 
+    override def cons: SymbolTypeF[Term, ThisTree] = this.copy
+  }
+
+  case class AnyType(level: Term, meta: OptionTermMeta) extends TypeTerm with AnyTypeC[Term] derives ReadWriter {
+    override type ThisTree = AnyType
+
+    override def cons: AnyTypeF[Term, ThisTree] = this.copy
+
+  }
+
+  given aAnyTypeF: AnyTypeF[Term, AnyType] = AnyType(Level0, meta = None).cons
+
+  case class NothingType(meta: OptionTermMeta) extends TypeTerm with NothingTypeC[Term] {
+    override type ThisTree = NothingType
+
     override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Symbol", ColorProfile.typeColor)
+      Doc.text("Nothing", ColorProfile.typeColor)
 
     override def ty: Term = Type0
   }
-
-  case class AnyType(level: Term, meta: OptionTermMeta) extends TypeTerm with WithType with AnyTypeC[Term] derives ReadWriter {
-    override type ThisTree = AnyType
-
-
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Any", ColorProfile.typeColor)
-
-    override def ty: Term = Type(level, meta)
-  }
-
-  def AnyType0: AnyType = AnyType(Level0, meta = None)
-
-  val AnyType0Debug: AnyType = AnyType(Level0, meta = None)
 
   case class LiteralType(
       literal: LiteralTerm,
       meta: OptionTermMeta
   ) extends TypeTerm
-      with WithType
+      
       with LiteralTypeC[Term] {
     override type ThisTree = LiteralType
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text(literal.toString, ColorProfile.typeColor)
-
-    override def ty: Term = Type0
   }
 
   case class ArgTerm(
@@ -945,15 +913,6 @@ object simple {
     def uniqId: UniqidOf[TypeDefinition]
 
     override def switchUniqId(r: UReplacer): TypeDefinition
-  }
-
-  case class NothingType(meta: OptionTermMeta) extends TypeTerm with WithType with NothingTypeC[Term] {
-    override type ThisTree = NothingType
-
-    override def toDoc(using options: PrettierOptions): Doc =
-      Doc.text("Nothing", ColorProfile.typeColor)
-
-    override def ty: Term = Type0
   }
 
 }

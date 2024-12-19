@@ -340,7 +340,7 @@ object spec {
     def newLevelType(meta: OptionTermMeta): ThisTree
   }
 
-  trait LevelTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  trait LevelTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: LevelTypeC[Term]
 
     def cons: LevelTypeF[Term, ThisTree]
@@ -472,19 +472,16 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait WithTypeT[Term <: TermT[Term]] extends TermT[Term] {
-    override type ThisTree <: WithTypeT[Term]
-
-    def ty: Term
-  }
-
   @FunctionalInterface
   trait IntegerTypeF[Term <: TermT[Term], ThisTree <: IntegerTypeC[Term]] {
     def newIntegerType(meta: OptionTermMeta): ThisTree
   }
 
-  trait IntegerTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  trait IntegerTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: IntegerTypeC[Term]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Integer", ColorProfile.typeColor)
 
     def cons: IntegerTypeF[Term, ThisTree]
 
@@ -493,22 +490,77 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait IntTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait IntTypeF[Term <: TermT[Term], ThisTree <: IntTypeC[Term]] {
+    def newIntType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait IntTypeC[Term <: TermT[Term]] extends TypeTermT[Term]  {
     override type ThisTree <: IntTypeC[Term]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Int", ColorProfile.typeColor)
+
+    def cons: IntTypeF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newIntType(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait UIntTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+
+@FunctionalInterface
+  trait UIntTypeF[Term <: TermT[Term], ThisTree <: UIntTypeC[Term]] {
+    def newUIntType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait UIntTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: UIntTypeC[Term]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("UInt", ColorProfile.typeColor)
+
+    def cons: UIntTypeF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newUIntType(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait NaturalTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait NaturalTypeF[Term <: TermT[Term], ThisTree <: NaturalTypeC[Term]] {
+    def newNaturalType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait NaturalTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: NaturalTypeC[Term]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Natural", ColorProfile.typeColor)
+
+    def cons: NaturalTypeF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newNaturalType(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  }
+
+  @FunctionalInterface
+  trait RationalTermF[Term <: TermT[Term], ThisTree <: RationalTermC[Term]] {
+    def newRationalTerm(value: Rational, meta: OptionTermMeta): ThisTree
   }
 
   trait RationalTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
     override type ThisTree <: RationalTermC[Term]
 
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text(value.toString, ColorProfile.literalColor)
     def value: Rational
+  }
+
+  @FunctionalInterface
+  trait BooleanTermF[Term <: TermT[Term], ThisTree <: BooleanTermC[Term]] {
+    def newBooleanTerm(value: Boolean, meta: OptionTermMeta): ThisTree
   }
 
   trait BooleanTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
@@ -522,49 +574,146 @@ object spec {
       Doc.text(value.toString, ColorProfile.literalColor)
   }
 
-  trait BooleanTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait BooleanTypeF[Term <: TermT[Term], ThisTree <: BooleanTypeC[Term]] {
+    def newBooleanType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait BooleanTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: BooleanTypeC[Term]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Boolean", ColorProfile.typeColor)
+
+    def cons: BooleanTypeF[Term, ThisTree]
+
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newBooleanType(meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  }
+
+  @FunctionalInterface
+  trait StringTermF[Term <: TermT[Term], ThisTree <: StringTermC[Term]] {
+    def newStringTerm(value: String, meta: OptionTermMeta): ThisTree
   }
 
   trait StringTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
     override type ThisTree <: StringTermC[Term]
 
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("\"" + encodeString(value) + "\"", ColorProfile.literalColor)
     def value: String
+    def cons: StringTermF[Term, ThisTree]
+    def cpy(value: String = value, meta: OptionTermMeta = meta): ThisTree = cons.newStringTerm(value, meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  }
+
+  @FunctionalInterface
+  trait SymbolTermF[Term <: TermT[Term], ThisTree <: SymbolTermC[Term]] {
+    def newSymbolTerm(value: String, meta: OptionTermMeta): ThisTree
   }
 
   trait SymbolTermC[Term <: TermT[Term]] extends LiteralTermT[Term] {
     override type ThisTree <: SymbolTermC[Term]
 
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("'" + value, ColorProfile.literalColor)
     def value: String
+    def cons: SymbolTermF[Term, ThisTree]
+    def cpy(value: String = value, meta: OptionTermMeta = meta): ThisTree = cons.newSymbolTerm(value, meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait RationalTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait RationalTypeF[Term <: TermT[Term], ThisTree <: RationalTypeC[Term]] {
+    def newRationalType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait RationalTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: RationalTypeC[Term]
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Rational", ColorProfile.typeColor)
+    def cons: RationalTypeF[Term, ThisTree]
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newRationalType(meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait FloatTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait FloatTypeF[Term <: TermT[Term], ThisTree <: FloatTypeC[Term]] {
+    def newFloatType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait FloatTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: FloatTypeC[Term]
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Float", ColorProfile.typeColor)
+    def cons: FloatTypeF[Term, ThisTree]
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newFloatType(meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait StringTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait StringTypeF[Term <: TermT[Term], ThisTree <: StringTypeC[Term]] {
+    def newStringType(meta: OptionTermMeta): ThisTree
+  }
+
+  trait StringTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: StringTypeC[Term]
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("String", ColorProfile.typeColor)
+    def cons: StringTypeF[Term, ThisTree]
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newStringType(meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait SymbolTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait SymbolTypeF[Term <: TermT[Term], ThisTree <: SymbolTypeC[Term]] {
+    def newSymbolType(meta: OptionTermMeta): ThisTree
+  } 
+
+  trait SymbolTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: SymbolTypeC[Term]
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Symbol", ColorProfile.typeColor)
+    def cons: SymbolTypeF[Term, ThisTree]
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newSymbolType(meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait AnyTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  @FunctionalInterface
+  trait AnyTypeF[Term <: TermT[Term], ThisTree <: AnyTypeC[Term]] {
+    def newAnyType(level: Term, meta: OptionTermMeta): ThisTree
+  }
+
+  trait AnyTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: AnyTypeC[Term]
 
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Any", ColorProfile.typeColor)
     def level: Term
+    def cons: AnyTypeF[Term, ThisTree]
+    def cpy(level: Term = level, meta: OptionTermMeta = meta): ThisTree = cons.newAnyType(level, meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  }
+  
+  def AnyType0[Term <: TermT[Term], ThisTree <: AnyTypeC[Term]](using aAnyTypeF: AnyTypeF[Term, ThisTree]): ThisTree = aAnyTypeF.newAnyType(Level0, meta = None)
+
+  @FunctionalInterface
+  trait NothingTypeF[Term <: TermT[Term], ThisTree <: NothingTypeC[Term]] {
+    def newNothingType(meta: OptionTermMeta): ThisTree
   }
 
-  trait NothingTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  trait NothingTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: NothingTypeC[Term]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      Doc.text("Nothing", ColorProfile.typeColor)
+    def cons: NothingTypeF[Term, ThisTree]
+    def cpy(meta: OptionTermMeta = meta): ThisTree = cons.newNothingType(meta)
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   }
 
-  trait LiteralTypeC[Term <: TermT[Term]] extends TypeTermT[Term] with WithTypeT[Term] {
+  trait LiteralTypeC[Term <: TermT[Term]] extends TypeTermT[Term]   {
     override type ThisTree <: LiteralTypeC[Term]
 
     def literal: LiteralTermT[Term]
