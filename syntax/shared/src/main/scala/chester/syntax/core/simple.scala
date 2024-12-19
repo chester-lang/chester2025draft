@@ -81,7 +81,7 @@ object simple {
 
     override def cons: BindF[Term, ThisTree] = this.copy
 
-   }
+  }
 
   object Bind {
     @deprecated("meta")
@@ -102,7 +102,6 @@ object simple {
 
   sealed trait TermWithUniqid extends Term with TermWithUniqidT[Term] derives ReadWriter {
     override type ThisTree <: TermWithUniqid
-
 
   }
 
@@ -127,7 +126,7 @@ object simple {
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
 
-    }
+  }
 
   sealed trait TypeTerm extends Term with TypeTermT[Term] with WHNF derives ReadWriter {
     override type ThisTree <: TypeTerm
@@ -143,13 +142,13 @@ object simple {
 
   case class Type(level: Term, meta: OptionTermMeta) extends Sort with TypeC[Term] {
     override type ThisTree = Type
-    
+
     override def cons: TypeF[Term, ThisTree] = this.copy
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
 
-   }
+  }
 
   case class LevelType(meta: OptionTermMeta) extends TypeTerm with LevelTypeC[Term] {
     override type ThisTree = LevelType
@@ -184,7 +183,7 @@ object simple {
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text("Levelω")
 
-   }
+  }
 
   // Referencing Setω in Agda
   val Typeω: Type = Type(LevelUnrestricted(None), meta = None)
@@ -221,7 +220,7 @@ object simple {
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text(value.toString, ColorProfile.literalColor)
   }
-  
+
   given aIntegerTerm: IntegerTermF[Term, IntegerTerm] = IntegerTerm(0, meta = None).cons
 
   case class IntegerTerm(value: BigInt, meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term] derives ReadWriter {
@@ -353,7 +352,6 @@ object simple {
       literal: LiteralTerm,
       meta: OptionTermMeta
   ) extends TypeTerm
-      
       with LiteralTypeC[Term] {
     override type ThisTree = LiteralType
 
@@ -407,7 +405,7 @@ object simple {
 
     override def cons: FunctionF[Term, ThisTree] = this.copy
 
-    }
+  }
 
   case class FunctionType(
       telescope: Vector[TelescopeTerm],
@@ -548,7 +546,8 @@ object simple {
     override type ThisTree <: Effect
   }
 
-  case class Effects(effectss: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM with EffectsC[Term] derives ReadWriter {
+  case class Effects(effectss: Map[LocalV, Term] = HashMap.empty, meta: OptionTermMeta) extends WHNF with EffectsM with EffectsC[Term]
+      derives ReadWriter {
     override def effects = effectss
     override type ThisTree = Effects
 
@@ -567,7 +566,6 @@ object simple {
 
     override def cons: ExceptionEffectF[Term, ThisTree] = this.copy
   }
-
 
   sealed trait ReferenceCall extends Term with Uneval with TermWithUniqid with ReferenceCallC[Term] derives ReadWriter {
     override type ThisTree <: ReferenceCall
@@ -699,8 +697,6 @@ object simple {
 
     override def cons: AnnotationF[Term, ThisTree] = this.copy
 
-   
-
     require(ty.nonEmpty || effects.nonEmpty)
   }
 
@@ -752,7 +748,8 @@ object simple {
       recordName: Name,
       args: Vector[Term],
       meta: OptionTermMeta
-  ) extends Uneval with RecordConstructorCallTermC[Term] {
+  ) extends Uneval
+      with RecordConstructorCallTermC[Term] {
     override type ThisTree = RecordConstructorCallTerm
 
     override def cons: RecordConstructorCallTermF[Term, ThisTree] = this.copy
@@ -764,7 +761,8 @@ object simple {
       extendsClause: Option[Term] = None,
       body: Option[BlockTerm] = None,
       meta: OptionTermMeta
-  ) extends TypeDefinition with TraitStmtTermC[Term] derives ReadWriter {
+  ) extends TypeDefinition
+      with TraitStmtTermC[Term] derives ReadWriter {
     override type ThisTree = TraitStmtTerm
 
     override def cons: TraitStmtTermF[Term, ThisTree] = this.copy
@@ -776,7 +774,8 @@ object simple {
       extendsClause: Option[Term] = None,
       body: Option[BlockTerm] = None,
       meta: OptionTermMeta
-  ) extends TypeDefinition with InterfaceStmtTermC[Term] derives ReadWriter {
+  ) extends TypeDefinition
+      with InterfaceStmtTermC[Term] derives ReadWriter {
     override type ThisTree = InterfaceStmtTerm
 
     override def cons: InterfaceStmtTermF[Term, ThisTree] = this.copy
@@ -810,7 +809,8 @@ object simple {
       extendsClause: Option[Term],
       body: Option[BlockTerm],
       meta: OptionTermMeta
-  ) extends TypeDefinition with ObjectStmtTermC[Term] derives ReadWriter {
+  ) extends TypeDefinition
+      with ObjectStmtTermC[Term] derives ReadWriter {
     override type ThisTree = ObjectStmtTerm
 
     override def cons: ObjectStmtTermF[Term, ThisTree] = this.copy
