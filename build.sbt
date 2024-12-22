@@ -699,7 +699,7 @@ object GeneratedJS {
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.12.1" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.12.2" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
