@@ -490,20 +490,8 @@ object simple {
     override def cons: UnionF[Term, ThisTree] = this.copy
   }
 
-  private inline def flatList[T <: Term](
-      inline constructor: Vector[Term] => T,
-      inline unapply: Term => Option[Vector[Term]],
-      inline post: Vector[Term] => Vector[Term] = x => x
-  )(inline xs: Vector[Term]) = {
-    val flattened = post(xs.flatMap { item =>
-      unapply(item).getOrElse(Vector(item))
-    })
-    constructor(flattened)
-  }
-
   object Union {
     @deprecated("meta")
-    // def apply(xs: Vector[Term]): OrType = flatList[OrType]((x => new OrType(x)), { case OrType(x) => Some(x); case _ => None }, _.distinct)(xs)
     def from(xs: Vector[Term]): Term = {
       val flattened = xs
         .flatMap {
@@ -527,7 +515,6 @@ object simple {
 
   object Intersection {
     @deprecated("meta")
-    // def apply(xs: Vector[Term]): AndType = flatList[AndType]((x => new AndType(x)), { case AndType(x) => Some(x); case _ => None })(xs)
     def from(xs: Vector[Term]): Term = {
       val flattened = xs.flatMap {
         case Intersection(ys, _) => ys
@@ -725,10 +712,6 @@ object simple {
     override def cons: FieldTermF[Term, ThisTree] = this.copy
 
   }
-
-  implicit def conversionRecord(x: UniqidOf[RecordStmtTermC[Term]]): UniqidOf[RecordStmtTerm] = x.asInstanceOf[UniqidOf[RecordStmtTerm]]
-
-  implicit def c1(x: Option[BlockTermC[Term]]): Option[BlockTerm] = x.asInstanceOf[Option[BlockTerm]]
 
   case class RecordStmtTerm(
       name: Name,

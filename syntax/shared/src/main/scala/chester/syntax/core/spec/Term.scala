@@ -1632,6 +1632,10 @@ object spec {
     )
   }
 
+  implicit def conversionRecord[Term <: TermT[Term],RecordStmtTerm<: RecordStmtTermC[Term]](x: UniqidOf[RecordStmtTermC[Term]]): UniqidOf[RecordStmtTerm] = x.asInstanceOf[UniqidOf[RecordStmtTerm]]
+
+  implicit def c1[Term <: TermT[Term],BlockTerm<: BlockTermC[Term]](x: Option[BlockTermC[Term]]): Option[BlockTerm] = x.asInstanceOf[Option[BlockTerm]]
+
   @FunctionalInterface
   trait RecordStmtTermF[Term <: TermT[Term], ThisTree <: RecordStmtTermC[Term]] {
     def newRecordStmt(
