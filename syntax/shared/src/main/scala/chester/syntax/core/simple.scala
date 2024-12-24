@@ -65,8 +65,6 @@ object simple {
 
   }
 
-  object FCallTerm {}
-
   sealed trait Pat extends SpecialTerm with PatT[Term] derives ReadWriter {
     override type ThisTree <: Pat
   }
@@ -81,11 +79,6 @@ object simple {
 
     override def cons: BindF[Term, ThisTree] = this.copy
 
-  }
-
-  object Bind {
-    @deprecated("meta")
-    def from(bind: LocalV): Bind = Bind(bind, bind.ty, None)
   }
 
   sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
@@ -111,11 +104,6 @@ object simple {
 
   case class MetaTerm(impl: HoldNotReadable[?], meta: OptionTermMeta) extends Term with MetaTermC[Term] with EffectsM with SpecialTerm {
     override type ThisTree = MetaTerm
-  }
-
-  object MetaTerm {
-    @deprecated("meta")
-    def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x), meta = None)
   }
 
   case class ListTerm(terms: Vector[Term], meta: OptionTermMeta) extends Term with ListTermC[Term] with WHNF derives ReadWriter {
@@ -185,9 +173,6 @@ object simple {
 
   }
 
-  // Referencing Setω in Agda
-  val Typeω: Type = Type(LevelUnrestricted(None), meta = None)
-
   case class Prop(level: Term, meta: OptionTermMeta) extends Sort with PropC[Term] {
     override type ThisTree = Prop
 
@@ -230,24 +215,6 @@ object simple {
       Doc.text(value.toString, ColorProfile.literalColor)
 
     override def cons: IntegerTermF[Term, ThisTree] = this.copy
-  }
-
-  object AbstractIntTerm {
-    def from(value: BigInt, meta: OptionTermMeta): AbstractIntTerm =
-      if (value.isValidInt) IntTerm(value.toInt, meta)
-      else IntegerTerm(value, meta)
-
-    def unapply(term: Term): Option[BigInt] = term match {
-      case IntTerm(value, _)     => Some(BigInt(value))
-      case IntegerTerm(value, _) => Some(value)
-      case _                     => None
-    }
-  }
-
-  object NaturalTerm {
-
-    @deprecated("meta")
-    def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm.from(value, meta = None)
   }
 
   case class IntegerType(meta: OptionTermMeta) extends TypeTerm with IntegerTypeC[Term] derives ReadWriter {
@@ -372,17 +339,6 @@ object simple {
 
   }
 
-  object ArgTerm {
-
-    @deprecated("meta")
-    def from(bind: LocalV): ArgTerm = ArgTerm(bind, bind.ty, meta = None)
-  }
-
-  object TelescopeTerm {
-    @deprecated("meta")
-    def from(x: ArgTerm*): TelescopeTerm = TelescopeTerm(x.toVector, meta = None)
-  }
-
   case class TelescopeTerm(
       args: Vector[ArgTerm],
       implicitly: Boolean = false,
@@ -418,18 +374,6 @@ object simple {
 
     override def cons: FunctionTypeF[Term, ThisTree] = this.copy
 
-  }
-
-  object FunctionType {
-    @deprecated("meta")
-    def apply(telescope: TelescopeTerm, resultTy: Term): FunctionType = {
-      new FunctionType(Vector(telescope), resultTy, meta = None)
-    }
-  }
-
-  def TyToty: FunctionType = {
-    val ty = LocalV("x", Type0, Uniqid.generate[LocalV], None)
-    FunctionType(TelescopeTerm.from(ArgTerm.from(ty)), ty)
   }
 
   case class ObjectClauseValueTerm(
@@ -490,39 +434,11 @@ object simple {
     override def cons: UnionF[Term, ThisTree] = this.copy
   }
 
-  object Union {
-    @deprecated("meta")
-    def from(xs: Vector[Term]): Term = {
-      val flattened = xs
-        .flatMap {
-          case Union(ys, _) => ys
-          case x            => Vector(x)
-        }
-        .distinct
-        .filter(x => !x.isInstanceOf[NothingType])
-      if (flattened.size == 1) return flattened.head
-      if (flattened.nonEmpty) new Union(flattened.assumeNonEmpty, None)
-      else NothingType(None)
-    }
-  }
-
   case class Intersection(xs: NonEmptyVector[Term], meta: OptionTermMeta) extends TypeTerm with IntersectionC[Term] derives ReadWriter {
     override type ThisTree = Intersection
 
     override def cons: IntersectionF[Term, ThisTree] = this.copy
 
-  }
-
-  object Intersection {
-    @deprecated("meta")
-    def from(xs: Vector[Term]): Term = {
-      val flattened = xs.flatMap {
-        case Intersection(ys, _) => ys
-        case x                   => Vector(x)
-      }.distinct
-      if (flattened.size == 1) return flattened.head
-      new Intersection(flattened.assumeNonEmpty, None)
-    }
   }
 
   sealed trait Builtin extends WHNF with BuiltinT[Term] derives ReadWriter {
@@ -541,12 +457,6 @@ object simple {
     override def cons: EffectsF[Term, ThisTree] = this.copy
 
   }
-
-  object Effects {
-    val Empty: Effects = Effects(HashMap.empty, meta = None)
-  }
-
-  val NoEffect = Effects.Empty
 
   case class ExceptionEffect(meta: OptionTermMeta) extends Effect with ExceptionEffectC[Term] {
     override type ThisTree = ExceptionEffect
@@ -677,20 +587,6 @@ object simple {
     override def cons: AnnotationF[Term, ThisTree] = this.copy
 
     require(ty.nonEmpty || effects.nonEmpty)
-  }
-
-  def UnitType(meta: OptionTermMeta): TupleType =
-    TupleType(Vector.empty, meta = meta)
-
-  object UnitTerm {
-    def unapply(x: Any): Option[OptionTermMeta] = x match {
-      case TupleTerm(Vector(), meta) => Some(meta)
-      case _                         => None
-    }
-
-    def apply(meta: OptionTermMeta): TupleTerm =
-      TupleTerm(Vector.empty, meta = meta)
-
   }
 
   case class FieldTerm(

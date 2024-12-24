@@ -117,7 +117,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       }
       case expr @ IntegerLiteral(value, meta) => {
         state.addPropagator(LiteralType(expr, ty))
-        AbstractIntTerm.from(value, convertMeta(meta))
+        AbstractIntTerm_.from(value, convertMeta(meta))
       }
       case expr @ RationalLiteral(value, meta) => {
         state.addPropagator(LiteralType(expr, ty))
@@ -133,7 +133,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       }
       case expr @ UnitExpr(meta) => {
         unify(ty, UnitType(convertMeta(meta)), expr)
-        UnitTerm(convertMeta(meta))
+        UnitTerm_(convertMeta(meta))
       }
       case expr @ ListExpr(terms, meta) => {
         val t = newType

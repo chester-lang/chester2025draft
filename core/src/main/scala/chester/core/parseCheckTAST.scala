@@ -26,7 +26,7 @@ def parseCheckTAST(
       TAST(
         fileName = source.fileName,
         module = DefaultModule,
-        ast = BlockTerm(Vector.empty, UnitTerm(meta = None), meta = None),
+        ast = BlockTerm(Vector.empty, UnitTerm_(meta = None), meta = None),
         ty = UnitType(meta = None),
         effects = NoEffect,
         problems = SeverityMap.Empty.copy(error = true)

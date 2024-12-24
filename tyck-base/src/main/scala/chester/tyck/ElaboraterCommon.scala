@@ -165,7 +165,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
             ZonkResult.Done
           case None =>
             // LHS is unknown, create UnionType from RHS values and set LHS
-            val unionType = Union.from(rhsValues.assumeNonEmpty)
+            val unionType = Union_.from(rhsValues.assumeNonEmpty)
             state.fill(lhs, unionType)
             ZonkResult.Done
         }
