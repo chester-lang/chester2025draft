@@ -569,7 +569,6 @@ object simple {
 
     override def cons: LocalVF[Term, ThisTree] = this.copy
 
-    override def switchUniqId(r: UReplacer): LocalV = copy(uniqId = r(uniqId))
   }
 
   implicit def conversionTop[Term <: TermT[Term]](x: UniqidOf[ToplevelVC[Term]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
@@ -585,15 +584,11 @@ object simple {
 
     override def cons: ToplevelVF[Term, ThisTree] = this.copy
 
-    override def switchUniqId(r: UReplacer): ToplevelV = copy(uniqId = r(uniqId))
   }
 
   case class ErrorTerm(problem: Problem, meta: OptionTermMeta) extends SpecialTerm with ErrorTermC[Term] {
     override type ThisTree = ErrorTerm
   }
-
-  def ErrorType(error: Problem, meta: OptionTermMeta): ErrorTerm =
-    ErrorTerm(error, meta)
 
   sealed trait StmtTerm extends Term with StmtTermT[Term] derives ReadWriter {
     override type ThisTree <: StmtTerm
@@ -669,7 +664,6 @@ object simple {
     override def cons: BlockTermF[Term, ThisTree] = this.copy
 
   }
-  implicit inline def effectsMConv(x: Option[EffectsMT[Term]]): Option[EffectsM] = x.asInstanceOf[Option[chester.syntax.core.simple.EffectsM]]
 
   case class Annotation(
       term: Term,

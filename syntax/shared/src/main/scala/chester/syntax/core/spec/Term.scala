@@ -1174,6 +1174,7 @@ object spec {
       cons.newLocalV(name, ty, uniqId, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(ty = f(ty)))
+    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
   }
 
   @FunctionalInterface
@@ -1201,6 +1202,7 @@ object spec {
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(ty = f(ty)))
 
+    override def switchUniqId(r: UReplacer): ThisTree = cpy(uniqId = r(uniqId))
     @deprecated("dont use")
     def name = id.name
   }
@@ -1778,4 +1780,7 @@ object spec {
       cpy(args = args.map(f))
     )
   }
+
+
+  implicit inline def effectsMConv[Term<:TermT[Term],EffectsM<:EffectsMT[Term]](x: Option[EffectsMT[Term]]): Option[EffectsM] = x.asInstanceOf[Option[EffectsM]]
 }
