@@ -1632,19 +1632,25 @@ object spec {
     )
   }
 
-  implicit def conversionRecord[Term <: TermT[Term],RecordStmtTerm<: RecordStmtTermC[Term]](x: UniqidOf[RecordStmtTermC[Term]]): UniqidOf[RecordStmtTerm] = x.asInstanceOf[UniqidOf[RecordStmtTerm]]
+  implicit def conversionRecord[Term <: TermT[Term], RecordStmtTerm <: RecordStmtTermC[Term]](
+      x: UniqidOf[RecordStmtTermC[Term]]
+  ): UniqidOf[RecordStmtTerm] = x.asInstanceOf[UniqidOf[RecordStmtTerm]]
 
-  implicit def c1[Term <: TermT[Term],BlockTerm<: BlockTermC[Term]](x: Option[BlockTermC[Term]]): Option[BlockTerm] = x.asInstanceOf[Option[BlockTerm]]
+  implicit def c1[Term <: TermT[Term], BlockTerm <: BlockTermC[Term]](x: Option[BlockTermC[Term]]): Option[BlockTerm] =
+    x.asInstanceOf[Option[BlockTerm]]
+
+  implicit def LocalVConversion[Term <: TermT[Term], LocalV <: LocalVC[Term]](x: UniqidOf[LocalVC[Term]]): UniqidOf[LocalV] =
+    x.asInstanceOf[UniqidOf[LocalV]]
 
   @FunctionalInterface
-  trait RecordStmtTermF[Term <: TermT[Term], ThisTree <: RecordStmtTermC[Term]] {
+  trait RecordStmtTermF[Term <: TermT[Term], RecordStmtTerm <: RecordStmtTermC[Term]] {
     def newRecordStmt(
         name: Name,
         uniqId: UniqidOf[RecordStmtTermC[Term]],
         fields: Vector[FieldTermC[Term]],
         body: Option[BlockTermC[Term]],
         meta: OptionTermMeta
-    ): ThisTree
+    ): RecordStmtTerm
   }
 
   trait RecordStmtTermC[Term <: TermT[Term]] extends TypeDefinitionT[Term] with StmtTermT[Term] {
@@ -1692,8 +1698,8 @@ object spec {
   }
 
   @FunctionalInterface
-  trait ObjectCallTermF[Term <: TermT[Term], ThisTree <: ObjectCallTermC[Term]] {
-    def newObjectCallTerm(objectRef: Term, meta: OptionTermMeta): ThisTree
+  trait ObjectCallTermF[Term <: TermT[Term], ObjectCallTerm <: ObjectCallTermC[Term]] {
+    def newObjectCallTerm(objectRef: Term, meta: OptionTermMeta): ObjectCallTerm
   }
 
   trait ObjectCallTermC[Term <: TermT[Term]] extends UnevalT[Term] {
@@ -1715,8 +1721,8 @@ object spec {
   }
 
   @FunctionalInterface
-  trait ObjectTypeTermF[Term <: TermT[Term], ThisTree <: ObjectTypeTermC[Term]] {
-    def newObjectTypeTerm(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ThisTree
+  trait ObjectTypeTermF[Term <: TermT[Term], ObjectTypeTerm <: ObjectTypeTermC[Term]] {
+    def newObjectTypeTerm(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ObjectTypeTerm
   }
 
   trait ObjectTypeTermC[Term <: TermT[Term]] extends TypeTermT[Term] {
@@ -1738,17 +1744,17 @@ object spec {
   }
 
   @FunctionalInterface
-  trait TelescopeTermF[Term <: TermT[Term], ThisTree <: TelescopeTermC[Term]] {
+  trait TelescopeTermF[Term <: TermT[Term], TelescopeTerm <: TelescopeTermC[Term]] {
     def newTelescope(
         args: Vector[ArgTermC[Term]],
         implicitly: Boolean,
         meta: OptionTermMeta
-    ): ThisTree
+    ): TelescopeTerm
   }
 
   @FunctionalInterface
-  trait RecordConstructorCallTermF[Term <: TermT[Term], ThisTree <: RecordConstructorCallTermC[Term]] {
-    def newRecordConstructorCallTerm(recordName: Name, args: Vector[Term], meta: OptionTermMeta): ThisTree
+  trait RecordConstructorCallTermF[Term <: TermT[Term], RecordConstructorCallTerm <: RecordConstructorCallTermC[Term]] {
+    def newRecordConstructorCallTerm(recordName: Name, args: Vector[Term], meta: OptionTermMeta): RecordConstructorCallTerm
   }
 
   trait RecordConstructorCallTermC[Term <: TermT[Term]] extends WHNFT[Term] {

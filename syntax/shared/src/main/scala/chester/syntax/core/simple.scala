@@ -558,8 +558,6 @@ object simple {
     override type ThisTree <: ReferenceCall
   }
 
-  implicit def LocalVConversion[Term <: TermT[Term]](x: UniqidOf[LocalVC[Term]]): UniqidOf[LocalV] = x.asInstanceOf[UniqidOf[LocalV]]
-
   case class LocalV(
       name: Name,
       ty: Term,
