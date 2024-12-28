@@ -14,7 +14,7 @@ object Utils {
         Tycker.check(parsedBlock) match {
           case TyckResult.Success(result, _, _)    => ???
           case TyckResult.Failure(errors, _, _, _) => ???
-          case _ => unreachable()
+          case _                                   => unreachable()
         }
     }
   }

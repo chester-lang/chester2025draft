@@ -10,9 +10,9 @@ import scala.collection.immutable
 import scala.util.*
 
 private def parseFromSource[T](
-                                source: ParserSource,
-                                parserFunc: ReaderInternal => P[T],
-                                ignoreLocation: Boolean = false
+    source: ParserSource,
+    parserFunc: ReaderInternal => P[T],
+    ignoreLocation: Boolean = false
 ): Either[ParseError, T] = {
   source.readContent match {
     case Right(content) =>

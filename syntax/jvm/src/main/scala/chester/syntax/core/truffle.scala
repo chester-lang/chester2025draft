@@ -112,12 +112,12 @@ object truffle {
     override type ThisTree = LevelUnrestricted
     override def cons: LevelUnrestrictedF[Term, ThisTree] = this.copy
   }
-  case class Prop(@child level: Term,@const  meta: OptionTermMeta) extends Sort with PropC[Term] {
+  case class Prop(@child level: Term, @const meta: OptionTermMeta) extends Sort with PropC[Term] {
     override type ThisTree = Prop
     override def cons: PropF[Term, ThisTree] = this.copy
   }
   // fibrant types
-  case class FType(@child level: Term,@const  meta: OptionTermMeta) extends Sort with FTypeC[Term] {
+  case class FType(@child level: Term, @const meta: OptionTermMeta) extends Sort with FTypeC[Term] {
     override type ThisTree = FType
     override def cons: FTypeF[Term, ThisTree] = this.copy
   }
@@ -132,7 +132,8 @@ object truffle {
     override def cons: IntTermF[Term, ThisTree] = this.copy
   }
   given aIntegerTerm: IntegerTermF[Term, IntegerTerm] = IntegerTerm(0, meta = None).cons
-  case class IntegerTerm(@const value: BigInt, @const meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term] derives ReadWriter {
+  case class IntegerTerm(@const value: BigInt, @const meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term]
+      derives ReadWriter {
     override type ThisTree = IntegerTerm
     override def cons: IntegerTermF[Term, ThisTree] = this.copy
   }

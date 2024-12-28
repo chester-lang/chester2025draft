@@ -159,7 +159,7 @@ private object ObjectDesalt {
       case ObjectExprClause(key: Identifier, value) =>
         ObjectExprClauseOnValue(SymbolLiteral(key.name, key.meta), value)
       case other: ObjectExprClauseOnValue => other
-      case _ => unreachable()
+      case _                              => unreachable()
     }
 
     expr.copy(clauses = updatedClauses)

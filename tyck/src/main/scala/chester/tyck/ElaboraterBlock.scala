@@ -150,7 +150,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         val name = expr.defined match {
           // TODO: support other defined patterns
           case DefinedPattern(PatternBind(name, _)) => name.name
-          case _ => ???
+          case _                                    => ???
         }
         val tyAndVal = TyAndVal.create()
         val id = Uniqid.generate[LocalV]
@@ -312,7 +312,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = expr.defined match {
       // TODO: support other defined patterns
       case DefinedPattern(PatternBind(name, _)) => name.name
-      case _ => ???
+      case _                                    => ???
     }
     val id = Uniqid.generate[LocalV]
     val ty = expr.ty match {
