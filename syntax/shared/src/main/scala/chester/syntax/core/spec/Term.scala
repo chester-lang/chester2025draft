@@ -1172,7 +1172,8 @@ object spec {
     def newLocalV(name: Name, ty: Term, uniqId: UniqidOf[LocalVC[Term]], meta: OptionTermMeta): ThisTree
   }
 
-  implicit def conversionTop[Term <: TermT[Term], ToplevelV <: ToplevelVC[Term]](x: UniqidOf[ToplevelVC[Term]]): UniqidOf[ToplevelV] = x.asInstanceOf[UniqidOf[ToplevelV]]
+  implicit def conversionTop[Term <: TermT[Term], ToplevelV <: ToplevelVC[Term]](x: UniqidOf[ToplevelVC[Term]]): UniqidOf[ToplevelV] =
+    x.asInstanceOf[UniqidOf[ToplevelV]]
 
   trait LocalVC[Term <: TermT[Term]] extends ReferenceCallC[Term] {
     override type ThisTree <: LocalVC[Term]
@@ -1800,6 +1801,6 @@ object spec {
     )
   }
 
-
-  implicit inline def effectsMConv[Term<:TermT[Term],EffectsM<:EffectsMT[Term]](x: Option[EffectsMT[Term]]): Option[EffectsM] = x.asInstanceOf[Option[EffectsM]]
+  implicit inline def effectsMConv[Term <: TermT[Term], EffectsM <: EffectsMT[Term]](x: Option[EffectsMT[Term]]): Option[EffectsM] =
+    x.asInstanceOf[Option[EffectsM]]
 }

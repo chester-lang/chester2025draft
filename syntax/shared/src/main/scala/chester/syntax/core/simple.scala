@@ -1,18 +1,15 @@
 package chester.syntax.core
-import chester.doc.*
 import chester.error.*
 import chester.error.ProblemUpickle.*
 import chester.utils.given
 import chester.utils.impls.*
 import upickle.default.*
 import cats.data.*
-import chester.doc.const.*
 import chester.error.Problem
 import chester.syntax.*
 import chester.syntax.core.spec.spec.*
 import chester.uniqid.*
 import chester.utils.*
-import chester.utils.doc.*
 import spire.math.*
 import scala.collection.immutable.HashMap
 object simple {
