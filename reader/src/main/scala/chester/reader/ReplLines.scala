@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 class ReplLines {
   private var history: Vector[String] = Vector()

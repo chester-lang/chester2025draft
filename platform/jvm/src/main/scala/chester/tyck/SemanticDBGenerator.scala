@@ -2,12 +2,12 @@ package chester.tyck
 
 import chester.core.parseCheckTAST
 import chester.error.*
-import chester.parser
+import chester.reader
 import chester.tyck.api.{CollectedSymbol, VectorSemanticCollector}
 import chester.syntax.*
 import chester.syntax.concrete.Expr
 import os.*
-import chester.parser.given
+import chester.reader.given
 
 import scala.meta.internal.semanticdb.*
 
@@ -27,7 +27,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
 
   // Process a single file
   def processFile(file: Path): Unit = {
-    val parserSource = parser.FilePath(file.toString)
+    val parserSource = reader.FilePath(file.toString)
     implicit val reporter: Reporter[Problem] = StdErrReporter
     // Parse and type-check the source code using parseCheckTAST
     val _ = parseCheckTAST(parserSource, sementicCollector = this)

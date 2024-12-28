@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 import upickle.default.*
 import chester.error.*

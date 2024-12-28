@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 import chester.error.*
 import chester.syntax.concrete.*
@@ -10,7 +10,7 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 import scala.util.*
 
-object ParserEngine {
+object ReaderREPL {
 
   def parseInput(
       history: Seq[String],
@@ -70,7 +70,7 @@ object ParserEngine {
     parse(
       input,
       p =>
-        new ParserInternal(
+        new ReaderInternal(
           SourceOffset(
             FileNameAndContent("repl", input),
             linesOffset = linesOffset,

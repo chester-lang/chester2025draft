@@ -14,7 +14,7 @@ object Scala {
     case StringTerm(s, _)  => meta.Lit.String(s)
     case SymbolTerm(s, _)  => meta.Lit.Symbol(Symbol(s))
     case BooleanTerm(b, _) => meta.Lit.Boolean(b)
-    case UnitTerm_(_)       => meta.Lit.Unit()
+    case UnitTerm_(_)      => meta.Lit.Unit()
     case _                 => throw new NotImplementedError(s"not implemented ${term.getClass.getName} $term")
   }
   def compileTy(ty: Term)(implicit ctx: ScalaContext = null): meta.Type = ty match {

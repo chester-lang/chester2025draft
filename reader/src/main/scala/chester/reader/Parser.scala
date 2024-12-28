@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 import chester.error.*
 import chester.syntax.IdentifierRules.*
@@ -14,7 +14,7 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 import scala.collection.immutable
 import scala.util.*
 
-case class ParserInternal(
+case class ReaderInternal(
     sourceOffset: SourceOffset,
     ignoreLocation: Boolean = false,
     defaultIndexer: Option[StringIndex] = None

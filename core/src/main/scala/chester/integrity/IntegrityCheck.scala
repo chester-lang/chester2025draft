@@ -1,6 +1,6 @@
 package chester.integrity
 
-import chester.parser.{FileNameAndContent, Parser}
+import chester.reader.{FileNameAndContent, ChesterReader}
 import chester.syntax.concrete.*
 
 // Test that the binary is still performing well when compiled differently.
@@ -31,10 +31,10 @@ object IntegrityCheck {
   }
 
   private def parseAndCheck(input: String, expected: Expr): Unit = {
-    Parser.parseExpr(
+    ChesterReader.parseExpr(
       FileNameAndContent("testFile", input)
     ) // it must parse with location
-    Parser.parseExpr(
+    ChesterReader.parseExpr(
       FileNameAndContent("testFile", input),
       ignoreLocation = true
     ) match {

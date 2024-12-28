@@ -1,22 +1,11 @@
 package chester.syntax.core
 
-import chester.doc.*
-import chester.error.*
-import chester.error.ProblemUpickle.*
-import chester.utils.given
-import chester.utils.impls.*
-import upickle.default.*
-
 import scala.language.implicitConversions
 import cats.data.*
-import chester.doc.const.*
-import chester.error.Problem
 import chester.syntax.*
 import chester.syntax.core.spec.spec.*
 import chester.uniqid.*
 import chester.utils.*
-import chester.utils.doc.*
-import spire.math.*
 
 import scala.collection.immutable.HashMap
 
@@ -29,7 +18,7 @@ def UnitType(meta: OptionTermMeta): TupleType =
 object UnitTerm_ {
   def unapply(x: Any): Option[OptionTermMeta] = x match {
     case TupleTerm(Vector(), meta) => Some(meta)
-    case _ => None
+    case _                         => None
   }
 
   def apply(meta: OptionTermMeta): TupleTerm =
@@ -49,9 +38,9 @@ object AbstractIntTerm_ {
     else IntegerTerm(value, meta)
 
   def unapply(term: Term): Option[BigInt] = term match {
-    case IntTerm(value, _) => Some(BigInt(value))
+    case IntTerm(value, _)     => Some(BigInt(value))
     case IntegerTerm(value, _) => Some(value)
-    case _ => None
+    case _                     => None
   }
 }
 
@@ -88,7 +77,7 @@ object Intersection_ {
   def from(xs: Vector[Term]): Term = {
     val flattened = xs.flatMap {
       case Intersection(ys, _) => ys
-      case x => Vector(x)
+      case x                   => Vector(x)
     }.distinct
     if (flattened.size == 1) return flattened.head
     new Intersection(flattened.assumeNonEmpty, None)
@@ -101,7 +90,7 @@ object Union_ {
     val flattened = xs
       .flatMap {
         case Union(ys, _) => ys
-        case x => Vector(x)
+        case x            => Vector(x)
       }
       .distinct
       .filter(x => !x.isInstanceOf[NothingType])

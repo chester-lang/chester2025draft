@@ -3,7 +3,7 @@ package chester.repl
 import cats.implicits.*
 import chester.doc.*
 import chester.doc.const.{Colors, ReplaceBracketsWithWord}
-import chester.parser.{ParseError, ParserEngine}
+import chester.reader.{ParseError, ReaderREPL}
 import chester.syntax.concrete.Expr
 import chester.syntax.core.*
 import chester.tyck.*
@@ -34,7 +34,7 @@ def REPLEngine[F[_]](using
 
   val terminalInfo = new TerminalInfo {
     override def checkInputStatus(input: String): InputStatus =
-      ParserEngine.checkInputStatus(input)
+      ReaderREPL.checkInputStatus(input)
 
     override def defaultPrompt: fansi.Str = mainPrompt
 
@@ -111,7 +111,7 @@ def REPLEngine[F[_]](using
 
   def handleTypeCheck(exprStr: String): F[Unit] =
     InTerminal.getHistory.flatMap { history =>
-      ParserEngine.parseInput(history, exprStr) match {
+      ReaderREPL.parseInput(history, exprStr) match {
         case Right(parsedExpr) =>
           typeCheck(parsedExpr) match {
             case TyckResult.Success(judge, _, _) =>
@@ -124,7 +124,7 @@ def REPLEngine[F[_]](using
     }
 
   def handleExpression(line: String): F[Unit] = InTerminal.getHistory.flatMap { history =>
-    ParserEngine.parseInput(history, line) match {
+    ReaderREPL.parseInput(history, line) match {
       case Right(parsedExpr) =>
         typeCheck(parsedExpr) match {
           case TyckResult.Success(judge, _, _) =>

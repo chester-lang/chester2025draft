@@ -1,6 +1,6 @@
 package chester.error
 
-import chester.parser.SourceOffset
+import chester.reader.SourceOffset
 import chester.utils.{WithUTF16, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
 import upickle.default.*

@@ -1,7 +1,7 @@
 package chester.js
 
 import chester.doc.const.LightMode
-import chester.parser.{FileNameAndContent, Parser}
+import chester.reader.{FileNameAndContent, ChesterReader}
 import chester.tyck.*
 import chester.utils.doc.ColorfulToHtml.colorfulToHtml
 import chester.utils.doc.*
@@ -9,7 +9,7 @@ import chester.utils.doc.*
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
   given options: PrettierOptions =
     PrettierOptions.Default.updated(LightMode, lightMode)
-  Parser.parseTopLevel(
+  ChesterReader.parseTopLevel(
     FileNameAndContent("playground.chester", content)
   ) match {
     case Right(parsedBlock) =>

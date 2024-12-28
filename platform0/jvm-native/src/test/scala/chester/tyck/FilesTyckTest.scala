@@ -1,6 +1,6 @@
 package chester.tyck
 
-import chester.parser.{*, given}
+import chester.reader.{*, given}
 import chester.syntax.concrete.*
 import chester.syntax.core.Judge
 import chester.utils.doc.*
@@ -19,7 +19,7 @@ class FilesTyckTest extends FunSuite {
       val expectedFile = testDir.resolve(s"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
-      Parser.parseTopLevel(FilePath(inputFile.toString)) match {
+      ChesterReader.parseTopLevel(FilePath(inputFile.toString)) match {
         case Right(parsedBlock) =>
           assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
           assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
@@ -66,7 +66,7 @@ class FilesTyckFailsTest extends FunSuite {
       val expectedFile = testDir.resolve(s"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
-      Parser.parseTopLevel(FilePath(inputFile.toString)) match {
+      ChesterReader.parseTopLevel(FilePath(inputFile.toString)) match {
         case Right(parsedBlock) =>
           Tycker.check(parsedBlock) match {
             case TyckResult.Success(_, _, _) =>

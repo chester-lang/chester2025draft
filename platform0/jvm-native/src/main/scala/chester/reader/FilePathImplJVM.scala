@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 import chester.error.*
 import chester.utils.*

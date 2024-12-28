@@ -1,6 +1,6 @@
 package chester.cli
 
-import chester.parser.{given}
+import chester.reader.given
 import chester.BuildInfo
 import chester.utils.fileExists
 import scopt.OParser
