@@ -50,7 +50,7 @@ class JLineTerminal(init: TerminalInit) {
           history.add(line)
         }
 
-        val status = chester.parser.ParserEngine.checkInputStatus(line)
+        val status = chester.reader.ReaderREPL.checkInputStatus(line)
 
         status match {
           case InputStatus.Complete =>

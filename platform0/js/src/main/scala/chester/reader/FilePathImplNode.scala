@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 import typings.node.fsMod
 import typings.node.bufferMod.global.BufferEncoding

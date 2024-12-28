@@ -1,7 +1,7 @@
 package chester.lsp
 
 import chester.error.*
-import chester.parser.*
+import chester.reader.*
 import chester.syntax.core.*
 import chester.tyck.api.*
 import chester.tyck.*
@@ -176,7 +176,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       uri: String,
       text: String
   ): (TyckResult[Unit, Judge], Vector[CollectedSymbol], List[Diagnostic]) = {
-    val parseResult = Parser.parseTopLevel(FileNameAndContent(uri, text))
+    val parseResult = ChesterReader.parseTopLevel(FileNameAndContent(uri, text))
     val collecter = new VectorSemanticCollector()
 
     parseResult match {

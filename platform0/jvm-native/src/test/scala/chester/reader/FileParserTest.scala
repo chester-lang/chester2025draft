@@ -1,6 +1,6 @@
-package chester.parser
+package chester.reader
 
-import chester.parser.*
+import chester.reader.*
 import chester.syntax.concrete.*
 import chester.utils.ponyfill.Files
 import munit.Assertions.assertEquals
@@ -19,7 +19,7 @@ class FileParserTest extends FunSuite {
 
       val expectedExists = Files.exists(expectedFile)
 
-      Parser.parseTopLevel(
+      ChesterReader.parseTopLevel(
         FilePath(inputFile.toString),
         ignoreLocation = true
       ) match {

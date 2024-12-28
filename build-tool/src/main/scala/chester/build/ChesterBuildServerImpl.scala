@@ -8,7 +8,7 @@ import java.util.Collections
 import scala.jdk.CollectionConverters.*
 import java.nio.file.Paths
 import java.nio.file.Files
-import chester.parser.{FileNameAndContent, Parser}
+import chester.reader.{FileNameAndContent, ChesterReader}
 import chester.tyck.{TyckResult, Tycker}
 
 class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
@@ -291,7 +291,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
         Files.walk(dir).forEach { path =>
           if (Files.isRegularFile(path) && path.toString.endsWith(".chester")) {
             val content = Files.readString(path)
-            Parser
+            ChesterReader
               .parseTopLevel(FileNameAndContent(path.toString, content)) match {
               case Right(parsedBlock) =>
                 Tycker.check(parsedBlock) match {

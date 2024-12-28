@@ -1,4 +1,4 @@
-package chester.parser
+package chester.reader
 
 import java.nio.file.{Files, Path, Paths}
 import scala.jdk.CollectionConverters.*

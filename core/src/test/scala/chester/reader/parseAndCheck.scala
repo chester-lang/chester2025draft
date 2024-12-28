@@ -1,14 +1,14 @@
-package chester.parser
+package chester.reader
 
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
 
 def parseAndCheck(input: String, expected: Expr): Unit = {
-  val resultignored = Parser.parseExpr(
+  val resultignored = ChesterReader.parseExpr(
     FileNameAndContent("testFile", input)
   ) // it must parse with location
-  Parser.parseExpr(
+  ChesterReader.parseExpr(
     FileNameAndContent("testFile", input),
     ignoreLocation = true
   ) match {
@@ -32,10 +32,10 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
 }
 
 def getParsed(input: String): Expr = {
-  Parser.parseExpr(
+  ChesterReader.parseExpr(
     FileNameAndContent("testFile", input)
   ) // it must parse with location
-  Parser.parseExpr(
+  ChesterReader.parseExpr(
     FileNameAndContent("testFile", input),
     ignoreLocation = true
   ) match {

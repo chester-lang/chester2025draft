@@ -1,5 +1,5 @@
-package chester.parser.Parser
-import chester.parser.*
+package chester.reader.ChesterReader
+import chester.reader.*
 import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*
@@ -10,9 +10,9 @@ import scala.collection.immutable
 import scala.util.*
 
 private def parseFromSource[T](
-    source: ParserSource,
-    parserFunc: ParserInternal => P[T],
-    ignoreLocation: Boolean = false
+                                source: ParserSource,
+                                parserFunc: ReaderInternal => P[T],
+                                ignoreLocation: Boolean = false
 ): Either[ParseError, T] = {
   source.readContent match {
     case Right(content) =>
@@ -21,7 +21,7 @@ private def parseFromSource[T](
         content,
         x =>
           parserFunc(
-            ParserInternal(
+            ReaderInternal(
               SourceOffset(source),
               ignoreLocation = ignoreLocation,
               defaultIndexer = Some(indexer)

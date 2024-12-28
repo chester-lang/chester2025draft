@@ -1,6 +1,6 @@
-package chester.parser
+package chester.reader
 
-import chester.parser.*
+import chester.reader.*
 import chester.syntax.concrete.*
 import munit.FunSuite
 

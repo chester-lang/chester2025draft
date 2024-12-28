@@ -4,7 +4,7 @@ import chester.core.parseCheckTAST
 import chester.error.Problem
 import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
-import chester.parser.{FilePath, FilePathImpl}
+import chester.reader.{FilePath, FilePathImpl}
 import chester.repl.REPLEngine
 import chester.tyck.Reporter
 import chester.utils.env.Environment
