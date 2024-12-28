@@ -7,7 +7,6 @@ import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.syntax.*
 import chester.syntax.core.orm.*
-import chester.syntax.core.simple.ObjectStmtTerm
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
@@ -1744,20 +1743,20 @@ object spec {
 
   @FunctionalInterface
   trait ObjectTypeTermF[Term <: TermT[Term], ObjectTypeTerm <: ObjectTypeTermC[Term]] {
-    def newObjectTypeTerm(objectDef: ObjectStmtTerm, meta: OptionTermMeta): ObjectTypeTerm
+    def newObjectTypeTerm(objectDef: ObjectStmtTermC[Term], meta: OptionTermMeta): ObjectTypeTerm
   }
 
   trait ObjectTypeTermC[Term <: TermT[Term]] extends TypeTermT[Term] {
     override type ThisTree <: ObjectTypeTermC[Term]
 
-    def objectDef: ObjectStmtTerm
+    def objectDef: ObjectStmtTermC[Term]
 
     def cons: ObjectTypeTermF[Term, ThisTree]
 
     override def toDoc(using options: PrettierOptions): Doc =
       Doc.text("ObjectType(") <> objectDef.name.toDoc <> Doc.text(")")
 
-    def cpy(objectDef: ObjectStmtTerm = objectDef, meta: OptionTermMeta = meta): ThisTree =
+    def cpy(objectDef: ObjectStmtTermC[Term] = objectDef, meta: OptionTermMeta = meta): ThisTree =
       cons.newObjectTypeTerm(objectDef, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
