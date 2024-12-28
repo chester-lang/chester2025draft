@@ -1,6 +1,5 @@
 package chester.syntax.core
 
-
 import scala.language.implicitConversions
 import cats.data.*
 import chester.syntax.*
