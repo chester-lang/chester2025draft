@@ -24,6 +24,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   )(using state: StateAbility[Tyck]): EffectsM = x match {
     case x: Effects     => x
     case x: EffectsCell => Meta(x.asInstanceOf[CellId[Effects]])
+    case _ => unreachable()
   }
 
   def toEffectsCell(

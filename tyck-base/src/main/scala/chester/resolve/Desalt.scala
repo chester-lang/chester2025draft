@@ -159,6 +159,7 @@ private object ObjectDesalt {
       case ObjectExprClause(key: Identifier, value) =>
         ObjectExprClauseOnValue(SymbolLiteral(key.name, key.meta), value)
       case other: ObjectExprClauseOnValue => other
+      case _ => unreachable()
     }
 
     expr.copy(clauses = updatedClauses)
@@ -188,7 +189,7 @@ case object StmtDesalt {
       // TODO: support multiple telescopes
       case FunctionCall(f: Identifier, MatchDeclarationTelescope(t), _) =>
         Some(DefinedFunction(f, Vector(t).assumeNonEmpty))
-      case a => PatternDesalt.desugar(a).map(DefinedPattern)
+      case a => PatternDesalt.desugar(a).map(DefinedPattern.apply)
     }
     else
       xs.head match {
@@ -363,10 +364,6 @@ case object SimpleDesalt {
               )
             )
             ImportStmt(modulePath, meta)
-          case None =>
-            val error = InvalidImportSyntax(opSeq)
-            reporter(error)
-            DesaltFailed(opSeq, error, meta)
         }
       case opseq @ OpSeq(Vector(Identifier(Const.Module, _), some), meta) =>
         Some(some) match {
@@ -377,10 +374,6 @@ case object SimpleDesalt {
               )
             )
             ModuleStmt(modulePath, meta)
-          case None =>
-            val error = InvalidModuleSyntax(opseq)
-            reporter(error)
-            DesaltFailed(opseq, error, meta)
         }
       case expr @ OpSeq(Vector(Identifier(Const.Record, _), nameExpr, rest @ _*), meta) =>
         // Parse the record name and parameters if any

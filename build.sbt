@@ -87,7 +87,8 @@ val commonSettings0 = Seq(
       "utf8",
       "-explain-cyclic",
       "-Wvalue-discard",
-      "-Wnonunit-statement"
+      "-Wnonunit-statement",
+      "-deprecation"
       // "-experimental"
     ),
   // scalafix

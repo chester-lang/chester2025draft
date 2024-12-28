@@ -12,7 +12,7 @@ import scala.collection.immutable.HashMap
 object TASTPackage {
   onNativeImageBuildTime {
     // it will be lazy val in the JVM bytecode, if we are building a native image, it will be calculated at build time.
-    readwriter[TAST]
+    val _ = readwriter[TAST]
   }
 
   // Typed Abstract Syntax Trees
