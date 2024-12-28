@@ -6,7 +6,7 @@
 
     <description>Provides language support for the Chester programming language.</description>
 
-    <idea-version since-build="231.0"/>
+    <idea-version since-build="232.0"/>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.properties</depends>
