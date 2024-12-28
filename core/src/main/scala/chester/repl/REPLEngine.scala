@@ -3,6 +3,7 @@ package chester.repl
 import cats.implicits.*
 import chester.doc.*
 import chester.doc.const.{Colors, ReplaceBracketsWithWord}
+import chester.error.unreachable
 import chester.reader.{ParseError, ReaderREPL}
 import chester.syntax.concrete.Expr
 import chester.syntax.core.*
