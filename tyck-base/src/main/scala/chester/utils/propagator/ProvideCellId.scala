@@ -216,8 +216,9 @@ trait ProvideCellId {
 
     def toId[T](x: CellIdOr[T]): CIdOf[Cell[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[Cell[T]]]
-      case x: T => {
-        val cell = addCell(LiteralCell[T](x))
+      case x => {
+        val t = x.asInstanceOf[T]
+        val cell = addCell(LiteralCell[T](t))
         cell.asInstanceOf[CIdOf[Cell[T]]]
       }
     }

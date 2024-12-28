@@ -1,5 +1,6 @@
 package chester.truffle
 
+import chester.error.unreachable
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.reader.*
 import chester.tyck.*
@@ -13,6 +14,7 @@ object Utils {
         Tycker.check(parsedBlock) match {
           case TyckResult.Success(result, _, _)    => ???
           case TyckResult.Failure(errors, _, _, _) => ???
+          case _ => unreachable()
         }
     }
   }

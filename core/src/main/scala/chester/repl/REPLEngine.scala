@@ -42,8 +42,6 @@ def REPLEngine[F[_]](using
   }
 
   // TODO: Add Out(n) to refer history evaluation
-  Vector()
-  Vector()
 
   // add to the environment of evaluation
 
@@ -117,6 +115,7 @@ def REPLEngine[F[_]](using
             case TyckResult.Success(judge, _, _) =>
               InTerminal.writeln(prettyPrintJudge(judge))
             case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
+            case _ => unreachable()
           }
         case Left(error) =>
           InTerminal.writeln(s"Parse Error: ${error.message}")
@@ -130,6 +129,7 @@ def REPLEngine[F[_]](using
           case TyckResult.Success(judge, _, _) =>
             InTerminal.writeln(prettyPrintJudgeWellTyped(judge))
           case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
+          case _ => unreachable()
         }
       case Left(error) =>
         InTerminal.writeln(s"Parse Error: ${error.message}")

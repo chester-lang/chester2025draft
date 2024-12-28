@@ -31,7 +31,7 @@ object IntegrityCheck {
   }
 
   private def parseAndCheck(input: String, expected: Expr): Unit = {
-    ChesterReader.parseExpr(
+    val _ = ChesterReader.parseExpr(
       FileNameAndContent("testFile", input)
     ) // it must parse with location
     ChesterReader.parseExpr(

@@ -105,7 +105,7 @@ implicit object DefaultIO extends IO[Id] {
     perms.add(java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE)
     perms.add(java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE)
     perms.add(java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE)
-    Files.setPosixFilePermissions(path.toNIO, perms)
+    val _ = Files.setPosixFilePermissions(path.toNIO, perms)
   }
 
   override inline def getAbsolutePath(path: Path): Path = path.resolveFrom(workingDir)

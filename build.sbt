@@ -88,7 +88,8 @@ val commonSettings0 = Seq(
       "-explain-cyclic",
       "-Wvalue-discard",
       "-Wnonunit-statement",
-      "-deprecation"
+      "-deprecation",
+      "-feature"
       // "-experimental"
     ),
   // scalafix

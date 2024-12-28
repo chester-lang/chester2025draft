@@ -32,6 +32,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   )(using state: StateAbility[Tyck]): CIdOf[EffectsCell] = x match {
     case x: Effects => state.addCell(FixedEffectsCell(x))
     case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCell]]
+    case _ => unreachable()
   }
 
   case class DynamicEffectsCell(effects: Map[LocalV, Term] = Map())

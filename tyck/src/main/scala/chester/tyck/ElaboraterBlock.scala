@@ -150,6 +150,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         val name = expr.defined match {
           // TODO: support other defined patterns
           case DefinedPattern(PatternBind(name, _)) => name.name
+          case _ => ???
         }
         val tyAndVal = TyAndVal.create()
         val id = Uniqid.generate[LocalV]
@@ -251,7 +252,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val fields = expr.fields
 
     // Extract the symbol from the extendsClause, if any. TODO: this is a stub only
-    expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
+    val _ = expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
       superType.head match {
         case Identifier(superName, _) => superName
         case _                        =>
@@ -311,6 +312,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = expr.defined match {
       // TODO: support other defined patterns
       case DefinedPattern(PatternBind(name, _)) => name.name
+      case _ => ???
     }
     val id = Uniqid.generate[LocalV]
     val ty = expr.ty match {

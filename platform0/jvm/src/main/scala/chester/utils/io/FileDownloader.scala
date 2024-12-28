@@ -19,7 +19,7 @@ object FileDownloader {
         Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING)
 
         // Move the temporary file to the target location
-        Files.move(tempFile, targetPath, StandardCopyOption.REPLACE_EXISTING)
+        val _ = Files.move(tempFile, targetPath, StandardCopyOption.REPLACE_EXISTING)
       } finally {
         inputStream.close()
       }

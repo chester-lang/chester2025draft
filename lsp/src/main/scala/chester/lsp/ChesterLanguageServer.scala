@@ -164,7 +164,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     val uri = params.getTextDocument.getUri
 
     // Remove the document from the store
-    documents.remove(uri)
+    val _ = documents.remove(uri)
 
     // Clear diagnostics for the closed document
     client.publishDiagnostics(

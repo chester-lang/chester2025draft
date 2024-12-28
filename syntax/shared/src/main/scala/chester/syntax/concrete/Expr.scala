@@ -73,6 +73,7 @@ object MetaFactory {
             )
           )
         )
+      case _ => unreachable()
     }
 }
 
@@ -980,6 +981,7 @@ case class PrecedenceGroupResolving(
       case Associativity.None  => Doc.empty
       case Associativity.Left  => Doc.text("associativity left")
       case Associativity.Right => Doc.text("associativity right")
+      case _ => unreachable()
     }
     nameDoc <+> higherThanDoc <+> lowerThanDoc <+> associativityDoc
   }
@@ -1015,6 +1017,7 @@ case class PrecedenceGroupResolved(
       case Associativity.None  => Doc.empty
       case Associativity.Left  => Doc.text("associativity left")
       case Associativity.Right => Doc.text("associativity right")
+      case _ => unreachable()
     }
     Doc.text(nameDoc) <+> higherThanDoc <+> lowerThanDoc <+> associativityDoc
   }
