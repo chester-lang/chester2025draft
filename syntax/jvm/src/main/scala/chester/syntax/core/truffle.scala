@@ -50,7 +50,7 @@ object truffle {
     override type ThisTree = FCallTerm
     override def cons: FCallTermF[Term, ThisTree] = this.copy
   }
-  sealed trait Pat extends SpecialTerm with PatT[Term] derives ReadWriter {
+  sealed abstract class Pat extends SpecialTerm with PatT[Term] derives ReadWriter {
     override type ThisTree <: Pat
   }
   case class Bind(
@@ -65,7 +65,7 @@ object truffle {
   sealed trait WHNF extends Term with WHNFT[Term] derives ReadWriter {
     override type ThisTree <: WHNF
   }
-  sealed trait Uneval extends Term with UnevalT[Term] derives ReadWriter {
+  sealed abstract class Uneval extends Term with UnevalT[Term] derives ReadWriter {
     override type ThisTree <: Uneval
   }
   sealed trait SpecialTerm extends Term with SpecialTermT[Term] derives ReadWriter {
@@ -74,20 +74,20 @@ object truffle {
   sealed trait TermWithUniqid extends Term with TermWithUniqidT[Term] derives ReadWriter {
     override type ThisTree <: TermWithUniqid
   }
-  sealed trait EffectsM extends Term with EffectsMT[Term] derives ReadWriter {
+  sealed abstract class EffectsM extends Term with EffectsMT[Term] derives ReadWriter {
     override type ThisTree <: EffectsM
   }
-  case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta) extends Term with MetaTermC[Term] with EffectsM with SpecialTerm {
+  case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta) extends EffectsM with MetaTermC[Term] with SpecialTerm {
     override type ThisTree = MetaTerm
   }
-  case class ListTerm(@child terms: Vector[Term], @const meta: OptionTermMeta) extends Term with ListTermC[Term] with WHNF derives ReadWriter {
+  case class ListTerm(@child terms: Vector[Term], @const meta: OptionTermMeta) extends WHNF with ListTermC[Term] derives ReadWriter {
     override final type ThisTree = ListTerm
     override def cons: ListTermF[Term, ThisTree] = this.copy
   }
-  sealed trait TypeTerm extends Term with TypeTermT[Term] with WHNF derives ReadWriter {
+  sealed trait TypeTerm extends WHNF with TypeTermT[Term] derives ReadWriter {
     override type ThisTree <: TypeTerm
   }
-  sealed trait Sort extends TypeTerm with SortT[Term] derives ReadWriter {
+  sealed abstract class Sort extends TypeTerm with SortT[Term] derives ReadWriter {
     override type ThisTree <: Sort
     def level: Term
   }
@@ -100,7 +100,7 @@ object truffle {
     override type ThisTree = LevelType
     override def cons: LevelTypeF[Term, ThisTree] = this.copy
   }
-  sealed trait Level extends Term with LevelT[Term] with WHNF derives ReadWriter {
+  sealed abstract class Level extends WHNF with LevelT[Term] derives ReadWriter {
     type ThisTree <: Level
   }
   given aLevelFiniteF: LevelFiniteF[Term, LevelFinite] = LevelFinite(IntegerTerm(0, meta = None), meta = None).cons
@@ -121,19 +121,18 @@ object truffle {
     override type ThisTree = FType
     override def cons: FTypeF[Term, ThisTree] = this.copy
   }
-  sealed trait LiteralTerm extends Term with LiteralTermT[Term] with WHNF derives ReadWriter {
+  sealed abstract class LiteralTerm extends WHNF with LiteralTermT[Term] derives ReadWriter {
     override type ThisTree <: LiteralTerm
   }
-  sealed trait AbstractIntTerm extends LiteralTerm with AbstractIntTermT[Term] derives ReadWriter {
+  sealed abstract class AbstractIntTerm extends LiteralTerm with AbstractIntTermT[Term] derives ReadWriter {
     override type ThisTree <: AbstractIntTerm
   }
-  case class IntTerm(@const value: Int, @const meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntTermC[Term] derives ReadWriter {
+  case class IntTerm(@const value: Int, @const meta: OptionTermMeta) extends AbstractIntTerm with IntTermC[Term] derives ReadWriter {
     override type ThisTree = IntTerm
     override def cons: IntTermF[Term, ThisTree] = this.copy
   }
   given aIntegerTerm: IntegerTermF[Term, IntegerTerm] = IntegerTerm(0, meta = None).cons
-  case class IntegerTerm(@const value: BigInt, @const meta: OptionTermMeta) extends LiteralTerm with AbstractIntTerm with IntegerTermC[Term]
-      derives ReadWriter {
+  case class IntegerTerm(@const value: BigInt, @const meta: OptionTermMeta) extends AbstractIntTerm with IntegerTermC[Term] derives ReadWriter {
     override type ThisTree = IntegerTerm
     override def cons: IntegerTermF[Term, ThisTree] = this.copy
   }
@@ -278,7 +277,7 @@ object truffle {
     override type ThisTree = ListF
     override def cons: ListFF[Term, ThisTree] = this.copy
   }
-  sealed trait Constructed extends WHNF with ConstructedT[Term] derives ReadWriter {
+  sealed abstract class Constructed extends WHNF with ConstructedT[Term] derives ReadWriter {
     type ThisTree <: Constructed
   }
   case class ListType(@child ty: Term, @const meta: OptionTermMeta) extends Constructed with ListTypeC[Term] with TypeTerm {
@@ -293,13 +292,13 @@ object truffle {
     override type ThisTree = Intersection
     override def cons: IntersectionF[Term, ThisTree] = this.copy
   }
-  sealed trait Builtin extends WHNF with BuiltinT[Term] derives ReadWriter {
+  sealed abstract class Builtin extends WHNF with BuiltinT[Term] derives ReadWriter {
     override type ThisTree <: Builtin
   }
-  sealed trait Effect extends WHNF with EffectT[Term] derives ReadWriter {
+  sealed abstract class Effect extends WHNF with EffectT[Term] derives ReadWriter {
     override type ThisTree <: Effect
   }
-  case class Effects(@const effectss: Map[LocalV, Term] = HashMap.empty, @const meta: OptionTermMeta) extends WHNF with EffectsM with EffectsC[Term]
+  case class Effects(@const effectss: Map[LocalV, Term] = HashMap.empty, @const meta: OptionTermMeta) extends EffectsM with WHNF with EffectsC[Term]
       derives ReadWriter {
     override def effects = effectss
     override type ThisTree = Effects
@@ -309,7 +308,7 @@ object truffle {
     override type ThisTree = ExceptionEffect
     override def cons: ExceptionEffectF[Term, ThisTree] = this.copy
   }
-  sealed trait ReferenceCall extends Term with Uneval with TermWithUniqid with ReferenceCallC[Term] derives ReadWriter {
+  sealed abstract class ReferenceCall extends Uneval with TermWithUniqid with ReferenceCallC[Term] derives ReadWriter {
     override type ThisTree <: ReferenceCall
   }
   case class LocalV(
@@ -335,7 +334,7 @@ object truffle {
   case class ErrorTerm(@const problem: Problem, @const meta: OptionTermMeta) extends SpecialTerm with ErrorTermC[Term] {
     override type ThisTree = ErrorTerm
   }
-  sealed trait StmtTerm extends Term with StmtTermT[Term] derives ReadWriter {
+  sealed abstract class StmtTerm extends Term with StmtTermT[Term] derives ReadWriter {
     override type ThisTree <: StmtTerm
   }
   case class LetStmtTerm(
@@ -476,7 +475,7 @@ object truffle {
     override type ThisTree = ObjectStmtTerm
     override def cons: ObjectStmtTermF[Term, ThisTree] = this.copy
   }
-  sealed trait TypeDefinition extends StmtTerm with TermWithUniqid with TypeDefinitionT[Term] derives ReadWriter {
+  sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid with TypeDefinitionT[Term] derives ReadWriter {
     override type ThisTree <: TypeDefinition
   }
 }
