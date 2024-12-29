@@ -2,7 +2,7 @@ package chester.tyck
 
 import chester.reader.{*, given}
 import chester.syntax.concrete.*
-import chester.syntax.core.Judge
+import chester.syntax.core.{Judge, convertToSimple}
 import chester.utils.doc.*
 import chester.utils.ponyfill.Files
 import munit.FunSuite
@@ -29,6 +29,11 @@ class FilesTyckTest extends FunSuite {
                 println(s"Testing read/write for $inputFile")
                 assertEquals(read[Judge](write[Judge](result)), result)
                 assertEquals(readBinary[Judge](writeBinary[Judge](result)), result)
+                assertEquals(StringPrinter.render(convertToSimple(result.wellTyped))(using
+                  PrettierOptions.Default
+                ), StringPrinter.render(result.wellTyped)(using
+                  PrettierOptions.Default
+                ))
               } else {
                 println(s"Skipping read/write test for $inputFile")
               }
