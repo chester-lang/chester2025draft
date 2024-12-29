@@ -266,6 +266,13 @@ object spec {
     def switchUniqId(r: UReplacer): TermWithUniqidT[Term]
   }
 
+  extension [Term <: TermT[Term]](e: EffectsMT[Term]) {
+    def nonEmpty: Boolean = e match {
+      case e: EffectsC[Term] => e.nonEmpty
+      case _ => true
+    }
+  }
+
   trait EffectsMT[Term <: TermT[Term]] extends TermT[Term] {
     override type ThisTree <: EffectsMT[Term]
   }
