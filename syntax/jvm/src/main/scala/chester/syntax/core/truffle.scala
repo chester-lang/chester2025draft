@@ -80,7 +80,7 @@ object truffle {
   case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta) extends EffectsM with MetaTermC[Term] with SpecialTerm {
     override type ThisTree = MetaTerm
   }
-  case class ListTerm(@child var terms: Vector[Term], @const meta: OptionTermMeta) extends WHNF with ListTermC[Term] derives ReadWriter {
+  case class ListTerm(@const terms: Vector[Term], @const meta: OptionTermMeta) extends WHNF with ListTermC[Term] derives ReadWriter {
     override final type ThisTree = ListTerm
     override def cons: ListTermF[Term, ThisTree] = this.copy
   }
