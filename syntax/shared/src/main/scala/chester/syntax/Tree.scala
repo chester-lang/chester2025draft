@@ -2,6 +2,8 @@ package chester.syntax
 
 import chester.utils.reuse
 
+import scala.language.implicitConversions
+
 trait Tree[A <: Tree[A]] extends Any {
   type RootTree = A
   type ThisTree <: Tree[A]
