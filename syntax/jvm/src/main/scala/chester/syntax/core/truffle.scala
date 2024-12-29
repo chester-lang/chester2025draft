@@ -17,7 +17,7 @@ import scala.collection.immutable.HashMap
 object truffle {
   type ExecuteGeneric = (VirtualFrame, Term) => Object
   var globalExecuteGeneric: ExecuteGeneric = (_: VirtualFrame, _: Term) => ???
-  sealed trait Term extends com.oracle.truffle.api.nodes.Node with TermT[Term] derives ReadWriter {
+  sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with TermT[Term] derives ReadWriter {
     type ThisTree <: Term
     final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric(frame, this)
   }
