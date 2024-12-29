@@ -400,7 +400,7 @@ object truffle {
   }
   case class FieldTerm(
       @const name: Name,
-      @child ty: Term,
+      @const ty: Term,
       @const meta: OptionTermMeta
   ) extends WHNF
       with FieldTermC[Term] derives ReadWriter {
