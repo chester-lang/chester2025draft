@@ -27,7 +27,7 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
 
   def cause: Term | Expr
 
-  override def location: Option[SourcePos] = cause match {
+  override def sourcePos: Option[SourcePos] = cause match {
     case x: WithPos => x.sourcePos
     case _          => None
   }
@@ -37,7 +37,7 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
   ): Doc = {
     val baseMessage = Doc.text(t"Error") <+> this
 
-    val locationInfo = location match {
+    val locationInfo = sourcePos match {
       case Some(pos) =>
         val lines = pos.getLinesInRange match {
           case Some(lines) =>

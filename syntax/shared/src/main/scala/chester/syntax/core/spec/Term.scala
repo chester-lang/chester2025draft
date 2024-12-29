@@ -167,7 +167,7 @@ object spec {
   }
 
   /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
-  trait TermT[Term <: TermT[Term]] extends Any with ToDoc with ContainsUniqid with Tree[Term] {
+  trait TermT[Term <: TermT[Term]] extends Any with ToDoc with WithPos with ContainsUniqid with Tree[Term] {
     override type ThisTree <: TermT[Term]
     override def toDoc(using options: PrettierOptions): Doc = toString
 

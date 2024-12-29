@@ -19,19 +19,21 @@ trait WithServerity extends Any {
   final def isError: Boolean = severity == Problem.Severity.Error
 }
 
-trait Problem extends ToDoc with WithServerity {
+case class DescriptionElement(doc: ToDoc, sourcePos: Option[SourcePos]) extends WithPos
+
+case class FullDescription(begin: ToDoc, explanations: Vector[DescriptionElement], end: ToDoc)
+
+trait Problem extends ToDoc with WithPos with WithServerity {
   def stage: Problem.Stage
   // TODO: use this
-  def location: Option[SourcePos]
-  // TODO: use this
-  def fullDescription: Option[Vector[(ToDoc, SourcePos)]] = None
+  def fullDescription: Option[FullDescription] = None
 }
 
 private case class ProblemSer(
     stage: Problem.Stage,
     severity: Problem.Severity,
     message: Doc,
-    location: Option[SourcePos]
+    sourcePos: Option[SourcePos]
 ) extends Problem derives ReadWriter {
   override def toDoc(using options: PrettierOptions): Doc = message
 }
@@ -41,7 +43,7 @@ private object ProblemSer {
     problem.stage,
     problem.severity,
     problem.toDoc(using PrettierOptions.Default),
-    problem.location
+    problem.sourcePos
   )
 }
 

@@ -188,7 +188,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           case TyckResult.Success(_, _, warnings) =>
             // Process warnings
             warnings.map { warning =>
-              val range = warning.location
+              val range = warning.sourcePos
                 .map { pos =>
                   rangeFromSourcePos(pos)
                 }
@@ -205,7 +205,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           case TyckResult.Failure(errors, warnings, _, _) =>
             // Combine errors and warnings into diagnostics
             val errorDiagnostics = errors.map { error =>
-              val range = error.location
+              val range = error.sourcePos
                 .map { pos =>
                   rangeFromSourcePos(pos)
                 }
@@ -220,7 +220,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             }
 
             val warningDiagnostics = warnings.map { warning =>
-              val range = warning.location
+              val range = warning.sourcePos
                 .map { pos =>
                   rangeFromSourcePos(pos)
                 }
