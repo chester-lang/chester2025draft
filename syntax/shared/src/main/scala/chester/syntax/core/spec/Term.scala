@@ -173,14 +173,6 @@ object spec {
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term
 
-    def mapFlatten[B](f: Term => Seq[B]): Vector[B] = {
-      var result = Vector.empty[B]
-      inspectRecursive { term =>
-        result ++= f(term)
-      }
-      result
-    }
-
     def meta: OptionTermMeta
 
     def whnf: Trilean

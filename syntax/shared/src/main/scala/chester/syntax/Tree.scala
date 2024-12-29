@@ -48,6 +48,14 @@ trait Tree[A <: Tree[A]] extends Any {
     operator(this.asInstanceOf[A])
   }
 
+  def mapFlatten[B](f: A => Seq[B]): Vector[B] = {
+    var result = Vector.empty[B]
+    inspectRecursive { term =>
+      result ++= f(term)
+    }
+    result
+  }
+
 }
 
 /** means not changing the subtype of Term */
