@@ -22,8 +22,8 @@ object truffle {
     final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric(frame, this)
   }
   case class CallingArgTerm(
-      @child value: Term,
-      @child ty: Term,
+      @child var value: Term,
+      @child var ty: Term,
       @const name: Option[Name] = None,
       @const vararg: Boolean = false,
       @const meta: OptionTermMeta
@@ -42,7 +42,7 @@ object truffle {
     override def cons: CallingF[Term, ThisTree] = this.copy
   }
   case class FCallTerm(
-      @child f: Term,
+      @child var f: Term,
       @const args: Vector[Calling],
       @const meta: OptionTermMeta
   ) extends WHNF
@@ -54,8 +54,8 @@ object truffle {
     override type ThisTree <: Pat
   }
   case class Bind(
-      @child bind: LocalV,
-      @child ty: Term,
+      @child var bind: LocalV,
+      @child var ty: Term,
       @const meta: OptionTermMeta
   ) extends Pat
       with BindC[Term] {
@@ -80,7 +80,7 @@ object truffle {
   case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta) extends EffectsM with MetaTermC[Term] with SpecialTerm {
     override type ThisTree = MetaTerm
   }
-  case class ListTerm(@child terms: Vector[Term], @const meta: OptionTermMeta) extends WHNF with ListTermC[Term] derives ReadWriter {
+  case class ListTerm(@child var terms: Vector[Term], @const meta: OptionTermMeta) extends WHNF with ListTermC[Term] derives ReadWriter {
     override final type ThisTree = ListTerm
     override def cons: ListTermF[Term, ThisTree] = this.copy
   }
@@ -92,7 +92,7 @@ object truffle {
     def level: Term
   }
   given aTypeF: TypeF[Term, Type] = Type(Level0, meta = None).cons
-  case class Type(@child level: Term, @const meta: OptionTermMeta) extends Sort with TypeC[Term] {
+  case class Type(@child var level: Term, @const meta: OptionTermMeta) extends Sort with TypeC[Term] {
     override type ThisTree = Type
     override def cons: TypeF[Term, ThisTree] = this.copy
   }
@@ -104,7 +104,7 @@ object truffle {
     type ThisTree <: Level
   }
   given aLevelFiniteF: LevelFiniteF[Term, LevelFinite] = LevelFinite(IntegerTerm(0, meta = None), meta = None).cons
-  case class LevelFinite(@child n: Term, @const meta: OptionTermMeta) extends Level with LevelFiniteC[Term] {
+  case class LevelFinite(@child var n: Term, @const meta: OptionTermMeta) extends Level with LevelFiniteC[Term] {
     override type ThisTree = LevelFinite
     override def cons: LevelFiniteF[Term, ThisTree] = this.copy
   }
@@ -112,12 +112,12 @@ object truffle {
     override type ThisTree = LevelUnrestricted
     override def cons: LevelUnrestrictedF[Term, ThisTree] = this.copy
   }
-  case class Prop(@child level: Term, @const meta: OptionTermMeta) extends Sort with PropC[Term] {
+  case class Prop(@child var level: Term, @const meta: OptionTermMeta) extends Sort with PropC[Term] {
     override type ThisTree = Prop
     override def cons: PropF[Term, ThisTree] = this.copy
   }
   // fibrant types
-  case class FType(@child level: Term, @const meta: OptionTermMeta) extends Sort with FTypeC[Term] {
+  case class FType(@child var level: Term, @const meta: OptionTermMeta) extends Sort with FTypeC[Term] {
     override type ThisTree = FType
     override def cons: FTypeF[Term, ThisTree] = this.copy
   }
@@ -191,7 +191,7 @@ object truffle {
     override type ThisTree = SymbolType
     override def cons: SymbolTypeF[Term, ThisTree] = this.copy
   }
-  case class AnyType(@child level: Term, @const meta: OptionTermMeta) extends TypeTerm with AnyTypeC[Term] derives ReadWriter {
+  case class AnyType(@child var level: Term, @const meta: OptionTermMeta) extends TypeTerm with AnyTypeC[Term] derives ReadWriter {
     override type ThisTree = AnyType
     override def cons: AnyTypeF[Term, ThisTree] = this.copy
   }
@@ -201,7 +201,7 @@ object truffle {
     override def cons: NothingTypeF[Term, ThisTree] = this.copy
   }
   case class LiteralType(
-      @child literal: LiteralTerm,
+      @child var literal: LiteralTerm,
       @const meta: OptionTermMeta
   ) extends TypeTerm
       with LiteralTypeC[Term] {
@@ -209,8 +209,8 @@ object truffle {
     override def cons: LiteralTypeF[Term, ThisTree] = this.copy
   }
   case class ArgTerm(
-      @child bind: LocalV,
-      @child ty: Term,
+      @child var bind: LocalV,
+      @child var ty: Term,
       @const default: Option[Term] = None,
       @const vararg: Boolean = false,
       @const meta: OptionTermMeta
@@ -229,8 +229,8 @@ object truffle {
     override def cons: TelescopeTermF[Term, ThisTree] = this.copy
   }
   case class Function(
-      @child ty: FunctionType,
-      @child body: Term,
+      @child var ty: FunctionType,
+      @child var body: Term,
       @const meta: OptionTermMeta
   ) extends WHNF
       with FunctionC[Term] {
@@ -239,7 +239,7 @@ object truffle {
   }
   case class FunctionType(
       @const telescope: Vector[TelescopeTerm],
-      @child resultTy: Term,
+      @child var resultTy: Term,
       @const effects: EffectsM = NoEffect,
       @const meta: OptionTermMeta
   ) extends WHNF
@@ -248,8 +248,8 @@ object truffle {
     override def cons: FunctionTypeF[Term, ThisTree] = this.copy
   }
   case class ObjectClauseValueTerm(
-      @child key: Term,
-      @child value: Term,
+      @child var key: Term,
+      @child var value: Term,
       @const meta: OptionTermMeta
   ) extends WHNF
       with ObjectClauseValueTermC[Term] derives ReadWriter {
@@ -280,7 +280,7 @@ object truffle {
   sealed abstract class Constructed extends WHNF with ConstructedT[Term] derives ReadWriter {
     type ThisTree <: Constructed
   }
-  case class ListType(@child ty: Term, @const meta: OptionTermMeta) extends Constructed with ListTypeC[Term] with TypeTerm {
+  case class ListType(@child var ty: Term, @const meta: OptionTermMeta) extends Constructed with ListTypeC[Term] with TypeTerm {
     override type ThisTree = ListType
     override def cons: ListTypeF[Term, ThisTree] = this.copy
   }
@@ -313,7 +313,7 @@ object truffle {
   }
   case class LocalV(
       @const name: Name,
-      @child ty: Term,
+      @child var ty: Term,
       @const uniqId: UniqidOf[LocalV],
       @const meta: OptionTermMeta
   ) extends ReferenceCall
@@ -323,7 +323,7 @@ object truffle {
   }
   case class ToplevelV(
       @const id: AbsoluteRef,
-      @child ty: Term,
+      @child var ty: Term,
       @const uniqId: UniqidOf[ToplevelV],
       @const meta: OptionTermMeta
   ) extends ReferenceCall
@@ -338,9 +338,9 @@ object truffle {
     override type ThisTree <: StmtTerm
   }
   case class LetStmtTerm(
-      @child localv: LocalV,
-      @child value: Term,
-      @child ty: Term,
+      @child var localv: LocalV,
+      @child var value: Term,
+      @child var ty: Term,
       @const meta: OptionTermMeta
   ) extends StmtTerm
       with LetStmtTermC[Term] {
@@ -348,9 +348,9 @@ object truffle {
     override def cons: LetStmtTermF[Term, ThisTree] = this.copy
   }
   case class DefStmtTerm(
-      @child localv: LocalV,
-      @child value: Term,
-      @child ty: Term,
+      @child var localv: LocalV,
+      @child var value: Term,
+      @child var ty: Term,
       @const meta: OptionTermMeta
   ) extends StmtTerm
       with DefStmtTermC[Term] {
@@ -358,15 +358,15 @@ object truffle {
     override def cons: DefStmtTermF[Term, ThisTree] = this.copy
   }
   case class ExprStmtTerm(
-      @child expr: Term,
-      @child ty: Term = AnyType0,
+      @child var expr: Term,
+      @child var ty: Term = AnyType0,
       @const meta: OptionTermMeta
   ) extends StmtTerm
       with ExprStmtTermC[Term] {
     override type ThisTree = ExprStmtTerm
     override def cons: ExprStmtTermF[Term, ThisTree] = this.copy
   }
-  case class NonlocalOrLocalReturn(@child value: Term, @const meta: OptionTermMeta) extends StmtTerm with NonlocalOrLocalReturnC[Term] {
+  case class NonlocalOrLocalReturn(@child var value: Term, @const meta: OptionTermMeta) extends StmtTerm with NonlocalOrLocalReturnC[Term] {
     override type ThisTree = NonlocalOrLocalReturn
     override def cons: NonlocalOrLocalReturnF[Term, ThisTree] = this.copy
   }
@@ -380,7 +380,7 @@ object truffle {
   }
   case class BlockTerm(
       @const statements: Vector[StmtTerm],
-      @child result: Term,
+      @child var result: Term,
       @const meta: OptionTermMeta
   ) extends Uneval
       with BlockTermC[Term] derives ReadWriter {
@@ -388,7 +388,7 @@ object truffle {
     override def cons: BlockTermF[Term, ThisTree] = this.copy
   }
   case class Annotation(
-      @child term: Term,
+      @child var term: Term,
       @const ty: Option[Term],
       @const effects: Option[EffectsM],
       @const meta: OptionTermMeta
@@ -399,7 +399,7 @@ object truffle {
   }
   case class FieldTerm(
       @const name: Name,
-      @child ty: Term,
+      @child var ty: Term,
       @const meta: OptionTermMeta
   ) extends WHNF
       with FieldTermC[Term] derives ReadWriter {
@@ -449,7 +449,7 @@ object truffle {
     override def cons: InterfaceStmtTermF[Term, ThisTree] = this.copy
   }
   case class ObjectCallTerm(
-      @child objectRef: Term,
+      @child var objectRef: Term,
       @const meta: OptionTermMeta
   ) extends Uneval
       with ObjectCallTermC[Term] {
@@ -457,7 +457,7 @@ object truffle {
     override def cons: ObjectCallTermF[Term, ThisTree] = this.copy
   }
   case class ObjectTypeTerm(
-      @child objectDef: ObjectStmtTerm,
+      @child var objectDef: ObjectStmtTerm,
       @const meta: OptionTermMeta
   ) extends TypeTerm
       with ObjectTypeTermC[Term] {
