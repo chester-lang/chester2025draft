@@ -3,7 +3,7 @@ package chester.reader
 import typings.node.fsMod
 import typings.node.bufferMod.global.BufferEncoding
 
-implicit object FilePathImplNode extends FilePathImpl {
+given FilePathImplNode : FilePathImpl with {
   override def readContent(fileName: String): Either[ParseError, String] =
     Right(fsMod.readFileSync(fileName, BufferEncoding.utf8))
 

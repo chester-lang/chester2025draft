@@ -81,7 +81,7 @@ case class UnusedVariableWarning(id: ReferenceCall, cause: Expr) extends TyckWar
     d"Unused variable: ${id}"
 }
 
-implicit val rwThis: ReadWriter[QualifiedName | String] =
+given rwThis: ReadWriter[QualifiedName | String] =
   union2RW[Expr, String](using
     implicitly[ClassTag[Expr]],
     implicitly[ClassTag[String]],

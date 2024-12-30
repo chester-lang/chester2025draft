@@ -21,7 +21,7 @@ def REPLEngine[F[_]](using
     inTerminal: InTerminal[F],
     env: Environment
 ): F[Unit] = {
-  implicit val options: PrettierOptions = PrettierOptions.Default.updated(
+  given options: PrettierOptions = PrettierOptions.Default.updated(
     ReplaceBracketsWithWord,
     env.hasWindowsNarrator
   )

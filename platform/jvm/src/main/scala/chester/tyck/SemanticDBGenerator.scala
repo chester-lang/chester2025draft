@@ -28,7 +28,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
   // Process a single file
   def processFile(file: Path): Unit = {
     val parserSource = reader.FilePath(file.toString)
-    implicit val reporter: Reporter[Problem] = StdErrReporter
+    given reporter: Reporter[Problem] = StdErrReporter
     // Parse and type-check the source code using parseCheckTAST
     val _ = parseCheckTAST(parserSource, sementicCollector = this)
   }

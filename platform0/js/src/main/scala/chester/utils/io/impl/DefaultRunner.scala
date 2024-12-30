@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-implicit object DefaultRunner extends Runner[Future] {
+given DefaultRunner : Runner[Future] with {
   inline override def doTry[T](IO: Future[T]): Future[Try[T]] =
     IO.transformWith(result => Future.successful(result))
 

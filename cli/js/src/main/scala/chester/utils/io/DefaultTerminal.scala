@@ -5,7 +5,7 @@ import chester.utils.term.*
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-implicit object DefaultTerminal extends Terminal[Future] {
+given DefaultTerminal : Terminal[Future]  with {
   override def runTerminal[T](
       init: TerminalInit,
       block: InTerminal[Future] ?=> Future[T]

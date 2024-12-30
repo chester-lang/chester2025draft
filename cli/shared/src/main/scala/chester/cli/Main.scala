@@ -5,8 +5,8 @@ import chester.BuildInfo
 import chester.utils.fileExists
 import scopt.OParser
 import chester.utils.env.DefaultEnv
-import chester.utils.io.*
-import chester.utils.io.impl.*
+import chester.utils.io.{*,given}
+import chester.utils.io.impl.{*,given}
 import chester.cli.Config.*
 
 object Main {
