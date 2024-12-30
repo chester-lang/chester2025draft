@@ -1326,15 +1326,3 @@ case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
     copy(meta = updater(meta))
 }
-
-case class BuiltinExpr(builtin: Builtin, meta: Option[ExprMeta]) extends Expr {
-  override type ThisTree = BuiltinExpr
-
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): BuiltinExpr = this
-
-  override def updateMeta(
-      updater: Option[ExprMeta] => Option[ExprMeta]
-  ): BuiltinExpr = copy(meta = updater(meta))
-
-  override def toDoc(using options: PrettierOptions): Doc = builtin.toDoc
-}
