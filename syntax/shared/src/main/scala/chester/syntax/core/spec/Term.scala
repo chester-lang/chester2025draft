@@ -83,13 +83,15 @@ object spec {
 
   @FunctionalInterface
   trait CallingF[Term <: TermT[Term], ThisTree <: CallingC[Term]] {
-    def newCalling(args: Vector[CallingArgTermC[Term]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
+    def newCalling(args: Seq[CallingArgTermC[Term]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
   }
+  
+  implicit inline def convertaaa[Term <: TermT[Term], ThisTree <: CallingC[Term]](x: Seq[CallingArgTermC[Term]]): Seq[ThisTree] = x.asInstanceOf[Seq[ThisTree]]
 
   trait CallingC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: CallingC[Term]
 
-    def args: Vector[CallingArgTermC[Term]]
+    def args: Seq[CallingArgTermC[Term]]
 
     def implicitly: Boolean
 
@@ -101,7 +103,7 @@ object spec {
     }
 
     def cpy(
-        args: Vector[CallingArgTermC[Term]] = args,
+        args: Seq[CallingArgTermC[Term]] = args,
         implicitly: Boolean = implicitly,
         meta: OptionTermMeta = meta
     ): ThisTree =

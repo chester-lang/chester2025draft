@@ -210,7 +210,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
     // Unify the arguments of expected and actual telescopes
     def unifyArgs(
         expectedArgs: Vector[ArgTerm],
-        actualArgs: Vector[CallingArgTerm],
+        actualArgs: Seq[CallingArgTerm],
         cause: Expr
     )(using
         state: StateAbility[Tyck],

@@ -20,9 +20,13 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
     x.asInstanceOf[NonEmptyVector[Term]].map(convertToSimple).asInstanceOf[NonEmptyVector[truffle.Term]]
   implicit inline def innerXs[From <: TermT[Term]](x: Vector[From]): Vector[truffle.Term] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[truffle.Term]]
+  implicit inline def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[truffle.CallingArgTerm] =
+    x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[truffle.CallingArgTerm]]
   implicit inline def innerXs2[From <: CallingArgTermC[Term]](x: Vector[From]): Vector[truffle.CallingArgTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[truffle.CallingArgTerm]]
-  implicit inline def innerXsCalling[From <: CallingC[Term]](x: Vector[From]): Vector[truffle.Calling] =
+  implicit inline def innerXsCalling[From <: CallingC[Term]](x: Seq[From]): Seq[truffle.Calling] =
+    x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[truffle.Calling]]
+  implicit inline def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[truffle.Calling] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[truffle.Calling]]
   implicit inline def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[truffle.TelescopeTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[truffle.TelescopeTerm]]

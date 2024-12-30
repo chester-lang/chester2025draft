@@ -1,7 +1,7 @@
 package chester.syntax.core
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal
-import com.oracle.truffle.api.nodes.Node.Child
+import com.oracle.truffle.api.nodes.Node.{Child, Children}
 
 import scala.annotation.meta.field
 
@@ -11,5 +11,6 @@ import scala.annotation.meta.field
 // This is necessary to make sure the *field* is annotated, not the getters
 // or setters.
 type child = Child @field
+type children = Children @field
 
 type const = CompilationFinal @field

@@ -28,7 +28,7 @@ object simple {
     override type ThisTree = CallingArgTerm
   }
   case class Calling(
-      args: Vector[CallingArgTerm],
+      args: Seq[CallingArgTerm],
       implicitly: Boolean = false,
       meta: OptionTermMeta
   ) extends WHNF

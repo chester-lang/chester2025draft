@@ -11,7 +11,7 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
   implicit inline def innerConvert[From <: TermT[Term]](t: From): simple.Term = convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.Term]
   implicit inline def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): simple.LocalV =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.LocalV]
-  
+
   implicit inline def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): simple.FunctionType =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.FunctionType]
   implicit inline def innerConvertEffects[From <: EffectsMT[Term]](t: From): simple.EffectsM =
@@ -20,9 +20,13 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
     x.asInstanceOf[NonEmptyVector[Term]].map(convertToSimple).asInstanceOf[NonEmptyVector[simple.Term]]
   implicit inline def innerXs[From <: TermT[Term]](x: Vector[From]): Vector[simple.Term] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.Term]]
+  implicit inline def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[simple.CallingArgTerm] =
+    x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[simple.CallingArgTerm]]
   implicit inline def innerXs2[From <: CallingArgTermC[Term]](x: Vector[From]): Vector[simple.CallingArgTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.CallingArgTerm]]
-  implicit inline def innerXsCalling[From <: CallingC[Term]](x: Vector[From]): Vector[simple.Calling] =
+  implicit inline def innerXsCalling[From <: CallingC[Term]](x: Seq[From]): Seq[simple.Calling] =
+    x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[simple.Calling]]
+  implicit inline def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[simple.Calling] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.Calling]]
   implicit inline def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[simple.TelescopeTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.TelescopeTerm]]

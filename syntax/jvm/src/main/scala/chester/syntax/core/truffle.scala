@@ -13,12 +13,14 @@ import chester.utils.*
 import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
 
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.{ArraySeq, HashMap}
 object truffle {
   type ExecuteGeneric = (VirtualFrame, Term) => Object
   val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
   given rw: ReadWriter[Term] = implicitly[ReadWriter[simple.Term]].bimap(convertToTruffle, convertToSimple)
   given rw1: ReadWriter[ReferenceCall] = rw.asInstanceOf[ReadWriter[ReferenceCall]]
+  given rw2: ReadWriter[Effects] = rw.asInstanceOf[ReadWriter[Effects]]
+  given rw3: ReadWriter[BlockTerm] = rw.asInstanceOf[ReadWriter[BlockTerm]]
   sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with TermT[Term]  {
     type ThisTree <: Term
     final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric.get(frame, this)
@@ -34,14 +36,20 @@ object truffle {
     override def cons: CallingArgTermF[Term, ThisTree] = this.copy
     override type ThisTree = CallingArgTerm
   }
-  case class Calling(
-      @const args: Vector[CallingArgTerm],
-      @const implicitly: Boolean = false,
-      @const meta: OptionTermMeta
+  class Calling(
+      args_ : Seq[CallingArgTerm],
+      @const val implicitly: Boolean = false,
+      @const val meta: OptionTermMeta
   ) extends WHNF
       with CallingC[Term]  {
+    @children private val argsArray = args_.toArray
+    override def args: Seq[CallingArgTerm] = ArraySeq.unsafeWrapArray(argsArray)
     override type ThisTree = Calling
-    override def cons: CallingF[Term, ThisTree] = this.copy
+    override def cons: CallingF[Term, ThisTree] = Calling
+  }
+  implicit object Calling extends CallingF[Term, Calling] {
+    def apply(args: Seq[CallingArgTerm], implicitly: Boolean = false, meta: OptionTermMeta = None): Calling = new Calling(args, implicitly, meta)
+    def newCalling(args: Seq[CallingArgTermC[Term]], implicitly: Boolean = false, meta: OptionTermMeta = None): Calling = new Calling(args, implicitly, meta)
   }
   case class FCallTerm(
       @child var f: Term,
