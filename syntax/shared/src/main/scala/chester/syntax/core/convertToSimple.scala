@@ -6,41 +6,41 @@ import chester.syntax.core.spec.spec.*
 import scala.language.implicitConversions
 
 def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
-  implicit inline def convertLiteralTermT[From <: LiteralTermT[Term]](t: From): simple.LiteralTerm =
+  implicit  def convertLiteralTermT[From <: LiteralTermT[Term]](t: From): simple.LiteralTerm =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.LiteralTerm]
-  implicit inline def innerConvert[From <: TermT[Term]](t: From): simple.Term = convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.Term]
-  implicit inline def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): simple.LocalV =
+  implicit  def innerConvert[From <: TermT[Term]](t: From): simple.Term = convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.Term]
+  implicit  def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): simple.LocalV =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.LocalV]
 
-  implicit inline def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): simple.FunctionType =
+  implicit  def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): simple.FunctionType =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.FunctionType]
-  implicit inline def innerConvertEffects[From <: EffectsMT[Term]](t: From): simple.EffectsM =
+  implicit  def innerConvertEffects[From <: EffectsMT[Term]](t: From): simple.EffectsM =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.EffectsM]
-  implicit inline def innerXsN[From <: TermT[Term]](x: NonEmptyVector[From]): NonEmptyVector[simple.Term] =
+  implicit  def innerXsN[From <: TermT[Term]](x: NonEmptyVector[From]): NonEmptyVector[simple.Term] =
     x.asInstanceOf[NonEmptyVector[Term]].map(convertToSimple).asInstanceOf[NonEmptyVector[simple.Term]]
-  implicit inline def innerXs[From <: TermT[Term]](x: Vector[From]): Vector[simple.Term] =
+  implicit  def innerXs[From <: TermT[Term]](x: Vector[From]): Vector[simple.Term] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.Term]]
-  implicit inline def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[simple.CallingArgTerm] =
+  implicit  def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[simple.CallingArgTerm] =
     x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[simple.CallingArgTerm]]
-  implicit inline def innerXs2[From <: CallingArgTermC[Term]](x: Vector[From]): Vector[simple.CallingArgTerm] =
+  implicit  def innerXs2[From <: CallingArgTermC[Term]](x: Vector[From]): Vector[simple.CallingArgTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.CallingArgTerm]]
-  implicit inline def innerXsCalling[From <: CallingC[Term]](x: Seq[From]): Seq[simple.Calling] =
+  implicit  def innerXsCalling[From <: CallingC[Term]](x: Seq[From]): Seq[simple.Calling] =
     x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[simple.Calling]]
-  implicit inline def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[simple.Calling] =
+  implicit  def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[simple.Calling] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.Calling]]
-  implicit inline def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[simple.TelescopeTerm] =
+  implicit  def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[simple.TelescopeTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.TelescopeTerm]]
-  implicit inline def innerXsArgTerm[From <: ArgTermC[Term]](x: Vector[From]): Vector[simple.ArgTerm] =
+  implicit  def innerXsArgTerm[From <: ArgTermC[Term]](x: Vector[From]): Vector[simple.ArgTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.ArgTerm]]
-  implicit inline def innerXsObjectClauseValueTerm[From <: ObjectClauseValueTermC[Term]](x: Vector[From]): Vector[simple.ObjectClauseValueTerm] =
+  implicit  def innerXsObjectClauseValueTerm[From <: ObjectClauseValueTermC[Term]](x: Vector[From]): Vector[simple.ObjectClauseValueTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.ObjectClauseValueTerm]]
-  implicit inline def innerXsStmtTerm[From <: StmtTermT[Term]](x: Vector[From]): Vector[simple.StmtTerm] =
+  implicit  def innerXsStmtTerm[From <: StmtTermT[Term]](x: Vector[From]): Vector[simple.StmtTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.StmtTerm]]
-  implicit inline def innerXsFieldTerm[From <: FieldTermC[Term]](x: Vector[From]): Vector[simple.FieldTerm] =
+  implicit  def innerXsFieldTerm[From <: FieldTermC[Term]](x: Vector[From]): Vector[simple.FieldTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.FieldTerm]]
-  implicit inline def innerXsO[From <: TermT[Term]](x: Option[From]): Option[simple.Term] =
+  implicit  def innerXsO[From <: TermT[Term]](x: Option[From]): Option[simple.Term] =
     x.asInstanceOf[Option[Term]].map(convertToSimple).asInstanceOf[Option[simple.Term]]
-  implicit inline def innerMap[KeyFrom <: LocalVC[Term], ValueFrom <: TermT[Term]](x: Map[KeyFrom, ValueFrom]): Map[simple.LocalV, simple.Term] =
+  implicit  def innerMap[KeyFrom <: LocalVC[Term], ValueFrom <: TermT[Term]](x: Map[KeyFrom, ValueFrom]): Map[simple.LocalV, simple.Term] =
     x.asInstanceOf[Map[Term, Term]].map((k, v) => (convertToSimple(k), convertToSimple(v))).asInstanceOf[Map[simple.LocalV, simple.Term]]
   term match {
     case x: CallingArgTermC[Term]        => simple.CallingArgTerm(value = x.value, ty = x.ty, name = x.name, vararg = x.vararg, meta = x.meta)

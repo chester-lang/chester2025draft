@@ -6,6 +6,8 @@ import chester.syntax.core.*
 import chester.tyck.api.SymbolCollector
 import chester.uniqid.UniqidOf
 
+import scala.collection.immutable.HashMap
+
 case class TyAndVal(
     ty: Term,
     value: Term
@@ -29,12 +31,12 @@ object Imports {
 }
 
 case class Context(
-    map: Map[Name, UniqidOf[ReferenceCall]] = Map.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
+    map: Map[Name, UniqidOf[ReferenceCall]] = HashMap.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
     contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
-      Map.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
-    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = Map.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
-    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = Map.empty,
-    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = Map.empty,
+    HashMap.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
+    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = HashMap.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
+    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
+    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
     imports: Imports = Imports.Empty,
     loadedModules: LoadedModules = LoadedModules.Empty,
     operators: OperatorsContext = OperatorsContext.Default,
@@ -80,8 +82,11 @@ case class Context(
     )
   }
 
-  def getTypeDefinition(name: Name): Option[TypeDefinition] = {
-    typeDefinitionNames.get(name).flatMap(typeDefinitions.get)
+  def Function(name: Name): Option[TypeDefinition] = {
+    val uniqId = typeDefinitionNames.get(name)
+    if(uniqId.isEmpty) return None
+    val r = typeDefinitions.get(uniqId.get)
+    return r
   }
 
   def getTypeDefinitionById(id: UniqidOf[TypeDefinition]): Option[TypeDefinition] = {
