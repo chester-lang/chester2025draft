@@ -11,6 +11,10 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
   implicit  def innerConvert[From <: TermT[Term]](t: From): simple.Term = convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.Term]
   implicit  def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): simple.LocalV =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.LocalV]
+  implicit def innerConvertyRecordStmtTerm[From <: RecordStmtTermC[Term]](t: From): simple.RecordStmtTerm =
+    convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.RecordStmtTerm]
+  implicit def innerConvertTelescopeTerm[From <: TelescopeTermC[Term]](t: From): simple.TelescopeTerm =
+    convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.TelescopeTerm]
 
   implicit  def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): simple.FunctionType =
     convertToSimple(t.asInstanceOf[Term]).asInstanceOf[simple.FunctionType]
@@ -108,6 +112,7 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
     case x: ObjectTypeTermC[Term] => simple.ObjectTypeTerm(objectDef = x.objectDef, meta = x.meta)
     case x: ObjectStmtTermC[Term] =>
       simple.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
+    case x: RecordCallTermC[Term] => simple.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
     case _ => throw new RuntimeException(s"Unhandled term type in convertToSimple: ${term.getClass}")
   }
 }

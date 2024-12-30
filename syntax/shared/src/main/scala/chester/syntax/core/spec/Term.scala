@@ -89,7 +89,7 @@ object spec {
     def newCalling(args: Seq[CallingArgTermC[Term]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
   }
   
-  implicit inline def convertbbb[Term <: TermT[Term], ThisTree <: CallingC[Term]](x: Vector[CallingC[Term]]): Vector[ThisTree] = x.asInstanceOf[Vector[ThisTree]]
+  implicit def convertbbb[Term <: TermT[Term], ThisTree <: CallingC[Term]](x: Vector[CallingC[Term]]): Vector[ThisTree] = x.asInstanceOf[Vector[ThisTree]]
 
   trait CallingC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: CallingC[Term]
@@ -1113,10 +1113,10 @@ object spec {
     override type ThisTree <: EffectT[Term]
   }
 
-  implicit inline def convert000[Term <: TermT[Term], LocalV <: LocalVC[Term]](x: Map[LocalVC[Term], Term]): Map[LocalV, Term] =
+  implicit def convert000[Term <: TermT[Term], LocalV <: LocalVC[Term]](x: Map[LocalVC[Term], Term]): Map[LocalV, Term] =
     x.asInstanceOf[Map[LocalV, Term]]
 
-  implicit inline def converta0[Term <: TermT[Term], LocalV <: LocalVC[Term]](x: Map[LocalV, Term]): Map[LocalVC[Term], Term] =
+  implicit def converta0[Term <: TermT[Term], LocalV <: LocalVC[Term]](x: Map[LocalV, Term]): Map[LocalVC[Term], Term] =
     x.asInstanceOf[Map[LocalVC[Term], Term]]
 
   @FunctionalInterface
@@ -1151,9 +1151,9 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(effects = effects.map { case (k, v) => (k, f(v)) }))
   }
 
-  implicit inline def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: MetaTerm): MetaTermC[Term] = x.asInstanceOf[MetaTermC[Term]]
+  implicit def convertF[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: MetaTerm): MetaTermC[Term] = x.asInstanceOf[MetaTermC[Term]]
 
-  implicit inline def convertF2[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: (MetaTerm => Term)): (MetaTermC[Term] => Term) =
+  implicit def convertF2[Term <: TermT[Term], MetaTerm <: MetaTermC[Term]](x: (MetaTerm => Term)): (MetaTermC[Term] => Term) =
     x.asInstanceOf[(MetaTermC[Term] => Term)]
   @FunctionalInterface
   trait ExceptionEffectF[Term <: TermT[Term], ThisTree <: ExceptionEffectC[Term]] {
@@ -1530,16 +1530,16 @@ object spec {
     override type ThisTree <: TypeDefinitionT[Term]
   }
 
-  implicit inline def tyaaa[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x: TypeDefinitionT[Term]): ThisTree = x.asInstanceOf[ThisTree]
+  implicit def tyaaa[Term <: TermT[Term], TypeDefinition <: TypeDefinitionT[Term]](x: TypeDefinitionT[Term]): TypeDefinition = x.asInstanceOf[TypeDefinition]
 
-  implicit inline def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x: UniqidOf[TypeDefinitionT[Term]]): UniqidOf[ThisTree] =
+  implicit def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x: UniqidOf[TypeDefinitionT[Term]]): UniqidOf[ThisTree] =
     x.asInstanceOf[UniqidOf[ThisTree]]
 
-  implicit inline def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](
+  implicit def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](
       x: (UniqidOf[TypeDefinitionT[Term]], TypeDefinitionT[Term])
   ): (UniqidOf[ThisTree], ThisTree) = x.asInstanceOf[(UniqidOf[ThisTree], ThisTree)]
 
-  implicit inline def uniqOb[Term <: TermT[Term], ThisTree <: ObjectStmtTermC[Term]](x: UniqidOf[ObjectStmtTermC[Term]]): UniqidOf[ThisTree] =
+  implicit def uniqOb[Term <: TermT[Term], ThisTree <: ObjectStmtTermC[Term]](x: UniqidOf[ObjectStmtTermC[Term]]): UniqidOf[ThisTree] =
     x.asInstanceOf[UniqidOf[ThisTree]]
 
   @FunctionalInterface
@@ -1587,7 +1587,7 @@ object spec {
     )
   }
 
-  implicit inline def uniqInterface[Term <: TermT[Term], ThisTree <: InterfaceStmtTermC[Term]](
+  implicit def uniqInterface[Term <: TermT[Term], ThisTree <: InterfaceStmtTermC[Term]](
       x: UniqidOf[InterfaceStmtTermC[Term]]
   ): UniqidOf[ThisTree] = x.asInstanceOf[UniqidOf[ThisTree]]
 
@@ -1636,7 +1636,7 @@ object spec {
     )
   }
 
-  implicit inline def uniqTrait[Term <: TermT[Term], ThisTree <: TraitStmtTermC[Term]](x: UniqidOf[TraitStmtTermC[Term]]): UniqidOf[ThisTree] =
+  implicit def uniqTrait[Term <: TermT[Term], ThisTree <: TraitStmtTermC[Term]](x: UniqidOf[TraitStmtTermC[Term]]): UniqidOf[ThisTree] =
     x.asInstanceOf[UniqidOf[ThisTree]]
 
   @FunctionalInterface
@@ -1749,6 +1749,31 @@ object spec {
   }
 
   @FunctionalInterface
+  trait RecordCallTermF[Term <: TermT[Term], RecordCallTerm <: RecordCallTermC[Term]] {
+    def newRecordCallTerm(recordDef: RecordStmtTermC[Term], telescope: TelescopeTermC[Term], meta: OptionTermMeta): RecordCallTerm
+  }
+
+  trait RecordCallTermC[Term <: TermT[Term]] extends TypeTermT[Term] {
+    override type ThisTree <: RecordCallTermC[Term]
+
+    def recordDef: RecordStmtTermC[Term]
+
+    def telescope: TelescopeTermC[Term]
+
+    def cons: RecordCallTermF[Term, ThisTree]
+
+    override def toDoc(using options: PrettierOptions): Doc =
+      group("RecordCall" <+> recordDef.toDoc <> telescope.toDoc)
+
+    def cpy(recordDef: RecordStmtTermC[Term] = recordDef, telescope: TelescopeTermC[Term] = telescope, meta: OptionTermMeta = meta): ThisTree =
+      cons.newRecordCallTerm(recordDef, telescope, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
+      cpy(recordDef = g(recordDef), telescope = g(telescope))
+    )
+  }
+
+  @FunctionalInterface
   trait ObjectCallTermF[Term <: TermT[Term], ObjectCallTerm <: ObjectCallTermC[Term]] {
     def newObjectCallTerm(objectRef: Term, meta: OptionTermMeta): ObjectCallTerm
   }
@@ -1830,6 +1855,6 @@ object spec {
     )
   }
 
-  implicit inline def effectsMConv[Term <: TermT[Term], EffectsM <: EffectsMT[Term]](x: Option[EffectsMT[Term]]): Option[EffectsM] =
+  implicit def effectsMConv[Term <: TermT[Term], EffectsM <: EffectsMT[Term]](x: Option[EffectsMT[Term]]): Option[EffectsM] =
     x.asInstanceOf[Option[EffectsM]]
 }

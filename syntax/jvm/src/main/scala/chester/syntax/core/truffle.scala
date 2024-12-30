@@ -461,6 +461,15 @@ object truffle {
     override type ThisTree = InterfaceStmtTerm
     override def cons: InterfaceStmtTermF[Term, ThisTree] = this.copy
   }
+  case class RecordCallTerm(
+      recordDef: RecordStmtTerm,
+      telescope: TelescopeTerm,
+      meta: OptionTermMeta
+  ) extends TypeTerm
+      with RecordCallTermC[Term] {
+    override type ThisTree = RecordCallTerm
+    override def cons: RecordCallTermF[Term, ThisTree] = this.copy
+  }
   case class ObjectCallTerm(
       @child var objectRef: Term,
       @const meta: OptionTermMeta

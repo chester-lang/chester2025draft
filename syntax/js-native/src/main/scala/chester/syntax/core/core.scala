@@ -1,3 +1,3 @@
 package chester.syntax.core
 
-export chester.syntax.core.simple.*
+export chester.syntax.core.simple.{*, given}

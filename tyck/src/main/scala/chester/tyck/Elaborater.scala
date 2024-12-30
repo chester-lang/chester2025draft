@@ -2,7 +2,7 @@ package chester.tyck
 
 import chester.error.*
 import chester.syntax.concrete.*
-import chester.syntax.core.*
+import chester.syntax.core.{*, given}
 import chester.tyck.*
 import chester.utils.*
 import chester.utils.propagator.*
@@ -107,7 +107,12 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 val objectCallTerm = ObjectCallTerm(objectDef, convertMeta(expr.meta))
                 unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
                 objectCallTerm
-              case _ =>
+              case Some(recordDef: RecordStmtTerm) =>
+                val recordCallTerm = RecordCallTerm(recordDef,TelescopeTerm(Vector(),meta=None), convertMeta(expr.meta)) // TODO
+                unify(ty, Type0, expr) // TODO: Type
+                recordCallTerm
+              case Some(todo) => ???
+              case None =>
                 val problem = UnboundVariable(name, expr)
                 ck.reporter.apply(problem)
                 ErrorTerm(problem, convertMeta(expr.meta))

@@ -1,2 +1,0 @@
-record A(a: Integer);
-def getA(x: A): Integer = x.a;

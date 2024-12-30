@@ -11,6 +11,10 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
   implicit  def innerConvert[From <: TermT[Term]](t: From): truffle.Term = convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.Term]
   implicit  def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): truffle.LocalV =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.LocalV]
+  implicit def innerConvertyRecordStmtTerm[From <: RecordStmtTermC[Term]](t: From): truffle.RecordStmtTerm =
+    convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.RecordStmtTerm]
+  implicit def innerConvertTelescopeTerm[From <: TelescopeTermC[Term]](t: From): truffle.TelescopeTerm =
+    convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.TelescopeTerm]
   
   implicit  def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): truffle.FunctionType =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.FunctionType]
@@ -108,6 +112,7 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
     case x: ObjectTypeTermC[Term] => truffle.ObjectTypeTerm(objectDef = x.objectDef, meta = x.meta)
     case x: ObjectStmtTermC[Term] =>
       truffle.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
+    case x: RecordCallTermC[Term] => truffle.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
     case _ => throw new RuntimeException(s"Unhandled term type in convertToTruffle: ${term.getClass}")
   }
 }
