@@ -5,7 +5,7 @@ import chester.js.*
 import chester.repl.REPLEngine
 import chester.utils.env.{BrowserEnv, Environment}
 import chester.utils.io.*
-import chester.utils.io.impl.*
+import chester.utils.io.impl.{*,given}
 import chester.utils.term.*
 import typings.xtermPty.mod.Slave
 import typings.xtermReadline.mod.Readline

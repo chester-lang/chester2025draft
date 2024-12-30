@@ -1,7 +1,7 @@
 package chester.js
 
 import chester.utils.io.*
-import chester.utils.io.impl.*
+import chester.utils.io.impl.{*,given}
 import chester.utils.term.*
 import typings.xtermXterm.mod
 
