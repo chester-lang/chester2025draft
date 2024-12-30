@@ -82,7 +82,7 @@ case class Context(
     )
   }
 
-  def Function(name: Name): Option[TypeDefinition] = {
+  def getTypeDefinition(name: Name): Option[TypeDefinition] = {
     val uniqId = typeDefinitionNames.get(name)
     if(uniqId.isEmpty) return None
     val r = typeDefinitions.get(uniqId.get)
