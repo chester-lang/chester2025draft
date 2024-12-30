@@ -42,7 +42,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       with NoFill[Effects] {
     override def add(key: LocalV, value: Term): DynamicEffectsCell = {
       require(!effects.contains(key))
-      copy(effects = effects + (key -> value))
+      copy(effects = effects.updated(key, value))
     }
 
     override def readUnstable: Option[Effects] = Some(Effects(effects, None))

@@ -17,7 +17,7 @@ import scala.collection.immutable.{ArraySeq, HashMap}
 object truffle {
   type ExecuteGeneric = (VirtualFrame, Term) => Object
   val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
-  given rw: ReadWriter[Term] = implicitly[ReadWriter[simple.Term]].bimap(convertToTruffle, convertToSimple)
+  given rw: ReadWriter[Term] = implicitly[ReadWriter[simple.Term]].bimap(convertToSimple, convertToTruffle)
   given rw1: ReadWriter[ReferenceCall] = rw.asInstanceOf[ReadWriter[ReferenceCall]]
   given rw2: ReadWriter[Effects] = rw.asInstanceOf[ReadWriter[Effects]]
   given rw3: ReadWriter[BlockTerm] = rw.asInstanceOf[ReadWriter[BlockTerm]]
@@ -58,7 +58,7 @@ object truffle {
   ) extends WHNF
       with FCallTermC[Term] {
     override type ThisTree = FCallTerm
-    override def cons: FCallTermF[Term, ThisTree] = this.copy
+    override def cons: FCallTermF[Term, ThisTree] = FCallTerm(_, _, _)
   }
   sealed abstract class Pat extends SpecialTerm with PatT[Term]  {
     override type ThisTree <: Pat
@@ -70,7 +70,7 @@ object truffle {
   ) extends Pat
       with BindC[Term] {
     override type ThisTree = Bind
-    override def cons: BindF[Term, ThisTree] = this.copy
+    override def cons: BindF[Term, ThisTree] = Bind(_,_,_)
   }
   sealed trait WHNF extends Term with WHNFT[Term]  {
     override type ThisTree <: WHNF
@@ -216,7 +216,7 @@ object truffle {
   ) extends TypeTerm
       with LiteralTypeC[Term] {
     override type ThisTree = LiteralType
-    override def cons: LiteralTypeF[Term, ThisTree] = this.copy
+    override def cons: LiteralTypeF[Term, ThisTree] = LiteralType(_,_)
   }
   case class ArgTerm(
       @child var bind: LocalV,
@@ -236,7 +236,7 @@ object truffle {
   ) extends WHNF
       with TelescopeTermC[Term] {
     override type ThisTree = TelescopeTerm
-    override def cons: TelescopeTermF[Term, ThisTree] = this.copy
+    override def cons: TelescopeTermF[Term, ThisTree] = TelescopeTerm(_,_,_)
   }
   case class Function(
       @child var ty: FunctionType,
@@ -245,7 +245,7 @@ object truffle {
   ) extends WHNF
       with FunctionC[Term] {
     override type ThisTree = Function
-    override def cons: FunctionF[Term, ThisTree] = this.copy
+    override def cons: FunctionF[Term, ThisTree] = Function(_,_,_)
   }
   case class FunctionType(
       @const telescope: Vector[TelescopeTerm],
@@ -272,7 +272,7 @@ object truffle {
   ) extends WHNF
       with ObjectTermC[Term] {
     override type ThisTree = ObjectTerm
-    override def cons: ObjectTermF[Term, ThisTree] = this.copy
+    override def cons: ObjectTermF[Term, ThisTree] = ObjectTerm(_,_)
   }
   case class ObjectType(
       @const fieldTypes: Vector[ObjectClauseValueTerm],
@@ -395,7 +395,7 @@ object truffle {
   ) extends Uneval
       with BlockTermC[Term]  {
     override type ThisTree = BlockTerm
-    override def cons: BlockTermF[Term, ThisTree] = this.copy
+    override def cons: BlockTermF[Term, ThisTree] = BlockTerm(_,_,_)
   }
   case class Annotation(
       @child var term: Term,

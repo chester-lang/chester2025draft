@@ -240,7 +240,7 @@ object simple {
   ) extends WHNF
       with FunctionTypeC[Term] {
     override type ThisTree = FunctionType
-    override def cons: FunctionTypeF[Term, ThisTree] = this.copy
+    override def cons: FunctionTypeF[Term, ThisTree] = FunctionType(_,_,_,_)
   }
   case class ObjectClauseValueTerm(
       key: Term,
