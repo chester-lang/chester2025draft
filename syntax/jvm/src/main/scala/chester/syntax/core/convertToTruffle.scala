@@ -26,8 +26,7 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.Term]]
   implicit def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[truffle.CallingArgTerm] =
     x.asInstanceOf[Seq[Term]].map(convertToTruffle).asInstanceOf[Seq[truffle.CallingArgTerm]]
-  
-  
+
   implicit def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[truffle.Calling] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.Calling]]
   implicit def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[truffle.TelescopeTerm] =

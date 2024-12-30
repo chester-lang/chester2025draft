@@ -26,8 +26,7 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.Term]]
   implicit def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[simple.CallingArgTerm] =
     x.asInstanceOf[Seq[Term]].map(convertToSimple).asInstanceOf[Seq[simple.CallingArgTerm]]
-  
-  
+
   implicit def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[simple.Calling] =
     x.asInstanceOf[Vector[Term]].map(convertToSimple).asInstanceOf[Vector[simple.Calling]]
   implicit def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[simple.TelescopeTerm] =
