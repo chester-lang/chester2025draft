@@ -252,7 +252,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         )
         val tyckResult = TyckResult(
           state = (),
-          result = Judge(ErrorTerm(parseError, meta = None), ErrorTerm(parseError, meta = None), NoEffect)
+          result = Judge(ErrorTerm(parseError, meta = None), ErrorTerm(parseError, meta = None), Effects.Empty)
         )
         (tyckResult, Vector(), List(diagnostic))
     }
