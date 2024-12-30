@@ -240,10 +240,10 @@ object simple {
   ) extends WHNF
       with FunctionTypeC[Term] {
     override type ThisTree = FunctionType
-    override def cons: FunctionTypeF[Term, ThisTree] = FunctionType(_,_,_,_)
+    override def cons: FunctionTypeF[Term, ThisTree] = FunctionType(_, _, _, _)
   }
   object Effects {
-    val Empty = Effects(Map.empty, meta = None)
+    val Empty: Effects = Effects(Map.empty, meta = None)
   }
   case class ObjectClauseValueTerm(
       key: Term,

@@ -47,9 +47,11 @@ object spec {
   trait CallingArgTermF[Term <: TermT[Term], ThisTree <: CallingArgTermC[Term]] {
     def newCallingArgTerm(value: Term, ty: Term, name: Option[Name], vararg: Boolean, meta: OptionTermMeta): ThisTree
   }
-  
-  implicit def convertArg[Term <: TermT[Term],CallingArgTerm <: CallingArgTermC[Term] ](x: CallingArgTermC[Term] ): CallingArgTerm = x.asInstanceOf[CallingArgTerm]
-  implicit def convertArg[Term <: TermT[Term],CallingArgTerm <: CallingArgTermC[Term] ](x: Seq[CallingArgTermC[Term]] ): Seq[CallingArgTerm] = x.asInstanceOf[Seq[CallingArgTerm] ]
+
+  implicit def convertArg[Term <: TermT[Term], CallingArgTerm <: CallingArgTermC[Term]](x: CallingArgTermC[Term]): CallingArgTerm =
+    x.asInstanceOf[CallingArgTerm]
+  implicit def convertArg[Term <: TermT[Term], CallingArgTerm <: CallingArgTermC[Term]](x: Seq[CallingArgTermC[Term]]): Seq[CallingArgTerm] =
+    x.asInstanceOf[Seq[CallingArgTerm]]
 
   trait CallingArgTermC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: CallingArgTermC[Term]
@@ -88,8 +90,9 @@ object spec {
   trait CallingF[Term <: TermT[Term], ThisTree <: CallingC[Term]] {
     def newCalling(args: Seq[CallingArgTermC[Term]], implicitly: Boolean, meta: OptionTermMeta): ThisTree
   }
-  
-  implicit def convertbbb[Term <: TermT[Term], ThisTree <: CallingC[Term]](x: Vector[CallingC[Term]]): Vector[ThisTree] = x.asInstanceOf[Vector[ThisTree]]
+
+  implicit def convertbbb[Term <: TermT[Term], ThisTree <: CallingC[Term]](x: Vector[CallingC[Term]]): Vector[ThisTree] =
+    x.asInstanceOf[Vector[ThisTree]]
 
   trait CallingC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: CallingC[Term]
@@ -170,7 +173,7 @@ object spec {
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(cpy(bind = g(bind), ty = f(ty)))
   }
 
-  implicit def convert [Term <: TermT[Term]](x: TermT[Term]): Term = x.asInstanceOf[Term]
+  implicit def convert[Term <: TermT[Term]](x: TermT[Term]): Term = x.asInstanceOf[Term]
 
   /** more abstract Term. sealed trait *T corresponds to sealed trait in Term; trait *C corresponds to case class in Term */
   trait TermT[Term <: TermT[Term]] extends Any with ToDoc with WithPos with ContainsUniqid with Tree[Term] {
@@ -826,8 +829,11 @@ object spec {
     def name = bind.name
   }
 
-  implicit def convertTelescopeTerm[Term <: TermT[Term], TelescopeTerm <: TelescopeTermC[Term]](x: TelescopeTermC[Term]): TelescopeTerm = x.asInstanceOf[TelescopeTerm]
-  implicit def convertTelescopeTermVec[Term <: TermT[Term], TelescopeTerm <: TelescopeTermC[Term]](x: Vector[TelescopeTermC[Term]]): Vector[TelescopeTerm] = x.asInstanceOf[Vector[TelescopeTerm]]
+  implicit def convertTelescopeTerm[Term <: TermT[Term], TelescopeTerm <: TelescopeTermC[Term]](x: TelescopeTermC[Term]): TelescopeTerm =
+    x.asInstanceOf[TelescopeTerm]
+  implicit def convertTelescopeTermVec[Term <: TermT[Term], TelescopeTerm <: TelescopeTermC[Term]](
+      x: Vector[TelescopeTermC[Term]]
+  ): Vector[TelescopeTerm] = x.asInstanceOf[Vector[TelescopeTerm]]
 
   trait TelescopeTermC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: TelescopeTermC[Term]
@@ -900,7 +906,8 @@ object spec {
     ): ThisTree
   }
 
-  implicit def convertFunctionTypeC[Term <: TermT[Term], FunctionType <: FunctionTypeC[Term]](x: FunctionTypeC[Term]): FunctionType = x.asInstanceOf[FunctionType]
+  implicit def convertFunctionTypeC[Term <: TermT[Term], FunctionType <: FunctionTypeC[Term]](x: FunctionTypeC[Term]): FunctionType =
+    x.asInstanceOf[FunctionType]
 
   trait FunctionTypeC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: FunctionTypeC[Term]
@@ -945,8 +952,12 @@ object spec {
     def newObjectClauseValueTerm(key: Term, value: Term, meta: OptionTermMeta): ThisTree
   }
 
-  implicit def convertObjectClauseValueTermC[Term <: TermT[Term], ObjectClauseValueTerm <: ObjectClauseValueTermC[Term]](x: ObjectClauseValueTermC[Term]): ObjectClauseValueTerm = x.asInstanceOf[ObjectClauseValueTerm]
-  implicit def convertObjectClauseValueTermCB[Term <: TermT[Term], ObjectClauseValueTerm <: ObjectClauseValueTermC[Term]](x: Vector[ObjectClauseValueTermC[Term]]): Vector[ObjectClauseValueTerm] = x.asInstanceOf[Vector[ObjectClauseValueTerm]]
+  implicit def convertObjectClauseValueTermC[Term <: TermT[Term], ObjectClauseValueTerm <: ObjectClauseValueTermC[Term]](
+      x: ObjectClauseValueTermC[Term]
+  ): ObjectClauseValueTerm = x.asInstanceOf[ObjectClauseValueTerm]
+  implicit def convertObjectClauseValueTermCB[Term <: TermT[Term], ObjectClauseValueTerm <: ObjectClauseValueTermC[Term]](
+      x: Vector[ObjectClauseValueTermC[Term]]
+  ): Vector[ObjectClauseValueTerm] = x.asInstanceOf[Vector[ObjectClauseValueTerm]]
 
   trait ObjectClauseValueTermC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: ObjectClauseValueTermC[Term]
@@ -1263,7 +1274,8 @@ object spec {
   }
 
   implicit def convertStmtTermT[Term <: TermT[Term], StmtTerm <: StmtTermT[Term]](x: StmtTermT[Term]): StmtTerm = x.asInstanceOf[StmtTerm]
-  implicit def convertStmtTermT2[Term <: TermT[Term], StmtTerm <: StmtTermT[Term]](x: Vector[StmtTermT[Term]]): Vector[StmtTerm] = x.asInstanceOf[Vector[StmtTerm]]
+  implicit def convertStmtTermT2[Term <: TermT[Term], StmtTerm <: StmtTermT[Term]](x: Vector[StmtTermT[Term]]): Vector[StmtTerm] =
+    x.asInstanceOf[Vector[StmtTerm]]
 
   @FunctionalInterface
   trait LetStmtTermF[Term <: TermT[Term], ThisTree <: LetStmtTermC[Term]] {
@@ -1490,9 +1502,9 @@ object spec {
     )
   }
 
-
   implicit def convertFieldTerm[Term <: TermT[Term], FieldTerm <: FieldTermC[Term]](x: FieldTermC[Term]): FieldTerm = x.asInstanceOf[FieldTerm]
-  implicit def convertFieldTermVec[Term <: TermT[Term], FieldTerm <: FieldTermC[Term]](x: Vector[FieldTermC[Term]]): Vector[FieldTerm] = x.asInstanceOf[Vector[FieldTerm]]
+  implicit def convertFieldTermVec[Term <: TermT[Term], FieldTerm <: FieldTermC[Term]](x: Vector[FieldTermC[Term]]): Vector[FieldTerm] =
+    x.asInstanceOf[Vector[FieldTerm]]
 
   trait FieldTermC[Term <: TermT[Term]] extends WHNFT[Term] {
     override type ThisTree <: FieldTermC[Term]
@@ -1530,7 +1542,8 @@ object spec {
     override type ThisTree <: TypeDefinitionT[Term]
   }
 
-  implicit def tyaaa[Term <: TermT[Term], TypeDefinition <: TypeDefinitionT[Term]](x: TypeDefinitionT[Term]): TypeDefinition = x.asInstanceOf[TypeDefinition]
+  implicit def tyaaa[Term <: TermT[Term], TypeDefinition <: TypeDefinitionT[Term]](x: TypeDefinitionT[Term]): TypeDefinition =
+    x.asInstanceOf[TypeDefinition]
 
   implicit def typeDefUniq[Term <: TermT[Term], ThisTree <: TypeDefinitionT[Term]](x: UniqidOf[TypeDefinitionT[Term]]): UniqidOf[ThisTree] =
     x.asInstanceOf[UniqidOf[ThisTree]]

@@ -33,8 +33,9 @@ object Imports {
 case class Context(
     map: Map[Name, UniqidOf[ReferenceCall]] = HashMap.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
     contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
-    HashMap.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
-    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = HashMap.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
+      HashMap.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
+    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] =
+      HashMap.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
     typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
     typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
     imports: Imports = Imports.Empty,
@@ -84,7 +85,7 @@ case class Context(
 
   def getTypeDefinition(name: Name): Option[TypeDefinition] = {
     val uniqId = typeDefinitionNames.get(name)
-    if(uniqId.isEmpty) return None
+    if (uniqId.isEmpty) return None
     val r = typeDefinitions.get(uniqId.get)
     return r
   }

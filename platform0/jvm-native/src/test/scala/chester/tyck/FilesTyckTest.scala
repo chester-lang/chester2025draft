@@ -27,16 +27,22 @@ class FilesTyckTest extends FunSuite {
             case TyckResult.Success(result, _, _) =>
               if (result.collectMeta.isEmpty) {
                 println(s"Testing read/write for $inputFile")
-                assertEquals(StringPrinter.render(read[Judge](write[Judge](result)))(using
-                  PrettierOptions.Default
-                ), StringPrinter.render(result)(using
-                  PrettierOptions.Default
-                ))
-                assertEquals(StringPrinter.render(readBinary[Judge](writeBinary[Judge](result)))(using
-                  PrettierOptions.Default
-                ),  StringPrinter.render(result)(using
-                  PrettierOptions.Default
-                ))
+                assertEquals(
+                  StringPrinter.render(read[Judge](write[Judge](result)))(using
+                    PrettierOptions.Default
+                  ),
+                  StringPrinter.render(result)(using
+                    PrettierOptions.Default
+                  )
+                )
+                assertEquals(
+                  StringPrinter.render(readBinary[Judge](writeBinary[Judge](result)))(using
+                    PrettierOptions.Default
+                  ),
+                  StringPrinter.render(result)(using
+                    PrettierOptions.Default
+                  )
+                )
                 assertEquals(
                   StringPrinter.render(convertToSimple(result.wellTyped))(using
                     PrettierOptions.Default

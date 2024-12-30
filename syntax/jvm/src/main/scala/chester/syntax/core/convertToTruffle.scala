@@ -6,45 +6,43 @@ import chester.syntax.core.spec.spec.*
 import scala.language.implicitConversions
 
 def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
-  implicit  def convertLiteralTermT[From <: LiteralTermT[Term]](t: From): truffle.LiteralTerm =
+  implicit def convertLiteralTermT[From <: LiteralTermT[Term]](t: From): truffle.LiteralTerm =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.LiteralTerm]
-  implicit  def innerConvert[From <: TermT[Term]](t: From): truffle.Term = convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.Term]
-  implicit  def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): truffle.LocalV =
+  implicit def innerConvert[From <: TermT[Term]](t: From): truffle.Term = convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.Term]
+  implicit def innerCOnvertLocalV[From <: LocalVC[Term]](t: From): truffle.LocalV =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.LocalV]
   implicit def innerConvertyRecordStmtTerm[From <: RecordStmtTermC[Term]](t: From): truffle.RecordStmtTerm =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.RecordStmtTerm]
   implicit def innerConvertTelescopeTerm[From <: TelescopeTermC[Term]](t: From): truffle.TelescopeTerm =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.TelescopeTerm]
-  
-  implicit  def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): truffle.FunctionType =
+
+  implicit def innerConvertFunctionType[From <: FunctionTypeC[Term]](t: From): truffle.FunctionType =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.FunctionType]
-  implicit  def innerConvertEffects[From <: EffectsMT[Term]](t: From): truffle.EffectsM =
+  implicit def innerConvertEffects[From <: EffectsMT[Term]](t: From): truffle.EffectsM =
     convertToTruffle(t.asInstanceOf[Term]).asInstanceOf[truffle.EffectsM]
-  implicit  def innerXsN[From <: TermT[Term]](x: NonEmptyVector[From]): NonEmptyVector[truffle.Term] =
+  implicit def innerXsN[From <: TermT[Term]](x: NonEmptyVector[From]): NonEmptyVector[truffle.Term] =
     x.asInstanceOf[NonEmptyVector[Term]].map(convertToTruffle).asInstanceOf[NonEmptyVector[truffle.Term]]
-  implicit  def innerXs[From <: TermT[Term]](x: Vector[From]): Vector[truffle.Term] =
+  implicit def innerXs[From <: TermT[Term]](x: Vector[From]): Vector[truffle.Term] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.Term]]
-  implicit  def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[truffle.CallingArgTerm] =
+  implicit def innerXs2ss[From <: CallingArgTermC[Term]](x: Seq[From]): Seq[truffle.CallingArgTerm] =
     x.asInstanceOf[Seq[Term]].map(convertToTruffle).asInstanceOf[Seq[truffle.CallingArgTerm]]
-  implicit  def innerXs2[From <: CallingArgTermC[Term]](x: Vector[From]): Vector[truffle.CallingArgTerm] =
-    x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.CallingArgTerm]]
-  implicit  def innerXsCalling[From <: CallingC[Term]](x: Seq[From]): Seq[truffle.Calling] =
-    x.asInstanceOf[Seq[Term]].map(convertToTruffle).asInstanceOf[Seq[truffle.Calling]]
-  implicit  def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[truffle.Calling] =
+  
+  
+  implicit def innerXsCallingff[From <: CallingC[Term]](x: Vector[From]): Vector[truffle.Calling] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.Calling]]
-  implicit  def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[truffle.TelescopeTerm] =
+  implicit def innerXSTelescope[From <: TelescopeTermC[Term]](x: Vector[From]): Vector[truffle.TelescopeTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.TelescopeTerm]]
-  implicit  def innerXsArgTerm[From <: ArgTermC[Term]](x: Vector[From]): Vector[truffle.ArgTerm] =
+  implicit def innerXsArgTerm[From <: ArgTermC[Term]](x: Vector[From]): Vector[truffle.ArgTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.ArgTerm]]
-  implicit  def innerXsObjectClauseValueTerm[From <: ObjectClauseValueTermC[Term]](x: Vector[From]): Vector[truffle.ObjectClauseValueTerm] =
+  implicit def innerXsObjectClauseValueTerm[From <: ObjectClauseValueTermC[Term]](x: Vector[From]): Vector[truffle.ObjectClauseValueTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.ObjectClauseValueTerm]]
-  implicit  def innerXsStmtTerm[From <: StmtTermT[Term]](x: Vector[From]): Vector[truffle.StmtTerm] =
+  implicit def innerXsStmtTerm[From <: StmtTermT[Term]](x: Vector[From]): Vector[truffle.StmtTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.StmtTerm]]
-  implicit  def innerXsFieldTerm[From <: FieldTermC[Term]](x: Vector[From]): Vector[truffle.FieldTerm] =
+  implicit def innerXsFieldTerm[From <: FieldTermC[Term]](x: Vector[From]): Vector[truffle.FieldTerm] =
     x.asInstanceOf[Vector[Term]].map(convertToTruffle).asInstanceOf[Vector[truffle.FieldTerm]]
-  implicit  def innerXsO[From <: TermT[Term]](x: Option[From]): Option[truffle.Term] =
+  implicit def innerXsO[From <: TermT[Term]](x: Option[From]): Option[truffle.Term] =
     x.asInstanceOf[Option[Term]].map(convertToTruffle).asInstanceOf[Option[truffle.Term]]
-  implicit  def innerMap[KeyFrom <: LocalVC[Term], ValueFrom <: TermT[Term]](x: Map[KeyFrom, ValueFrom]): Map[truffle.LocalV, truffle.Term] =
+  implicit def innerMap[KeyFrom <: LocalVC[Term], ValueFrom <: TermT[Term]](x: Map[KeyFrom, ValueFrom]): Map[truffle.LocalV, truffle.Term] =
     x.asInstanceOf[Map[Term, Term]].map((k, v) => (convertToTruffle(k), convertToTruffle(v))).asInstanceOf[Map[truffle.LocalV, truffle.Term]]
   term match {
     case x: CallingArgTermC[Term]        => truffle.CallingArgTerm(value = x.value, ty = x.ty, name = x.name, vararg = x.vararg, meta = x.meta)
@@ -113,6 +111,6 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
     case x: ObjectStmtTermC[Term] =>
       truffle.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: RecordCallTermC[Term] => truffle.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
-    case _ => throw new RuntimeException(s"Unhandled term type in convertToTruffle: ${term.getClass}")
+    case _                        => throw new RuntimeException(s"Unhandled term type in convertToTruffle: ${term.getClass}")
   }
 }

@@ -7,7 +7,6 @@ import chester.syntax.core.spec.spec.*
 import chester.uniqid.*
 import chester.utils.*
 
-import scala.collection.immutable.HashMap
 
 // Referencing Setω in Agda
 val Typeω: Type = Type(LevelUnrestricted(None), meta = None)

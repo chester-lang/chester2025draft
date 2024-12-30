@@ -108,7 +108,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
                 objectCallTerm
               case Some(recordDef: RecordStmtTerm) =>
-                val recordCallTerm = RecordCallTerm(recordDef,TelescopeTerm(Vector(),meta=None), convertMeta(expr.meta)) // TODO
+                val recordCallTerm = RecordCallTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta)) // TODO
                 unify(ty, Type0, expr) // TODO: Type
                 recordCallTerm
               case Some(todo) => ???
