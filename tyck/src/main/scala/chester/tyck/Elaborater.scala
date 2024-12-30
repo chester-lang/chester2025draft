@@ -23,7 +23,7 @@ trait Elaborater extends ProvideCtx with ElaboraterCommon {
     // Create a new type cell representing the kind Typeω (the type of types)
     val kindType = literal(Typeω: Term)
 
-    elab(expr, kindType, toEffectsCell(NoEffect))
+    elab(expr, kindType, toEffectsCell(Effects.Empty))
   }
 
   def checkTypeId(expr: Expr)(using

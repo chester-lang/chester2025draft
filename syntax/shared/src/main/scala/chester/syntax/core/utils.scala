@@ -26,12 +26,6 @@ object UnitTerm_ {
 
 }
 
-object Effects_ {
-  val Empty: Effects = Effects(HashMap.empty, meta = None)
-}
-
-val NoEffect = Effects_.Empty
-
 object AbstractIntTerm_ {
   def from(value: BigInt, meta: OptionTermMeta): AbstractIntTerm =
     if (value.isValidInt) IntTerm(value.toInt, meta)

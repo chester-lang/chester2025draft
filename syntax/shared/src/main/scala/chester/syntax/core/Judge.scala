@@ -1,8 +1,10 @@
 package chester.syntax.core
+import chester.doc.const.Docs
 import chester.uniqid.*
+import chester.utils.doc.*
 import upickle.default.*
 
-case class Judge(wellTyped: Term, ty: Term, effects: Effects = NoEffect) extends ContainsUniqid derives ReadWriter {
+case class Judge(wellTyped: Term, ty: Term, effects: Effects = Effects.Empty) extends ContainsUniqid with ToDoc derives ReadWriter {
   def substitute(from: TermWithUniqid, to: Term): Judge = Judge(
     wellTyped.substitute(from, to),
     ty.substitute(from, to),
@@ -27,4 +29,7 @@ case class Judge(wellTyped: Term, ty: Term, effects: Effects = NoEffect) extends
       effects.replaceU(reranger).asInstanceOf[Effects]
     )
   }
+
+  override def toDoc(using options: PrettierOptions): Doc =
+    Docs.`(` <> wellTyped.toDoc <> Docs.`,` <> ty.toDoc <> Docs.`,` <> effects.toDoc <> Docs.`)`
 }

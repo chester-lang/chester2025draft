@@ -28,7 +28,7 @@ def parseCheckTAST(
         module = DefaultModule,
         ast = BlockTerm(Vector.empty, UnitTerm_(meta = None), meta = None),
         ty = UnitType(meta = None),
-        effects = NoEffect,
+        effects = Effects.Empty,
         problems = SeverityMap.Empty.copy(error = true)
       )
   }

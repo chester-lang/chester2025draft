@@ -250,7 +250,7 @@ object truffle {
   case class FunctionType(
       @const telescope: Vector[TelescopeTerm],
       @child var resultTy: Term,
-      @const effects: EffectsM = NoEffect,
+      @const effects: EffectsM = Effects.Empty,
       @const meta: OptionTermMeta
   ) extends WHNF
       with FunctionTypeC[Term] {
@@ -313,6 +313,9 @@ object truffle {
     override def effects = effectss
     override type ThisTree = Effects
     override def cons: EffectsF[Term, ThisTree] = this.copy
+  }
+  object Effects {
+    val Empty = Effects(Map.empty, meta = None)
   }
   case class ExceptionEffect(@const meta: OptionTermMeta) extends Effect with ExceptionEffectC[Term] {
     override type ThisTree = ExceptionEffect

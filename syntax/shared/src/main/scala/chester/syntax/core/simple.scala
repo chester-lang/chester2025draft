@@ -235,12 +235,15 @@ object simple {
   case class FunctionType(
       telescope: Vector[TelescopeTerm],
       resultTy: Term,
-      effects: EffectsM = NoEffect,
+      effects: EffectsM = Effects.Empty,
       meta: OptionTermMeta
   ) extends WHNF
       with FunctionTypeC[Term] {
     override type ThisTree = FunctionType
     override def cons: FunctionTypeF[Term, ThisTree] = FunctionType(_,_,_,_)
+  }
+  object Effects {
+    val Empty = Effects(Map.empty, meta = None)
   }
   case class ObjectClauseValueTerm(
       key: Term,
