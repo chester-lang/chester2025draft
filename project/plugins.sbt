@@ -6,7 +6,7 @@ val nativeVer = if (System.getProperty("os.name").toLowerCase.contains("win")) "
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % nativeVer)
 addSbtPlugin("org.scalablytyped.converter" % "sbt-converter" % "1.0.0-beta44")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.2.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.3.0")
 addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.3.4")
 //addSbtPlugin("com.codecommit" % "sbt-github-packages" % "0.5.3")
 addSbtPlugin("com.eed3si9n.ifdef" % "sbt-ifdef" % "0.3.0")
@@ -27,5 +27,5 @@ resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 addDependencyTreePlugin
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0+25-ce9fb4e7-SNAPSHOT")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0+27-2e43b9bf-SNAPSHOT")
 //addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.7.0")
