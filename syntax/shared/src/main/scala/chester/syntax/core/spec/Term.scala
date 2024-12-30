@@ -6,7 +6,6 @@ import chester.doc.*
 import chester.doc.const.{ColorProfile, Docs}
 import chester.error.*
 import chester.syntax.*
-import chester.syntax.core.orm.*
 import chester.uniqid.*
 import chester.utils.*
 import chester.utils.doc.*
@@ -269,7 +268,7 @@ object spec {
   extension [Term <: TermT[Term]](e: EffectsMT[Term]) {
     def nonEmpty: Boolean = e match {
       case e: EffectsC[Term] => e.nonEmpty
-      case _ => true
+      case _                 => true
     }
   }
 

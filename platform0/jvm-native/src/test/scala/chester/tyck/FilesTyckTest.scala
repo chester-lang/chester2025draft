@@ -29,11 +29,14 @@ class FilesTyckTest extends FunSuite {
                 println(s"Testing read/write for $inputFile")
                 assertEquals(read[Judge](write[Judge](result)), result)
                 assertEquals(readBinary[Judge](writeBinary[Judge](result)), result)
-                assertEquals(StringPrinter.render(convertToSimple(result.wellTyped))(using
-                  PrettierOptions.Default
-                ), StringPrinter.render(result.wellTyped)(using
-                  PrettierOptions.Default
-                ))
+                assertEquals(
+                  StringPrinter.render(convertToSimple(result.wellTyped))(using
+                    PrettierOptions.Default
+                  ),
+                  StringPrinter.render(result.wellTyped)(using
+                    PrettierOptions.Default
+                  )
+                )
               } else {
                 println(s"Skipping read/write test for $inputFile")
               }
