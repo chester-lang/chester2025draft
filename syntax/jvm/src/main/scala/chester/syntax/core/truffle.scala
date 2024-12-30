@@ -16,10 +16,10 @@ import spire.math.*
 import scala.collection.immutable.HashMap
 object truffle {
   type ExecuteGeneric = (VirtualFrame, Term) => Object
-  var globalExecuteGeneric: ExecuteGeneric = (_: VirtualFrame, _: Term) => ???
+  val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
   sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with TermT[Term] derives ReadWriter {
     type ThisTree <: Term
-    final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric(frame, this)
+    final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric.get(frame, this)
   }
   case class CallingArgTerm(
       @child var value: Term,
