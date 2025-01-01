@@ -94,7 +94,7 @@ val commonSettings0 = Seq(
     ),
   // scalafix
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
-  scalacOptions ++= Seq("-rewrite", "-source", "3.4-migration"),
+  scalacOptions ++= Seq("-rewrite", "-source", "3.6-migration"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.0.3" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
