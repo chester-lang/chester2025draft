@@ -18,7 +18,7 @@ export default {
     babel({
       babelHelpers: 'bundled',
       presets: [
-        ['@babel/preset-env', { targets: {rhino: "1.7.15"} }]
+        ['@babel/preset-env', { targets: {rhino: "1.8.0"} }]
       ]
     }),
 // broken on termux
