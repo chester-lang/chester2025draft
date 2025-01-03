@@ -19,7 +19,8 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 //addSbtPlugin("io.get-coursier" % "sbt-shading" % "2.1.5")
 
 libraryDependencies ++= Seq(
-  "org.mozilla" % "rhino" % "1.8.0"
+  "org.mozilla" % "rhino" % "1.8.0",
+  "org.mozilla" % "rhino-tools" % "1.8.0"
 )
 
 // cli tools
