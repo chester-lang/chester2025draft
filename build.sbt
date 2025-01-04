@@ -46,7 +46,7 @@ up := {
   log.success("Finished updating all dependencies")
 }
 
-val scala3Version = "3.6.3-RC1"
+val scala3Version = "3.6.3-RC2"
 val scala3Lib = "3.5.2"
 val scala2Version = "2.13.15"
 
