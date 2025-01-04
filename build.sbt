@@ -617,7 +617,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
-      "org.mozilla" % "rhino" % "1.8.0"
+      "org.mozilla" % "rhino" % "1.7.15"
     )
   )
 
@@ -717,7 +717,7 @@ object GeneratedJS {
       // "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       // "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       // "org.soot-oss" % "sootup.analysis" % sootupVersion,
-      "org.mozilla" % "rhino" % "1.8.0"
+      "org.mozilla" % "rhino" % "1.7.15"
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
