@@ -55,13 +55,15 @@ val graalJdkVersion = "23.0.1"
 val graalvmVersion = "24.1.1"
 
 val defaultNativeImageOptions = Seq(
-  //"-H:-CheckToolchain",
+  // "-H:-CheckToolchain",
   "--verbose",
   "--no-fallback",
   "-enablesystemassertions",
   // runtime: org.jline
-  "--initialize-at-build-time=org.mozilla.javascript,org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
+  "--initialize-at-build-time=org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
   "--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
+  // we are having problem with org.mozilla.javascript.EmbeddedSlotMap
+  // "--initialize-at-build-time=chester",
   "-O2",
   // "-Dpolyglotimpl.DisableVersionChecks=true", // for 24-ea
   "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
