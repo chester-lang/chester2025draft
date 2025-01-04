@@ -1,7 +1,7 @@
 package chester.truffle
 
 import chester.error.unreachable
-import com.oracle.truffle.api.{CallTarget, Truffle, TruffleLanguage}
+import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.reader.*
 import chester.syntax.core.*
 import chester.truffle.ChesterLang.ChesterRootNode
