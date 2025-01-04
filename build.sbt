@@ -55,7 +55,7 @@ val graalJdkVersion = "23.0.1"
 val graalvmVersion = "24.1.1"
 
 val defaultNativeImageOptions = Seq(
-  "-H:-CheckToolchain",
+  //"-H:-CheckToolchain",
   "--verbose",
   "--no-fallback",
   "-enablesystemassertions",
