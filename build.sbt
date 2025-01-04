@@ -60,10 +60,13 @@ val defaultNativeImageOptions = Seq(
   "--no-fallback",
   "-enablesystemassertions",
   // runtime: org.jline
-  "--initialize-at-build-time=org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
+  "--initialize-at-build-time=org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,jdk,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
   "--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
+  "-H:ReflectionConfigurationFiles=" + file("reflection-config.json").getAbsolutePath,
   // we are having problem with org.mozilla.javascript.EmbeddedSlotMap
   // "--initialize-at-build-time=chester",
+  // org.mozilla.javascript.optimizer.Bootstrapper NPE if at runtime
+  "--initialize-at-build-time=org.mozilla.javascript.optimizer.Bootstrapper,org.mozilla.javascript.optimizer.DefaultLinker,org.mozilla.javascript.optimizer.BaseFunctionLinker,org.mozilla.javascript.optimizer.NativeArrayLinker,org.mozilla.javascript.optimizer.ConsStringLinker,org.mozilla.javascript.optimizer.StringLinker,org.mozilla.javascript.optimizer.DoubleLinker,org.mozilla.javascript.optimizer.IntegerLinker,org.mozilla.javascript.optimizer.BooleanLinker,org.mozilla.javascript.optimizer.ConstAwareLinker",
   "-O2",
   // "-Dpolyglotimpl.DisableVersionChecks=true", // for 24-ea
   "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
