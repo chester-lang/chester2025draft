@@ -60,8 +60,11 @@ val defaultNativeImageOptions = Seq(
   "--no-fallback",
   "-enablesystemassertions",
   // runtime: org.jline
-  "--initialize-at-build-time=org.mozilla.javascript,org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
-  "--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
+  // initialize-at-build-time are broken with rhino 1.8.0 update with some complicated reasons
+  //"--initialize-at-build-time=org.mozilla.javascript,org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
+  //"--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
+  "--initialize-at-build-time=org.mozilla.javascript,jdk,chester.Js4Jvm$,chester.ChesterJs",
+  "-H:ReflectionConfigurationFiles=" + file("reflection-config.json").getAbsolutePath,
   "-O2",
   // "-Dpolyglotimpl.DisableVersionChecks=true", // for 24-ea
   "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
@@ -617,7 +620,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
-      "org.mozilla" % "rhino" % "1.7.15"
+      "org.mozilla" % "rhino" % "1.8.0"
     )
   )
 
@@ -717,7 +720,7 @@ object GeneratedJS {
       // "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       // "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       // "org.soot-oss" % "sootup.analysis" % sootupVersion,
-      "org.mozilla" % "rhino" % "1.7.15"
+      "org.mozilla" % "rhino" % "1.8.0"
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,

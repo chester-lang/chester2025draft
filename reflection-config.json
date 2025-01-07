@@ -1,0 +1,18 @@
+[
+  {
+    "name": "org.mozilla.javascript.jdk18.VMBridge_jdk18",
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ],
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.mozilla.javascript.VMBridge_custom",
+    "methods": [
+      { "name": "<init>", "parameterTypes": [] }
+    ],
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  }
+]
