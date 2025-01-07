@@ -96,7 +96,7 @@ val commonSettings0 = Seq(
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.6-migration"),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.0.3" % Test,
+    "org.scalameta" %%% "munit" % "1.0.4" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
@@ -138,7 +138,7 @@ val scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.0.3" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalameta" %%% "munit" % "1.0.4" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
