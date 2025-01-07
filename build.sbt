@@ -63,7 +63,7 @@ val defaultNativeImageOptions = Seq(
   // initialize-at-build-time are broken with rhino 1.8.0 update with some complicated reasons
   //"--initialize-at-build-time=org.mozilla.javascript,org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
   //"--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
-  "--initialize-at-build-time=org.mozilla.javascript,jdk,chester.Js4Jvm$,chester.ChesterJs",
+  "--initialize-at-build-time=org.mozilla.javascript,jdk,scala", // chester.Js4Jvm,chester.Js4Jvm$,chester.ChesterJs
   "-H:ReflectionConfigurationFiles=" + file("reflection-config.json").getAbsolutePath,
   "-O2",
   // "-Dpolyglotimpl.DisableVersionChecks=true", // for 24-ea
