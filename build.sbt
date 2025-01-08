@@ -60,8 +60,11 @@ val defaultNativeImageOptions = Seq(
   "--no-fallback",
   "-enablesystemassertions",
   // runtime: org.jline
-  "--initialize-at-build-time=org.mozilla.javascript,org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,chester,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
+  //"--initialize-at-build-time=org.mozilla.javascript,chester",
+  "--initialize-at-build-time=org.slf4j,org.typelevel,os,scalax,sbt,ujson,upack,upickle,algebra,cps,com.oracle,spire,org.graalvm,scopt,fastparse,scala,java,jdk,org.eclipse,cats,fansi,sourcecode,com.monovore.decline,geny,pprint",
   "--initialize-at-build-time=scala.meta.internal.semanticdb.Access$$anon$1",
+  "--initialize-at-build-time=org.mozilla.javascript,chester.Js4Jvm,chester.Js4Jvm$,chester.ChesterJs",
+  "-H:ReflectionConfigurationFiles=" + file("reflection-config.json").getAbsolutePath, // org.mozilla.javascript.VMBridge.makeInstance(VMBridge.java:32)
   "-O2",
   // "-Dpolyglotimpl.DisableVersionChecks=true", // for 24-ea
   "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
@@ -439,7 +442,7 @@ lazy val utils = useSpire(
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M3"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4-M4"
       ),
       commonJvmLibSettings,
       libraryDependencies ++= Seq(
@@ -457,7 +460,7 @@ lazy val utils = useSpire(
     )
     .nativeSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M3"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4-M4"
       ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
@@ -617,7 +620,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
-      "org.mozilla" % "rhino" % "1.7.15"
+      "org.mozilla" % "rhino" % "1.8.0"
     )
   )
 
@@ -693,6 +696,7 @@ object GeneratedJS {
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
         val dest = (Compile / resourceManaged).value
 
+        System.setProperty("java.vm.name", "Dalvik") // disable dynamic features of rhino
         org.mozilla.javascript.tools.jsc.Main
           .main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
         Seq(dest / "chester" / "ChesterJs.class")
@@ -717,7 +721,7 @@ object GeneratedJS {
       // "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       // "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       // "org.soot-oss" % "sootup.analysis" % sootupVersion,
-      "org.mozilla" % "rhino" % "1.7.15"
+      "org.mozilla" % "rhino" % "1.8.0"
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
