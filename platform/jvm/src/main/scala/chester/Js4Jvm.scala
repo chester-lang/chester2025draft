@@ -5,15 +5,11 @@ import _root_.chester.utils.onNativeImageBuildTime
 
 // single threaded
 object Js4Jvm {
-  System.setProperty("java.vm.name", "Dalvik") // disable dynamic features of rhino
   private var context: Context = null
   private def check(): Unit = {
-    System.setProperty("java.vm.name", "Dalvik") // disable dynamic features of rhino
     if (context ne null) return
     val cx = Context.enter()
     cx.setLanguageVersion(Context.VERSION_ES6)
-    cx.setInterpretedMode(true)
-    cx.setOptimizationLevel(-1)
     context = cx
   }
   check()
@@ -34,8 +30,8 @@ object Js4Jvm {
   val helloFromJs: CharSequence = exports.get("helloFromJs", exports).asInstanceOf[CharSequence]
 
   onNativeImageBuildTime {
-    //Context.exit()
-    //context = null
+    Context.exit()
+    context = null
   }
 
   def test(x: Any): Any = {
