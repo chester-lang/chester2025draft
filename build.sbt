@@ -1086,8 +1086,8 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.jline" % "jline" % jlineVersion,
       "org.jline" % "jline-terminal" % jlineVersion,
-      "org.jline" % "jline-terminal-jansi" % jlineVersion,
-      // "org.jline" % "jline-terminal-jni" % jlineVersion,
+      // "org.jline" % "jline-terminal-jansi" % jlineVersion,
+      "org.jline" % "jline-terminal-jni" % jlineVersion,
       // "org.jline" % "jline-terminal-jna" % jlineVersion,
       // "org.jline" % "jline-terminal-ffm" % jlineVersion,
       // "org.jline" % "jline-native" % jlineVersion,
