@@ -195,7 +195,7 @@ val baseDeps = Seq(
   libraryDependencies ++= Seq(
     "org.typelevel" %%% "cats-core" % "2.12.0",
     "org.typelevel" %%% "cats-free" % "2.12.0",
-    "com.lihaoyi" %%% "upickle" % "4.0.2",
+    "com.lihaoyi" %%% "upickle" % "4.1.0",
     "com.lihaoyi" %%% "fansi" % "0.5.0",
     "com.lihaoyi" %%% "fastparse" % "3.1.1"
     // "com.lihaoyi" %%% "scalatags" % "0.13.1",
@@ -382,9 +382,9 @@ lazy val ironNative = crossProject(NativePlatform)
   .disablePlugins(ScalafixPlugin)
   .nativeSettings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "4.0.2",
+      "com.lihaoyi" %%% "upickle" % "4.1.0",
       "org.typelevel" %%% "cats-core" % "2.12.0",
-      "com.lihaoyi" %%% "utest" % "0.8.4" % Test,
+      "com.lihaoyi" %%% "utest" % "0.8.5" % Test,
       "org.typelevel" %%% "kittens" % "3.4.0" % Test
     ),
     testFrameworks += new TestFramework("utest.runner.Framework")
