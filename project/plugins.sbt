@@ -1,7 +1,7 @@
 //dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.2.0" // scalablytyped & sbt-microsites
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2")
 addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.3.2")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.17.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.18.1")
 val nativeVer = if (System.getProperty("os.name").toLowerCase.contains("win")) "0.5.5" else "0.5.6"
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % nativeVer)
 addSbtPlugin("org.scalablytyped.converter" % "sbt-converter" % "1.0.0-beta44")
