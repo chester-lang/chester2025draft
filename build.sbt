@@ -47,7 +47,7 @@ up := {
 }
 
 val scala3Version = "3.6.3-RC2"
-val scala3Lib = "3.5.2"
+val scala3Lib = "3.6.2"
 val scala2Version = "2.13.16"
 
 val graalVm = "graalvm-java23"
