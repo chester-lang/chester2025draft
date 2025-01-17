@@ -298,3 +298,23 @@ case class PotentialNonterminatingFunction(cause: Expr) extends TyckError {
   ): Doc =
     t"Potential non-terminating function"
 }
+
+case class FieldNotFound(fieldName: Name, recordName: Name, cause: Expr) extends TyckError {
+  override def toDoc(using options: PrettierOptions): Doc =
+    t"Field '${fieldName}' not found in record '${recordName}'"
+}
+
+case class NotARecordType(ty: Term, cause: Expr) extends TyckError {
+  override def toDoc(using options: PrettierOptions): Doc =
+    t"Expected a record type, got ${ty}"
+}
+
+case class InvalidFieldName(cause: Expr) extends TyckError {
+  override def toDoc(using options: PrettierOptions): Doc =
+    t"Expected an identifier for field name"
+}
+
+case class NotImplementedFeature(message: String, cause: Expr) extends TyckError {
+  override def toDoc(using options: PrettierOptions): Doc =
+    t"${message}"
+}

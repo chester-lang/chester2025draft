@@ -172,6 +172,45 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr: DesaltFunctionCall => elabFunctionCall(expr, ty, effects)
       case expr @ ObjectExpr(fields, _) =>
         elabObjectExpr(expr, fields, ty, effects)
+      case expr @ DotCall(recordExpr, fieldExpr, telescopes, meta) =>
+        if (telescopes.nonEmpty) {
+          val problem = NotImplementedFeature("Field access with arguments is not yet supported", expr)
+          ck.reporter.apply(problem)
+          ErrorTerm(problem, convertMeta(expr.meta))
+        } else {
+          // Elaborate the record expression
+          val recordTy = newType
+          val recordTerm = elab(recordExpr, recordTy, effects)
+          
+          // Get the field name
+          fieldExpr match {
+            case Identifier(fieldName, _) =>
+              // Read the record type
+              readMetaVar(toTerm(recordTy)) match {
+                case RecordCallTerm(recordDef, _, _) =>
+                  // Find the field in the record definition
+                  recordDef.fields.find(_.name == fieldName) match {
+                    case Some(fieldTerm) =>
+                      // Unify the field type with the expected type
+                      unify(ty, fieldTerm.ty, expr)
+                      // Create field access term
+                      FieldAccessTerm(recordTerm, fieldName, fieldTerm.ty, convertMeta(meta))
+                    case None =>
+                      val problem = FieldNotFound(fieldName, recordDef.name, expr)
+                      ck.reporter.apply(problem)
+                      ErrorTerm(problem, convertMeta(expr.meta))
+                  }
+                case other =>
+                  val problem = NotARecordType(other, expr)
+                  ck.reporter.apply(problem)
+                  ErrorTerm(problem, convertMeta(expr.meta))
+              }
+            case _ =>
+              val problem = InvalidFieldName(fieldExpr)
+              ck.reporter.apply(problem)
+              ErrorTerm(problem, convertMeta(expr.meta))
+          }
+        }
       case expr: Expr => {
         val problem = NotImplemented(expr)
         ck.reporter.apply(problem)

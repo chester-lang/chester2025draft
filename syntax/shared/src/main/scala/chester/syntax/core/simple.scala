@@ -485,4 +485,14 @@ object simple {
   sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid with TypeDefinitionT[Term] derives ReadWriter {
     override type ThisTree <: TypeDefinition
   }
+  case class FieldAccessTerm(
+      record: Term,
+      fieldName: Name,
+      fieldType: Term,
+      meta: OptionTermMeta
+  ) extends Uneval
+      with FieldAccessTermC[Term] {
+    override type ThisTree = FieldAccessTerm
+    override def cons: FieldAccessTermF[Term, ThisTree] = this.copy
+  }
 }

@@ -110,6 +110,7 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
     case x: ObjectStmtTermC[Term] =>
       truffle.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: RecordCallTermC[Term] => truffle.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
+    case x: FieldAccessTermC[Term] => truffle.FieldAccessTerm(record = x.record, fieldName = x.fieldName, fieldType = x.fieldType, meta = x.meta)
     case _                        => throw new RuntimeException(s"Unhandled term type in convertToTruffle: ${term.getClass}")
   }
 }

@@ -497,4 +497,14 @@ object truffle {
   sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid with TypeDefinitionT[Term] {
     override type ThisTree <: TypeDefinition
   }
+  case class FieldAccessTerm(
+      @child var record: Term,
+      @const fieldName: Name,
+      @child var fieldType: Term,
+      @const meta: OptionTermMeta
+  ) extends Uneval
+      with FieldAccessTermC[Term] {
+    override type ThisTree = FieldAccessTerm
+    override def cons: FieldAccessTermF[Term, ThisTree] = this.copy
+  }
 }

@@ -1870,4 +1870,34 @@ object spec {
 
   implicit def effectsMConv[Term <: TermT[Term], EffectsM <: EffectsMT[Term]](x: Option[EffectsMT[Term]]): Option[EffectsM] =
     x.asInstanceOf[Option[EffectsM]]
+
+  @FunctionalInterface
+  trait FieldAccessTermF[Term <: TermT[Term], ThisTree <: FieldAccessTermC[Term]] {
+    def newFieldAccessTerm(record: Term, fieldName: Name, fieldType: Term, meta: OptionTermMeta): ThisTree
+  }
+
+  trait FieldAccessTermC[Term <: TermT[Term]] extends UnevalT[Term] {
+    override type ThisTree <: FieldAccessTermC[Term]
+
+    def record: Term
+    def fieldName: Name
+    def fieldType: Term
+    def cons: FieldAccessTermF[Term, ThisTree]
+
+    override def toDoc(using options: PrettierOptions): Doc = {
+      group(record.toDoc <> Docs.`.` <> fieldName.toDoc)
+    }
+
+    def cpy(
+        record: Term = record,
+        fieldName: Name = fieldName,
+        fieldType: Term = fieldType,
+        meta: OptionTermMeta = meta
+    ): ThisTree =
+      cons.newFieldAccessTerm(record, fieldName, fieldType, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
+      cpy(record = f(record), fieldType = f(fieldType))
+    )
+  }
 }
