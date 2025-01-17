@@ -14,6 +14,7 @@ import chester.syntax.TASTPackage.{LoadedModules, TAST}
 import chester.utils.doc.*
 import chester.BuildInfo
 import chester.cli.Config.*
+import scala.language.experimental.betterFors
 
 object CLI {
   def spawn[F[_]](config: Option[Config])(using
@@ -177,8 +178,8 @@ class CLI[F[_]](using
   }
 
   def decompileFile(inputFile: String): F[Unit] = {
-    val inputPath = stringToPath(inputFile)
     for {
+      inputPath = stringToPath(inputFile)
       fileExists <- IO.exists(inputPath)
       _ <-
         if (fileExists) {
