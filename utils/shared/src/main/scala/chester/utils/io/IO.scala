@@ -64,12 +64,11 @@ trait IO[F[_]] {
 case class CommandOutput(exitCode: Option[Int])
 
 object Runner {
-  inline def pure[F[_], A](inline x: A)(using inline runner: Runner[F]): F[A] =
+  inline def pure[F[_]: Runner as runner, A](inline x: A): F[A] =
     runner.pure(x)
 
-  inline def doTry[F[_], T](inline IO: F[T])(using
-      inline runner: Runner[F]
-  ): F[Try[T]] = runner.doTry(IO)
+  inline def doTry[F[_]: Runner as runner, T](inline IO: F[T]): F[Try[T]] =
+    runner.doTry(IO)
 
 }
 
