@@ -88,21 +88,20 @@ class CLI[F[_]](using
     _ <- IO.println(s"Expect one file for type checking (more support will be added later) $fileOrDir...")
     _ <- ChesterReader.parseTopLevel(FilePath(fileOrDir)) match {
       case Right(parsedBlock) =>
-        assert(read[Expr](write[Expr](parsedBlock))== parsedBlock)
-        assert(readBinary[Expr](writeBinary[Expr](parsedBlock))== parsedBlock)
+        assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
+        assert(readBinary[Expr](writeBinary[Expr](parsedBlock)) == parsedBlock)
         Tycker.check(parsedBlock) match {
           case TyckResult.Success(result, _, _) => {
             if (result.collectMeta.nonEmpty) {
               ???
             }
-            val text = StringPrinter.render(result)(using
-              PrettierOptions.Default)
+            val text = StringPrinter.render(result)(using PrettierOptions.Default)
             IO.println(text)
           }
           case TyckResult.Failure(errors, _, _, _) =>
-            for{
+            for {
               _ <- IO.println(s"Failed to type check file: $fileOrDir, errors: $errors")
-            }yield ()
+            } yield ()
         }
       case Left(_) => ???
     }
