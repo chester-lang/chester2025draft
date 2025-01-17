@@ -4,9 +4,9 @@ import chester.core.parseCheckTAST
 import chester.error.Problem
 import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
-import chester.reader.{FilePath, FilePathImpl}
+import chester.reader.{ChesterReader, FilePath, FilePathImpl}
 import chester.repl.REPLEngine
-import chester.tyck.Reporter
+import chester.tyck.{Reporter, TyckResult, Tycker}
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
@@ -14,6 +14,9 @@ import chester.syntax.TASTPackage.{LoadedModules, TAST}
 import chester.utils.doc.*
 import chester.BuildInfo
 import chester.cli.Config.*
+import chester.syntax.concrete.Expr
+import upickle.default.{read, readBinary, write, writeBinary}
+
 import scala.language.experimental.betterFors
 
 object CLI {
@@ -81,11 +84,25 @@ class CLI[F[_]](using
     }
   }
 
-  // Evaluate from file or directory
   def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
-    _ <- IO.println(s"Running from $fileOrDir...")
-    // Implement your logic here
-    _ <- Runner.pure(())
+    _ <- IO.println(s"Expect one file for type checking (more support will be added later) $fileOrDir...")
+    _ <- ChesterReader.parseTopLevel(FilePath(fileOrDir)) match {
+      case Right(parsedBlock) =>
+        assert(read[Expr](write[Expr](parsedBlock))== parsedBlock)
+        assert(readBinary[Expr](writeBinary[Expr](parsedBlock))== parsedBlock)
+        Tycker.check(parsedBlock) match {
+          case TyckResult.Success(result, _, _) => {
+            if (result.collectMeta.nonEmpty) {
+              ???
+            }
+            val text = StringPrinter.render(result)(using
+              PrettierOptions.Default)
+            IO.println(text)
+          }
+          case _ => ???
+        }
+      case Left(_) => ???
+    }
   } yield ()
 
   def runIntegrityCheck(): F[Unit] = for {

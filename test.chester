@@ -1,0 +1,3 @@
+record A(a: Integer);
+let aT = A;
+def getA(x: A): Integer = x.a;
