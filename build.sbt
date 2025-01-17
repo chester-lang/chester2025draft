@@ -55,7 +55,7 @@ val graalJdkVersion = "23.0.1"
 val graalvmVersion = "24.1.1"
 
 val defaultNativeImageOptions = Seq(
-  //"-H:-CheckToolchain",
+  // "-H:-CheckToolchain",
   "--verbose",
   "--no-fallback",
   "-enablesystemassertions",
@@ -334,6 +334,9 @@ ThisBuild / nativeConfig ~= (if (supportNativeBuildForTermux) {
                                _.withMultithreading(false).withGC(GC.immix)
                              } else (x => x))
 
+ThisBuild / nativeConfig ~= (if (supportNativeBuildForTermux) {
+                               _.withCompileOptions(_ :+ "-D_POSIX_C_SOURCE")
+                             } else (x => x))
 // original kiama-core
 lazy val kiamaCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)

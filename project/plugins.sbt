@@ -26,6 +26,6 @@ libraryDependencies ++= Seq(
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 addDependencyTreePlugin
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.13.0+27-2e43b9bf-SNAPSHOT")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.0")
 //addSbtPlugin("com.github.sbt" % "sbt-license-report" % "1.7.0")
