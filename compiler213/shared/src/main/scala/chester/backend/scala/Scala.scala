@@ -3,6 +3,8 @@ package chester.backend.scala
 import scala.meta
 import chester.syntax.core._
 import chester.syntax.core.simple._
+import annotation.experimental
+@experimental
 object Scala {
   case class ScalaContext()
   def compileExpr(term: Term)(implicit ctx: ScalaContext = null): meta.Term = term match {

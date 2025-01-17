@@ -10,11 +10,11 @@ import scala.annotation.tailrec
 import scala.util.Try
 import com.eed3si9n.ifdef.*
 
-given DefaultSpawn: Spawn[Id] with {
+given DefaultSpawn: Spawn[Id] {
   override inline def spawn(x: => Unit): Unit = x
 }
 
-given DefaultRunner: Runner[Id] with {
+given DefaultRunner: Runner[Id] {
   override inline def pure[A](x: A): A = x
 
   override inline def flatMap[A, B](fa: A)(f: A => B): B = f(fa)

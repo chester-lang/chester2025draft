@@ -13,7 +13,7 @@ class InTerm(terminal: JLineTerminal) extends InTerminal[Id] {
   inline def getHistory: Seq[String] = terminal.getHistory
 }
 
-given DefaultTerminal: Terminal[Id] with {
+given DefaultTerminal: Terminal[Id] {
   inline def runTerminal[T](
       init: TerminalInit,
       block: InTerminal[Id] ?=> T

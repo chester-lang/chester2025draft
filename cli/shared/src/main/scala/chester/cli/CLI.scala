@@ -14,7 +14,6 @@ import chester.syntax.TASTPackage.{LoadedModules, TAST}
 import chester.utils.doc.*
 import chester.BuildInfo
 import chester.cli.Config.*
-import scala.language.experimental.betterFors
 
 object CLI {
   def spawn[F[_]](config: Option[Config])(using

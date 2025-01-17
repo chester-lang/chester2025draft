@@ -89,8 +89,8 @@ val commonSettings0 = Seq(
       "-Wvalue-discard",
       "-Wnonunit-statement",
       "-deprecation",
-      "-feature"
-      // "-experimental"
+      "-feature",
+      "-experimental"
     ),
   // scalafix
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),

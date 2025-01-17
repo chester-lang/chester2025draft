@@ -5,7 +5,7 @@ import typings.node.processMod
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-given DefaultSpawn: Spawn[Future] with {
+given DefaultSpawn: Spawn[Future] {
   inline override def spawn(x: => Future[Unit]): Unit = x.recover { e =>
     e.printStackTrace()
     processMod.^.exit(1)

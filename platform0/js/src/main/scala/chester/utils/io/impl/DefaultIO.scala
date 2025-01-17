@@ -16,7 +16,7 @@ import js.JSConverters.*
 
 import scala.scalajs.js.typedarray.*
 
-given DefaultIO: IO[Future] with {
+given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
   def toScalaArray(input: Uint8Array): Array[Byte] = {
     // Create a view as Int8 on the same underlying data.
