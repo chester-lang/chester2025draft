@@ -336,6 +336,7 @@ ThisBuild / nativeConfig ~= (if (supportNativeBuildForTermux) {
 
 ThisBuild / nativeConfig ~= (if (supportNativeBuildForTermux) {
                                _.withCompileOptions(_ :+ "-D_POSIX_C_SOURCE=200809L")
+                               .withLinkingOptions(_ :+ "-landroid-posix-semaphore")
                              } else (x => x))
 // original kiama-core
 lazy val kiamaCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
