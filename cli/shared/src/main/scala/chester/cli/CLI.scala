@@ -99,7 +99,10 @@ class CLI[F[_]](using
               PrettierOptions.Default)
             IO.println(text)
           }
-          case _ => ???
+          case TyckResult.Failure(errors, _, _, _) =>
+            for{
+              _ <- IO.println(s"Failed to type check file: $fileOrDir, errors: $errors")
+            }yield ()
         }
       case Left(_) => ???
     }
