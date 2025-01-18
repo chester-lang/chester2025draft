@@ -1024,7 +1024,7 @@ lazy val platform0 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("platform0"))
-  .dependsOn(core, compiler)
+  .dependsOn(core)
   .jsConfigure(
     _.dependsOn(jsTypings.js)
   )
