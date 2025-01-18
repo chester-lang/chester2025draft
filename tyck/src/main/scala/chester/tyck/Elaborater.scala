@@ -12,7 +12,7 @@ import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
 
-trait Elaborater extends ProvideCtx with ElaboraterCommon {
+trait Elaborater extends ProvideCtx with TyckPropagator {
 
   def checkType(expr: Expr)(using
       localCtx: Context,
