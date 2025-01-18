@@ -4,11 +4,11 @@ import chester.reader.{*, given}
 import chester.syntax.concrete.*
 import chester.syntax.core.{Judge, convertToSimple}
 import chester.utils.doc.*
-import java.nio.file.Files
 import munit.FunSuite
 import upickle.default.*
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 class FilesTyckTest extends FunSuite {
   val (testDir, inputFiles) = getInputFiles("tests/tyck")

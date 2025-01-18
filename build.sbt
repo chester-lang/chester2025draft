@@ -622,7 +622,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("platform"))
-  .dependsOn(platform0, compiler)
+  .dependsOn(compatibility, compiler, semantic, core)
   .settings(
     name := "platform",
     commonSettings
@@ -1020,11 +1020,11 @@ lazy val jsTypings = crossProject(JSPlatform)
      */
   )
 
-lazy val platform0 = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val compatibility = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("platform0"))
-  .dependsOn(core)
+  .in(file("compatibility"))
+  .dependsOn(utils, err)
   .jsConfigure(
     _.dependsOn(jsTypings.js)
   )
@@ -1062,7 +1062,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cli"))
   .jvmEnablePlugins(NativeImagePlugin)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
-  .dependsOn(platform0, platform, compiler)
+  .dependsOn(compatibility, platform, compiler)
   .settings(
     Compile / mainClass := Some("chester.cli.Main"),
     assembly / assemblyOutputPath := file("target") / "chester.jar",
@@ -1119,7 +1119,7 @@ lazy val js = crossProject(JSPlatform)
   .withoutSuffixFor(JSPlatform)
   .crossType(CrossType.Pure)
   .in(file("js"))
-  .dependsOn(platform0)
+  .dependsOn(compatibility, core)
   .settings(
     commonSettings
   )
@@ -1165,7 +1165,7 @@ lazy val lsp = crossProject(JVMPlatform)
   .in(file("lsp"))
   .jvmEnablePlugins(NativeImagePlugin)
   // .enablePlugins(SbtProguard)
-  .dependsOn(buildProtocol)
+  .dependsOn(buildProtocol, semantic, core)
   .settings(
     libraryDependencies ++= Seq(
     ),
@@ -1203,7 +1203,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("build-protocol"))
-  .dependsOn(platform0)
+  .dependsOn(compatibility)
   .settings(
     name := "build-protocol",
     commonSettings,
@@ -1226,7 +1226,7 @@ lazy val buildTool = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("build-tool"))
   .jvmEnablePlugins(NativeImagePlugin)
-  .dependsOn(buildProtocol)
+  .dependsOn(buildProtocol, semantic, core)
   .settings(
     name := "build-tool",
     Compile / mainClass := Some("chester.build.Main"),
@@ -1334,7 +1334,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     platform,
     jsForJvm,
     core,
-    platform0,
+    compatibility,
     cli,
     lsp,
     buildProtocol,

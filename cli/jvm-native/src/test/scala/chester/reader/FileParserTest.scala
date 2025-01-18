@@ -2,12 +2,12 @@ package chester.reader
 
 import chester.reader.*
 import chester.syntax.concrete.*
-import java.nio.file.Files
 import munit.Assertions.assertEquals
 import munit.FunSuite
 import upickle.default.*
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 class FileParserTest extends FunSuite {
   val (testDir, inputFiles) = getInputFiles("tests/parser")
