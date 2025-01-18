@@ -554,22 +554,11 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-lazy val tyckBase = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val semantic = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .in(file("tyck-base"))
+  .crossType(CrossType.Full)
+  .in(file("semantic"))
   .dependsOn(utils, syntax, err)
-  .settings(
-    name := "tyck-base",
-    commonSettings
-  )
-  .jvmSettings(commonJvmLibSettings)
-
-lazy val tyck = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .in(file("tyck"))
-  .dependsOn(utils, syntax, err, tyckBase, eval)
   .settings(
     commonSettings
   )
@@ -737,7 +726,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
-  .dependsOn(utils, reader, syntax, pretty, tyck)
+  .dependsOn(utils, reader, syntax, pretty, semantic)
   .settings(
     name := "core",
     assembly / assemblyOutputPath := file("target") / "chester-core.jar",
@@ -1251,21 +1240,11 @@ lazy val buildTool = crossProject(JVMPlatform)
     )
   )
 
-lazy val eval = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .in(file("eval"))
-  .dependsOn(tyckBase)
-  .settings(
-    commonSettings
-  )
-  .jvmSettings(commonJvmLibSettings)
-
 lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("interpreter"))
-  .dependsOn(eval, reader, tyck)
+  .dependsOn(reader, semantic)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
@@ -1351,8 +1330,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     syntax,
     err,
     pretty,
-    tyck,
-    tyckBase,
+    semantic,
     platform,
     jsForJvm,
     core,
@@ -1361,7 +1339,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     lsp,
     buildProtocol,
     buildTool,
-    eval,
     interpreter,
     js,
     site,
