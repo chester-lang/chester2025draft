@@ -73,7 +73,10 @@ val jdk17ClassVersion = 61.0f
 val jdk17: Boolean = false /* because of -java-output-version 8 */
 // classVersion >= jdk17ClassVersion
 
+dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
+
 val commonSettings0 = Seq(
+  dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla"),
   // githubTokenSource := TokenSource.GitConfig("github.token") || TokenSource.Environment("GITHUB_TOKEN"),
   // resolvers += Resolver.githubPackages("edadma", "readline"),
   resolvers += "jitpack" at "https://jitpack.io",
