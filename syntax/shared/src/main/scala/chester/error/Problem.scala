@@ -1,6 +1,6 @@
 package chester.error
 
-import chester.utils.doc.{Doc, PrettierOptions, ToDoc}
+import chester.utils.doc.*
 import upickle.default.*
 
 object Problem {
@@ -50,4 +50,59 @@ private object ProblemSer {
 object ProblemUpickle {
   implicit val problemRW: ReadWriter[Problem] =
     readwriter[ProblemSer].bimap(ProblemSer.from, x => x)
+}
+
+extension (p: Problem) {
+  def renderDoc(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
+    p.fullDescription match {
+      case Some(desc) => renderFullDescription(desc)(using options, sourceReader)
+      case None => renderToDocWithSource(p)(using options, sourceReader)
+    }
+  }
+}
+
+private def renderFullDescription(desc: FullDescription)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
+  val beginDoc = desc.begin.toDoc
+  val explanationsDoc = desc.explanations.map { elem =>
+    val elemDoc = elem.doc.toDoc
+    elem.sourcePos.flatMap(sourceReader.apply) match {
+      case Some(source) => elemDoc </> Doc.text(source)
+      case None => elemDoc
+    }
+  }
+  val endDoc = desc.end.toDoc
+
+  Doc.concat(
+    beginDoc,
+    Doc.line,
+    ssep(explanationsDoc, Doc.line),
+    Doc.line,
+    endDoc
+  )
+}
+
+private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
+  val baseDoc = p.toDoc
+  p.sourcePos.flatMap(sourceReader.apply) match {
+    case Some(source) => 
+      baseDoc <> Doc.line <> Doc.text(source)
+    case None => 
+      baseDoc
+  }
+}
+
+case class SourceReader(readSource: SourcePos => Option[String]) {
+  def apply(pos: SourcePos): Option[String] = readSource(pos)
+}
+
+object SourceReader {
+  def fromFileContent(content: FileContent): SourceReader = {
+    SourceReader { pos =>
+      pos.getLinesInRange.map { lines =>
+        lines.map { case (_, line) => line }.mkString("\n")
+      }
+    }
+  }
+
+  def empty: SourceReader = SourceReader(_ => None)
 }
