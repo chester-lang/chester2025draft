@@ -1,7 +1,7 @@
 package chester.cli
 
 import chester.core.parseCheckTAST
-import chester.error.Problem
+import chester.error.*
 import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
 import chester.reader.{ChesterReader, FilePath, FilePathImpl}
@@ -163,14 +163,19 @@ class CLI[F[_]](using
       object reporter extends Reporter[Problem] {
         private var varErrors: Boolean = false
 
-        override def apply(problem: Problem): Unit = problem.severity match {
-          case Severity.Error =>
-            varErrors = true
-            println(s"Error: $problem")
-          case Severity.Warning =>
-            println(s"Warning: $problem")
-          case _ =>
-            println(s"Info: $problem")
+        override def apply(problem: Problem): Unit = {
+          given sourceReader: SourceReader = SourceReader.default
+          given prettierOptions: PrettierOptions = PrettierOptions.Default
+          
+          problem.severity match {
+            case Severity.Error =>
+              varErrors = true
+              println(FansiPrettyPrinter.render(problem.renderDoc, 80).render)
+            case Severity.Warning =>
+              println(FansiPrettyPrinter.render(problem.renderDoc, 80).render)
+            case _ =>
+              println(FansiPrettyPrinter.render(problem.renderDoc, 80).render)
+          }
         }
 
         def hasErrors: Boolean = varErrors
