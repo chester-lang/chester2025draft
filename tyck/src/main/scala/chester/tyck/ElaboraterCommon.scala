@@ -492,6 +492,47 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     toTerm(argTerm)
   }
 
+  case class RecordFieldPropagator(
+      recordTy: CellId[Term],
+      fieldName: Name, 
+      expectedTy: CellId[Term],
+      cause: Expr
+  )(using localCtx: Context) extends Propagator[Tyck] {
+    override val readingCells: Set[CIdOf[Cell[?]]] = Set(recordTy)
+    override val writingCells: Set[CIdOf[Cell[?]]] = Set(expectedTy)
+    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(recordTy, expectedTy)
+
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+      state.readStable(recordTy) match {
+        case Some(Meta(id)) =>
+          state.addPropagator(RecordFieldPropagator(id, fieldName, expectedTy, cause))
+          true
+        case Some(RecordCallTerm(recordDef, _, _)) =>
+          recordDef.fields.find(_.name == fieldName) match {
+            case Some(fieldTerm) =>
+              unify(expectedTy, fieldTerm.ty, cause)
+              true
+            case None =>
+              val problem = FieldNotFound(fieldName, recordDef.name, cause)
+              more.reporter.apply(problem)
+              true
+          }
+        case Some(other) =>
+          val problem = NotARecordType(other, cause)
+          more.reporter.apply(problem)
+          true
+        case None => false
+      }
+    }
+
+    override def naiveZonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      state.readStable(recordTy) match {
+        case None => ZonkResult.Require(Vector(recordTy))
+        case _ => ZonkResult.Done
+      }
+    }
+  }
+
 }
 
 trait ElaboraterBase extends CommonPropagator[Tyck] {
