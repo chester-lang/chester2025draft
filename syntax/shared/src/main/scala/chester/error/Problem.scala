@@ -2,6 +2,7 @@ package chester.error
 
 import chester.utils.doc.*
 import upickle.default.*
+import chester.i18n.*
 
 object Problem {
   enum Stage derives ReadWriter {
@@ -66,7 +67,12 @@ private def renderFullDescription(desc: FullDescription)(using options: Prettier
   val explanationsDoc = desc.explanations.map { elem =>
     val elemDoc = elem.doc.toDoc
     elem.sourcePos.flatMap(sourceReader.apply) match {
-      case Some(source) => elemDoc </> Doc.text(source)
+      case Some(lines) => 
+        val sourceLines = lines.map { case (lineNumber, line) =>
+          Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
+        }
+        val codeBlock = Doc.group(Doc.concat(sourceLines.map(_.end)*))
+        elemDoc </> codeBlock
       case None => elemDoc
     }
   }
@@ -82,27 +88,55 @@ private def renderFullDescription(desc: FullDescription)(using options: Prettier
 }
 
 private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
-  val baseDoc = p.toDoc
-  p.sourcePos.flatMap(sourceReader.apply) match {
-    case Some(source) => 
-      baseDoc <> Doc.line <> Doc.text(source)
+  val severityDoc = p.severity match {
+    case Problem.Severity.Error => Doc.text(t"Error")
+    case Problem.Severity.Warning => Doc.text(t"Warning")
+    case Problem.Severity.Goal => Doc.text(t"Goal")
+    case Problem.Severity.Info => Doc.text(t"Info")
+  }
+  
+  val baseDoc = severityDoc <+> p.toDoc
+
+  p.sourcePos match {
+    case Some(pos) =>
+      val locationHeader = Doc.text(t"Location") <+>
+        Doc.text(
+          t"${pos.fileName} [${pos.range.start.line + 1}:${pos.range.start.column.i + 1}] to [${pos.range.end.line + 1}:${pos.range.end.column.i + 1}]",
+          Styling.BoldOn
+        )
+
+      val sourceLines = sourceReader(pos).map { lines =>
+        lines.map { case (lineNumber, line) =>
+          Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
+        }
+      }.getOrElse(Vector.empty)
+
+      val codeBlock = Doc.group(Doc.concat(sourceLines.map(_.end)*))
+
+      baseDoc <|> locationHeader <|> codeBlock
+
     case None => 
       baseDoc
   }
 }
-
-case class SourceReader(readSource: SourcePos => Option[String]) {
-  def apply(pos: SourcePos): Option[String] = readSource(pos)
+/** A reader for source code that provides line-numbered content.
+  * 
+  * @param readSource A function that takes a SourcePos and returns line-numbered content.
+  *                  The returned Vector contains tuples of (lineNumber, lineContent) where:
+  *                  - lineNumber: 1-based line numbers (e.g., lines 3,4,5)
+  *                  - lineContent: The actual text content of that line
+  *                  Note: While internal line tracking is 0-based, this API returns 1-based line numbers for display
+  */
+case class SourceReader(readSource: SourcePos => Option[Vector[(Int, String)]]) {
+  def apply(pos: SourcePos): Option[Vector[(Int, String)]] = readSource(pos)
 }
 
 object SourceReader {
   def fromFileContent(content: FileContent): SourceReader = {
-    SourceReader { pos =>
-      pos.getLinesInRange.map { lines =>
-        lines.map { case (_, line) => line }.mkString("\n")
-      }
-    }
+    SourceReader { pos => pos.getLinesInRange }
   }
+
+  def default: SourceReader = SourceReader { pos => pos.getLinesInRange }
 
   def empty: SourceReader = SourceReader(_ => None)
 }

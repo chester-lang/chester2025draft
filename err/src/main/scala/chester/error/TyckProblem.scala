@@ -21,48 +21,13 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
 
   def hint: ToDoc = empty
 
-  override def toDoc(using
-      options: PrettierOptions
-  ): Doc
+  override def toDoc(using options: PrettierOptions): Doc
 
   def cause: Term | Expr
 
   override def sourcePos: Option[SourcePos] = cause match {
     case x: WithPos => x.sourcePos
     case _          => None
-  }
-
-  def renderWithLocation(using
-      options: PrettierOptions
-  ): Doc = {
-    val baseMessage = Doc.text(t"Error") <+> this
-
-    val locationInfo = sourcePos match {
-      case Some(pos) =>
-        val lines = pos.getLinesInRange match {
-          case Some(lines) =>
-            lines.map { case (lineNumber, line) =>
-              Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
-            }
-          case None => Vector.empty
-        }
-        val locationHeader = Doc.text(t"Location") <+>
-          Doc.text(
-            t"${pos.fileName} [${pos.range.start.line + 1}:${pos.range.start.column.i + 1}] to [${pos.range.end.line + 1}:${pos.range.end.column.i + 1}]",
-            Styling.BoldOn
-          )
-
-        val codeBlock = Doc.group(Doc.concat(lines.map(_.end)*))
-
-        locationHeader <|> codeBlock
-
-      case None =>
-        val causeHeader = Doc.text(t"Cause", Styling.BoldOn)
-        val causeText = cause
-        causeHeader <|> causeText
-    }
-
-    baseMessage <|> locationInfo
   }
 }
 

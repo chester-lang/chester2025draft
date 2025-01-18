@@ -3,7 +3,7 @@ package chester.repl
 import cats.implicits.*
 import chester.doc.*
 import chester.doc.const.{Colors, ReplaceBracketsWithWord}
-import chester.error.unreachable
+import chester.error.*
 import chester.reader.{ParseError, ReaderREPL}
 import chester.syntax.concrete.Expr
 import chester.syntax.core.*
@@ -145,15 +145,17 @@ def REPLEngine[F[_]](using
       er: Vector[chester.error.TyckError],
       wr: Vector[chester.error.TyckWarning] = Vector()
   ): F[Unit] = {
+    given sourceReader: SourceReader = SourceReader.default
+    
     for {
       _ <- er.traverse(x => {
         InTerminal.writeln(
-          FansiPrettyPrinter.render(x.renderWithLocation, maxWidth)
+          FansiPrettyPrinter.render(x.renderDoc, maxWidth)
         )
       })
       _ <- wr.traverse(x => {
         InTerminal.writeln(
-          FansiPrettyPrinter.render(x.renderWithLocation, maxWidth)
+          FansiPrettyPrinter.render(x.renderDoc, maxWidth)
         )
       })
     } yield ()
