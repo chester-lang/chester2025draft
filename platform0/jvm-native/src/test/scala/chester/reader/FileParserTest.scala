@@ -2,7 +2,7 @@ package chester.reader
 
 import chester.reader.*
 import chester.syntax.concrete.*
-import chester.utils.ponyfill.Files
+import java.nio.file.Files
 import munit.Assertions.assertEquals
 import munit.FunSuite
 import upickle.default.*

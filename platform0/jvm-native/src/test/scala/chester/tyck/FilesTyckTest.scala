@@ -4,7 +4,7 @@ import chester.reader.{*, given}
 import chester.syntax.concrete.*
 import chester.syntax.core.{Judge, convertToSimple}
 import chester.utils.doc.*
-import chester.utils.ponyfill.Files
+import java.nio.file.Files
 import munit.FunSuite
 import upickle.default.*
 
