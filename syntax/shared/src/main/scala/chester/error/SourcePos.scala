@@ -49,13 +49,13 @@ case class SourcePos(source: SourceOffset, range: RangeInFile) derives ReadWrite
   val fileName = source.fileName
 
   /** Extracts all lines within the range with their line numbers.
-   *
-   * @return Option containing a Vector of (lineNumber, lineContent) tuples where:
-   *         - lineNumber: 1-based line numbers for display (e.g., if range spans lines 3-5, 
-   *           returns exactly [(3,"line3"), (4,"line4"), (5,"line5")])
-   *         - lineContent: The actual text content of that line
-   *           Note: While internal line tracking is 0-based, this API returns 1-based line numbers for display
-   */
+    *
+    * @return
+    *   Option containing a Vector of (lineNumber, lineContent) tuples where:
+    *   - lineNumber: 1-based line numbers for display (e.g., if range spans lines 3-5, returns exactly [(3,"line3"), (4,"line4"), (5,"line5")])
+    *   - lineContent: The actual text content of that line Note: While internal line tracking is 0-based, this API returns 1-based line numbers for
+    *     display
+    */
   def getLinesInRange: Option[Vector[(Int, String)]] = fileContent map { fileContent =>
     val startLine = range.start.line - fileContent.lineOffset
     val endLine = range.end.line - fileContent.lineOffset

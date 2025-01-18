@@ -109,8 +109,8 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
     case x: ObjectTypeTermC[Term] => simple.ObjectTypeTerm(objectDef = x.objectDef, meta = x.meta)
     case x: ObjectStmtTermC[Term] =>
       simple.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
-    case x: RecordCallTermC[Term] => simple.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
+    case x: RecordCallTermC[Term]  => simple.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
     case x: FieldAccessTermC[Term] => simple.FieldAccessTerm(record = x.record, fieldName = x.fieldName, fieldType = x.fieldType, meta = x.meta)
-    case _                        => throw new RuntimeException(s"Unhandled term type in convertToSimple: ${term.getClass}")
+    case _                         => throw new RuntimeException(s"Unhandled term type in convertToSimple: ${term.getClass}")
   }
 }

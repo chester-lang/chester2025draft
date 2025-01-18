@@ -57,7 +57,7 @@ extension (p: Problem) {
   def renderDoc(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
     p.fullDescription match {
       case Some(desc) => renderFullDescription(desc)(using options, sourceReader)
-      case None => renderToDocWithSource(p)(using options, sourceReader)
+      case None       => renderToDocWithSource(p)(using options, sourceReader)
     }
   }
 }
@@ -67,7 +67,7 @@ private def renderFullDescription(desc: FullDescription)(using options: Prettier
   val explanationsDoc = desc.explanations.map { elem =>
     val elemDoc = elem.doc.toDoc
     elem.sourcePos.flatMap(sourceReader.apply) match {
-      case Some(lines) => 
+      case Some(lines) =>
         val sourceLines = lines.map { case (lineNumber, line) =>
           Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
         }
@@ -89,12 +89,12 @@ private def renderFullDescription(desc: FullDescription)(using options: Prettier
 
 private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
   val severityDoc = p.severity match {
-    case Problem.Severity.Error => Doc.text(t"Error")
+    case Problem.Severity.Error   => Doc.text(t"Error")
     case Problem.Severity.Warning => Doc.text(t"Warning")
-    case Problem.Severity.Goal => Doc.text(t"Goal")
-    case Problem.Severity.Info => Doc.text(t"Info")
+    case Problem.Severity.Goal    => Doc.text(t"Goal")
+    case Problem.Severity.Info    => Doc.text(t"Info")
   }
-  
+
   val baseDoc = severityDoc <+> p.toDoc
 
   p.sourcePos match {
@@ -105,27 +105,30 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
           Styling.BoldOn
         )
 
-      val sourceLines = sourceReader(pos).map { lines =>
-        lines.map { case (lineNumber, line) =>
-          Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
+      val sourceLines = sourceReader(pos)
+        .map { lines =>
+          lines.map { case (lineNumber, line) =>
+            Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
+          }
         }
-      }.getOrElse(Vector.empty)
+        .getOrElse(Vector.empty)
 
       val codeBlock = Doc.group(Doc.concat(sourceLines.map(_.end)*))
 
       baseDoc <|> locationHeader <|> codeBlock
 
-    case None => 
+    case None =>
       baseDoc
   }
 }
+
 /** A reader for source code that provides line-numbered content.
-  * 
-  * @param readSource A function that takes a SourcePos and returns line-numbered content.
-  *                  The returned Vector contains tuples of (lineNumber, lineContent) where:
-  *                  - lineNumber: 1-based line numbers (e.g., lines 3,4,5)
-  *                  - lineContent: The actual text content of that line
-  *                  Note: While internal line tracking is 0-based, this API returns 1-based line numbers for display
+  *
+  * @param readSource
+  *   A function that takes a SourcePos and returns line-numbered content. The returned Vector contains tuples of (lineNumber, lineContent) where:
+  *   - lineNumber: 1-based line numbers (e.g., lines 3,4,5)
+  *   - lineContent: The actual text content of that line Note: While internal line tracking is 0-based, this API returns 1-based line numbers for
+  *     display
   */
 case class SourceReader(readSource: SourcePos => Option[Vector[(Int, String)]]) {
   def apply(pos: SourcePos): Option[Vector[(Int, String)]] = readSource(pos)

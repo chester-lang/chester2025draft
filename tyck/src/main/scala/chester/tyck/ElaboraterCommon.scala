@@ -494,10 +494,11 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   case class RecordFieldPropagator(
       recordTy: CellId[Term],
-      fieldName: Name, 
+      fieldName: Name,
       expectedTy: CellId[Term],
       cause: Expr
-  )(using localCtx: Context) extends Propagator[Tyck] {
+  )(using localCtx: Context)
+      extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(recordTy)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(expectedTy)
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(recordTy, expectedTy)
@@ -528,7 +529,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     override def naiveZonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       state.readStable(recordTy) match {
         case None => ZonkResult.Require(Vector(recordTy))
-        case _ => ZonkResult.Done
+        case _    => ZonkResult.Done
       }
     }
   }

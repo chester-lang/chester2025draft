@@ -146,7 +146,7 @@ def REPLEngine[F[_]](using
       wr: Vector[chester.error.TyckWarning] = Vector()
   ): F[Unit] = {
     given sourceReader: SourceReader = SourceReader.default
-    
+
     for {
       _ <- er.traverse(x => {
         InTerminal.writeln(
