@@ -17,9 +17,9 @@ addSbtPlugin("com.eed3si9n.ifdef" % "sbt-ifdef" % "0.4.0")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 //addSbtPlugin("io.get-coursier" % "sbt-shading" % "2.1.5")
 
-dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
+//dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
 
-dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
+//dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
 libraryDependencies ++= Seq(
   "org.mozilla" % "rhino" % "1.7.15"
 )
