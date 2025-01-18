@@ -1,13 +1,10 @@
 package chester.tyck
 
 import chester.error.*
-import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.syntax.Name
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.uniqid.*
 import chester.utils.*
-import chester.utils.propagator.CommonPropagator
 
 trait TyckPropagator extends ElaboraterCommon {
 
