@@ -1,11 +1,12 @@
 package chester.syntax.core
 
+import cats.data._
+import chester.syntax._
+import chester.syntax.core.spec.spec._
+import chester.uniqid._
+import chester.utils._
+
 import scala.language.implicitConversions
-import cats.data.*
-import chester.syntax.*
-import chester.syntax.core.spec.spec.*
-import chester.uniqid.*
-import chester.utils.*
 
 // Referencing Setω in Agda
 val Typeω: Type = Type(LevelUnrestricted(None), meta = None)

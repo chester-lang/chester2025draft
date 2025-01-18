@@ -1,8 +1,9 @@
 package chester.build
 
 import ch.epfl.scala.bsp4j._
-import java.util.concurrent.CompletableFuture
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
+
+import java.util.concurrent.CompletableFuture
 import scala.beans.BeanProperty
 
 trait ChesterBuildServer {

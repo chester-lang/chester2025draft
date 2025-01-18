@@ -2,7 +2,7 @@ package chester.utils.io
 
 import cats.Id
 import chester.repl.JLineTerminal
-import chester.utils.term.*
+import chester.utils.term._
 
 class InTerm(terminal: JLineTerminal) extends InTerminal[Id] {
   inline def writeln(line: fansi.Str): Unit = println(line.render)

@@ -1,9 +1,10 @@
 package chester.backend.scala
 
-import scala.meta
 import chester.syntax.core._
 import chester.syntax.core.simple._
-import annotation.experimental
+
+import scala.meta
+import scala.annotation.experimental
 @experimental
 object Scala {
   case class ScalaContext()

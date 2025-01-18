@@ -2,13 +2,13 @@ package chester.utils.io.impl
 
 import cats.Id
 import chester.utils.os2
-import chester.utils.io.*
-import _root_.os.*
+import chester.utils.io._
+import _root_.os._
+import com.eed3si9n.ifdef._
 
 import java.nio.file.Files
 import scala.annotation.tailrec
 import scala.util.Try
-import com.eed3si9n.ifdef.*
 
 given DefaultSpawn: Spawn[Id] {
   override inline def spawn(x: => Unit): Unit = x

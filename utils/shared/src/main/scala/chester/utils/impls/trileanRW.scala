@@ -1,6 +1,6 @@
 package chester.utils.impls
 
-import upickle.default.*
+import upickle.default._
 import spire.math.Trilean
 private enum Three derives ReadWriter {
   case True, False, Unknown

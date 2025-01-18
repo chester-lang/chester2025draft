@@ -1,14 +1,14 @@
 package chester.js
 
-import chester.utils.io.*
-import chester.utils.io.impl.{given}
-import chester.utils.term.*
+import chester.utils.io._
+import chester.utils.io.impl.given
+import chester.utils.term._
 import typings.xtermPty.mod.Slave
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.Thenable.Implicits.*
+import scala.scalajs.js.Thenable.Implicits._
 
 final class InXtermPty(pty: Slave) extends InTerminalNoHistory[Future] {
   inline override def writeln(line: fansi.Str): Future[Unit] = {

@@ -1,8 +1,8 @@
 package chester.reader
 
-import chester.syntax.concrete.*
+import chester.syntax.concrete._
 import munit.Assertions.{assertEquals, fail}
-import upickle.default.*
+import upickle.default._
 
 def parseAndCheck(input: String, expected: Expr): Unit = {
   val resultignored = ChesterReader.parseExpr(

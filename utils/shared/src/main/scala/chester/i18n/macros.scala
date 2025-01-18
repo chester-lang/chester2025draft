@@ -1,6 +1,6 @@
 package chester.i18n
 
-import scala.quoted.*
+import scala.quoted._
 
 trait T {
   def t(args: Any*)(using lang: Language): String

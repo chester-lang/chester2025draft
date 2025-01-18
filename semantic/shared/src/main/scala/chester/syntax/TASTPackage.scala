@@ -2,10 +2,10 @@ package chester.syntax
 
 import chester.syntax.core.{BlockTerm, Effects, Term}
 import chester.tyck.SeverityMap
-import chester.uniqid.*
-import chester.utils.*
-import upickle.default.*
-import upickle.default as upickle
+import chester.uniqid._
+import chester.utils._
+import upickle.default._
+import upickle.{default => upickle}
 
 import scala.collection.immutable.HashMap
 

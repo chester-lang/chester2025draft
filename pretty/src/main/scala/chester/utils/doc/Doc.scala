@@ -1,9 +1,9 @@
 package chester.utils.doc
 
-import chester.utils.{*, given}
-import kiama2.output.*
+import chester.utils.{_, given}
+import kiama2.output._
 import kiama2.output.PrettyPrinterTypes.Width
-import upickle.default.*
+import upickle.default._
 
 import scala.annotation.targetName
 import scala.language.implicitConversions

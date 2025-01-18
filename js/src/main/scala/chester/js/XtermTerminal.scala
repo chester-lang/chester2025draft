@@ -1,8 +1,8 @@
 package chester.js
 
-import chester.utils.io.*
-import chester.utils.io.impl.{given}
-import chester.utils.term.*
+import chester.utils.io._
+import chester.utils.io.impl.given
+import chester.utils.term._
 import typings.xtermXterm.mod
 
 import scala.concurrent.ExecutionContext.Implicits.global

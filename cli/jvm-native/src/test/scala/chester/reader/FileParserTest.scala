@@ -1,10 +1,10 @@
 package chester.reader
 
-import chester.reader.*
-import chester.syntax.concrete.*
+import chester.reader._
+import chester.syntax.concrete._
 import munit.Assertions.assertEquals
 import munit.FunSuite
-import upickle.default.*
+import upickle.default._
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

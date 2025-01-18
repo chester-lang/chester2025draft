@@ -1,12 +1,11 @@
 package chester.site
 
-import chester.js.*
-
+import chester.js._
 import chester.repl.REPLEngine
 import chester.utils.env.{BrowserEnv, Environment}
-import chester.utils.io.*
-import chester.utils.io.impl.{given}
-import chester.utils.term.*
+import chester.utils.io._
+import chester.utils.io.impl.given
+import chester.utils.term._
 import typings.xtermPty.mod.Slave
 import typings.xtermReadline.mod.Readline
 import typings.xtermXterm.mod.Terminal
@@ -14,7 +13,7 @@ import typings.xtermXterm.mod.Terminal
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters.*
+import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 @JSExportTopLevel("startRepl")

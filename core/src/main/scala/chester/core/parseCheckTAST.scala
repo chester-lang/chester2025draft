@@ -1,10 +1,10 @@
 package chester.core
 
-import chester.error.*
-import chester.reader.*
-import chester.syntax.*
-import chester.syntax.core.*
-import chester.tyck.*
+import chester.error._
+import chester.reader._
+import chester.syntax._
+import chester.syntax.core._
+import chester.tyck._
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector}
 
 def parseCheckTAST(

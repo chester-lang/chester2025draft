@@ -1,15 +1,15 @@
 package chester.tyck
 
 import chester.core.parseCheckTAST
-import chester.error.*
+import chester.error._
 import chester.reader
 import chester.tyck.api.{CollectedSymbol, VectorSemanticCollector}
-import chester.syntax.*
+import chester.syntax._
 import chester.syntax.concrete.Expr
-import os.*
+import os._
 import chester.reader.given
 
-import scala.meta.internal.semanticdb.*
+import scala.meta.internal.semanticdb._
 
 class SemanticDBGenerator extends VectorSemanticCollector {
 

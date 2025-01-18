@@ -1,10 +1,10 @@
 package chester.tyck
 
-import chester.error.*
+import chester.error._
 import chester.syntax.Name
-import chester.syntax.concrete.*
-import chester.syntax.core.*
-import chester.utils.*
+import chester.syntax.concrete._
+import chester.syntax.core._
+import chester.utils._
 
 trait TyckPropagator extends ElaboraterCommon {
 

@@ -1,10 +1,10 @@
 package chester.tyck
 
-import chester.syntax.*
-import chester.syntax.core.*
+import chester.syntax._
+import chester.syntax.core._
 import chester.tyck.BuiltIn.BuiltinItem
-import chester.uniqid.*
-import chester.utils.propagator.*
+import chester.uniqid._
+import chester.utils.propagator._
 
 trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 

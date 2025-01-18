@@ -1,13 +1,13 @@
 package chester.error
 
-import chester.i18n.*
+import chester.i18n._
 import chester.syntax.Name
-import chester.syntax.accociativity.*
-import chester.syntax.concrete.*
-import chester.syntax.core.*
-import chester.utils.doc.*
-import chester.utils.impls.*
-import upickle.default.*
+import chester.syntax.accociativity._
+import chester.syntax.concrete._
+import chester.syntax.core._
+import chester.utils.doc._
+import chester.utils.impls._
+import upickle.default._
 
 import scala.reflect.ClassTag
 

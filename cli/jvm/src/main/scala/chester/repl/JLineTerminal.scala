@@ -1,7 +1,7 @@
 package chester.repl
 
-import chester.utils.term.*
-import org.jline.reader.*
+import chester.utils.term._
+import org.jline.reader._
 import org.jline.reader.impl.DefaultParser
 import org.jline.reader.impl.history.DefaultHistory
 class JLineTerminal(init: TerminalInit) {

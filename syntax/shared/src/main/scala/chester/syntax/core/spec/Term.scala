@@ -1,17 +1,17 @@
 // TODO: More correctly implement toDoc
 package chester.syntax.core.spec
 
-import cats.data.*
-import chester.doc.*
+import cats.data._
+import chester.doc._
 import chester.doc.const.{ColorProfile, Docs}
-import chester.error.*
-import chester.syntax.*
-import chester.uniqid.*
-import chester.utils.*
-import chester.utils.doc.*
-import spire.math.Trilean.*
+import chester.error._
+import chester.syntax._
+import chester.uniqid._
+import chester.utils._
+import chester.utils.doc._
+import spire.math.Trilean._
 import spire.math.{Rational, Trilean}
-import upickle.default.*
+import upickle.default._
 
 import scala.language.implicitConversions
 

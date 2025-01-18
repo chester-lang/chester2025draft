@@ -1,7 +1,7 @@
 package chester.targets.c
 
-import chester.utils.doc.*
-import upickle.default.*
+import chester.utils.doc._
+import upickle.default._
 
 // Base trait for all AST nodes
 sealed trait ASTNode extends ToDoc derives ReadWriter

@@ -1,7 +1,7 @@
 package chester.reader
 
-import chester.reader.*
-import chester.syntax.concrete.*
+import chester.reader._
+import chester.syntax.concrete._
 import munit.FunSuite
 
 class PatternMatchingTest extends FunSuite {

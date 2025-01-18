@@ -1,9 +1,9 @@
 package chester.resolve
 
-import chester.error.*
-import chester.syntax.*
-import chester.syntax.accociativity.*
-import chester.syntax.concrete.*
+import chester.error._
+import chester.syntax._
+import chester.syntax.accociativity._
+import chester.syntax.concrete._
 import chester.tyck.Reporter
 import scalax.collection.edges.DiEdge
 import scalax.collection.immutable.Graph

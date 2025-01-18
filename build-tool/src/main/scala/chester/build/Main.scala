@@ -3,6 +3,7 @@ package chester.build
 import ch.epfl.scala.bsp4j._
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.log4s._
+
 import java.util.concurrent.Executors
 
 object Main {

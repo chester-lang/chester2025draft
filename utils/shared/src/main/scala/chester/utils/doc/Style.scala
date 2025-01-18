@@ -1,8 +1,9 @@
 package chester.utils.doc
 
 import spire.math.Trilean
-import upickle.default.*
-import chester.utils.impls.*
+import upickle.default._
+import chester.utils.impls._
+
 import scala.language.implicitConversions
 
 case class Style(

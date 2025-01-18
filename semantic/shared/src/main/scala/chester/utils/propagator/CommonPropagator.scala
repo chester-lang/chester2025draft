@@ -1,5 +1,5 @@
 package chester.utils.propagator
-import cats.implicits.*
+import cats.implicits._
 
 trait CommonPropagator[Ck] extends ProvideCellId {
 

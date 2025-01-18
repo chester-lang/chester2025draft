@@ -1,7 +1,7 @@
 package chester.eval
 
 import chester.runtime.Value
-import chester.syntax.core.*
+import chester.syntax.core._
 import chester.syntax.core.spec.spec.{BooleanTermC, TermT}
 
 case class EvalContext()

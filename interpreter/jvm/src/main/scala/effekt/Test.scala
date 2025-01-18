@@ -29,9 +29,7 @@ import com.oracle.truffle.api.frame._
 import com.oracle.truffle.api.TruffleLanguage.{Env, ParsingRequest}
 import com.oracle.truffle.api.nodes.Node.Child
 import org.graalvm.polyglot.{Context => Ctx}
-import com.oracle.truffle.api.Truffle
-import com.oracle.truffle.api.frame.VirtualFrame
-import com.oracle.truffle.api.nodes.*
+import com.oracle.truffle.api.nodes._
 
 import scala.annotation.meta.field
 

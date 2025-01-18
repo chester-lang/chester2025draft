@@ -1,6 +1,6 @@
 package chester.error
 
-import chester.utils.doc.*
+import chester.utils.doc._
 
 // TODO: print correct compiler internal error message, also scala builtin assert/require
 

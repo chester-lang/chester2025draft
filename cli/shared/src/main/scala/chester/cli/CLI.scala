@@ -1,22 +1,22 @@
 package chester.cli
 
 import chester.core.parseCheckTAST
-import chester.error.*
+import chester.error._
 import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
 import chester.reader.{ChesterReader, FilePath, FilePathImpl}
 import chester.repl.REPLEngine
 import chester.tyck.{Reporter, TyckResult, Tycker}
 import chester.utils.env.Environment
-import chester.utils.io.*
+import chester.utils.io._
 import chester.utils.term.{Terminal, TerminalInit}
 import chester.syntax.TASTPackage.{LoadedModules, TAST}
-import chester.utils.doc.*
+import chester.utils.doc._
 import chester.BuildInfo
-import chester.cli.Config.*
+import chester.cli.Config._
 import chester.syntax.concrete.Expr
 import upickle.default.{read, readBinary, write, writeBinary}
-import cats.implicits.*
+import cats.implicits._
 
 import scala.language.experimental.betterFors
 
@@ -102,12 +102,10 @@ class CLI[F[_]](using
           case TyckResult.Failure(errors, warnings, _, _) =>
             given sourceReader: SourceReader = SourceReader.default
             given prettierOptions: PrettierOptions = PrettierOptions.Default
-            
+
             for {
-              _ <- errors.traverse(error => 
-                IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
-              _ <- warnings.traverse(warning => 
-                IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
+              _ <- errors.traverse(error => IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
+              _ <- warnings.traverse(warning => IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
             } yield ()
         }
       case Left(_) => ???
@@ -173,7 +171,7 @@ class CLI[F[_]](using
         override def apply(problem: Problem): Unit = {
           given sourceReader: SourceReader = SourceReader.default
           given prettierOptions: PrettierOptions = PrettierOptions.Default
-          
+
           problem.severity match {
             case Severity.Error =>
               varErrors = true

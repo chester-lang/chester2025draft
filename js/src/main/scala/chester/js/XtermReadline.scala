@@ -1,14 +1,14 @@
 package chester.js
 
-import chester.utils.io.*
-import chester.utils.io.impl.{given}
-import chester.utils.term.*
+import chester.utils.io._
+import chester.utils.io.impl.given
+import chester.utils.term._
 import typings.std.global.setTimeout
 import typings.xtermReadline.mod.Readline
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.Thenable.Implicits.*
+import scala.scalajs.js.Thenable.Implicits._
 
 def setTimeoutThen: Future[Unit] = {
   val promise = Promise[Unit]()

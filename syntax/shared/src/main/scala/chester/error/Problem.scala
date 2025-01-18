@@ -1,8 +1,8 @@
 package chester.error
 
-import chester.utils.doc.*
-import upickle.default.*
-import chester.i18n.*
+import chester.utils.doc._
+import upickle.default._
+import chester.i18n._
 
 object Problem {
   enum Stage derives ReadWriter {

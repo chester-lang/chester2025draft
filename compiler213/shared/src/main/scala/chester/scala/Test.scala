@@ -1,11 +1,11 @@
 package chester.scala
 
 import chester.backend.scala.Scala
+import chester.syntax.core.simple._
 
 import scala.meta
 import scala.meta._
-import chester.syntax.core.simple._
-import annotation.experimental
+import scala.annotation.experimental
 @experimental
 object Test {
   val test: meta.Term.Apply = q"function(argument)"

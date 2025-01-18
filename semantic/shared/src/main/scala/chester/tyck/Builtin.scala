@@ -1,7 +1,7 @@
 package chester.tyck
 
 import chester.syntax.Name
-import chester.syntax.core.*
+import chester.syntax.core._
 
 object BuiltIn {
   case class BuiltinItem(id: Name, value: Term, ty: Term) {}

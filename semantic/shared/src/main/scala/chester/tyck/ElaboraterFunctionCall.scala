@@ -1,8 +1,8 @@
 package chester.tyck
 
-import chester.error.*
-import chester.syntax.concrete.*
-import chester.syntax.core.*
+import chester.error._
+import chester.syntax.concrete._
+import chester.syntax.core._
 import chester.tyck.api.SemanticCollector
 
 trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {

@@ -1,7 +1,7 @@
 package chester.reader
 
 import java.nio.file.{Files, Path, Paths}
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters._
 
 def getInputFiles(testDir: String): (Path, Seq[Path]) = {
   val path = Paths.get(testDir)

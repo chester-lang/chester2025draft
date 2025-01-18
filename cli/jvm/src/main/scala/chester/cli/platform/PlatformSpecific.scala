@@ -2,7 +2,7 @@ package chester.cli.platform
 
 import chester.cli.Main.CliConfig
 import chester.tyck.SemanticDBGenerator
-import chester.utils.*
+import chester.utils._
 
 def genSemanticDB(config: CliConfig): Unit = {
   val inputPath = config.input.getOrElse {

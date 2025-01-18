@@ -1,6 +1,6 @@
 package chester.utils
 
-import upickle.default.*
+import upickle.default._
 
 // allow to write, not allow read
 given HoldNotReadableRW: ReadWriter[HoldNotReadable[?]] =

@@ -1,7 +1,7 @@
 package chester.doc.const
 
-import chester.doc.*
-import chester.utils.doc.*
+import chester.doc._
+import chester.utils.doc._
 
 object Colors {
   def REPLPrompt: Style = Foreground.LightBlue ++ Styling.BoldOn

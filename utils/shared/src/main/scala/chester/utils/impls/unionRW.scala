@@ -1,5 +1,5 @@
 package chester.utils.impls
-import upickle.default.*
+import upickle.default._
 
 import scala.reflect.ClassTag
 

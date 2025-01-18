@@ -1,8 +1,8 @@
 package chester.targets.js
 
-import chester.error.*
-import chester.utils.doc.*
-import upickle.default.*
+import chester.error._
+import chester.utils.doc._
+import upickle.default._
 
 case class Meta(sourcePos: SourcePos) derives ReadWriter
 

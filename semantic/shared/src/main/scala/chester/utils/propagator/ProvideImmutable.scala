@@ -1,6 +1,6 @@
 package chester.utils.propagator
 
-import chester.uniqid.*
+import chester.uniqid._
 
 trait ProvideImmutable extends ProvideImpl {
   type CIdOf[+T <: Cell[?]] = UniqidOf[T]

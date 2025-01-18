@@ -1,15 +1,16 @@
 package chester.tyck
 
-import cats.implicits.*
-import chester.tyck.*
-import chester.utils.*
-import chester.syntax.*
-import scala.language.implicitConversions
-import chester.error.*
-import chester.syntax.concrete.*
-import chester.syntax.core.*
+import cats.implicits._
+import chester.tyck._
+import chester.utils._
+import chester.syntax._
+import chester.error._
+import chester.syntax.concrete._
+import chester.syntax.core._
 import chester.tyck.api.SemanticCollector
-import chester.uniqid.*
+import chester.uniqid._
+
+import scala.language.implicitConversions
 
 trait ElaboraterBlock extends Elaborater {
   // Sealed trait for declaration information, for forwarding references

@@ -1,7 +1,7 @@
 package chester.utils
 
-import cats.data.*
-import upickle.default.*
+import cats.data._
+import upickle.default._
 
 import scala.language.implicitConversions
 

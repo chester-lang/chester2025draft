@@ -1,6 +1,7 @@
 package chester.docs
 
-import chester.js.*
+import chester.js._
+
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 @JSExportTopLevel("chesterRunFile")

@@ -11,7 +11,7 @@
 
 package kiama2.output
 
-import PrettyPrinterTypes.Width
+import kiama2.output.PrettyPrinterTypes.Width
 
 /** The sides that an expression may appear on inside another expression or associativities that infix operators can have.
   */

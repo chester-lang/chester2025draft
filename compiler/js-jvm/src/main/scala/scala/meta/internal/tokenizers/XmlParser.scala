@@ -3,14 +3,13 @@
 // override
 package scala.meta.internal.tokenizers
 
-import scala.meta.Dialect
-import scala.meta.inputs.Input
-
-import scala.annotation.switch
-import scala.annotation.tailrec
-
 import fastparse.NoWhitespace._
 import fastparse._
+
+import scala.meta.Dialect
+import scala.meta.inputs.Input
+import scala.annotation.switch
+import scala.annotation.tailrec
 
 /** Copy-pasta from this lihaoyi comment: [[https://github.com/scalameta/fastparse/pull/1#issuecomment-244940542]] and adapted to more closely match
   * scala-xml and then adapted to fastparse 2.3.1

@@ -1,7 +1,8 @@
 package chester.utils.io.impl
 
-import chester.utils.io.*
+import chester.utils.io._
 import typings.node.processMod
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

@@ -1,8 +1,8 @@
 package chester.repl
 
 import cats.Id
-import chester.utils.term.InputStatus.*
-import chester.utils.term.*
+import chester.utils.term.InputStatus._
+import chester.utils.term._
 import linenoise.facade
 
 class LinenoiseTerminal(init: TerminalInit) extends InTerminal[Id] {

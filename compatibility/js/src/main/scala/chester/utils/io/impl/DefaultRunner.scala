@@ -1,6 +1,6 @@
 package chester.utils.io.impl
 
-import chester.utils.io.*
+import chester.utils.io._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}

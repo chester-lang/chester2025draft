@@ -1,16 +1,17 @@
 package chester.syntax.core
-import chester.error.*
-import chester.error.ProblemUpickle.*
+import chester.error._
+import chester.error.ProblemUpickle._
 import chester.utils.given
-import chester.utils.impls.*
-import upickle.default.*
-import cats.data.*
+import chester.utils.impls._
+import upickle.default._
+import cats.data._
 import chester.error.Problem
-import chester.syntax.*
-import chester.syntax.core.spec.spec.*
-import chester.uniqid.*
-import chester.utils.*
-import spire.math.*
+import chester.syntax._
+import chester.syntax.core.spec.spec._
+import chester.uniqid._
+import chester.utils._
+import spire.math._
+
 import scala.collection.immutable.HashMap
 object simple {
   sealed trait Term extends TermT[Term] derives ReadWriter {

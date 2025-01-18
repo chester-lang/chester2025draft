@@ -1,14 +1,14 @@
 package chester.syntax.core
-import chester.error.*
-import upickle.default.*
-import cats.data.*
+import chester.error._
+import upickle.default._
+import cats.data._
 import chester.error.Problem
-import chester.syntax.*
-import chester.syntax.core.spec.spec.*
-import chester.uniqid.*
-import chester.utils.*
+import chester.syntax._
+import chester.syntax.core.spec.spec._
+import chester.uniqid._
+import chester.utils._
 import com.oracle.truffle.api.frame.VirtualFrame
-import spire.math.*
+import spire.math._
 
 import scala.collection.immutable.{ArraySeq, HashMap}
 object truffle {
