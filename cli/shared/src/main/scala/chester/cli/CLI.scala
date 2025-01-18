@@ -16,6 +16,7 @@ import chester.BuildInfo
 import chester.cli.Config.*
 import chester.syntax.concrete.Expr
 import upickle.default.{read, readBinary, write, writeBinary}
+import cats.implicits.*
 
 import scala.language.experimental.betterFors
 
@@ -98,9 +99,15 @@ class CLI[F[_]](using
             val text = StringPrinter.render(result)(using PrettierOptions.Default)
             IO.println(text)
           }
-          case TyckResult.Failure(errors, _, _, _) =>
+          case TyckResult.Failure(errors, warnings, _, _) =>
+            given sourceReader: SourceReader = SourceReader.default
+            given prettierOptions: PrettierOptions = PrettierOptions.Default
+            
             for {
-              _ <- IO.println(s"Failed to type check file: $fileOrDir, errors: $errors")
+              _ <- errors.traverse(error => 
+                IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
+              _ <- warnings.traverse(warning => 
+                IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
             } yield ()
         }
       case Left(_) => ???
