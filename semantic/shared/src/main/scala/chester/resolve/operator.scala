@@ -273,16 +273,23 @@ def resolveOpSeq(
   // Perform a topological sort of the precedence graph
   val topOrder = precedenceGraph.topologicalSort
 
-  val groupPrecedence: Map[QualifiedIDString, Int] = topOrder.fold({ _ => reporter.apply(
+  val groupPrecedence: Map[QualifiedIDString, Int] = topOrder.fold(
+    { _ =>
+      reporter.apply(
         PrecedenceCycleDetected(precedenceGraph.nodes.map(_.outer))
       )
-      Map.empty }, { order => val layeredOrder = order.toLayered
+      Map.empty
+    },
+    { order =>
+      val layeredOrder = order.toLayered
       // Map each group to its precedence level
       layeredOrder.iterator.flatMap { case (index, nodes) =>
         nodes.map { node =>
           node.outer.name -> index
         }
-      }.toMap })
+      }.toMap
+    }
+  )
 
   // Parse tokens from the operation sequence
   val tokens = parseTokens(opSeq.seq, opContext, groupPrecedence, reporter)

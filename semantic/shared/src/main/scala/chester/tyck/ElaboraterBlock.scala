@@ -213,9 +213,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-       SemanticCollector,
-       Tyck,
-       StateAbility[Tyck]
+      SemanticCollector,
+      Tyck,
+      StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val defInfo = declarationsMap(expr).asInstanceOf[DefDeclaration]
@@ -347,8 +347,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = traitInfo.name
 
     // TODO: Elaborate the extends clause properly
-    val elaboratedExtendsClause = expr.extendsClause.map { checkType
-    }
+    val elaboratedExtendsClause = expr.extendsClause.map { checkType }
 
     // Elaborate the optional body (if any)
     val elaboratedBody = expr.body.map { body =>
@@ -386,8 +385,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = interfaceInfo.name
 
     // TODO: Elaborate the extends clause properly
-    val elaboratedExtendsClause = expr.extendsClause.map { checkType
-    }
+    val elaboratedExtendsClause = expr.extendsClause.map { checkType }
 
     // Elaborate the optional body (if any)
     val elaboratedBody = expr.body.map { body =>
@@ -425,8 +423,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = objectInfo.name
 
     // Elaborate the extends clause if present
-    val elaboratedExtendsClause = expr.extendsClause.map { checkType
-    }
+    val elaboratedExtendsClause = expr.extendsClause.map { checkType }
 
     // Elaborate the body if present
     val elaboratedBody = expr.body.map { body =>

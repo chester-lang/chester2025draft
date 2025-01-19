@@ -64,7 +64,7 @@ private object MatchDeclarationTelescope {
   }
 }
 
-def opSeq(xs: Seq[Expr])(using  Reporter[TyckProblem]): Expr =
+def opSeq(xs: Seq[Expr])(using Reporter[TyckProblem]): Expr =
   SimpleDesalt.desugar(OpSeq(xs.toVector, xs.head.meta))
 
 private object DesaltSimpleFunction {
@@ -83,7 +83,7 @@ private object DesaltSimpleFunction {
 
         val paramsExpr = before match {
           case x @ Vector(Tuple(_, _)) => x
-          case _                          => before
+          case _                       => before
         }
 
         paramsExpr.traverse(MatchDeclarationTelescope.unapply) match {
@@ -164,20 +164,20 @@ private object ObjectDesalt {
 case object PatternDesalt {
   def desugar(
       x: Expr
-  )(using  Reporter[TyckProblem]): Option[DesaltPattern] = PartialFunction.condOpt(x) {
-    case id @ Identifier(_, meta) => PatternBind(id, meta) // TODO: more
+  )(using Reporter[TyckProblem]): Option[DesaltPattern] = PartialFunction.condOpt(x) { case id @ Identifier(_, meta) =>
+    PatternBind(id, meta) // TODO: more
   }
 }
 
 case object StmtDesalt {
-  def desugar(x: Expr)(using  Reporter[TyckProblem]): Expr = x match {
+  def desugar(x: Expr)(using Reporter[TyckProblem]): Expr = x match {
     case StmtDesalt(x) => x
     case _             => x
   }
 
   def defined(
       xs: Vector[Expr]
-  )(using  Reporter[TyckProblem]): Option[Defined] = {
+  )(using Reporter[TyckProblem]): Option[Defined] = {
     if (xs.isEmpty) None
     else if (xs.length == 1) xs.head match {
       // TODO: support multiple telescopes
@@ -270,7 +270,7 @@ case object StmtDesalt {
     }
   }
 
-  def unapply(x: Expr)(using  Reporter[TyckProblem]): Option[Stmt] =
+  def unapply(x: Expr)(using Reporter[TyckProblem]): Option[Stmt] =
     x match {
       case opseq @ OpSeq(seq, _) =>
         seq.indexWhere {
@@ -542,14 +542,14 @@ case object SimpleDesalt {
     }
 
   @tailrec
-  private def unwrap(e: Expr)(using  Reporter[TyckProblem]): Expr =
+  private def unwrap(e: Expr)(using Reporter[TyckProblem]): Expr =
     e match {
       case Block(Vector(), Some(tail), _) => unwrap(desugar(tail))
       case Tuple(Vector(term), _)         => unwrap(desugar(term))
       case _                              => e
     }
 
-  def desugarUnwrap(expr: Expr)(using  Reporter[TyckProblem]): Expr =
+  def desugarUnwrap(expr: Expr)(using Reporter[TyckProblem]): Expr =
     unwrap(desugar(expr))
 
   // Helper method to parse super types separated by 'with'

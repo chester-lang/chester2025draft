@@ -49,12 +49,12 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
       ty: CellIdOr[Term],
       id: UniqidOf[LocalV],
       meta: Option[ExprMeta]
-  )(using  Tyck,  StateAbility[Tyck]): LocalV = {
+  )(using Tyck, StateAbility[Tyck]): LocalV = {
     val m = convertMeta(meta)
     LocalV(name, toTerm(ty), id, m)
   }
 
-  def toTerm[T <: Term](x: CellIdOr[T])(using  StateAbility[Tyck]): T | MetaTerm = x match {
+  def toTerm[T <: Term](x: CellIdOr[T])(using StateAbility[Tyck]): T | MetaTerm = x match {
     case x: Term =>
       x match {
         case Meta(x) => Meta(x).asInstanceOf[T | MetaTerm]

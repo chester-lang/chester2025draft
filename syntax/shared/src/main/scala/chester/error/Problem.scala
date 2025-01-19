@@ -36,7 +36,7 @@ private case class ProblemSer(
     message: Doc,
     sourcePos: Option[SourcePos]
 ) extends Problem derives ReadWriter {
-  override def toDoc(using  PrettierOptions): Doc = message
+  override def toDoc(using PrettierOptions): Doc = message
 }
 
 private object ProblemSer {

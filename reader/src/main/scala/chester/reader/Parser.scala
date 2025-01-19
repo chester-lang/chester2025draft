@@ -192,7 +192,7 @@ case class ReaderInternal(
   }
 
   inline def PwithMeta[T, R](inline parse0: P[T])(using
-       fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
+      fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
   ): P[R] = P(parse0.withMeta)
 
   def identifier: P[Identifier] = P(id.withMeta).map { case (name, meta) =>

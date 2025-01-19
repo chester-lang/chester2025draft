@@ -15,7 +15,10 @@ object ChesterReader {
       parserFunc: ReaderInternal => P[T],
       ignoreLocation: Boolean = false
   ): Either[ParseError, T] = {
-    source.readContent.fold(error => Left(error), { content => val indexer = StringIndex(content)
+    source.readContent.fold(
+      error => Left(error),
+      { content =>
+        val indexer = StringIndex(content)
         parse(
           content,
           x =>
@@ -36,7 +39,9 @@ object ChesterReader {
               pos.column
             )
             Left(ParseError(s"Parsing failed: ${extra.trace().longMsg}", p))
-        } })
+        }
+      }
+    )
   }
 
   def parseStatements(

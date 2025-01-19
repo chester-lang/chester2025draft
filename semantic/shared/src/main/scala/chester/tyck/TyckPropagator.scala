@@ -79,7 +79,7 @@ trait TyckPropagator extends ElaboraterCommon {
   type Literals = Expr & (IntegerLiteral | RationalLiteral | StringLiteral | SymbolLiteral)
 
   case class Unify(lhs: CellId[Term], rhs: CellId[Term], cause: Expr)(using
-       Context
+      Context
   ) extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
@@ -130,7 +130,7 @@ trait TyckPropagator extends ElaboraterCommon {
       lhs: CellId[Term],
       rhs: Vector[CellId[Term]],
       cause: Expr
-  )(using  Context)
+  )(using Context)
       extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
@@ -227,7 +227,7 @@ trait TyckPropagator extends ElaboraterCommon {
   }
 
   case class LiteralType(x: Literals, tyLhs: CellId[Term])(using
-       Context
+      Context
   ) extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
@@ -343,7 +343,7 @@ trait TyckPropagator extends ElaboraterCommon {
       fieldName: Name,
       expectedTy: CellId[Term],
       cause: Expr
-  )(using  Context)
+  )(using Context)
       extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(recordTy)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(expectedTy)

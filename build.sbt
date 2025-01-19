@@ -74,7 +74,7 @@ val scalafixRules = Seq(
   "PartialFunctionCondOpt",
   "RedundantCaseClassVal",
   "RemoveEmptyObject",
-  //"RemoveIf",
+  // "RemoveIf",
   "RemovePureEff",
   "RemoveSamePackageImport",
   "RemoveStringInterpolation",

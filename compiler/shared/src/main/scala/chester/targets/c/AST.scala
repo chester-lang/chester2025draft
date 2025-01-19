@@ -13,26 +13,26 @@ sealed trait Expression extends ASTNode derives ReadWriter
 case class Identifier(
     name: String
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = Doc.text(name)
+  def toDoc(using PrettierOptions): Doc = Doc.text(name)
 }
 
 // Literals
 sealed trait Literal extends Expression derives ReadWriter
 
 case class IntegerLiteral(value: Long) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = Doc.text(value.toString)
+  def toDoc(using PrettierOptions): Doc = Doc.text(value.toString)
 }
 
 case class FloatLiteral(value: Double) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = Doc.text(value.toString)
+  def toDoc(using PrettierOptions): Doc = Doc.text(value.toString)
 }
 
 case class CharLiteral(value: Char) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = Doc.text(s"'$value'")
+  def toDoc(using PrettierOptions): Doc = Doc.text(s"'$value'")
 }
 
 case class StringLiteral(value: String) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = Doc.text(s""""$value"""")
+  def toDoc(using PrettierOptions): Doc = Doc.text(s""""$value"""")
 }
 
 // Binary Expressions
@@ -41,7 +41,7 @@ case class BinaryExpression(
     left: Expression,
     right: Expression
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     Doc.group(left.toDoc <+> Doc.text(operator.toString) <+> right.toDoc)
 }
 
@@ -50,7 +50,7 @@ case class UnaryExpression(
     operator: UnaryOperator,
     argument: Expression
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     Doc.group(Doc.text(operator.toString) <> argument.toDoc)
 }
 
@@ -59,7 +59,7 @@ case class CallExpression(
     callee: Expression,
     arguments: List[Expression]
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val argsDoc = Doc.sep(Doc.text(", "), arguments.map(_.toDoc))
     Doc.group(callee.toDoc <> Doc.text("(") <> argsDoc <> Doc.text(")"))
   }
@@ -69,7 +69,7 @@ case class CallExpression(
 case class Initializer(
     expressions: List[Expression]
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val exprsDoc = Doc.sep(Doc.text(", "), expressions.map(_.toDoc))
     Doc.text("{") <> exprsDoc <> Doc.text("}")
   }
@@ -81,13 +81,13 @@ sealed trait Statement extends ASTNode derives ReadWriter
 case class ExpressionStatement(
     expression: Expression
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc = expression.toDoc <> Doc.text(";")
+  def toDoc(using PrettierOptions): Doc = expression.toDoc <> Doc.text(";")
 }
 
 case class ReturnStatement(
     argument: Option[Expression]
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc = argument match {
+  def toDoc(using PrettierOptions): Doc = argument match {
     case Some(expr) => Doc.text("return") <+> expr.toDoc <> Doc.text(";")
     case None       => Doc.text("return;")
   }
@@ -100,7 +100,7 @@ case class VariableDeclaration(
     typeSpecifier: TypeSpecifier,
     declarators: List[VariableDeclarator]
 ) extends Declaration {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val declsDoc = Doc.sep(Doc.text(", "), declarators.map(_.toDoc))
     Doc.group(typeSpecifier.toDoc <+> declsDoc <> Doc.text(";"))
   }
@@ -111,7 +111,7 @@ case class VariableDeclarator(
     pointer: Option[PointerType],
     init: Option[Either[Expression, Initializer]]
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val pointerDoc = pointer.map(_.toDoc).getOrElse(Doc.empty)
     val initDoc = init
       .map {
@@ -129,7 +129,7 @@ case class FunctionDeclaration(
     params: List[Parameter],
     body: BlockStatement
 ) extends Declaration {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val paramsDoc = Doc.text("(") <> Doc.sep(Doc.text(", "), params.map(_.toDoc)) <> Doc.text(")")
     Doc.group(
       returnType.toDoc <+> id.toDoc <> paramsDoc <+> body.toDoc
@@ -141,13 +141,13 @@ case class Parameter(
     typeSpecifier: TypeSpecifier,
     id: Identifier
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = typeSpecifier.toDoc <+> id.toDoc
+  def toDoc(using PrettierOptions): Doc = typeSpecifier.toDoc <+> id.toDoc
 }
 
 case class BlockStatement(
     body: List[Statement]
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val bodyDoc = Doc.concat(body.map(stmt => stmt.toDoc <> Doc.line))
     Doc.text("{") <> Doc.indent(Doc.line <> bodyDoc) <> Doc.line <> Doc.text("}")
   }
@@ -158,50 +158,50 @@ sealed trait TypeSpecifier extends ASTNode derives ReadWriter
 
 // Basic Types
 case object IntType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("int")
+  def toDoc(using PrettierOptions): Doc = Doc.text("int")
 }
 
 case object UnsignedIntType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("unsigned int")
+  def toDoc(using PrettierOptions): Doc = Doc.text("unsigned int")
 }
 
 case object ShortIntType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("short int")
+  def toDoc(using PrettierOptions): Doc = Doc.text("short int")
 }
 
 case object LongIntType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("long int")
+  def toDoc(using PrettierOptions): Doc = Doc.text("long int")
 }
 
 case object FloatType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("float")
+  def toDoc(using PrettierOptions): Doc = Doc.text("float")
 }
 
 case object DoubleType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("double")
+  def toDoc(using PrettierOptions): Doc = Doc.text("double")
 }
 
 case object CharType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("char")
+  def toDoc(using PrettierOptions): Doc = Doc.text("char")
 }
 
 case object UnsignedCharType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("unsigned char")
+  def toDoc(using PrettierOptions): Doc = Doc.text("unsigned char")
 }
 
 case object VoidType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("void")
+  def toDoc(using PrettierOptions): Doc = Doc.text("void")
 }
 
 case object BoolType extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text("bool")
+  def toDoc(using PrettierOptions): Doc = Doc.text("bool")
 }
 
 // Pointer Type
 case class PointerType(
     baseType: TypeSpecifier
 ) extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = baseType.toDoc <> Doc.text("*")
+  def toDoc(using PrettierOptions): Doc = baseType.toDoc <> Doc.text("*")
 }
 
 // Array Type
@@ -209,7 +209,7 @@ case class ArrayType(
     baseType: TypeSpecifier,
     size: Option[Expression]
 ) extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val sizeDoc = size.map(_.toDoc).getOrElse(Doc.empty)
     baseType.toDoc <> Doc.text("[") <> sizeDoc <> Doc.text("]")
   }
@@ -219,7 +219,7 @@ case class ArrayType(
 case class CustomType(
     name: String
 ) extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = Doc.text(name)
+  def toDoc(using PrettierOptions): Doc = Doc.text(name)
 }
 
 // Struct Type
@@ -227,7 +227,7 @@ case class StructType(
     id: Option[Identifier],
     members: Option[List[StructMember]]
 ) extends TypeSpecifier {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val idDoc = id.map(_.toDoc).getOrElse(Doc.empty)
     val membersDoc = members
       .map { m =>
@@ -244,7 +244,7 @@ case class StructDeclaration(
     id: Identifier,
     members: List[StructMember]
 ) extends Declaration {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val membersDoc = Doc.concat(members.map(m => m.toDoc <> Doc.text(";") <> Doc.line))
     Doc.text("struct") <+> id.toDoc <+> Doc.text("{") <>
       Doc.indent(Doc.line <> membersDoc) <> Doc.line <> Doc.text("};")
@@ -255,7 +255,7 @@ case class StructMember(
     typeSpecifier: TypeSpecifier,
     id: Identifier
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = typeSpecifier.toDoc <+> id.toDoc
+  def toDoc(using PrettierOptions): Doc = typeSpecifier.toDoc <+> id.toDoc
 }
 
 // Typedef Declaration
@@ -263,7 +263,7 @@ case class TypedefDeclaration(
     originalType: TypeSpecifier,
     newType: CustomType
 ) extends Declaration {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     Doc.text("typedef") <+> originalType.toDoc <+> newType.toDoc <> Doc.text(";")
 }
 
@@ -272,7 +272,7 @@ case class EnumDeclaration(
     id: Identifier,
     members: List[EnumMember]
 ) extends Declaration {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val membersDoc = Doc.sep(Doc.text(", "), members.map(_.toDoc))
     Doc.text("enum") <+> id.toDoc <+> Doc.text("{") <>
       Doc.indent(Doc.line <> membersDoc) <> Doc.line <> Doc.text("};")
@@ -283,7 +283,7 @@ case class EnumMember(
     id: Identifier,
     value: Option[Expression]
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = value match {
+  def toDoc(using PrettierOptions): Doc = value match {
     case Some(expr) => id.toDoc <+> Doc.text("=") <+> expr.toDoc
     case None       => id.toDoc
   }
@@ -351,7 +351,7 @@ case class IfStatement(
     consequent: Statement,
     alternate: Option[Statement]
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val ifDoc = Doc.text("if (") <> test.toDoc <> Doc.text(")") <+> consequent.toDoc
     alternate match {
       case Some(alt) => Doc.group(ifDoc <+> Doc.text("else") <+> alt.toDoc)
@@ -364,7 +364,7 @@ case class WhileStatement(
     test: Expression,
     body: Statement
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     Doc.text("while (") <> test.toDoc <> Doc.text(")") <+> body.toDoc
 }
 
@@ -372,7 +372,7 @@ case class DoWhileStatement(
     body: Statement,
     test: Expression
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     Doc.text("do") <+> body.toDoc <+> Doc.text("while (") <> test.toDoc <> Doc.text(");")
 }
 
@@ -382,7 +382,7 @@ case class ForStatement(
     update: Option[Expression],
     body: Statement
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val initDoc = init.map(_.toDoc).getOrElse(Doc.empty)
     val testDoc = test.map(_.toDoc).getOrElse(Doc.empty)
     val updateDoc = update.map(_.toDoc).getOrElse(Doc.empty)
@@ -397,7 +397,7 @@ case class SwitchStatement(
     cases: List[CaseStatement],
     defaultCase: Option[DefaultCase]
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val casesDoc = Doc.concat(cases.map(_.toDoc <> Doc.line))
     val defaultDoc = defaultCase.map(_.toDoc <> Doc.line).getOrElse(Doc.empty)
     Doc.group(
@@ -411,7 +411,7 @@ case class CaseStatement(
     test: Expression,
     consequent: List[Statement]
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val bodyDoc = Doc.concat(consequent.map(stmt => stmt.toDoc <> Doc.line))
     Doc.text("case ") <> test.toDoc <> Doc.text(":") <> Doc.line <> Doc.indent(bodyDoc)
   }
@@ -420,7 +420,7 @@ case class CaseStatement(
 case class DefaultCase(
     consequent: List[Statement]
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val bodyDoc = Doc.concat(consequent.map(stmt => stmt.toDoc <> Doc.line))
     Doc.text("default:") <> Doc.line <> Doc.indent(bodyDoc)
   }
@@ -429,7 +429,7 @@ case class DefaultCase(
 case class GotoStatement(
     label: Identifier
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     Doc.text("goto") <+> label.toDoc <> Doc.text(";")
 }
 
@@ -437,7 +437,7 @@ case class LabelStatement(
     label: Identifier,
     statement: Statement
 ) extends Statement {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     label.toDoc <> Doc.text(":") <> Doc.line <> statement.toDoc
 }
 
@@ -448,7 +448,7 @@ case class IncludeDirective(
     path: String,
     isSystem: Boolean
 ) extends PreprocessorDirective {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     if (isSystem) Doc.text(s"#include <$path>")
     else Doc.text(s"""#include "$path"""")
 }
@@ -457,7 +457,7 @@ case class DefineDirective(
     name: String,
     value: Option[String]
 ) extends PreprocessorDirective {
-  def toDoc(using  PrettierOptions): Doc = value match {
+  def toDoc(using PrettierOptions): Doc = value match {
     case Some(v) => Doc.text(s"#define $name $v")
     case None    => Doc.text(s"#define $name")
   }
@@ -468,7 +468,7 @@ case class IfDefDirective(
     trueBranch: List[ASTNode],
     falseBranch: Option[List[ASTNode]]
 ) extends PreprocessorDirective {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val trueDoc = Doc.concat(trueBranch.map(_.toDoc <> Doc.line))
     val falseDoc = falseBranch
       .map { fb =>
@@ -484,7 +484,7 @@ case class Comment(
     content: String,
     isBlock: Boolean
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     if (isBlock) Doc.text(s"/* $content */")
     else Doc.text(s"// $content")
 }
@@ -494,7 +494,7 @@ case class Program(
     declarations: List[Declaration],
     preprocessorDirectives: List[PreprocessorDirective]
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val directivesDoc = Doc.concat(preprocessorDirectives.map(_.toDoc <> Doc.line))
     val declarationsDoc = Doc.concat(declarations.map(_.toDoc <> Doc.line))
     directivesDoc <> Doc.line <> declarationsDoc

@@ -179,7 +179,9 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     val parseResult = ChesterReader.parseTopLevel(FileNameAndContent(uri, text))
     val collecter = new VectorSemanticCollector()
 
-    parseResult.fold({ parseError => val range = new Range(
+    parseResult.fold(
+      { parseError =>
+        val range = new Range(
           new Position(parseError.index.line, parseError.index.column.utf16),
           new Position(parseError.index.line, parseError.index.column.utf16)
         )
@@ -193,7 +195,10 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           state = (),
           result = Judge(ErrorTerm(parseError, meta = None), ErrorTerm(parseError, meta = None), Effects.Empty)
         )
-        (tyckResult, Vector(), List(diagnostic)) }, { parsedExpr => val tyckResult = Tycker.check(parsedExpr, sementicCollector = collecter)
+        (tyckResult, Vector(), List(diagnostic))
+      },
+      { parsedExpr =>
+        val tyckResult = Tycker.check(parsedExpr, sementicCollector = collecter)
 
         // Generate diagnostics from the TyckResult
         val diagnostics = tyckResult match {
@@ -201,8 +206,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             // Process warnings
             warnings.map { warning =>
               val range = warning.sourcePos
-                .map { rangeFromSourcePos
-                }
+                .map { rangeFromSourcePos }
                 .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
               new Diagnostic(
@@ -217,8 +221,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             // Combine errors and warnings into diagnostics
             val errorDiagnostics = errors.map { error =>
               val range = error.sourcePos
-                .map { rangeFromSourcePos
-                }
+                .map { rangeFromSourcePos }
                 .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
               new Diagnostic(
@@ -231,8 +234,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
             val warningDiagnostics = warnings.map { warning =>
               val range = warning.sourcePos
-                .map { rangeFromSourcePos
-                }
+                .map { rangeFromSourcePos }
                 .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
               new Diagnostic(
@@ -246,7 +248,9 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             (errorDiagnostics ++ warningDiagnostics).toList
         }
 
-        (tyckResult, collecter.get, diagnostics) })
+        (tyckResult, collecter.get, diagnostics)
+      }
+    )
   }
 
   override def completion(

@@ -11,7 +11,7 @@ trait Eraser {
 case class ErasureContext()
 
 object EraserImpl extends Eraser {
-  def checkAndErase(term: Term, ty: Term, effects: Effects)(using  ErasureContext,  Reporter[TyckProblem]): Term = {
+  def checkAndErase(term: Term, ty: Term, effects: Effects)(using ErasureContext, Reporter[TyckProblem]): Term = {
     term match {
       case _ => ???
     }

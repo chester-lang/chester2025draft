@@ -141,7 +141,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
 
   def Traverse[A](
       x: Seq[CellId[A]]
-  )(using  Ck,  StateAbility[Ck]): CellId[Seq[A]] =
+  )(using Ck, StateAbility[Ck]): CellId[Seq[A]] =
     FlatMap(x)(identity)
 
 }

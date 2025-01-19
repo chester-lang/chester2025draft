@@ -34,12 +34,18 @@ object IntegrityCheck {
     val _ = ChesterReader.parseExpr(
       FileNameAndContent("testFile", input)
     ) // it must parse with location
-    ChesterReader.parseExpr(
-      FileNameAndContent("testFile", input),
-      ignoreLocation = true
-    ).fold(error => fail(
-          s"Parsing failed for input: $input ${error.message} at index ${error.index}"
-        ), value => assertEquals(value, expected, s"Failed for input: $input"))
+    ChesterReader
+      .parseExpr(
+        FileNameAndContent("testFile", input),
+        ignoreLocation = true
+      )
+      .fold(
+        error =>
+          fail(
+            s"Parsing failed for input: $input ${error.message} at index ${error.index}"
+          ),
+        value => assertEquals(value, expected, s"Failed for input: $input")
+      )
   }
 
   test("parse opSeq with mixed operators without spaces") {

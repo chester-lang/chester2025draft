@@ -7,7 +7,7 @@ trait D {
 }
 
 implicit def d(sc: StringContext): D = new D {
-  def d(args: ToDoc*)(using  PrettierOptions): Doc = {
+  def d(args: ToDoc*)(using PrettierOptions): Doc = {
     val parts = sc.parts.iterator
     val argsIterator = args.iterator
     var docBuilder = Doc.empty

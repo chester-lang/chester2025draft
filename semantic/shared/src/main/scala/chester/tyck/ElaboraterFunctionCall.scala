@@ -116,7 +116,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       cause: Expr,
       functionTerm: Term,
       functionCallTerm: CellId[Term]
-  )(using  Context)
+  )(using Context)
       extends Propagator[Tyck] {
 
     override val readingCells: Set[CellIdAny] = Set(functionTy)
@@ -226,14 +226,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       }
 
       // Unify each pair of expected and actual argument types
-      expectedArgs.lazyZip(actualArgs).foreach {  (expectedArg, actualArg) =>
+      expectedArgs.lazyZip(actualArgs).foreach { (expectedArg, actualArg) =>
         unify(expectedArg.ty, actualArg.ty, cause)
       }
     }
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using  StateAbility[Tyck],  Tyck): ZonkResult = {
+    )(using StateAbility[Tyck], Tyck): ZonkResult = {
       ZonkResult.Require(Vector(functionTy))
     }
   }
@@ -243,9 +243,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       functionTy: CellId[Term],
       expr: DesaltFunctionCall
   )(using
-       Context,
-       StateAbility[Tyck],
-       Tyck
+      Context,
+      StateAbility[Tyck],
+      Tyck
   ): List[Calling] = {
 
     // TODO: Implement logic to infer implicit arguments based on the function type

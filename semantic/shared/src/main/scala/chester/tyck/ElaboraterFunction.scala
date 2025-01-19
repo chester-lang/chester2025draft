@@ -45,10 +45,10 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
   }
 
   def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
-       MutableContext,
-       SemanticCollector,
-       Tyck,
-       StateAbility[Tyck]
+      MutableContext,
+      SemanticCollector,
+      Tyck,
+      StateAbility[Tyck]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
     val argTerms = telescope.args.map { arg =>
@@ -128,8 +128,8 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
       term: Term,
       functionNameOpt: Option[String]
   )(using
-       Tyck,
-       StateAbility[Tyck]
+      Tyck,
+      StateAbility[Tyck]
   ): Boolean = {
     // Collect function calls within the term
     val functionCalls = collectFunctionCalls(term)
@@ -148,7 +148,8 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
   def collectFunctionCalls(term: Term): Set[String] = {
     val calls = scala.collection.mutable.Set[String]()
 
-    term.inspectRecursive {  {
+    term.inspectRecursive {
+      {
         case FCallTerm(function, _, _) =>
           function match {
             // TODO: calls += name
@@ -156,7 +157,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
               // Continue traversing the function term
               function.inspectRecursive {
                 // TODO: calls += name
-                 _ =>
+                _ =>
               }
           }
         case _ =>

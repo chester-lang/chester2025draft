@@ -87,25 +87,32 @@ class CLI[F[_]](using
 
   def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
     _ <- IO.println(s"Expect one file for type checking (more support will be added later) $fileOrDir...")
-    _ <- ChesterReader.parseTopLevel(FilePath(fileOrDir)).fold(_ => ???, { parsedBlock => assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
-        assert(readBinary[Expr](writeBinary[Expr](parsedBlock)) == parsedBlock)
-        Tycker.check(parsedBlock) match {
-          case TyckResult.Success(result, _, _) => {
-            if (result.collectMeta.nonEmpty) {
-              ???
+    _ <- ChesterReader
+      .parseTopLevel(FilePath(fileOrDir))
+      .fold(
+        _ => ???,
+        { parsedBlock =>
+          assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
+          assert(readBinary[Expr](writeBinary[Expr](parsedBlock)) == parsedBlock)
+          Tycker.check(parsedBlock) match {
+            case TyckResult.Success(result, _, _) => {
+              if (result.collectMeta.nonEmpty) {
+                ???
+              }
+              val text = StringPrinter.render(result)(using PrettierOptions.Default)
+              IO.println(text)
             }
-            val text = StringPrinter.render(result)(using PrettierOptions.Default)
-            IO.println(text)
-          }
-          case TyckResult.Failure(errors, warnings, _, _) =>
-            given sourceReader: SourceReader = SourceReader.default
-            given prettierOptions: PrettierOptions = PrettierOptions.Default
+            case TyckResult.Failure(errors, warnings, _, _) =>
+              given sourceReader: SourceReader = SourceReader.default
+              given prettierOptions: PrettierOptions = PrettierOptions.Default
 
-            for {
-              _ <- errors.traverse(error => IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
-              _ <- warnings.traverse(warning => IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
-            } yield ()
-        } })
+              for {
+                _ <- errors.traverse(error => IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
+                _ <- warnings.traverse(warning => IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
+              } yield ()
+          }
+        }
+      )
   } yield ()
 
   def runIntegrityCheck(): F[Unit] = for {

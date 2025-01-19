@@ -12,7 +12,7 @@ case class ParseError(message: String, index: Pos) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
   override def stage: Problem.Stage = Problem.Stage.PARSE
 
-  override def toDoc(using  PrettierOptions): Doc = Doc.text(message)
+  override def toDoc(using PrettierOptions): Doc = Doc.text(message)
   def sourcePos: Option[SourcePos] = None // TODO
 }
 

@@ -10,7 +10,7 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
   implicit class TyAndValOpsss(ignored: TyAndVal.type) {
     def create(ty: Term, value: Term)(using
-         StateAbility[Tyck]
+        StateAbility[Tyck]
     ): TyAndVal = {
       new TyAndVal(toTerm(literal(ty)), toTerm(literal(value)))
     }
@@ -21,9 +21,9 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
   }
 
   extension (context: ContextItem) {
-    def tyId(using  StateAbility[Tyck]): CellId[Term] = toId(context.ty)
+    def tyId(using StateAbility[Tyck]): CellId[Term] = toId(context.ty)
 
-    def tyTerm(using  StateAbility[Tyck]): Term = toTerm(context.ty)
+    def tyTerm(using StateAbility[Tyck]): Term = toTerm(context.ty)
   }
 
   implicit class ContextItemObject(ignored: ContextItem.type) {
@@ -41,18 +41,18 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
   }
 
   implicit class TyAndValOps(tyandval: TyAndVal) {
-    def tyId(using  StateAbility[Tyck]): CellId[Term] = toId(tyandval.ty)
+    def tyId(using StateAbility[Tyck]): CellId[Term] = toId(tyandval.ty)
 
-    def valueId(using  StateAbility[Tyck]): CellId[Term] = toId(tyandval.value)
+    def valueId(using StateAbility[Tyck]): CellId[Term] = toId(tyandval.value)
 
-    def tyTerm(using  StateAbility[Tyck]): Term = toTerm(tyandval.ty)
+    def tyTerm(using StateAbility[Tyck]): Term = toTerm(tyandval.ty)
 
-    def valueTerm(using  StateAbility[Tyck]): Term = toTerm(tyandval.value)
+    def valueTerm(using StateAbility[Tyck]): Term = toTerm(tyandval.value)
 
   }
 
   implicit class LocalCtxOps(ignored: Context.type) {
-    def default(using  StateAbility[Tyck]): Context = {
+    def default(using StateAbility[Tyck]): Context = {
       val items = BuiltIn.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
       val contextItems = items.map(item => item._2.uniqId -> item._2).toMap

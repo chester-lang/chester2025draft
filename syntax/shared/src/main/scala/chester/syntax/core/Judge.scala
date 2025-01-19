@@ -30,6 +30,6 @@ case class Judge(wellTyped: Term, ty: Term, effects: Effects = Effects.Empty) ex
     )
   }
 
-  override def toDoc(using  PrettierOptions): Doc =
+  override def toDoc(using PrettierOptions): Doc =
     Docs.`(` <> wellTyped.toDoc <> Docs.`,` <> ty.toDoc <> Docs.`,` <> effects.toDoc <> Docs.`)`
 }

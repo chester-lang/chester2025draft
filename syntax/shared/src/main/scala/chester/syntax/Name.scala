@@ -29,7 +29,7 @@ implicit val NamespaceRW: ReadWriter[Namespace] =
 
 /** when it is needed to have different version of the same library etc */
 case class Namespace(x: Name) extends AnyVal with ToDoc {
-  override def toDoc(using  PrettierOptions): Doc = Doc.text(x)
+  override def toDoc(using PrettierOptions): Doc = Doc.text(x)
 }
 
 object Namespace {
@@ -38,7 +38,7 @@ object Namespace {
 
 /** nonempty */
 case class ModuleRef(xs: Vector[Name], namespace: Namespace = Namespace.Default) extends ToDoc derives ReadWriter {
-  override def toDoc(using  PrettierOptions): Doc =
+  override def toDoc(using PrettierOptions): Doc =
     Doc.text(xs.mkString("."))
 }
 
@@ -48,6 +48,6 @@ val DefaultModule = ModuleRef(Vector("_default"))
 
 case class AbsoluteRef(module: ModuleRef, id: Name) extends ToDoc derives ReadWriter {
   def name: Name = id
-  override def toDoc(using  PrettierOptions): Doc =
+  override def toDoc(using PrettierOptions): Doc =
     module.toDoc <> Doc.text(".") <> id.toDoc
 }

@@ -30,28 +30,28 @@ case class StringLiteral(
     value: String,
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text(s""""$value""""))
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(s""""$value""""))
 }
 
 case class NumberLiteral(
     value: Double,
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text(value.toString))
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(value.toString))
 }
 
 case class BooleanLiteral(
     value: Boolean,
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using  PrettierOptions): Doc =
+  def toDoc(using PrettierOptions): Doc =
     meta.link(if (value) Doc.text("#t") else Doc.text("#f"))
 }
 
 case class NullLiteral(
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text("'()"))
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("'()"))
 }
 
 // Identifiers
@@ -59,7 +59,7 @@ case class Identifier(
     name: String,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text(name))
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(name))
 }
 
 // ListExpression as a case class
@@ -68,7 +68,7 @@ case class ListExpression(
     meta: Option[Meta] = None
 ) extends Expression derives ReadWriter {
 
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(Doc.text(" "), elements.map(_.toDoc))
     meta.link(Doc.text("(") <> elemsDoc <> Doc.text(")"))
   }
@@ -182,7 +182,7 @@ case class Quotation(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text("'") <> value.toDoc)
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("'") <> value.toDoc)
 }
 
 // QuasiQuotation class
@@ -190,7 +190,7 @@ case class QuasiQuotation(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text("`") <> value.toDoc)
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("`") <> value.toDoc)
 }
 
 // Unquote class
@@ -198,7 +198,7 @@ case class Unquote(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text(",") <> value.toDoc)
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(",") <> value.toDoc)
 }
 
 // UnquoteSplicing class
@@ -206,7 +206,7 @@ case class UnquoteSplicing(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
-  def toDoc(using  PrettierOptions): Doc = meta.link(Doc.text(",@") <> value.toDoc)
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(",@") <> value.toDoc)
 }
 
 // Program
@@ -214,7 +214,7 @@ case class Program(
     expressions: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ASTNode {
-  def toDoc(using  PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc = {
     meta.link(Doc.concat(expressions.map(_.toDoc <> Doc.line)))
   }
 }

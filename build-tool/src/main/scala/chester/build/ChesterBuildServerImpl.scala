@@ -292,15 +292,21 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
           if (Files.isRegularFile(path) && path.toString.endsWith(".chester")) {
             val content = Files.readString(path)
             ChesterReader
-              .parseTopLevel(FileNameAndContent(path.toString, content)).fold(error => logger
-                  .error(s"Parsing failed for file: $path with error: $error"), parsedBlock => Tycker.check(parsedBlock) match {
-                  case TyckResult.Success(_, _, _) =>
-                    logger.info(s"Type checking succeeded for file: $path")
-                  case TyckResult.Failure(errors, _, _, _) =>
-                    logger.error(
-                      s"Type checking failed for file: $path with errors: $errors"
-                    )
-                })
+              .parseTopLevel(FileNameAndContent(path.toString, content))
+              .fold(
+                error =>
+                  logger
+                    .error(s"Parsing failed for file: $path with error: $error"),
+                parsedBlock =>
+                  Tycker.check(parsedBlock) match {
+                    case TyckResult.Success(_, _, _) =>
+                      logger.info(s"Type checking succeeded for file: $path")
+                    case TyckResult.Failure(errors, _, _, _) =>
+                      logger.error(
+                        s"Type checking failed for file: $path with errors: $errors"
+                      )
+                  }
+              )
           }
         }
       } else {
