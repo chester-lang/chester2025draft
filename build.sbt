@@ -12,10 +12,10 @@ import sbt.dsl.LinterLevel.Ignore
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.26")
 ThisBuild / organization := "com.github.chester-lang"
 
-addCommandAlias("testAll", "rootJVM/test ; rootJS/test ; rootNative/test")
-
-addCommandAlias("format0", "scalafmtAll ; scalafmtSbt ; rootJVM/scalafixAll")
-addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; rootJVM/scalafixAll ; rootJS/scalafixAll ; rootNative/scalafixAll")
+addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
+addCommandAlias("updates", ";dependencyUpdates; reload plugins; dependencyUpdates")
+addCommandAlias("format0", ";scalafmtAll; scalafmtSbt; rootJVM/scalafixAll")
+addCommandAlias("format", ";scalafmtAll; scalafmtSbt; rootJVM/scalafixAll; rootJS/scalafixAll; rootNative/scalafixAll")
 
 val scalafixRules = Seq(
   "AddExplicitImplicitTypes",
@@ -115,7 +115,7 @@ val scalafixRules = Seq(
 
 addCommandAlias("fixmore", scalafixRules.map(x => s"rootJVM/scalafixAll $x").mkString(" ; "))
 
-addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
+addCommandAlias("fmt", ";scalafmtAll; scalafmtSbt")
 inThisBuild(
   List(
     semanticdbEnabled := true, // enable SemanticDB
