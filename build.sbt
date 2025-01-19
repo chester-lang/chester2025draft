@@ -13,6 +13,7 @@ ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.26")
 ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
+addCommandAlias("testWinCi", ";rootJVM/test; rootJS/test; rootNative/compile") // we have some bugs on ci
 addCommandAlias("updates", ";dependencyUpdates; reload plugins; dependencyUpdates")
 addCommandAlias("format0", ";scalafmtAll; scalafmtSbt; rootJVM/scalafixAll")
 addCommandAlias("format", ";scalafmtAll; scalafmtSbt; rootJVM/scalafixAll; rootJS/scalafixAll; rootNative/scalafixAll")
@@ -113,7 +114,8 @@ val scalafixRules = Seq(
   "WithLeftWithRight"
 ).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.0") ++ Seq(
   // "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.8",
-  "dependency:ZeroIndexToHead@net.pixiv:scalafix-pixiv-rule:4.5.3"
+  //"dependency:ZeroIndexToHead@net.pixiv:scalafix-pixiv-rule:4.5.3",
+  "dependency:ExplicitNonNullaryApply@org.scala-lang:scala-rewrites:0.1.5"
 )
 
 addCommandAlias("fixmore", scalafixRules.map(rule => s"""eval println("Applying rule: $rule"); rootJVM/scalafixAll $rule""").mkString("; "))

@@ -109,7 +109,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
           x.asInstanceOf[CellId[Any]],
           y.asInstanceOf[CellId[Any]]
         ),
-        (xs: Seq[Any]) => f(xs.head.asInstanceOf[A], xs(1).asInstanceOf[B]),
+        (xs: Seq[Any]) => f(xs(0).asInstanceOf[A], xs(1).asInstanceOf[B]),
         cell
       )
     )
@@ -129,7 +129,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
         ),
         (xs: Seq[Any]) =>
           f(
-            xs.head.asInstanceOf[A],
+            xs(0).asInstanceOf[A],
             xs(1).asInstanceOf[B],
             xs(2).asInstanceOf[C]
           ),

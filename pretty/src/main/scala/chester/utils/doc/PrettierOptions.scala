@@ -33,7 +33,7 @@ implicit def prettyKeyValue2Tuple[T](
 ): (PrettierOptionsKey[T], T) = (kv.key, kv.value)
 
 object PrettierOptions {
-  val Default: PrettierOptions = PrettierOptions(Map.empty)
+  val Default: PrettierOptions = PrettierOptions(Map())
 
   def apply(options: PrettierKeyValue[?]*): PrettierOptions = PrettierOptions(
     options.map(prettyKeyValue2Tuple).toMap

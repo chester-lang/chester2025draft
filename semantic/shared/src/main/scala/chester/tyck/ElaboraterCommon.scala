@@ -33,7 +33,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     case _          => unreachable()
   }
 
-  case class DynamicEffectsCell(effects: Map[LocalV, Term] = Map.empty)
+  case class DynamicEffectsCell(effects: Map[LocalV, Term] = Map())
       extends BaseMapCell[LocalV, Term]
       with EffectsCell
       with UnstableCell[Effects]

@@ -143,7 +143,7 @@ def buildExpr(
     reporter: Reporter[TyckError]
 ): Expr = {
   if (stack.isEmpty) {
-    reporter.apply(UnexpectedTokens(List.empty))
+    reporter.apply(UnexpectedTokens(Nil))
     Identifier("error", meta = None)
   } else {
     val tokenInfo = stack.pop()

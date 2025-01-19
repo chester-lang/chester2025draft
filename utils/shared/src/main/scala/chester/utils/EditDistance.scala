@@ -36,7 +36,7 @@ object EditDistance {
     if (m == 0) return n
 
     val d = Array.ofDim[Int](n + 1, m + 1)
-    0 to n foreach (x => d(x).head = x)
+    0 to n foreach (x => d(x)(0) = x)
     0 to m foreach (x => d(0)(x) = x)
 
     for (i <- 1 to n; s_i = s(i - 1); j <- 1 to m) {

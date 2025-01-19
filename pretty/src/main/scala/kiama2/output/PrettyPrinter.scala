@@ -43,7 +43,7 @@ object PrettyPrinterTypes {
 
   /** An empty links mapping.
     */
-  val emptyLinks: List[Link] = List.empty[Link]
+  val emptyLinks: List[Link] = List[Link]()
 
 }
 
@@ -861,7 +861,11 @@ trait AbstractPrettyPrinter extends PrettyPrinterBase {
                       layout <- o2(r)
                     } yield layout
                   )
-              More(() => grp2(h)(o3))
+              More(() =>
+                for {
+                  o4 <- grp2(h)(o3)
+                } yield o4
+              )
             }
         )
         c(p, dq.init.init :+ n)
@@ -1021,7 +1025,7 @@ trait AbstractPrettyPrinter extends PrettyPrinterBase {
 
     val PPState(links, _, _, _, stringBuilder) =
       finalBuffer.foldLeft(
-        PPState(emptyLinks, List.empty[Int], List.empty[Int], 0, newBuilder)
+        PPState(emptyLinks, List[Int](), List[Int](), 0, newBuilder)
       ) { case (PPState(x, ss, ts, o, l), e) =>
         e match {
           case Start(_) =>

@@ -340,9 +340,18 @@ jobs:
           ./chester-${{ matrix.os_name }}.zip,
           ./chester-${{ matrix.os_name }}.zip.sha256
 
-    - name: Run Tests
+    - name: Run Tests (Unix)
+      if: runner.os != 'Windows'
       uses: nick-fields/retry@v3
       with:
         timeout_minutes: 25
         max_attempts: 3
         command: sbt testAll
+
+    - name: Run Tests (Windows)
+      if: runner.os == 'Windows'
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 25
+        max_attempts: 3
+        command: sbt testWinCi
