@@ -9,7 +9,7 @@ import scala.sys.process._
 
 import sbt.dsl.LinterLevel.Ignore
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.26")
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.27")
 ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
