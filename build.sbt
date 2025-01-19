@@ -113,9 +113,12 @@ val scalafixRules = Seq(
   "WithFilter",
   "WithLeftWithRight"
 ).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.0") ++ Seq(
-  // "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.8",
-  //"dependency:ZeroIndexToHead@net.pixiv:scalafix-pixiv-rule:4.5.3",
-  "dependency:ExplicitNonNullaryApply@org.scala-lang:scala-rewrites:0.1.5"
+  "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.8",
+  "dependency:NonCaseException@net.pixiv:scalafix-pixiv-rule:4.5.3",
+  "dependency:NeedMessageExtendsRuntimeException@net.pixiv:scalafix-pixiv-rule:4.5.3",
+  "dependency:CheckIsEmpty@net.pixiv:scalafix-pixiv-rule:4.5.3",
+  "dependency:UnifiedArrow@net.pixiv:scalafix-pixiv-rule:4.5.3",
+  "dependency:UnnecessarySemicolon@net.pixiv:scalafix-pixiv-rule:4.5.3"
 )
 
 addCommandAlias("fixmore", scalafixRules.map(rule => s"""eval println("Applying rule: $rule"); rootJVM/scalafixAll $rule""").mkString("; "))

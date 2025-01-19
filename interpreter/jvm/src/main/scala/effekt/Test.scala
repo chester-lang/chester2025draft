@@ -39,7 +39,7 @@ trait ExampleContext
 // Instead, we manually created the file `META-INF/truffle/language`.
 class ExampleLang extends TruffleLanguage[ExampleContext] {
   def createContext(env: Env): ExampleContext = {
-    ExampleLang.INSTANCE = this;
+    ExampleLang.INSTANCE = this
     new ExampleContext {}
   }
   def isObjectOfLanguage(obj: Any): Boolean = false

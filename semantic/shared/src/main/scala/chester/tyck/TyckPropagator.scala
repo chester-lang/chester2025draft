@@ -330,7 +330,7 @@ trait TyckPropagator extends ElaboraterCommon {
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val t1 = state.readStable(this.tRhs)
       val listT1 = state.readStable(this.listTLhs)
-      if (!t1.isDefined) return ZonkResult.Require(Vector(this.tRhs))
+      if (t1.isEmpty) return ZonkResult.Require(Vector(this.tRhs))
       val ty = t1.get
       assert(listT1.isEmpty)
       state.fill(this.listTLhs, ListType(ty, meta = None))
