@@ -57,7 +57,7 @@ val scalafixRules = Seq(
   "MapFlattenFlatMap",
   "MapSequenceTraverse",
   "MapToForeach",
-  "MatchParentheses",
+  // "MatchParentheses",
   "NamedParamOrder",
   "NoElse",
   "ObjectFinal",
@@ -96,7 +96,7 @@ val scalafixRules = Seq(
   "SizeToLength",
   "SlickFilter",
   "StringFormatToInterpolation",
-  "SyntacticOrganizeImports",
+  // "SyntacticOrganizeImports",
   "ThrowableToNonFatal",
   "UnmooredDocComment",
   "UnnecessaryCase",
@@ -111,9 +111,12 @@ val scalafixRules = Seq(
   "UsingParamAnonymousConstructor",
   "WithFilter",
   "WithLeftWithRight"
-).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.0")
+).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.0") ++ Seq(
+  // "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.8",
+  "dependency:ZeroIndexToHead@net.pixiv:scalafix-pixiv-rule:4.5.3"
+)
 
-addCommandAlias("fixmore", scalafixRules.map(x => s"rootJVM/scalafixAll $x").mkString(" ; "))
+addCommandAlias("fixmore", scalafixRules.map(rule => s"""eval println("Applying rule: $rule"); rootJVM/scalafixAll $rule""").mkString("; "))
 
 addCommandAlias("fmt", ";scalafmtAll; scalafmtSbt")
 inThisBuild(
