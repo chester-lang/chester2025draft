@@ -156,6 +156,7 @@ up := {
 val scala3Version = "3.6.4-RC1"
 val scala3Lib = "3.6.3"
 val scala2Version = "2.13.16"
+val scala3Nightly = "3.7.0-RC1-bin-20250117-1778a6e-NIGHTLY"
 
 val graalVm = "graalvm-java23"
 val graalJdkVersion = "23.0.1"
@@ -290,6 +291,9 @@ val cpsSettings = Seq(
 val commonJvmLibSettings = Seq(
   // scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
   scalacOptions ++= Seq("-java-output-version", "11")
+)
+val jvmScala3Settings = Seq(
+  scalaVersion := scala3Nightly
 )
 
 val NativeImageOptions = sys.env.get("NATIVE_IMAGE_OPTIONS").map(_.split(" ").toList).getOrElse(List[String]())
@@ -1195,7 +1199,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     buildInfoObject := "BuildInfo" // Set the object name
   )
   .jvmSettings(
-    commonJvmLibSettings,
+    jvmScala3Settings,
     nativeImageOutput := file("target") / "chester",
     graalvmSettings,
     libraryDependencies ++= Seq(
@@ -1315,6 +1319,7 @@ lazy val lsp = crossProject(JVMPlatform)
      */
   )
   .jvmSettings(
+    jvmScala3Settings,
     graalvmSettings
   )
 
