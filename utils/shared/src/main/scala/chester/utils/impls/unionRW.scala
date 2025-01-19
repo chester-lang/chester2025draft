@@ -8,7 +8,7 @@ def union2RW[A: ClassTag, B: ClassTag](implicit
     b: ReadWriter[B]
 ): ReadWriter[A | B] = {
   require(a != b)
-  sealed trait Union2 derives ReadWriter {
+  sealed trait Union2 extends Product with Serializable derives ReadWriter {
     def toUnionType: A | B
   }
   extension (u: A | B) {
@@ -33,7 +33,7 @@ def union4RW[A: ClassTag, B: ClassTag, C: ClassTag, D: ClassTag](implicit
     d: ReadWriter[D]
 ): ReadWriter[A | B | C | D] = {
   require(a != b && a != c && a != d && b != c && b != d && c != d)
-  sealed trait Union4 derives ReadWriter {
+  sealed trait Union4 extends Product with Serializable derives ReadWriter {
     def toUnionType: A | B | C | D
   }
   extension (u: A | B | C | D) {

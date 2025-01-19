@@ -261,10 +261,7 @@ case class ReaderInternal(
     }
 
     P("\"\"\"" ~ (!"\"\"\"".rep ~ AnyChar).rep.!.flatMap { str =>
-      validateIndentation(str) match {
-        case Right(validStr) => Pass(validStr)
-        case Left(errorMsg)  => Fail.opaque(errorMsg)
-      }
+      validateIndentation(str).fold(Fail.opaque, validStr => Pass(validStr))
     } ~ "\"\"\"")
   }
 

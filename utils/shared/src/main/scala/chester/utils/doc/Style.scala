@@ -31,7 +31,7 @@ object Style {
   val Empty: Style = Style()
 }
 
-sealed trait Foreground derives ReadWriter {
+sealed trait Foreground extends Product with Serializable derives ReadWriter {
   def toFansi: fansi.Attrs
 
   implicit final inline def toStyle: Style = Style(foreground = Some(this))
@@ -105,7 +105,7 @@ object Foreground {
   }
 }
 
-sealed trait Background derives ReadWriter {
+sealed trait Background extends Product with Serializable derives ReadWriter {
   def toFansi: fansi.Attrs
 
   implicit final inline def toStyle: Style = Style(background = Some(this))
@@ -179,7 +179,7 @@ object Background {
   }
 }
 
-sealed trait Styling derives ReadWriter {
+sealed trait Styling extends Product with Serializable derives ReadWriter {
   def toFansi: fansi.Attrs
 
   implicit final inline def toStyle: Style = Style(styling = applyOn())

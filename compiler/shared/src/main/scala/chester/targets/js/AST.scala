@@ -339,10 +339,7 @@ case class ArrowFunctionExpression(
         Doc.text("(") <> Doc.sep(Doc.text(","), params.map(_.toDoc)) <> Doc.text(")")
     }
     val returnTypeDoc = returnType.map(rt => Doc.text(":") <+> rt.toDoc).getOrElse(Doc.empty)
-    val bodyDoc = body match {
-      case Left(expr)   => Doc.text(" => ") <> expr.toDoc
-      case Right(stmts) => Doc.text(" => ") <> stmts.toDoc
-    }
+    val bodyDoc = body.fold(expr => Doc.text(" => ") <> expr.toDoc, stmts => Doc.text(" => ") <> stmts.toDoc)
     Doc.group(asyncDoc <> paramsDoc <> returnTypeDoc <> bodyDoc)
   }
 }
@@ -532,7 +529,7 @@ case class VariableDeclaration(
 }
 
 // VariableKind enumeration
-sealed trait VariableKind derives ReadWriter
+sealed trait VariableKind extends Product with Serializable derives ReadWriter
 object VariableKind {
   case object Var extends VariableKind
   case object Let extends VariableKind
@@ -665,10 +662,7 @@ case class ForInStatement(
     body: Statement,
     meta: Option[Meta] = None
 ) extends Statement {
-  def leftDoc(using options: PrettierOptions): Doc = left match {
-    case Left(varDecl) => varDecl.toDoc
-    case Right(expr)   => expr.toDoc
-  }
+  def leftDoc(using options: PrettierOptions): Doc = left.fold(varDecl => varDecl.toDoc, expr => expr.toDoc)
   def toDoc(using options: PrettierOptions): Doc = Doc.text("for (") <> leftDoc <> Doc.text(" in ") <> right.toDoc <> Doc.text(")") <+> body.toDoc
 }
 
@@ -679,10 +673,7 @@ case class ForOfStatement(
     await: Boolean = false,
     meta: Option[Meta] = None
 ) extends Statement {
-  def leftDoc(using options: PrettierOptions): Doc = left match {
-    case Left(varDecl) => varDecl.toDoc
-    case Right(expr)   => expr.toDoc
-  }
+  def leftDoc(using options: PrettierOptions): Doc = left.fold(varDecl => varDecl.toDoc, expr => expr.toDoc)
   def awaitDoc(using options: PrettierOptions): Doc = if (await) Doc.text("await") <+> Doc.empty else Doc.empty
   def toDoc(using options: PrettierOptions): Doc =
     Doc.text("for") <+> awaitDoc <> Doc.text("(") <> leftDoc <> Doc.text(" of ") <> right.toDoc <> Doc.text(")") <+> body.toDoc

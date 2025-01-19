@@ -14,13 +14,7 @@ def parseCheckTAST(
     loadedModules: LoadedModules = LoadedModules.Empty
 )(using reporter: Reporter[Problem]): chester.syntax.TAST = {
   // Parse the source code into an Expr using parseTopLevel
-  ChesterReader.parseTopLevel(source, ignoreLocation) match {
-    case Right(expr) =>
-      // Type-check the parsed expression
-      checkTop(source.fileName, expr, reporter, loadedModules = loadedModules)
-    case Left(error) =>
-      // Report the parsing error
-      reporter(error)
+  ChesterReader.parseTopLevel(source, ignoreLocation).fold({ error => reporter(error)
 
       // Return an empty TAST or handle accordingly
       TAST(
@@ -30,6 +24,5 @@ def parseCheckTAST(
         ty = UnitType(meta = None),
         effects = Effects.Empty,
         problems = SeverityMap.Empty.copy(error = true)
-      )
-  }
+      ) }, expr => checkTop(source.fileName, expr, reporter, loadedModules = loadedModules))
 }

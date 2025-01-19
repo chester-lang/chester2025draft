@@ -22,9 +22,7 @@ class FileParserTest extends FunSuite {
       ChesterReader.parseTopLevel(
         FilePath(inputFile.toString),
         ignoreLocation = true
-      ) match {
-        case Right(parsedBlock) =>
-          assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
+      ).fold(error => fail(s"Failed to parse file: $inputFile, error: $error"), { parsedBlock => assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
           assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
           val actual: String = pprint
             .apply(parsedBlock, width = 128, height = Integer.MAX_VALUE)
@@ -39,11 +37,7 @@ class FileParserTest extends FunSuite {
               .readString(expectedFile, StandardCharsets.UTF_8)
               .replace("\r\n", "\n")
             assertEquals(actual, expected)
-          }
-
-        case Left(error) =>
-          fail(s"Failed to parse file: $inputFile, error: $error")
-      }
+          } })
     }
   }
 }

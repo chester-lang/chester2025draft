@@ -239,7 +239,7 @@ def parseExpression(
 }
 
 // Definition of operator types
-sealed trait OpType
+sealed trait OpType extends Product with Serializable
 
 object OpType {
   case object Infix extends OpType
@@ -273,23 +273,16 @@ def resolveOpSeq(
   // Perform a topological sort of the precedence graph
   val topOrder = precedenceGraph.topologicalSort
 
-  val groupPrecedence: Map[QualifiedIDString, Int] = topOrder match {
-    case Right(order) =>
-      // Convert to LayeredTopologicalOrder to access layers
-      val layeredOrder = order.toLayered
+  val groupPrecedence: Map[QualifiedIDString, Int] = topOrder.fold({ _ => reporter.apply(
+        PrecedenceCycleDetected(precedenceGraph.nodes.map(_.outer))
+      )
+      Map.empty }, { order => val layeredOrder = order.toLayered
       // Map each group to its precedence level
       layeredOrder.iterator.flatMap { case (index, nodes) =>
         nodes.map { node =>
           node.outer.name -> index
         }
-      }.toMap
-    case Left(_) =>
-      // If there's a cycle, report an error
-      reporter.apply(
-        PrecedenceCycleDetected(precedenceGraph.nodes.map(_.outer))
-      )
-      Map.empty
-  }
+      }.toMap })
 
   // Parse tokens from the operation sequence
   val tokens = parseTokens(opSeq.seq, opContext, groupPrecedence, reporter)

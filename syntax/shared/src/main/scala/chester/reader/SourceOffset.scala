@@ -16,7 +16,7 @@ case class ParseError(message: String, index: Pos) extends Problem {
   def sourcePos: Option[SourcePos] = None // TODO
 }
 
-sealed trait ParserSource derives ReadWriter {
+sealed trait ParserSource extends Product with Serializable derives ReadWriter {
   def fileName: String
 
   def readContent: Either[ParseError, String]

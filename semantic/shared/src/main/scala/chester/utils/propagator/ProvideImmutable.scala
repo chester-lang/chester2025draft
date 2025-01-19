@@ -99,12 +99,12 @@ trait ProvideImmutable extends ProvideImpl {
         val cellsToZonk = if (cellsNeeded.nonEmpty) {
           val a = cellsNeeded
           cellsNeeded = Vector.empty
-          (a ++ cells).filter(id => !state.cells(id).hasStableValue)
+          (a ++ cells).filterNot(id => state.cells(id).hasStableValue)
         } else {
-          cells.filter(id => !state.cells(id).hasStableValue)
+          cells.filterNot(id => state.cells(id).hasStableValue)
         }
         val xs = state.propagators.filter((_, propagator) => propagator.zonkingCells.exists(cellsToZonk.contains))
-        val uncorvedCells = cellsToZonk.filter(id => !xs.values.exists(_.zonkingCells.contains(id)))
+        val uncorvedCells = cellsToZonk.filterNot(id => xs.values.exists(_.zonkingCells.contains(id)))
         if (uncorvedCells.nonEmpty) {
           throw new IllegalStateException(
             s"Cells $uncorvedCells are not covered by any propagator"

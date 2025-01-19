@@ -1,6 +1,6 @@
 package chester.utils.term
 
-sealed trait ReadLineResult
+sealed trait ReadLineResult extends Product with Serializable
 
 case class LineRead(line: String) extends ReadLineResult
 

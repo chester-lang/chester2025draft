@@ -2,7 +2,6 @@ package chester.syntax.core
 import chester.error._
 import upickle.default._
 import cats.data._
-import chester.error.Problem
 import chester.syntax._
 import chester.syntax.core.spec.spec._
 import chester.uniqid._

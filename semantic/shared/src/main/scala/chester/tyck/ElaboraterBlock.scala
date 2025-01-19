@@ -14,7 +14,7 @@ import scala.language.implicitConversions
 
 trait ElaboraterBlock extends Elaborater {
   // Sealed trait for declaration information, for forwarding references
-  sealed trait DeclarationInfo {
+  sealed trait DeclarationInfo extends Product with Serializable {
     def expr: Expr
     def name: Name
   }
@@ -347,8 +347,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = traitInfo.name
 
     // TODO: Elaborate the extends clause properly
-    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
-      checkType(clause)
+    val elaboratedExtendsClause = expr.extendsClause.map { checkType
     }
 
     // Elaborate the optional body (if any)
@@ -387,8 +386,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = interfaceInfo.name
 
     // TODO: Elaborate the extends clause properly
-    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
-      checkType(clause)
+    val elaboratedExtendsClause = expr.extendsClause.map { checkType
     }
 
     // Elaborate the optional body (if any)
@@ -427,8 +425,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     val name = objectInfo.name
 
     // Elaborate the extends clause if present
-    val elaboratedExtendsClause = expr.extendsClause.map { clause =>
-      checkType(clause)
+    val elaboratedExtendsClause = expr.extendsClause.map { checkType
     }
 
     // Elaborate the body if present

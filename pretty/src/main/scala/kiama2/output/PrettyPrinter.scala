@@ -27,7 +27,7 @@ object PrettyPrinterTypes {
 
   /** A link between a value and a range. Used for the representation of mappings between pretty-printed values and their printed representations.
     */
-  sealed abstract class Link
+  sealed abstract class Link extends Product with Serializable
 
   /** Link a value to a target range. Ultimately, the source will be from the position of the value.
     */
@@ -739,7 +739,7 @@ trait AbstractPrettyPrinter extends PrettyPrinterBase {
 
   /** An entry in the final output stream.
     */
-  sealed abstract class Entry
+  sealed abstract class Entry extends Product with Serializable
 
   /** An output entry for a piece of the pretty-printed text.
     */

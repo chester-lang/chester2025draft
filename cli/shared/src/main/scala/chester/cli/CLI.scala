@@ -87,9 +87,7 @@ class CLI[F[_]](using
 
   def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
     _ <- IO.println(s"Expect one file for type checking (more support will be added later) $fileOrDir...")
-    _ <- ChesterReader.parseTopLevel(FilePath(fileOrDir)) match {
-      case Right(parsedBlock) =>
-        assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
+    _ <- ChesterReader.parseTopLevel(FilePath(fileOrDir)).fold(_ => ???, { parsedBlock => assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
         assert(readBinary[Expr](writeBinary[Expr](parsedBlock)) == parsedBlock)
         Tycker.check(parsedBlock) match {
           case TyckResult.Success(result, _, _) => {
@@ -107,9 +105,7 @@ class CLI[F[_]](using
               _ <- errors.traverse(error => IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
               _ <- warnings.traverse(warning => IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
             } yield ()
-        }
-      case Left(_) => ???
-    }
+        } })
   } yield ()
 
   def runIntegrityCheck(): F[Unit] = for {

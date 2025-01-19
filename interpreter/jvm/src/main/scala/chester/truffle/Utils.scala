@@ -10,10 +10,7 @@ import chester.tyck._
 object Utils {
   @throws[Exception]
   def parse(lang: ChesterLang, request: TruffleLanguage.ParsingRequest): CallTarget = {
-    ChesterReader.parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString)) match {
-      case Left(err) => ???
-      case Right(parsedBlock) =>
-        Tycker.check(parsedBlock) match {
+    ChesterReader.parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString)).fold(err => ???, parsedBlock => Tycker.check(parsedBlock) match {
           case TyckResult.Success(result, _, _) => {
             val t: Term = result.wellTyped
             val root = new ChesterRootNode(lang, t)
@@ -21,7 +18,6 @@ object Utils {
           }
           case TyckResult.Failure(errors, _, _, _) => ???
           case _                                   => unreachable()
-        }
-    }
+        })
   }
 }

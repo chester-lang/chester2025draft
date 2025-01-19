@@ -86,7 +86,7 @@ object Union_ {
         case x            => Vector(x)
       }
       .distinct
-      .filter(x => !x.isInstanceOf[NothingType])
+      .filterNot(x => x.isInstanceOf[NothingType])
     if (flattened.size == 1) return flattened.head
     if (flattened.nonEmpty) new Union(flattened.assumeNonEmpty, None)
     else NothingType(None)

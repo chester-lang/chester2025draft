@@ -110,31 +110,21 @@ def REPLEngine[F[_]](using
 
   def handleTypeCheck(exprStr: String): F[Unit] =
     InTerminal.getHistory.flatMap { history =>
-      ReaderREPL.parseInput(history, exprStr) match {
-        case Right(parsedExpr) =>
-          typeCheck(parsedExpr) match {
+      ReaderREPL.parseInput(history, exprStr).fold(error => InTerminal.writeln(s"Parse Error: ${error.message}"), parsedExpr => typeCheck(parsedExpr) match {
             case TyckResult.Success(judge, _, _) =>
               InTerminal.writeln(prettyPrintJudge(judge))
             case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
             case _                                   => unreachable()
-          }
-        case Left(error) =>
-          InTerminal.writeln(s"Parse Error: ${error.message}")
-      }
+          })
     }
 
   def handleExpression(line: String): F[Unit] = InTerminal.getHistory.flatMap { history =>
-    ReaderREPL.parseInput(history, line) match {
-      case Right(parsedExpr) =>
-        typeCheck(parsedExpr) match {
+    ReaderREPL.parseInput(history, line).fold(error => InTerminal.writeln(s"Parse Error: ${error.message}"), parsedExpr => typeCheck(parsedExpr) match {
           case TyckResult.Success(judge, _, _) =>
             InTerminal.writeln(prettyPrintJudgeWellTyped(judge))
           case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
           case _                                   => unreachable()
-        }
-      case Left(error) =>
-        InTerminal.writeln(s"Parse Error: ${error.message}")
-    }
+        })
   }
 
   def typeCheck(expr: Expr): TyckResult[?, Judge] = {

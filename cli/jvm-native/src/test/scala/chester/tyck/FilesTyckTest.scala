@@ -19,9 +19,7 @@ class FilesTyckTest extends FunSuite {
       val expectedFile = testDir.resolve(s"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
-      ChesterReader.parseTopLevel(FilePath(inputFile.toString)) match {
-        case Right(parsedBlock) =>
-          assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
+      ChesterReader.parseTopLevel(FilePath(inputFile.toString)).fold(error => fail(s"Failed to parse file: $inputFile, error: $error"), { parsedBlock => assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
           assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
           Tycker.check(parsedBlock) match {
             case TyckResult.Success(result, _, _) =>
@@ -71,10 +69,7 @@ class FilesTyckTest extends FunSuite {
 
             case TyckResult.Failure(errors, _, _, _) =>
               fail(s"Failed to type check file: $inputFile, errors: $errors")
-          }
-        case Left(error) =>
-          fail(s"Failed to parse file: $inputFile, error: $error")
-      }
+          } })
     }
   }
 }
@@ -88,9 +83,7 @@ class FilesTyckFailsTest extends FunSuite {
       val expectedFile = testDir.resolve(s"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
-      ChesterReader.parseTopLevel(FilePath(inputFile.toString)) match {
-        case Right(parsedBlock) =>
-          Tycker.check(parsedBlock) match {
+      ChesterReader.parseTopLevel(FilePath(inputFile.toString)).fold(error => fail(s"Failed to parse file: $inputFile, error: $error"), parsedBlock => Tycker.check(parsedBlock) match {
             case TyckResult.Success(_, _, _) =>
               fail(s"Expected file to fail type checking: $inputFile")
             case TyckResult.Failure(errors, _, _, _) =>
@@ -107,10 +100,7 @@ class FilesTyckFailsTest extends FunSuite {
                 }
               }
 
-          }
-        case Left(error) =>
-          fail(s"Failed to parse file: $inputFile, error: $error")
-      }
+          })
     }
   }
 }

@@ -128,7 +128,7 @@ case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr d
 
   override def toString: String = meta.flatMap(_.sourcePos) match {
     case None      => s"Identifier(\"${encodeString(name)}\")"
-    case Some(pos) => s"Identifier(\"${encodeString(name)}\", ${pos.toString})"
+    case Some(pos) => s"Identifier(\"${encodeString(name)}\", ${pos})"
   }
 
   override def updateMeta(
@@ -577,7 +577,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
   override def toString: String = meta.flatMap(_.sourcePos) match {
     case None => s"StringLiteral(\"${encodeString(value)}\")"
     case Some(pos) =>
-      s"StringLiteral(\"${encodeString(value)}\", ${pos.toString})"
+      s"StringLiteral(\"${encodeString(value)}\", ${pos})"
   }
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
@@ -673,7 +673,7 @@ case class AnnotatedExpr(
   )
 }
 
-sealed trait ObjectClause derives ReadWriter {
+sealed trait ObjectClause extends Product with Serializable derives ReadWriter {
   def descent(f: Expr => Expr, g: TreeMap[Expr]): ObjectClause
 }
 
@@ -951,7 +951,7 @@ case class ExprStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
 }
 
 @deprecated("not used")
-sealed trait PrecedenceGroupExpr
+sealed trait PrecedenceGroupExpr extends Product with Serializable
 
 @deprecated("not used")
 case class PrecedenceGroupResolving(

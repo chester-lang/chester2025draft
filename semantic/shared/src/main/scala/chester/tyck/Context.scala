@@ -49,7 +49,7 @@ case class Context(
     knownMap.get(x.uniqId.asInstanceOf[UniqidOf[ReferenceCall]])
 
   def get(id: Name): Option[ContextItem] =
-    map.get(id).flatMap(uniqId => contextItems.get(uniqId))
+    map.get(id).flatMap(contextItems.get)
 
   def knownAdd(id: UniqidOf[ReferenceCall], y: TyAndVal): Context =
     knownAdd(Seq(id -> y))

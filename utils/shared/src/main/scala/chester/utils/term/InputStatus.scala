@@ -1,6 +1,6 @@
 package chester.utils.term
 
-sealed trait InputStatus
+sealed trait InputStatus extends Product with Serializable
 
 object InputStatus {
 
