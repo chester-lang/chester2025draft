@@ -4,7 +4,7 @@ import cats.implicits._
 import chester.doc._
 import chester.doc.const.{Colors, ReplaceBracketsWithWord}
 import chester.error._
-import chester.reader.{ParseError, ReaderREPL}
+import chester.reader.ReaderREPL
 import chester.syntax.concrete.Expr
 import chester.syntax.core._
 import chester.tyck._
