@@ -820,14 +820,26 @@ object GeneratedJS {
       // "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       // "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       // "org.soot-oss" % "sootup.analysis" % sootupVersion,
-      "org.mozilla" % "rhino" % "1.7.15"
+      "org.mozilla" % "rhino" % "1.7.15",
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
       // "org.graalvm.polyglot" % "js" % graalvmVersion
-      // "org.bytedeco" % "llvm-platform" % "18.1.8-1.5.11-SNAPSHOT" // no: no enough memory to build it with native image
+      "org.bytedeco" % "llvm-platform" % "19.1.3-1.5.11" % Provided
     )
   )
+
+lazy val optional = crossProject(JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("optional"))
+  .settings(
+    commonSettings,
+    libraryDependencies ++= Seq(
+      "org.bytedeco" % "llvm-platform" % "19.1.3-1.5.11"
+    )
+  )
+  .jvmSettings(commonJvmLibSettings)
 
 lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -1449,7 +1461,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     interpreter,
     js,
     site,
-    docs
+    docs,
+    optional
   )
   .settings(
     scalaVersion := scala3Version
