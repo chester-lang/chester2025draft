@@ -1,7 +1,7 @@
 package chester.tyck
 
-import chester.syntax.concrete._
-import chester.syntax.core._
+import chester.syntax.concrete.*
+import chester.syntax.core.*
 
 trait MethodExtractor {
 

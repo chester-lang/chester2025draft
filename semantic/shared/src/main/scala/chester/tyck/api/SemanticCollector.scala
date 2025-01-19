@@ -1,11 +1,11 @@
 package chester.tyck.api
 
-import chester.syntax._
-import chester.syntax.concrete._
-import chester.syntax.core._
+import chester.syntax.*
+import chester.syntax.concrete.*
+import chester.syntax.core.*
 import chester.tyck.Context
-import upickle.default._
-import chester.uniqid._
+import upickle.default.*
+import chester.uniqid.*
 
 import scala.collection.mutable
 

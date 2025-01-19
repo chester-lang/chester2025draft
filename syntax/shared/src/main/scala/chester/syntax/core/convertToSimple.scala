@@ -1,7 +1,7 @@
 package chester.syntax.core
 
 import cats.data.NonEmptyVector
-import chester.syntax.core.spec.spec._
+import chester.syntax.core.spec.spec.*
 
 import scala.language.implicitConversions
 

@@ -1,13 +1,13 @@
 package chester.build
 
-import ch.epfl.scala.bsp4j._
-import org.log4s._
+import ch.epfl.scala.bsp4j.*
+import org.log4s.*
 import chester.reader.{ChesterReader, FileNameAndContent}
 import chester.tyck.{TyckResult, Tycker}
 
 import java.util.concurrent.CompletableFuture
 import java.util.Collections
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import java.nio.file.Paths
 import java.nio.file.Files
 

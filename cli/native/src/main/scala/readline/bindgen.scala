@@ -12,9 +12,9 @@ ALSO REPLACED macro with `macro`
  */
 package readline
 
-import _root_.scala.scalanative._
-import _root_.scala.scalanative.unsafe._
-import _root_.scala.scalanative.unsigned._
+import _root_.scala.scalanative.*
+import _root_.scala.scalanative.unsafe.*
+import _root_.scala.scalanative.unsigned.*
 
 object predef:
   private[readline] trait CEnumU[T](using eq: T =:= UInt):

@@ -1,18 +1,18 @@
 package chester.reader
 
-import chester.error._
-import chester.syntax.IdentifierRules._
-import chester.syntax.concrete._
-import chester.utils.parse._
+import chester.error.*
+import chester.syntax.IdentifierRules.*
+import chester.syntax.concrete.*
+import chester.utils.parse.*
 import chester.utils.{StringIndex, WithUTF16}
-import fastparse._
-import fastparse.NoWhitespace._
-import _root_.io.github.iltotore.iron._
-import _root_.io.github.iltotore.iron.constraint.all._
-import _root_.io.github.iltotore.iron.constraint.numeric._
+import fastparse.*
+import fastparse.NoWhitespace.*
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 import scala.collection.immutable
-import scala.util._
+import scala.util.*
 
 case class ReaderInternal(
     sourceOffset: SourceOffset,

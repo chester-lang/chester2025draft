@@ -1,8 +1,8 @@
 package chester.syntax.core
 import chester.doc.const.Docs
-import chester.uniqid._
-import chester.utils.doc._
-import upickle.default._
+import chester.uniqid.*
+import chester.utils.doc.*
+import upickle.default.*
 
 case class Judge(wellTyped: Term, ty: Term, effects: Effects = Effects.Empty) extends ContainsUniqid with ToDoc derives ReadWriter {
   def substitute(from: TermWithUniqid, to: Term): Judge = Judge(

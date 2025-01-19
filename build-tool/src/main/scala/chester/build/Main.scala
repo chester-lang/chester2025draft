@@ -1,8 +1,8 @@
 package chester.build
 
-import ch.epfl.scala.bsp4j._
+import ch.epfl.scala.bsp4j.*
 import org.eclipse.lsp4j.jsonrpc.Launcher
-import org.log4s._
+import org.log4s.*
 
 import java.util.concurrent.Executors
 

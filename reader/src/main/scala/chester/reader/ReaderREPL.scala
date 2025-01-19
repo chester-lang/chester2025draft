@@ -1,14 +1,14 @@
 package chester.reader
 
-import chester.error._
-import chester.syntax.concrete._
-import chester.utils.term._
+import chester.error.*
+import chester.syntax.concrete.*
+import chester.utils.term.*
 import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
-import fastparse._
-import _root_.io.github.iltotore.iron._
-import _root_.io.github.iltotore.iron.constraint.numeric._
+import fastparse.*
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
 
-import scala.util._
+import scala.util.*
 
 object ReaderREPL {
 

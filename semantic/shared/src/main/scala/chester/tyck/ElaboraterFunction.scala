@@ -1,10 +1,10 @@
 package chester.tyck
 
-import chester.syntax.concrete._
-import chester.syntax.core._
+import chester.syntax.concrete.*
+import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
-import chester.error._
-import chester.uniqid._
+import chester.error.*
+import chester.uniqid.*
 
 trait ElaboraterFunction extends ProvideCtx with Elaborater {
   def elabFunction(

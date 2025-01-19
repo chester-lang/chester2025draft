@@ -1,19 +1,19 @@
 package chester.repl
 
-import cats.implicits._
-import chester.doc._
+import cats.implicits.*
+import chester.doc.*
 import chester.doc.const.{Colors, ReplaceBracketsWithWord}
-import chester.error._
+import chester.error.*
 import chester.reader.ReaderREPL
 import chester.syntax.concrete.Expr
-import chester.syntax.core._
-import chester.tyck._
-import chester.utils.doc._
+import chester.syntax.core.*
+import chester.tyck.*
+import chester.utils.doc.*
 import chester.utils.env
 import chester.utils.env.Environment
-import chester.utils.io._
-import chester.utils.term._
-import fansi._
+import chester.utils.io.*
+import chester.utils.term.*
+import fansi.*
 
 // could be inline
 def REPLEngine[F[_]](using

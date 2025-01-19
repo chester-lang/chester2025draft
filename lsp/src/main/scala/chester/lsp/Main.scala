@@ -1,7 +1,7 @@
 package chester.lsp
 
 import org.eclipse.lsp4j.launch.LSPLauncher
-import org.log4s._
+import org.log4s.*
 import org.slf4j.simple.SimpleLogger
 
 import java.io.{InputStream, OutputStream}

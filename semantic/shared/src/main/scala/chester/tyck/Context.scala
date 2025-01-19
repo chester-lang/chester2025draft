@@ -1,8 +1,8 @@
 package chester.tyck
 
-import chester.syntax._
+import chester.syntax.*
 import chester.syntax.accociativity.OperatorsContext
-import chester.syntax.core._
+import chester.syntax.core.*
 import chester.tyck.api.SymbolCollector
 import chester.uniqid.UniqidOf
 

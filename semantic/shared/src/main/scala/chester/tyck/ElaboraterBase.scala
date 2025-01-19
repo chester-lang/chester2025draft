@@ -1,10 +1,10 @@
 package chester.tyck
 
 import chester.syntax.Name
-import chester.syntax.concrete._
-import chester.syntax.core._
-import chester.uniqid._
-import chester.utils._
+import chester.syntax.concrete.*
+import chester.syntax.core.*
+import chester.uniqid.*
+import chester.utils.*
 import chester.utils.propagator.CommonPropagator
 
 trait ElaboraterBase extends CommonPropagator[Tyck] {

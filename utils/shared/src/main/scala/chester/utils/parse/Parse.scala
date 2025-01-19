@@ -1,7 +1,7 @@
 package chester.utils.parse
 
-import fastparse._
-import fastparse.NoWhitespace._
+import fastparse.*
+import fastparse.NoWhitespace.*
 
 type Character = Int
 

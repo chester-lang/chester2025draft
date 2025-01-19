@@ -1,7 +1,7 @@
 package chester.syntax.core.orm
 
-import chester.syntax.core._
-import upickle.default._
+import chester.syntax.core.*
+import upickle.default.*
 
 import scala.language.implicitConversions
 

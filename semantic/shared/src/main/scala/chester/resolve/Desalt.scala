@@ -1,12 +1,12 @@
 package chester.resolve
 
-import cats.data._
-import cats.implicits._
-import chester.error._
+import cats.data.*
+import cats.implicits.*
+import chester.error.*
 import chester.syntax.{Const, ModuleRef}
-import chester.syntax.concrete._
-import chester.tyck._
-import chester.utils._
+import chester.syntax.concrete.*
+import chester.tyck.*
+import chester.utils.*
 
 import scala.annotation.tailrec
 

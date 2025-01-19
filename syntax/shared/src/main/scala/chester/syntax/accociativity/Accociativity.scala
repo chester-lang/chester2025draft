@@ -1,7 +1,7 @@
 package chester.syntax.accociativity
 
 import chester.syntax.{Name, QualifiedIDString}
-import upickle.default._
+import upickle.default.*
 
 case class PrecedenceGroup(
     name: QualifiedIDString,

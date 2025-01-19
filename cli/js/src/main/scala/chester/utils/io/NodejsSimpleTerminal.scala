@@ -1,7 +1,7 @@
 package chester.utils.io
 
 import chester.utils.io.impl.given
-import chester.utils.term._
+import chester.utils.term.*
 import fansi.Str
 import typings.node.{processMod, readlineMod}
 

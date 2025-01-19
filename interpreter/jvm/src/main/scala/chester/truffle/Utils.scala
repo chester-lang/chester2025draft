@@ -2,10 +2,10 @@ package chester.truffle
 
 import chester.error.unreachable
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
-import chester.reader._
-import chester.syntax.core._
+import chester.reader.*
+import chester.syntax.core.*
 import chester.truffle.ChesterLang.ChesterRootNode
-import chester.tyck._
+import chester.tyck.*
 
 object Utils {
   @throws[Exception]

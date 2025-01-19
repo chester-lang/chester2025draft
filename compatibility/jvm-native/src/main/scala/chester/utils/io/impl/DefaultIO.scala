@@ -2,9 +2,9 @@ package chester.utils.io.impl
 
 import cats.Id
 import chester.utils.os2
-import chester.utils.io._
-import _root_.os._
-import com.eed3si9n.ifdef._
+import chester.utils.io.*
+import _root_.os.*
+import com.eed3si9n.ifdef.*
 
 import java.nio.file.Files
 import scala.annotation.tailrec

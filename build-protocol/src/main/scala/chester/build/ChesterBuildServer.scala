@@ -1,6 +1,6 @@
 package chester.build
 
-import ch.epfl.scala.bsp4j._
+import ch.epfl.scala.bsp4j.*
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 
 import java.util.concurrent.CompletableFuture

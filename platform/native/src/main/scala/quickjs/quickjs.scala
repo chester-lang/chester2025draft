@@ -1,9 +1,9 @@
 // sn-bindgen-x86_64-pc-linux --package quickjs --header quickjs.h --scala > ~/Downloads/quickjs.scala
 package quickjs
 
-import _root_.scala.scalanative.unsafe._
-import _root_.scala.scalanative.unsigned._
-import _root_.scala.scalanative._
+import _root_.scala.scalanative.unsafe.*
+import _root_.scala.scalanative.unsigned.*
+import _root_.scala.scalanative.*
 
 object predef:
   private[quickjs] trait CEnumU[T](using eq: T =:= UInt):

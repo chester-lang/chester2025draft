@@ -1,7 +1,7 @@
 package chester.reader
 
-import chester.reader._
-import chester.syntax.concrete._
+import chester.reader.*
+import chester.syntax.concrete.*
 import munit.FunSuite
 
 class ObjectParserTest extends FunSuite {

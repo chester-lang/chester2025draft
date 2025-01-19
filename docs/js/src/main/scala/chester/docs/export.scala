@@ -1,6 +1,6 @@
 package chester.docs
 
-import chester.js._
+import chester.js.*
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 

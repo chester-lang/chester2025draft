@@ -1,8 +1,8 @@
 package chester.syntax
 
-import chester.utils._
-import chester.utils.doc.{ToDoc, _}
-import upickle.default._
+import chester.utils.*
+import chester.utils.doc.{ToDoc, *}
+import upickle.default.*
 
 type Name = String
 

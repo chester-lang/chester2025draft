@@ -1,13 +1,13 @@
 package chester.tyck
 
-import cats.implicits._
-import chester.utils._
-import chester.syntax._
-import chester.error._
-import chester.syntax.concrete._
-import chester.syntax.core._
+import cats.implicits.*
+import chester.utils.*
+import chester.syntax.*
+import chester.error.*
+import chester.syntax.concrete.*
+import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
-import chester.uniqid._
+import chester.uniqid.*
 
 import scala.language.implicitConversions
 

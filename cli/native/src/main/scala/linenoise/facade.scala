@@ -1,8 +1,8 @@
 package linenoise
 
-import linenoise.all._
+import linenoise.all.*
 
-import scala.scalanative.unsafe._
+import scala.scalanative.unsafe.*
 
 object facade {
 

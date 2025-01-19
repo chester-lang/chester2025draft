@@ -1,6 +1,6 @@
 package chester.reader
 
-import chester.syntax.concrete._
+import chester.syntax.concrete.*
 import munit.FunSuite
 
 class ParserTest extends FunSuite {

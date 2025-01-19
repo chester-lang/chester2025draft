@@ -1,10 +1,10 @@
 package chester.syntax.core
 
-import cats.data._
-import chester.syntax._
-import chester.syntax.core.spec.spec._
-import chester.uniqid._
-import chester.utils._
+import cats.data.*
+import chester.syntax.*
+import chester.syntax.core.spec.spec.*
+import chester.uniqid.*
+import chester.utils.*
 
 import scala.language.implicitConversions
 

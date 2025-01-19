@@ -1,7 +1,7 @@
 package chester.syntax.accociativity
 
-import chester.syntax._
-import upickle.default._
+import chester.syntax.*
+import upickle.default.*
 
 case class OperatorsContext(
     opinfos: InfixDefitions,

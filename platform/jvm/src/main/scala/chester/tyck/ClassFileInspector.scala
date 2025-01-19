@@ -1,8 +1,8 @@
 package chester.tyck
 
-import scala.tools.asm._
-import scala.tools.asm.tree._
-import scala.jdk.CollectionConverters._
+import scala.tools.asm.*
+import scala.tools.asm.tree.*
+import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Paths}
 
 object ClassFileInspector {

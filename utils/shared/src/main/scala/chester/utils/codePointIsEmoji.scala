@@ -1,6 +1,6 @@
 package chester.utils
 
-import com.eed3si9n.ifdef._
+import com.eed3si9n.ifdef.*
 
 @ifndef("jdk17")
 def codePointIsEmoji(codePoint: Int): Boolean = {

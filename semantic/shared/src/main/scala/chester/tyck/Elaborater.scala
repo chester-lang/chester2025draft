@@ -1,12 +1,12 @@
 package chester.tyck
 
-import chester.error._
-import chester.syntax.concrete._
-import chester.syntax.core.{_, given}
-import chester.tyck._
-import chester.utils._
-import chester.utils.propagator._
-import chester.syntax._
+import chester.error.*
+import chester.syntax.concrete.*
+import chester.syntax.core.{*, given}
+import chester.tyck.*
+import chester.utils.*
+import chester.utils.propagator.*
+import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
 
 import scala.language.implicitConversions

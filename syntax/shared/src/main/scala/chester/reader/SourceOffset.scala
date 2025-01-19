@@ -1,10 +1,10 @@
 package chester.reader
 
-import upickle.default._
-import chester.error._
+import upickle.default.*
+import chester.error.*
 import chester.utils.WithUTF16
-import _root_.io.github.iltotore.iron._
-import _root_.io.github.iltotore.iron.constraint.all._
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.upickle.given
 import chester.utils.doc.{Doc, PrettierOptions}
 

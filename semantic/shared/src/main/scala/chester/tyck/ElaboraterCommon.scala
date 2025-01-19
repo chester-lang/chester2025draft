@@ -1,10 +1,10 @@
 package chester.tyck
 
-import chester.error._
+import chester.error.*
 import chester.resolve.{SimpleDesalt, resolveOpSeq}
-import chester.syntax.concrete._
-import chester.syntax.core._
-import chester.utils._
+import chester.syntax.concrete.*
+import chester.syntax.core.*
+import chester.utils.*
 import chester.utils.propagator.CommonPropagator
 
 trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[Tyck] {

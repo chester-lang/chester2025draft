@@ -1,6 +1,6 @@
 package chester.tyck
 
-import chester.error._
+import chester.error.*
 
 // maybe add marks about what item is used when there is a multiple choice. Maybe report some warning when two or more candidates are equally good
 case class TyckResult0[Problem <: WithServerity, +S, +T](

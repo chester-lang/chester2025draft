@@ -1,6 +1,6 @@
 package chester.utils.io
 
-import chester.utils.term._
+import chester.utils.term.*
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

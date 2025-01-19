@@ -3,8 +3,8 @@
 // override
 package scala.meta.internal.tokenizers
 
-import fastparse.NoWhitespace._
-import fastparse._
+import fastparse.NoWhitespace.*
+import fastparse.*
 
 import scala.meta.Dialect
 import scala.meta.inputs.Input

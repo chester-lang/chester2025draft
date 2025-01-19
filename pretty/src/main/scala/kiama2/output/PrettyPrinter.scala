@@ -861,9 +861,7 @@ trait AbstractPrettyPrinter extends PrettyPrinterBase {
                       layout <- o2(r)
                     } yield layout
                   )
-              More(() =>
-                grp2(h)(o3)
-              )
+              More(() => grp2(h)(o3))
             }
         )
         c(p, dq.init.init :+ n)

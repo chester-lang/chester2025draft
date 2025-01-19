@@ -1,22 +1,22 @@
 package chester.cli
 
 import chester.core.parseCheckTAST
-import chester.error._
+import chester.error.*
 import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
 import chester.reader.{ChesterReader, FilePath, FilePathImpl}
 import chester.repl.REPLEngine
 import chester.tyck.{Reporter, TyckResult, Tycker}
 import chester.utils.env.Environment
-import chester.utils.io._
+import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
 import chester.syntax.TASTPackage.{LoadedModules, TAST}
-import chester.utils.doc._
+import chester.utils.doc.*
 import chester.BuildInfo
-import chester.cli.Config._
+import chester.cli.Config.*
 import chester.syntax.concrete.Expr
 import upickle.default.{read, readBinary, write, writeBinary}
-import cats.implicits._
+import cats.implicits.*
 
 import scala.language.experimental.betterFors
 

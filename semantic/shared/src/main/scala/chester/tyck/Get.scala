@@ -1,9 +1,9 @@
 package chester.tyck
 
-import chester.error._
+import chester.error.*
 import chester.error.Problem.Severity
 import chester.utils.MutBox
-import upickle.default._
+import upickle.default.*
 
 trait Reporter[-T] {
   def apply(value: T): Unit

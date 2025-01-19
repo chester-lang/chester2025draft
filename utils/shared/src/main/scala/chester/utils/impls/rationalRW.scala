@@ -1,7 +1,7 @@
 package chester.utils.impls
 
 import spire.math.Rational
-import upickle.default._
+import upickle.default.*
 
 case class RationalSerialized(numerator: BigInt, denominator: BigInt) derives ReadWriter {
   def toRational: Rational = Rational(numerator, denominator)

@@ -1,18 +1,18 @@
 // TODO: Correctly implement toDoc. They are very broken
 package chester.syntax.concrete
 
-import cats.data._
-import chester.doc._
+import cats.data.*
+import chester.doc.*
 import chester.doc.const.Docs
-import chester.error._
-import chester.syntax._
-import chester.utils.doc._
-import upickle.default._
-import chester.utils._
+import chester.error.*
+import chester.syntax.*
+import chester.utils.doc.*
+import upickle.default.*
+import chester.utils.*
 import spire.math.Rational
-import chester.utils.impls._
-import chester.error.ProblemUpickle._
-import chester.uniqid._
+import chester.utils.impls.*
+import chester.error.ProblemUpickle.*
+import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
 
 enum CommentType derives ReadWriter {

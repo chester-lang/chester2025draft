@@ -1,11 +1,11 @@
 package chester.tyck
 
-import chester.reader.{_, given}
-import chester.syntax.concrete._
+import chester.reader.{*, given}
+import chester.syntax.concrete.*
 import chester.syntax.core.{Judge, convertToSimple}
-import chester.utils.doc._
+import chester.utils.doc.*
 import munit.FunSuite
-import upickle.default._
+import upickle.default.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

@@ -1,19 +1,19 @@
 package chester.utils.io.impl
 
-import chester.utils.io._
+import chester.utils.io.*
 import typings.node.bufferMod.global.BufferEncoding
 import typings.node.fsMod.MakeDirectoryOptions
 import typings.node.{childProcessMod, fsMod, fsPromisesMod, osMod, pathMod, processMod}
 import typings.node.childProcessMod.{IOType, SpawnSyncOptions}
 import typings.std.global.fetch
 
-import scala.scalajs.js.Thenable.Implicits._
+import scala.scalajs.js.Thenable.Implicits.*
 import java.io.IOException
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.scalajs.js.typedarray._
-import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.typedarray.*
+import scala.scalajs.js.JSConverters.*
 
 given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498

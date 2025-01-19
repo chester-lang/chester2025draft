@@ -1,22 +1,22 @@
 package chester.lsp
 
-import chester.error._
-import chester.reader._
-import chester.syntax.core._
-import chester.tyck.api._
-import chester.tyck._
+import chester.error.*
+import chester.reader.*
+import chester.syntax.core.*
+import chester.tyck.api.*
+import chester.tyck.*
 import chester.utils.{StringIndex, WithUTF16}
-import _root_.io.github.iltotore.iron._
-import org.eclipse.lsp4j._
+import _root_.io.github.iltotore.iron.*
+import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.eclipse.lsp4j.services._
-import org.log4s._
+import org.eclipse.lsp4j.services.*
+import org.log4s.*
 
-import java.util.{List => JList}
+import java.util.List as JList
 import java.util.concurrent.CompletableFuture
 import scala.collection.mutable
 import scala.compiletime.uninitialized
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 class ChesterLanguageServer extends LanguageServer with TextDocumentService with WorkspaceService {
   enableDebug()

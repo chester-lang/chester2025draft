@@ -1,13 +1,13 @@
 package chester.reader
 
-import chester.syntax.concrete._
+import chester.syntax.concrete.*
 import chester.utils.StringIndex
-import fastparse._
-import chester.error._
-import _root_.io.github.iltotore.iron._
+import fastparse.*
+import chester.error.*
+import _root_.io.github.iltotore.iron.*
 
 import scala.collection.immutable
-import scala.util._
+import scala.util.*
 object ChesterReader {
 
   private def parseFromSource[T](

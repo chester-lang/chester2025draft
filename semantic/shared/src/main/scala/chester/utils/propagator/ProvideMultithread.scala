@@ -2,9 +2,9 @@ package chester.utils.propagator
 
 import chester.uniqid.{Uniqid, UniqidOf}
 
-import java.util.concurrent._
+import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 // currently broken too eager to use default values
 trait ProvideMultithread extends ProvideImpl {
