@@ -3,12 +3,12 @@ package chester.utils.term
 import chester.utils.io._
 import chester.utils.term.InputStatus.{Complete, Error, Incomplete}
 
-abstract class InTerminalNoHistory[F[_]](using runner: Runner[F]) extends AbstractInTerminal[F] {
+abstract class InTerminalNoHistory[F[_]](using  Runner[F]) extends AbstractInTerminal[F] {
 
   def initHistory: F[Seq[String]] = Runner.pure(Vector())
 
 }
-abstract class AbstractInTerminal[F[_]](using runner: Runner[F]) extends InTerminal[F] {
+abstract class AbstractInTerminal[F[_]](using  Runner[F]) extends InTerminal[F] {
   private var history: Vector[String] = Vector()
   private var currentInputs: String = ""
 

@@ -290,11 +290,11 @@ trait PrettyPrinterBase {
         "null"
       else
         a match {
-          case a: Array[_]  => list(a.toList, "Array", any)
-          case v: Vector[_] => list(v.toList, "Vector", any)
-          case m: Map[_, _] => list(m.toList, "Map", any)
+          case a: Array[?]  => list(a.toList, "Array", any)
+          case v: Vector[?] => list(v.toList, "Vector", any)
+          case m: Map[?, ?] => list(m.toList, "Map", any)
           case Nil          => "Nil"
-          case l: List[_]   => list(l, "List", any)
+          case l: List[?]   => list(l, "List", any)
           case (l, r)       => any(l) <+> "->" <+> any(r)
           case None         => "None"
           case p: Product =>

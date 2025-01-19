@@ -1,5 +1,5 @@
 package chester.reader
-import chester.reader._
+
 import chester.syntax.concrete._
 import chester.utils.StringIndex
 import fastparse._

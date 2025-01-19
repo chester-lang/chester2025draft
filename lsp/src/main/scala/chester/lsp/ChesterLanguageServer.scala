@@ -529,7 +529,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       }
 
       val matchingSymbols = allSymbols
-        .filter { symbol =>
+        .withFilter { symbol =>
           symbol.name.toLowerCase.contains(query) &&
           symbol.definedOn.sourcePos.nonEmpty
         }

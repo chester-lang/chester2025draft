@@ -192,7 +192,7 @@ case class ReaderInternal(
   }
 
   inline def PwithMeta[T, R](inline parse0: P[T])(using
-      s: fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
+       fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
   ): P[R] = P(parse0.withMeta)
 
   def identifier: P[Identifier] = P(id.withMeta).map { case (name, meta) =>
@@ -248,7 +248,7 @@ case class ReaderInternal(
     def validateIndentation(str: String): Either[String, String] = {
       val lines = str.split("\n")
       val indentStrings =
-        lines.filter(_.trim.nonEmpty).map(_.takeWhile(_.isWhitespace))
+        lines.withFilter(_.trim.nonEmpty).map(_.takeWhile(_.isWhitespace))
 
       if (indentStrings.distinct.length > 1)
         Left("Inconsistent indentation in heredoc string literal")

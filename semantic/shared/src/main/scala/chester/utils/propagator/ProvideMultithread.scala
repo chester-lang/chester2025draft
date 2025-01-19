@@ -171,7 +171,7 @@ trait ProvideMultithread extends ProvideImpl {
         // Process any remaining propagators
         val tasks = cellsNeeded.flatMap { c =>
           if (c.noAnyValue) {
-            c.zonkingPropagators.asScala.filter(_.alive).map { p =>
+            c.zonkingPropagators.asScala.withFilter(_.alive).map { p =>
               new ZonkTask(
                 c,
                 p.asInstanceOf[HoldPropagator[Propagator[Ability]]],
@@ -301,7 +301,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     class DefaultValueTask(c: CIdOf[Cell[?]], state: Impl[Ability])(using
-        ability: Ability
+         Ability
     ) extends RecursiveAction {
       override def compute(): Unit = {
         if (c.noAnyValue && c.store.default.isDefined) {

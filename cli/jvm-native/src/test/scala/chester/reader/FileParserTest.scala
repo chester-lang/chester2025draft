@@ -1,6 +1,6 @@
 package chester.reader
 
-import chester.reader._
+
 import chester.syntax.concrete._
 import munit.Assertions.assertEquals
 import munit.FunSuite

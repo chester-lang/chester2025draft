@@ -16,10 +16,10 @@ import scala.util.boundary.break
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
   def checkType(expr: Expr)(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       Context,
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): Term = {
     // Create a new type cell representing the kind Typeω (the type of types)
     val kindType = literal(Typeω: Term)
@@ -28,19 +28,19 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   }
 
   def checkTypeId(expr: Expr)(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       Context,
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): CellId[Term] = {
     toId(checkType(expr))
   }
 
   def elabTy(expr: Option[Expr])(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       Context,
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): Term =
     expr match {
       case Some(expr) => checkType(expr)
@@ -55,10 +55,10 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   ): Term
 
   def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       Context,
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): CellId[Term] = {
     val term = elab(expr, ty, effects)
     toId(term)
@@ -207,10 +207,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       Context,
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): Term = {
     // Create collections to store field keys and types
     val fieldTypeVars = scala.collection.mutable.Map[Term, CellId[Term]]()

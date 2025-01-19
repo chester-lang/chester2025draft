@@ -1,7 +1,7 @@
 package chester.tyck
 
 import cats.implicits._
-import chester.tyck._
+
 import chester.utils._
 import chester.syntax._
 import chester.error._
@@ -213,9 +213,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val defInfo = declarationsMap(expr).asInstanceOf[DefDeclaration]

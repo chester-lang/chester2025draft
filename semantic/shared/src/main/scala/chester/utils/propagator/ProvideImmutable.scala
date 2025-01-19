@@ -70,7 +70,7 @@ trait ProvideImmutable extends ProvideImpl {
       val didChanged = state.didChanged
       state = state.copy(didChanged = Vector.empty)
       state.propagators
-        .filter((_, propagator) => propagator.readingCells.exists(didChanged.contains))
+        .withFilter((_, propagator) => propagator.readingCells.exists(didChanged.contains))
         .foreach { case (pid, propagator) =>
           if (state.propagators.contains(pid)) {
             val done = propagator.run(using this, more)

@@ -169,11 +169,13 @@ class DummyLoop extends Node with RepeatingNode {
     }
 }
 
-object Test extends App {
+object Test   {
+  def main(args: Array[String]): Unit = {
   ExampleLang { lang =>
     Truffle.getRuntime
     val rootNode = new TestRootNode(lang)
     val target = rootNode.getCallTarget()
     println(target.call())
+  }
   }
 }

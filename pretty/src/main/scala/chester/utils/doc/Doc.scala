@@ -18,7 +18,7 @@ sealed trait Doc extends ToDoc derives ReadWriter {
 
   def printToExpr(using printer: DocPrinter): printer.Expr
 
-  final inline def toDoc(using options: PrettierOptions): Doc = this
+  final inline def toDoc(using  PrettierOptions): Doc = this
 
   def descent(f: Doc => Doc): Doc = this
 
@@ -75,7 +75,7 @@ def render(doc: ToDoc, w: Width)(using
 // TODO: this is broken, please fix
 def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
     docs: Iterable[ToDoc]
-)(using options: PrettierOptions): Doc = group {
+)(using  PrettierOptions): Doc = group {
   docs.toList match {
     case Nil =>
       begin.toDoc <> end.toDoc
@@ -89,12 +89,12 @@ def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
   }
 }
 
-def concat(docs: ToDoc*)(using options: PrettierOptions): Doc = group {
+def concat(docs: ToDoc*)(using  PrettierOptions): Doc = group {
   docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
 }
 
 @targetName("concatIterable")
-def concat(docs: Iterable[ToDoc])(using options: PrettierOptions): Doc = group {
+def concat(docs: Iterable[ToDoc])(using  PrettierOptions): Doc = group {
   docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
 }
 
@@ -103,8 +103,8 @@ val hardline = text("\n") // TODO: CRLF?
 val line = hardline
 
 object Doc {
-  def indented(doc: ToDoc)(using options: PrettierOptions): Doc = doc.indented()
-  def indent(doc: ToDoc)(using options: PrettierOptions): Doc = doc.indented()
+  def indented(doc: ToDoc)(using  PrettierOptions): Doc = doc.indented()
+  def indent(doc: ToDoc)(using  PrettierOptions): Doc = doc.indented()
 
   export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, empty, concat, hardline, line, sep, link}
 }
@@ -231,10 +231,10 @@ case class $link(n: HoldOptionNoRead[AnyRef], d: Doc) extends Doc {
   override def descent(f: Doc => Doc): Doc = copy(d = f(d))
 }
 
-def hsep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $hsep(ds.map(_.toDoc), sep.toDoc)
-def ssep(ds: Seq[ToDoc], sep: ToDoc)(using options: PrettierOptions): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
-def sep(sep: ToDoc, ds: Seq[ToDoc])(using options: PrettierOptions): Doc = hsep(ds, sep)
-def link(n: AnyRef, d: ToDoc)(using options: PrettierOptions): Doc = $link(HoldOptionNoRead(Some(n)), d.toDoc)
+def hsep(ds: Seq[ToDoc], sep: ToDoc)(using  PrettierOptions): Doc = $hsep(ds.map(_.toDoc), sep.toDoc)
+def ssep(ds: Seq[ToDoc], sep: ToDoc)(using  PrettierOptions): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
+def sep(sep: ToDoc, ds: Seq[ToDoc])(using  PrettierOptions): Doc = hsep(ds, sep)
+def link(n: AnyRef, d: ToDoc)(using  PrettierOptions): Doc = $link(HoldOptionNoRead(Some(n)), d.toDoc)
 def link(n: AnyRef, d: Doc): Doc = $link(HoldOptionNoRead(Some(n)), d)
 extension (self: ToDoc)(using options: PrettierOptions) {
   implicit inline def asDoc: Doc = self.toDoc

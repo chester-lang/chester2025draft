@@ -6,5 +6,5 @@ case object LanguageKey extends PrettierOptionsKey[Language] {
   val default: Language = Language.from("en_NZ")
 }
 
-implicit def languageInPretty(using options: PrettierOptions): Language =
+implicit def languageInPretty(using  PrettierOptions): Language =
   LanguageKey.get

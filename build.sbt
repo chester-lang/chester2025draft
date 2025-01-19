@@ -23,12 +23,12 @@ val scalafixRules = Seq(
   "CatsToValid",
   "CirceCodec",
   "CollectHead",
-  "CollectHeadOption", 
+  "CollectHeadOption",
   "CompareSameValue",
   "DirectoryAndPackageName",
   "DiscardValue",
   "DuplicateWildcardImport",
-  //"EitherFold",
+  // "EitherFold",
   "EitherGetOrElse",
   "EitherMap",
   "EtaExpand",
@@ -74,7 +74,7 @@ val scalafixRules = Seq(
   "PartialFunctionCondOpt",
   "RedundantCaseClassVal",
   "RemoveEmptyObject",
-  "RemoveIf",
+  //"RemoveIf",
   "RemovePureEff",
   "RemoveSamePackageImport",
   "RemoveStringInterpolation",
@@ -85,14 +85,13 @@ val scalafixRules = Seq(
   "ReplaceSymbolLiterals",
   "ReuseInstances",
   "SameParamOverloading",
-  //"Scala3ImportRewrite",
-  //"Scala3ImportWarn",
+  // "Scala3ImportRewrite",
+  // "Scala3ImportWarn",
   "Scala3Placeholder",
   "ScalaApp",
   "ScalazEitherInfix",
-  "SeparateEachFileConfig",
-  "SeparateEachFileRewrite",
-  "SeparateEachFileWarn",
+  // "SeparateEachFileRewrite",
+  // "SeparateEachFileWarn",
   "SimplifyForYield",
   "SizeToLength",
   "SlickFilter",
@@ -114,7 +113,7 @@ val scalafixRules = Seq(
   "WithLeftWithRight"
 ).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.0")
 
-addCommandAlias("fixmore", scalafixRules.map(x=>s"rootJVM/scalafixAll $x").mkString(" ; "))
+addCommandAlias("fixmore", scalafixRules.map(x => s"rootJVM/scalafixAll $x").mkString(" ; "))
 
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
 inThisBuild(

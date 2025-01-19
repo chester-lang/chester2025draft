@@ -141,7 +141,7 @@ trait ProvideCellId {
 
     def naiveFallbackZonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using state: StateAbility[Ability], more: Ability): ZonkResult =
+    )(using  StateAbility[Ability],  Ability): ZonkResult =
       naiveZonk(needed)
   }
 
@@ -191,7 +191,7 @@ trait ProvideCellId {
     ): PIdOf[T]
 
     final def addPropagator[T <: Propagator[Ability]](propagator: T)(using
-        more: Ability
+         Ability
     ): Unit = {
       val _ = addPropagatorGetPid(propagator)
     }

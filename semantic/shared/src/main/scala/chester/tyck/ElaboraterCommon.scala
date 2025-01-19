@@ -12,14 +12,14 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   trait EffectsCell extends Cell[Effects] {
     def requireEffect(
         effect: Term
-    )(using ck: Tyck, state: StateAbility[Tyck]): LocalV = {
+    )(using  Tyck,  StateAbility[Tyck]): LocalV = {
       ???
     }
   }
 
   def toEffectsM(
       x: CellIdOr[Effects]
-  )(using state: StateAbility[Tyck]): EffectsM = x match {
+  )(using  StateAbility[Tyck]): EffectsM = x match {
     case x: Effects     => x
     case x: EffectsCell => Meta(x.asInstanceOf[CellId[Effects]])
     case _              => unreachable()
@@ -73,7 +73,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     cell
   }
 
-  def newTypeTerm(using ck: Tyck, state: StateAbility[Tyck]): Term = {
+  def newTypeTerm(using  Tyck,  StateAbility[Tyck]): Term = {
     Meta(newType)
   }
 
@@ -85,7 +85,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     cell
   }
 
-  def newEffectsTerm(using ck: Tyck, state: StateAbility[Tyck]): Effects | MetaTerm = {
+  def newEffectsTerm(using  Tyck,  StateAbility[Tyck]): Effects | MetaTerm = {
     Meta(newEffects)
   }
 

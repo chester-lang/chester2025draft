@@ -196,9 +196,9 @@ def parseExpression(
   val operators = mutable.Stack[TokenInfo]()
 
   tokens.zipWithIndex.foreach { case (tokenInfo, index) =>
-    val prevToken = if (index > 0) Some(tokens(index - 1)) else None
+    val prevToken = Option.when(index > 0)(tokens(index - 1))
     val nextToken =
-      if (index < tokens.length - 1) Some(tokens(index + 1)) else None
+      Option.when(index < tokens.length - 1)(tokens(index + 1))
 
     // Determine the operator type based on context
     val opType = determineOpType(tokenInfo, prevToken, nextToken)

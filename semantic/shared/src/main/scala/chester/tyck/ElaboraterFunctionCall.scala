@@ -116,7 +116,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       cause: Expr,
       functionTerm: Term,
       functionCallTerm: CellId[Term]
-  )(using localCtx: Context)
+  )(using  Context)
       extends Propagator[Tyck] {
 
     override val readingCells: Set[CellIdAny] = Set(functionTy)
@@ -173,12 +173,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
 
       expected.foreach { expectedTele =>
         val hasActual = actualIndex < actual.length
-        val actualTeleOpt = if (hasActual) Some(actual(actualIndex)) else None
+        val actualTeleOpt = Option.when(hasActual)(actual(actualIndex))
 
-        val matchesProvided = actualTeleOpt match {
-          case Some(actualTele) => actualTele.implicitly == expectedTele.implicitly
-          case None             => false
-        }
+        val matchesProvided = actualTeleOpt.exists(_.implicitly == expectedTele.implicitly)
 
         if (matchesProvided) {
           // Telescopes match; proceed to unify their arguments
@@ -229,14 +226,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       }
 
       // Unify each pair of expected and actual argument types
-      expectedArgs.zip(actualArgs).foreach { case (expectedArg, actualArg) =>
+      expectedArgs.lazyZip(actualArgs).foreach {  (expectedArg, actualArg) =>
         unify(expectedArg.ty, actualArg.ty, cause)
       }
     }
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using state: StateAbility[Tyck], ck: Tyck): ZonkResult = {
+    )(using  StateAbility[Tyck],  Tyck): ZonkResult = {
       ZonkResult.Require(Vector(functionTy))
     }
   }
@@ -246,9 +243,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       functionTy: CellId[Term],
       expr: DesaltFunctionCall
   )(using
-      ctx: Context,
-      state: StateAbility[Tyck],
-      ck: Tyck
+       Context,
+       StateAbility[Tyck],
+       Tyck
   ): List[Calling] = {
 
     // TODO: Implement logic to infer implicit arguments based on the function type
