@@ -27,7 +27,7 @@ lazy val chesterPlugin =
       ),
       resolvers += "jitpack" at "https://jitpack.io",
       scalacOptions ++= Seq(
-        //"-experimental"
+        "-experimental"
       ),
       // scalafix
       scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
