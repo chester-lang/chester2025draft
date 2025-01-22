@@ -8,7 +8,7 @@ import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.upickle.given
 import chester.utils.doc.{Doc, PrettierOptions}
 
-case class ParseError(message: String, index: Pos) extends Problem {
+case class ParseError(message: String, pos: Pos) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
   override def stage: Problem.Stage = Problem.Stage.PARSE
 
@@ -44,7 +44,7 @@ object FilePath {
 case class FilePath private (fileName: String) extends ParserSource {
   private[chester] var impl: FilePathImpl = null
   override lazy val readContent: Either[ParseError, String] = {
-    if (impl == null) Left(ParseError("No FilePathImpl provided", Pos.Zero))
+    if (impl == null) Left(ParseError("No FilePathImpl provided", Pos.zero))
     else impl.readContent(fileName)
   }
 }

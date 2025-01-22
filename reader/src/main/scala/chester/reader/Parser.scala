@@ -65,7 +65,7 @@ case class ReaderInternal(
 
   def simpleId: P[String] = P(
     (CharacterPred(isIdentifierFirst).rep(1) ~ CharacterPred(
-      isIdentifierMiddle
+      isIdentifierPart
     ).rep.? ~ CharacterPred(isIdentifierEnd).?).!
   )
 

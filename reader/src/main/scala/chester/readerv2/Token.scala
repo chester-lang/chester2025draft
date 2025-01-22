@@ -1,88 +1,76 @@
 package chester.readerv2
 
 import chester.error.Pos
+import chester.reader.ParseError
 
 sealed trait Token {
   def pos: Pos
   def text: String
 }
 
-sealed trait TokenKind {
-  def text: String
-}
-
-sealed trait Literal extends TokenKind
-sealed trait Delimiter extends TokenKind
-sealed trait Operator extends TokenKind
-
-object TokenKind {
-  sealed trait Name {
-    def parts: Vector[NamePart]
-  }
-  
+object Token {
   sealed trait NamePart
   case class IdentifierPart(value: Vector[Char]) extends NamePart
   case class OperatorPart(value: Vector[Char]) extends NamePart
   
-  case class Identifier(parts: Vector[NamePart]) extends TokenKind with Name {
+  sealed trait StringSegment
+  case class StringChars(chars: Vector[Char]) extends StringSegment
+  case class StringEscape(char: Char) extends StringSegment
+  case class StringInterpolation(expr: Vector[Token]) extends StringSegment
+  
+  case class Identifier(parts: Vector[NamePart], pos: Pos) extends Token {
     def text: String = parts.map {
       case IdentifierPart(chars) => chars.mkString
       case OperatorPart(chars) => chars.mkString
     }.mkString
   }
   
-  case class IntegerLiteral(value: BigInt, radix: Int) extends TokenKind with Literal {
+  case class IntegerLiteral(value: BigInt, radix: Int, pos: Pos) extends Token {
     def text: String = if (radix == 10) value.toString else s"0x${value.toString(16)}"
   }
   
-  case class RationalLiteral(value: BigDecimal) extends TokenKind with Literal {
+  case class RationalLiteral(value: BigDecimal, pos: Pos) extends Token {
     def text: String = value.toString
   }
   
-  case class StringLiteral(segments: Vector[StringSegment]) extends TokenKind with Literal {
-    def text: String = s"\"${segments.map(_.text).mkString}\""
+  case class StringLiteral(segments: Vector[StringSegment], pos: Pos) extends Token {
+    def text: String = {
+      val sb = new StringBuilder("\"")
+      segments.foreach {
+        case StringChars(chars) => sb.append(chars.mkString)
+        case StringEscape(c) => sb.append('\\').append(c)
+        case StringInterpolation(expr) => sb.append("${").append(expr.map(_.text).mkString).append("}")
+      }
+      sb.append("\"").toString
+    }
   }
   
-  sealed trait StringSegment {
-    def text: String
-  }
-  case class StringChars(chars: Vector[Char]) extends StringSegment {
-    def text: String = chars.mkString
-  }
-  case class StringEscape(char: Char) extends StringSegment {
-    def text: String = s"\\$char"
-  }
-  
-  case class SymbolLiteral(segments: Vector[StringSegment]) extends TokenKind with Literal {
-    def text: String = s"'${segments.map(_.text).mkString}"
+  case class SymbolLiteral(name: String, pos: Pos) extends Token {
+    def text: String = s"'$name"
   }
   
   // Delimiters
-  case object LParen extends TokenKind with Delimiter { def text = "(" }
-  case object RParen extends TokenKind with Delimiter { def text = ")" }
-  case object LBrace extends TokenKind with Delimiter { def text = "{" }
-  case object RBrace extends TokenKind with Delimiter { def text = "}" }
-  case object LBracket extends TokenKind with Delimiter { def text = "[" }
-  case object RBracket extends TokenKind with Delimiter { def text = "]" }
-  
-  // Operators
-  case object Comma extends TokenKind with Operator { def text = "," }
-  case object Dot extends TokenKind with Operator { def text = "." }
-  case object Equal extends TokenKind with Operator { def text = "=" }
-  case object Arrow extends TokenKind with Operator { def text = "->" }
+  case class LParen(pos: Pos) extends Token { def text = "(" }
+  case class RParen(pos: Pos) extends Token { def text = ")" }
+  case class LBrace(pos: Pos) extends Token { def text = "{" }
+  case class RBrace(pos: Pos) extends Token { def text = "}" }
+  case class LBracket(pos: Pos) extends Token { def text = "[" }
+  case class RBracket(pos: Pos) extends Token { def text = "]" }
+  case class Comma(pos: Pos) extends Token { def text = "," }
+  case class Dot(pos: Pos) extends Token { def text = "." }
+  case class Equal(pos: Pos) extends Token { def text = "=" }
+  case class Arrow(pos: Pos) extends Token { def text = "->" }
   
   // Comments and Whitespace
-  case class Comment(content: Vector[Char]) extends TokenKind {
+  case class Comment(content: Vector[Char], pos: Pos) extends Token {
     def text: String = s"//${content.mkString}"
   }
   
-  case class Whitespace(chars: Vector[Char]) extends TokenKind {
+  case class Whitespace(chars: Vector[Char], pos: Pos) extends Token {
     def text: String = chars.mkString
   }
   
-  case object EOF extends TokenKind { def text = "" }
+  case class EOF(pos: Pos) extends Token { def text = "" }
 }
 
-case class TokenWithPos(kind: TokenKind, pos: Pos) extends Token {
-  def text: String = kind.text
-}
+type TokenStream = LazyList[Either[ParseError, Token]]

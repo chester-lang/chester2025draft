@@ -16,7 +16,7 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
     .fold(
       error =>
         fail(
-          s"Parsing failed for input: $input ${error.message} at index ${error.index}"
+          s"Parsing failed for input: $input ${error.message} at index ${error.pos}"
         ),
       { value =>
         assertEquals(read[Expr](write[Expr](value)), value)
@@ -46,7 +46,7 @@ def getParsed(input: String): Expr = {
     .fold(
       error =>
         fail(
-          s"Parsing failed for input: $input ${error.message} at index ${error.index}"
+          s"Parsing failed for input: $input ${error.message} at index ${error.pos}"
         ),
       value => value
     )

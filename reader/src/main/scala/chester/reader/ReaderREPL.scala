@@ -79,7 +79,7 @@ object ReaderREPL {
         )(using p).exprEntrance
     ) match {
       case Parsed.Success(expr, _) => Right(expr)
-      case f: Parsed.Failure       => Left(ParseError(f.msg, Pos.Zero))
+      case f: Parsed.Failure       => Left(ParseError(f.msg, Pos.zero))
     }
   }
 }

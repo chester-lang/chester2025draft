@@ -13,7 +13,7 @@ object FilePathImplJVM extends FilePathImpl {
         Right(content)
       case Failure(exception) =>
         Left(
-          ParseError(s"Failed to read file: ${exception.getMessage}", Pos.Zero)
+          ParseError(s"Failed to read file: ${exception.getMessage}", Pos.zero)
         )
     }
   }

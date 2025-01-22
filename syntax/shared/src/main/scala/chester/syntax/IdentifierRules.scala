@@ -26,7 +26,7 @@ object IdentifierRules {
 
   def isIdentifierFirst(x: Character): Boolean = isWording(x) || isWordingSymbol(x)
 
-  def isIdentifierMiddle(x: Character): Boolean =
+  def isIdentifierPart(x: Character): Boolean =
     isIdentifierFirst(x) || isDigit(x) || isMiddleWordingSymbol(x)
 
   def isIdentifierEnd(x: Character): Boolean = isIdentifierFirst(x) || isDigit(x)

@@ -182,8 +182,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     parseResult.fold(
       { parseError =>
         val range = new Range(
-          new Position(parseError.index.line, parseError.index.column.utf16),
-          new Position(parseError.index.line, parseError.index.column.utf16)
+          new Position(parseError.pos.line, parseError.pos.column.utf16),
+          new Position(parseError.pos.line, parseError.pos.column.utf16)
         )
         val diagnostic = new Diagnostic(
           range,
