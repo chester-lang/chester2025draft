@@ -5,7 +5,6 @@ import cats.implicits.*
 import chester.error.*
 import chester.syntax.{Const, ModuleRef}
 import chester.syntax.concrete.*
-import chester.tyck.*
 import chester.utils.*
 
 import scala.annotation.tailrec

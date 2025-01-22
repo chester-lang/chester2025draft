@@ -2,36 +2,36 @@ package chester.readerv2
 
 import chester.error.{Pos, Reporter}
 import chester.utils.WithUTF16
-import chester.syntax.IdentifierRules._
+import chester.syntax.IdentifierRules.*
 import chester.reader.{ParseError, SourceOffset}
-import _root_.io.github.iltotore.iron._
-import _root_.io.github.iltotore.iron.constraint.all.{Positive0 => IPositive0, _}
-import Token._
+import _root_.io.github.iltotore.iron.*
+import _root_.io.github.iltotore.iron.constraint.all.{Positive0 as IPositive0, *}
+import chester.readerv2.Token.*
 
 class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]) {
   private val content = sourceOffset.readContent match {
     case Right(content) => content
-    case Left(error) => 
+    case Left(error) =>
       reporter(error)
       ""
   }
-  
+
   private case class TokenizerState(
-    index: Int,
-    line: Int :| IPositive0,
-    column: WithUTF16,
-    utf16Column: Int :| IPositive0
+      index: Int,
+      line: Int :| IPositive0,
+      column: WithUTF16,
+      utf16Column: Int :| IPositive0
   )
-  
+
   private def currentPos(state: TokenizerState): Pos = Pos(
     sourceOffset.posOffset + WithUTF16(state.index.refineUnsafe, state.utf16Column),
     state.line,
     state.column
   )
-  
-  private def peek(state: TokenizerState): Option[Char] = 
+
+  private def peek(state: TokenizerState): Option[Char] =
     if (state.index + 1 >= content.length) None else Some(content(state.index + 1))
-    
+
   private def advance(state: TokenizerState): TokenizerState = {
     if (state.index < content.length) {
       val c = content(state.index)
@@ -69,9 +69,9 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       case ',' => Comma(pos)
       case '.' => Dot(pos)
       case '=' => Equal(pos)
-      case '-' if peek(state) == Some('>') => 
+      case '-' if peek(state) == Some('>') =>
         Arrow(pos)
-      case c => 
+      case c =>
         reporter(ParseError(s"Unexpected character: $c", pos))
         EOF(pos)
     }
@@ -82,12 +82,12 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startPos = currentPos(state)
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = state
-    
+
     while (current.index < content.length && content(current.index).isWhitespace) {
       chars += content(current.index)
       current = advance(current)
     }
-    
+
     (current, Right(Token.Whitespace(chars.toVector, startPos)))
   }
 
@@ -95,12 +95,12 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startPos = currentPos(state)
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = advance(advance(state)) // Skip //
-    
+
     while (current.index < content.length && content(current.index) != '\n') {
       chars += content(current.index)
       current = advance(current)
     }
-    
+
     (current, Right(Comment(chars.toVector, startPos)))
   }
 
@@ -108,16 +108,16 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startPos = currentPos(state)
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = state
-    
+
     while (current.index < content.length && isIdentifierPart(content(current.index))) {
       chars += content(current.index)
       current = advance(current)
     }
-    
+
     (current, Right(Identifier(Vector(IdentifierPart(chars.toVector)), startPos)))
   }
 
-  private def isHexDigit(c: Char): Boolean = 
+  private def isHexDigit(c: Char): Boolean =
     c.isDigit || ('a' to 'f').contains(c.toLower)
 
   private def scanNumber(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
@@ -125,20 +125,22 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = state
     var isHex = false
-    
+
     if (content(current.index) == '0' && current.index + 1 < content.length && content(current.index + 1).toLower == 'x') {
       isHex = true
       chars += '0' += 'x'
       current = advance(advance(current))
     }
-    
-    while (current.index < content.length && 
-           (content(current.index).isDigit || 
-            (isHex && isHexDigit(content(current.index))))) {
+
+    while (
+      current.index < content.length &&
+      (content(current.index).isDigit ||
+        (isHex && isHexDigit(content(current.index))))
+    ) {
       chars += content(current.index)
       current = advance(current)
     }
-    
+
     if (current.index < content.length && content(current.index) == '.' && !isHex) {
       chars += '.'
       current = advance(current)
@@ -149,10 +151,11 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       val value = BigDecimal(chars.mkString)
       (current, Right(RationalLiteral(value, startPos)))
     } else {
-      val value = if (isHex) 
-        BigInt(chars.drop(2).mkString, 16)
-      else 
-        BigInt(chars.mkString)
+      val value =
+        if (isHex)
+          BigInt(chars.drop(2).mkString, 16)
+        else
+          BigInt(chars.mkString)
       (current, Right(IntegerLiteral(value, if (isHex) 16 else 10, startPos)))
     }
   }
@@ -161,7 +164,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startPos = currentPos(state)
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = advance(state) // Skip opening quote
-    
+
     while (current.index < content.length && content(current.index) != '"') {
       if (content(current.index) == '\\' && current.index + 1 < content.length) {
         current = advance(current)
@@ -171,7 +174,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       }
       current = advance(current)
     }
-    
+
     if (current.index >= content.length) {
       (current, Left(ParseError("Unterminated string literal", startPos)))
     } else {
@@ -184,12 +187,12 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startPos = currentPos(state)
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = advance(state) // Skip opening quote
-    
+
     while (current.index < content.length && content(current.index) != '\'' && content(current.index) != '\n') {
       chars += content(current.index)
       current = advance(current)
     }
-    
+
     if (current.index >= content.length || content(current.index) == '\n') {
       (current, Left(ParseError("Unterminated symbol literal", startPos)))
     } else {
@@ -205,18 +208,18 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       } else {
         val c = content(state.index)
         val (nextState, result) = c match {
-          case c if c.isWhitespace => scanWhitespace(state)
+          case c if c.isWhitespace             => scanWhitespace(state)
           case '/' if peek(state) == Some('/') => scanComment(state)
-          case c if isIdentifierFirst(c) => scanIdentifier(state)
-          case c if c.isDigit => scanNumber(state)
-          case '"' => scanString(state)
-          case '\'' => scanSymbol(state)
-          case c => singleCharToken(state, c)
+          case c if isIdentifierFirst(c)       => scanIdentifier(state)
+          case c if c.isDigit                  => scanNumber(state)
+          case '"'                             => scanString(state)
+          case '\''                            => scanSymbol(state)
+          case c                               => singleCharToken(state, c)
         }
         result #:: loop(nextState)
       }
     }
-    
+
     loop(TokenizerState(0, sourceOffset.linesOffset, sourceOffset.posOffset, sourceOffset.posOffset.utf16))
   }
 }
