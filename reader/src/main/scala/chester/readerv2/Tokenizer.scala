@@ -124,24 +124,29 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startPos = currentPos(state)
     val chars = new scala.collection.mutable.ArrayBuffer[Char]()
     var current = state
-    var isHex = false
+    var radix = 10
 
-    if (content(current.index) == '0' && current.index + 1 < content.length && content(current.index + 1).toLower == 'x') {
-      isHex = true
+    if (content.startsWith("0x", current.index) || content.startsWith("0X", current.index)) {
+      radix = 16
       chars += '0' += 'x'
+      current = advance(advance(current))
+    } else if (content.startsWith("0b", current.index) || content.startsWith("0B", current.index)) {
+      radix = 2
+      chars += '0' += 'b'
       current = advance(advance(current))
     }
 
     while (
       current.index < content.length &&
       (content(current.index).isDigit ||
-        (isHex && isHexDigit(content(current.index))))
+        (radix == 16 && isHexDigit(content(current.index))) ||
+        (radix == 2 && (content(current.index) == '0' || content(current.index) == '1')))
     ) {
       chars += content(current.index)
       current = advance(current)
     }
 
-    if (current.index < content.length && content(current.index) == '.' && !isHex) {
+    if (current.index < content.length && content(current.index) == '.' && radix == 10) {
       chars += '.'
       current = advance(current)
       while (current.index < content.length && content(current.index).isDigit) {
@@ -151,12 +156,12 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       val value = BigDecimal(chars.mkString)
       (current, Right(RationalLiteral(value, startPos)))
     } else {
-      val value =
-        if (isHex)
-          BigInt(chars.drop(2).mkString, 16)
-        else
-          BigInt(chars.mkString)
-      (current, Right(IntegerLiteral(value, if (isHex) 16 else 10, startPos)))
+      val value = radix match {
+        case 16 => BigInt(chars.drop(2).mkString, 16)
+        case 2 => BigInt(chars.drop(2).mkString, 2)
+        case _ => BigInt(chars.mkString)
+      }
+      (current, Right(IntegerLiteral(value, radix, startPos)))
     }
   }
 
