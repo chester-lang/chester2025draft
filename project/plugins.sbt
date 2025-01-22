@@ -5,7 +5,7 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.18.1")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.6")
 addSbtPlugin("org.scalablytyped.converter" % "sbt-converter" % "1.0.0-beta44")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.3.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.3.1")
 addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.3.4")
 //addSbtPlugin("com.codecommit" % "sbt-github-packages" % "0.5.3")
 addSbtPlugin("com.eed3si9n.ifdef" % "sbt-ifdef" % "0.4.0")

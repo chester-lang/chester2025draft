@@ -159,8 +159,8 @@ val scala2Version = "2.13.16"
 val scala3Nightly = "3.7.0-RC1-bin-20250118-b801042-NIGHTLY"
 
 val graalVm = "graalvm-java23"
-val graalJdkVersion = "23.0.1"
-val graalvmVersion = "24.1.1"
+val graalJdkVersion = "23.0.2"
+val graalvmVersion = "24.1.2"
 
 val defaultNativeImageOptions = Seq(
   // "-H:-CheckToolchain",
@@ -207,7 +207,7 @@ val commonSettings0 = Seq(
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.6-migration"),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.0.4" % Test,
+    "org.scalameta" %%% "munit" % "1.1.0" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
@@ -249,7 +249,7 @@ val scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.0.4" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalameta" %%% "munit" % "1.1.0" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
@@ -307,8 +307,8 @@ val graalvmSettings = Seq(
 
 val baseDeps = Seq(
   libraryDependencies ++= Seq(
-    "org.typelevel" %%% "cats-core" % "2.12.0",
-    "org.typelevel" %%% "cats-free" % "2.12.0",
+    "org.typelevel" %%% "cats-core" % "2.13.0",
+    "org.typelevel" %%% "cats-free" % "2.13.0",
     "com.lihaoyi" %%% "upickle" % "4.1.0",
     "com.lihaoyi" %%% "fansi" % "0.5.0",
     "com.lihaoyi" %%% "fastparse" % "3.1.1"
@@ -501,7 +501,7 @@ lazy val ironNative = crossProject(NativePlatform)
   .nativeSettings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "4.1.0",
-      "org.typelevel" %%% "cats-core" % "2.12.0",
+      "org.typelevel" %%% "cats-core" % "2.13.0",
       "com.lihaoyi" %%% "utest" % "0.8.5" % Test,
       "org.typelevel" %%% "kittens" % "3.4.0" % Test
     ),
@@ -535,7 +535,7 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       Seq[File](algebraFile)
     },
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "algebra-laws" % "2.12.0"
+      "org.typelevel" %%% "algebra-laws" % "2.13.0"
     )
   )
   .nativeSettings(
@@ -1334,8 +1334,8 @@ lazy val buildProtocol = crossProject(JVMPlatform)
     libraryDependencies ++= Seq(
       // "ch.epfl.scala" %%% "bsp4s" % "2.2.0-M4.TEST" cross (CrossVersion.for3Use2_13) exclude("com.lihaoyi", "sourcecode_2.13") exclude("org.typelevel", "cats-core_2.13") exclude("org.typelevel", "cats-kernel_2.13"),
       // "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1",
-      // "org.typelevel" %%% "cats-core" % "2.12.0",
-      // "org.typelevel" %%% "cats-kernel" % "2.12.0",
+      // "org.typelevel" %%% "cats-core" % "2.13.0",
+      // "org.typelevel" %%% "cats-kernel" % "2.13.0",
       "org.log4s" %%% "log4s" % "1.10.0",
       "org.slf4j" % "slf4j-api" % "2.0.16",
       "org.slf4j" % "slf4j-simple" % "2.0.16",
