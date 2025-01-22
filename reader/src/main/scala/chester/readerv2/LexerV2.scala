@@ -1,24 +1,30 @@
 package chester.readerv2
 
-import chester.error.Pos
-import chester.reader.ParseError
+import chester.error.{Pos, RangeInFile, SourcePos}
+import chester.reader.{ParseError, SourceOffset}
 import chester.readerv2.Token
 import chester.syntax.concrete.*
 
 case class LexerState(
     tokens: TokenStream,
     current: Token,
-    errors: Vector[ParseError] = Vector.empty
+    errors: Vector[ParseError] = Vector.empty,
+    ignoreLocation: Boolean = false,
+    sourceOffset: SourceOffset
 )
 
 object LexerV2 {
-  def apply(tokens: TokenStream): LexerState = {
+  private def createMeta(pos: Pos, sourceOffset: SourceOffset): ExprMeta = {
+    ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(pos, pos))), None)
+  }
+
+  def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerState = {
     tokens.headOption match {
-      case Some(Right(token)) => LexerState(tokens.tail, token)
+      case Some(Right(token)) => LexerState(tokens.tail, token, ignoreLocation = ignoreLocation, sourceOffset = sourceOffset)
       case Some(Left(error)) => 
-        val initialState = LexerState(tokens.tail, Token.EOF(error.pos), Vector(error))
+        val initialState = LexerState(tokens.tail, Token.EOF(error.pos), Vector(error), ignoreLocation, sourceOffset)
         advance(initialState)
-      case None => LexerState(LazyList.empty, Token.EOF(Pos.zero))
+      case None => LexerState(LazyList.empty, Token.EOF(Pos.zero), ignoreLocation = ignoreLocation, sourceOffset = sourceOffset)
     }
   }
 
@@ -62,41 +68,41 @@ object LexerV2 {
     val cleanState = skipWhitespaceAndComments(state)
     cleanState.current match {
       case Token.IntegerLiteral(value, radix, pos) =>
-        Right((IntegerLiteral(value, None), advance(cleanState)))
+        Right((IntegerLiteral(value, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
         
       case Token.RationalLiteral(value, pos) =>
-        Right((RationalLiteral(value.toDouble, None), advance(cleanState)))
+        Right((RationalLiteral(value.toDouble, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
         
       case Token.StringLiteral(segments, pos) =>
         Right((StringLiteral(segments.map {
           case Token.StringChars(chars) => chars.mkString
           case Token.StringEscape(c) => c.toString
           case _ => "" // Handle interpolation later
-        }.mkString, None), advance(cleanState)))
+        }.mkString, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
         
       case Token.Identifier(parts, pos) =>
         Right((Identifier(parts.map {
           case Token.IdentifierPart(chars) => chars.mkString
           case Token.OperatorPart(chars) => chars.mkString
-        }.mkString, None), advance(cleanState)))
+        }.mkString, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
         
       case Token.LParen(pos) =>
         for {
           (exprs, state1) <- parseExprList(advance(cleanState))
-          (_, state2) <- expect(state1, classOf[Token.RParen])
-        } yield (Tuple(exprs, None), state2)
+          (rparen, state2) <- expect(state1, classOf[Token.RParen])
+        } yield (Tuple(exprs, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), state2)
         
       case Token.LBracket(pos) =>
         for {
           (exprs, state1) <- parseExprList(advance(cleanState))
-          (_, state2) <- expect(state1, classOf[Token.RBracket])
-        } yield (ListExpr(exprs, None), state2)
+          (rbracket, state2) <- expect(state1, classOf[Token.RBracket])
+        } yield (ListExpr(exprs, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), state2)
         
       case Token.LBrace(pos) =>
         for {
           (fields, state1) <- parseObjectFields(advance(cleanState))
-          (_, state2) <- expect(state1, classOf[Token.RBrace])
-        } yield (ObjectExpr(fields, None), state2)
+          (rbrace, state2) <- expect(state1, classOf[Token.RBrace])
+        } yield (ObjectExpr(fields, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), state2)
         
       case token =>
         Left(ParseError(s"Unexpected token: ${token.text}", token.pos))
@@ -140,7 +146,10 @@ object LexerV2 {
       (nameToken, state1) <- expect(state, classOf[Token.Identifier])
       (_, state2) <- expect(state1, classOf[Token.Equal])
       (value, state3) <- parseExpr(state2)
-    } yield (ObjectExprClause(Identifier(nameToken.text, None), value), state3)
+    } yield (ObjectExprClause(
+      Identifier(nameToken.text, if (state.ignoreLocation) None else Some(createMeta(nameToken.pos, state.sourceOffset))), 
+      value
+    ), state3)
   }
 
   private def expect[T <: Token](state: LexerState, tokenType: Class[T]): Either[ParseError, (T, LexerState)] = {

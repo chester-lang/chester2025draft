@@ -64,9 +64,10 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
   given reporter: Reporter[ParseError] = new Reporter[ParseError] {
     def apply(error: ParseError): Unit = fail(s"Tokenizer error: ${error.message}")
   }
-  val tokenizer = chester.readerv2.Tokenizer(SourceOffset(source))
+  val sourceOffset = SourceOffset(source)
+  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize
-  val lexerState = LexerV2(tokens)
+  val lexerState = LexerV2(tokens, sourceOffset, ignoreLocation = true)
   
   LexerV2.parseExpr(lexerState).fold(
     error => fail(s"V2 Parsing failed for input: $input ${error.message} at ${error.pos}"),
