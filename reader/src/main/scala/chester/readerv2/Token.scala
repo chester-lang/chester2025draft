@@ -49,6 +49,16 @@ object Token {
     def text: String = s"'$name"
   }
 
+  // Keywords
+  case class Keyword(name: String, pos: Pos) extends Token {
+    def text = s"#$name"
+  }
+
+  // Operators
+  case class Operator(symbol: String, pos: Pos) extends Token {
+    def text = symbol
+  }
+
   // Delimiters
   case class LParen(pos: Pos) extends Token { def text = "(" }
   case class RParen(pos: Pos) extends Token { def text = ")" }
