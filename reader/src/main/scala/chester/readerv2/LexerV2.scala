@@ -11,7 +11,7 @@ case class LexerState(
     errors: Vector[ParseError] = Vector.empty
 )
 
-object Lexer {
+object LexerV2 {
   def apply(tokens: TokenStream): LexerState = {
     tokens.headOption match {
       case Some(Right(token)) => LexerState(tokens.tail, token)
