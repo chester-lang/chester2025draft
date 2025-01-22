@@ -156,7 +156,7 @@ up := {
 val scala3Version = "3.6.4-RC1"
 val scala3Lib = "3.6.3"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.0-RC1-bin-20250118-b801042-NIGHTLY"
+val scala3Nightly = "3.7.0-RC1-bin-20250120-db23c08-NIGHTLY"
 
 val graalVm = "graalvm-java23"
 val graalJdkVersion = "23.0.2"
@@ -205,7 +205,7 @@ val commonSettings0 = Seq(
     ),
   // scalafix
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
-  scalacOptions ++= Seq("-rewrite", "-source", "3.6-migration"),
+  scalacOptions ++= Seq("-rewrite", "-source", "3.7"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.0" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
