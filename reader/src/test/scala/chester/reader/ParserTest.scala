@@ -47,7 +47,7 @@ class ParserTest extends FunSuite {
   test("parse valid decimal integer") {
     val input = "12345"
     val expected = IntegerLiteral(BigInt("12345"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckV2(input, expected)
   }
 
   test("parse valid hexadecimal integer") {
