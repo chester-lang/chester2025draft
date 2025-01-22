@@ -1375,7 +1375,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     assembly / assemblyOutputPath := file("target") / "chester-interpreter.jar"
   )
   .jvmSettings(
-    libraryDependencies += "org.jetbrains" % "annotations" % "26.0.1",
+    libraryDependencies += "org.jetbrains" % "annotations" % "26.0.2",
     assembly / test := {},
     assembly / assemblyExcludedJars := {
       val cp = (assembly / fullClasspath).value
