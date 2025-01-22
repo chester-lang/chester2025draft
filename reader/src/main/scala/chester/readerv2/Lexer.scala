@@ -34,7 +34,7 @@ class Lexer(tokens: TokenStream) {
 
   def skipWhitespaceAndComments(state: LexerState): LexerState = {
     state.current match {
-      case _: Whitespace | _: Comment => skipWhitespaceAndComments(advance(state))
+      case _: Whitespace | _: SingleLineComment => skipWhitespaceAndComments(advance(state))
       case _                          => state
     }
   }

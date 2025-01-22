@@ -101,7 +101,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       current = advance(current)
     }
 
-    (current, Right(Comment(chars.toVector, startPos)))
+    (current, Right(SingleLineComment(chars.toVector, startPos)))
   }
 
   private def scanIdentifier(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {

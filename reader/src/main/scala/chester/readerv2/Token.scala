@@ -62,7 +62,7 @@ object Token {
   case class Arrow(pos: Pos) extends Token { def text = "->" }
 
   // Comments and Whitespace
-  case class Comment(content: Vector[Char], pos: Pos) extends Token {
+  case class SingleLineComment(content: Vector[Char], pos: Pos) extends Token {
     def text: String = s"//${content.mkString}"
   }
 
