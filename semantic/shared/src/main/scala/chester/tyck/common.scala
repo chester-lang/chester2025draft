@@ -1,6 +1,6 @@
 package chester.tyck
 
-import chester.error.TyckProblem
+import chester.error.{Reporter, TyckProblem}
 
 given ckToReport(using ck: Tyck): Reporter[TyckProblem] = ck.reporter
 

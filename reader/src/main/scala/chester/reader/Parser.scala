@@ -64,16 +64,16 @@ case class ReaderInternal(
   def maybeSpace1: P[Vector[Comment]] = P(delimiter1.?.map(_.toVector.flatten))
 
   def simpleId: P[String] = P(
-    (CharacterPred(identifierFirst).rep(1) ~ CharacterPred(
-      identifierMiddle
-    ).rep.? ~ CharacterPred(identifierEnd).?).!
+    (CharacterPred(isIdentifierFirst).rep(1) ~ CharacterPred(
+      isIdentifierMiddle
+    ).rep.? ~ CharacterPred(isIdentifierEnd).?).!
   )
 
   def id: P[String] = operatorId | simpleId
 
   def operatorId: P[String] = P(
-    (CharacterPred(operatorIdentifierFirst).rep(1) ~ CharacterPred(
-      operatorIdentifierRest
+    (CharacterPred(isOperatorIdentifierFirst).rep(1) ~ CharacterPred(
+      isOperatorIdentifierRest
     ).rep).!
   )
 

@@ -24,16 +24,16 @@ object IdentifierRules {
   def isMiddleWordingSymbol(x: Character): Boolean =
     AllowedMiddleWordingSymbols.contains(x)
 
-  def identifierFirst(x: Character): Boolean = isWording(x) || isWordingSymbol(x)
+  def isIdentifierFirst(x: Character): Boolean = isWording(x) || isWordingSymbol(x)
 
-  def identifierMiddle(x: Character): Boolean =
-    identifierFirst(x) || isDigit(x) || isMiddleWordingSymbol(x)
+  def isIdentifierMiddle(x: Character): Boolean =
+    isIdentifierFirst(x) || isDigit(x) || isMiddleWordingSymbol(x)
 
-  def identifierEnd(x: Character): Boolean = identifierFirst(x) || isDigit(x)
+  def isIdentifierEnd(x: Character): Boolean = isIdentifierFirst(x) || isDigit(x)
 
-  def operatorIdentifierFirst(x: Character): Boolean = isOperatorSymbol(x)
+  def isOperatorIdentifierFirst(x: Character): Boolean = isOperatorSymbol(x)
 
-  def operatorIdentifierRest(x: Character): Boolean =
+  def isOperatorIdentifierRest(x: Character): Boolean =
     isOperatorSymbol(x) || isWordingSymbol(x)
 
   def strIsOperator(s: String): Boolean = {

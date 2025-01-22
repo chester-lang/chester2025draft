@@ -6,7 +6,7 @@ import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
 import chester.reader.{ChesterReader, FilePath, FilePathImpl}
 import chester.repl.REPLEngine
-import chester.tyck.{Reporter, TyckResult, Tycker}
+import chester.tyck.{TyckResult, Tycker}
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
