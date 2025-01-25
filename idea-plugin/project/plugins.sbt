@@ -1,4 +1,4 @@
-addSbtPlugin("org.jetbrains" % "sbt-idea-plugin" % "3.26.2")
+addSbtPlugin("org.jetbrains" % "sbt-idea-plugin" % "4.1.0")
 
 // cli tools
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")

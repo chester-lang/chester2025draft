@@ -1,5 +1,10 @@
 import org.jetbrains.sbtidea.Keys._
 
+
+ThisBuild / intellijPluginName := "Chester Language Support"
+ThisBuild / intellijBuild := "243.23654.117"
+ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity
+
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
 inThisBuild(
@@ -16,11 +21,8 @@ lazy val chesterPlugin =
       name := "ChesterLanguageSupport",
       version := "0.0.27",
       scalaVersion := "3.7.0-RC1-bin-20250120-db23c08-NIGHTLY",
-      ThisBuild / intellijPluginName := "Chester Language Support",
-      ThisBuild / intellijBuild := "243.23654.117",
-      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity,
-      Global / intellijAttachSources := true,
       Compile / javacOptions ++= Seq("--release", "17"),
+      Compile / scalacOptions ++= Seq("--release", "17"),
       intellijPlugins ++= Seq(
         "com.intellij.properties".toPlugin,
         "com.redhat.devtools.lsp4ij".toPlugin
