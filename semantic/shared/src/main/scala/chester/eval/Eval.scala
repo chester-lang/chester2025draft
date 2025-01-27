@@ -1,15 +1,17 @@
 package chester.eval
 
-import chester.runtime.Value
 import chester.syntax.core.*
-import chester.syntax.core.spec.spec.{BooleanTermC, TermT}
 
-case class EvalContext()
+case class ReduceContext()
 
-case class Eval[Term <: TermT[Term]]() {
-  type BooleanTerm = BooleanTermC[Term]
-  def evalNoEffect(code: Term, ctx: EvalContext = EvalContext()): Value = code match {
-    case b: BooleanTerm => Value(b.value)
-    case _              => ???
-  }
+trait Reducer {
+  def reduce(term: Term)(using ReduceContext, Reducer): Term
+}
+
+object Reducer {
+  def reduce(term: Term)(using ctx:ReduceContext, r: Reducer): Term = r.reduce(term)
+}
+
+object NaiveReducer extends Reducer {
+  override def reduce(term: Term)(using ReduceContext, Reducer):Term=term
 }
