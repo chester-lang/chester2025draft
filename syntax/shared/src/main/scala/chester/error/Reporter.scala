@@ -1,7 +1,8 @@
 package chester.error
 
-trait Reporter[-T] {
+trait Reporter[-T] extends Function1[T, Unit] {
   def apply(value: T): Unit
+  final inline def report(value: T): Unit = apply(value)
 }
 
 object StdErrReporter extends Reporter[Problem] {
