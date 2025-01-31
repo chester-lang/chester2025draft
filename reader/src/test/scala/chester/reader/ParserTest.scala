@@ -47,25 +47,25 @@ class ParserTest extends FunSuite {
   test("parse valid decimal integer") {
     val input = "12345"
     val expected = IntegerLiteral(BigInt("12345"), meta = None)
-    parseAndCheckV2(input, expected)
+    parseAndCheck(input, expected)
   }
 
   test("parse valid hexadecimal integer") {
     val input = "0x1A3F"
     val expected = IntegerLiteral(BigInt("1A3F", 16), meta = None)
-    parseAndCheckV2(input, expected)
+    parseAndCheck(input, expected)
   }
 
   test("parse valid binary integer") {
     val input = "0b1101"
     val expected = IntegerLiteral(BigInt("1101", 2), meta = None)
-    parseAndCheckV2(input, expected)
+    parseAndCheck(input, expected)
   }
 
   if (false) test("parse signed integer") { // we see it as -(6789) now
     val input = "-6789"
     val expected = IntegerLiteral(BigInt("-6789"), meta = None)
-    parseAndCheckV2(input, expected)
+    parseAndCheck(input, expected)
   }
 
   // Tests for DoubleLiteral
@@ -92,7 +92,7 @@ class ParserTest extends FunSuite {
   test("parse integerLiteral") {
     val input = "12345"
     val expected = IntegerLiteral(BigInt("12345"), meta = None)
-    parseAndCheckV2(input, expected)
+    parseAndCheck(input, expected)
   }
 
   test("parse doubleLiteral") {

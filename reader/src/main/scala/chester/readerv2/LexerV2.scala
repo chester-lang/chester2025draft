@@ -11,8 +11,8 @@ case class LexerState(
     sourceOffset: SourceOffset
 )
 
-class LexerV2(using reporter: Reporter[ParseError]) {
-  def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerState = {
+object LexerV2 {
+  def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false)(using reporter: Reporter[ParseError]): LexerState = {
     tokens.headOption match {
       case Some(Right(token)) => 
         LexerState(tokens.tail, token, ignoreLocation = ignoreLocation, sourceOffset = sourceOffset)
@@ -29,7 +29,13 @@ class LexerV2(using reporter: Reporter[ParseError]) {
     ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(pos, pos))), None)
   }
 
-  def parseAtom(state: LexerState): (Expr, LexerState) = {
+  def parseExpr(state: LexerState)(using reporter: Reporter[ParseError]): Either[ParseError, (Expr, LexerState)] = {
+    parseAtom(state) match {
+      case (expr, state) => Right((expr, state))
+    }
+  }
+
+  private def parseAtom(state: LexerState)(using reporter: Reporter[ParseError]): (Expr, LexerState) = {
     def parseExpr(state: LexerState): (Expr, LexerState) = {
       val cleanState = skipWhitespaceAndComments(state)
       cleanState.current match {
@@ -82,11 +88,11 @@ class LexerV2(using reporter: Reporter[ParseError]) {
         case Token.Operator(symbol, pos) =>
           val (expr, state) = parseAtom(advance(cleanState))
           val meta = if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))
-          (OpSeq(Vector(Identifier(Name(symbol), meta), expr), None), state)
+          (OpSeq(Vector(Identifier(symbol, meta), expr), None), state)
 
         case Token.SymbolLiteral(name, pos) =>
           val meta = if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))
-          (SymbolLiteral(Name(name), meta), advance(cleanState))
+          (SymbolLiteral(name, meta), advance(cleanState))
 
         case Token.Keyword(name, pos) =>
           val meta = if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))
@@ -95,17 +101,52 @@ class LexerV2(using reporter: Reporter[ParseError]) {
 
         case Token.Identifier(parts, pos) =>
           val meta = if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))
-          (Identifier(Name(parts.map(_.text).mkString), meta), advance(cleanState))
+          val ident = Identifier(parts.map(_.text).mkString, meta)
+          var current = advance(cleanState)
+          var expr: Expr = ident
+
+          // Parse function calls and dot access
+          while (current.current != Token.EOF(current.current.pos)) {
+            current = skipWhitespaceAndComments(current)
+            current.current match {
+              case Token.LParen(_) =>
+                val (args, newState) = parseExprList(advance(current))
+                newState.current match {
+                  case Token.RParen(_) =>
+                    expr = FunctionCall(expr, Tuple(args, None), meta)
+                    current = advance(newState)
+                  case _ =>
+                    reporter.report(ParseError("Expected closing parenthesis", newState.current.pos))
+                    // Recover and continue
+                    expr = FunctionCall(expr, Tuple(args, None), meta)
+                    current = newState
+                }
+
+              case Token.Dot(_) =>
+                current = skipWhitespaceAndComments(advance(current))
+                current.current match {
+                  case Token.Identifier(parts, _) =>
+                    expr = DotCall(expr, Identifier(parts.map(_.text).mkString, None), Vector.empty, meta)
+                    current = advance(current)
+                  case _ =>
+                    reporter.report(ParseError("Expected identifier after dot", current.current.pos))
+                    return (expr, current)
+                }
+
+              case _ =>
+                return (expr, current)
+            }
+          }
+          (expr, current)
 
         case Token.EOF(pos) =>
           reporter.report(ParseError("Unexpected end of input", pos))
-          // Recover with empty tuple
-          (Tuple(Vector.empty, None), state)
+          (Block(Vector.empty, None, None), state)
 
-        case _ =>
-          reporter.report(ParseError(s"Unexpected token: ${cleanState.current}", cleanState.current.pos))
-          // Recover with empty tuple and advance
-          (Tuple(Vector.empty, None), advance(cleanState))
+        case token =>
+          reporter.report(ParseError(s"Unexpected token: ${token.text}", token.pos))
+          val meta = if (state.ignoreLocation) None else Some(createMeta(token.pos, state.sourceOffset))
+          (Block(Vector.empty, None, meta), advance(state))
       }
     }
 
@@ -113,213 +154,91 @@ class LexerV2(using reporter: Reporter[ParseError]) {
     val (firstExpr, firstState) = parseExpr(state)
     var current = skipWhitespaceAndComments(firstState)
     var expr = firstExpr
-    var terms = Vector(expr)
 
-    // Look for operator sequences
-    while (true) {
+    // Parse operator sequences
+    while (current.current != Token.EOF(current.current.pos)) {
       current.current match {
-        case op @ Token.Operator(_, _) =>
-          val opText = op.text
-          current = skipWhitespaceAndComments(advance(current))
-          val (nextExpr, nextState) = parseAtom(current)
-          terms = terms :+ Identifier(Name(opText), if (current.ignoreLocation) None else Some(createMeta(op.pos, current.sourceOffset))) :+ nextExpr
-          current = skipWhitespaceAndComments(nextState)
-        case id @ Token.Identifier(parts, _) if parts.exists(_.isInstanceOf[Token.OpPart]) =>
-          val opText = id.text
-          current = skipWhitespaceAndComments(advance(current))
-          val (nextExpr, nextState) = parseAtom(current)
-          terms = terms :+ Identifier(Name(opText), if (current.ignoreLocation) None else Some(createMeta(id.pos, current.sourceOffset))) :+ nextExpr
-          current = skipWhitespaceAndComments(nextState)
+        case Token.Operator(op, _) =>
+          val (rightExpr, newState) = parseExpr(advance(current))
+          expr = OpSeq(Vector(expr, Identifier(op, None), rightExpr), None)
+          current = newState
         case _ =>
-          if (terms.length > 1) {
-            return (OpSeq(terms, None), current)
-          } else {
-            return (expr, current)
-          }
+          return (expr, current)
       }
     }
+
     (expr, current)
   }
 
-  private def parseObjectExprClause(state: LexerState): (ObjectExprClause, LexerState) = {
-    val (nameToken, state1) = expect(state, classOf[Token.Identifier])
-    val state2 = skipWhitespaceAndComments(advance(state1))
-    val meta = if (state.ignoreLocation) None else Some(createMeta(nameToken.pos, state.sourceOffset))
-    
-    state2.current match {
-      case Token.Operator("=", _) =>
-        val state3 = skipWhitespaceAndComments(advance(state2))
-        val (value, state4) = parseOpSeq(state3)
-        (ObjectExprClause(Identifier(Name(nameToken.text), meta), value), state4)
-      case _ =>
-        reporter.report(ParseError("Expected equals", state2.current.pos))
-        // Recover by treating as empty value
-        (ObjectExprClause(Identifier(Name(nameToken.text), meta), Tuple(Vector.empty, None)), state2)
+  private def skipWhitespaceAndComments(state: LexerState)(using reporter: Reporter[ParseError]): LexerState = {
+    var current = state
+    while (current.current match {
+      case Token.Whitespace(_, _) | Token.SingleLineComment(_, _) => true
+      case _ => false
+    }) {
+      current = advance(current)
     }
+    current
   }
 
-  def advance(state: LexerState): LexerState = {
-    var currentState = state
-    while (true) {
-      currentState.tokens.headOption match {
-        case Some(Right(token)) =>
-          return currentState.copy(current = token, tokens = currentState.tokens.tail)
-        case Some(Left(error)) =>
-          reporter.report(error)
-          currentState = currentState.copy(tokens = currentState.tokens.tail)
-        case None =>
-          return currentState.copy(current = Token.EOF(currentState.current.pos), tokens = LazyList.empty)
-      }
-    }
-    currentState // Unreachable but needed for compilation
-  }
-
-  def skipWhitespaceAndComments(state: LexerState): LexerState = {
-    var currentState = state
-    while (
-      currentState.current match {
-        case _: Token.Whitespace | _: Token.SingleLineComment => true
-        case _                                                => false
-      }
-    ) {
-      currentState = advance(currentState)
-    }
-    currentState
-  }
-
-  def peek(state: LexerState): Option[Token] = {
+  private def advance(state: LexerState)(using reporter: Reporter[ParseError]): LexerState = {
     state.tokens.headOption match {
-      case Some(Right(token)) => Some(token)
-      case _                  => None
+      case Some(Right(token)) => state.copy(tokens = state.tokens.tail, current = token)
+      case Some(Left(error)) =>
+        reporter.report(error)
+        // Skip the error token and continue
+        state.copy(tokens = state.tokens.tail)
+      case None => state.copy(tokens = LazyList.empty, current = Token.EOF(state.current.pos))
     }
   }
 
-  def parseExpr(state: LexerState): (Expr, LexerState) = {
-    parseOpSeq(state)
-  }
-
-  private def parseOpSeq(state: LexerState): (Expr, LexerState) = {
-    val (firstExpr, firstState) = parseAtom(state)
-    var current = skipWhitespaceAndComments(firstState)
-    var expr = firstExpr
-    var terms = Vector(expr)
-
-    // Look for operator sequences
-    while (true) {
-      current.current match {
-        case op @ Token.Operator(_, _) =>
-          val opText = op.text
-          current = skipWhitespaceAndComments(advance(current))
-          val (nextExpr, nextState) = parseAtom(current)
-          terms = terms :+ Identifier(Name(opText), if (current.ignoreLocation) None else Some(createMeta(op.pos, current.sourceOffset))) :+ nextExpr
-          current = skipWhitespaceAndComments(nextState)
-        case id @ Token.Identifier(parts, _) if parts.exists(_.isInstanceOf[Token.OpPart]) =>
-          val opText = id.text
-          current = skipWhitespaceAndComments(advance(current))
-          val (nextExpr, nextState) = parseAtom(current)
-          terms = terms :+ Identifier(Name(opText), if (current.ignoreLocation) None else Some(createMeta(id.pos, current.sourceOffset))) :+ nextExpr
-          current = skipWhitespaceAndComments(nextState)
-        case _ =>
-          if (terms.length > 1) {
-            return (OpSeq(terms, None), current)
-          } else {
-            return (expr, current)
-          }
-      }
-    }
-    (expr, current)
-  }
-
-  private def parseStatements(state: LexerState): (Vector[Expr], Option[Expr], LexerState) = {
-    var statements = Vector.empty[Expr]
-    var current = skipWhitespaceAndComments(state)
-    var lastExpr: Option[Expr] = None
-
-    while (current.current != Token.EOF(current.current.pos) && current.current != Token.RBrace(current.current.pos)) {
-      val (expr, nextState) = parseOpSeq(current)
-      current = skipWhitespaceAndComments(nextState)
-      current.current match {
-        case Token.Comma(_) | Token.Semicolon(_) =>
-          statements = statements :+ expr
-          current = skipWhitespaceAndComments(advance(current))
-        case _ =>
-          lastExpr = Some(expr)
-          current = skipWhitespaceAndComments(current)
-      }
-    }
-    (statements, lastExpr, current)
-  }
-
-  private def parseExprList(state: LexerState): (Vector[Expr], LexerState) = {
+  private def parseExprList(state: LexerState)(using reporter: Reporter[ParseError]): (Vector[Expr], LexerState) = {
     var exprs = Vector.empty[Expr]
     var current = skipWhitespaceAndComments(state)
 
     while (current.current != Token.EOF(current.current.pos) && 
-           !current.current.isInstanceOf[Token.RParen] && 
-           !current.current.isInstanceOf[Token.RBrace] && 
-           !current.current.isInstanceOf[Token.RBracket]) {
-      val (expr, nextState) = parseOpSeq(current)
+           current.current != Token.RParen(current.current.pos)) {
+      val (expr, newState) = parseAtom(current)
       exprs = exprs :+ expr
-      current = skipWhitespaceAndComments(nextState)
+      current = skipWhitespaceAndComments(newState)
+
       current.current match {
         case Token.Comma(_) =>
           current = skipWhitespaceAndComments(advance(current))
-          // Handle trailing comma
-          if (current.current.isInstanceOf[Token.RParen] || 
-              current.current.isInstanceOf[Token.RBrace] || 
-              current.current.isInstanceOf[Token.RBracket]) {
-            return (exprs, current)
-          }
-        case Token.RParen(_) | Token.RBrace(_) | Token.RBracket(_) =>
+        case Token.RParen(_) | Token.EOF(_) =>
           // End of list
-          return (exprs, current)
-        case _ if exprs.nonEmpty =>
-          reporter.report(ParseError("Expected comma between expressions", current.current.pos))
-          // Recover by treating as end of list
-          return (exprs, current)
         case _ =>
-          // Single expression or empty list
+          reporter.report(ParseError("Expected comma or closing parenthesis", current.current.pos))
+          // Try to recover by assuming this is the end of the list
+          return (exprs, current)
       }
     }
+
     (exprs, current)
   }
 
-  private def parseObjectFields(state: LexerState): (Vector[ObjectClause], LexerState) = {
-    def loop(state: LexerState, acc: Vector[ObjectClause]): (Vector[ObjectClause], LexerState) = {
-      val cleanState = skipWhitespaceAndComments(state)
-      cleanState.current match {
-        case _: Token.RBrace => (acc, cleanState)
-        case _: Token.Comma  => loop(advance(cleanState), acc)
+  private def parseStatements(state: LexerState)(using reporter: Reporter[ParseError]): (Vector[Expr], Option[Expr], LexerState) = {
+    var statements = Vector.empty[Expr]
+    var current = skipWhitespaceAndComments(state)
+    var lastExpr: Option[Expr] = None
+
+    while (current.current != Token.EOF(current.current.pos) && 
+           current.current != Token.RBrace(current.current.pos)) {
+      val (expr, newState) = parseAtom(current)
+      current = skipWhitespaceAndComments(newState)
+
+      current.current match {
+        case Token.Semicolon(_) =>
+          statements = statements :+ expr
+          current = skipWhitespaceAndComments(advance(current))
+        case Token.RBrace(_) | Token.EOF(_) =>
+          lastExpr = Some(expr)
         case _ =>
-          val (field, state1) = parseObjectField(cleanState)
-          loop(state1, acc :+ field)
+          statements = statements :+ expr
+          current = skipWhitespaceAndComments(current)
       }
     }
-    loop(state, Vector.empty)
-  }
 
-  private def parseObjectField(state: LexerState): (ObjectClause, LexerState) = {
-    val (nameToken, state1) = expect(state, classOf[Token.Identifier])
-    val (_, state2) = expect(state1, classOf[Token.Equal])
-    val (value, state3) = parseOpSeq(state2)
-    (
-      ObjectExprClause(
-        Identifier(Name(nameToken.text), if (state.ignoreLocation) None else Some(createMeta(nameToken.pos, state.sourceOffset))),
-        value
-      ),
-      state3
-    )
-  }
-
-  private def expect[T <: Token](state: LexerState, tokenType: Class[T]): (T, LexerState) = {
-    if (tokenType.isInstance(state.current)) {
-      val token = state.current.asInstanceOf[T]
-      val nextState = advance(state)
-      (token, nextState)
-    } else {
-      reporter.report(ParseError(s"Expected ${tokenType.getSimpleName} but got ${state.current.getClass.getSimpleName}", state.current.pos))
-      // Recover by treating as end of input
-      (state.current.asInstanceOf[T], state)
-    }
+    (statements, lastExpr, current)
   }
 }

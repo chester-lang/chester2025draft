@@ -2,8 +2,6 @@ package chester.readerv2
 
 import chester.error.{Pos, Reporter}
 import chester.reader.{ParseError, SourceOffset}
-import chester.readerv2.Token.*
-import chester.syntax.IdentifierRules.*
 import chester.utils.WithUTF16
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
@@ -18,194 +16,91 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       ""
   }
 
-  private case class TokenizerState(
+  case class TokenizerState(
       index: Int,
-      pos: Pos
-  ) {
-    def current: Option[Char] = if (index < content.length) Some(content(index)) else None
-  }
+      current: Option[Char],
+      utf16: Int
+  )
 
-  private def currentPos(state: TokenizerState): Pos = state.pos
+  private def currentPos(state: TokenizerState): Pos = {
+    val line = content.substring(0, state.index).count(_ == '\n') + 1
+    val lastNewline = content.lastIndexOf('\n', state.index - 1)
+    val col = if (lastNewline == -1) state.index + 1 else state.index - lastNewline
+    Pos(WithUTF16(col, state.utf16), line - 1, WithUTF16(col, state.utf16))
+  }
 
   private def peek(state: TokenizerState): Option[Char] =
     if (state.index + 1 >= content.length) None else Some(content(state.index + 1))
-  implicit def refineUUU(x:Int): Int :| Positive0 = x.refineUnsafe[Positive0]
+
+  implicit def refineUUU(x: Int): Int :| Positive0 = x.refineUnsafe[Positive0]
 
   private def advance(state: TokenizerState): TokenizerState = {
     val c = state.current.getOrElse(return state)
-    if (c == '\n') {
-      state.copy(
-        index = state.index + 1,
-        pos = Pos(
-          WithUTF16(state.pos.index.i + 1, state.pos.index.utf16 + 1),
-          (state.pos.line + 1).refineUnsafe[Positive0],
-          WithUTF16.Zero
-        )
-      )
+    val nextIndex = state.index + 1
+    val nextUtf16 = state.utf16 + (if (c.isHighSurrogate) 2 else 1)
+    
+    if (nextIndex >= content.length) {
+      TokenizerState(nextIndex, None, nextUtf16)
     } else {
-      val charWidth = if (c.isHighSurrogate) 2 else 1
-      state.copy(
-        index = state.index + 1,
-        pos = Pos(
-          WithUTF16(state.pos.index.i + charWidth, state.pos.index.utf16 + charWidth),
-          state.pos.line,
-          WithUTF16(state.pos.column.i + 1, state.pos.column.utf16 + charWidth)
-        )
-      )
+      TokenizerState(nextIndex, Some(content(nextIndex)), nextUtf16)
     }
-  }
-
-  private def singleCharToken(state: TokenizerState, c: Char): (TokenizerState, Either[ParseError, Token]) = {
-    val pos = currentPos(state)
-    val nextState = advance(state)
-    val token = c match {
-      case '(' => LParen(pos)
-      case ')' => RParen(pos)
-      case '{' => LBrace(pos)
-      case '}' => RBrace(pos)
-      case '[' => LBracket(pos)
-      case ']' => RBracket(pos)
-      case ',' => Comma(pos)
-      case '.' => Dot(pos)
-      case '=' => Equal(pos)
-      case ';' => Semicolon(pos)
-      case '-' if peek(state) == Some('>') =>
-        Arrow(pos)
-      case c =>
-        reporter(ParseError(s"Unexpected character: $c", pos))
-        EOF(pos)
-    }
-    (nextState, Right(token))
-  }
-
-  private def scanWhitespace(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
-    val startPos = currentPos(state)
-    val chars = new scala.collection.mutable.ArrayBuffer[Char]()
-    var current = state
-
-    while (current.index < content.length && content(current.index).isWhitespace) {
-      chars += content(current.index)
-      current = advance(current)
-    }
-
-    (current, Right(Token.Whitespace(chars.toVector, startPos)))
-  }
-
-  private def scanComment(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
-    val startPos = currentPos(state)
-    val chars = new scala.collection.mutable.ArrayBuffer[Char]()
-    var current = advance(advance(state)) // Skip //
-
-    while (current.index < content.length && content(current.index) != '\n') {
-      chars += content(current.index)
-      current = advance(current)
-    }
-
-    (current, Right(SingleLineComment(chars.toVector, startPos)))
   }
 
   private def scanIdentifier(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
     var current = state
+    var parts = Vector.empty[Token.IdentifierPart]
     val startPos = currentPos(state)
-    val parts = Vector.newBuilder[Token.IdentifierPart]
-    var currentPart = Vector.newBuilder[Char]
 
-    while (current.index < content.length && (isIdentifierPart(content(current.index)) || content(current.index) == '_')) {
-      currentPart += content(current.index)
+    while (current.current.exists(c => c.isLetterOrDigit || c == '_' || c == '-')) {
+      val text = current.current.get.toString
+      parts = parts :+ Token.NormalPart(text.toVector)
       current = advance(current)
     }
 
-    if (currentPart.result().nonEmpty) {
-      parts += Token.NormalPart(currentPart.result())
-    }
-
-    val identifier = Token.Identifier(parts.result(), startPos)
-    (current, Right(identifier))
-  }
-
-  private def scanOperator(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
-    var current = state
-    val startPos = currentPos(state)
-    val parts = Vector.newBuilder[Token.IdentifierPart]
-    var currentPart = Vector.newBuilder[Char]
-
-    while (current.index < content.length && isOperatorChar(content(current.index))) {
-      currentPart += content(current.index)
-      current = advance(current)
-    }
-
-    if (currentPart.result().nonEmpty) {
-      parts += Token.OpPart(currentPart.result())
-    }
-
-    val operator = Token.Operator(currentPart.result().mkString, startPos)
-    (current, Right(operator))
-  }
-
-  private def parseNumber(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
-    var current = state
-    val startPos = current.pos
-    var chars = Vector.empty[Char]
-    var isDecimal = false
-
-    while (current.current.exists(c => c.isDigit || (!isDecimal && c == '.'))) {
-      val c = current.current.get
-      if (c == '.') {
-        isDecimal = true
-      }
-      chars = chars :+ c
-      current = advance(current)
-    }
-
-    if (isDecimal) {
-      try {
-        val value = chars.mkString.toDouble
-        (current, Right(Token.RationalLiteral(value, startPos)))
-      } catch {
-        case _: NumberFormatException =>
-          (current, Left(ParseError("Invalid decimal number", startPos)))
-      }
+    if (parts.isEmpty) {
+      (current, Left(ParseError("Expected identifier", startPos)))
     } else {
-      try {
-        val value = BigInt(chars.mkString)
-        (current, Right(Token.IntegerLiteral(value, 10, startPos)))
-      } catch {
-        case _: NumberFormatException =>
-          (current, Left(ParseError("Invalid integer", startPos)))
-      }
+      (current, Right(Token.Identifier(parts, startPos)))
     }
   }
 
-  private def parseString(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
-    var current = advance(state) // Skip opening quote
-    val startPos = state.pos
-    var parts = Vector.empty[StringPart]
+  private def scanString(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
+    var current = state
+    var parts = Vector.empty[Token.StringPart]
     var currentChars = Vector.empty[Char]
+    val startPos = currentPos(state)
+    current = advance(current) // Skip opening quote
 
-    while (current.current.exists(_ != '"')) {
+    while (current.current.isDefined) {
       val c = current.current.get
-      if (c == '\\') {
-        current = advance(current)
-        if (current.current.isEmpty) {
-          return (current, Left(ParseError("Unterminated escape sequence", startPos)))
-        }
-        val escaped = current.current.get match {
-          case 'n' => '\n'
-          case 't' => '\t'
-          case 'r' => '\r'
-          case '"' => '"'
-          case '\\' => '\\'
-          case c => return (current, Left(ParseError(s"Invalid escape sequence: \\$c", startPos)))
-        }
+      if (c == '"') {
         if (currentChars.nonEmpty) {
-          parts = parts :+ StringChars(currentChars)
+          parts = parts :+ Token.StringChars(currentChars)
+        }
+        return (advance(current), Right(Token.StringLiteral(parts, startPos)))
+      } else if (c == '\\') {
+        if (currentChars.nonEmpty) {
+          parts = parts :+ Token.StringChars(currentChars)
           currentChars = Vector.empty
         }
-        parts = parts :+ StringEscape(escaped)
-        current = advance(current)
+        peek(current) match {
+          case Some(next) =>
+            val escaped = next match {
+              case 'n' => '\n'
+              case 't' => '\t'
+              case 'r' => '\r'
+              case '"' => '"'
+              case '\\' => '\\'
+              case _ => next
+            }
+            parts = parts :+ Token.StringEscape(escaped)
+            current = advance(advance(current))
+          case None =>
+            return (current, Left(ParseError("Incomplete escape sequence", currentPos(current))))
+        }
       } else if (c == '$' && peek(current).contains('{')) {
         if (currentChars.nonEmpty) {
-          parts = parts :+ StringChars(currentChars)
+          parts = parts :+ Token.StringChars(currentChars)
           currentChars = Vector.empty
         }
         
@@ -220,9 +115,9 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
           } else if (c == '}') {
             braceCount -= 1
             if (braceCount == 0) {
-              parts = parts :+ StringInterpolation(interpolationTokens)
+              parts = parts :+ Token.StringInterpolation(interpolationTokens)
               current = advance(current)
-              return (current, Right(Token.StringLiteral(parts, startPos)))
+              currentChars = Vector.empty
             }
           }
           
@@ -238,7 +133,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         }
         
         if (braceCount > 0) {
-          return (current, Left(ParseError("Unterminated string interpolation", startPos)))
+          return (current, Left(ParseError("Unclosed brace in string interpolation", startPos)))
         }
       } else {
         currentChars = currentChars :+ c
@@ -246,75 +141,69 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       }
     }
 
-    if (currentChars.nonEmpty) {
-      parts = parts :+ StringChars(currentChars)
-    }
-
-    if (current.current.isEmpty) {
-      (current, Left(ParseError("Unterminated string literal", startPos)))
-    } else {
-      current = advance(current) // Skip closing quote
-      (current, Right(Token.StringLiteral(parts, startPos)))
-    }
+    (current, Left(ParseError("Unterminated string literal", startPos)))
   }
 
-  private def isHexDigit(c: Char): Boolean =
-    c.isDigit || ('a' to 'f').contains(c.toLower)
-
-  private def isOperatorChar(c: Char): Boolean = {
-    c match {
-      case '+' | '-' | '*' | '/' | '%' | '=' | '<' | '>' | '!' | '&' | '|' | '^' | '~' | ':' => true
-      case _ => false
-    }
-  }
-
-  private def readOperator(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
+  private def parseNumber(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
     var current = state
+    var chars = Vector.empty[Char]
     val startPos = currentPos(state)
-    val buffer = new StringBuilder()
 
-    while (current.index < content.length && isOperatorChar(content(current.index))) {
-      buffer.append(content(current.index))
+    while (current.current.exists(_.isDigit)) {
+      chars = chars :+ current.current.get
       current = advance(current)
     }
 
-    val op = buffer.toString()
-    op match {
-      case ":" => (current, Right(Token.Colon(startPos)))
-      case "=" => (current, Right(Token.Equal(startPos)))
-      case "->" => (current, Right(Token.Arrow(startPos)))
-      case _ => (current, Right(Token.Operator(op, startPos)))
+    if (chars.isEmpty) {
+      (current, Left(ParseError("Expected number", startPos)))
+    } else {
+      try {
+        val value = BigInt(chars.mkString)
+        (current, Right(Token.IntegerLiteral(value, 10, startPos)))
+      } catch {
+        case _: NumberFormatException =>
+          (current, Left(ParseError("Invalid integer", startPos)))
+      }
     }
   }
 
   private def parseToken(state: TokenizerState): (TokenizerState, Either[ParseError, Token]) = {
-    val c = state.current.getOrElse(return (state, Right(Token.EOF(state.pos))))
-    val (nextState, token) = c match {
-      case c if c.isWhitespace => scanWhitespace(state)
-      case '/' if peek(state).contains('/') => scanComment(state)
-      case c if c.isDigit => parseNumber(state)
-      case '"' => parseString(state)
-      case c if isIdentifierFirst(c) => scanIdentifier(state)
-      case c if isOperatorIdentifierFirst(c) => scanOperator(state)
-      case c if isOperatorChar(c) => readOperator(state)
-      case c => singleCharToken(state, c)
+    var current = state
+    while (current.current.exists(_.isWhitespace)) {
+      current = advance(current)
     }
-    (nextState, token)
+
+    current.current match {
+      case None => (current, Right(Token.EOF(currentPos(current))))
+      case Some(c) =>
+        val pos = currentPos(current)
+        c match {
+          case '(' => (advance(current), Right(Token.LParen(pos)))
+          case ')' => (advance(current), Right(Token.RParen(pos)))
+          case '{' => (advance(current), Right(Token.LBrace(pos)))
+          case '}' => (advance(current), Right(Token.RBrace(pos)))
+          case '[' => (advance(current), Right(Token.LBracket(pos)))
+          case ']' => (advance(current), Right(Token.RBracket(pos)))
+          case '.' => (advance(current), Right(Token.Dot(pos)))
+          case ',' => (advance(current), Right(Token.Comma(pos)))
+          case ';' => (advance(current), Right(Token.Semicolon(pos)))
+          case ':' => (advance(current), Right(Token.Colon(pos)))
+          case '"' => scanString(current)
+          case c if c.isLetter || c == '_' => scanIdentifier(current)
+          case c if c.isDigit => parseNumber(current)
+          case c => (advance(current), Right(Token.Operator(c.toString, pos)))
+        }
+    }
   }
 
   def tokenize: TokenStream = {
-    var state = TokenizerState(
-      0,
-      Pos(WithUTF16(0, 0), 0, WithUTF16(0, 0))
-    )
-    var tokens = LazyList.empty[Either[ParseError, Token]]
-
-    while (state.index < content.length) {
-      val (newState, token) = parseToken(state)
-      state = newState
-      tokens = tokens.appended(token)
+    var current = TokenizerState(0, if (content.isEmpty) None else Some(content(0)), 0)
+    LazyList.unfold(current) { state =>
+      if (state.current.isEmpty) None
+      else {
+        val (nextState, token) = parseToken(state)
+        Some((token, nextState))
+      }
     }
-
-    tokens.appended(Right(Token.EOF(currentPos(state))))
   }
 }
