@@ -37,9 +37,15 @@ object NaiveReducer extends Reducer {
         )
       )
       reducedF match {
-        case Function(ty, body, _) =>
-          // TODO: Implement function application by substituting args into body
-          r.reduce(body)
+        case Function(FunctionType(telescopes, _, _, _), body, _) =>
+          // Substitute args into body
+          val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
+            telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
+              acc.substitute(param.bind, arg.value)
+            }
+          }
+          // Reduce the substituted body
+          r.reduce(substitutedBody)
         case _ => FCallTerm(reducedF, reducedArgs, meta)
       }
     }
