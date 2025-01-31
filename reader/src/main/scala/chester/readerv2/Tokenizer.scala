@@ -158,8 +158,8 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     } else {
       val value = radix match {
         case 16 => BigInt(chars.drop(2).mkString, 16)
-        case 2 => BigInt(chars.drop(2).mkString, 2)
-        case _ => BigInt(chars.mkString)
+        case 2  => BigInt(chars.drop(2).mkString, 2)
+        case _  => BigInt(chars.mkString)
       }
       (current, Right(IntegerLiteral(value, radix, startPos)))
     }

@@ -21,7 +21,7 @@ object LexerV2 {
   def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerState = {
     tokens.headOption match {
       case Some(Right(token)) => LexerState(tokens.tail, token, ignoreLocation = ignoreLocation, sourceOffset = sourceOffset)
-      case Some(Left(error)) => 
+      case Some(Left(error)) =>
         val initialState = LexerState(tokens.tail, Token.EOF(error.pos), Vector(error), ignoreLocation, sourceOffset)
         advance(initialState)
       case None => LexerState(LazyList.empty, Token.EOF(Pos.zero), ignoreLocation = ignoreLocation, sourceOffset = sourceOffset)
@@ -48,10 +48,12 @@ object LexerV2 {
 
   def skipWhitespaceAndComments(state: LexerState): LexerState = {
     var currentState = state
-    while (currentState.current match {
-      case _: Token.Whitespace | _: Token.SingleLineComment => true
-      case _ => false
-    }) {
+    while (
+      currentState.current match {
+        case _: Token.Whitespace | _: Token.SingleLineComment => true
+        case _                                                => false
+      }
+    ) {
       currentState = advance(currentState)
     }
     currentState
@@ -60,7 +62,7 @@ object LexerV2 {
   def peek(state: LexerState): Option[Token] = {
     state.tokens.headOption match {
       case Some(Right(token)) => Some(token)
-      case _ => None
+      case _                  => None
     }
   }
 
@@ -69,41 +71,62 @@ object LexerV2 {
     cleanState.current match {
       case Token.IntegerLiteral(value, radix, pos) =>
         Right((IntegerLiteral(value, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
-        
+
       case Token.RationalLiteral(value, pos) =>
-        Right((RationalLiteral(value.toDouble, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
-        
+        Right(
+          (
+            RationalLiteral(value.toDouble, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))),
+            advance(cleanState)
+          )
+        )
+
       case Token.StringLiteral(segments, pos) =>
-        Right((StringLiteral(segments.map {
-          case Token.StringChars(chars) => chars.mkString
-          case Token.StringEscape(c) => c.toString
-          case _ => "" // Handle interpolation later
-        }.mkString, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
-        
+        Right(
+          (
+            StringLiteral(
+              segments.map {
+                case Token.StringChars(chars) => chars.mkString
+                case Token.StringEscape(c)    => c.toString
+                case _                        => "" // Handle interpolation later
+              }.mkString,
+              if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))
+            ),
+            advance(cleanState)
+          )
+        )
+
       case Token.Identifier(parts, pos) =>
-        Right((Identifier(parts.map {
-          case Token.IdentifierPart(chars) => chars.mkString
-          case Token.OperatorPart(chars) => chars.mkString
-        }.mkString, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), advance(cleanState)))
-        
+        Right(
+          (
+            Identifier(
+              parts.map {
+                case Token.IdentifierPart(chars) => chars.mkString
+                case Token.OperatorPart(chars)   => chars.mkString
+              }.mkString,
+              if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))
+            ),
+            advance(cleanState)
+          )
+        )
+
       case Token.LParen(pos) =>
         for {
           (exprs, state1) <- parseExprList(advance(cleanState))
           (rparen, state2) <- expect(state1, classOf[Token.RParen])
         } yield (Tuple(exprs, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), state2)
-        
+
       case Token.LBracket(pos) =>
         for {
           (exprs, state1) <- parseExprList(advance(cleanState))
           (rbracket, state2) <- expect(state1, classOf[Token.RBracket])
         } yield (ListExpr(exprs, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), state2)
-        
+
       case Token.LBrace(pos) =>
         for {
           (fields, state1) <- parseObjectFields(advance(cleanState))
           (rbrace, state2) <- expect(state1, classOf[Token.RBrace])
         } yield (ObjectExpr(fields, if (cleanState.ignoreLocation) None else Some(createMeta(pos, cleanState.sourceOffset))), state2)
-        
+
       case token =>
         Left(ParseError(s"Unexpected token: ${token.text}", token.pos))
     }
@@ -114,7 +137,7 @@ object LexerV2 {
       val cleanState = skipWhitespaceAndComments(state)
       cleanState.current match {
         case _: Token.RParen | _: Token.RBracket => Right((acc, cleanState))
-        case _: Token.Comma => loop(advance(cleanState), acc)
+        case _: Token.Comma                      => loop(advance(cleanState), acc)
         case _ =>
           for {
             (expr, state1) <- parseExpr(cleanState)
@@ -130,7 +153,7 @@ object LexerV2 {
       val cleanState = skipWhitespaceAndComments(state)
       cleanState.current match {
         case _: Token.RBrace => Right((acc, cleanState))
-        case _: Token.Comma => loop(advance(cleanState), acc)
+        case _: Token.Comma  => loop(advance(cleanState), acc)
         case _ =>
           for {
             (field, state1) <- parseObjectField(cleanState)
@@ -146,10 +169,13 @@ object LexerV2 {
       (nameToken, state1) <- expect(state, classOf[Token.Identifier])
       (_, state2) <- expect(state1, classOf[Token.Equal])
       (value, state3) <- parseExpr(state2)
-    } yield (ObjectExprClause(
-      Identifier(nameToken.text, if (state.ignoreLocation) None else Some(createMeta(nameToken.pos, state.sourceOffset))), 
-      value
-    ), state3)
+    } yield (
+      ObjectExprClause(
+        Identifier(nameToken.text, if (state.ignoreLocation) None else Some(createMeta(nameToken.pos, state.sourceOffset))),
+        value
+      ),
+      state3
+    )
   }
 
   private def expect[T <: Token](state: LexerState, tokenType: Class[T]): Either[ParseError, (T, LexerState)] = {
@@ -158,11 +184,12 @@ object LexerV2 {
       val nextState = advance(state)
       Right((token, nextState))
     } else {
-      Left(ParseError(
-        s"Expected ${tokenType.getSimpleName} but got ${state.current.getClass.getSimpleName}",
-        state.current.pos
-      ))
+      Left(
+        ParseError(
+          s"Expected ${tokenType.getSimpleName} but got ${state.current.getClass.getSimpleName}",
+          state.current.pos
+        )
+      )
     }
   }
 }
-

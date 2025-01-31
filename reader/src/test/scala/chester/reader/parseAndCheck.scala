@@ -54,11 +54,10 @@ def getParsed(input: String): Expr = {
     )
 }
 
-
 def parseAndCheckV2(input: String, expected: Expr): Unit = {
   // Check old implementation first
   parseAndCheck(input, expected)
-  
+
   // Check new implementation
   val source = FileNameAndContent("testFile", input)
   given reporter: Reporter[ParseError] = new Reporter[ParseError] {
@@ -68,14 +67,16 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize
   val lexerState = LexerV2(tokens, sourceOffset, ignoreLocation = true)
-  
-  LexerV2.parseExpr(lexerState).fold(
-    error => fail(s"V2 Parsing failed for input: $input ${error.message} at ${error.pos}"),
-    { case (value, _) =>
-      assertEquals(value, expected, s"V2 implementation failed for input: $input")
-      // Also verify serialization works
-      assertEquals(read[Expr](write[Expr](value)), value)
-      assertEquals(readBinary[Expr](writeBinary[Expr](value)), value)
-    }
-  )
+
+  LexerV2
+    .parseExpr(lexerState)
+    .fold(
+      error => fail(s"V2 Parsing failed for input: $input ${error.message} at ${error.pos}"),
+      { case (value, _) =>
+        assertEquals(value, expected, s"V2 implementation failed for input: $input")
+        // Also verify serialization works
+        assertEquals(read[Expr](write[Expr](value)), value)
+        assertEquals(readBinary[Expr](writeBinary[Expr](value)), value)
+      }
+    )
 }
