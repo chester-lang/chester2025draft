@@ -2,8 +2,6 @@ package chester.reduce
 
 import chester.syntax.core.*
 
-case class ReduceContext()
-
 trait Reducer {
   def reduce(term: Term)(using ReduceContext, Reducer): Term
 }
