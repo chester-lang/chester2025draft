@@ -156,7 +156,7 @@ up := {
 val scala3Version = "3.6.4-RC1"
 val scala3Lib = "3.6.3"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.0-RC1-bin-20250120-db23c08-NIGHTLY"
+val scala3Nightly = "3.7.0-RC1-bin-20250129-81e057a-NIGHTLY"
 
 val graalVm = "graalvm-java23"
 val graalJdkVersion = "23.0.2"
@@ -478,7 +478,7 @@ lazy val effektKiama = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "jline" % "jline" % "2.14.6",
       "org.rogach" %% "scallop" % "5.2.0",
       "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
-      "com.google.code.gson" % "gson" % "2.11.0"
+      "com.google.code.gson" % "gson" % "2.12.1"
     )
   )
   .nativeSettings(
@@ -1178,7 +1178,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.28.0"
+val jlineVersion = "3.29.0"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
