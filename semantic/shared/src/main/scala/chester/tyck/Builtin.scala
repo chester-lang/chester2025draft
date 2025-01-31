@@ -7,6 +7,7 @@ object BuiltIn {
   case class BuiltinItem(id: Name, value: Term, ty: Term) {}
 
   val builtinItems: Seq[BuiltinItem] = Vector(
+    BuiltinItem("Type", Type0, Type0),
     BuiltinItem("Int", IntType(None), Type0),
     BuiltinItem("Integer", IntegerType(None), Type0),
     BuiltinItem("Float", FloatType(None), Type0),
