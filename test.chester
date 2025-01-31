@@ -1,4 +1,6 @@
 record A(a: Integer);
+def idType(x: Type): Type = x;
 let aT = A;
 def getA(x: A): Integer = x.a;
-def getA(x: aT): Integer = x.a;
+def getA1(x: aT): Integer = x.a;
+def getA2(x: idType(aT)): Integer = x.a;
