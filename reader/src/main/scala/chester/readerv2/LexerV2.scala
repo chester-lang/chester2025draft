@@ -53,7 +53,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, reporter: Reporte
   private def parseAtom(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     state.current match {
       case Right(Token.LBrace(startPos)) =>
-        parseBlock(state)
+        // Try parsing as an object first
+        parseObject(state) match {
+          case Right(result) => Right(result)
+          case Left(_) => 
+            // If object parsing fails, try parsing as a block
+            parseBlock(state)
+        }
       case Right(Token.LParen(startPos)) =>
         parseTuple(state)
       case Right(Token.LBracket(startPos)) =>
@@ -93,15 +99,66 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, reporter: Reporte
                   }
                 case _ =>
                   // Check for more function calls or dot notation
-                  parseDotOrCall(call, tupleState)
-              }
+                  Right((call, tupleState))
+                }
             }
           case Right(Token.LBrace(_)) =>
             parseBlock(nextState).map { case (block, blockState) =>
               (FunctionCall(expr, Tuple(Vector(block), None), None), blockState)
             }
           case Right(Token.Dot(_)) =>
-            parseDotOrCall(expr, nextState)
+            val afterDot = advance(nextState)
+            afterDot.current match {
+              case Right(Token.Identifier(name, pos)) =>
+                val field = Identifier(name.map(_.text).mkString, createMeta(pos, pos))
+                val afterField = advance(afterDot)
+                
+                def parseArgLists(state: LexerState, args: Vector[Tuple] = Vector.empty): Either[ParseError, (Vector[Tuple], LexerState)] = {
+                  state.current match {
+                    case Right(Token.LParen(_)) =>
+                      parseTuple(state).flatMap { case (tuple, tupleState) =>
+                        parseArgLists(tupleState, args :+ tuple.asInstanceOf[Tuple])
+                      }
+                    case Right(Token.LBrace(_)) =>
+                      parseBlock(state).flatMap { case (block, blockState) =>
+                        parseArgLists(blockState, args :+ Tuple(Vector(block), None))
+                      }
+                    case _ =>
+                      Right((args, state))
+                  }
+                }
+                
+                parseArgLists(afterField).map { case (args, finalState) =>
+                  (DotCall(expr, field, args, None), finalState)
+                }
+                
+              case Right(Token.Operator(op, pos)) =>
+                // Operator method call
+                val field = Identifier(op.mkString, createMeta(pos, pos))
+                val afterField = advance(afterDot)
+                
+                def parseArgLists(state: LexerState, args: Vector[Tuple] = Vector.empty): Either[ParseError, (Vector[Tuple], LexerState)] = {
+                  state.current match {
+                    case Right(Token.LParen(_)) =>
+                      parseTuple(state).flatMap { case (tuple, tupleState) =>
+                        parseArgLists(tupleState, args :+ tuple.asInstanceOf[Tuple])
+                      }
+                    case Right(Token.LBrace(_)) =>
+                      parseBlock(state).flatMap { case (block, blockState) =>
+                        parseArgLists(blockState, args :+ Tuple(Vector(block), None))
+                      }
+                    case _ =>
+                      Right((args, state))
+                  }
+                }
+                
+                parseArgLists(afterField).map { case (args, finalState) =>
+                  (DotCall(expr, field, args, None), finalState)
+                }
+                
+              case Right(t) => Left(ParseError("Expected identifier or operator after '.'", t.pos))
+              case Left(err) => Left(err)
+            }
           case _ => Right((expr, nextState))
         }
       case Right(Token.Operator(op, startPos)) =>
@@ -459,7 +516,30 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, reporter: Reporte
                 case Right((key, keyState)) =>
                   current = keyState
                   current.current match {
-                    case Right(Token.Equal(_)) | Right(Token.Operator("=>", _)) =>
+                    case Right(Token.Equal(_)) =>
+                      current = advance(current)
+                      parseExprInternal(current) match {
+                        case Right((value, valueState)) =>
+                          key match {
+                            case id @ Identifier(name, _) =>
+                              clauses = clauses :+ ObjectExprClause(id, value)
+                            case StringLiteral(name, _) =>
+                              clauses = clauses :+ ObjectExprClause(Identifier(name, None), value)
+                            case _ =>
+                              return Left(ParseError("Invalid object key", key.meta.flatMap(_.sourcePos).map(_.range.start).getOrElse(startPos)))
+                          }
+                          current = valueState
+                          current.current match {
+                            case Right(Token.Comma(_)) =>
+                              current = advance(current)
+                            case Right(Token.RBrace(_)) =>
+                              // Allow trailing comma
+                            case Right(t) => return Left(ParseError("Expected ',' or '}'", t.pos))
+                            case Left(err) => return Left(err)
+                          }
+                        case Left(err) => return Left(err)
+                      }
+                    case Right(Token.Operator("=>", _)) =>
                       current = advance(current)
                       parseExprInternal(current) match {
                         case Right((value, valueState)) =>
