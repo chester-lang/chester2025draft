@@ -1,102 +1,39 @@
 package chester.readerv2
 
 import chester.error.Pos
-import chester.reader.ParseError
+
+case class StringChar(text: String, pos: Pos)
 
 sealed trait Token {
   def pos: Pos
-  def text: String
+  def isWhitespace: Boolean = false
+  def isComment: Boolean = false
+  def isRecoveryPoint: Boolean = this match {
+    case Token.RParen(_) | Token.RBracket(_) | Token.RBrace(_) | Token.Semicolon(_) | Token.Comma(_) | Token.EOF(_) => true
+    case _ => false
+  }
 }
 
 object Token {
-  sealed trait IdentifierPart {
-    def text: String
-  }
-  case class NormalPart(chars: Vector[Char]) extends IdentifierPart {
-    override def text: String = chars.mkString
-  }
-  case class OpPart(chars: Vector[Char]) extends IdentifierPart {
-    override def text: String = chars.mkString
-  }
-
-  sealed trait StringPart {
-    def text: String
-  }
-  case class StringChars(chars: Vector[Char]) extends StringPart {
-    override def text: String = chars.mkString
-  }
-  case class StringEscape(c: Char) extends StringPart {
-    override def text: String = c.toString
-  }
-  case class StringInterpolation(tokens: Vector[Token]) extends StringPart {
-    override def text: String = "${" + tokens.map(_.text).mkString + "}"
-  }
-
-  case class IntegerLiteral(value: BigInt, radix: Int, pos: Pos) extends Token {
-    override def text: String = value.toString(radix)
-  }
-  case class RationalLiteral(value: Double, pos: Pos) extends Token {
-    override def text: String = value.toString
-  }
-  case class StringLiteral(parts: Vector[StringPart], pos: Pos) extends Token {
-    override def text: String = "\"" + parts.map(_.text).mkString + "\""
-  }
-  case class Identifier(parts: Vector[IdentifierPart], pos: Pos) extends Token {
-    override def text: String = parts.map(_.text).mkString
-  }
-  case class Operator(text: String, pos: Pos) extends Token
-  case class SymbolLiteral(name: String, pos: Pos) extends Token {
-    override def text: String = "'" + name
-  }
-  case class Keyword(name: String, pos: Pos) extends Token {
-    override def text: String = name
-  }
-
-  case class LParen(pos: Pos) extends Token {
-    override def text: String = "("
-  }
-  case class RParen(pos: Pos) extends Token {
-    override def text: String = ")"
-  }
-  case class LBrace(pos: Pos) extends Token {
-    override def text: String = "{"
-  }
-  case class RBrace(pos: Pos) extends Token {
-    override def text: String = "}"
-  }
-  case class LBracket(pos: Pos) extends Token {
-    override def text: String = "["
-  }
-  case class RBracket(pos: Pos) extends Token {
-    override def text: String = "]"
-  }
-  case class Comma(pos: Pos) extends Token {
-    override def text: String = ","
-  }
-  case class Dot(pos: Pos) extends Token {
-    override def text: String = "."
-  }
-  case class Colon(pos: Pos) extends Token {
-    override def text: String = ":"
-  }
-  case class Semicolon(pos: Pos) extends Token {
-    override def text: String = ";"
-  }
-  case class Equal(pos: Pos) extends Token {
-    override def text: String = "="
-  }
-  case class Arrow(pos: Pos) extends Token {
-    override def text: String = "->"
-  }
-  case class SingleLineComment(content: Vector[Char], pos: Pos) extends Token {
-    override def text: String = "//" + content.mkString
-  }
-  case class Whitespace(chars: Vector[Char], pos: Pos) extends Token {
-    override def text: String = chars.mkString
-  }
-  case class EOF(pos: Pos) extends Token {
-    override def text: String = "<EOF>"
-  }
+  case class LParen(pos: Pos) extends Token
+  case class RParen(pos: Pos) extends Token
+  case class LBracket(pos: Pos) extends Token
+  case class RBracket(pos: Pos) extends Token
+  case class LBrace(pos: Pos) extends Token
+  case class RBrace(pos: Pos) extends Token
+  case class Comma(pos: Pos) extends Token
+  case class Semicolon(pos: Pos) extends Token
+  case class Equal(pos: Pos) extends Token
+  case class Colon(pos: Pos) extends Token
+  case class Dot(pos: Pos) extends Token
+  case class At(pos: Pos) extends Token
+  case class EOF(pos: Pos) extends Token
+  case class Whitespace(pos: Pos) extends Token { override def isWhitespace = true }
+  case class Comment(text: String, pos: Pos) extends Token { override def isComment = true }
+  case class IntegerLiteral(value: String, pos: Pos) extends Token
+  case class RationalLiteral(value: String, pos: Pos) extends Token
+  case class StringLiteral(value: Vector[StringChar], pos: Pos) extends Token
+  case class SymbolLiteral(value: String, pos: Pos) extends Token
+  case class Identifier(parts: Vector[StringChar], pos: Pos) extends Token
+  case class Operator(value: String, pos: Pos) extends Token
 }
-
-type TokenStream = LazyList[Either[ParseError, Token]]

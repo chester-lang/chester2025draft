@@ -80,11 +80,11 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   }
   val sourceOffset = SourceOffset(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
-  val tokens = tokenizer.tokenize
-  val lexerState = LexerV2(tokens, sourceOffset, ignoreLocation = true)
+  val tokens = tokenizer.tokenize()
+  val lexer = LexerV2(tokens, sourceOffset, reporter, ignoreLocation = true)
 
-  LexerV2
-    .parseExpr(lexerState)
+  val result = lexer
+    .parseExpr()
     .fold(
       error => {
         val errorIndex = error.pos.index.utf16
@@ -103,6 +103,7 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
              |$line
              |$pointer""".stripMargin)
       },
-      expr => expr
+      { case (expr, _) => expr }
     )
+  assertEquals(result, expected, s"Failed for input: $input")
 }
