@@ -61,3 +61,5 @@ node_modules
 *.iml
 
 sbt-launch.jar
+.aider*
+!.aiderignore
