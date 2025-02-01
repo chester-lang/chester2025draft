@@ -199,13 +199,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, reporter: Reporte
           val nameStr = name.map(_.text).mkString
           val meta = createMeta(pos, pos)
           val afterOp = advance(state)
-          parseAtomBase(afterOp).flatMap { case (next, nextState) =>
+          parseAtom(afterOp).flatMap { case (next, nextState) =>
             collectOperands(nextState, terms :+ Identifier(nameStr, meta) :+ next)
           }
         case Right(Token.Operator(op, pos)) =>
           val meta = createMeta(pos, pos)
           val afterOp = advance(state)
-          parseAtomBase(afterOp).flatMap { case (next, nextState) =>
+          parseAtom(afterOp).flatMap { case (next, nextState) =>
             collectOperands(nextState, terms :+ Identifier(op, meta) :+ next)
           }
         case Right(Token.LBrace(_)) =>
@@ -219,13 +219,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, reporter: Reporte
     collectOperands(state).map { case (terms, finalState) =>
       if (terms.size == 1) (terms.head, finalState)
       else (OpSeq(terms, None), finalState)
-    }
-  }
-
-  private def isOperator(name: String): Boolean = {
-    name match {
-      case "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||" | "!" | "->" | "=>" => true
-      case _ => false
     }
   }
 
@@ -258,9 +251,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, reporter: Reporte
                       current = exprState
                       done = true
                     case Right(Token.Equal(_)) | Right(Token.Operator("=>", _)) =>
-                      // Only treat as object if we haven't seen any statements yet and this is the first expression
-                      if (statements.isEmpty && result.isEmpty && current == advance(state)) {
-                        return parseObject(state).map { case (obj, objState) => (Block(Vector(), Some(obj), None), objState) }
+                      if (statements.isEmpty && result.isEmpty) {
+                        parseObject(state).map { case (obj, objState) => (Block(Vector(), Some(obj), None), objState) }
+                        return Left(ParseError("Expected ';' or '}'", exprState.current.fold(_.pos, _.pos)))
                       } else {
                         return Left(ParseError("Unexpected '=' or '=>' in block", exprState.current.fold(_.pos, _.pos)))
                       }
