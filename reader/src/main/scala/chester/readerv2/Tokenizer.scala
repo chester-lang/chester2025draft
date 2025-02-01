@@ -146,16 +146,58 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   private def parseNumber(initial: String, startPos: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
     var isRational = false
+    var hasExponent = false
+    
+    // Check for hex or binary prefix
+    if (initial == "0" && pos < source.length) {
+      source(pos) match {
+        case 'x' | 'X' =>
+          // Hexadecimal
+          sb.append(source(pos))
+          pos += 1
+          col += 1
+          while (pos < source.length && (source(pos).isDigit || ('a' to 'f').contains(source(pos).toLower))) {
+            sb.append(source(pos))
+            pos += 1
+            col += 1
+          }
+          return Right(Token.IntegerLiteral(sb.toString, createPos(startPos)))
+        case 'b' | 'B' =>
+          // Binary
+          sb.append(source(pos))
+          pos += 1
+          col += 1
+          while (pos < source.length && ('0' to '1').contains(source(pos))) {
+            sb.append(source(pos))
+            pos += 1
+            col += 1
+          }
+          return Right(Token.IntegerLiteral(sb.toString, createPos(startPos)))
+        case _ =>
+      }
+    }
 
-    while (pos < source.length && (source(pos).isDigit || source(pos) == '.')) {
-      if (source(pos) == '.') {
-        if (isRational) {
-          val error = ParseError("Invalid number format: multiple decimal points", createPos(startPos))
+    // Parse decimal part
+    while (pos < source.length && (source(pos).isDigit || source(pos) == '.' || source(pos) == 'e' || source(pos) == 'E' || (hasExponent && source(pos) == '-'))) {
+      val c = source(pos)
+      if (c == '.') {
+        if (isRational || hasExponent) {
+          val error = ParseError("Invalid number format: multiple decimal points or decimal after exponent", createPos(startPos))
           return Left(error)
         }
         isRational = true
+      } else if (c == 'e' || c == 'E') {
+        if (hasExponent) {
+          val error = ParseError("Invalid number format: multiple exponents", createPos(startPos))
+          return Left(error)
+        }
+        hasExponent = true
+        isRational = true
+      } else if (c == '-' && !hasExponent) {
+        val error = ParseError("Invalid number format: negative sign in middle of number", createPos(startPos))
+        return Left(error)
       }
-      sb.append(source(pos))
+      sb.append(c)
       pos += 1
       col += 1
     }
@@ -187,3 +229,4 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     Right(Token.Operator(sb.toString, createPos(startPos)))
   }
 }
+
