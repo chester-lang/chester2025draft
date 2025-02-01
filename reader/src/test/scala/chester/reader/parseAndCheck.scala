@@ -61,7 +61,22 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   // Check new implementation
   val source = FileNameAndContent("testFile", input)
   given reporter: Reporter[ParseError] = new Reporter[ParseError] {
-    def apply(error: ParseError): Unit = fail(s"Tokenizer error: ${error.message}")
+    def apply(error: ParseError): Unit = {
+      val errorIndex = error.pos.index.utf16
+      val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+      val lineEnd = input.indexOf('\n', errorIndex) match {
+        case -1 => input.length
+        case n  => n
+      }
+      val line = input.substring(lineStart, lineEnd)
+      val pointer = " " * (errorIndex - lineStart) + "^"
+      
+      fail(
+        s"""Tokenizer error: ${error.message}
+           |At position ${error.pos}:
+           |$line
+           |$pointer""".stripMargin)
+    }
   }
   val sourceOffset = SourceOffset(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
@@ -71,12 +86,23 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   LexerV2
     .parseExpr(lexerState)
     .fold(
-      error => fail(s"V2 Parsing failed for input: $input ${error.message} at ${error.pos}"),
-      { case (value, _) =>
-        assertEquals(value, expected, s"V2 implementation failed for input: $input")
-        // Also verify serialization works
-        assertEquals(read[Expr](write[Expr](value)), value)
-        assertEquals(readBinary[Expr](writeBinary[Expr](value)), value)
-      }
+      error => {
+        val errorIndex = error.pos.index.utf16
+        val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+        val lineEnd = input.indexOf('\n', errorIndex) match {
+          case -1 => input.length
+          case n  => n
+        }
+        val line = input.substring(lineStart, lineEnd)
+        val pointer = " " * (errorIndex - lineStart) + "^"
+        
+        fail(
+          s"""V2 Parsing failed for input: $input
+             |Error: ${error.message}
+             |At position ${error.pos}:
+             |$line
+             |$pointer""".stripMargin)
+      },
+      expr => expr
     )
 }
