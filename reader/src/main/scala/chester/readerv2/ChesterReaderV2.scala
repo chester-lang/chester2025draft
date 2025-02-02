@@ -3,9 +3,7 @@ package chester.readerv2
 import chester.error.Reporter
 import chester.reader.{FileNameAndContent, ParseError, SourceOffset}
 import chester.syntax.concrete.Expr
-import io.github.iltotore.iron.*
-import chester.error.Pos
-import chester.utils.WithUTF16
+import chester.error.{Pos, SourcePos, RangeInFile}
 
 object ChesterReaderV2 {
   def parseExpr(source: FileNameAndContent): Either[ParseError, Expr] = {
@@ -29,7 +27,7 @@ object ChesterReaderV2 {
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()
     val lexer = new LexerV2(tokens, sourceOffset, false)
-    val pos = Pos(WithUTF16.Zero, 0, WithUTF16.Zero)
-    lexer.parseExprList(LexerState(tokens, Right(Token.EOF(pos)), ignoreLocation = false, sourceOffset)).map(_._1)
+    val pos = SourcePos(sourceOffset, RangeInFile(Pos.zero, Pos.zero))
+    lexer.parseExprList(LexerState(tokens.toVector, 0)).map(_._1)
   }
 }

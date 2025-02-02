@@ -88,4 +88,14 @@ class FunctionCallParserTest extends FunSuite {
     )
     parseAndCheck(input, expected)
   }
+
+  test("simple function call") {
+    val input = "func()"
+    val expected = FunctionCall(
+      Identifier("func", None),
+      Tuple(Vector.empty, None),
+      None
+    )
+    runSingleTest(input, expected)
+  }
 }

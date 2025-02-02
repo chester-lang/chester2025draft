@@ -23,13 +23,13 @@ def parseAndCheckV0(input: String, expected: Expr): Unit = {
       { value =>
         assertEquals(read[Expr](write[Expr](value)), value)
         assertEquals(
-          read[Expr](write[Expr](resultignored.right.get)),
-          resultignored.right.get
+          read[Expr](write[Expr](resultignored.getOrElse(throw new Exception("Failed to parse")))),
+          resultignored.getOrElse(throw new Exception("Failed to parse"))
         )
         assertEquals(readBinary[Expr](writeBinary[Expr](value)), value)
         assertEquals(
-          readBinary[Expr](writeBinary[Expr](resultignored.right.get)),
-          resultignored.right.get
+          readBinary[Expr](writeBinary[Expr](resultignored.getOrElse(throw new Exception("Failed to parse")))),
+          resultignored.getOrElse(throw new Exception("Failed to parse"))
         )
         assertEquals(value, expected, s"Failed for input: $input")
       }
@@ -81,8 +81,16 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   val sourceOffset = SourceOffset(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
+  
+  // Enable debug logging
+  chester.readerv2.LexerV2.DEBUG = true
+  println(s"\n=== Starting test for input: $input ===")
+  println("Tokens:")
+  tokens.take(20).foreach(token => println(s"  $token"))
+  
   val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
 
+  println("\nParsing expression...")
   val result = lexer
     .parseExpr()
     .fold(
@@ -103,7 +111,24 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
              |$line
              |$pointer""".stripMargin)
       },
-      { case (expr, _) => expr }
+      { case (expr, state) => 
+        println(s"Successfully parsed expression: $expr")
+        println(s"Remaining tokens: ${state.tokens.drop(state.index).take(5).mkString(", ")}")
+        expr 
+      }
     )
+  
+  println("\nComparing with expected result...")
   assertEquals(result, expected, s"Failed for input: $input")
+  println("=== Test passed ===\n")
+  
+  // Disable debug logging after test
+  chester.readerv2.LexerV2.DEBUG = false
+}
+
+def runSingleTest(input: String, expected: Expr): Unit = {
+  println(s"\n=== Running single test ===")
+  println(s"Input: $input")
+  println(s"Expected: $expected")
+  parseAndCheck(input, expected)
 }

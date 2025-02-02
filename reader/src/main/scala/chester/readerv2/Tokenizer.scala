@@ -1,6 +1,6 @@
 package chester.readerv2
 
-import chester.error.{Reporter, Pos}
+import chester.error.{Reporter, Pos, SourcePos, RangeInFile}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
 import _root_.io.github.iltotore.iron.*
@@ -15,7 +15,7 @@ object Tokenizer {
 }
 
 class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]) {
-  private val source = sourceOffset.source.readContent.getOrElse("")
+  private val source = sourceOffset.readContent.getOrElse("")
   private var pos: Int = 0
   private var line: Int = 0
   private var col: Int = 0
@@ -23,7 +23,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   def tokenize(): TokenStream = {
     LazyList.unfold(()) { _ =>
       if (pos >= source.length) {
-        Some((Right(Token.EOF(createPos(0))), ()))
+        Some((Right(Token.EOF(createSourcePos(0, 0))), ()))
       } else {
         val token = nextToken
         Some((token, ()))
@@ -31,21 +31,25 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     }
   }
 
-  private def createPos(startPos: Int): Pos = {
+  private def createSourcePos(startPos: Int, endPos: Int): SourcePos = {
     val zero = 0.refineUnsafe[Positive0]
-    val start = startPos.refineUnsafe[Positive0]
-    val len = (pos - startPos).refineUnsafe[Positive0]
-    val startUtf16 = source.substring(0, startPos).codePoints().count().toInt.refineUnsafe[Positive0]
-    val lenUtf16 = source.substring(startPos, pos).codePoints().count().toInt.refineUnsafe[Positive0]
-    val lineUtf16 = line.refineUnsafe[Positive0]
-    val colUtf16 = col.refineUnsafe[Positive0]
-    Pos(WithUTF16(start, startUtf16), lineUtf16, WithUTF16(len, lenUtf16))
+    val start: Int :| Positive0 = startPos.refineUnsafe[Positive0]
+    val end: Int :| Positive0 = endPos.refineUnsafe[Positive0]
+    val startUtf16: Int :| Positive0 = source.substring(0, startPos).codePoints().count().toInt.refineUnsafe[Positive0]
+    val endUtf16: Int :| Positive0 = source.substring(0, endPos).codePoints().count().toInt.refineUnsafe[Positive0]
+    val lineUtf16: Int :| Positive0 = line.refineUnsafe[Positive0]
+    val colUtf16: Int :| Positive0 = col.refineUnsafe[Positive0]
+    
+    val startPosition = Pos(WithUTF16(start, startUtf16), lineUtf16, WithUTF16(zero, colUtf16))
+    val endPosition = Pos(WithUTF16(end, endUtf16), lineUtf16, WithUTF16((end - start).refineUnsafe, (endUtf16 - startUtf16).refineUnsafe))
+    
+    SourcePos(sourceOffset, RangeInFile(startPosition, endPosition))
   }
 
   private def nextToken: Either[ParseError, Token] = {
     skipWhitespace()
     if (pos >= source.length) {
-      Right(Token.EOF(createPos(0)))
+      Right(Token.EOF(createSourcePos(0, 0)))
     } else {
       val c = source(pos)
       val startPos = pos
@@ -53,25 +57,25 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       col += 1
 
       c match {
-        case '(' => Right(Token.LParen(createPos(startPos)))
-        case ')' => Right(Token.RParen(createPos(startPos)))
-        case '[' => Right(Token.LBracket(createPos(startPos)))
-        case ']' => Right(Token.RBracket(createPos(startPos)))
-        case '{' => Right(Token.LBrace(createPos(startPos)))
-        case '}' => Right(Token.RBrace(createPos(startPos)))
-        case ',' => Right(Token.Comma(createPos(startPos)))
-        case ';' => Right(Token.Semicolon(createPos(startPos)))
-        case '=' => Right(Token.Equal(createPos(startPos)))
-        case ':' => Right(Token.Colon(createPos(startPos)))
-        case '.' => Right(Token.Dot(createPos(startPos)))
-        case '@' => Right(Token.At(createPos(startPos)))
+        case '(' => Right(Token.LParen(createSourcePos(startPos, pos)))
+        case ')' => Right(Token.RParen(createSourcePos(startPos, pos)))
+        case '[' => Right(Token.LBracket(createSourcePos(startPos, pos)))
+        case ']' => Right(Token.RBracket(createSourcePos(startPos, pos)))
+        case '{' => Right(Token.LBrace(createSourcePos(startPos, pos)))
+        case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
+        case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
+        case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
+        case '=' => Right(Token.Equal(createSourcePos(startPos, pos)))
+        case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
+        case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
+        case '@' => Right(Token.At(createSourcePos(startPos, pos)))
         case '"' => parseString(startPos)
         case '\'' => parseSymbol(startPos)
         case d if d.isDigit => parseNumber(d.toString, startPos)
         case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
         case o if isOperatorChar(o) => parseOperator(o.toString, startPos)
         case other =>
-          val error = ParseError(s"Unexpected character: $other", createPos(startPos))
+          val error = ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start)
           Left(error)
       }
     }
@@ -109,27 +113,27 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
           case '"' => '"'
           case '\\' => '\\'
           case other =>
-            val error = ParseError(s"Invalid escape sequence: \\$other", createPos(startPos))
+            val error = ParseError(s"Invalid escape sequence: \\$other", createSourcePos(pos - 1, pos).range.start)
             return Left(error)
         }
-        chars = chars :+ StringChar(escapeChar.toString, createPos(pos - 1))
+        chars = chars :+ StringChar(escapeChar.toString, createSourcePos(pos - 1, pos))
         escaped = false
       } else if (source(pos) == '\\') {
         escaped = true
       } else {
-        chars = chars :+ StringChar(source(pos).toString, createPos(pos))
+        chars = chars :+ StringChar(source(pos).toString, createSourcePos(pos, pos + 1))
       }
       pos += 1
       col += 1
     }
 
     if (pos >= source.length) {
-      val error = ParseError("Unterminated string literal", createPos(startPos))
+      val error = ParseError("Unterminated string literal", createSourcePos(startPos, pos).range.start)
       Left(error)
     } else {
       pos += 1 // Skip closing quote
       col += 1
-      Right(Token.StringLiteral(chars, createPos(startPos)))
+      Right(Token.StringLiteral(chars, createSourcePos(startPos, pos)))
     }
   }
 
@@ -140,72 +144,66 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       pos += 1
       col += 1
     }
-    Right(Token.SymbolLiteral(sb.toString, createPos(startPos)))
+    Right(Token.SymbolLiteral(sb.toString, createSourcePos(startPos, pos)))
   }
 
   private def parseNumber(initial: String, startPos: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
     var isRational = false
-    var hasExponent = false
-    
-    // Check for hex or binary prefix
+    var hasDecimalPoint = false
+
+    def readDigits(): Unit = {
+      while (pos < source.length && source(pos).isDigit) {
+        sb.append(source(pos))
+        pos += 1
+        col += 1
+      }
+    }
+
     if (initial == "0" && pos < source.length) {
       source(pos) match {
         case 'x' | 'X' =>
-          // Hexadecimal
           sb.append(source(pos))
           pos += 1
           col += 1
-          while (pos < source.length && (source(pos).isDigit || ('a' to 'f').contains(source(pos).toLower))) {
+          while (pos < source.length && (source(pos).isDigit || ('a' <= source(pos).toLower && source(pos).toLower <= 'f'))) {
             sb.append(source(pos))
             pos += 1
             col += 1
           }
-          return Right(Token.IntegerLiteral(sb.toString, createPos(startPos)))
         case 'b' | 'B' =>
-          // Binary
           sb.append(source(pos))
           pos += 1
           col += 1
-          while (pos < source.length && ('0' to '1').contains(source(pos))) {
+          while (pos < source.length && (source(pos) == '0' || source(pos) == '1')) {
             sb.append(source(pos))
             pos += 1
             col += 1
           }
-          return Right(Token.IntegerLiteral(sb.toString, createPos(startPos)))
         case _ =>
+          readDigits()
       }
+    } else {
+      readDigits()
     }
 
-    // Parse decimal part
-    while (pos < source.length && (source(pos).isDigit || source(pos) == '.' || source(pos) == 'e' || source(pos) == 'E' || (hasExponent && source(pos) == '-'))) {
-      val c = source(pos)
-      if (c == '.') {
-        if (isRational || hasExponent) {
-          val error = ParseError("Invalid number format: multiple decimal points or decimal after exponent", createPos(startPos))
-          return Left(error)
-        }
-        isRational = true
-      } else if (c == 'e' || c == 'E') {
-        if (hasExponent) {
-          val error = ParseError("Invalid number format: multiple exponents", createPos(startPos))
-          return Left(error)
-        }
-        hasExponent = true
-        isRational = true
-      } else if (c == '-' && !hasExponent) {
-        val error = ParseError("Invalid number format: negative sign in middle of number", createPos(startPos))
+    if (pos < source.length && source(pos) == '.') {
+      if (hasDecimalPoint) {
+        val error = ParseError("Multiple decimal points in number", createSourcePos(pos, pos + 1).range.start)
         return Left(error)
       }
-      sb.append(c)
+      hasDecimalPoint = true
+      isRational = true
+      sb.append(source(pos))
       pos += 1
       col += 1
+      readDigits()
     }
 
     if (isRational) {
-      Right(Token.RationalLiteral(sb.toString, createPos(startPos)))
+      Right(Token.RationalLiteral(sb.toString, createSourcePos(startPos, pos)))
     } else {
-      Right(Token.IntegerLiteral(sb.toString, createPos(startPos)))
+      Right(Token.IntegerLiteral(sb.toString, createSourcePos(startPos, pos)))
     }
   }
 
@@ -216,7 +214,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       pos += 1
       col += 1
     }
-    Right(Token.Identifier(Vector(StringChar(sb.toString, createPos(startPos))), createPos(startPos)))
+    Right(Token.Identifier(Vector(StringChar(sb.toString, createSourcePos(startPos, pos))), createSourcePos(startPos, pos)))
   }
 
   private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
@@ -226,7 +224,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       pos += 1
       col += 1
     }
-    Right(Token.Operator(sb.toString, createPos(startPos)))
+    Right(Token.Operator(sb.toString, createSourcePos(startPos, pos)))
   }
 }
 
