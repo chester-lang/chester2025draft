@@ -3,6 +3,7 @@ package chester.readerv2
 import chester.error.{Reporter, Pos, SourcePos, RangeInFile}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
+import chester.syntax.IdentifierRules.*
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 
@@ -73,7 +74,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         case '\'' => parseSymbol(startPos)
         case d if d.isDigit => parseNumber(d.toString, startPos)
         case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
-        case o if isOperatorChar(o) => parseOperator(o.toString, startPos)
+        case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
         case other =>
           val error = ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start)
           Left(error)
@@ -90,13 +91,6 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         col += 1
       }
       pos += 1
-    }
-  }
-
-  private def isOperatorChar(c: Char): Boolean = {
-    c match {
-      case '+' | '-' | '*' | '/' | '%' | '&' | '|' | '^' | '~' | '<' | '>' | '!' | '?' => true
-      case _ => false
     }
   }
 
@@ -219,7 +213,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
 
   private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
-    while (pos < source.length && isOperatorChar(source(pos))) {
+    while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
       sb.append(source(pos))
       pos += 1
       col += 1
