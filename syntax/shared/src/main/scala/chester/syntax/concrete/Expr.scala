@@ -14,6 +14,7 @@ import chester.utils.impls.*
 import chester.error.ProblemUpickle.*
 import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
+import chester.reader.ParseError
 
 enum CommentType derives ReadWriter {
   case OneLine
@@ -846,6 +847,29 @@ sealed trait ErrorExpr extends Expr derives ReadWriter {
   override type ThisTree <: ErrorExpr
 }
 
+case class RecoverableParseError(
+    partialResult: Option[Expr],
+    message: String,
+    pos: Pos,
+    meta: Option[ExprMeta]
+) extends ErrorExpr {
+  override type ThisTree = RecoverableParseError
+
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): RecoverableParseError = thisOr(
+    RecoverableParseError(partialResult.map(f), message, pos, meta)
+  )
+
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): RecoverableParseError = copy(meta = updater(meta))
+
+  override def toDoc(using PrettierOptions): Doc = group(
+    Doc.text("RecoverableParseError(") <>
+    partialResult.map(_.toDoc).getOrElse(Doc.text("None")) <> Doc.text(", ") <>
+    Doc.text(message) <> Doc.text(")")
+  )
+}
+
 case object EmptyExpr extends ErrorExpr {
   override type ThisTree = EmptyExpr.type
 
@@ -1061,7 +1085,6 @@ case class UnitExpr(meta: Option[ExprMeta]) extends DesaltExpr {
   ): UnitExpr = copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc = Doc.text("()")
-
 }
 
 case class LetDefStmt(
