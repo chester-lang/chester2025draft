@@ -96,6 +96,6 @@ class FunctionCallParserTest extends FunSuite {
       Tuple(Vector.empty, None),
       None
     )
-    runSingleTest(input, expected)
+    parseAndCheck(input, expected)
   }
 }
