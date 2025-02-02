@@ -43,96 +43,40 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   private def parseExprInternal(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    boundary {
-      parseAtom(state).flatMap { case (first, firstState) =>
-        parseOpSeq(first, firstState)
-      }
-    }
+    for {
+      (first, firstState) <- parseAtom(state)
+      (withSuffix, afterSuffix) <- parseAtomSuffix(first, firstState)
+      (result, resultState) <- parseOpSeq(withSuffix, afterSuffix)
+    } yield (result, resultState)
   }
 
   private def parseAtom(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    boundary {
-      state.current match {
-        case Right(token) =>
-          token match {
-            case Token.Operator(op, pos) =>
-              val meta = createMeta(pos, pos)
-              val opExpr = Identifier(op, meta)
-              val nextState = advance(state)
-              nextState.current match {
-                case Right(Token.LParen(_)) =>
-                  parseTuple(nextState).flatMap { case (tuple, tupleState) =>
-                    tuple match {
-                      case t: Tuple =>
-                        tupleState.current match {
-                          case Right(Token.LBrace(_)) =>
-                            parseBlock(tupleState).map { case (block, blockState) =>
-                              (FunctionCall(FunctionCall(opExpr, t, None), Tuple(Vector(block), None), None), blockState)
-                            }
-                          case _ =>
-                            Right((FunctionCall(opExpr, t, None), tupleState))
-                        }
-                      case _ => Left(ParseError("Expected tuple arguments", tupleState.current.fold(_.pos, _.pos)))
-                    }
-                  }
-                case Right(Token.LBrace(_)) =>
-                  parseBlock(nextState).map { case (block, blockState) =>
-                    (FunctionCall(opExpr, Tuple(Vector(block), None), None), blockState)
-                  }
-                case _ =>
-                  parseAtomBase(nextState).map { case (rightExpr, rightState) =>
-                    (OpSeq(Vector(opExpr, rightExpr), None), rightState)
-                  }
-              }
-            case Token.Identifier(name, pos) =>
-              val meta = createMeta(pos, pos)
-              val opExpr = Identifier(name.map(_.text).mkString, meta)
-              val nextState = advance(state)
-              nextState.current match {
-                case Right(Token.LParen(_)) =>
-                  parseTuple(nextState).flatMap { case (tuple, tupleState) =>
-                    tuple match {
-                      case t: Tuple =>
-                        tupleState.current match {
-                          case Right(Token.LBrace(_)) =>
-                            parseBlock(tupleState).map { case (block, blockState) =>
-                              (FunctionCall(FunctionCall(opExpr, t, None), Tuple(Vector(block), None), None), blockState)
-                            }
-                          case _ =>
-                            Right((FunctionCall(opExpr, t, None), tupleState))
-                        }
-                      case _ => Left(ParseError("Expected tuple arguments", tupleState.current.fold(_.pos, _.pos)))
-                    }
-                  }
-                case Right(Token.LBrace(_)) =>
-                  parseBlock(nextState).map { case (block, blockState) =>
-                    (FunctionCall(opExpr, Tuple(Vector(block), None), None), blockState)
-                  }
-                case _ =>
-                  parseAtomBase(nextState).map { case (rightExpr, rightState) =>
-                    (OpSeq(Vector(opExpr, rightExpr), None), rightState)
-                  }
-              }
-            case _ => parseAtomBase(state)
-          }
-        case Left(err) => Left(err)
-      }
-    }
-  }
-
-  private def parseAtomBase(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     state.current match {
-      case Right(Token.LBrace(startPos)) =>
-        parseObject(state)
-      case Right(Token.LParen(startPos)) =>
-        parseTuple(state)
-      case Right(Token.LBracket(startPos)) =>
+      case Right(Token.Identifier(name, pos)) if isOperator(name.map(_.text).mkString) =>
+        val nameStr = name.map(_.text).mkString
+        val meta = createMeta(pos, pos)
+        val afterOp = advance(state)
+        parseAtom(afterOp).map { case (right, afterRight) =>
+          (OpSeq(Vector(Identifier(nameStr, meta), right), None), afterRight)
+        }
+      case Right(Token.Operator(op, pos)) =>
+        val meta = createMeta(pos, pos)
+        val afterOp = advance(state)
+        parseAtom(afterOp).map { case (right, afterRight) =>
+          (OpSeq(Vector(Identifier(op, meta), right), None), afterRight)
+        }
+      case Right(Token.LBrace(_)) =>
+        parseObjectClauses(state)
+      case Right(Token.LBracket(_)) =>
         parseList(state)
-      case Right(Token.StringLiteral(value, startPos)) =>
-        val meta = createMeta(startPos, startPos)
-        Right((StringLiteral(value.map(_.text).mkString, meta), advance(state)))
-      case Right(Token.IntegerLiteral(value, startPos)) =>
-        val meta = createMeta(startPos, startPos)
+      case Right(Token.LParen(_)) =>
+        parseTuple(state)
+      case Right(Token.Identifier(name, pos)) =>
+        val nameStr = name.map(_.text).mkString
+        val meta = createMeta(pos, pos)
+        Right((Identifier(nameStr, meta), advance(state)))
+      case Right(Token.IntegerLiteral(value, pos)) =>
+        val meta = createMeta(pos, pos)
         val intValue = if (value.startsWith("0x") || value.startsWith("0X")) {
           BigInt(value.substring(2), 16)
         } else if (value.startsWith("0b") || value.startsWith("0B")) {
@@ -141,85 +85,76 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           BigInt(value)
         }
         Right((IntegerLiteral(intValue, meta), advance(state)))
-      case Right(Token.RationalLiteral(value, startPos)) =>
-        val meta = createMeta(startPos, startPos)
-        Right((RationalLiteral(Rational(value), meta), advance(state)))
-      case Right(Token.SymbolLiteral(value, startPos)) =>
-        val meta = createMeta(startPos, startPos)
-        Right((SymbolLiteral(value, meta), advance(state)))
-      case Right(Token.Identifier(name, startPos)) =>
-        val meta = createMeta(startPos, startPos)
-        val expr = Identifier(name.map(_.text).mkString, meta)
-        val nextState = advance(state)
-        parseDotOrCall(expr, nextState)
+      case Right(Token.StringLiteral(value, pos)) =>
+        val meta = createMeta(pos, pos)
+        Right((StringLiteral(value.map(_.text).mkString, meta), advance(state)))
+      case Right(Token.Comment(content, pos)) =>
+        parseAtom(advance(state))
       case Right(t) => Left(ParseError("Unexpected token", t.pos))
       case Left(err) => Left(err)
     }
   }
 
-  private def parseDotOrCall(expr: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    state.current match {
-      case Right(Token.LParen(_)) =>
-        parseTuple(state).flatMap { case (tuple, argsState) =>
-          tuple match {
-            case t: Tuple =>
-              argsState.current match {
-                case Right(Token.LBrace(_)) =>
-                  parseBlock(argsState).map { case (block, blockState) =>
-                    (FunctionCall(FunctionCall(expr, t, None), Tuple(Vector(block), None), None), blockState)
-                  }
-                case _ =>
-                  Right((FunctionCall(expr, t, None), argsState))
-              }
-            case other => Left(ParseError("Expected tuple arguments", argsState.current.fold(_.pos, _.pos)))
+  private def parseAtomSuffix(expr: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    def parseSuffix(current: Expr, currentState: LexerState): Either[ParseError, (Expr, LexerState)] = {
+      currentState.current match {
+        case Right(Token.Dot(_)) =>
+          val afterDot = advance(currentState)
+          parseAtom(afterDot).flatMap { case (field, afterField) =>
+            val telescope = Vector.empty[MaybeTelescope]
+            parseSuffix(DotCall(current, field, telescope, None), afterField)
           }
-        }
-      case Right(Token.LBrace(_)) =>
-        parseBlock(state).map { case (block, blockState) =>
-          (FunctionCall(expr, Tuple(Vector(block), None), None), blockState)
-        }
-      case Right(Token.Dot(_)) =>
-        val afterDot = advance(state)
-        afterDot.current match {
-          case Right(Token.Identifier(name, _)) =>
-            val afterId = advance(afterDot)
-            parseDotOrCall(DotCall(expr, Identifier(name.map(_.text).mkString, None), Vector(), None), afterId)
-          case Right(t) => Left(ParseError("Expected identifier after '.'", t.pos))
-          case Left(err) => Left(err)
-        }
-      case _ => Right((expr, state))
+        case Right(Token.LParen(_)) =>
+          parseTelescope(currentState).flatMap { case (telescope, afterTelescope) =>
+            val telescopeExpr = telescope match {
+              case tuple: Tuple => tuple
+              case other => Tuple(Vector(other), None)
+            }
+            current match {
+              case DotCall(expr, field, telescopes, meta) =>
+                parseSuffix(DotCall(expr, field, telescopes :+ telescopeExpr, meta), afterTelescope)
+              case _ =>
+                parseSuffix(FunctionCall(current, telescopeExpr, None), afterTelescope)
+            }
+          }
+        case Right(Token.LBrace(_)) =>
+          parseBlock(currentState).flatMap { case (block, afterBlock) =>
+            current match {
+              case DotCall(expr, field, telescopes, meta) =>
+                parseSuffix(DotCall(expr, field, telescopes :+ Tuple(Vector(block), None), meta), afterBlock)
+              case _ =>
+                parseSuffix(FunctionCall(current, Tuple(Vector(block), None), None), afterBlock)
+            }
+          }
+        case _ => Right((current, currentState))
+      }
     }
+    parseSuffix(expr, state)
   }
 
   private def parseOpSeq(first: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    boundary {
-      def collectOperands(state: LexerState, terms: Vector[Expr] = Vector(first)): Either[ParseError, (Vector[Expr], LexerState)] = {
-        state.current match {
-          case Right(Token.Identifier(name, pos)) =>
-            val nameStr = name.map(_.text).mkString
-            val meta = createMeta(pos, pos)
-            val afterOp = advance(state)
-            parseAtom(afterOp).flatMap { case (next, nextState) =>
-              collectOperands(nextState, terms :+ Identifier(nameStr, meta) :+ next)
-            }
-          case Right(Token.Operator(op, pos)) =>
-            val meta = createMeta(pos, pos)
-            val afterOp = advance(state)
-            parseAtom(afterOp).flatMap { case (next, nextState) =>
-              collectOperands(nextState, terms :+ Identifier(op, meta) :+ next)
-            }
-          case Right(Token.LBrace(_)) =>
-            parseBlock(state).flatMap { case (block, blockState) =>
-              collectOperands(blockState, terms :+ block)
-            }
-          case _ => Right((terms, state))
-        }
+    def collectOpSeq(terms: Vector[Expr], currentState: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
+      currentState.current match {
+        case Right(Token.Identifier(name, pos)) if isOperator(name.map(_.text).mkString) =>
+          val nameStr = name.map(_.text).mkString
+          val meta = createMeta(pos, pos)
+          val afterOp = advance(currentState)
+          parseAtom(afterOp).flatMap { case (right, afterRight) =>
+            collectOpSeq(terms :+ Identifier(nameStr, meta) :+ right, afterRight)
+          }
+        case Right(Token.Operator(op, pos)) =>
+          val meta = createMeta(pos, pos)
+          val afterOp = advance(currentState)
+          parseAtom(afterOp).flatMap { case (right, afterRight) =>
+            collectOpSeq(terms :+ Identifier(op, meta) :+ right, afterRight)
+          }
+        case _ => Right((terms, currentState))
       }
+    }
 
-      collectOperands(state).map { case (terms, finalState) =>
-        if (terms.size == 1) (terms.head, finalState)
-        else (OpSeq(terms, None), finalState)
-      }
+    collectOpSeq(Vector(first), state).map { case (terms, finalState) =>
+      if (terms.length == 1) (first, finalState)
+      else (OpSeq(terms, None), finalState)
     }
   }
 
@@ -237,28 +172,57 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               }
             case _ =>
               parseExprInternal(afterBrace).flatMap { case (first, firstState) =>
-                var exprs = Vector(first)
+                var exprs = Vector[Expr]()
+                var result: Option[Expr] = None
                 var currentState = firstState
-                var done = false
-                
-                while (!done) {
-                  currentState.current match {
-                    case Right(Token.RBrace(_)) =>
-                      done = true
-                      currentState = advance(currentState)
-                    case Right(Token.Semicolon(_)) =>
-                      currentState = advance(currentState)
-                      parseExprInternal(currentState) match {
-                        case Right((expr, exprState)) =>
+
+                def parseNextExpr(): Either[ParseError, Unit] = {
+                  parseExprInternal(currentState) match {
+                    case Right((expr, exprState)) =>
+                      currentState = exprState
+                      currentState.current match {
+                        case Right(Token.RBrace(_)) =>
+                          result = Some(expr)
+                          currentState = advance(currentState)
+                          Right(())
+                        case Right(Token.Semicolon(_)) =>
                           exprs = exprs :+ expr
-                          currentState = exprState
+                          currentState = advance(currentState)
+                          Right(())
+                        case Right(t) => Left(ParseError("Expected ';' or '}'", t.pos))
                         case Left(err) => break(Left(err))
                       }
-                    case Right(t) => break(Left(ParseError("Expected ';' or '}'", t.pos)))
-                    case Left(err) => break(Left(err))
+                    case Left(err) => Left(err)
                   }
                 }
-                Right((Block(exprs, None, None), currentState))
+
+                currentState.current match {
+                  case Right(Token.RBrace(_)) =>
+                    result = Some(first)
+                    currentState = advance(currentState)
+                    Right((Block(exprs, result, None), currentState))
+                  case Right(Token.Semicolon(_)) =>
+                    exprs = exprs :+ first
+                    currentState = advance(currentState)
+                    var done = false
+                    while (!done) {
+                      currentState.current match {
+                        case Right(Token.RBrace(_)) =>
+                          done = true
+                          currentState = advance(currentState)
+                        case Right(Token.Comment(_, _)) =>
+                          currentState = advance(currentState)
+                        case _ =>
+                          parseNextExpr() match {
+                            case Right(_) => ()
+                            case Left(err) => break(Left(err))
+                          }
+                      }
+                    }
+                    Right((Block(exprs, result, None), currentState))
+                  case Right(t) => Left(ParseError("Expected ';' or '}'", t.pos))
+                  case Left(err) => Left(err)
+                }
               }
           }
         case Right(t) => Left(ParseError("Expected '{'", t.pos))
@@ -276,7 +240,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             case Right(Token.RParen(_)) =>
               Right((Tuple(Vector.empty, None), advance(afterParen)))
             case _ =>
-              parseExprInternal(afterParen).flatMap { case (first, firstState) =>
+              parseTupleItem(afterParen).flatMap { case (first, firstState) =>
                 var exprs = Vector(first)
                 var currentState = firstState
                 var done = false
@@ -288,7 +252,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                       currentState = advance(currentState)
                     case Right(Token.Comma(_)) =>
                       currentState = advance(currentState)
-                      parseExprInternal(currentState) match {
+                      parseTupleItem(currentState) match {
                         case Right((expr, exprState)) =>
                           exprs = exprs :+ expr
                           currentState = exprState
@@ -303,6 +267,40 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           }
         case Right(t) => Left(ParseError("Expected '('", t.pos))
         case Left(err) => Left(err)
+      }
+    }
+  }
+
+  private def parseTupleItem(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    boundary {
+      parseAtom(state).flatMap { case (expr, exprState) =>
+        exprState.current match {
+          case Right(Token.Colon(_)) =>
+            val colonState = advance(exprState)
+            parseExprInternal(colonState).flatMap { case (typeExpr, typeState) =>
+              typeState.current match {
+                case Right(Token.Equal(_)) =>
+                  val eqState = advance(typeState)
+                  parseExprInternal(eqState).map { case (defaultExpr, defaultState) =>
+                    (OpSeq(Vector(expr, Identifier(":", None), typeExpr, Identifier("=", None), defaultExpr), None), defaultState)
+                  }
+                case Right(Token.Operator("*", _)) =>
+                  val starState = advance(typeState)
+                  Right((OpSeq(Vector(expr, Identifier(":", None), typeExpr, Identifier("*", None)), None), starState))
+                case _ => 
+                  Right((OpSeq(Vector(expr, Identifier(":", None), typeExpr), None), typeState))
+              }
+            }
+          case Right(Token.Equal(_)) =>
+            val eqState = advance(exprState)
+            parseExprInternal(eqState).map { case (defaultExpr, defaultState) =>
+              (OpSeq(Vector(expr, Identifier("=", None), defaultExpr), None), defaultState)
+            }
+          case Right(Token.Operator("*", _)) =>
+            val starState = advance(exprState)
+            Right((OpSeq(Vector(expr, Identifier("*", None)), None), starState))
+          case _ => Right((expr, exprState))
+        }
       }
     }
   }
@@ -403,8 +401,31 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 current = advance(current)
               case Right(Token.Comma(_)) =>
                 current = advance(current)
+              case Right(Token.SymbolLiteral(name, pos)) =>
+                val meta = createMeta(pos, pos)
+                val afterKey = advance(current)
+                afterKey.current match {
+                  case Right(Token.Equal(_)) =>
+                    val afterEqual = advance(afterKey)
+                    parseExprInternal(afterEqual) match {
+                      case Right((value, valueState)) =>
+                        clauses = clauses :+ ObjectExprClause(Identifier(name, meta), value)
+                        current = valueState
+                      case Left(err) => break(Left(err))
+                    }
+                  case Right(Token.Operator("=>", _)) =>
+                    val afterArrow = advance(afterKey)
+                    parseExprInternal(afterArrow) match {
+                      case Right((value, valueState)) =>
+                        clauses = clauses :+ ObjectExprClauseOnValue(SymbolLiteral(name, meta), value)
+                        current = valueState
+                      case Left(err) => break(Left(err))
+                    }
+                  case Right(t) => break(Left(ParseError("Expected '=' or '=>' in object field", t.pos)))
+                  case Left(err) => break(Left(err))
+                }
               case _ =>
-                parseAtomBase(current) match {
+                parseExprInternal(current) match {
                   case Right((key, keyState)) =>
                     keyState.current match {
                       case Right(Token.Equal(_)) =>
@@ -412,8 +433,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                         parseExprInternal(afterEqual) match {
                           case Right((value, valueState)) =>
                             key match {
-                              case Identifier(name, meta) =>
-                                clauses = clauses :+ ObjectExprClause(Identifier(name, meta), value)
+                              case id: Identifier =>
+                                clauses = clauses :+ ObjectExprClause(id, value)
                                 current = valueState
                               case _ => break(Left(ParseError("Expected identifier as object field key", keyState.current.fold(_.pos, _.pos))))
                             }
@@ -439,6 +460,103 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         case Right(t) => Left(ParseError("Expected '{' for object", t.pos))
         case Left(err) => Left(err)
       }
+    }
+  }
+
+  private def parseObjectClauses(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    state.current match {
+      case Right(Token.LBrace(_)) =>
+        val afterBrace = advance(state)
+        afterBrace.current match {
+          case Right(Token.RBrace(_)) =>
+            Right((ObjectExpr(Vector.empty, None), advance(afterBrace)))
+          case _ =>
+            parseObjectClausesRec(afterBrace, Vector.empty).flatMap { case (clauses, afterClauses) =>
+              afterClauses.current match {
+                case Right(Token.RBrace(_)) =>
+                  Right((ObjectExpr(clauses, None), advance(afterClauses)))
+                case Right(t) => Left(ParseError("Expected '}'", t.pos))
+                case Left(err) => Left(err)
+              }
+            }
+        }
+      case Right(t) => Left(ParseError("Expected '{'", t.pos))
+      case Left(err) => Left(err)
+    }
+  }
+
+  private def parseObjectClausesRec(state: LexerState, acc: Vector[ObjectClause]): Either[ParseError, (Vector[ObjectClause], LexerState)] = {
+    state.current match {
+      case Right(Token.RBrace(_)) => Right((acc, state))
+      case Right(Token.Comma(_)) =>
+        val afterComma = advance(state)
+        parseObjectClausesRec(afterComma, acc)
+      case Right(Token.Comment(_, _)) =>
+        val afterComment = advance(state)
+        parseObjectClausesRec(afterComment, acc)
+      case _ =>
+        parseExprInternal(state).flatMap { case (key, afterKey) =>
+          afterKey.current match {
+            case Right(Token.Equal(_)) =>
+              val afterEquals = advance(afterKey)
+              parseExprInternal(afterEquals).flatMap { case (value, afterValue) =>
+                key match {
+                  case id: Identifier =>
+                    val clause = ObjectExprClause(id, value)
+                    parseObjectClausesRec(afterValue, acc :+ clause)
+                  case _ =>
+                    val clause = ObjectExprClauseOnValue(key, value)
+                    parseObjectClausesRec(afterValue, acc :+ clause)
+                }
+              }
+            case Right(t) => Left(ParseError("Expected '=' in object field", t.pos))
+            case Left(err) => Left(err)
+          }
+        }
+    }
+  }
+
+  private def isOperator(name: String): Boolean = {
+    name.matches("[!@#$%^&*+\\-=<>/?|~:]+") || 
+    name == "and" || name == "or" || name == "not" || 
+    name == "->" || name == "=>" || name == "if" || name == "then" || name == "else" || name == "match"
+  }
+
+  private def parseTelescope(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    state.current match {
+      case Right(Token.LParen(startPos)) =>
+        val afterParen = advance(state)
+        afterParen.current match {
+          case Right(Token.RParen(_)) =>
+            Right((Tuple(Vector.empty, None), advance(afterParen)))
+          case _ =>
+            parseTupleItem(afterParen).flatMap { case (first, firstState) =>
+              var exprs = Vector(first)
+              var currentState = firstState
+              var done = false
+              
+              while (!done) {
+                currentState.current match {
+                  case Right(Token.RParen(_)) =>
+                    done = true
+                    currentState = advance(currentState)
+                  case Right(Token.Comma(_)) =>
+                    currentState = advance(currentState)
+                    parseTupleItem(currentState) match {
+                      case Right((expr, exprState)) =>
+                        exprs = exprs :+ expr
+                        currentState = exprState
+                      case Left(err) => return Left(err)
+                    }
+                  case Right(t) => return Left(ParseError("Expected ',' or ')'", t.pos))
+                  case Left(err) => return Left(err)
+                }
+              }
+              Right((Tuple(exprs, None), currentState))
+            }
+        }
+      case Right(t) => Left(ParseError("Expected '('", t.pos))
+      case Left(err) => Left(err)
     }
   }
 }

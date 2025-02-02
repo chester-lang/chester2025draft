@@ -81,7 +81,7 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   val sourceOffset = SourceOffset(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
-  val lexer = LexerV2(tokens, sourceOffset, reporter, ignoreLocation = true)
+  val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
 
   val result = lexer
     .parseExpr()
