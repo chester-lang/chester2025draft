@@ -23,16 +23,34 @@ def parseAndCheckV0(input: String, expected: Expr): Unit = {
       { value =>
         assertEquals(read[Expr](write[Expr](value)), value)
         assertEquals(
-          read[Expr](write[Expr](resultignored.getOrElse(throw new Exception("Failed to parse")))),
-          resultignored.getOrElse(throw new Exception("Failed to parse"))
+          read[Expr](write[Expr](resultignored.right.get)),
+          resultignored.right.get
         )
         assertEquals(readBinary[Expr](writeBinary[Expr](value)), value)
         assertEquals(
-          readBinary[Expr](writeBinary[Expr](resultignored.getOrElse(throw new Exception("Failed to parse")))),
-          resultignored.getOrElse(throw new Exception("Failed to parse"))
+          readBinary[Expr](writeBinary[Expr](resultignored.right.get)),
+          resultignored.right.get
         )
         assertEquals(value, expected, s"Failed for input: $input")
       }
+    )
+}
+@deprecated("TODO: remove this")
+def getParsed(input: String): Expr = {
+  ChesterReader.parseExpr(
+    FileNameAndContent("testFile", input)
+  ) // it must parse with location
+  ChesterReader
+    .parseExpr(
+      FileNameAndContent("testFile", input),
+      ignoreLocation = true
+    )
+    .fold(
+      error =>
+        fail(
+          s"Parsing failed for input: $input ${error.message} at index ${error.pos}"
+        ),
+      value => value
     )
 }
 
@@ -112,7 +130,8 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   }
 }
 
-def getParsed(input: String): Expr = {
+@deprecated("TODO: remove this")
+def getParsedV1(input: String): Expr = {
   // Parse with location first to ensure it works
   ChesterReader.parseExpr(FileNameAndContent("testFile", input)).fold(
     error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
