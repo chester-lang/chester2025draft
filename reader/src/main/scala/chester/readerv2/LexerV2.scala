@@ -22,6 +22,7 @@ case class LexerState(
   index: Int
 ) {
   def current: Either[ParseError, Token] = tokens(index)
+  override def toString: String = s"LexerState(index=$index, current=$current, remaining=${tokens.length - index} tokens)"
 }
 
 object LexerV2 {
@@ -29,16 +30,56 @@ object LexerV2 {
     new LexerV2(tokens, sourceOffset, ignoreLocation)
     
   var DEBUG = false // Global debug flag
+  private var globalRecursionDepth = 0 // Track global recursion depth
+  private var maxRecursionDepth = 0 // Track maximum recursion depth reached
+  private var methodCallCounts = Map[String, Int]() // Track number of calls per method
 }
 
 class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean) {
-  import LexerV2.DEBUG
+  import LexerV2.{DEBUG, globalRecursionDepth, maxRecursionDepth, methodCallCounts}
   
-  private def debug(msg: => String): Unit = if (DEBUG) println(s"[DEBUG] $msg")
+  private def debug(msg: => String): Unit = if (DEBUG) {
+    val indent = " " * globalRecursionDepth
+    println(s"[DEBUG]$indent $msg")
+    System.out.flush()
+  }
+  
+  private def debugState(label: String): Unit = if (DEBUG) {
+    debug(s"$label:")
+    debug(s"  Current state: $state")
+    debug(s"  Loop count: $loopCount")
+    debug(s"  Recursion depth: $globalRecursionDepth")
+    debug(s"  Max recursion depth: $maxRecursionDepth")
+    debug(s"  Method call counts: ${methodCallCounts.mkString(", ")}")
+    System.out.flush()
+  }
   
   private var state: LexerState = LexerState(tokens.toVector, 0)
   private var loopCount = 0 // Track loop iterations
   
+  private def withRecursion[T](name: String)(f: => T): T = {
+    globalRecursionDepth += 1
+    maxRecursionDepth = math.max(maxRecursionDepth, globalRecursionDepth)
+    methodCallCounts = methodCallCounts.updated(name, methodCallCounts.getOrElse(name, 0) + 1)
+    
+    debug(s"ENTER $name (depth=$globalRecursionDepth, calls=${methodCallCounts(name)})")
+    debugState(s"Before $name")
+    
+    try {
+      val result = f
+      debug(s"EXIT $name with result=$result")
+      debugState(s"After $name")
+      result
+    } catch {
+      case e: Throwable =>
+        debug(s"ERROR in $name: ${e.getMessage}")
+        e.printStackTrace()
+        throw e
+    } finally {
+      globalRecursionDepth -= 1
+    }
+  }
+
   private def createMeta(startSourcePos: SourcePos, endSourcePos: SourcePos): Option[ExprMeta] = {
     debug(s"createMeta: start=$startSourcePos, end=$endSourcePos")
     Some(ExprMeta(Some(startSourcePos.combine(endSourcePos)), None))
@@ -56,17 +97,18 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     getSourcePos(token).range.start
 
   private def peek(): LexerState = {
-    debug(s"peek: current state index=${state.index}, token=${state.current}")
+    debug(s"peek: current state=$state")
     state
   }
 
   private def advance(): LexerState = {
-    debug(s"advance: from index=${state.index} to ${state.index + 1}")
+    val oldState = state
     state = LexerState(state.tokens, state.index + 1)
+    debug(s"advance: from $oldState to $state")
     state
   }
 
-  def parseExpr(): Either[ParseError, (Expr, LexerState)] = {
+  def parseExpr(): Either[ParseError, (Expr, LexerState)] = withRecursion("parseExpr") {
     debug("parseExpr: starting")
     loopCount = 0
     val result = parseExprInternal(state)
@@ -74,11 +116,15 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     result
   }
 
-  private def parseExprInternal(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    debug(s"parseExprInternal: ENTER state index=${state.index}, token=${state.current}, loopCount=$loopCount")
+  private def parseExprInternal(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("parseExprInternal") {
+    debug(s"parseExprInternal: state=$state, loopCount=$loopCount")
     loopCount += 1
     if (loopCount > 50) {
       debug(s"parseExprInternal: LOOP LIMIT EXCEEDED! loopCount=$loopCount")
+      debug("Token stream from current position:")
+      state.tokens.drop(state.index).take(10).zipWithIndex.foreach { case (token, i) =>
+        debug(s"  Token[${state.index + i}]: $token")
+      }
       Left(ParseError("Parser loop limit exceeded", getStartPos(state.current)))
     } else {
       val result = state.current match {
@@ -95,7 +141,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           debug("parseExprInternal: delegating to collectOpSeq")
           collectOpSeq(state)
       }
-      debug(s"parseExprInternal: EXIT with result=$result")
+      debug(s"parseExprInternal: returning result=$result")
       result
     }
   }
@@ -167,18 +213,18 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  private def collectOpSeq(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    debug(s"collectOpSeq: ENTER with token=${state.current}")
+  private def collectOpSeq(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("collectOpSeq") {
+    debug(s"collectOpSeq: state=$state")
     parseAtom(state).flatMap { case (left, afterLeft: LexerState) =>
-      debug(s"collectOpSeq: parsed atom=$left, next token=${afterLeft.current}")
+      debug(s"collectOpSeq: parsed atom=$left, next state=$afterLeft")
       val result = parseSuffix(afterLeft, left)
-      debug(s"collectOpSeq: EXIT with result=$result")
+      debug(s"collectOpSeq: returning result=$result")
       result
     }
   }
 
-  private def parseAtom(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    debug(s"parseAtom: ENTER with token=${state.current}")
+  private def parseAtom(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("parseAtom") {
+    debug(s"parseAtom: state=$state")
     val result = state.current match {
       case Right(Token.Identifier(text, sourcePos)) =>
         val id = text.map(_.text).mkString
@@ -192,12 +238,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         debug(s"parseAtom: error token $err")
         Left(err)
     }
-    debug(s"parseAtom: EXIT with result=$result")
+    debug(s"parseAtom: returning result=$result")
     result
   }
 
-  private def parseSuffix(state: LexerState, left: Expr): Either[ParseError, (Expr, LexerState)] = {
-    debug(s"parseSuffix: ENTER with left=$left, token=${state.current}")
+  private def parseSuffix(state: LexerState, left: Expr): Either[ParseError, (Expr, LexerState)] = withRecursion("parseSuffix") {
+    debug(s"parseSuffix: state=$state, left=$left")
     val result = state.current match {
       case Right(Token.LParen(_)) =>
         debug("parseSuffix: found LParen, creating function call")
@@ -251,7 +297,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         debug("parseSuffix: no suffix found")
         Right((left, state))
     }
-    debug(s"parseSuffix: EXIT with result=$result")
+    debug(s"parseSuffix: returning result=$result")
     result
   }
 
@@ -273,19 +319,19 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  private def parseTuple(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    debug(s"parseTuple: ENTER with state index=${state.index}, token=${state.current}")
+  private def parseTuple(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("parseTuple") {
+    debug(s"parseTuple: state=$state")
     boundary {
       state.current match {
         case Right(Token.LParen(sourcePos)) =>
           debug("parseTuple: found opening parenthesis")
           val afterParen = advance()
-          debug(s"parseTuple: after advance, token=${afterParen.current}")
+          debug(s"parseTuple: after advance, state=$afterParen")
           afterParen.current match {
             case Right(Token.RParen(_)) =>
               debug("parseTuple: found immediate closing parenthesis")
               val result = Right((Tuple(Vector.empty, createMeta(sourcePos, sourcePos)), advance()))
-              debug(s"parseTuple: EXIT with empty tuple result=$result")
+              debug(s"parseTuple: returning empty tuple result=$result")
               result
             case _ =>
               debug("parseTuple: parsing tuple contents")
@@ -295,23 +341,23 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               var itemCount = 0
               
               while (maxItems > 0) {
-                debug(s"parseTuple: processing item #$itemCount, current token=${current.current}, maxItems=$maxItems")
+                debug(s"parseTuple: processing item #$itemCount, state=$current, maxItems=$maxItems")
                 parseExpr().flatMap { case (expr, exprState) =>
                   debug(s"parseTuple: parsed expression: $expr")
                   exprs = exprs :+ expr
                   current = exprState
-                  debug(s"parseTuple: after parsing expr, current token=${current.current}")
+                  debug(s"parseTuple: after parsing expr, state=$current")
                   current.current match {
                     case Right(Token.RParen(_)) =>
                       debug("parseTuple: found closing parenthesis")
                       val endSourcePos = getSourcePos(current.current)
                       val result = Right((Tuple(exprs, createMeta(sourcePos, endSourcePos)), advance()))
-                      debug(s"parseTuple: EXIT with result=$result")
+                      debug(s"parseTuple: returning result=$result")
                       break(result)
                     case Right(Token.Comma(_)) =>
                       debug("parseTuple: found comma separator")
                       current = advance()
-                      debug(s"parseTuple: after comma advance, current token=${current.current}")
+                      debug(s"parseTuple: after comma advance, state=$current")
                       Right(())
                     case Right(t) =>
                       debug(s"parseTuple: unexpected token after expression: $t")

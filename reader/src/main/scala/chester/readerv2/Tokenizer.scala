@@ -22,12 +22,14 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   private var col: Int = 0
 
   def tokenize(): TokenStream = {
-    LazyList.unfold(()) { _ =>
-      if (pos >= source.length) {
-        Some((Right(Token.EOF(createSourcePos(0, 0))), ()))
+    LazyList.unfold(false) { isEOF =>
+      if (isEOF) {
+        None  // Stop generating tokens after EOF
+      } else if (pos >= source.length) {
+        Some((Right(Token.EOF(createSourcePos(0, 0))), true))  // Mark that we've hit EOF
       } else {
         val token = nextToken
-        Some((token, ()))
+        Some((token, false))  // Continue tokenizing
       }
     }
   }
