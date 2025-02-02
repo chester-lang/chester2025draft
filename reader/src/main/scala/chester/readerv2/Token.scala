@@ -27,7 +27,6 @@ object Token {
   case class Colon(sourcePos: SourcePos) extends Token
   case class Dot(sourcePos: SourcePos) extends Token
   case class At(sourcePos: SourcePos) extends Token
-  case class Arrow2(sourcePos: SourcePos) extends Token
   case class EOF(sourcePos: SourcePos) extends Token
   case class Whitespace(sourcePos: SourcePos) extends Token { override def isWhitespace = true }
   case class Comment(text: String, sourcePos: SourcePos) extends Token { override def isComment = true }

@@ -3,7 +3,7 @@ package chester.readerv2
 import chester.error.{Reporter, Pos, SourcePos, RangeInFile}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
-import chester.syntax.IdentifierRules.*
+import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 
@@ -38,8 +38,14 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val zero = 0.refineUnsafe[Positive0]
     val start: Int :| Positive0 = startPos.refineUnsafe[Positive0]
     val end: Int :| Positive0 = endPos.refineUnsafe[Positive0]
-    val startUtf16: Int :| Positive0 = source.substring(0, startPos).codePoints().count().toInt.refineUnsafe[Positive0]
-    val endUtf16: Int :| Positive0 = source.substring(0, endPos).codePoints().count().toInt.refineUnsafe[Positive0]
+    val startUtf16: Int :| Positive0 = Math.max(
+      startPos,
+      source.substring(0, startPos).codePoints().count().toInt
+    ).refineUnsafe[Positive0]
+    val endUtf16: Int :| Positive0 = Math.max(
+      endPos,
+      source.substring(0, endPos).codePoints().count().toInt
+    ).refineUnsafe[Positive0]
     val lineUtf16: Int :| Positive0 = line.refineUnsafe[Positive0]
     val colUtf16: Int :| Positive0 = col.refineUnsafe[Positive0]
     
@@ -54,32 +60,39 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     if (pos >= source.length) {
       Right(Token.EOF(createSourcePos(0, 0)))
     } else {
-      val c = source(pos)
+      val c = source.codePointAt(pos)
       val startPos = pos
-      pos += 1
+      pos += Character.charCount(c)
       col += 1
 
-      c match {
-        case '(' => Right(Token.LParen(createSourcePos(startPos, pos)))
-        case ')' => Right(Token.RParen(createSourcePos(startPos, pos)))
-        case '[' => Right(Token.LBracket(createSourcePos(startPos, pos)))
-        case ']' => Right(Token.RBracket(createSourcePos(startPos, pos)))
-        case '{' => Right(Token.LBrace(createSourcePos(startPos, pos)))
-        case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
-        case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
-        case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
-        case '=' => Right(Token.Equal(createSourcePos(startPos, pos)))
-        case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
-        case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
-        case '@' => Right(Token.At(createSourcePos(startPos, pos)))
-        case '"' => parseString(startPos)
-        case '\'' => parseSymbol(startPos)
-        case d if d.isDigit => parseNumber(d.toString, startPos)
-        case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
-        case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
-        case other =>
-          val error = ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start)
-          Left(error)
+      if (Character.isSupplementaryCodePoint(c)) {
+        if (isIdentifierFirst(c)) {
+          parseIdentifier(String.valueOf(Character.toChars(c)), startPos)
+        } else {
+          Left(ParseError(s"Unexpected character: ${String.valueOf(Character.toChars(c))}", createSourcePos(startPos, pos).range.start))
+        }
+      } else {
+        c.toChar match {
+          case '(' => Right(Token.LParen(createSourcePos(startPos, pos)))
+          case ')' => Right(Token.RParen(createSourcePos(startPos, pos)))
+          case '[' => Right(Token.LBracket(createSourcePos(startPos, pos)))
+          case ']' => Right(Token.RBracket(createSourcePos(startPos, pos)))
+          case '{' => Right(Token.LBrace(createSourcePos(startPos, pos)))
+          case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
+          case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
+          case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
+          case '=' => Right(Token.Equal(createSourcePos(startPos, pos)))
+          case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
+          case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
+          case '@' => Right(Token.At(createSourcePos(startPos, pos)))
+          case '"' => parseString(startPos)
+          case '\'' => parseSymbol(startPos)
+          case d if d.isDigit => parseNumber(d.toString, startPos)
+          case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
+          case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
+          case other =>
+            Left(ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start))
+        }
       }
     }
   }
@@ -220,7 +233,8 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       pos += 1
       col += 1
     }
-    Right(Token.Operator(sb.toString, createSourcePos(startPos, pos)))
+    val operator = sb.toString
+    Right(Token.Operator(operator, createSourcePos(startPos, pos)))
   }
 }
 

@@ -9,11 +9,13 @@ import io.github.iltotore.iron.autoRefine
 import chester.reader.{ParseError, SourceOffset, ParserSource}
 import chester.syntax.IdentifierRules.*
 import chester.syntax.concrete.{
-  Block, Expr, ExprMeta, ExprStmt, Identifier, ListExpr, ObjectExpr, ObjectExprClause,
-  OpSeq, QualifiedName, Tuple, FunctionCall, IntegerLiteral, RationalLiteral
+  Block, Expr, ExprMeta, ExprStmt, Identifier, ListExpr, ObjectExpr,
+  QualifiedName, Tuple, FunctionCall, IntegerLiteral, RationalLiteral, StringLiteral,
+  ObjectExprClauseOnValue, ObjectExprClause, ObjectClause, OpSeq
 }
-import chester.syntax.concrete.ObjectExprClause.*
 import chester.syntax.concrete.Literal.*
+import spire.math.Rational
+import chester.reader.FileNameAndContent
 
 case class StmtExpr(expr: Expr)
 
@@ -22,6 +24,12 @@ case class LexerState(
   index: Int
 ) {
   def current: Either[ParseError, Token] = tokens(index)
+  def isAtEnd: Boolean = index >= tokens.length
+  def advance(): LexerState = LexerState(tokens, index + 1)
+  def sourcePos: SourcePos = current match {
+    case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
+    case Right(t) => t.sourcePos
+  }
   override def toString: String = s"LexerState(index=$index, current=$current, remaining=${tokens.length - index} tokens)"
 }
 
@@ -92,7 +100,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   private def getSourcePos(token: Either[ParseError, Token]): SourcePos = {
     debug(s"getSourcePos: token=$token")
     token match {
-      case Left(err) => err.sourcePos.getOrElse(SourcePos(sourceOffset, RangeInFile(Pos.zero, Pos.zero)))
+      case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
       case Right(t) => t.sourcePos
     }
   }
@@ -219,34 +227,158 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private def collectOpSeq(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("collectOpSeq") {
     debug(s"collectOpSeq: state=$state")
-    parseAtom(state).flatMap { case (left, afterLeft: LexerState) =>
+    
+    // First check if we have a prefix operator
+    val (firstTerm, afterFirst) = state.current match {
+      case Right(Token.Operator(text, sourcePos)) =>
+        debug(s"collectOpSeq: found prefix operator '$text'")
+        val op = Identifier(text, createMeta(sourcePos, sourcePos))
+        val afterOp = advance()
+        afterOp.current match {
+          case Right(Token.LParen(_)) =>
+            debug(s"collectOpSeq: found parentheses after prefix operator, creating function call")
+            parseTuple(afterOp).map { case (args, afterArgs) =>
+              val telescope = args match {
+                case tuple: Tuple => tuple
+                case other => Tuple(Vector(other), None)
+              }
+              (FunctionCall(op, telescope, None), afterArgs)
+            }.fold(
+              err => (op, afterOp),
+              result => result
+            )
+          case _ => (op, afterOp)
+        }
+      case Right(Token.Identifier(parts, sourcePos)) if parts.map(_.text).mkString.matches("[a-zA-Z]+") =>
+        debug(s"collectOpSeq: found prefix identifier '${parts.map(_.text).mkString}'")
+        val id = Identifier(parts.map(_.text).mkString, createMeta(sourcePos, sourcePos))
+        val afterId = advance()
+        afterId.current match {
+          case Right(Token.LParen(_)) =>
+            debug(s"collectOpSeq: found parentheses after prefix identifier, creating function call")
+            parseTuple(afterId).map { case (args, afterArgs) =>
+              val telescope = args match {
+                case tuple: Tuple => tuple
+                case other => Tuple(Vector(other), None)
+              }
+              (FunctionCall(id, telescope, None), afterArgs)
+            }.fold(
+              err => (id, afterId),
+              result => result
+            )
+          case _ => (id, afterId)
+        }
+      case _ =>
+        debug("collectOpSeq: no prefix operator found")
+        (null, state)
+    }
+
+    val startState = if (firstTerm == null) state else afterFirst
+    parseAtom(startState).flatMap { case (left, afterLeft) =>
       debug(s"collectOpSeq: parsed atom=$left, next state=$afterLeft")
-      val result = parseSuffix(afterLeft, left)
-      debug(s"collectOpSeq: returning result=$result")
-      result
+      var currentState = afterLeft
+      var terms = if (firstTerm == null) Vector[Expr](left) else Vector[Expr](firstTerm, left)
+      
+      while (currentState.current match {
+        case Right(Token.Operator(_, _)) => true
+        case Right(Token.Identifier(parts, _)) if parts.map(_.text).mkString.matches("[a-zA-Z]+") => true
+        case Right(Token.LBrace(_)) => true
+        case _ => false
+      }) {
+        val opToken = currentState.current.toOption.get
+        val opSourcePos = opToken.sourcePos
+        
+        currentState = advance()
+        
+        val nextTerm = opToken match {
+          case Token.LBrace(_) =>
+            debug("collectOpSeq: found block")
+            parseBlock(currentState.copy(index = currentState.index - 1))
+          case _ =>
+            val opText = opToken match {
+              case Token.Operator(text, _) => text
+              case Token.Identifier(parts, _) => parts.map(_.text).mkString
+              case _ => throw new IllegalStateException("Unexpected token type")
+            }
+            
+            parseAtom(currentState) match {
+              case Right((nextAtom, afterAtom)) =>
+                terms = terms :+ Identifier(opText, createMeta(opSourcePos, opSourcePos))
+                Right((nextAtom, afterAtom))
+              case Left(err) => Left(err)
+            }
+        }
+        
+        nextTerm match {
+          case Right((nextExpr, afterExpr)) =>
+            terms = terms :+ nextExpr
+            currentState = afterExpr
+          case Left(err) => return Left(err)
+        }
+      }
+      
+      Right((if (terms.length > 1) OpSeq(terms, None) else terms.head, currentState))
     }
   }
 
   private def parseAtom(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("parseAtom") {
     debug(s"parseAtom: state=$state")
     val result = state.current match {
+      case Right(Token.LParen(sourcePos)) =>
+        debug("parseAtom: found left parenthesis, parsing tuple")
+        parseTuple(state)
       case Right(Token.Identifier(text, sourcePos)) =>
         val id = text.map(_.text).mkString
         debug(s"parseAtom: found identifier '$id'")
         val identifier = Identifier(id, createMeta(sourcePos, sourcePos))
-        Right((identifier, advance()))
+        val afterId = advance()
+        afterId.current match {
+          case Right(Token.LParen(_)) =>
+            debug(s"parseAtom: found parentheses after identifier, creating function call")
+            parseTuple(afterId).map { case (args, afterArgs) =>
+              val telescope = args match {
+                case tuple: Tuple => tuple
+                case other => Tuple(Vector(other), None)
+              }
+              (FunctionCall(identifier, telescope, None), afterArgs)
+            }
+          case _ => Right((identifier, afterId))
+        }
       case Right(Token.Operator(text, sourcePos)) =>
         debug(s"parseAtom: found operator '$text'")
         val identifier = Identifier(text, createMeta(sourcePos, sourcePos))
-        Right((identifier, advance()))
+        val afterOp = advance()
+        afterOp.current match {
+          case Right(Token.LParen(_)) =>
+            debug(s"parseAtom: found parentheses after operator, creating function call")
+            parseTuple(afterOp).map { case (args, afterArgs) =>
+              val telescope = args match {
+                case tuple: Tuple => tuple
+                case other => Tuple(Vector(other), None)
+              }
+              (FunctionCall(identifier, telescope, None), afterArgs)
+            }
+          case _ => Right((identifier, afterOp))
+        }
       case Right(Token.IntegerLiteral(value, sourcePos)) =>
         debug(s"parseAtom: found integer literal '$value'")
-        val intLiteral = IntegerLiteral(BigInt(value), createMeta(sourcePos, sourcePos))
+        val intValue = if (value.startsWith("0x") || value.startsWith("0X")) {
+          BigInt(value.substring(2), 16)
+        } else if (value.startsWith("0b") || value.startsWith("0B")) {
+          BigInt(value.substring(2), 2)
+        } else {
+          BigInt(value)
+        }
+        val intLiteral = IntegerLiteral(intValue, createMeta(sourcePos, sourcePos))
         Right((intLiteral, advance()))
       case Right(Token.RationalLiteral(value, sourcePos)) =>
         debug(s"parseAtom: found rational literal '$value'")
-        val rationalLiteral = RationalLiteral(BigDecimal(value), createMeta(sourcePos, sourcePos))
-        Right((rationalLiteral, advance()))
+        val finalValue = BigDecimal(value)
+        Right((RationalLiteral(finalValue, createMeta(sourcePos, sourcePos)), advance()))
+      case Right(Token.StringLiteral(chars, sourcePos)) =>
+        debug(s"parseAtom: found string literal '${chars.map(_.text).mkString}'")
+        val stringLiteral = StringLiteral(chars.map(_.text).mkString, createMeta(sourcePos, sourcePos))
+        Right((stringLiteral, advance()))
       case Right(t) =>
         debug(s"parseAtom: unexpected token $t")
         Left(ParseError("Expected expression", t.sourcePos.range.start))
@@ -261,29 +393,55 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   private def parseSuffix(state: LexerState, left: Expr): Either[ParseError, (Expr, LexerState)] = withRecursion("parseSuffix") {
     debug(s"parseSuffix: state=$state, left=$left")
     val result = state.current match {
-      case Right(Token.LParen(_)) =>
-        debug("parseSuffix: found LParen, creating function call")
-        parseTuple(state).map { case (args, newState) =>
-          args match {
-            case tuple: Tuple =>
-              debug(s"parseSuffix: created function call with args=$tuple")
-              (FunctionCall(left, tuple, None), newState)
-            case other =>
-              debug(s"parseSuffix: unexpected args type: $other")
-              (FunctionCall(left, Tuple(Vector(other), None), None), newState)
-          }
+      case Right(Token.Operator("->", sourcePos)) =>
+        debug("parseSuffix: found -> operator")
+        val afterArrow = advance()
+        parseExpr().flatMap { case (right, afterRight) =>
+          Right((ObjectExpr(Vector(ObjectExprClauseOnValue(left, right)), None), afterRight))
         }
       case Right(Token.LBracket(_)) =>
         debug("parseSuffix: found LBracket, creating list expression")
-        parseList(state).map { case (args, newState) =>
-          args match {
-            case list: ListExpr =>
-              debug(s"parseSuffix: created function call with list args=$list")
-              (FunctionCall(left, list, None), newState)
-            case other =>
-              debug(s"parseSuffix: unexpected list args type: $other")
-              (FunctionCall(left, ListExpr(Vector(other), None), None), newState)
+        parseList(state).flatMap { case (args, afterList) =>
+          debug(s"parseSuffix: parsed generic args=$args")
+          val funcWithGenerics = FunctionCall(
+            left, 
+            args match {
+              case ListExpr(terms, meta) => ListExpr(terms, meta)
+              case other => ListExpr(Vector(other), None)
+            },
+            None
+          )
+          afterList.current match {
+            case Right(Token.LParen(_)) =>
+              debug("parseSuffix: found LParen after generics, creating function call")
+              parseTuple(afterList).map { case (tupleArgs, afterTuple) =>
+                val finalCall = FunctionCall(
+                  funcWithGenerics,
+                  tupleArgs match {
+                    case Tuple(terms, meta) => Tuple(terms, meta)
+                    case other => Tuple(Vector(other), None)
+                  },
+                  None
+                )
+                debug(s"parseSuffix: created function call with generics and args: $finalCall")
+                (finalCall, afterTuple)
+              }
+            case _ => Right((funcWithGenerics, afterList))
           }
+        }
+      case Right(Token.LParen(_)) =>
+        debug("parseSuffix: found LParen, creating function call")
+        parseTuple(state).map { case (args, newState) =>
+          val finalCall = FunctionCall(
+            left,
+            args match {
+              case Tuple(terms, meta) => Tuple(terms, meta)
+              case other => Tuple(Vector(other), None)
+            },
+            None
+          )
+          debug(s"parseSuffix: created function call with args: $finalCall")
+          (finalCall, newState)
         }
       case Right(Token.Dot(sourcePos)) =>
         debug("parseSuffix: found dot operator")
@@ -578,24 +736,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 val identifier = Identifier(name, createMeta(keySourcePos, keySourcePos))
                 val afterKey = advance()
                 afterKey.current match {
-                  case Right(Token.Colon(_)) =>
-                    debug("parseObject: found colon after key")
+                  case Right(Token.Colon(_)) | Right(Token.Equal(_)) =>
+                    debug("parseObject: found colon/equals after key")
                     val afterColon = advance()
                     parseExprInternal(afterColon) match {
-                      case Right((value, valueState: LexerState)) =>
-                        debug(s"parseObject: successfully parsed value: $value")
-                        clauses = clauses :+ ObjectExprClause(identifier, value)
-                        current = valueState
-                        maxClauses -= 1
-                        clauseCount += 1
-                      case Left(err) => 
-                        debug(s"parseObject: error parsing value: $err")
-                        break(Left(err))
-                    }
-                  case Right(Token.Equal(_)) =>
-                    debug("parseObject: found equals after key")
-                    val afterEqual = advance()
-                    parseExprInternal(afterEqual) match {
                       case Right((value, valueState: LexerState)) =>
                         debug(s"parseObject: successfully parsed value: $value")
                         clauses = clauses :+ ObjectExprClause(identifier, value)
@@ -679,5 +823,59 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         case Left(err) => Left(err)
       }
     }
+  }
+
+  def parseObjectExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = withRecursion("parseObjectExpr") {
+    var clauses = Vector.empty[ObjectExprClauseOnValue]
+    var currentState = state
+    
+    while (true) {
+      parseExpr() match {
+        case Left(err) => return Left(err)
+        case Right((left, afterLeft)) => {
+          if (afterLeft.current.exists(t => t match {
+            case Token.Operator("->", _) => true
+            case _ => false
+          })) {
+            val afterArrow = afterLeft.advance()
+            parseExpr() match {
+              case Left(err) => return Left(err)
+              case Right((right, afterRight)) =>
+                clauses = clauses :+ ObjectExprClauseOnValue(left, right)
+                if (afterRight.current.exists(t => t.isInstanceOf[Token.Comma])) {
+                  currentState = afterRight.advance()
+                } else {
+                  return Right((ObjectExpr(clauses, None), afterRight))
+                }
+            }
+          } else {
+            return Left(ParseError("Expected '->' in object expression", afterLeft.sourcePos.range.start))
+          }
+        }
+      }
+    }
+    
+    Right((ObjectExpr(clauses, None), currentState))
+  }
+
+  def collectIdentifier(state: LexerState): (Vector[StringChar], LexerState) = {
+    var chars = Vector.empty[StringChar]
+    var currentState = state
+    
+    while (!currentState.isAtEnd && currentState.current.exists(token => token.isInstanceOf[Token.Identifier])) {
+      currentState.current match {
+        case Right(id: Token.Identifier) =>
+          chars = chars ++ id.parts
+          currentState = currentState.advance()
+        case _ => throw new RuntimeException("Unreachable: exists check ensures this case never happens")
+      }
+    }
+    
+    (chars, currentState)
+  }
+
+  def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
+    case Right(token) => token.isInstanceOf[Token.Identifier]
+    case _ => false
   }
 }
