@@ -14,8 +14,6 @@ class SimpleFunctionCallTest extends FunSuite {
     parseAndCheck(input, expected)
   }
 
-  // We'll uncomment this more complex test after the simple one works
-  /*
   test("simple plus function") {
     val input = "+(2, 3)"
     val expected = FunctionCall(
@@ -31,5 +29,4 @@ class SimpleFunctionCallTest extends FunSuite {
     )
     parseAndCheck(input, expected)
   }
-  */
 } 

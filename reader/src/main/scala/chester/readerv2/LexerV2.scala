@@ -10,7 +10,7 @@ import chester.reader.{ParseError, SourceOffset, ParserSource}
 import chester.syntax.IdentifierRules.*
 import chester.syntax.concrete.{
   Block, Expr, ExprMeta, ExprStmt, Identifier, ListExpr, ObjectExpr, ObjectExprClause,
-  OpSeq, QualifiedName, Tuple, FunctionCall
+  OpSeq, QualifiedName, Tuple, FunctionCall, IntegerLiteral, RationalLiteral
 }
 import chester.syntax.concrete.ObjectExprClause.*
 import chester.syntax.concrete.Literal.*
@@ -82,7 +82,11 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private def createMeta(startSourcePos: SourcePos, endSourcePos: SourcePos): Option[ExprMeta] = {
     debug(s"createMeta: start=$startSourcePos, end=$endSourcePos")
-    Some(ExprMeta(Some(startSourcePos.combine(endSourcePos)), None))
+    if (ignoreLocation) {
+      None
+    } else {
+      Some(ExprMeta(Some(startSourcePos.combine(endSourcePos)), None))
+    }
   }
 
   private def getSourcePos(token: Either[ParseError, Token]): SourcePos = {
@@ -231,6 +235,18 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         debug(s"parseAtom: found identifier '$id'")
         val identifier = Identifier(id, createMeta(sourcePos, sourcePos))
         Right((identifier, advance()))
+      case Right(Token.Operator(text, sourcePos)) =>
+        debug(s"parseAtom: found operator '$text'")
+        val identifier = Identifier(text, createMeta(sourcePos, sourcePos))
+        Right((identifier, advance()))
+      case Right(Token.IntegerLiteral(value, sourcePos)) =>
+        debug(s"parseAtom: found integer literal '$value'")
+        val intLiteral = IntegerLiteral(BigInt(value), createMeta(sourcePos, sourcePos))
+        Right((intLiteral, advance()))
+      case Right(Token.RationalLiteral(value, sourcePos)) =>
+        debug(s"parseAtom: found rational literal '$value'")
+        val rationalLiteral = RationalLiteral(BigDecimal(value), createMeta(sourcePos, sourcePos))
+        Right((rationalLiteral, advance()))
       case Right(t) =>
         debug(s"parseAtom: unexpected token $t")
         Left(ParseError("Expected expression", t.sourcePos.range.start))
