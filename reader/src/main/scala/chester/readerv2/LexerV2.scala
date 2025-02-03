@@ -146,6 +146,42 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   /*
+   * Design Notes for Uniform Operator/Identifier Handling:
+   * 
+   * 1. No Special Cases:
+   *    - All identifiers and operators are treated uniformly in parsing
+   *    - No predefined keywords (if/then/else/val) or operators (+/-/*)
+   *    - No special parsing rules for any identifiers
+   *    - Semantic meaning determined in later passes
+   *    - Examples:
+   *      - Traditional: if x then y else z
+   *      - Custom: myIf x myThen y myElse z
+   *      - Both parse to: OpSeq([identifier, expr, identifier, expr, identifier, expr])
+   * 
+   * 2. Operator/Identifier Rules:
+   *    - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
+   *    - Identifiers start with letters/emoji/underscore
+   *    - Both can contain operator symbols and word symbols
+   *    - See IdentifierRules.scala for complete rules
+   * 
+   * 3. Sequence Construction:
+   *    - All terms form a uniform sequence: expr op expr op expr ...
+   *    - Structure preserved for later semantic analysis
+   *    - Examples:
+   *      - 1 + 2 -> OpSeq([1, +, 2])
+   *      - if x then y -> OpSeq([if, x, then, y])
+   *      - val x = 1 -> OpSeq([val, x, =, 1])
+   *      - myOp1 x myOp2 y -> OpSeq([myOp1, x, myOp2, y])
+   * 
+   * 4. Benefits:
+   *    - Allows user-defined operators and keywords
+   *    - Consistent parsing rules for all identifiers
+   *    - Flexible operator definition and extension
+   *    - Operator precedence and fixity handled in later passes
+   *    - Supports domain-specific language extensions
+   */
+
+  /*
    * Design Notes for Operator Sequence Parsing:
    * 
    * 1. Operators are handled uniformly through character-based identification
