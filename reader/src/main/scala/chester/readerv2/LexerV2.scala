@@ -145,135 +145,132 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     state
   }
 
-  /*
-   * Design Notes for Uniform Operator/Identifier Handling:
-   * 
-   * 1. No Special Cases:
-   *    - All identifiers and operators are treated uniformly in parsing
-   *    - No predefined keywords (if/then/else/val) or operators (+/-/*)
-   *    - No special parsing rules for any identifiers
-   *    - Semantic meaning determined in later passes
-   *    - Examples:
-   *      - Traditional: if x then y else z
-   *      - Custom: myIf x myThen y myElse z
-   *      - Both parse to: OpSeq([identifier, expr, identifier, expr, identifier, expr])
-   * 
-   * 2. Operator/Identifier Rules:
-   *    - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
-   *    - Identifiers start with letters/emoji/underscore
-   *    - Both can contain operator symbols and word symbols
-   *    - See IdentifierRules.scala for complete rules
-   * 
-   * 3. Sequence Construction:
-   *    - All terms form a uniform sequence: expr op expr op expr ...
-   *    - Structure preserved for later semantic analysis
-   *    - Examples:
-   *      - 1 + 2 -> OpSeq([1, +, 2])
-   *      - if x then y -> OpSeq([if, x, then, y])
-   *      - val x = 1 -> OpSeq([val, x, =, 1])
-   *      - myOp1 x myOp2 y -> OpSeq([myOp1, x, myOp2, y])
-   * 
-   * 4. Benefits:
-   *    - Allows user-defined operators and keywords
-   *    - Consistent parsing rules for all identifiers
-   *    - Flexible operator definition and extension
-   *    - Operator precedence and fixity handled in later passes
-   *    - Supports domain-specific language extensions
-   */
+  // Design Notes for Uniform Operator/Identifier Handling:
+  // 
+  // 1. No Special Cases:
+  //    - All identifiers and operators are treated uniformly in parsing
+  //    - No predefined keywords (if/then/else/val) or operators (+/-/*)
+  //    - No special parsing rules for any identifiers
+  //    - Semantic meaning determined in later passes
+  //    - Examples:
+  //      - Traditional: if x then y else z
+  //      - Custom: myIf x myThen y myElse z
+  //      - Both parse to: OpSeq([identifier, expr, identifier, expr, identifier, expr])
+  // 
+  // 2. Operator/Identifier Rules:
+  //    - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
+  //    - Identifiers start with letters/emoji/underscore
+  //    - Both can contain operator symbols and word symbols
+  //    - See IdentifierRules.scala for complete rules
+  // 
+  // 3. Sequence Construction:
+  //    - All terms form a uniform sequence: expr op expr op expr ...
+  //    - Structure preserved for later semantic analysis
+  //    - Examples:
+  //      - 1 + 2 -> OpSeq([1, +, 2])
+  //      - if x then y -> OpSeq([if, x, then, y])
+  //      - val x = 1 -> OpSeq([val, x, =, 1])
+  //      - myOp1 x myOp2 y -> OpSeq([myOp1, x, myOp2, y])
+  // 
+  // 4. Benefits:
+  //    - Allows user-defined operators and keywords
+  //    - Consistent parsing rules for all identifiers
+  //    - Flexible operator definition and extension
+  //    - Operator precedence and fixity handled in later passes
+  //    - Supports domain-specific language extensions
 
-  /*
-   * Design Notes for Operator Sequence Parsing:
-   * 
-   * 1. Operators are handled uniformly through character-based identification
-   * 2. No special casing of operators - determined by character patterns
-   * 3. Operator sequences are built incrementally
-   * 4. The sequence maintains the alternating pattern: term operator term operator ...
-   * 5. Both prefix and infix operators are supported through the same mechanism
-   */
+  // Design Notes for Operator Sequence Parsing:
+  // 
+  // 1. Operators are handled uniformly through character-based identification
+  // 2. No special casing of operators - determined by character patterns
+  // 3. Operator sequences are built incrementally
+  // 4. The sequence maintains the alternating pattern: term operator term operator ...
+  // 5. Both prefix and infix operators are supported through the same mechanism
   def parseExpr(): Either[ParseError, (Expr, LexerState)] = withRecursion("parseExpr") {
     debug(s"parseExpr: state=$state")
-    parseAtom(state).flatMap { case (firstExpr, firstState) =>
-      var currentExpr = firstExpr
-      var currentState = firstState
-      var shouldContinue = true
-      var result: Either[ParseError, (Expr, LexerState)] = Right((currentExpr, currentState))
-      
-      while (shouldContinue && currentState.index < currentState.tokens.length) {
-        currentState.current match {
-          case Right(Token.Operator(chars, sourcePos)) =>
+    parseAtom(state).flatMap { case (firstAtom, afterAtom) =>
+      collectOpSeq(firstAtom, afterAtom)
+    }
+  }
+
+  /*
+   * Collects a sequence of expressions and operators into an OpSeq
+   * without considering operator precedence or fixity.
+   * This allows for flexible operator definition and semantics in later passes.
+   */
+  def collectOpSeq(first: Expr, current: LexerState): Either[ParseError, (OpSeq, LexerState)] = {
+    debug(s"collectOpSeq: first=$first, current=$current")
+    var terms = Vector[Expr](first)
+    var maxTerms = 100
+    var done = false
+    var state = current
+
+    while (!done && maxTerms > 0) {
+      maxTerms -= 1
+      state.current match {
+        case Right(Token.EOF(_)) | Right(Token.Comment(_, _)) | Right(Token.RParen(_)) | 
+             Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) =>
+          done = true
+
+        case Right(token) => token match {
+          case Token.Operator(chars, _) => {
             val str = chars.mkString
             val isOperator = str.headOption.exists(isOperatorIdentifierFirst) && 
                             str.tail.forall(isOperatorIdentifierRest)
             
             if (isOperator) {
-              val afterOp = currentState.advance()
-              parseAtom(afterOp) match {
-                case Right((rhs, afterRhs)) =>
-                  val seq = currentExpr match {
-                    case OpSeq(existingSeq, meta) =>
-                      existingSeq :+ Identifier(str, None) :+ rhs
-                    case _ =>
-                      Vector(currentExpr, Identifier(str, None), rhs)
-                  }
-                  currentExpr = OpSeq(seq, None)
-                  currentState = afterRhs
-                  result = Right((currentExpr, currentState))
-                case Left(err) => 
-                  result = Left(err)
-                  shouldContinue = false
+              val op = Identifier(str, None)
+              state = state.advance()
+              parseAtom(state) match {
+                case Left(err) => return Left(err)
+                case Right((rhs, afterRhs)) => {
+                  terms = terms :+ op :+ rhs
+                  state = afterRhs
+                }
               }
             } else {
-              shouldContinue = false
+              done = true
             }
-            
-          case Right(Token.Identifier(chars, sourcePos)) =>
+          }
+
+          case Token.Identifier(chars, _) => {
             val str = chars.mkString
-            // IMPORTANT: Do not special case word operators like 'and', 'or', 'not', etc.
-            // Instead, handle all operators uniformly through the operator identification rules
-            // This ensures consistent behavior and allows for flexible operator definition
             val isOperator = str.headOption.exists(isOperatorIdentifierFirst) && 
                             str.tail.forall(isOperatorIdentifierRest)
             
             if (isOperator) {
-              val afterOp = currentState.advance()
-              parseAtom(afterOp) match {
-                case Right((rhs, afterRhs)) =>
-                  val seq = currentExpr match {
-                    case OpSeq(existingSeq, meta) =>
-                      existingSeq :+ Identifier(str, None) :+ rhs
-                    case _ =>
-                      Vector(currentExpr, Identifier(str, None), rhs)
-                  }
-                  currentExpr = OpSeq(seq, None)
-                  currentState = afterRhs
-                  result = Right((currentExpr, currentState))
-                case Left(err) => 
-                  result = Left(err)
-                  shouldContinue = false
+              val op = Identifier(str, None)
+              state = state.advance()
+              parseAtom(state) match {
+                case Left(err) => return Left(err)
+                case Right((rhs, afterRhs)) => {
+                  terms = terms :+ op :+ rhs
+                  state = afterRhs
+                }
               }
             } else {
-              shouldContinue = false
+              done = true
             }
-            
+          }
+
           case _ =>
-            shouldContinue = false
+            done = true
         }
-        
-        // Safety check to prevent infinite loops
-        loopCount += 1
-        if (loopCount > 1000) {
-          result = Left(ParseError("Too many iterations while parsing expression", getStartPos(currentState.current)))
-          shouldContinue = false
-        }
+
+        case Left(err) =>
+          return Left(err)
       }
-      
-      result
+    }
+
+    if (maxTerms <= 0) {
+      Left(ParseError("Too many terms in operator sequence", getStartPos(state.current)))
+    } else {
+      Right((OpSeq(terms, None), state))
     }
   }
 
   // Helper functions for operator identification
-  // IMPORTANT: These rules must match chester.syntax.IdentifierRules
-  // See syntax/shared/src/main/scala/chester/syntax/IdentifierRules.scala
+  // These rules must match chester.syntax.IdentifierRules
   private val AllowedOperatorSymbols: Set[Int] = ".:=-+\\|<>/?`~!@$%^&*".toSet.map(_.toInt)
   
   private def isOperatorIdentifierFirst(c: Char): Boolean = {
@@ -348,62 +345,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             Right(stmts)
           }
       }
-    }
-  }
-
-  /*
-   * Collects a sequence of expressions and operators into an OpSeq
-   * without considering operator precedence or fixity.
-   * This allows for flexible operator definition and semantics in later passes.
-   */
-  def collectOpSeq(first: Expr, current: LexerState): Either[ParseError, (OpSeq, LexerState)] = {
-    var terms = Vector[Expr](first)
-    var maxTerms = 100
-    var done = false
-    var state = current
-
-    while (!done && maxTerms > 0) {
-      maxTerms -= 1
-      state.current match {
-        case Right(Token.EOF(_)) | Right(Token.Comment(_, _)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) =>
-          done = true
-
-        case Right(Token.Identifier(text, _)) if text.mkString == "then" || text.mkString == "else" =>
-          done = true
-
-        case Right(Token.Identifier(text, _)) if text.mkString == "->" =>
-          state = state.advance()
-          parseAtom(state).flatMap { case (rhs, afterRhs) =>
-            terms = terms :+ Identifier(text.mkString, None) :+ rhs
-            state = afterRhs
-            Right(())
-          } match {
-            case Left(err) => return Left(err)
-            case Right(_) =>
-          }
-
-        case Right(Token.Identifier(text, _)) =>
-          state = state.advance()
-          parseAtom(state).flatMap { case (rhs, afterRhs) =>
-            terms = terms :+ Identifier(text.mkString, None) :+ rhs
-            state = afterRhs
-            Right(())
-          } match {
-            case Left(err) => return Left(err)
-            case Right(_) =>
-          }
-
-        case Right(token) =>
-          return Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
-        case Left(err) =>
-          return Left(err)
-      }
-    }
-
-    if (maxTerms <= 0) {
-      Left(ParseError("Too many terms in operator sequence", state.sourcePos.range.start))
-    } else {
-      Right((OpSeq(terms, None), state))
     }
   }
 
