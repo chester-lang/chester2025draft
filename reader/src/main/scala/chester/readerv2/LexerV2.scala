@@ -26,6 +26,58 @@ package chester.readerv2
  *    - Useful for IDE integration and live editing
  */
 
+  // Design Notes for Uniform Operator/Identifier Handling:
+  // 
+  // 1. No Special Cases:
+  //    - All identifiers and operators are treated uniformly in parsing
+  //    - No special cases for keywords like "if", "then", "else" - they are just identifiers
+  //    - No predefined keywords (if/then/else/val) or operators (+/-/*)
+  //    - No special parsing rules for any identifiers
+  //    - Semantic meaning determined in later passes
+  //    - Examples:
+  //      - Traditional: if x then y else z
+  //      - Custom: myIf x myThen y myElse z
+  //      - Both parse to: OpSeq([identifier, expr, identifier, expr, identifier, expr])
+  //      - Keywords like "if", "then", "else" are treated exactly the same as any other identifier
+  // 
+  // 2. Operator/Identifier Rules:
+  //    - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
+  //    - Identifiers start with letters/emoji/underscore
+  //    - Both can contain operator symbols and word symbols
+  //    - See IdentifierRules.scala for complete rules
+  //    - We use IdentifierRules.strIsOperator for uniform operator identification
+  //    - NO local redefinition of operator rules to ensure consistency
+  //    - Keywords are NOT special - they follow the same rules as any other identifier
+  // 
+  // 3. Sequence Construction:
+  //    - All terms form a uniform sequence: expr op expr op expr ...
+  //    - Structure preserved for later semantic analysis
+  //    - Examples:
+  //      - 1 + 2 -> OpSeq([1, +, 2])
+  //      - if x then y -> OpSeq([if, x, then, y])  // "if" and "then" are just identifiers
+  //      - val x = 1 -> OpSeq([val, x, =, 1])      // "val" is just an identifier
+  //      - myOp1 x myOp2 y -> OpSeq([myOp1, x, myOp2, y])
+  // 
+  // 4. Benefits:
+  //    - Allows user-defined operators and keywords
+  //    - Consistent parsing rules for all identifiers
+  //    - Flexible operator definition and extension
+  //    - Operator precedence and fixity handled in later passes
+  //    - Supports domain-specific language extensions
+  //    - Single source of truth for operator identification (IdentifierRules)
+  //    - No special cases means simpler, more maintainable code
+  //    - Keywords can be redefined or extended by users
+
+  // Design Notes for Operator Sequence Parsing:
+  // 
+  // 1. Operators are handled uniformly through character-based identification
+  // 2. No special casing of operators - determined by character patterns in IdentifierRules
+  // 3. Operator sequences are built incrementally
+  // 4. The sequence maintains the alternating pattern: term operator term operator ...
+  // 5. Both prefix and infix operators are supported through the same mechanism
+  // 6. All operator identification is delegated to IdentifierRules.strIsOperator
+  //    to maintain consistency across the codebase
+
 import scala.util.boundary
 import scala.util.boundary.break
 import chester.error.{Pos, SourcePos, RangeInFile}
