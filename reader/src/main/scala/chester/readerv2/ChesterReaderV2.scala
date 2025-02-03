@@ -15,7 +15,7 @@ object ChesterReaderV2 {
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()
     val lexer = new LexerV2(tokens, sourceOffset, false)
-    lexer.parseExpr().map(_._1)
+    lexer.parseExpr(LexerState(tokens.toVector, 0)).map(_._1)
   }
 
   def parseExprList(source: FileNameAndContent): Either[ParseError, Vector[Expr]] = {

@@ -1,7 +1,7 @@
 package chester.reader
 
 import chester.error.Reporter
-import chester.readerv2.LexerV2
+import chester.readerv2.{LexerV2, LexerState}
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
@@ -138,7 +138,7 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
     println("\n=== Parsing expression ===")
     System.out.flush()
     val result = lexer
-      .parseExpr()
+      .parseExpr(LexerState(tokens.toVector, 0))
       .fold(
         error => {
           println("\n=== Parsing failed ===")
