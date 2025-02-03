@@ -204,81 +204,91 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   def parseExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     state.current match {
-      case Right(Token.Identifier(chars, _)) => {
-        val id = chars.map(_.text).mkString
+      case Right(Token.IntegerLiteral(value, sourcePos)) =>
         for {
           state1 <- Right(advance())
-          (next, state2) <- state1.current match {
-            case Right(Token.LParen(_)) => 
-              for {
-                (args, state3) <- parseTuple(state1)
-              } yield (FunctionCall(Identifier(id, None), args.asInstanceOf[Tuple], None), state3)
-            case _ => Right((Identifier(id, None), state1))
-          }
-          (result, state3) <- collectOpSeq(next, state2)
-        } yield (result, state3)
-      }
-      case Right(Token.Operator(op, _)) => {
+          (terms, state2) <- collectNext(state1, Vector(IntegerLiteral(BigInt(value), None)))
+        } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
+      case Right(Token.StringLiteral(value, sourcePos)) =>
         for {
           state1 <- Right(advance())
-          (next, state2) <- state1.current match {
-            case Right(Token.LParen(_)) =>
-              for {
-                (args, state3) <- parseTuple(state1)
-              } yield (FunctionCall(Identifier(op.toString, None), args.asInstanceOf[Tuple], None), state3)
-            case _ =>
-              parseExpr(state1).map {
-                case (expr, state3) => (OpSeq(Vector(Identifier(op.toString, None), expr), None), state3)
-              }
-          }
-        } yield (next, state2)
-      }
-      case Right(Token.LParen(_)) => {
-        for {
-          (tuple, state1) <- parseTuple(state)
-          (result, state2) <- collectOpSeq(tuple, state1)
-        } yield (result, state2)
-      }
-      case Right(Token.IntegerLiteral(value, _)) => {
+          (terms, state2) <- collectNext(state1, Vector(StringLiteral(value.map(_.text).mkString, None)))
+        } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
+      case Right(Token.LParen(sourcePos)) =>
         for {
           state1 <- Right(advance())
-          (result, state2) <- collectOpSeq(IntegerLiteral(BigInt(value), None), state1)
-        } yield (result, state2)
-      }
-      case Right(Token.StringLiteral(chars, _)) => {
+          (terms, state2) <- parseTuple(state1)
+          (nextTerms, state3) <- collectNext(state2, Vector(terms))
+        } yield (if (nextTerms.length == 1) nextTerms.head else OpSeq(nextTerms, None), state3)
+      case Right(Token.LBrace(sourcePos)) =>
         for {
           state1 <- Right(advance())
-          (result, state2) <- collectOpSeq(StringLiteral(chars.map(_.text).mkString, None), state1)
-        } yield (result, state2)
-      }
+          (block, state2) <- parseBlock(state1)
+          (nextTerms, state3) <- collectNext(state2, Vector(block))
+        } yield (if (nextTerms.length == 1) nextTerms.head else OpSeq(nextTerms, None), state3)
+      case Right(Token.Identifier(name, sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (terms, state2) <- collectNext(state1, Vector(Identifier(name.map(_.text).mkString, None)))
+        } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
+      case Right(Token.Operator(op, sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (terms, state2) <- collectNext(state1, Vector(Identifier(op.toString, None)))
+        } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
       case Right(token) =>
-        Left(ParseError(s"Unexpected token: $token", getStartPos(state.current)))
+        Left(ParseError(s"Unexpected token: $token", state.sourcePos.range.start))
       case Left(error) =>
         Left(error)
     }
   }
 
-  def collectOpSeq(expr: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    def collectNext(terms: Vector[Expr], state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
-      state.current match {
-        case Right(Token.Operator(op, _)) =>
-          for {
-            state2 <- Right(advance())
-            (next, state3) <- parseExpr(state2)
-            (rest, state4) <- collectNext(terms :+ Identifier(op.toString, None) :+ next, state3)
-          } yield (rest, state4)
-        case Right(Token.LBrace(_)) =>
-          for {
-            (block, state2) <- parseBlock(state)
-            (rest, state3) <- collectNext(terms :+ block, state2)
-          } yield (rest, state3)
-        case _ => Right((terms, state))
-      }
+  def collectNext(state: LexerState, terms: Vector[Expr]): Either[ParseError, (Vector[Expr], LexerState)] = {
+    state.current match {
+      case Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.EOF(_)) =>
+        Right((terms, state))
+      case Right(Token.LParen(sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (args, state2) <- parseTuple(state1)
+          (nextTerms, state3) <- collectNext(state2, terms :+ args)
+        } yield (nextTerms, state3)
+      case Right(Token.LBrace(sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (block, state2) <- parseBlock(state1)
+          (nextTerms, state3) <- collectNext(state2, terms :+ block)
+        } yield (nextTerms, state3)
+      case Right(Token.Identifier(name, sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (nextTerms, state2) <- collectNext(state1, terms :+ Identifier(name.map(_.text).mkString, None))
+        } yield (nextTerms, state2)
+      case Right(Token.IntegerLiteral(value, sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (nextTerms, state2) <- collectNext(state1, terms :+ IntegerLiteral(BigInt(value), None))
+        } yield (nextTerms, state2)
+      case Right(Token.StringLiteral(value, sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (nextTerms, state2) <- collectNext(state1, terms :+ StringLiteral(value.map(_.text).mkString, None))
+        } yield (nextTerms, state2)
+      case Right(Token.Operator(op, sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (nextTerms, state2) <- collectNext(state1, terms :+ Identifier(op.toString, None))
+        } yield (nextTerms, state2)
+      case Right(Token.Equal(sourcePos)) =>
+        for {
+          state1 <- Right(advance())
+          (nextTerms, state2) <- collectNext(state1, terms :+ Identifier("=", None))
+        } yield (nextTerms, state2)
+      case Right(token) =>
+        Left(ParseError(s"Unexpected token: $token", state.sourcePos.range.start))
+      case Left(error) =>
+        Left(error)
     }
-
-    for {
-      (terms, state2) <- collectNext(Vector(expr), state)
-    } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
   }
 
   def parseTuple(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
@@ -524,8 +534,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                         Right((Block(Vector(ExprStmt(expr, None)), Some(nextExpr), None), advance()))
                       }
                       case Right(t) => Left(ParseError("Expected '}' after block expression", t.sourcePos.range.start))
-                      case Left(err) => Left(err)
-                    }
+      case Left(err) => Left(err)
+    }
                   }}
                 }
                 case Right(t) => Left(ParseError("Expected '}' or ';' after block expression", t.sourcePos.range.start))
