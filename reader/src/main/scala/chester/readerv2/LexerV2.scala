@@ -215,8 +215,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         case Right(token) => token match {
           case Token.Operator(chars, _) => {
             val str = chars.mkString
-            val isOperator = str.headOption.exists(isOperatorIdentifierFirst) && 
-                            str.tail.forall(isOperatorIdentifierRest)
+            val isOperator = strIsOperator(str)
             
             if (isOperator) {
               val op = Identifier(str, None)
@@ -235,8 +234,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
           case Token.Identifier(chars, _) => {
             val str = chars.mkString
-            val isOperator = str.headOption.exists(isOperatorIdentifierFirst) && 
-                            str.tail.forall(isOperatorIdentifierRest)
+            val isOperator = strIsOperator(str)
             
             if (isOperator) {
               val op = Identifier(str, None)
@@ -267,18 +265,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     } else {
       Right((OpSeq(terms, None), state))
     }
-  }
-
-  // Helper functions for operator identification
-  // These rules must match chester.syntax.IdentifierRules
-  private val AllowedOperatorSymbols: Set[Int] = ".:=-+\\|<>/?`~!@$%^&*".toSet.map(_.toInt)
-  
-  private def isOperatorIdentifierFirst(c: Char): Boolean = {
-    AllowedOperatorSymbols.contains(c.toInt)
-  }
-
-  private def isOperatorIdentifierRest(c: Char): Boolean = {
-    isOperatorIdentifierFirst(c) || c == '_'
   }
 
   private def parseStmt(state: LexerState): Either[ParseError, (ExprStmt, LexerState)] = {
