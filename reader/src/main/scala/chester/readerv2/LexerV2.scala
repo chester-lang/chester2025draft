@@ -153,6 +153,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   // 
   // 1. No Special Cases:
   //    - All identifiers and operators are treated uniformly in parsing
+  //    - IMPORTANT: No special cases for keywords like "if", "then", "else" - they are just identifiers
   //    - No predefined keywords (if/then/else/val) or operators (+/-/*)
   //    - No special parsing rules for any identifiers
   //    - Semantic meaning determined in later passes
@@ -160,6 +161,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //      - Traditional: if x then y else z
   //      - Custom: myIf x myThen y myElse z
   //      - Both parse to: OpSeq([identifier, expr, identifier, expr, identifier, expr])
+  //      - Keywords like "if", "then", "else" are treated exactly the same as any other identifier
   // 
   // 2. Operator/Identifier Rules:
   //    - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
@@ -168,14 +170,15 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //    - See IdentifierRules.scala for complete rules
   //    - IMPORTANT: We use IdentifierRules.strIsOperator for uniform operator identification
   //    - NO local redefinition of operator rules to ensure consistency
+  //    - Keywords are NOT special - they follow the same rules as any other identifier
   // 
   // 3. Sequence Construction:
   //    - All terms form a uniform sequence: expr op expr op expr ...
   //    - Structure preserved for later semantic analysis
   //    - Examples:
   //      - 1 + 2 -> OpSeq([1, +, 2])
-  //      - if x then y -> OpSeq([if, x, then, y])
-  //      - val x = 1 -> OpSeq([val, x, =, 1])
+  //      - if x then y -> OpSeq([if, x, then, y])  // "if" and "then" are just identifiers
+  //      - val x = 1 -> OpSeq([val, x, =, 1])      // "val" is just an identifier
   //      - myOp1 x myOp2 y -> OpSeq([myOp1, x, myOp2, y])
   // 
   // 4. Benefits:
@@ -185,6 +188,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //    - Operator precedence and fixity handled in later passes
   //    - Supports domain-specific language extensions
   //    - Single source of truth for operator identification (IdentifierRules)
+  //    - No special cases means simpler, more maintainable code
+  //    - Keywords can be redefined or extended by users
 
   // Design Notes for Operator Sequence Parsing:
   // 
@@ -198,10 +203,37 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   type LexerError = ParseError
 
   def parseExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    for {
-      (first, state1) <- parseAtom(state)
-      (result, state2) <- collectOpSeq(first, state1)
-    } yield (result, state2)
+    state.current match {
+      case Right(Token.Identifier(chars, _)) => {
+        val id = chars.map(_.text).mkString
+        if (strIsOperator(id)) {
+          // Handle prefix operator
+          for {
+            state1 <- Right(advance())
+            (next, state2) <- parseExpr(state1)
+          } yield (OpSeq(Vector(Identifier(id, None), next), None), state2)
+        } else {
+          for {
+            (first, state1) <- parseAtom(state)
+            (result, state2) <- collectOpSeq(first, state1)
+          } yield (result, state2)
+        }
+      }
+      case Right(Token.Operator(op, _)) => {
+        // Handle prefix operator
+        for {
+          state1 <- Right(advance())
+          (next, state2) <- parseExpr(state1)
+        } yield (OpSeq(Vector(Identifier(op.toString, None), next), None), state2)
+      }
+      case Right(_) => {
+        for {
+          (first, state1) <- parseAtom(state)
+          (result, state2) <- collectOpSeq(first, state1)
+        } yield (result, state2)
+      }
+      case Left(err) => Left(err)
+    }
   }
 
   def collectOpSeq(first: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
@@ -211,23 +243,28 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
     def collectNext(): Either[ParseError, Boolean] = {
       currentState.current match {
-        case Right(Token.Identifier(name, _)) if strIsOperator(name.map(_.text).mkString) => {
-          for {
-            state1 <- Right(advance())
-            (next, state2) <- parseAtom(state1)
-          } yield {
-            terms = terms :+ Identifier(name.map(_.text).mkString, None) :+ next
-            currentState = state2
-            maxTerms -= 1
-            true
+        case Right(Token.Identifier(name, _)) => {
+          val id = name.map(_.text).mkString
+          if (strIsOperator(id)) {
+            for {
+              state1 <- Right(advance())
+              (next, state2) <- parseAtom(state1)
+            } yield {
+              terms = terms :+ Identifier(id, None) :+ next
+              currentState = state2
+              maxTerms -= 1
+              true
+            }
+          } else {
+            Right(false)
           }
         }
-        case Right(Token.Operator(name, _)) => {
+        case Right(Token.Operator(op, _)) => {
           for {
             state1 <- Right(advance())
             (next, state2) <- parseAtom(state1)
           } yield {
-            terms = terms :+ Identifier(name.mkString, None) :+ next
+            terms = terms :+ Identifier(op.toString, None) :+ next
             currentState = state2
             maxTerms -= 1
             true
@@ -239,14 +276,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
     while (maxTerms > 0) {
       collectNext() match {
-        case Right(true) => ()
-        case Right(false) => maxTerms = 0
         case Left(error) => return Left(error)
+        case Right(false) => maxTerms = 0
+        case Right(true) => ()
       }
     }
 
     if (terms.length == 1) {
-      Right((first, state))
+      Right((terms.head, currentState))
     } else {
       Right((OpSeq(terms, None), currentState))
     }
@@ -401,6 +438,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(Token.LBracket(sourcePos)) => {
         debug("parseAtom: found left bracket, parsing list")
         parseList(state)
+      }
+      case Right(Token.Operator(op, sourcePos)) => {
+        debug(s"parseAtom: found operator: $op")
+        Right((Identifier(op.toString, None), advance()))
       }
       case Right(Token.IntegerLiteral(value, sourcePos)) => {
         debug(s"parseAtom: found integer literal: $value")
