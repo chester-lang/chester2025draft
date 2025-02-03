@@ -41,6 +41,7 @@ import chester.syntax.concrete.{
 import chester.syntax.concrete.Literal.*
 import spire.math.Rational
 import chester.reader.FileNameAndContent
+import chester.syntax.IdentifierRules.strIsOperator
 
 case class StmtExpr(expr: Expr)
 
@@ -188,8 +189,35 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   // 5. Both prefix and infix operators are supported through the same mechanism
   def parseExpr(): Either[ParseError, (Expr, LexerState)] = withRecursion("parseExpr") {
     debug(s"parseExpr: state=$state")
-    parseAtom(state).flatMap { case (firstAtom, afterAtom) =>
-      collectOpSeq(firstAtom, afterAtom)
+    state.current match {
+      case Right(Token.Operator(opChars, _)) =>
+        val str = opChars.mkString
+        if (strIsOperator(str)) {
+          val op = Identifier(str, None)
+          val afterOp = advance()
+          afterOp.current match {
+            case Right(Token.LParen(_)) =>
+              parseTuple(afterOp).map { case (args, afterArgs) =>
+                val telescope = args match {
+                  case tuple: Tuple => tuple
+                  case other => Tuple(Vector(other), None)
+                }
+                (FunctionCall(op, telescope, None), afterArgs)
+              }
+            case _ =>
+              parseAtom(afterOp).map { case (rhs, afterRhs) =>
+                (OpSeq(Vector(op, rhs), None), afterRhs)
+              }
+          }
+        } else {
+          parseAtom(state).flatMap { case (firstAtom, afterAtom) =>
+            collectOpSeq(firstAtom, afterAtom)
+          }
+        }
+      case _ =>
+        parseAtom(state).flatMap { case (firstAtom, afterAtom) =>
+          collectOpSeq(firstAtom, afterAtom)
+        }
     }
   }
 
@@ -209,15 +237,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       maxTerms -= 1
       state.current match {
         case Right(Token.EOF(_)) | Right(Token.Comment(_, _)) | Right(Token.RParen(_)) | 
-             Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) =>
+             Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) | Right(Token.Semicolon(_)) =>
           done = true
 
         case Right(token) => token match {
-          case Token.Operator(chars, _) => {
-            val str = chars.mkString
-            val isOperator = strIsOperator(str)
-            
-            if (isOperator) {
+          case Token.Operator(opChars, _) => {
+            val str = opChars.mkString
+            if (strIsOperator(str)) {
               val op = Identifier(str, None)
               state = state.advance()
               parseAtom(state) match {
@@ -232,11 +258,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
           }
 
-          case Token.Identifier(chars, _) => {
-            val str = chars.mkString
-            val isOperator = strIsOperator(str)
-            
-            if (isOperator) {
+          case Token.Identifier(idChars, _) => {
+            val str = idChars.mkString
+            if (strIsOperator(str)) {
               val op = Identifier(str, None)
               state = state.advance()
               parseAtom(state) match {
@@ -353,29 +377,26 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(Token.LBracket(sourcePos)) =>
         debug("parseAtom: found left bracket, parsing list")
         parseList(state)
-      case Right(Token.Operator(chars, sourcePos)) =>
-        debug(s"parseAtom: found operator '${chars.mkString}'")
-        val identifier = Identifier(chars.mkString, createMeta(sourcePos, sourcePos))
-        val afterOp = advance()
-        afterOp.current match {
-          case Right(Token.LParen(_)) =>
-            debug(s"parseAtom: found parentheses after operator, creating function call")
-            parseTuple(afterOp).map { case (args, afterArgs) =>
-              val telescope = args match {
-                case tuple: Tuple => tuple
-                case other => Tuple(Vector(other), None)
-              }
-              (FunctionCall(identifier, telescope, None), afterArgs)
-            }
-          case _ => 
-            parseAtom(afterOp).map { case (rhs, afterRhs) =>
-              (OpSeq(Vector(identifier, rhs), None), afterRhs)
-            }
+      case Right(Token.IntegerLiteral(value, sourcePos)) =>
+        debug(s"parseAtom: found integer literal: $value")
+        val intValue = if (value.startsWith("0x") || value.startsWith("0X")) {
+          BigInt(value.substring(2), 16)
+        } else if (value.startsWith("0b") || value.startsWith("0B")) {
+          BigInt(value.substring(2), 2)
+        } else {
+          BigInt(value)
         }
+        Right((IntegerLiteral(intValue, None), advance()))
+      case Right(Token.RationalLiteral(value, sourcePos)) =>
+        debug(s"parseAtom: found rational literal: $value")
+        Right((RationalLiteral(BigDecimal(value), None), advance()))
+      case Right(Token.StringLiteral(chars, sourcePos)) =>
+        debug(s"parseAtom: found string literal: ${chars.mkString}")
+        Right((StringLiteral(chars.mkString, None), advance()))
       case Right(Token.Identifier(chars, sourcePos)) =>
+        debug(s"parseAtom: found identifier: ${chars.mkString}")
         val id = chars.mkString
-        debug(s"parseAtom: found identifier '$id'")
-        val identifier = Identifier(id, createMeta(sourcePos, sourcePos))
+        val identifier = Identifier(id, None)
         val afterId = advance()
         afterId.current match {
           case Right(Token.LParen(_)) =>
@@ -389,26 +410,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
           case _ => Right((identifier, afterId))
         }
-      case Right(Token.IntegerLiteral(value, sourcePos)) =>
-        debug(s"parseAtom: found integer literal '$value'")
-        val intValue = if (value.startsWith("0x") || value.startsWith("0X")) {
-          BigInt(value.substring(2), 16)
-        } else if (value.startsWith("0b") || value.startsWith("0B")) {
-          BigInt(value.substring(2), 2)
-        } else {
-          BigInt(value)
-        }
-        Right((IntegerLiteral(intValue, createMeta(sourcePos, sourcePos)), advance()))
-      case Right(Token.RationalLiteral(value, sourcePos)) =>
-        debug(s"parseAtom: found rational literal '$value'")
-        val finalValue = BigDecimal(value)
-        Right((RationalLiteral(finalValue, createMeta(sourcePos, sourcePos)), advance()))
-      case Right(Token.StringLiteral(parts, sourcePos)) =>
-        debug(s"parseAtom: found string literal '${parts.mkString}'")
-        Right((StringLiteral(parts.mkString, createMeta(sourcePos, sourcePos)), advance()))
-      case Right(t) =>
-        debug(s"parseAtom: unexpected token: $t")
-        Left(ParseError("Unexpected token", t.sourcePos.range.start))
+      case Right(token) =>
+        debug(s"parseAtom: unexpected token: $token")
+        Left(ParseError(s"Unexpected token: $token", getStartPos(state.current)))
       case Left(err) =>
         debug(s"parseAtom: error token: $err")
         Left(err)
