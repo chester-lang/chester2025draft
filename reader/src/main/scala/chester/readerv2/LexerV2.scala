@@ -203,40 +203,35 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   type LexerError = ParseError
 
   def parseExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    def parseIdentifierOrOperator(id: String, state1: LexerState): Either[ParseError, (Expr, LexerState)] = {
-      state1.current match {
-        case Right(Token.LParen(_)) =>
-          for {
-            (args, state2) <- parseTuple(state1)
-            (result, state3) <- collectOpSeq(FunctionCall(Identifier(id, None), args.asInstanceOf[Tuple], None), state2)
-          } yield (result, state3)
-        case _ =>
-          if (strIsOperator(id)) {
-            // Handle prefix operator
-            for {
-              (next, state2) <- parseExpr(state1)
-              (result, state3) <- collectOpSeq(OpSeq(Vector(Identifier(id, None), next), None), state2)
-            } yield (result, state3)
-          } else {
-            collectOpSeq(Identifier(id, None), state1)
-          }
-      }
-    }
-
     state.current match {
       case Right(Token.Identifier(chars, _)) => {
         val id = chars.map(_.text).mkString
         for {
           state1 <- Right(advance())
-          (result, state2) <- parseIdentifierOrOperator(id, state1)
-        } yield (result, state2)
+          (next, state2) <- state1.current match {
+            case Right(Token.LParen(_)) => 
+              for {
+                (args, state3) <- parseTuple(state1)
+              } yield (FunctionCall(Identifier(id, None), args.asInstanceOf[Tuple], None), state3)
+            case _ => Right((Identifier(id, None), state1))
+          }
+          (result, state3) <- collectOpSeq(next, state2)
+        } yield (result, state3)
       }
       case Right(Token.Operator(op, _)) => {
-        val opStr = op.toString
         for {
           state1 <- Right(advance())
-          (result, state2) <- parseIdentifierOrOperator(opStr, state1)
-        } yield (result, state2)
+          (next, state2) <- state1.current match {
+            case Right(Token.LParen(_)) =>
+              for {
+                (args, state3) <- parseTuple(state1)
+              } yield (FunctionCall(Identifier(op.toString, None), args.asInstanceOf[Tuple], None), state3)
+            case _ =>
+              parseExpr(state1).map {
+                case (expr, state3) => (OpSeq(Vector(Identifier(op.toString, None), expr), None), state3)
+              }
+          }
+        } yield (next, state2)
       }
       case Right(Token.LParen(_)) => {
         for {
@@ -264,60 +259,26 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   def collectOpSeq(expr: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    def collectNext(terms: Vector[Expr], currentState: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
-      currentState.current match {
-        case Right(Token.Identifier(chars, _)) => {
-          val id = chars.map(_.text).mkString
-          if (strIsOperator(id)) {
-            currentState.current match {
-              case Right(Token.LParen(_)) =>
-                for {
-                  (args, state1) <- parseTuple(currentState)
-                  (result, state2) <- collectNext(terms :+ FunctionCall(Identifier(id, None), args.asInstanceOf[Tuple], None), state1)
-                } yield (result, state2)
-              case _ =>
-                for {
-                  state1 <- Right(advance())
-                  (next, state2) <- parseExpr(state1)
-                  (result, state3) <- collectNext(terms :+ Identifier(id, None) :+ next, state2)
-                } yield (result, state3)
-            }
-          } else {
-            currentState.current match {
-              case Right(Token.LParen(_)) =>
-                for {
-                  (args, state1) <- parseTuple(currentState)
-                  (result, state2) <- collectNext(terms :+ FunctionCall(expr, args.asInstanceOf[Tuple], None), state1)
-                } yield (result, state2)
-              case _ =>
-                Right((terms, currentState))
-            }
-          }
-        }
-        case Right(Token.Operator(op, _)) => {
-          val opStr = op.toString
-          currentState.current match {
-            case Right(Token.LParen(_)) =>
-              for {
-                (args, state1) <- parseTuple(currentState)
-                (result, state2) <- collectNext(terms :+ FunctionCall(Identifier(opStr, None), args.asInstanceOf[Tuple], None), state1)
-              } yield (result, state2)
-                    case _ =>
-              for {
-                state1 <- Right(advance())
-                (next, state2) <- parseExpr(state1)
-                (result, state3) <- collectNext(terms :+ Identifier(opStr, None) :+ next, state2)
-              } yield (result, state3)
-          }
-        }
-        case _ => Right((terms, currentState))
+    def collectNext(terms: Vector[Expr], state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
+      state.current match {
+        case Right(Token.Operator(op, _)) =>
+          for {
+            state2 <- Right(advance())
+            (next, state3) <- parseExpr(state2)
+            (rest, state4) <- collectNext(terms :+ Identifier(op.toString, None) :+ next, state3)
+          } yield (rest, state4)
+        case Right(Token.LBrace(_)) =>
+          for {
+            (block, state2) <- parseBlock(state)
+            (rest, state3) <- collectNext(terms :+ block, state2)
+          } yield (rest, state3)
+        case _ => Right((terms, state))
       }
     }
 
-    collectNext(Vector(expr), state).map {
-      case (terms, finalState) if terms.length == 1 => (terms.head, finalState)
-      case (terms, finalState) => (OpSeq(terms, None), finalState)
-    }
+    for {
+      (terms, state2) <- collectNext(Vector(expr), state)
+    } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
   }
 
   def parseTuple(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
@@ -563,8 +524,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                         Right((Block(Vector(ExprStmt(expr, None)), Some(nextExpr), None), advance()))
                       }
                       case Right(t) => Left(ParseError("Expected '}' after block expression", t.sourcePos.range.start))
-      case Left(err) => Left(err)
-    }
+                      case Left(err) => Left(err)
+                    }
                   }}
                 }
                 case Right(t) => Left(ParseError("Expected '}' or ';' after block expression", t.sourcePos.range.start))
@@ -947,5 +908,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
     case Right(token) => token.isInstanceOf[Token.Identifier]
     case _ => false
+  }
+
+  def expectIdentifier(expected: String, state: LexerState): Either[ParseError, LexerState] = {
+    state.current match {
+      case Right(Token.Identifier(chars, _)) if chars.map(_.text).mkString == expected =>
+        Right(advance())
+      case other =>
+        Left(ParseError(s"Expected identifier '$expected' but got $other", state.sourcePos.range.start))
+    }
   }
 }
