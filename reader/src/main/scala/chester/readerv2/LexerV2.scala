@@ -237,66 +237,54 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
         case Right(Token.Operator(op, sourcePos)) => {
           current = current.advance()
-          parseAtom(current).flatMap {
-            case (next, newState) => {
-              current = newState
-              buildOpSeq(terms :+ Identifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
-            }
-          }
+          parseAtom(current).flatMap { case (next, newState) => {
+            current = newState
+            buildOpSeq(terms :+ Identifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
+          }}
         }
         case Right(Token.Equal(sourcePos)) => {
           current = current.advance()
-          parseAtom(current).flatMap {
-            case (next, newState) => {
-              current = newState
-              buildOpSeq(terms :+ Identifier("=", createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
-            }
-          }
+          parseAtom(current).flatMap { case (next, newState) => {
+            current = newState
+            buildOpSeq(terms :+ Identifier("=", createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
+          }}
         }
         case Right(Token.Identifier(chars, sourcePos)) => {
           val text = chars.map(_.text).mkString
-          if (text == "and" || strIsOperator(text)) {
-            current = current.advance()
-            parseAtom(current).flatMap {
-              case (next, newState) => {
+          current = current.advance()
+          current.current match {
+            case Right(Token.LParen(_)) => {
+              parseTuple(current).flatMap { case (tuple, newState) => {
                 current = newState
-                buildOpSeq(terms :+ Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
-              }
+                buildOpSeq(terms :+ FunctionCall(
+                  Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
+                  tuple,
+                  createMeta(Some(sourcePos), Some(sourcePos))
+                ))
+              }}
             }
-          } else {
-            current = current.advance()
-            current.current match {
-              case Right(Token.LParen(_)) => {
-                parseTuple(current).flatMap {
-                  case (tuple, newState) => {
-                    current = newState
-                    buildOpSeq(terms :+ FunctionCall(
-                      Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                      tuple,
-                      createMeta(Some(sourcePos), Some(sourcePos))
-                    ))
-                  }
-                }
-              }
-              case Right(Token.LBrace(_)) => {
-                buildOpSeq(terms :+ Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
-              }
-              case _ => {
-                buildOpSeq(terms :+ Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
-              }
+            case Right(Token.LBrace(_)) => {
+              parseBlock(current).flatMap { case (block, newState) => {
+                current = newState
+                buildOpSeq(terms :+ Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ block)
+              }}
+            }
+            case _ => {
+              buildOpSeq(terms :+ Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
             }
           }
         }
         case Right(Token.LBrace(_)) => {
-          parseBlock(current).flatMap {
-            case (block, newState) => {
-              current = newState
-              buildOpSeq(terms :+ block)
-            }
-          }
+          parseBlock(current).flatMap { case (block, newState) => {
+            current = newState
+            buildOpSeq(terms :+ block)
+          }}
         }
         case Right(token) => {
-          Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
+          parseAtom(current).flatMap { case (next, newState) => {
+            current = newState
+            buildOpSeq(terms :+ next)
+          }}
         }
         case Left(error) => {
           Left(error)
@@ -328,34 +316,37 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       }
       case Right(Token.Identifier(chars, sourcePos)) => {
         val text = chars.map(_.text).mkString
-        if (text == "and" || strIsOperator(text)) {
-          current = current.advance()
-          current.current match {
-            case Right(Token.LParen(_)) => {
-              parseTuple(current).map { case (tuple, newState) =>
-                (FunctionCall(
-                  Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                  tuple,
-                  createMeta(Some(sourcePos), Some(sourcePos))
-                ), newState)
-              }
-            }
-            case _ => parseAtom(current).flatMap { case (expr, state2) => {
-              current = state2
+        current = current.advance()
+        current.current match {
+          case Right(Token.LParen(_)) => {
+            parseTuple(current).flatMap { case (tuple, newState) => {
+              current = newState
+              buildOpSeq(Vector(FunctionCall(
+                Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
+                tuple,
+                createMeta(Some(sourcePos), Some(sourcePos))
+              )))
+            }}
+          }
+          case Right(Token.LBrace(_)) => {
+            parseBlock(current).flatMap { case (block, newState) => {
+              current = newState
               buildOpSeq(Vector(
                 Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                expr
+                block
               ))
             }}
           }
-        } else {
-          parseAtom(state).flatMap { case (expr, state2) => {
-            current = state2
-            buildOpSeq(Vector(expr))
-          }}
+          case _ => buildOpSeq(Vector(Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))))
         }
       }
-      case _ => parseAtom(state).flatMap { case (expr, state2) => {
+      case Right(Token.LBrace(_)) => {
+        parseBlock(current).flatMap { case (block, newState) => {
+          current = newState
+          buildOpSeq(Vector(block))
+        }}
+      }
+      case _ => parseAtom(current).flatMap { case (expr, state2) => {
         current = state2
         buildOpSeq(Vector(expr))
       }}
@@ -472,17 +463,57 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               current = current.advance()
               Right((Block(Vector(), Some(expr), createMeta(Some(sourcePos), Some(endPos))), current))
             }
-            case Right(t) => {
-              Left(ParseError("Expected '}' after expression in block", t.sourcePos.range.start))
+            case Right(Token.Semicolon(_)) => {
+              current = current.advance()
+              var statements = Vector(expr)
+              var result: Option[Expr] = None
+              var maxStatements = 50
+
+              while (maxStatements > 0) {
+                current.current match {
+                  case Right(Token.RBrace(endPos)) => {
+                    current = current.advance()
+                    return Right((Block(statements, result, createMeta(Some(sourcePos), Some(endPos))), current))
+                  }
+                  case _ => {
+                    parseExpr(current) match {
+                      case Right((nextExpr, afterNext)) => {
+                        current = afterNext
+                        current.current match {
+                          case Right(Token.Semicolon(_)) => {
+                            statements = statements :+ nextExpr
+                            current = current.advance()
+                          }
+                          case Right(Token.RBrace(endPos)) => {
+                            result = Some(nextExpr)
+                            current = current.advance()
+                            return Right((Block(statements, result, createMeta(Some(sourcePos), Some(endPos))), current))
+                          }
+                          case Right(t) => {
+                            return Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
+                          }
+                          case Left(err) => return Left(err)
+                        }
+                      }
+                      case Left(err) => return Left(err)
+                    }
+                  }
+                }
+                maxStatements -= 1
+              }
+              Left(ParseError("Too many statements in block", sourcePos.range.start))
             }
-            case Left(err) => { Left(err) }
+            case Right(t) => {
+              Left(ParseError("Expected '}' or ';' after expression in block", t.sourcePos.range.start))
+            }
+            case Left(err) => Left(err)
           }
         }}
       }
       case Right(t) => {
         Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
       }
-      case Left(err) => { Left(err) }
+      case Left(err) => Left(err)
     }
   }
 
