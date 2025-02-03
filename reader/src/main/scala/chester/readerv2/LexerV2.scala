@@ -267,28 +267,30 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
 
         case Right(Token.Identifier(name, sourcePos)) if name.map(_.text).mkString == "val" => {
-          var currentState = state.advance()
-          currentState.current match {
-            case Right(Token.Identifier(name, _)) => {
-              currentState = currentState.advance()
-              currentState.current match {
+          debug("parseAtom: found 'val' keyword")
+          val meta = None
+          val afterVal = state.advance()
+          afterVal.current match {
+            case Right(Token.Identifier(identName, _)) => {
+              val afterIdent = afterVal.advance()
+              afterIdent.current match {
                 case Right(Token.Operator("=", _)) => {
-                  currentState = currentState.advance()
-                  parseExpr(currentState) match {
-                    case Right((expr, newState)) =>
+                  val afterEquals = afterIdent.advance()
+                  parseExpr(afterEquals) match {
+                    case Right((expr, afterExpr)) =>
                       Right((OpSeq(Vector(
-                        Identifier("val", None),
-                        Identifier(name.map(_.text).mkString, None),
-                        Identifier("=", None),
+                        Identifier("val", meta),
+                        Identifier(identName.map(_.text).mkString, meta),
+                        Identifier("=", meta),
                         expr
-                      ), None), newState))
+                      ), meta), afterExpr))
                     case Left(err) => Left(err)
                   }
                 }
-                case _ => Left(ParseError(s"Expected '=' in val declaration", currentState.sourcePos.range.start))
+                case _ => Left(ParseError("Expected '=' in val declaration", afterIdent.sourcePos.range.start))
               }
             }
-            case _ => Left(ParseError("Expected identifier after val", currentState.sourcePos.range.start))
+            case _ => Left(ParseError("Expected identifier after val", afterVal.sourcePos.range.start))
           }
         }
 
@@ -304,19 +306,21 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   val afterLBrace = afterThen.advance()
                   var exprs = Vector[ExprStmt]()
                   var currentState = afterLBrace
+                  var lastExpr: Option[Expr] = None
                   
                   while (!currentState.isAtEnd) {
                     currentState.current match {
                       case Right(Token.RBrace(_)) =>
+                        val block = Block(Vector.empty, lastExpr.getOrElse(Identifier("Unit", None)), None)
                         return Right((OpSeq(Vector(
                           Identifier("so", meta),
                           Identifier("getthen", meta),
-                          Block(exprs, None, None)
+                          block
                         ), None), currentState.advance()))
                       case _ =>
                         parseExpr(currentState) match {
                           case Right((expr, afterExprState)) =>
-                            exprs = exprs :+ ExprStmt(expr, None)
+                            lastExpr = Some(expr)
                             currentState = afterExprState
                             currentState.current match {
                               case Right(Token.Semicolon(_)) =>
