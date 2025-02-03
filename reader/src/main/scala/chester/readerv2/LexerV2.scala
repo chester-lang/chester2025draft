@@ -36,7 +36,8 @@ import chester.reader.{ParseError, SourceOffset, ParserSource}
 import chester.syntax.concrete.{
   Block, Expr, ExprMeta, ExprStmt, Identifier, ListExpr, ObjectExpr,
   QualifiedName, Tuple, FunctionCall, IntegerLiteral, RationalLiteral, StringLiteral,
-  ObjectExprClauseOnValue, ObjectExprClause, ObjectClause, OpSeq, ErrorExpr, RecoverableParseError
+  ObjectExprClauseOnValue, ObjectExprClause, ObjectClause, OpSeq, ErrorExpr, RecoverableParseError,
+  MaybeTelescope
 }
 import chester.syntax.concrete.Literal.*
 import spire.math.Rational
@@ -217,8 +218,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(Token.LParen(sourcePos)) =>
         for {
           state1 <- Right(advance())
-          (terms, state2) <- parseTuple(state1)
-          (nextTerms, state3) <- collectNext(state2, Vector(terms))
+          (tuple, state2) <- parseTuple(state1)
+          (nextTerms, state3) <- collectNext(state2, Vector(tuple))
         } yield (if (nextTerms.length == 1) nextTerms.head else OpSeq(nextTerms, None), state3)
       case Right(Token.LBrace(sourcePos)) =>
         for {
@@ -230,12 +231,30 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         for {
           state1 <- Right(advance())
           (terms, state2) <- collectNext(state1, Vector(Identifier(name.map(_.text).mkString, None)))
-        } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
+        } yield {
+          val expr = if (terms.length == 1) {
+            terms.head
+          } else if (terms.length >= 2 && terms(1).isInstanceOf[Tuple]) {
+            FunctionCall(terms.head, terms(1).asInstanceOf[Tuple], None)
+          } else {
+            OpSeq(terms, None)
+          }
+          (expr, state2)
+        }
       case Right(Token.Operator(op, sourcePos)) =>
         for {
           state1 <- Right(advance())
           (terms, state2) <- collectNext(state1, Vector(Identifier(op.toString, None)))
-        } yield (if (terms.length == 1) terms.head else OpSeq(terms, None), state2)
+        } yield {
+          val expr = if (terms.length == 1) {
+            terms.head
+          } else if (terms.length >= 2 && terms(1).isInstanceOf[Tuple]) {
+            FunctionCall(terms.head, terms(1).asInstanceOf[Tuple], None)
+          } else {
+            OpSeq(terms, None)
+          }
+          (expr, state2)
+        }
       case Right(token) =>
         Left(ParseError(s"Unexpected token: $token", state.sourcePos.range.start))
       case Left(error) =>
@@ -250,8 +269,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(Token.LParen(sourcePos)) =>
         for {
           state1 <- Right(advance())
-          (args, state2) <- parseTuple(state1)
-          (nextTerms, state3) <- collectNext(state2, terms :+ args)
+          (tuple, state2) <- parseTuple(state1)
+          (nextTerms, state3) <- collectNext(state2, if (terms.nonEmpty && !terms.last.isInstanceOf[Tuple]) {
+            terms.init :+ FunctionCall(terms.last, tuple.asInstanceOf[MaybeTelescope], None)
+          } else {
+            terms :+ tuple
+          })
         } yield (nextTerms, state3)
       case Right(Token.LBrace(sourcePos)) =>
         for {
@@ -279,11 +302,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           state1 <- Right(advance())
           (nextTerms, state2) <- collectNext(state1, terms :+ Identifier(op.toString, None))
         } yield (nextTerms, state2)
-      case Right(Token.Equal(sourcePos)) =>
-        for {
-          state1 <- Right(advance())
-          (nextTerms, state2) <- collectNext(state1, terms :+ Identifier("=", None))
-        } yield (nextTerms, state2)
       case Right(token) =>
         Left(ParseError(s"Unexpected token: $token", state.sourcePos.range.start))
       case Left(error) =>
@@ -293,7 +311,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   def parseTuple(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     var exprs = Vector[Expr]()
-    var currentState = advance() // Skip the left paren
+    var currentState = state
     var done = false
     var maxExprs = 50
 
@@ -305,38 +323,46 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       }
     }
 
-    while (!done && maxExprs > 0) {
-      currentState.current match {
-        case Right(Token.RParen(_)) => {
-          currentState = advance() // Skip the right paren
-          done = true
-        }
-        case Right(Token.Comma(_)) => {
-          currentState = advance() // Skip the comma
-          parseNext() match {
-            case Right(_) => ()
-            case Left(error) => return Left(error)
+    currentState.current match {
+      case Right(Token.LParen(_)) => {
+        currentState = advance() // Skip the left paren
+        
+        while (!done && maxExprs > 0) {
+          currentState.current match {
+            case Right(Token.RParen(_)) => {
+              currentState = advance() // Skip the right paren
+              done = true
+            }
+            case Right(Token.Comma(_)) => {
+              currentState = advance() // Skip the comma
+              parseNext() match {
+                case Right(_) => ()
+                case Left(error) => return Left(error)
+              }
+            }
+            case Right(_) if exprs.isEmpty => {
+              parseNext() match {
+                case Right(_) => ()
+                case Left(error) => return Left(error)
+              }
+            }
+            case Right(_) => {
+              done = true
+            }
+            case Left(error) => {
+              return Left(error)
+            }
           }
         }
-        case Right(_) if exprs.isEmpty => {
-          parseNext() match {
-            case Right(_) => ()
-            case Left(error) => return Left(error)
-          }
-        }
-        case Right(_) => {
-          done = true
-        }
-        case Left(error) => {
-          return Left(error)
+
+        if (maxExprs <= 0) {
+          Left(ParseError("Too many expressions in tuple", getStartPos(state.current)))
+        } else {
+          Right((Tuple(exprs, None), currentState))
         }
       }
-    }
-
-    if (maxExprs <= 0) {
-      Left(ParseError("Too many expressions in tuple", getStartPos(state.current)))
-    } else {
-      Right((Tuple(exprs, None), currentState))
+      case Right(t) => Left(ParseError("Expected '(' for tuple", t.sourcePos.range.start))
+      case Left(err) => Left(err)
     }
   }
 
@@ -518,27 +544,50 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         val afterBrace = advance()
         afterBrace.current match {
           case Right(Token.RBrace(endSourcePos)) => {
+            // Empty block case
             Right((Block(Vector.empty, None, None), advance()))
           }
           case _ => {
-            parseExpr(afterBrace).flatMap { case (expr, afterExpr) => {
-              afterExpr.current match {
+            // Parse first expression
+            parseExpr(afterBrace).flatMap { case (firstExpr, afterFirst) => {
+              afterFirst.current match {
                 case Right(Token.RBrace(endSourcePos)) => {
-                  Right((Block(Vector.empty, Some(expr), None), advance()))
+                  // Single expression block
+                  Right((Block(Vector.empty, Some(firstExpr), None), afterFirst.advance()))
                 }
                 case Right(Token.Semicolon(_)) => {
-                  val afterSemi = advance()
-                  parseExpr(afterSemi).flatMap { case (nextExpr, afterNext) => {
-                    afterNext.current match {
-                      case Right(Token.RBrace(endSourcePos)) => {
-                        Right((Block(Vector(ExprStmt(expr, None)), Some(nextExpr), None), advance()))
+                  // Multiple expressions block
+                  var current = afterFirst.advance()
+                  var exprs = Vector(firstExpr)
+                  var lastExpr: Option[Expr] = None
+                  
+                  while (current.current.exists(!_.isInstanceOf[Token.RBrace])) {
+                    parseExpr(current) match {
+                      case Right((expr, afterExpr)) => {
+                        current = afterExpr
+                        current.current match {
+                          case Right(Token.Semicolon(_)) => {
+                            exprs = exprs :+ expr
+                            current = current.advance()
+                          }
+                          case Right(Token.RBrace(_)) => {
+                            lastExpr = Some(expr)
+                          }
+                          case Right(t) => return Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
+                          case Left(err) => return Left(err)
+                        }
                       }
-                      case Right(t) => Left(ParseError("Expected '}' after block expression", t.sourcePos.range.start))
-      case Left(err) => Left(err)
-    }
-                  }}
+                      case Left(err) => return Left(err)
+                    }
+                  }
+                  
+                  if (!current.current.exists(_.isInstanceOf[Token.RBrace])) {
+                    Left(ParseError("Expected '}' to close block", current.sourcePos.range.start))
+                  } else {
+                    Right((Block(exprs.map(e => ExprStmt(e, None)), lastExpr, None), current.advance()))
+                  }
                 }
-                case Right(t) => Left(ParseError("Expected '}' or ';' after block expression", t.sourcePos.range.start))
+                case Right(t) => Left(ParseError("Expected '}' or ';' after expression in block", t.sourcePos.range.start))
                 case Left(err) => Left(err)
               }
             }}
