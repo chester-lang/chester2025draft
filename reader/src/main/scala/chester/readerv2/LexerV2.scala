@@ -230,39 +230,41 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   def parseExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     var current = state
-    val startPos = current.current.map(_.sourcePos).getOrElse(current.sourcePos)
-    
+    var terms = Vector.empty[Expr]
+
     def buildOpSeq(terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
+      if (terms.isEmpty) {
+        Left(ParseError("Empty operator sequence", getStartPos(state.current)))
+      } else if (terms.length == 1) {
+        Right((terms.head, current))
+      } else {
+        Right((OpSeq(terms, None), current))
+      }
+    }
+
+    def parseRest(first: Expr): Either[ParseError, (Expr, LexerState)] = {
+      if (terms.isEmpty) {
+        terms = Vector(first)
+      }
+      
       current.current match {
-        case Right(Token.EOF(_)) => {
-          Right((terms match {
-            case Vector(single) => single
-            case _ => OpSeq(terms, None)
-          }), current)
-        }
-        case Right(t @ (Token.RParen(_) | Token.RBrace(_) | Token.RBracket(_) | Token.Comma(_))) => {
-          Right((terms match {
-            case Vector(single) => single
-            case _ => OpSeq(terms, None)
-          }), current)
+        case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) => {
+          buildOpSeq(terms)
         }
         case Right(Token.Operator(op, sourcePos)) => {
           current = current.advance()
           parseAtom(current).flatMap { case (next, newState) => {
             current = newState
-            buildOpSeq(terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
+            terms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
+            parseRest(next)
           }}
         }
         case Right(Token.Equal(sourcePos)) => {
           current = current.advance()
-          parseAtom(current).flatMap { case (next, newState) => {
+          parseExpr(current).flatMap { case (next, newState) => {
             current = newState
-            terms match {
-              case Vector(id @ ConcreteIdentifier(_, _)) => {
-                Right((ObjectExpr(Vector(ObjectExprClause(id, next)), None), current))
-              }
-              case _ => buildOpSeq(terms :+ ConcreteIdentifier("=", createMeta(Some(sourcePos), Some(sourcePos))) :+ next)
-            }
+            terms = terms :+ ConcreteIdentifier("=", createMeta(Some(sourcePos), Some(sourcePos))) :+ next
+            buildOpSeq(terms)
           }}
         }
         case Right(Token.Identifier(chars, sourcePos)) => {
@@ -272,80 +274,33 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             case Right(Token.LParen(_)) => {
               parseTuple(current).flatMap { case (tuple, newState) => {
                 current = newState
-                buildOpSeq(terms :+ FunctionCall(
+                val functionCall = FunctionCall(
                   ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
                   tuple,
                   createMeta(Some(sourcePos), Some(sourcePos))
-                ))
+                )
+                terms = terms :+ functionCall
+                parseRest(functionCall)
               }}
             }
             case Right(Token.LBrace(_)) => {
               parseBlock(current).flatMap { case (block, newState) => {
                 current = newState
-                buildOpSeq(terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ block)
+                terms = terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ block
+                parseRest(block)
               }}
             }
             case _ => {
-              buildOpSeq(terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
+              terms = terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              parseRest(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
             }
-          }
-        }
-        case Right(Token.LBrace(sourcePos)) => {
-          current = current.advance()
-          var clauses = Vector.empty[ObjectClause]
-          
-          def parseClause(): Either[ParseError, Unit] = {
-            if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
-              Right(())
-            } else {
-              parseExpr(current).flatMap { case (key, afterKey) =>
-                current = afterKey
-                current.current match {
-                  case Right(Token.Operator("->", _)) | Right(Token.Equal(_)) => {
-                    current = current.advance()
-                    parseExpr(current).map { case (value, afterValue) =>
-                      current = afterValue
-                      clauses = clauses :+ (key match {
-                        case qn: QualifiedName => ObjectExprClause(qn, value)
-                        case _ => ObjectExprClauseOnValue(key, value)
-                      })
-                      current.current match {
-                        case Right(Token.Comma(_)) => {
-                          current = current.advance()
-                        }
-                        case Right(Token.RBrace(_)) => ()
-                        case Right(t) => return Left(ParseError("Expected ',' or '}' after object clause", t.sourcePos.range.start))
-                        case Left(err) => return Left(err)
-                      }
-                    }
-                  }
-                  case Right(t) => Left(ParseError("Expected '->' or '=' in object expression", t.sourcePos.range.start))
-                  case Left(err) => Left(err)
-                }
-              }
-            }
-          }
-          
-          while (!current.current.exists(_.isInstanceOf[Token.RBrace])) {
-            parseClause() match {
-              case Right(_) => ()
-              case Left(err) => return Left(err)
-            }
-          }
-          
-          current.current match {
-            case Right(Token.RBrace(endPos)) => {
-              current = current.advance()
-              Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), current))
-            }
-            case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
-            case Left(err) => Left(err)
           }
         }
         case Right(token) => {
           parseAtom(current).flatMap { case (next, newState) => {
             current = newState
-            buildOpSeq(terms :+ next)
+            terms = terms :+ next
+            parseRest(next)
           }}
         }
         case Left(error) => {
@@ -369,10 +324,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           }
           case _ => parseAtom(current).flatMap { case (expr, state2) => {
             current = state2
-            buildOpSeq(Vector(
-              ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
-              expr
-            ))
+            terms = Vector(ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))), expr)
+            parseRest(expr)
           }}
         }
       }
@@ -383,23 +336,26 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           case Right(Token.LParen(_)) => {
             parseTuple(current).flatMap { case (tuple, newState) => {
               current = newState
-              buildOpSeq(Vector(FunctionCall(
+              val functionCall = FunctionCall(
                 ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
                 tuple,
                 createMeta(Some(sourcePos), Some(sourcePos))
-              )))
+              )
+              terms = Vector(functionCall)
+              parseRest(functionCall)
             }}
           }
           case Right(Token.LBrace(_)) => {
             parseBlock(current).flatMap { case (block, newState) => {
               current = newState
-              buildOpSeq(Vector(
-                ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                block
-              ))
+              terms = Vector(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))), block)
+              parseRest(block)
             }}
           }
-          case _ => buildOpSeq(Vector(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))))
+          case _ => {
+            terms = Vector(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
+            parseRest(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
+          }
         }
       }
       case Right(Token.LBrace(sourcePos)) => {
@@ -410,15 +366,16 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
             Right(())
           } else {
-            parseExpr(current).flatMap { case (key, afterKey) =>
+            parseAtom(current).flatMap { case (key, afterKey) =>
               current = afterKey
               current.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Equal(_)) => {
+                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Equal(_)) => {
                   current = current.advance()
                   parseExpr(current).map { case (value, afterValue) =>
                     current = afterValue
                     clauses = clauses :+ (key match {
-                      case qn: QualifiedName => ObjectExprClause(qn, value)
+                      case id: ConcreteIdentifier => ObjectExprClause(id, value)
+                      case sym: chester.syntax.concrete.SymbolLiteral => ObjectExprClauseOnValue(sym, value)
                       case _ => ObjectExprClauseOnValue(key, value)
                     })
                     current.current match {
@@ -431,7 +388,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     }
                   }
                 }
-                case Right(t) => Left(ParseError("Expected '->' or '=' in object expression", t.sourcePos.range.start))
+                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object expression", t.sourcePos.range.start))
                 case Left(err) => Left(err)
               }
             }
@@ -454,10 +411,22 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           case Left(err) => Left(err)
         }
       }
-      case _ => parseAtom(current).flatMap { case (expr, state2) => {
-        current = state2
-        buildOpSeq(Vector(expr))
-      }}
+      case Right(Token.LBracket(_)) => {
+        parseList(current)
+      }
+      case Right(Token.SymbolLiteral(value, sourcePos)) => {
+        current = current.advance()
+        Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current))
+      }
+      case Right(token) => {
+        parseAtom(current).flatMap { case (expr, state2) => {
+          current = state2
+          parseRest(expr)
+        }}
+      }
+      case Left(error) => {
+        Left(error)
+      }
     }
   }
 
@@ -523,56 +492,60 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         var clauses = Vector.empty[ObjectClause]
         
         def parseClause(): Either[ParseError, Unit] = {
-          parseExpr(current).flatMap { case (key, afterKey) =>
-            current = afterKey
-            current.current match {
-              case Right(Token.Operator("->", _)) | Right(Token.Equal(_)) => {
-                current = current.advance()
-                parseExpr(current).map { case (value, afterValue) =>
-                  current = afterValue
-                  clauses = clauses :+ (key match {
-                    case qn: QualifiedName => ObjectExprClause(qn, value)
-                    case _ => ObjectExprClauseOnValue(key, value)
-                  })
-                  current.current match {
-                    case Right(Token.Comma(_)) => {
-                      current = current.advance()
+          if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
+            Right(())
+          } else {
+            parseAtom(current).flatMap { case (key, afterKey) =>
+              current = afterKey
+              current.current match {
+                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Equal(_)) => {
+                  current = current.advance()
+                  parseExpr(current).map { case (value, afterValue) =>
+                    current = afterValue
+                    clauses = clauses :+ (key match {
+                      case id: ConcreteIdentifier => ObjectExprClause(id, value)
+                      case sym: chester.syntax.concrete.SymbolLiteral => ObjectExprClauseOnValue(sym, value)
+                      case _ => ObjectExprClauseOnValue(key, value)
+                    })
+                    current.current match {
+                      case Right(Token.Comma(_)) => {
+                        current = current.advance()
+                      }
+                      case Right(Token.RBrace(_)) => ()
+                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object clause", t.sourcePos.range.start))
+                      case Left(err) => return Left(err)
                     }
-                    case Right(Token.RBrace(_)) => ()
-                    case Right(t) => return Left(ParseError("Expected ',' or '}' after object clause", t.sourcePos.range.start))
-                    case Left(err) => return Left(err)
                   }
                 }
+                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object expression", t.sourcePos.range.start))
+                case Left(err) => Left(err)
               }
-              case Right(t) => Left(ParseError("Expected '->' or '=' in object expression", t.sourcePos.range.start))
-              case Left(err) => Left(err)
             }
           }
         }
         
-        if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
-          current = current.advance()
-          Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(sourcePos))), current))
-        } else {
-          while (!current.current.exists(_.isInstanceOf[Token.RBrace])) {
-            parseClause() match {
-              case Right(_) => ()
-              case Left(err) => return Left(err)
-            }
+        while (!current.current.exists(_.isInstanceOf[Token.RBrace])) {
+          parseClause() match {
+            case Right(_) => ()
+            case Left(err) => return Left(err)
           }
-          
-          current.current match {
-            case Right(Token.RBrace(endPos)) => {
-              current = current.advance()
-              Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), current))
-            }
-            case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
-            case Left(err) => Left(err)
+        }
+        
+        current.current match {
+          case Right(Token.RBrace(endPos)) => {
+            current = current.advance()
+            Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), current))
           }
+          case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
+          case Left(err) => Left(err)
         }
       }
       case Right(Token.LBracket(_)) => {
         parseList(current)
+      }
+      case Right(Token.SymbolLiteral(value, sourcePos)) => {
+        current = current.advance()
+        Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current))
       }
       case Right(token) => {
         Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
@@ -589,9 +562,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     var maxExprs = 50
 
     while (maxExprs > 0 && !current.current.exists(_.isInstanceOf[Token.RParen])) {
-      if (current.index >= current.tokens.length) {
+        if (current.index >= current.tokens.length) {
         return Left(ParseError("Unexpected end of input while parsing expressions", getStartPos(state.current)))
-      }
+        }
 
       current.current match {
         case Right(Token.Comma(_)) => {
@@ -599,10 +572,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
         case Right(Token.RParen(_)) => {
           current = current.advance()
-        }
-        case _ => {
+          }
+          case _ => {
           parseExpr(current).flatMap { case (expr, afterExpr) => {
-            current = afterExpr
+                current = afterExpr
             exprs = exprs :+ expr
             current.current match {
               case Right(Token.RParen(_)) => {
@@ -611,29 +584,29 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               case Right(Token.Comma(_)) => {
                 current = current.advance()
                 Right(())
-              }
+            }
               case Right(t) => {
                 Left(ParseError("Expected ',' or ')' after expression", t.sourcePos.range.start))
-              }
-              case Left(err) => { Left(err) }
-            }
+          }
+              case Left(err) => Left(err)
+        }
           }}
         }
       }
       maxExprs -= 1
-    }
+      }
 
     if (maxExprs <= 0) {
       Left(ParseError("Too many expressions", getStartPos(state.current)))
-    } else {
-      Right((exprs, current))
+      } else {
+        Right((exprs, current))
     }
   }
 
   private def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
     state.current match {
       case Right(Token.LBrace(sourcePos)) => {
-        var current = state
+      var current = state
         current = current.advance()
         parseExpr(current).flatMap { case (expr, afterExpr) => {
           current = afterExpr
@@ -649,13 +622,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               var maxStatements = 50
 
               while (maxStatements > 0) {
-                current.current match {
+          current.current match {
                   case Right(Token.RBrace(endPos)) => {
                     current = current.advance()
                     return Right((Block(statements, result, createMeta(Some(sourcePos), Some(endPos))), current))
-                  }
-                  case _ => {
-                    parseExpr(current) match {
+          }
+          case _ => {
+            parseExpr(current) match {
                       case Right((nextExpr, afterNext)) => {
                         current = afterNext
                         current.current match {
@@ -698,7 +671,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
     var current = state
-    current.current match {
+        current.current match {
       case Right(Token.LParen(_)) => {
         current = current.advance()
         var exprs = Vector.empty[Expr]
@@ -726,7 +699,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
         
         current.current match {
-          case Right(Token.RParen(_)) => {
+            case Right(Token.RParen(_)) => {
             current = current.advance()
             Right((Tuple(exprs, None), current))
           }
@@ -739,7 +712,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  private def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
+  def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
     var current = state
     var exprs = Vector[Expr]()
     
@@ -756,36 +729,25 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               current = current.advance()
             }
             case _ => {
-              val result = for {
-                (expr, afterExpr) <- parseExpr(current)
-                _ = {
-                  exprs = exprs :+ expr
+              parseExpr(current) match {
+                case Right((expr, afterExpr)) => {
                   current = afterExpr
+                  exprs = exprs :+ expr
+                  current.current match {
+                    case Right(Token.RBracket(_)) => ()
+                    case Right(Token.Comma(_)) => {
+                      current = current.advance()
+                    }
+                    case Right(t) => return Left(ParseError("Expected ',' or ']' in list", t.sourcePos.range.start))
+                    case Left(err) => return Left(err)
+                  }
                 }
-                result <- current.current match {
-                  case Right(Token.RBracket(endPos)) => {
-                    current = current.advance()
-                    Right((ListExpr(exprs, createMeta(Some(sourcePos), Some(endPos))), current))
-                  }
-                  case Right(Token.Comma(_)) => {
-                    current = current.advance()
-                    Right(())
-                  }
-                  case Right(t) => {
-                    Left(ParseError("Expected ',' or ']' in list", t.sourcePos.range.start))
-                  }
-                  case Left(err) => { Left(err) }
-                }
-              } yield result
-              
-              result match {
-                case Right(_) => ()
-                case Left(err) => return Left(err)
+        case Left(err) => return Left(err)
               }
             }
           }
         }
-        Left(ParseError("List has too many expressions (max 50)", sourcePos.range.start))
+        Left(ParseError("Too many elements in list", sourcePos.range.start))
       }
       case Right(t) => Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
       case Left(err) => Left(err)
@@ -841,7 +803,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       parseExpr(current).flatMap { case (key, afterKey) =>
         current = afterKey
         current.current match {
-          case Right(Token.Operator("->", _)) | Right(Token.Equal(_)) => {
+          case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Equal(_)) => {
             current = current.advance()
             parseExpr(current).map { case (value, afterValue) =>
               current = afterValue
@@ -859,7 +821,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               }
             }
           }
-          case Right(t) => Left(ParseError("Expected '->' or '=' in object expression", t.sourcePos.range.start))
+          case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object expression", t.sourcePos.range.start))
           case Left(err) => Left(err)
         }
       }

@@ -81,7 +81,15 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
           case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
           case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
           case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
-          case '=' => Right(Token.Equal(createSourcePos(startPos, pos)))
+          case '=' => {
+            if (pos < source.length && source(pos) == '>') {
+              pos += 1
+              col += 1
+              Right(Token.Operator("=>", createSourcePos(startPos, pos)))
+            } else {
+              Right(Token.Equal(createSourcePos(startPos, pos)))
+            }
+          }
           case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
           case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
           case '@' => Right(Token.At(createSourcePos(startPos, pos)))
@@ -153,7 +161,11 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       pos += 1
       col += 1
     }
-    Right(Token.SymbolLiteral(sb.toString, createSourcePos(startPos, pos)))
+    if (sb.isEmpty) {
+      Left(ParseError("Empty symbol literal", createSourcePos(startPos, pos).range.start))
+    } else {
+      Right(Token.SymbolLiteral(sb.toString, createSourcePos(startPos, pos)))
+    }
   }
 
   private def parseNumber(initial: String, startPos: Int): Either[ParseError, Token] = {
@@ -266,6 +278,11 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
     while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
+      if (initial == "=" && source(pos) == '>') {
+        pos += 1
+        col += 1
+        return Right(Token.Operator("=>", createSourcePos(startPos, pos)))
+      }
       sb.append(source(pos))
       pos += 1
       col += 1
