@@ -81,15 +81,6 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
           case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
           case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
           case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
-          case '=' => {
-            if (pos < source.length && source(pos) == '>') {
-              pos += 1
-              col += 1
-              Right(Token.Operator("=>", createSourcePos(startPos, pos)))
-            } else {
-              Right(Token.Equal(createSourcePos(startPos, pos)))
-            }
-          }
           case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
           case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
           case '@' => Right(Token.At(createSourcePos(startPos, pos)))

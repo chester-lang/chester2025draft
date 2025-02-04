@@ -259,7 +259,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             parseRest(next)
           }}
         }
-        case Right(Token.Equal(sourcePos)) => {
+        case Right(Token.Operator("=", sourcePos)) => {
           current = current.advance()
           parseExpr(current).flatMap { case (next, newState) => {
             current = newState
@@ -369,7 +369,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             parseAtom(current).flatMap { case (key, afterKey) =>
               current = afterKey
               current.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Equal(_)) => {
+                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
                   current = current.advance()
                   parseExpr(current).map { case (value, afterValue) =>
                     current = afterValue
@@ -498,7 +498,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             parseAtom(current).flatMap { case (key, afterKey) =>
               current = afterKey
               current.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Equal(_)) => {
+                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
                   current = current.advance()
                   parseExpr(current).map { case (value, afterValue) =>
                     current = afterValue
@@ -803,7 +803,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       parseExpr(current).flatMap { case (key, afterKey) =>
         current = afterKey
         current.current match {
-          case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Equal(_)) => {
+          case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
             current = current.advance()
             parseExpr(current).map { case (value, afterValue) =>
               current = afterValue

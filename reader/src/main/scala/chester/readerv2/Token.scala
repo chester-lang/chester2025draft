@@ -23,7 +23,6 @@ object Token {
   case class RBrace(sourcePos: SourcePos) extends Token
   case class Comma(sourcePos: SourcePos) extends Token
   case class Semicolon(sourcePos: SourcePos) extends Token
-  case class Equal(sourcePos: SourcePos) extends Token
   case class Colon(sourcePos: SourcePos) extends Token
   case class Dot(sourcePos: SourcePos) extends Token
   case class At(sourcePos: SourcePos) extends Token
