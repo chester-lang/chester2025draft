@@ -232,160 +232,67 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     var current = state
     var terms = Vector.empty[Expr]
 
-    def buildOpSeq(terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
+    def buildOpSeq(terms: Vector[Expr]): Either[ParseError, Expr] = {
       if (terms.isEmpty) {
         Left(ParseError("Empty operator sequence", getStartPos(state.current)))
       } else if (terms.length == 1) {
-        Right((terms.head, current))
+        Right(terms.head)
       } else {
-        Right((OpSeq(terms, None), current))
+        Right(OpSeq(terms, None))
       }
     }
 
-    def parseDotCall(expr: Expr, dotSourcePos: SourcePos): Either[ParseError, (Expr, LexerState)] = {
-      current = current.advance() // Skip the dot
-      current.current match {
-        case Right(Token.Identifier(chars1, idSourcePos1)) => {
-          current = current.advance()
-          val field = ConcreteIdentifier(chars1.map(_.text).mkString, createMeta(Some(idSourcePos1), Some(idSourcePos1)))
-          var telescope = Vector.empty[MaybeTelescope]
-          current.current match {
-            case Right(Token.LParen(_)) => {
-              parseTuple(current).flatMap { case (args, afterArgs) => {
-                current = afterArgs
-                telescope = Vector(args)
-                current.current match {
-                  case Right(Token.LParen(_)) => {
-                    parseTuple(current).map { case (args2, afterArgs2) => {
-                      current = afterArgs2
-                      telescope = telescope :+ args2
-                      (DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterArgs2.sourcePos))), current)
-                    }}
-                  }
-                  case Right(Token.LBrace(_)) => {
-                    parseBlock(current).map { case (block, afterBlock) => {
-                      current = afterBlock
-                      telescope = telescope :+ Tuple(Vector(block), None)
-                      (DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterBlock.sourcePos))), current)
-                    }}
-                  }
-                  case Right(Token.Dot(nextDotSourcePos)) => {
-                    val dotCall = DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos)))
-                    parseDotCall(dotCall, nextDotSourcePos)
-                  }
-                  case _ => Right((DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos))), current))
-                }
-              }}
-            }
-            case Right(Token.LBrace(_)) => {
-              parseBlock(current).flatMap { case (block, afterBlock) => {
-                current = afterBlock
-                telescope = Vector(Tuple(Vector(block), None))
-                val dotCall = DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterBlock.sourcePos)))
-                current.current match {
-                  case Right(Token.Dot(nextDotSourcePos)) => {
-                    parseDotCall(dotCall, nextDotSourcePos)
-                  }
-                  case _ => Right((dotCall, current))
-                }
-              }}
-            }
-            case Right(Token.Dot(nextDotSourcePos)) => {
-              val dotCall = DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(idSourcePos1)))
-              parseDotCall(dotCall, nextDotSourcePos)
-            }
-            case _ => {
-              Right((DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(idSourcePos1))), current))
-            }
-          }
-        }
-        case Right(Token.Operator(op, idSourcePos)) => {
-          current = current.advance()
-          val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
-          current.current match {
-            case Right(Token.LParen(_)) => {
-              parseTuple(current).map { case (args, afterArgs) => {
-                current = afterArgs
-                (DotCall(expr, field, Vector(args), createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos))), current)
-              }}
-            }
-            case _ => {
-              Right((DotCall(expr, field, Vector.empty, createMeta(Some(dotSourcePos), Some(idSourcePos))), current))
-            }
-          }
-        }
-        case Right(t) => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
-        case Left(err) => Left(err)
-      }
-    }
-
-    def parseRest(first: Expr): Either[ParseError, (Expr, LexerState)] = {
-      if (terms.isEmpty) {
-        terms = Vector(first)
-      }
-      
-      current.current match {
+    def parseRest(expr: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+      state.current match {
         case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) => {
-          buildOpSeq(terms)
+          buildOpSeq(terms).map(result => (result, state))
         }
         case Right(Token.Dot(dotSourcePos)) => {
-          parseDotCall(first, dotSourcePos).flatMap { case (dotCall, afterDot) => {
-            current = afterDot
+          handleDotCall(dotSourcePos, state, terms).flatMap { case (dotCall, newState) =>
             terms = Vector(dotCall)
-            parseRest(dotCall)
-          }}
+            parseRest(dotCall, newState)
+          }
         }
         case Right(Token.Operator(op, sourcePos)) => {
-          current = current.advance()
-          parseAtom(current).flatMap { case (next, newState) => {
-            current = newState
+          val afterOp = state.advance()
+          parseAtom(afterOp).flatMap { case (next, afterNext) =>
             terms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
-            parseRest(next)
-          }}
-        }
-        case Right(Token.Operator("=", sourcePos)) => {
-          current = current.advance()
-          parseExpr(current).flatMap { case (next, newState) => {
-            current = newState
-            terms = terms :+ ConcreteIdentifier("=", createMeta(Some(sourcePos), Some(sourcePos))) :+ next
-            buildOpSeq(terms)
-          }}
+            parseRest(next, afterNext)
+          }
         }
         case Right(Token.Identifier(chars, sourcePos)) => {
           val text = chars.map(_.text).mkString
-          current = current.advance()
-          current.current match {
+          val afterId = state.advance()
+          afterId.current match {
             case Right(Token.LParen(_)) => {
-              parseTuple(current).flatMap { case (tuple, newState) => {
-                current = newState
+              parseTuple(afterId).flatMap { case (tuple, afterTuple) =>
                 val functionCall = FunctionCall(
                   ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
                   tuple,
                   createMeta(Some(sourcePos), Some(sourcePos))
                 )
                 terms = terms :+ functionCall
-                parseRest(functionCall)
-              }}
+                parseRest(functionCall, afterTuple)
+              }
             }
             case Right(Token.LBrace(_)) => {
-              parseBlock(current).flatMap { case (block, newState) => {
-                current = newState
+              parseBlock(afterId).flatMap { case (block, afterBlock) =>
                 terms = terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ block
-                parseRest(block)
-              }}
+                parseRest(block, afterBlock)
+              }
             }
             case _ => {
-              terms = terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-              parseRest(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
+              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              terms = terms :+ id
+              parseRest(id, afterId)
             }
           }
         }
-        case Right(token) => {
-          parseAtom(current).flatMap { case (next, newState) => {
-            current = newState
+        case Right(_) => {
+          parseAtom(state).flatMap { case (next, afterNext) =>
             terms = terms :+ next
-            parseRest(next)
-          }}
+            parseRest(next, afterNext)
+          }
         }
         case Left(error) => {
           Left(error)
@@ -395,121 +302,94 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
     current.current match {
       case Right(Token.Operator(op, sourcePos)) => {
-        current = current.advance()
-        current.current match {
+        val afterOp = current.advance()
+        afterOp.current match {
           case Right(Token.LParen(_)) => {
-            parseTuple(current).map { case (tuple, newState) =>
+            parseTuple(afterOp).map { case (tuple, afterTuple) =>
               (FunctionCall(
                 ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
                 tuple,
                 createMeta(Some(sourcePos), Some(sourcePos))
-              ), newState)
+              ), afterTuple)
             }
           }
-          case _ => parseAtom(current).flatMap { case (expr, state2) => {
-            current = state2
+          case _ => parseAtom(afterOp).flatMap { case (expr, afterExpr) =>
             terms = Vector(ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))), expr)
-            parseRest(expr)
-          }}
-        }
-      }
-      case Right(Token.Identifier(chars, sourcePos)) => {
-        val text = chars.map(_.text).mkString
-        current = current.advance()
-        current.current match {
-          case Right(Token.LParen(_)) => {
-            parseTuple(current).flatMap { case (tuple, newState) => {
-              current = newState
-              val functionCall = FunctionCall(
-                ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                tuple,
-                createMeta(Some(sourcePos), Some(sourcePos))
-              )
-              terms = Vector(functionCall)
-              parseRest(functionCall)
-            }}
-          }
-          case Right(Token.LBrace(_)) => {
-            parseBlock(current).flatMap { case (block, newState) => {
-              current = newState
-              terms = Vector(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))), block)
-              parseRest(block)
-            }}
-          }
-          case _ => {
-            terms = Vector(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
-            parseRest(ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))))
+            parseRest(expr, afterExpr)
           }
         }
       }
-      case Right(Token.LBrace(sourcePos)) => {
-        current = current.advance()
-        var clauses = Vector.empty[ObjectClause]
+      case _ => parseAtom(current).flatMap { case (first, afterFirst) =>
+        terms = Vector(first)
+        parseRest(first, afterFirst)
+      }
+    }
+  }
+
+  def handleDotCall(dotSourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
+    val afterDot = state.advance() // Skip the dot
+    afterDot.current match {
+      case Right(Token.Identifier(chars1, idSourcePos1)) => {
+        val afterId = afterDot.advance()
+        val field = ConcreteIdentifier(chars1.map(_.text).mkString, createMeta(Some(idSourcePos1), Some(idSourcePos1)))
+        var telescope = Vector.empty[Tuple]
         
-        def parseClause(): Either[ParseError, Unit] = {
-          if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
-            Right(())
-          } else {
-            parseAtom(current).flatMap { case (key, afterKey) =>
-              current = afterKey
-              current.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
-                  current = current.advance()
-                  parseExpr(current).map { case (value, afterValue) =>
-                    current = afterValue
-                    clauses = clauses :+ (key match {
-                      case id: ConcreteIdentifier => ObjectExprClause(id, value)
-                      case sym: chester.syntax.concrete.SymbolLiteral => ObjectExprClauseOnValue(sym, value)
-                      case _ => ObjectExprClauseOnValue(key, value)
-                    })
-                    current.current match {
-                      case Right(Token.Comma(_)) => {
-                        current = current.advance()
-                      }
-                      case Right(Token.RBrace(_)) => ()
-                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object clause", t.sourcePos.range.start))
-                      case Left(err) => return Left(err)
-                    }
-                  }
-                }
-                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object expression", t.sourcePos.range.start))
-                case Left(err) => Left(err)
+        def parseNextTelescope(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+          state.current match {
+            case Right(Token.LParen(_)) => {
+              parseTuple(state).flatMap { case (args, afterArgs) =>
+                telescope = telescope :+ args
+                parseNextTelescope(afterArgs)
               }
             }
+            case Right(Token.LBrace(_)) => {
+              parseBlock(state).flatMap { case (block, afterBlock) =>
+                telescope = telescope :+ Tuple(Vector(block), None)
+                parseNextTelescope(afterBlock)
+              }
+            }
+            case Right(Token.Dot(nextDotSourcePos)) => {
+              val dotCall = DotCall(terms.last, field, telescope, createMeta(Some(dotSourcePos), Some(state.sourcePos)))
+              handleDotCall(nextDotSourcePos, state, Vector(dotCall))
+            }
+            case _ => {
+              Right((DotCall(terms.last, field, telescope, createMeta(Some(dotSourcePos), Some(state.sourcePos))), state))
+            }
           }
         }
         
-        while (!current.current.exists(_.isInstanceOf[Token.RBrace])) {
-          parseClause() match {
-            case Right(_) => ()
-            case Left(err) => return Left(err)
+        parseNextTelescope(afterId)
+      }
+      case Right(Token.Operator(op, idSourcePos)) => {
+        val afterOp = afterDot.advance()
+        val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
+        afterOp.current match {
+          case Right(Token.LParen(_)) => {
+            parseTuple(afterOp).map { case (args, afterArgs) =>
+              (DotCall(terms.last, field, Vector(args), createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos))), afterArgs)
+            }
+          }
+          case _ => {
+            Right((DotCall(terms.last, field, Vector.empty, createMeta(Some(dotSourcePos), Some(idSourcePos))), afterOp))
           }
         }
-        
-        current.current match {
-          case Right(Token.RBrace(endPos)) => {
-            current = current.advance()
-            Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), current))
-          }
-          case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
-          case Left(err) => Left(err)
+      }
+      case Right(t) => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
+      case Left(err) => Left(err)
+    }
+  }
+
+  def handleOperator(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
+    var current = state
+    current = current.advance()
+    parseAtom(current).flatMap { case (next, newState) =>
+      current = newState
+      val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
+      current.current match {
+        case Right(Token.Operator(nextOp, nextSourcePos)) => {
+          handleOperator(nextOp, nextSourcePos, current, updatedTerms)
         }
-      }
-      case Right(Token.LBracket(_)) => {
-        parseList(current)
-      }
-      case Right(Token.SymbolLiteral(value, sourcePos)) => {
-        current = current.advance()
-        Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current))
-      }
-      case Right(token) => {
-        parseAtom(current).flatMap { case (expr, state2) => {
-          current = state2
-          parseRest(expr)
-        }}
-      }
-      case Left(error) => {
-        Left(error)
+        case _ => Right((next, current))
       }
     }
   }
@@ -572,57 +452,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
       }
       case Right(Token.LBrace(sourcePos)) => {
-        current = current.advance()
-        var clauses = Vector.empty[ObjectClause]
-        
-        def parseClause(): Either[ParseError, Unit] = {
-          if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
-            Right(())
-          } else {
-            parseAtom(current).flatMap { case (key, afterKey) =>
-              current = afterKey
-              current.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
-                  current = current.advance()
-                  parseExpr(current).map { case (value, afterValue) =>
-                    current = afterValue
-                    clauses = clauses :+ (key match {
-                      case id: ConcreteIdentifier => ObjectExprClause(id, value)
-                      case sym: chester.syntax.concrete.SymbolLiteral => ObjectExprClauseOnValue(sym, value)
-                      case _ => ObjectExprClauseOnValue(key, value)
-                    })
-                    current.current match {
-                      case Right(Token.Comma(_)) => {
-                        current = current.advance()
-                      }
-                      case Right(Token.RBrace(_)) => ()
-                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object clause", t.sourcePos.range.start))
-                      case Left(err) => return Left(err)
-                    }
-                  }
-                }
-                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object expression", t.sourcePos.range.start))
-                case Left(err) => Left(err)
-              }
-            }
-          }
-        }
-        
-        while (!current.current.exists(_.isInstanceOf[Token.RBrace])) {
-          parseClause() match {
-            case Right(_) => ()
-            case Left(err) => return Left(err)
-          }
-        }
-        
-        current.current match {
-          case Right(Token.RBrace(endPos)) => {
-            current = current.advance()
-            Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), current))
-          }
-          case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
-          case Left(err) => Left(err)
-        }
+        parseObject(current)
       }
       case Right(Token.LBracket(_)) => {
         parseList(current)
@@ -687,108 +517,151 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  private def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+  def parseBlock(current: LexerState): Either[ParseError, (Block, LexerState)] = {
+    var state = current
+    var maxExprs = 100 // Prevent infinite loops
+    var exprs = Vector.empty[Expr]
+    
     state.current match {
       case Right(Token.LBrace(sourcePos)) => {
-      var current = state
-        current = current.advance()
-        parseExpr(current).flatMap { case (expr, afterExpr) => {
-          current = afterExpr
-          current.current match {
-            case Right(Token.RBrace(endPos)) => {
-              current = current.advance()
-              Right((Block(Vector(), Some(expr), createMeta(Some(sourcePos), Some(endPos))), current))
-            }
-            case Right(Token.Semicolon(_)) => {
-              current = current.advance()
-              var statements = Vector(expr)
-              var result: Option[Expr] = None
-              var maxStatements = 50
-
-              while (maxStatements > 0) {
-          current.current match {
-                  case Right(Token.RBrace(endPos)) => {
-                    current = current.advance()
-                    return Right((Block(statements, result, createMeta(Some(sourcePos), Some(endPos))), current))
-          }
-          case _ => {
-            parseExpr(current) match {
-                      case Right((nextExpr, afterNext)) => {
-                        current = afterNext
-                        current.current match {
-                          case Right(Token.Semicolon(_)) => {
-                            statements = statements :+ nextExpr
-                            current = current.advance()
-                          }
-                          case Right(Token.RBrace(endPos)) => {
-                            result = Some(nextExpr)
-                            current = current.advance()
-                            return Right((Block(statements, result, createMeta(Some(sourcePos), Some(endPos))), current))
-                          }
-                          case Right(t) => {
-                            return Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
-                          }
-                          case Left(err) => return Left(err)
-                        }
-                      }
-                      case Left(err) => return Left(err)
-                    }
-                  }
-                }
-                maxStatements -= 1
+        state = state.advance()
+        while (maxExprs > 0 && !state.current.exists(_.isInstanceOf[Token.RBrace])) {
+          parseExpr(state).flatMap { case (expr, afterExpr) =>
+            state = afterExpr
+            exprs = exprs :+ expr
+            state.current match {
+              case Right(Token.Semicolon(_)) => {
+                state = state.advance()
+                Right(())
               }
-              Left(ParseError("Too many statements in block", sourcePos.range.start))
+              case Right(Token.RBrace(_)) => Right(())
+              case Right(t) => Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
+              case Left(err) => Left(err)
             }
-            case Right(t) => {
-              Left(ParseError("Expected '}' or ';' after expression in block", t.sourcePos.range.start))
+          } match {
+            case Right(_) => ()
+            case Left(err) => return Left(err)
+          }
+          maxExprs -= 1
+        }
+        
+        if (maxExprs <= 0) {
+          Left(ParseError("Block contains too many expressions", state.sourcePos.range.start))
+        } else {
+          state.current match {
+            case Right(Token.RBrace(endPos)) => {
+              state = state.advance()
+              val meta = createMeta(Some(sourcePos), Some(endPos))
+              val result = if (exprs.isEmpty) None else Some(exprs.last)
+              val stmts = if (exprs.isEmpty) Vector.empty else exprs.init
+              Right((Block(stmts, result, meta), state))
             }
+            case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
             case Left(err) => Left(err)
           }
-        }}
+        }
       }
-      case Right(t) => {
-        Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
-      }
+      case Right(t) => Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
   }
 
-  private def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
-    var current = state
-        current.current match {
-      case Right(Token.LParen(_)) => {
-        current = current.advance()
-        var exprs = Vector.empty[Expr]
+  def parseObject(current: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
+    var state = current
+    state.current match {
+      case Right(Token.LBrace(sourcePos)) => {
+        state = state.advance()
+        var clauses = Vector.empty[ObjectClause]
         
-        def parseElement(): Either[ParseError, Unit] = {
-          parseExpr(current).map { case (expr, afterExpr) =>
-            current = afterExpr
-            exprs = exprs :+ expr
-            current.current match {
-              case Right(Token.Comma(_)) => {
-                current = current.advance()
+        def parseField(): Either[ParseError, Unit] = {
+          state.current match {
+            case Right(Token.Identifier(chars, idSourcePos)) => {
+              state = state.advance()
+              val key = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(idSourcePos), Some(idSourcePos)))
+              state.current match {
+                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
+                  state = state.advance()
+                  parseExpr(state).map { case (value, afterValue) =>
+                    state = afterValue
+                    clauses = clauses :+ ObjectExprClause(key, value)
+                    state.current match {
+                      case Right(Token.Comma(_)) => state = state.advance()
+                      case Right(Token.RBrace(_)) => ()
+                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+                      case Left(err) => return Left(err)
+                    }
+                  }
+                }
+                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object field", t.sourcePos.range.start))
+                case Left(err) => Left(err)
               }
-              case Right(Token.RParen(_)) => ()
-              case Right(t) => return Left(ParseError("Expected ',' or ')' in tuple", t.sourcePos.range.start))
-              case Left(err) => return Left(err)
             }
+            case Right(Token.SymbolLiteral(value, symSourcePos)) => {
+              state = state.advance()
+              val key = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
+              state.current match {
+                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
+                  state = state.advance()
+                  parseExpr(state).map { case (value, afterValue) =>
+                    state = afterValue
+                    clauses = clauses :+ ObjectExprClauseOnValue(key, value)
+                    state.current match {
+                      case Right(Token.Comma(_)) => state = state.advance()
+                      case Right(Token.RBrace(_)) => ()
+                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+                      case Left(err) => return Left(err)
+                    }
+                  }
+                }
+                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object field", t.sourcePos.range.start))
+                case Left(err) => Left(err)
+              }
+            }
+            case Right(Token.RBrace(endPos)) => {
+              state = state.advance()
+              Right(())
+            }
+            case Right(t) => Left(ParseError("Expected identifier, symbol literal or '}' in object", t.sourcePos.range.start))
+            case Left(err) => Left(err)
           }
         }
         
-        while (!current.current.exists(_.isInstanceOf[Token.RParen])) {
-          parseElement() match {
+        while (!state.current.exists(_.isInstanceOf[Token.RBrace])) {
+          parseField() match {
             case Right(_) => ()
             case Left(err) => return Left(err)
           }
         }
         
-        current.current match {
-            case Right(Token.RParen(_)) => {
-            current = current.advance()
-            Right((Tuple(exprs, None), current))
+        state.current match {
+          case Right(Token.RBrace(endPos)) => {
+            state = state.advance()
+            Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), state))
           }
-          case Right(t) => Left(ParseError("Expected ')' at end of tuple", t.sourcePos.range.start))
+          case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
           case Left(err) => Left(err)
+        }
+      }
+      case Right(t) => Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
+      case Left(err) => Left(err)
+    }
+  }
+
+  def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
+    var current = state
+    current.current match {
+      case Right(Token.LParen(sourcePos)) => {
+        current = current.advance()
+        parseExprList(current).flatMap { case (exprs, afterExprs) =>
+          current = afterExprs
+          current.current match {
+            case Right(Token.RParen(endPos)) => {
+              current = current.advance()
+              Right((Tuple(exprs, createMeta(Some(sourcePos), Some(endPos))), current))
+            }
+            case Right(t) => Left(ParseError("Expected ')' at end of tuple", t.sourcePos.range.start))
+            case Left(err) => Left(err)
+          }
         }
       }
       case Right(t) => Left(ParseError("Expected '(' at start of tuple", t.sourcePos.range.start))
@@ -876,53 +749,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(token) if token.isInstanceOf[T] => Right(state.advance())
       case Right(token) => Left(ParseError(s"Expected token of type ${tag.runtimeClass.getSimpleName}", token.sourcePos.range.start))
       case Left(err) => Left(err)
-    }
-  }
-
-  def parseObject(sourcePos: SourcePos): Either[ParseError, (Expr, LexerState)] = {
-    var current = advance()
-    var clauses = Vector.empty[ObjectClause]
-
-    def parseClause(): Either[ParseError, Unit] = {
-      parseExpr(current).flatMap { case (key, afterKey) =>
-        current = afterKey
-        current.current match {
-          case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
-            current = current.advance()
-            parseExpr(current).map { case (value, afterValue) =>
-              current = afterValue
-              clauses = clauses :+ (key match {
-                case qn: QualifiedName => ObjectExprClause(qn, value)
-                case _ => ObjectExprClauseOnValue(key, value)
-              })
-              current.current match {
-                case Right(Token.Comma(_)) => {
-                  current = current.advance()
-                }
-                case Right(Token.RBrace(_)) => ()
-                case Right(t) => return Left(ParseError("Expected ',' or '}' after object clause", t.sourcePos.range.start))
-                case Left(err) => return Left(err)
-              }
-            }
-          }
-          case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object expression", t.sourcePos.range.start))
-          case Left(err) => Left(err)
-        }
-      }
-    }
-
-    while (current.current.exists(!_.isInstanceOf[Token.RBrace])) {
-      parseClause() match {
-        case Right(_) => ()
-        case Left(err) => return Left(err)
-      }
-    }
-
-    if (current.current.exists(_.isInstanceOf[Token.RBrace])) {
-      current = current.advance()
-      Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(sourcePos))), current))
-    } else {
-      Left(ParseError("Expected '}' at end of object", sourcePos.range.start))
     }
   }
 }
