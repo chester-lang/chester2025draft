@@ -496,6 +496,20 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
             }
           }
+          case Right(Token.LBracket(_)) => {
+            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
+            parseList(current).flatMap { case (listExpr, afterList) =>
+              afterList.current match {
+                case Right(Token.LParen(_)) => {
+                  val functionWithGenerics = FunctionCall(identifier, listExpr, createMeta(Some(sourcePos), Some(sourcePos)))
+                  parseTuple(afterList).map { case (tuple, nextState) =>
+                    (FunctionCall(functionWithGenerics, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
+                  }
+                }
+                case _ => Right((FunctionCall(identifier, listExpr, createMeta(Some(sourcePos), Some(sourcePos))), afterList))
+              }
+            }
+          }
           case _ => {
             Right((ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), current))
           }
