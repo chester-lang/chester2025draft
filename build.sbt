@@ -477,7 +477,7 @@ lazy val effektKiama = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "jline" % "jline" % "2.14.6",
       "org.rogach" %% "scallop" % "5.2.0",
-      "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
+      "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "1.0.0-SNAPSHOT",
       "com.google.code.gson" % "gson" % "2.12.1"
     )
   )
@@ -557,7 +557,7 @@ lazy val utils = useSpire(
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M4"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4-M5"
       ),
       commonJvmLibSettings,
       libraryDependencies ++= Seq(
@@ -575,7 +575,7 @@ lazy val utils = useSpire(
     )
     .nativeSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M4"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4-M5"
       ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
@@ -1293,7 +1293,7 @@ lazy val lsp = crossProject(JVMPlatform)
     libraryDependencies ++= Seq(
     ),
     Compile / mainClass := Some("chester.lsp.Main"),
-    libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0-SNAPSHOT",
+    libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "1.0.0-SNAPSHOT",
     assembly / assemblyOutputPath := file("target") / "chester-lsp.jar",
     nativeImageOutput := file("target") / "chester-lsp",
     commonSettings
