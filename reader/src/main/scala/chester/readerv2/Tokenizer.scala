@@ -268,18 +268,31 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
 
   private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
-    while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
-      if (initial == "=" && source(pos) == '>') {
+    if (initial == "/" && pos < source.length && source(pos) == '/') {
+      // Handle single-line comment
+      pos += 1 // Skip the second '/'
+      col += 1
+      val commentStart = pos
+      while (pos < source.length && source(pos) != '\n') {
         pos += 1
         col += 1
-        return Right(Token.Operator("=>", createSourcePos(startPos, pos)))
       }
-      sb.append(source(pos))
-      pos += 1
-      col += 1
+      val commentText = source.substring(commentStart, pos)
+      Right(Token.Comment(commentText, createSourcePos(startPos, pos)))
+    } else {
+      while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
+        if (initial == "=" && source(pos) == '>') {
+          pos += 1
+          col += 1
+          return Right(Token.Operator("=>", createSourcePos(startPos, pos)))
+        }
+        sb.append(source(pos))
+        pos += 1
+        col += 1
+      }
+      val operator = sb.toString
+      Right(Token.Operator(operator, createSourcePos(startPos, pos)))
     }
-    val operator = sb.toString
-    Right(Token.Operator(operator, createSourcePos(startPos, pos)))
   }
 }
 

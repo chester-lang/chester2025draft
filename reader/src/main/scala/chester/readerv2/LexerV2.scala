@@ -543,6 +543,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           debug("Found RParen after expression")
           return Right((exprs, current))
         }
+        case Right(Token.Comment(text, sourcePos)) => {
+          debug("Found comment, skipping")
+          current = skipComments(current.advance())
+        }
         case _ => {
           debug("Parsing expression")
           parseExpr(current) match {
