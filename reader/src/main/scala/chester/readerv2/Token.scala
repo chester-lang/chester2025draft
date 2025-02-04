@@ -28,6 +28,7 @@ object Token {
   case class At(sourcePos: SourcePos) extends Token
   case class EOF(sourcePos: SourcePos) extends Token
   case class Whitespace(sourcePos: SourcePos) extends Token { override def isWhitespace = true }
+  case class Newline(sourcePos: SourcePos) extends Token { override def isWhitespace = true }
   case class Comment(text: String, sourcePos: SourcePos) extends Token { override def isComment = true }
   case class IntegerLiteral(value: String, sourcePos: SourcePos) extends Token
   case class RationalLiteral(value: String, sourcePos: SourcePos) extends Token
