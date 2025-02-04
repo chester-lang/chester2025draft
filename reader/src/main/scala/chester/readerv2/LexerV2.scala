@@ -579,7 +579,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               state = state.advance()
               val key = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(idSourcePos), Some(idSourcePos)))
               state.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
+                case Right(Token.Operator(op, _)) => {
                   state = state.advance()
                   parseExpr(state).map { case (value, afterValue) =>
                     state = afterValue
@@ -592,7 +592,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     }
                   }
                 }
-                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object field", t.sourcePos.range.start))
+                case Right(t) => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
               }
             }
@@ -600,7 +600,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               state = state.advance()
               val key = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
               state.current match {
-                case Right(Token.Operator("->", _)) | Right(Token.Operator("=>", _)) | Right(Token.Operator("=", _)) => {
+                case Right(Token.Operator(op, _)) => {
                   state = state.advance()
                   parseExpr(state).map { case (value, afterValue) =>
                     state = afterValue
@@ -613,7 +613,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     }
                   }
                 }
-                case Right(t) => Left(ParseError("Expected '->', '=>' or '=' in object field", t.sourcePos.range.start))
+                case Right(t) => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
               }
             }
