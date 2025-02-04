@@ -491,14 +491,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         current = current.advance()
         current.current match {
           case Right(Token.LParen(_)) => {
-            parseTuple(current).map {
-              case (tuple, newState) => {
-                (FunctionCall(
-                  ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))),
-                  tuple,
-                  createMeta(Some(sourcePos), Some(sourcePos))
-                ), newState)
-              }
+            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
+            parseTuple(current).map { case (tuple, nextState) =>
+              (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
             }
           }
           case _ => {
@@ -507,10 +502,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
       }
       case Right(Token.LParen(_)) => {
-        parseTuple(current).map {
-          case (Tuple(Vector(single), _), state) => { (single, state) }
-          case (tuple, state) => { (tuple, state) }
-        }
+        parseTuple(current)
       }
       case Right(Token.LBrace(sourcePos)) => {
         parseObject(current)
