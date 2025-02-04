@@ -358,7 +358,28 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     current.current match {
       case Right(Token.IntegerLiteral(value, sourcePos)) => {
         current = current.advance()
-        Right((IntegerLiteral(BigInt(value), createMeta(Some(sourcePos), Some(sourcePos))), current))
+        val (numStr, base) = if (value.startsWith("0x")) {
+          (value.drop(2), 16)
+        } else if (value.startsWith("0b")) {
+          (value.drop(2), 2)
+        } else {
+          (value, 10)
+        }
+        try {
+          Right((IntegerLiteral(BigInt(numStr, base), createMeta(Some(sourcePos), Some(sourcePos))), current))
+        } catch {
+          case e: NumberFormatException =>
+            Left(ParseError(s"Invalid number format: $value", sourcePos.range.start))
+        }
+      }
+      case Right(Token.RationalLiteral(value, sourcePos)) => {
+        current = current.advance()
+        try {
+          Right((RationalLiteral(BigDecimal(value), createMeta(Some(sourcePos), Some(sourcePos))), current))
+        } catch {
+          case e: NumberFormatException =>
+            Left(ParseError(s"Invalid rational number format: $value", sourcePos.range.start))
+        }
       }
       case Right(Token.StringLiteral(chars, sourcePos)) => {
         current = current.advance()
@@ -423,8 +444,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
         case _ => {
           parseExpr(current).flatMap { case (expr, afterExpr) => {
-            exprs = exprs :+ expr
             current = afterExpr
+            exprs = exprs :+ expr
             current.current match {
               case Right(Token.RParen(_)) => {
                 Right((exprs, current))

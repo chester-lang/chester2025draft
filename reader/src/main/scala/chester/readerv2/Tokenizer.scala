@@ -160,6 +160,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val sb = new StringBuilder(initial)
     var isRational = false
     var hasDecimalPoint = false
+    var base = 10
 
     def readDigits(): Unit = {
       while (pos < source.length && source(pos).isDigit) {
@@ -169,26 +170,36 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       }
     }
 
+    def readHexDigits(): Unit = {
+      while (pos < source.length && (source(pos).isDigit || ('a' <= source(pos).toLower && source(pos).toLower <= 'f'))) {
+        sb.append(source(pos))
+        pos += 1
+        col += 1
+      }
+    }
+
+    def readBinaryDigits(): Unit = {
+      while (pos < source.length && (source(pos) == '0' || source(pos) == '1')) {
+        sb.append(source(pos))
+        pos += 1
+        col += 1
+      }
+    }
+
     if (initial == "0" && pos < source.length) {
       source(pos) match {
         case 'x' | 'X' =>
-          sb.append(source(pos))
-          pos += 1
+          base = 16
+          sb.append(source(pos))  // Keep the x
+          pos += 1 // Skip 'x'
           col += 1
-          while (pos < source.length && (source(pos).isDigit || ('a' <= source(pos).toLower && source(pos).toLower <= 'f'))) {
-            sb.append(source(pos))
-            pos += 1
-            col += 1
-          }
+          readHexDigits()
         case 'b' | 'B' =>
-          sb.append(source(pos))
-          pos += 1
+          base = 2
+          sb.append(source(pos))  // Keep the b
+          pos += 1 // Skip 'b'
           col += 1
-          while (pos < source.length && (source(pos) == '0' || source(pos) == '1')) {
-            sb.append(source(pos))
-            pos += 1
-            col += 1
-          }
+          readBinaryDigits()
         case _ =>
           readDigits()
       }
@@ -197,15 +208,41 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     }
 
     if (pos < source.length && source(pos) == '.') {
+      if (base != 10) {
+        return Left(ParseError("Decimal point not allowed in hex or binary numbers", createSourcePos(pos, pos + 1).range.start))
+      }
       if (hasDecimalPoint) {
-        val error = ParseError("Multiple decimal points in number", createSourcePos(pos, pos + 1).range.start)
-        return Left(error)
+        return Left(ParseError("Multiple decimal points in number", createSourcePos(pos, pos + 1).range.start))
       }
       hasDecimalPoint = true
       isRational = true
       sb.append(source(pos))
       pos += 1
       col += 1
+      readDigits()
+    }
+
+    // Handle exponent
+    if (pos < source.length && (source(pos) == 'e' || source(pos) == 'E')) {
+      if (base != 10) {
+        return Left(ParseError("Exponent not allowed in hex or binary numbers", createSourcePos(pos, pos + 1).range.start))
+      }
+      isRational = true
+      sb.append(source(pos))
+      pos += 1
+      col += 1
+      
+      // Optional sign
+      if (pos < source.length && (source(pos) == '+' || source(pos) == '-')) {
+        sb.append(source(pos))
+        pos += 1
+        col += 1
+      }
+      
+      // Must have at least one digit after exponent
+      if (pos >= source.length || !source(pos).isDigit) {
+        return Left(ParseError("Expected digits after exponent", createSourcePos(pos, pos).range.start))
+      }
       readDigits()
     }
 
