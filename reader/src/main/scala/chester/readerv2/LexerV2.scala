@@ -591,8 +591,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(Token.LBrace(sourcePos)) => {
         state = state.advance()
         while (maxExprs > 0 && !state.current.exists(_.isInstanceOf[Token.RBrace])) {
+          // Parse each expression in the block as a potential operator sequence
           parseExpr(state).flatMap { case (expr, afterExpr) =>
             state = afterExpr
+            // Add the expression to our list - parseExpr already handles operator sequences
             exprs = exprs :+ expr
             state.current match {
               case Right(Token.Semicolon(_)) => {
