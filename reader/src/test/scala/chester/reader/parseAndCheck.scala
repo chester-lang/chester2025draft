@@ -82,32 +82,38 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   val sourceOffset = SourceOffset(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
-  val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
+  val oldDebug = LexerV2.DEBUG
+  try {
+    LexerV2.DEBUG = true
+    val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
 
-  val result = lexer
-    .parseExpr(LexerState(tokens.toVector, 0))
-    .fold(
-      error => {
-        val errorIndex = error.pos.index.utf16
-        val lineStart = input.lastIndexOf('\n', errorIndex) + 1
-        val lineEnd = input.indexOf('\n', errorIndex) match {
-          case -1 => input.length
-          case n  => n
-        }
-        val line = input.substring(lineStart, lineEnd)
-        val pointer = " " * (errorIndex - lineStart) + "^"
-        
-        fail(
-          s"""V2 Parsing failed for input: $input
-             |Error: ${error.message}
-             |At position ${error.pos}:
-             |$line
-             |$pointer""".stripMargin)
-      },
-      { case (expr, _) => expr }
-    )
+    val result = lexer
+      .parseExpr(LexerState(tokens.toVector, 0))
+      .fold(
+        error => {
+          val errorIndex = error.pos.index.utf16
+          val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+          val lineEnd = input.indexOf('\n', errorIndex) match {
+            case -1 => input.length
+            case n  => n
+          }
+          val line = input.substring(lineStart, lineEnd)
+          val pointer = " " * (errorIndex - lineStart) + "^"
+          
+          fail(
+            s"""V2 Parsing failed for input: $input
+               |Error: ${error.message}
+               |At position ${error.pos}:
+               |$line
+               |$pointer""".stripMargin)
+        },
+        { case (expr, _) => expr }
+      )
 
-  assertEquals(result, expected, s"Failed for input: $input")
+    assertEquals(result, expected, s"Failed for input: $input")
+  } finally {
+    LexerV2.DEBUG = oldDebug
+  }
 }
 
 @deprecated("TODO: remove this")
