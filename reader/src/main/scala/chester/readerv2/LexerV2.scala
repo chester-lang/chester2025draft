@@ -242,6 +242,83 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       }
     }
 
+    def parseDotCall(expr: Expr, dotSourcePos: SourcePos): Either[ParseError, (Expr, LexerState)] = {
+      current = current.advance() // Skip the dot
+      current.current match {
+        case Right(Token.Identifier(chars1, idSourcePos1)) => {
+          current = current.advance()
+          val field = ConcreteIdentifier(chars1.map(_.text).mkString, createMeta(Some(idSourcePos1), Some(idSourcePos1)))
+          var telescope = Vector.empty[MaybeTelescope]
+          current.current match {
+            case Right(Token.LParen(_)) => {
+              parseTuple(current).flatMap { case (args, afterArgs) => {
+                current = afterArgs
+                telescope = Vector(args)
+                current.current match {
+                  case Right(Token.LParen(_)) => {
+                    parseTuple(current).map { case (args2, afterArgs2) => {
+                      current = afterArgs2
+                      telescope = telescope :+ args2
+                      (DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterArgs2.sourcePos))), current)
+                    }}
+                  }
+                  case Right(Token.LBrace(_)) => {
+                    parseBlock(current).map { case (block, afterBlock) => {
+                      current = afterBlock
+                      telescope = telescope :+ Tuple(Vector(block), None)
+                      (DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterBlock.sourcePos))), current)
+                    }}
+                  }
+                  case Right(Token.Dot(nextDotSourcePos)) => {
+                    val dotCall = DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos)))
+                    parseDotCall(dotCall, nextDotSourcePos)
+                  }
+                  case _ => Right((DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos))), current))
+                }
+              }}
+            }
+            case Right(Token.LBrace(_)) => {
+              parseBlock(current).flatMap { case (block, afterBlock) => {
+                current = afterBlock
+                telescope = Vector(Tuple(Vector(block), None))
+                val dotCall = DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(afterBlock.sourcePos)))
+                current.current match {
+                  case Right(Token.Dot(nextDotSourcePos)) => {
+                    parseDotCall(dotCall, nextDotSourcePos)
+                  }
+                  case _ => Right((dotCall, current))
+                }
+              }}
+            }
+            case Right(Token.Dot(nextDotSourcePos)) => {
+              val dotCall = DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(idSourcePos1)))
+              parseDotCall(dotCall, nextDotSourcePos)
+            }
+            case _ => {
+              Right((DotCall(expr, field, telescope, createMeta(Some(dotSourcePos), Some(idSourcePos1))), current))
+            }
+          }
+        }
+        case Right(Token.Operator(op, idSourcePos)) => {
+          current = current.advance()
+          val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
+          current.current match {
+            case Right(Token.LParen(_)) => {
+              parseTuple(current).map { case (args, afterArgs) => {
+                current = afterArgs
+                (DotCall(expr, field, Vector(args), createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos))), current)
+              }}
+            }
+            case _ => {
+              Right((DotCall(expr, field, Vector.empty, createMeta(Some(dotSourcePos), Some(idSourcePos))), current))
+            }
+          }
+        }
+        case Right(t) => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
+        case Left(err) => Left(err)
+      }
+    }
+
     def parseRest(first: Expr): Either[ParseError, (Expr, LexerState)] = {
       if (terms.isEmpty) {
         terms = Vector(first)
@@ -250,6 +327,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       current.current match {
         case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) => {
           buildOpSeq(terms)
+        }
+        case Right(Token.Dot(dotSourcePos)) => {
+          parseDotCall(first, dotSourcePos).flatMap { case (dotCall, afterDot) => {
+            current = afterDot
+            terms = Vector(dotCall)
+            parseRest(dotCall)
+          }}
         }
         case Right(Token.Operator(op, sourcePos)) => {
           current = current.advance()
