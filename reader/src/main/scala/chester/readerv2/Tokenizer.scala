@@ -55,63 +55,56 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     SourcePos(sourceOffset, RangeInFile(startPosition, endPosition))
   }
 
-  private def skipWhitespace(): Option[Either[ParseError, Token]] = {
-    while (pos < source.length && source(pos).isWhitespace) {
+  private def nextToken: Either[ParseError, Token] = {
+    skipWhitespace()
+    if (pos >= source.length) {
+      Right(Token.EOF(createSourcePos(0, 0)))
+    } else {
+      val c = source.codePointAt(pos)
       val startPos = pos
+      pos += Character.charCount(c)
+      col += 1
+
+      if (Character.isSupplementaryCodePoint(c)) {
+        if (isIdentifierFirst(c)) {
+          parseIdentifier(String.valueOf(Character.toChars(c)), startPos)
+        } else {
+          Left(ParseError(s"Unexpected character: ${String.valueOf(Character.toChars(c))}", createSourcePos(startPos, pos).range.start))
+        }
+      } else {
+        c.toChar match {
+          case '(' => Right(Token.LParen(createSourcePos(startPos, pos)))
+          case ')' => Right(Token.RParen(createSourcePos(startPos, pos)))
+          case '[' => Right(Token.LBracket(createSourcePos(startPos, pos)))
+          case ']' => Right(Token.RBracket(createSourcePos(startPos, pos)))
+          case '{' => Right(Token.LBrace(createSourcePos(startPos, pos)))
+          case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
+          case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
+          case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
+          case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
+          case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
+          case '@' => Right(Token.At(createSourcePos(startPos, pos)))
+          case '"' => parseString(startPos)
+          case '\'' => parseSymbol(startPos)
+          case d if d.isDigit => parseNumber(d.toString, startPos)
+          case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
+          case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
+          case other =>
+            Left(ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start))
+        }
+      }
+    }
+  }
+
+  private def skipWhitespace(): Unit = {
+    while (pos < source.length && source(pos).isWhitespace) {
       if (source(pos) == '\n') {
         line += 1
         col = 0
-        pos += 1
-        return Some(Right(Token.Newline(createSourcePos(startPos, pos))))
       } else {
         col += 1
-        pos += 1
       }
-    }
-    None
-  }
-
-  private def nextToken: Either[ParseError, Token] = {
-    skipWhitespace() match {
-      case Some(token) => token
-      case None =>
-        if (pos >= source.length) {
-          Right(Token.EOF(createSourcePos(0, 0)))
-        } else {
-          val c = source.codePointAt(pos)
-          val startPos = pos
-          pos += Character.charCount(c)
-          col += 1
-
-          if (Character.isSupplementaryCodePoint(c)) {
-            if (isIdentifierFirst(c)) {
-              parseIdentifier(String.valueOf(Character.toChars(c)), startPos)
-            } else {
-              Left(ParseError(s"Unexpected character: ${String.valueOf(Character.toChars(c))}", createSourcePos(startPos, pos).range.start))
-            }
-          } else {
-            c.toChar match {
-              case '(' => Right(Token.LParen(createSourcePos(startPos, pos)))
-              case ')' => Right(Token.RParen(createSourcePos(startPos, pos)))
-              case '[' => Right(Token.LBracket(createSourcePos(startPos, pos)))
-              case ']' => Right(Token.RBracket(createSourcePos(startPos, pos)))
-              case '{' => Right(Token.LBrace(createSourcePos(startPos, pos)))
-              case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
-              case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
-              case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
-              case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
-              case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
-              case '@' => Right(Token.At(createSourcePos(startPos, pos)))
-              case '"' => parseString(startPos)
-              case '\'' => parseSymbol(startPos)
-              case d if d.isDigit => parseNumber(d.toString, startPos)
-              case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
-              case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
-              case other =>
-                Left(ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start))
-            }
-          }
-        }
+      pos += 1
     }
   }
 
@@ -285,7 +278,6 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         col += 1
       }
       val commentText = source.substring(commentStart, pos)
-      // Don't include the newline in the comment - it will be handled by skipWhitespace
       Right(Token.Comment(commentText, createSourcePos(startPos, pos)))
     } else {
       while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {

@@ -216,18 +216,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //    - Single source of truth for operator identification (IdentifierRules)
   //    - No special cases means simpler, more maintainable code
   //    - Keywords can be redefined or extended by users
-  //
-  // 5. Newline Handling Rules:
-  //    - Newlines after blocks are significant and end expressions
-  //    - Examples:
-  //      - f {} {}     -> Single expression: function f with two block arguments
-  //      - f {}\n{}    -> Two separate expressions: f with one block, then another block
-  //      - f {}\n g {} -> Two separate expressions: f with block, then g with block
-  //    - Newlines within blocks are not significant (just whitespace)
-  //    - Newlines after non-block expressions are not significant
-  //    - This matches intuitive code formatting while maintaining unambiguous parsing
-  //    - Allows natural expression separation without requiring semicolons
-  //    - IMPORTANT: Only newlines after } are treated as expression terminators
 
   // Design Notes for Operator Sequence Parsing:
   // 
@@ -259,126 +247,106 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     def parseRest(expr: Expr, state: LexerState): Either[ParseError, (Expr, LexerState)] = {
       debug(s"parseRest called with expr: $expr, state: $state, current terms: $terms")
       val current = skipComments(state)
-      
-      // Check if we just finished a block and hit a newline
-      val lastTokenWasRBrace = if (current.index > 0) {
-        current.tokens(current.index - 1) match {
-          case Right(Token.RBrace(_)) => true
-          case _ => false
+      current.current match {
+        case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) => {
+          debug("parseRest: Hit terminator token")
+          buildOpSeq(terms).map(result => (result, current))
         }
-      } else false
-      
-      // If we're after a block and hit a newline, and not in a function call context, end the expression
-      val inFunctionCallContext = terms.nonEmpty && terms.last.isInstanceOf[FunctionCall]
-      if (lastTokenWasRBrace && hasNewlineBefore(current) && !inFunctionCallContext) {
-        debug("Found newline after block, ending expression")
-        buildOpSeq(terms).map(result => (result, current))
-      } else {
-        current.current match {
-          case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) => {
-            debug("parseRest: Hit terminator token")
-            buildOpSeq(terms).map(result => (result, current))
+        case Right(Token.Colon(sourcePos)) => {
+          debug("parseRest: Found colon")
+          val afterColon = current.advance()
+          terms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
+          debug(s"parseRest: After adding colon, terms: $terms")
+          parseAtom(afterColon).flatMap { case (next, afterNext) =>
+            terms = terms :+ next
+            debug(s"parseRest: After parsing atom after colon, terms: $terms")
+            parseRest(next, afterNext)
           }
-          case Right(Token.Colon(sourcePos)) => {
-            debug("parseRest: Found colon")
-            val afterColon = current.advance()
-            terms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
-            debug(s"parseRest: After adding colon, terms: $terms")
-            parseAtom(afterColon).flatMap { case (next, afterNext) =>
-              terms = terms :+ next
-              debug(s"parseRest: After parsing atom after colon, terms: $terms")
+        }
+        case Right(Token.Dot(dotSourcePos)) => {
+          debug("parseRest: Found dot")
+          handleDotCall(dotSourcePos, current, terms).flatMap { case (dotCall, newState) =>
+            terms = Vector(dotCall)
+            debug(s"parseRest: After dot call, terms: $terms")
+            parseRest(dotCall, newState)
+          }
+        }
+        case Right(Token.Operator(op, sourcePos)) => {
+          debug(s"parseRest: Found operator $op")
+          val afterOp = current.advance()
+          // Check if this is a terminating operator (like * in vararg context)
+          if (op == "*" && isVarargContext(current)) {
+            terms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
+            debug(s"parseRest: Added terminating operator *, terms: $terms")
+            buildOpSeq(terms).map(result => (result, afterOp))
+          } else {
+            parseAtom(afterOp).flatMap { case (next, afterNext) =>
+              debug(s"parseRest: After parsing atom after operator, got: $next")
+              terms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
+              debug(s"parseRest: Updated terms after operator: $terms")
               parseRest(next, afterNext)
             }
           }
-          case Right(Token.Dot(dotSourcePos)) => {
-            debug("parseRest: Found dot")
-            handleDotCall(dotSourcePos, current, terms).flatMap { case (dotCall, newState) =>
-              terms = Vector(dotCall)
-              debug(s"parseRest: After dot call, terms: $terms")
-              parseRest(dotCall, newState)
+        }
+        case Right(Token.Identifier(chars, sourcePos)) => {
+          val text = chars.map(_.text).mkString
+          debug(s"parseRest: Found identifier $text")
+          val afterId = current.advance()
+          afterId.current match {
+            case Right(Token.LParen(_)) => {
+              debug("parseRest: Found lparen after identifier")
+              parseTuple(afterId).flatMap { case (tuple, afterTuple) =>
+                val functionCall = FunctionCall(
+                  ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
+                  tuple,
+                  createMeta(Some(sourcePos), Some(sourcePos))
+                )
+                terms = terms :+ functionCall
+                debug(s"parseRest: After function call, terms: $terms")
+                parseRest(functionCall, afterTuple)
+              }
             }
-          }
-          case Right(Token.Operator(op, sourcePos)) => {
-            debug(s"parseRest: Found operator $op")
-            val afterOp = current.advance()
-            // Check if this is a terminating operator (like * in vararg context)
-            if (op == "*" && isVarargContext(current)) {
-              terms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
-              debug(s"parseRest: Added terminating operator *, terms: $terms")
-              buildOpSeq(terms).map(result => (result, afterOp))
-            } else {
+            case Right(Token.LBrace(_)) => {
+              debug("parseRest: Found lbrace after identifier")
+              parseBlock(afterId).flatMap { case (block, afterBlock) =>
+                terms = terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ block
+                debug(s"parseRest: After block, terms: $terms")
+                parseRest(block, afterBlock)
+              }
+            }
+            case Right(Token.Operator(op, opSourcePos)) => {
+              debug(s"parseRest: Found operator $op after identifier")
+              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val opId = ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
+              terms = terms :+ id :+ opId
+              debug(s"parseRest: After adding id and op, terms: $terms")
+              val afterOp = afterId.advance()
               parseAtom(afterOp).flatMap { case (next, afterNext) =>
-                debug(s"parseRest: After parsing atom after operator, got: $next")
-                terms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
-                debug(s"parseRest: Updated terms after operator: $terms")
+                terms = terms :+ next
+                debug(s"parseRest: After parsing atom after operator, terms: $terms")
                 parseRest(next, afterNext)
               }
             }
-          }
-          case Right(Token.Identifier(chars, sourcePos)) => {
-            val text = chars.map(_.text).mkString
-            debug(s"parseRest: Found identifier $text")
-            val afterId = current.advance()
-            afterId.current match {
-              case Right(Token.LParen(_)) => {
-                debug("parseRest: Found lparen after identifier")
-                parseTuple(afterId).flatMap { case (tuple, afterTuple) =>
-                  val functionCall = FunctionCall(
-                    ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                    tuple,
-                    createMeta(Some(sourcePos), Some(sourcePos))
-                  )
-                  terms = terms :+ functionCall
-                  debug(s"parseRest: After function call, terms: $terms")
-                  parseRest(functionCall, afterTuple)
-                }
-              }
-              case Right(Token.LBrace(_)) => {
-                debug("parseRest: Found lbrace after identifier")
-                parseBlock(afterId).flatMap { case (block, afterBlock) =>
-                  terms = terms :+ ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))) :+ block
-                  debug(s"parseRest: After block, terms: $terms")
-                  parseRest(block, afterBlock)
-                }
-              }
-              case Right(Token.Operator(op, opSourcePos)) => {
-                debug(s"parseRest: Found operator $op after identifier")
-                val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-                val opId = ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
-                terms = terms :+ id :+ opId
-                debug(s"parseRest: After adding id and op, terms: $terms")
-                val afterOp = afterId.advance()
-                parseAtom(afterOp).flatMap { case (next, afterNext) =>
-                  terms = terms :+ next
-                  debug(s"parseRest: After parsing atom after operator, terms: $terms")
-                  parseRest(next, afterNext)
-                }
-              }
-              case _ => {
-                debug(s"parseRest: Found bare identifier $text")
-                val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-                terms = terms :+ id
-                debug(s"parseRest: After adding bare id, terms: $terms")
-                parseRest(id, afterId)
-              }
+            case _ => {
+              debug(s"parseRest: Found bare identifier $text")
+              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              terms = terms :+ id
+              debug(s"parseRest: After adding bare id, terms: $terms")
+              parseRest(id, afterId)
             }
           }
-          case Right(Token.Newline(_)) => {
-            debug("parseRest: Skipping newline in operation sequence")
-            parseRest(expr, current.advance())
+        }
+        case Right(_) => {
+          debug("parseRest: Found other token, parsing as atom")
+          parseAtom(current).flatMap { case (next, afterNext) =>
+            terms = terms :+ next
+            debug(s"parseRest: After parsing other token as atom, terms: $terms")
+            parseRest(next, afterNext)
           }
-          case Right(_) => {
-            debug("parseRest: Found other token, parsing as atom")
-            parseAtom(current).flatMap { case (next, afterNext) =>
-              terms = terms :+ next
-              debug(s"parseRest: After parsing other token as atom, terms: $terms")
-              parseRest(next, afterNext)
-            }
-          }
-          case Left(error) => {
-            debug(s"parseRest: Got error: $error")
-            Left(error)
-          }
+        }
+        case Left(error) => {
+          debug(s"parseRest: Got error: $error")
+          Left(error)
         }
       }
     }
@@ -395,7 +363,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
                 tuple,
                 createMeta(Some(sourcePos), Some(sourcePos))
-              )
+              ), afterTuple)
             }
           }
           case _ => {
@@ -614,52 +582,46 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     Left(ParseError("Too many expressions in list", state.sourcePos.range.start))
   }
 
-  def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
-    var current = state
+  def parseBlock(current: LexerState): Either[ParseError, (Block, LexerState)] = {
+    var state = current
     var maxExprs = 100 // Prevent infinite loops
     var exprs = Vector.empty[Expr]
     
-    current.current match {
+    state.current match {
       case Right(Token.LBrace(sourcePos)) => {
-        current = current.advance()
-        while (maxExprs > 0 && !current.current.exists(_.isInstanceOf[Token.RBrace])) {
-          // Skip any leading whitespace/comments/newlines before the expression
-          current = skipComments(current)
-          
-          // Parse each expression in the block
-          parseExpr(current) match {
-            case Right((expr, afterExpr)) => {
-              current = afterExpr
-              // Add the expression to our list
-              exprs = exprs :+ expr
-              
-              // Handle semicolon or end of block
-              current.current match {
-                case Right(Token.Semicolon(_)) => {
-                  current = current.advance()
-                  // Skip any trailing whitespace/comments/newlines after semicolon
-                  current = skipComments(current)
-                }
-                case Right(Token.RBrace(_)) => ()
-                case Right(t) => return Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
-                case Left(err) => return Left(err)
+        state = state.advance()
+        while (maxExprs > 0 && !state.current.exists(_.isInstanceOf[Token.RBrace])) {
+          // Parse each expression in the block as a potential operator sequence
+          parseExpr(state).flatMap { case (expr, afterExpr) =>
+            state = afterExpr
+            // Add the expression to our list - parseExpr already handles operator sequences
+            exprs = exprs :+ expr
+            state.current match {
+              case Right(Token.Semicolon(_)) => {
+                state = state.advance()
+                Right(())
               }
+              case Right(Token.RBrace(_)) => Right(())
+              case Right(t) => Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
+              case Left(err) => Left(err)
             }
+          } match {
+            case Right(_) => ()
             case Left(err) => return Left(err)
           }
           maxExprs -= 1
         }
         
         if (maxExprs <= 0) {
-          Left(ParseError("Block contains too many expressions", current.sourcePos.range.start))
+          Left(ParseError("Block contains too many expressions", state.sourcePos.range.start))
         } else {
-          current.current match {
+          state.current match {
             case Right(Token.RBrace(endPos)) => {
-              current = current.advance()
+              state = state.advance()
               val meta = createMeta(Some(sourcePos), Some(endPos))
               val result = if (exprs.isEmpty) None else Some(exprs.last)
               val stmts = if (exprs.isEmpty) Vector.empty else exprs.init
-              Right((Block(stmts, result, meta), current))
+              Right((Block(stmts, result, meta), state))
             }
             case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
             case Left(err) => Left(err)
@@ -756,16 +718,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     var current = skipComments(state)
     current.current match {
       case Right(Token.LParen(sourcePos)) => {
-        current = current.advance()
-        // Skip any whitespace/comments/newlines after the opening paren
-        current = skipComments(current)
+        current = skipComments(current.advance())
         parseExprList(current).flatMap { case (exprs, afterExprs) =>
-          current = afterExprs
-          // Skip any whitespace/comments/newlines before the closing paren
-          current = skipComments(current)
+          current = skipComments(afterExprs)
           current.current match {
             case Right(Token.RParen(endPos)) => {
-              current = current.advance()
+              current = skipComments(current.advance())
+              // Always wrap expressions in a Tuple when inside parentheses
               Right((Tuple(exprs, createMeta(Some(sourcePos), Some(endPos))), current))
             }
             case Right(t) => Left(ParseError("Expected ')' at end of tuple", t.sourcePos.range.start))
@@ -785,8 +744,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     current.current match {
       case Right(Token.LBracket(sourcePos)) => {
         current = current.advance()
-        // Skip any whitespace/comments/newlines after the opening bracket
-        current = skipComments(current)
         while (exprs.length < 50) {
           current.current match {
             case Right(Token.RBracket(endPos)) => {
@@ -795,28 +752,22 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
             case Right(Token.Comma(_)) => {
               current = current.advance()
-              // Skip any whitespace/comments/newlines after commas
-              current = skipComments(current)
             }
             case _ => {
               parseExpr(current) match {
                 case Right((expr, afterExpr)) => {
                   current = afterExpr
                   exprs = exprs :+ expr
-                  // Skip any whitespace/comments/newlines before comma/bracket
-                  current = skipComments(current)
                   current.current match {
                     case Right(Token.RBracket(_)) => ()
                     case Right(Token.Comma(_)) => {
                       current = current.advance()
-                      // Skip any whitespace/comments/newlines after commas
-                      current = skipComments(current)
                     }
                     case Right(t) => return Left(ParseError("Expected ',' or ']' in list", t.sourcePos.range.start))
                     case Left(err) => return Left(err)
                   }
                 }
-                case Left(err) => return Left(err)
+        case Left(err) => return Left(err)
               }
             }
           }
@@ -880,39 +831,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private def skipComments(state: LexerState): LexerState = {
     var current = state
-    var inBlock = false
-    var inTupleOrList = false
-    
-    // Check if we're inside a block, tuple, or list by looking back
-    var index = current.index - 1
-    while (index >= 0) {
-      current.tokens(index) match {
-        case Right(Token.LBrace(_)) => inBlock = true; index = -1
-        case Right(Token.RBrace(_)) => index = -1  // Stop at first RBrace
-        case Right(Token.LParen(_)) | Right(Token.LBracket(_)) => inTupleOrList = true; index = -1
-        case Right(Token.RParen(_)) | Right(Token.RBracket(_)) => index = -1  // Stop at first RParen/RBracket
-        case _ => index -= 1
-      }
-    }
-    
-    // Skip comments and newlines if we're in a block, tuple, or list
-    while (current.current.exists(t => t.isComment || (t.isInstanceOf[Token.Newline] && (inBlock || inTupleOrList)))) {
+    while (current.current.exists(_.isComment)) {
       current = current.advance()
     }
     current
-  }
-
-  private def hasNewlineBefore(state: LexerState): Boolean = {
-    // Look back through previous tokens until we find a non-whitespace token
-    var index = state.index - 1
-    while (index >= 0) {
-      state.tokens(index) match {
-        case Right(Token.Newline(_)) => return true
-        case Right(t) if t.isWhitespace || t.isComment => index -= 1
-        case _ => return false
-      }
-    }
-    // If we're at the start of input, treat it as having a newline
-    index < 0
   }
 }

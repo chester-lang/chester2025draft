@@ -63,12 +63,12 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
   given reporter: Reporter[ParseError] = new Reporter[ParseError] {
     def apply(error: ParseError): Unit = {
       val errorIndex = error.pos.index.utf16
-      val lineStart = math.max(0, input.lastIndexOf('\n', math.min(errorIndex, input.length - 1)) + 1)
-      val lineEnd = input.indexOf('\n', math.min(errorIndex, input.length - 1)) match {
+      val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+      val lineEnd = input.indexOf('\n', errorIndex) match {
         case -1 => input.length
         case n  => n
       }
-      val line = if (lineStart < lineEnd && lineStart < input.length) input.substring(lineStart, lineEnd) else ""
+      val line = input.substring(lineStart, lineEnd)
       val pointer = " " * (errorIndex - lineStart) + "^"
       
       fail(
@@ -92,12 +92,12 @@ def parseAndCheck(input: String, expected: Expr): Unit = {
       .fold(
         error => {
           val errorIndex = error.pos.index.utf16
-          val lineStart = math.max(0, input.lastIndexOf('\n', math.min(errorIndex, input.length - 1)) + 1)
-          val lineEnd = input.indexOf('\n', math.min(errorIndex, input.length - 1)) match {
+          val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+          val lineEnd = input.indexOf('\n', errorIndex) match {
             case -1 => input.length
             case n  => n
           }
-          val line = if (lineStart < lineEnd && lineStart < input.length) input.substring(lineStart, lineEnd) else ""
+          val line = input.substring(lineStart, lineEnd)
           val pointer = " " * (errorIndex - lineStart) + "^"
           
           fail(
