@@ -24,6 +24,33 @@ package chester.readerv2
  *    - Supports partial parsing of incomplete expressions
  *    - Maintains parser state for potential incremental updates
  *    - Useful for IDE integration and live editing
+ *
+ * 5. Space and Newline Handling:
+ *    - Spaces are significant in specific contexts:
+ *      a. Function calls: f() vs f () - space before parentheses changes interpretation
+ *         - Without space: Parsed as function call
+ *         - With space: Parsed as separate identifier and tuple
+ *      b. Operator sequences: Spaces don't affect operator precedence or association
+ *         - a + b is equivalent to a+b
+ *         - Spaces around operators are for readability only
+ *    
+ *    - Newlines have special significance:
+ *      a. After blocks: Newline after a block ends the expression
+ *         - f { 1 } g()  -> Parsed as two separate expressions
+ *         - f { 1 } + g() -> Parsed as one expression
+ *      b. Within blocks: Newlines within blocks are not significant
+ *         - f { 1 + 2 } is equivalent to f { 1
+ *                                            + 2 }
+ *      c. In operator sequences: Newlines between operators and operands are ignored
+ *         - a +
+ *           b is equivalent to a + b
+ *
+ *    - Implementation details:
+ *      - Source positions track exact character positions including spaces
+ *      - Space significance checked by comparing end position of one token
+ *        with start position of next token
+ *      - Block parsing maintains state about newline significance
+ *      - Operator sequence parsing ignores newlines between terms
  */
 
 import scala.annotation.tailrec
