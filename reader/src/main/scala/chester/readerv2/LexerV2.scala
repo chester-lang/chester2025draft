@@ -40,13 +40,23 @@ package chester.readerv2
  *         - f { aaa } \n b { bbb } \n  -> Two separate expressions
  *         - f { aaa } b { bbb }        -> Single expression
  *         
- *      b. Pattern Matching: Each case must be on a new line
+ *      b. Pattern Matching:
+ *         - For single expressions: case X => expr;
+ *           - Semicolon required after expression
+ *           - Newlines are treated like spaces (not separators)
+ *         - For blocks: case X => { stmts }
+ *           - Only need newline after block (}\n)
+ *           - Newline after block acts as separator
+ *           - No semicolon needed after block
  *         Example:
  *         x match {
- *           case1 { ... } \n
- *           case2 { ... } \n
+ *           case1 => expr1;
+ *           case2 => {
+ *             stmt1;
+ *             stmt2
+ *           }
+ *           case3 => expr3;
  *         }
- *         Note: 'case1', 'case2' are examples - there are no predefined names
  *         
  *      c. Within blocks: Newlines within blocks are not significant
  *         - Expressions can span multiple lines within a block
