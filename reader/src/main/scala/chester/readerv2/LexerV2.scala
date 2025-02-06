@@ -67,6 +67,19 @@ package chester.readerv2
  *           2
  *         }
  *
+ *    - Block Return Value Semantics:
+ *      - Rust-like block return value semantics
+ *      - Last expression in block is the return value
+ *      - {a} -> returns value of a
+ *      - {a;} -> equivalent to {a; ()} -> returns unit
+ *      - {a; b} -> returns value of b
+ *      - {a; b;} -> equivalent to {a; b; ()} -> returns unit
+ *      Examples:
+ *        - { println(1); 2 }     -> returns 2
+ *        - { println(1); 2; }    -> returns unit
+ *        - { println(1) }        -> returns println result
+ *        - { println(1); }       -> returns unit
+ *
  *    - Implementation details:
  *      - Tokenizer explicitly tracks newlines with NewLine tokens
  *      - Parser checks for newlines after blocks to determine expression boundaries
