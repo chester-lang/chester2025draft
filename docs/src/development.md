@@ -154,8 +154,11 @@ case expr =>
    sbt "semantic/test"
    sbt "reader/test"
    
-   # INCORRECT: Avoid running all tests
-   sbt test        # Takes too long
+   # For running all JVM tests
+   sbt "rootJVM/test"    # Note: Will be slow if Scala.js and Scala Native are enabled
+   
+   # INCORRECT: Never run all tests with plain 'sbt test'
+   sbt test        # VERY slow - will run Scala.js and Scala Native tests which take a long time to compile
    sbt testOnly    # Too broad
    ```
 
@@ -169,4 +172,6 @@ case expr =>
    - Faster feedback loop
    - More focused debugging
    - Prevents unnecessary test runs
-   - Saves CI/CD resources 
+   - Saves CI/CD resources
+   - Avoids cross-platform compilation overhead when not needed
+   - Scala.js and Scala Native tests require full recompilation and are very slow 
