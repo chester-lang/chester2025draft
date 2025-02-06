@@ -98,3 +98,30 @@ case expr =>
 - Preserves original term structure when possible
 - Makes type checking more predictable
 - Keeps error messages more relevant to source code 
+
+## Testing Strategy
+
+### Running Tests Efficiently
+
+1. **Always Run Specific Module Tests**
+   ```bash
+   # CORRECT: Run tests for specific module
+   sbt "semantic/test"
+   sbt "reader/test"
+   
+   # INCORRECT: Avoid running all tests
+   sbt test        # Takes too long
+   sbt testOnly    # Too broad
+   ```
+
+2. **Further Narrow Test Scope When Possible**
+   ```bash
+   # Even better: Run specific test class
+   sbt "semantic/testOnly chester.tyck.LazyReductionTest"
+   ```
+
+3. **Why This Matters**
+   - Faster feedback loop
+   - More focused debugging
+   - Prevents unnecessary test runs
+   - Saves CI/CD resources 
