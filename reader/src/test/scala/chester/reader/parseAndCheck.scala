@@ -5,7 +5,7 @@ import chester.readerv2.{LexerV2, LexerState}
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
-
+def parseAndCheck(input: String, expected: Expr): Unit = parseAndCheckV0(input, expected)
 def parseAndCheckV0(input: String, expected: Expr): Unit = {
   val resultignored = ChesterReader.parseExpr(
     FileNameAndContent("testFile", input)
@@ -54,7 +54,7 @@ def getParsed(input: String): Expr = {
     )
 }
 
-def parseAndCheck(input: String, expected: Expr): Unit = {
+def parseAndCheckV1(input: String, expected: Expr): Unit = {
   // Check old implementation first
   parseAndCheckV0(input, expected)
 
