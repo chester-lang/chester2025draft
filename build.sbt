@@ -463,31 +463,6 @@ lazy val kiamaCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .disablePlugins(ScalafixPlugin)
   .jvmSettings(commonJvmLibSettings)
 
-// kiama fork from effekt - https://github.com/effekt-lang/kiama
-lazy val effektKiama = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Full)
-  .in(file("vendor/effekt-kiama"))
-  .settings(
-    commonVendorSettings
-  )
-  .disablePlugins(ScalafixPlugin)
-  .jvmSettings(
-    commonJvmLibSettings,
-    libraryDependencies ++= Seq(
-      "jline" % "jline" % "2.14.6",
-      "org.rogach" %% "scallop" % "5.2.0",
-      "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "1.0.0-SNAPSHOT",
-      "com.google.code.gson" % "gson" % "2.12.1"
-    )
-  )
-  .nativeSettings(
-    // https://github.com/scala-native/scala-native/issues/4044#issuecomment-2329088930
-    scalacOptions ++= Seq(
-      "-Ylegacy-lazy-vals"
-    )
-  )
-
 // iron & iron-cats & iron-upickle, commit 86fbe48e8c9b0f6e5d2f7261ddefaa7c671341ae, built against Scala Native 0.5
 // removed RefinedTypeOpsSuite.scala because of compilation error
 lazy val ironNative = crossProject(NativePlatform)
@@ -1445,7 +1420,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     typedvscodeLanguageserverTypes,
     typedvscodeLanguageserver,
     kiamaCore,
-    effektKiama,
     jsTypings,
     utils,
     reader,
