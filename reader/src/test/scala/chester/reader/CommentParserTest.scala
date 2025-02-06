@@ -15,6 +15,6 @@ class CommentParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 }

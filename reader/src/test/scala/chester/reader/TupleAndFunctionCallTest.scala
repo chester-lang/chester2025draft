@@ -20,7 +20,7 @@ class TupleAndFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("parse function call") {
@@ -35,7 +35,7 @@ class TupleAndFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("parse identifier to function call conversion") {
@@ -66,6 +66,6 @@ class TupleAndFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 }

@@ -27,7 +27,7 @@ class VarargParserTest extends FunSuite {
         ),
         meta = None
       )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("parse function def with single vararg") {
@@ -51,7 +51,7 @@ class VarargParserTest extends FunSuite {
         ),
         meta = None
       )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
 }

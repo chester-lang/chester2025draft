@@ -11,7 +11,7 @@ class SimpleFunctionCallTest extends FunSuite {
       Tuple(Vector.empty, meta = None),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("simple plus function") {
@@ -27,7 +27,7 @@ class SimpleFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("function call with one arg") {
@@ -37,7 +37,7 @@ class SimpleFunctionCallTest extends FunSuite {
       Tuple(Vector(IntegerLiteral(1, meta = None)), meta = None),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("function call with multiple args") {
@@ -54,7 +54,7 @@ class SimpleFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("nested function calls") {
@@ -73,7 +73,7 @@ class SimpleFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
   test("function call with mixed arg types") {
@@ -94,6 +94,6 @@ class SimpleFunctionCallTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 }
