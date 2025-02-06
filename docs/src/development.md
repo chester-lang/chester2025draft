@@ -68,6 +68,51 @@ The codebase provides implicit convert functions for these cases, so explicit ty
 
 ## Type Checking and Reduction Strategy
 
+### Preserve Original Terms
+
+1. **Keep Original Form**
+   - Always preserve the original, unreduced form of terms in the elaborated output
+   - Reduced forms should only be used internally during type checking when absolutely necessary
+   - Never expose reduced terms in error messages, semantic analysis, or any user-facing output
+
+2. **When to Reduce**
+   - Only reduce terms when type checking requires it, such as:
+     - Field access on record types (to see the actual record structure)
+     - Function application at the type level (to evaluate type-level functions)
+     - Pattern matching on constructors
+   - Keep the reduction scope as narrow as possible
+
+```scala
+// CORRECT: Only reduce when needed for type checking
+case DotCall(recordExpr, fieldExpr, _, _) =>
+  val recordTy = newType
+  val recordTerm = elab(recordExpr, recordTy, effects)
+  // Only reduce if needed to check field access
+  val reducedRecordTerm = recordTerm match {
+    case _: RecordStmtTerm => recordTerm  // Already a record, no need to reduce
+    case _ => Reducer.reduce(recordTerm)   // Reduce only if needed
+  }
+
+// INCORRECT: Don't reduce unnecessarily
+case expr =>
+  val reduced = reducer.reduce(expr)  // Don't reduce everything
+  // ...
+```
+
+3. **Benefits**
+   - Preserves source code structure for better error messages
+   - Maintains traceability back to original code
+   - Improves debugging experience
+   - Keeps semantic information intact
+   - Makes refactoring and code analysis more accurate
+
+4. **Implementation Guidelines**
+   - Use lazy reduction strategies
+   - Cache reduced forms when they must be computed
+   - Keep reduction local to type checking logic
+   - Never modify the original AST structure
+   - Return original terms in elaboration results
+
 ### Lazy Reduction Approach
 
 The type checker should avoid unnecessary term reduction during elaboration. Only reduce terms when absolutely necessary:
