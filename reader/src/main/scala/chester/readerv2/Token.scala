@@ -1,6 +1,6 @@
 package chester.readerv2
 
-import chester.error.{Pos, SourcePos}
+import chester.error.SourcePos
 
 case class StringChar(text: String, sourcePos: SourcePos)
 

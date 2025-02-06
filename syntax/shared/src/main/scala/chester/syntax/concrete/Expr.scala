@@ -14,7 +14,6 @@ import chester.utils.impls.*
 import chester.error.ProblemUpickle.*
 import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
-import chester.reader.ParseError
 
 enum CommentType derives ReadWriter {
   case OneLine

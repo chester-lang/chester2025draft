@@ -3,7 +3,7 @@ package chester.readerv2
 import chester.error.Reporter
 import chester.reader.{FileNameAndContent, ParseError, SourceOffset}
 import chester.syntax.concrete.Expr
-import chester.error.{Pos, SourcePos, RangeInFile}
+import chester.error.{Pos, RangeInFile, SourcePos}
 
 object ChesterReaderV2 {
   def parseExpr(source: FileNameAndContent): Either[ParseError, Expr] = {
@@ -27,7 +27,7 @@ object ChesterReaderV2 {
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()
     val lexer = new LexerV2(tokens, sourceOffset, false)
-    val pos = SourcePos(sourceOffset, RangeInFile(Pos.zero, Pos.zero))
+    SourcePos(sourceOffset, RangeInFile(Pos.zero, Pos.zero))
     lexer.parseExprList(LexerState(tokens.toVector, 0)).map(_._1)
   }
 }

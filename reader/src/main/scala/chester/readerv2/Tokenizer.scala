@@ -1,9 +1,9 @@
 package chester.readerv2
 
-import chester.error.{Reporter, Pos, SourcePos, RangeInFile}
+import chester.error.{Pos, RangeInFile, Reporter, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
-import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
+import chester.syntax.IdentifierRules.{isIdentifierFirst, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 
