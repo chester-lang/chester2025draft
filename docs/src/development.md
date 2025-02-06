@@ -65,3 +65,36 @@ The codebase provides implicit convert functions for these cases, so explicit ty
 - The convert functions handle type conversions safely and efficiently
 - Avoiding trait suffixes makes the code more maintainable
 - This approach leverages the type system to catch potential platform-specific issues at compile time 
+
+## Type Checking and Reduction Strategy
+
+### Lazy Reduction Approach
+
+The type checker should avoid unnecessary term reduction during elaboration. Only reduce terms when absolutely necessary:
+
+1. **Default Behavior**: Try to type check without reduction first
+2. **Reduction Triggers**:
+   - Field access on record types (to see the actual record structure)
+   - Function application at the type level (to evaluate type-level functions)
+
+### Example
+
+```scala
+// CORRECT: Check without reduction first
+case DotCall(recordExpr, fieldExpr, _, _) =>
+  val recordTy = newType
+  val recordTerm = elab(recordExpr, recordTy, effects)
+  // Only reduce if needed to check field access
+  
+// INCORRECT: Reducing everything
+case expr =>
+  val reduced = reducer.reduce(expr)  // Don't reduce unnecessarily
+  // ...
+```
+
+### Why This Matters
+
+- Improves performance by avoiding unnecessary computation
+- Preserves original term structure when possible
+- Makes type checking more predictable
+- Keeps error messages more relevant to source code 
