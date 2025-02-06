@@ -24,12 +24,12 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   def tokenize(): TokenStream = {
     LazyList.unfold(false) { isEOF =>
       if (isEOF) {
-        None  // Stop generating tokens after EOF
+        None // Stop generating tokens after EOF
       } else if (pos >= source.length) {
-        Some((Right(Token.EOF(createSourcePos(0, 0))), true))  // Mark that we've hit EOF
+        Some((Right(Token.EOF(createSourcePos(0, 0))), true)) // Mark that we've hit EOF
       } else {
         val token = nextToken
-        Some((token, false))  // Continue tokenizing
+        Some((token, false)) // Continue tokenizing
       }
     }
   }
@@ -38,20 +38,24 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val zero = 0.refineUnsafe[Positive0]
     val start: Int :| Positive0 = startPos.refineUnsafe[Positive0]
     val end: Int :| Positive0 = endPos.refineUnsafe[Positive0]
-    val startUtf16: Int :| Positive0 = Math.max(
-      startPos,
-      source.substring(0, startPos).codePoints().count().toInt
-    ).refineUnsafe[Positive0]
-    val endUtf16: Int :| Positive0 = Math.max(
-      endPos,
-      source.substring(0, endPos).codePoints().count().toInt
-    ).refineUnsafe[Positive0]
+    val startUtf16: Int :| Positive0 = Math
+      .max(
+        startPos,
+        source.substring(0, startPos).codePoints().count().toInt
+      )
+      .refineUnsafe[Positive0]
+    val endUtf16: Int :| Positive0 = Math
+      .max(
+        endPos,
+        source.substring(0, endPos).codePoints().count().toInt
+      )
+      .refineUnsafe[Positive0]
     val lineUtf16: Int :| Positive0 = line.refineUnsafe[Positive0]
     val colUtf16: Int :| Positive0 = col.refineUnsafe[Positive0]
-    
+
     val startPosition = Pos(WithUTF16(start, startUtf16), lineUtf16, WithUTF16(zero, colUtf16))
     val endPosition = Pos(WithUTF16(end, endUtf16), lineUtf16, WithUTF16((end - start).refineUnsafe, (endUtf16 - startUtf16).refineUnsafe))
-    
+
     SourcePos(sourceOffset, RangeInFile(startPosition, endPosition))
   }
 
@@ -73,21 +77,21 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         }
       } else {
         c.toChar match {
-          case '(' => Right(Token.LParen(createSourcePos(startPos, pos)))
-          case ')' => Right(Token.RParen(createSourcePos(startPos, pos)))
-          case '[' => Right(Token.LBracket(createSourcePos(startPos, pos)))
-          case ']' => Right(Token.RBracket(createSourcePos(startPos, pos)))
-          case '{' => Right(Token.LBrace(createSourcePos(startPos, pos)))
-          case '}' => Right(Token.RBrace(createSourcePos(startPos, pos)))
-          case ',' => Right(Token.Comma(createSourcePos(startPos, pos)))
-          case ';' => Right(Token.Semicolon(createSourcePos(startPos, pos)))
-          case ':' => Right(Token.Colon(createSourcePos(startPos, pos)))
-          case '.' => Right(Token.Dot(createSourcePos(startPos, pos)))
-          case '@' => Right(Token.At(createSourcePos(startPos, pos)))
-          case '"' => parseString(startPos)
-          case '\'' => parseSymbol(startPos)
-          case d if d.isDigit => parseNumber(d.toString, startPos)
-          case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
+          case '('                            => Right(Token.LParen(createSourcePos(startPos, pos)))
+          case ')'                            => Right(Token.RParen(createSourcePos(startPos, pos)))
+          case '['                            => Right(Token.LBracket(createSourcePos(startPos, pos)))
+          case ']'                            => Right(Token.RBracket(createSourcePos(startPos, pos)))
+          case '{'                            => Right(Token.LBrace(createSourcePos(startPos, pos)))
+          case '}'                            => Right(Token.RBrace(createSourcePos(startPos, pos)))
+          case ','                            => Right(Token.Comma(createSourcePos(startPos, pos)))
+          case ';'                            => Right(Token.Semicolon(createSourcePos(startPos, pos)))
+          case ':'                            => Right(Token.Colon(createSourcePos(startPos, pos)))
+          case '.'                            => Right(Token.Dot(createSourcePos(startPos, pos)))
+          case '@'                            => Right(Token.At(createSourcePos(startPos, pos)))
+          case '"'                            => parseString(startPos)
+          case '\''                           => parseSymbol(startPos)
+          case d if d.isDigit                 => parseNumber(d.toString, startPos)
+          case a if a.isLetter || a == '_'    => parseIdentifier(a.toString, startPos)
           case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
           case other =>
             Left(ParseError(s"Unexpected character: $other", createSourcePos(startPos, pos).range.start))
@@ -115,10 +119,10 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     while (pos < source.length && (escaped || source(pos) != '"')) {
       if (escaped) {
         val escapeChar = source(pos) match {
-          case 'n' => '\n'
-          case 't' => '\t'
-          case 'r' => '\r'
-          case '"' => '"'
+          case 'n'  => '\n'
+          case 't'  => '\t'
+          case 'r'  => '\r'
+          case '"'  => '"'
           case '\\' => '\\'
           case other =>
             val error = ParseError(s"Invalid escape sequence: \\$other", createSourcePos(pos - 1, pos).range.start)
@@ -193,13 +197,13 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       source(pos) match {
         case 'x' | 'X' =>
           base = 16
-          sb.append(source(pos))  // Keep the x
+          sb.append(source(pos)) // Keep the x
           pos += 1 // Skip 'x'
           col += 1
           readHexDigits()
         case 'b' | 'B' =>
           base = 2
-          sb.append(source(pos))  // Keep the b
+          sb.append(source(pos)) // Keep the b
           pos += 1 // Skip 'b'
           col += 1
           readBinaryDigits()
@@ -234,14 +238,14 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       sb.append(source(pos))
       pos += 1
       col += 1
-      
+
       // Optional sign
       if (pos < source.length && (source(pos) == '+' || source(pos) == '-')) {
         sb.append(source(pos))
         pos += 1
         col += 1
       }
-      
+
       // Must have at least one digit after exponent
       if (pos >= source.length || !source(pos).isDigit) {
         return Left(ParseError("Expected digits after exponent", createSourcePos(pos, pos).range.start))
@@ -295,4 +299,3 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     }
   }
 }
-

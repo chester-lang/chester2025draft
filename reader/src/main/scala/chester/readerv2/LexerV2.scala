@@ -2,24 +2,24 @@ package chester.readerv2
 
 /*
  * ReaderV2 Design Principles:
- * 
+ *
  * 1. Separation of Concerns:
  *    - Parser only produces OpSeq without knowledge of operator semantics
  *    - Operator precedence, fixity (infix/prefix/postfix/mixfix) handled in later passes
  *    - This separation allows flexible operator definition and extension
- * 
+ *
  * 2. Error Recovery:
  *    - Designed to handle incomplete/broken source code (e.g. during editing)
  *    - Attempts to produce meaningful partial results when possible
  *    - Uses ErrorExpr to represent recoverable parse errors inline
  *    - Continues parsing after encountering errors when safe to do so
- * 
+ *
  * 3. OpSeq Design:
  *    - Raw sequence of expressions and operators
  *    - No precedence or associativity information at parse time
  *    - Later passes will restructure based on operator properties
  *    - Allows for flexible operator definition and semantics
- * 
+ *
  * 4. Incremental Parsing:
  *    - Supports partial parsing of incomplete expressions
  *    - Maintains parser state for potential incremental updates
@@ -33,13 +33,13 @@ package chester.readerv2
  *      b. Operator sequences: Spaces don't affect operator precedence or association
  *         - a + b is equivalent to a+b
  *         - Spaces around operators are for readability only
- *    
+ *
  *    - Newlines have special significance:
  *      a. After blocks: Newline after a block ends the expression
  *         Examples:
  *         - f { aaa } \n b { bbb } \n  -> Two separate expressions
  *         - f { aaa } b { bbb }        -> Single expression
- *         
+ *
  *      b. Pattern Matching:
  *         - For single expressions: case X => expr;
  *           - Semicolon required after expression
@@ -57,13 +57,13 @@ package chester.readerv2
  *           }
  *           case3 => expr3;
  *         }
- *         
+ *
  *      c. Within blocks: Newlines within blocks are not significant
  *         - Expressions can span multiple lines within a block
  *         - Operators and operands can be split across lines
  *         Example:
  *         f {
- *           1 + 
+ *           1 +
  *           2
  *         }
  *
@@ -98,9 +98,23 @@ import chester.utils.WithUTF16
 import io.github.iltotore.iron.autoRefine
 import chester.reader.{ParseError, SourceOffset, ParserSource}
 import chester.syntax.concrete.{
-  Block, Expr, ExprMeta, ExprStmt, ListExpr, ObjectExpr,
-  QualifiedName, Tuple, FunctionCall, OpSeq, ErrorExpr, RecoverableParseError,
-  MaybeTelescope, DotCall, ObjectExprClauseOnValue, ObjectExprClause, ObjectClause
+  Block,
+  Expr,
+  ExprMeta,
+  ExprStmt,
+  ListExpr,
+  ObjectExpr,
+  QualifiedName,
+  Tuple,
+  FunctionCall,
+  OpSeq,
+  ErrorExpr,
+  RecoverableParseError,
+  MaybeTelescope,
+  DotCall,
+  ObjectExprClauseOnValue,
+  ObjectExprClause,
+  ObjectClause
 }
 import chester.syntax.concrete.{
   Identifier => ConcreteIdentifier,
@@ -123,15 +137,15 @@ import Token.*
 case class StmtExpr(expr: Expr)
 
 case class LexerState(
-  tokens: Vector[Either[ParseError, Token]],
-  index: Int
+    tokens: Vector[Either[ParseError, Token]],
+    index: Int
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
   def advance(): LexerState = LexerState(tokens, index + 1)
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
-    case Right(t) => t.sourcePos
+    case Right(t)  => t.sourcePos
   }
   override def toString: String = s"LexerState(index=$index, current=$current, remaining=${tokens.length - index} tokens)"
 }
@@ -139,7 +153,7 @@ case class LexerState(
 object LexerV2 {
   def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerV2 =
     new LexerV2(tokens, sourceOffset, ignoreLocation)
-    
+
   var DEBUG = false // Global debug flag
   private var globalRecursionDepth = 0 // Track global recursion depth
   private var maxRecursionDepth = 0 // Track maximum recursion depth reached
@@ -148,13 +162,13 @@ object LexerV2 {
 
 class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   import LexerV2.{DEBUG, globalRecursionDepth, maxRecursionDepth, methodCallCounts}
-  
+
   private def debug(msg: => String): Unit = if (DEBUG) {
     val indent = " " * globalRecursionDepth
     println(s"[DEBUG]$indent $msg")
     System.out.flush()
   }
-  
+
   private def debugState(label: String): Unit = if (DEBUG) {
     debug(s"$label:")
     debug(s"  Current state: $state")
@@ -164,10 +178,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     debug(s"  Method call counts: ${methodCallCounts.mkString(", ")}")
     System.out.flush()
   }
-  
+
   private var state: LexerState = LexerState(tokens.toVector, 0)
   private var loopCount = 0 // Track loop iterations
-  
+
   private def withRecursion[T](name: String)(f: => T): T = {
     val MaxRecursionDepth = 100 // Add reasonable limit
     try {
@@ -177,10 +191,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       globalRecursionDepth += 1
       maxRecursionDepth = math.max(maxRecursionDepth, globalRecursionDepth)
       methodCallCounts = methodCallCounts.updated(name, methodCallCounts.getOrElse(name, 0) + 1)
-      
+
       debug(s"ENTER $name (depth=$globalRecursionDepth, calls=${methodCallCounts(name)})")
       debugState(s"Before $name")
-      
+
       val result = f
       debug(s"EXIT $name with result=$result")
       debugState(s"After $name")
@@ -215,12 +229,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     debug(s"getSourcePos: token=$token")
     token match {
       case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
-      case Right(t) => t.sourcePos
+      case Right(t)  => t.sourcePos
     }
   }
 
   private def getStartPos(token: Either[ParseError, Token]): Pos = token match {
-    case Right(t) => t.sourcePos.range.start
+    case Right(t)  => t.sourcePos.range.start
     case Left(err) => err.pos
   }
 
@@ -238,7 +252,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   // Design Notes for Uniform Operator/Identifier Handling:
-  // 
+  //
   // 1. No Special Cases:
   //    - All identifiers and operators are treated uniformly in parsing
   //    - IMPORTANT: No special cases for keywords like "if", "then", "else" - they are just identifiers
@@ -250,7 +264,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //      - Custom: myIf x myThen y myElse z
   //      - Both parse to: OpSeq([identifier, expr, identifier, expr, identifier, expr])
   //      - Keywords like "if", "then", "else" are treated exactly the same as any other identifier
-  // 
+  //
   // 2. Operator/Identifier Rules:
   //    - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
   //    - Identifiers start with letters/emoji/underscore
@@ -259,7 +273,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //    - IMPORTANT: We use IdentifierRules.strIsOperator for uniform operator identification
   //    - NO local redefinition of operator rules to ensure consistency
   //    - Keywords are NOT special - they follow the same rules as any other identifier
-  // 
+  //
   // 3. Sequence Construction:
   //    - All terms form a uniform sequence: expr op expr op expr ...
   //    - Structure preserved for later semantic analysis
@@ -268,7 +282,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //      - if x then y -> OpSeq([if, x, then, y])  // "if" and "then" are just identifiers
   //      - val x = 1 -> OpSeq([val, x, =, 1])      // "val" is just an identifier
   //      - myOp1 x myOp2 y -> OpSeq([myOp1, x, myOp2, y])
-  // 
+  //
   // 4. Benefits:
   //    - Allows user-defined operators and keywords
   //    - Consistent parsing rules for all identifiers
@@ -280,7 +294,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   //    - Keywords can be redefined or extended by users
 
   // Design Notes for Operator Sequence Parsing:
-  // 
+  //
   // 1. Operators are handled uniformly through character-based identification
   // 2. No special casing of operators - determined by character patterns in IdentifierRules
   // 3. Operator sequences are built incrementally
@@ -421,11 +435,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           case Right(Token.LParen(_)) => {
             debug("parseExpr: Found lparen after initial operator")
             parseTuple(afterOp).map { case (tuple, afterTuple) =>
-              (FunctionCall(
-                ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
-                tuple,
-                createMeta(Some(sourcePos), Some(sourcePos))
-              ), afterTuple)
+              (
+                FunctionCall(
+                  ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
+                  tuple,
+                  createMeta(Some(sourcePos), Some(sourcePos))
+                ),
+                afterTuple
+              )
             }
           }
           case _ => {
@@ -456,7 +473,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         val afterId = afterDot.advance()
         val field = ConcreteIdentifier(chars1.map(_.text).mkString, createMeta(Some(idSourcePos1), Some(idSourcePos1)))
         var telescope = Vector.empty[Tuple]
-        
+
         def parseNextTelescope(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
           state.current match {
             case Right(Token.LParen(_)) => {
@@ -480,7 +497,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
           }
         }
-        
+
         parseNextTelescope(afterId)
       }
       case Right(Token.Operator(op, idSourcePos)) => {
@@ -497,7 +514,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           }
         }
       }
-      case Right(t) => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
+      case Right(t)  => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
   }
@@ -632,7 +649,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   current = skipComments(current.advance())
                   maxExprs = maxExprs - 1
                 }
-                case Right(t) => return Left(ParseError("Expected ',' or ')' after expression", t.sourcePos.range.start))
+                case Right(t)  => return Left(ParseError("Expected ',' or ')' after expression", t.sourcePos.range.start))
                 case Left(err) => return Left(err)
               }
             }
@@ -648,7 +665,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     var state = current
     var maxExprs = 100 // Prevent infinite loops
     var exprs = Vector.empty[Expr]
-    
+
     state.current match {
       case Right(Token.LBrace(sourcePos)) => {
         state = state.advance()
@@ -664,16 +681,16 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 Right(())
               }
               case Right(Token.RBrace(_)) => Right(())
-              case Right(t) => Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
-              case Left(err) => Left(err)
+              case Right(t)               => Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
+              case Left(err)              => Left(err)
             }
           } match {
-            case Right(_) => ()
+            case Right(_)  => ()
             case Left(err) => return Left(err)
           }
           maxExprs -= 1
         }
-        
+
         if (maxExprs <= 0) {
           Left(ParseError("Block contains too many expressions", state.sourcePos.range.start))
         } else {
@@ -685,12 +702,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               val stmts = if (exprs.isEmpty) Vector.empty else exprs.init
               Right((Block(stmts, result, meta), state))
             }
-            case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
+            case Right(t)  => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
             case Left(err) => Left(err)
           }
         }
       }
-      case Right(t) => Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+      case Right(t)  => Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
   }
@@ -701,7 +718,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Right(Token.LBrace(sourcePos)) => {
         state = state.advance()
         var clauses = Vector.empty[ObjectClause]
-        
+
         def parseField(): Either[ParseError, Unit] = {
           state.current match {
             case Right(Token.Identifier(chars, idSourcePos)) => {
@@ -714,14 +731,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     state = afterValue
                     clauses = clauses :+ ObjectExprClause(key, value)
                     state.current match {
-                      case Right(Token.Comma(_)) => state = state.advance()
+                      case Right(Token.Comma(_))  => state = state.advance()
                       case Right(Token.RBrace(_)) => ()
-                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-                      case Left(err) => return Left(err)
+                      case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+                      case Left(err)              => return Left(err)
                     }
                   }
                 }
-                case Right(t) => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+                case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
               }
             }
@@ -735,14 +752,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     state = afterValue
                     clauses = clauses :+ ObjectExprClauseOnValue(key, value)
                     state.current match {
-                      case Right(Token.Comma(_)) => state = state.advance()
+                      case Right(Token.Comma(_))  => state = state.advance()
                       case Right(Token.RBrace(_)) => ()
-                      case Right(t) => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-                      case Left(err) => return Left(err)
+                      case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+                      case Left(err)              => return Left(err)
                     }
                   }
                 }
-                case Right(t) => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+                case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
               }
             }
@@ -750,28 +767,28 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               state = state.advance()
               Right(())
             }
-            case Right(t) => Left(ParseError("Expected identifier, symbol literal or '}' in object", t.sourcePos.range.start))
+            case Right(t)  => Left(ParseError("Expected identifier, symbol literal or '}' in object", t.sourcePos.range.start))
             case Left(err) => Left(err)
           }
         }
-        
+
         while (!state.current.exists(_.isInstanceOf[Token.RBrace])) {
           parseField() match {
-            case Right(_) => ()
+            case Right(_)  => ()
             case Left(err) => return Left(err)
           }
         }
-        
+
         state.current match {
           case Right(Token.RBrace(endPos)) => {
             state = state.advance()
             Right((ObjectExpr(clauses, createMeta(Some(sourcePos), Some(endPos))), state))
           }
-          case Right(t) => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
+          case Right(t)  => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
           case Left(err) => Left(err)
         }
       }
-      case Right(t) => Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
+      case Right(t)  => Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
   }
@@ -789,12 +806,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               // Always wrap expressions in a Tuple when inside parentheses
               Right((Tuple(exprs, createMeta(Some(sourcePos), Some(endPos))), current))
             }
-            case Right(t) => Left(ParseError("Expected ')' at end of tuple", t.sourcePos.range.start))
+            case Right(t)  => Left(ParseError("Expected ')' at end of tuple", t.sourcePos.range.start))
             case Left(err) => Left(err)
           }
         }
       }
-      case Right(t) => Left(ParseError("Expected '(' at start of tuple", t.sourcePos.range.start))
+      case Right(t)  => Left(ParseError("Expected '(' at start of tuple", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
   }
@@ -802,7 +819,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
     var current = state
     var exprs = Vector[Expr]()
-    
+
     current.current match {
       case Right(Token.LBracket(sourcePos)) => {
         current = current.advance()
@@ -825,18 +842,18 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     case Right(Token.Comma(_)) => {
                       current = current.advance()
                     }
-                    case Right(t) => return Left(ParseError("Expected ',' or ']' in list", t.sourcePos.range.start))
+                    case Right(t)  => return Left(ParseError("Expected ',' or ']' in list", t.sourcePos.range.start))
                     case Left(err) => return Left(err)
                   }
                 }
-        case Left(err) => return Left(err)
+                case Left(err) => return Left(err)
               }
             }
           }
         }
         Left(ParseError("Too many elements in list", sourcePos.range.start))
       }
-      case Right(t) => Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
+      case Right(t)  => Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
   }
@@ -844,7 +861,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   def collectIdentifier(state: LexerState): (Vector[StringChar], LexerState) = {
     var chars = Vector.empty[StringChar]
     var currentState = state
-    
+
     while (!currentState.isAtEnd && currentState.current.exists(token => token.isInstanceOf[Token.Identifier])) {
       currentState.current match {
         case Right(id: Token.Identifier) => {
@@ -854,13 +871,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         case _ => { throw new RuntimeException("Unreachable: exists check ensures this case never happens") }
       }
     }
-    
+
     (chars, currentState)
   }
 
   def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
     case Right(token) => { token.isInstanceOf[Token.Identifier] }
-    case _ => { false }
+    case _            => { false }
   }
 
   def expectIdentifier(expected: String, state: LexerState): Either[ParseError, LexerState] = {
@@ -878,7 +895,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     state.current match {
       case Right(token) if token.isInstanceOf[T] => Right(state.advance())
       case Right(token) => Left(ParseError(s"Expected token of type ${tag.runtimeClass.getSimpleName}", token.sourcePos.range.start))
-      case Left(err) => Left(err)
+      case Left(err)    => Left(err)
     }
   }
 
@@ -887,7 +904,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     var lookAhead = state.advance()
     lookAhead.current match {
       case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-      case _ => false
+      case _                                              => false
     }
   }
 

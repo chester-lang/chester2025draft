@@ -865,8 +865,8 @@ case class RecoverableParseError(
 
   override def toDoc(using PrettierOptions): Doc = group(
     Doc.text("RecoverableParseError(") <>
-    partialResult.map(_.toDoc).getOrElse(Doc.text("None")) <> Doc.text(", ") <>
-    Doc.text(message) <> Doc.text(")")
+      partialResult.map(_.toDoc).getOrElse(Doc.text("None")) <> Doc.text(", ") <>
+      Doc.text(message) <> Doc.text(")")
   )
 }
 

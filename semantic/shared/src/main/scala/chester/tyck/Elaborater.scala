@@ -81,16 +81,11 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
   /** Type checking and elaboration of Chester terms.
     *
-    * During type checking, we sometimes need to reduce/evaluate terms to check types.
-    * For example, when checking field access on a type constructed by a type function:
-    *   def idType(x: Type): Type = x;
-    *   let aT = A;
-    *   def getA2(x: idType(aT)): Integer = x.a;
+    * During type checking, we sometimes need to reduce/evaluate terms to check types. For example, when checking field access on a type constructed
+    * by a type function: def idType(x: Type): Type = x; let aT = A; def getA2(x: idType(aT)): Integer = x.a;
     *
-    * Here we need to reduce idType(aT) to A to check the field access.
-    * However, we preserve the original unreduced terms in the core representation
-    * unless explicitly requested. This keeps the term structure clean while still
-    * allowing type checking to work correctly.
+    * Here we need to reduce idType(aT) to A to check the field access. However, we preserve the original unreduced terms in the core representation
+    * unless explicitly requested. This keeps the term structure clean while still allowing type checking to work correctly.
     */
   override def elab(
       expr: Expr,

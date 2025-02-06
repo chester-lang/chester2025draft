@@ -96,4 +96,4 @@ class SimpleFunctionCallTest extends FunSuite {
     )
     parseAndCheck(input, expected)
   }
-} 
+}

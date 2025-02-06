@@ -10,7 +10,7 @@ sealed trait Token {
   def isComment: Boolean = false
   def isRecoveryPoint: Boolean = this match {
     case Token.RParen(_) | Token.RBracket(_) | Token.RBrace(_) | Token.Semicolon(_) | Token.Comma(_) | Token.EOF(_) => true
-    case _ => false
+    case _                                                                                                          => false
   }
 }
 

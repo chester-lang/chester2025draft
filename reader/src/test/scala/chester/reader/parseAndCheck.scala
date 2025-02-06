@@ -70,9 +70,8 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
       }
       val line = input.substring(lineStart, lineEnd)
       val pointer = " " * (errorIndex - lineStart) + "^"
-      
-      fail(
-        s"""Tokenizer error: ${error.message}
+
+      fail(s"""Tokenizer error: ${error.message}
            |At position ${error.pos}:
            |$line
            |$pointer""".stripMargin)
@@ -99,9 +98,8 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
           }
           val line = input.substring(lineStart, lineEnd)
           val pointer = " " * (errorIndex - lineStart) + "^"
-          
-          fail(
-            s"""V2 Parsing failed for input: $input
+
+          fail(s"""V2 Parsing failed for input: $input
                |Error: ${error.message}
                |At position ${error.pos}:
                |$line
@@ -119,14 +117,18 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
 @deprecated("TODO: remove this")
 def getParsedV1(input: String): Expr = {
   // Parse with location first to ensure it works
-  ChesterReader.parseExpr(FileNameAndContent("testFile", input)).fold(
-    error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
-    _ => ()
-  )
-  
+  ChesterReader
+    .parseExpr(FileNameAndContent("testFile", input))
+    .fold(
+      error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
+      _ => ()
+    )
+
   // Then parse without location for the actual result
-  ChesterReader.parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true).fold(
-    error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
-    value => value
-  )
+  ChesterReader
+    .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
+    .fold(
+      error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
+      value => value
+    )
 }
