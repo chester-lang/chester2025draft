@@ -4,6 +4,10 @@ import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
+import chester.reduce.{Reducer, ReduceContext, NaiveReducer}
+import chester.utils.*
+import chester.utils.propagator.*
+import chester.tyck.*
 
 trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
   def elabFunctionCall(
@@ -29,7 +33,6 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
-
     // Check if the function refers to a record definition
     val functionExpr = expr.function
 
@@ -67,13 +70,17 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
-
     // Elaborate the function expression to get its term and type
     val functionTy = newType
     val functionTerm = elab(expr.function, functionTy, effects)
 
-    // **No need to infer implicit arguments here**
-    // We will handle implicit arguments during unification
+    // Only reduce if this is a type-level function
+    given ReduceContext = ReduceContext()
+    given Reducer = NaiveReducer
+    val reducedF = functionTerm match {
+      case f: Function if isTypeLevelFunction(functionTy)(using state) => Reducer.reduce(f)
+      case _ => functionTerm
+    }
 
     // Elaborate the arguments in the telescopes
     val callings = expr.telescopes.map { telescope =>
@@ -98,7 +105,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
         callings.toVector,
         resultTy,
         expr,
-        functionTerm,
+        reducedF,
         functionCallTerm
       )
     )
@@ -106,7 +113,24 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
     // Unify the result type with the expected type
     unify(ty, resultTy, expr)
 
-    toTerm(functionCallTerm)
+    // For type-level functions, we need to reduce the result
+    val result = toTerm(functionCallTerm)
+    if (isTypeLevelFunction(functionTy)(using state)) {
+      Reducer.reduce(result)
+    } else {
+      result
+    }
+  }
+
+  private def isTypeLevelFunction(ty: CellId[Term])(using s: StateAbility[Tyck]): Boolean = {
+    s.readUnstable(ty) match {
+      case Some(FunctionType(_, resultType, _, _)) => 
+        resultType match {
+          case t: Type => true
+          case _ => false
+        }
+      case _ => false
+    }
   }
 
   case class UnifyFunctionCall(
@@ -247,7 +271,6 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       StateAbility[Tyck],
       Tyck
   ): List[Calling] = {
-
     // TODO: Implement logic to infer implicit arguments based on the function type
     // For now, return an empty list as a stub
     List.empty

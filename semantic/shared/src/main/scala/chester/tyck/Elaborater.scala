@@ -8,6 +8,7 @@ import chester.utils.*
 import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
+import chester.reduce.{Reducer, ReduceContext, NaiveReducer}
 
 import scala.language.implicitConversions
 import scala.util.boundary
@@ -190,7 +191,14 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             case Identifier(fieldName, _) =>
               val recordTy = newType
               val recordTerm = elab(recordExpr, recordTy, effects)
-              val resultTerm = FieldAccessTerm(recordTerm, fieldName, toTerm(ty), convertMeta(meta))
+              // Only reduce the record term if needed to check field access
+              given ReduceContext = ReduceContext()
+              given Reducer = NaiveReducer
+              val reducedRecordTerm = recordTerm match {
+                case _: RecordStmtTerm => recordTerm
+                case _ => Reducer.reduce(recordTerm)
+              }
+              val resultTerm = FieldAccessTerm(reducedRecordTerm, fieldName, toTerm(ty), convertMeta(meta))
               state.addPropagator(RecordFieldPropagator(recordTy, fieldName, ty, expr))
               resultTerm
             case _ =>
@@ -207,7 +215,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     }
   }
 
-  // TODO: untested
   def elabObjectExpr(
       expr: ObjectExpr,
       fields: Vector[ObjectClause],
@@ -248,6 +255,62 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     unify(ty, expectedObjectType, expr)
 
     objectTerm
+  }
+
+  def elabFunctionCall(
+      expr: DesaltFunctionCall,
+      ty: CellId[Term],
+      effects: CIdOf[EffectsCell]
+  )(using
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Term = {
+    val fTy = newType
+    val f = elab(expr.function, fTy, effects)
+    
+    // Only reduce if this is a type-level function
+    given ReduceContext = ReduceContext()
+    given Reducer = NaiveReducer
+    val reducedF = f match {
+      case f: Function if isTypeLevelFunction(fTy) => Reducer.reduce(f)
+      case _ => f
+    }
+    
+    // Elaborate arguments
+    val elaboratedArgs = expr.telescopes.map { calling =>
+      Calling(
+        calling.args.map { arg =>
+          val argTy = newType
+          val elaboratedValue = elab(arg.expr, argTy, effects)
+          CallingArgTerm(elaboratedValue, toTerm(argTy), arg.name.map(_.name), arg.vararg, convertMeta(arg.meta))
+        },
+        calling.implicitly,
+        convertMeta(calling.meta)
+      )
+    }
+
+    // Create function call term
+    val callTerm = FCallTerm(reducedF, elaboratedArgs, convertMeta(expr.meta))
+    
+    // For type-level functions, we need to reduce the result
+    if (isTypeLevelFunction(fTy)) {
+      Reducer.reduce(callTerm)
+    } else {
+      callTerm
+    }
+  }
+  
+  private def isTypeLevelFunction(ty: CellId[Term])(using state: StateAbility[Tyck]): Boolean = {
+    state.readUnstable(ty).get match {
+      case FunctionType(_, resultType, _, _) => 
+        resultType match {
+          case t: Type => true
+          case _ => false
+        }
+      case _ => false
+    }
   }
 }
 
