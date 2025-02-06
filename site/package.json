@@ -3,7 +3,7 @@
     "overrides": {
       "xterm-pty>xterm": "$xterm",
       "xterm-readline>xterm": "$xterm",
-      "@types/react": "19.0.7",
+      "@types/react": "19.0.8",
       "@xterm/xterm": "5.6.0-beta.70",
       "@types/react-dom": "19.0.3"
     }
@@ -31,7 +31,7 @@
     "base64-arraybuffer": "^1.0.2",
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.2",
-    "next": "15.1.5",
+    "next": "15.1.6",
     "next-intl": "^3.26.3",
     "pako": "^2.1.0",
     "react": "19.0.0",
@@ -43,14 +43,14 @@
     "xterm-readline": "^1.1.2"
   },
   "devDependencies": {
-    "@types/node": "^22.13.0",
+    "@types/node": "^22.13.1",
     "@types/pako": "^2.0.3",
-    "@types/react": "19.0.7",
+    "@types/react": "19.0.8",
     "@types/react-dom": "19.0.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.19.0",
-    "eslint-config-next": "15.1.5",
+    "eslint-config-next": "15.1.6",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.3",
     "postcss": "^8.5.1",
