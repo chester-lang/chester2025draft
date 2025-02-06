@@ -83,7 +83,7 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
   val tokens = tokenizer.tokenize()
   val oldDebug = LexerV2.DEBUG
   try {
-    LexerV2.DEBUG = true
+    //LexerV2.DEBUG = true // uncomment when needed
     val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
 
     val result = lexer
