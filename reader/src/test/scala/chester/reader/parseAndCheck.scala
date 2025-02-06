@@ -23,13 +23,13 @@ def parseAndCheckV0(input: String, expected: Expr): Unit = {
       { value =>
         assertEquals(read[Expr](write[Expr](value)), value)
         assertEquals(
-          read[Expr](write[Expr](resultignored.right.get)),
-          resultignored.right.get
+          read[Expr](write[Expr](resultignored.toOption.get)),
+          resultignored.toOption.get
         )
         assertEquals(readBinary[Expr](writeBinary[Expr](value)), value)
         assertEquals(
-          readBinary[Expr](writeBinary[Expr](resultignored.right.get)),
-          resultignored.right.get
+          readBinary[Expr](writeBinary[Expr](resultignored.toOption.get)),
+          resultignored.toOption.get
         )
         assertEquals(value, expected, s"Failed for input: $input")
       }
