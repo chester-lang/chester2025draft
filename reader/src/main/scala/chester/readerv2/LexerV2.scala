@@ -36,19 +36,31 @@ package chester.readerv2
  *    
  *    - Newlines have special significance:
  *      a. After blocks: Newline after a block ends the expression
- *         - f { 1 } g()  -> Parsed as two separate expressions
- *         - f { 1 } + g() -> Parsed as one expression
- *      b. Within blocks: Newlines within blocks are not significant
- *         - f { 1 + 2 } is equivalent to f { 1
- *                                            + 2 }
- *      c. In operator sequences: Newlines between operators and operands are ignored
- *         - a +
- *           b is equivalent to a + b
+ *         Examples:
+ *         - f { aaa } \n b { bbb } \n  -> Two separate expressions
+ *         - f { aaa } b { bbb }        -> Single expression
+ *         
+ *      b. Pattern Matching: Each case must be on a new line
+ *         Example:
+ *         x match {
+ *           case1 { ... } \n
+ *           case2 { ... } \n
+ *         }
+ *         Note: 'case1', 'case2' are examples - there are no predefined names
+ *         
+ *      c. Within blocks: Newlines within blocks are not significant
+ *         - Expressions can span multiple lines within a block
+ *         - Operators and operands can be split across lines
+ *         Example:
+ *         f {
+ *           1 + 
+ *           2
+ *         }
  *
  *    - Implementation details:
- *      - Source positions track exact character positions including spaces
- *      - Space significance checked by comparing end position of one token
- *        with start position of next token
+ *      - Tokenizer explicitly tracks newlines with NewLine tokens
+ *      - Parser checks for newlines after blocks to determine expression boundaries
+ *      - Pattern matching context detection influences newline handling
  *      - Block parsing maintains state about newline significance
  *      - Operator sequence parsing ignores newlines between terms
  */
