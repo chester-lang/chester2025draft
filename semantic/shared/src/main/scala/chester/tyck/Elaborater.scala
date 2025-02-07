@@ -191,21 +191,79 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             case Identifier(fieldName, _) =>
               val recordTy = newType
               val recordTerm = elab(recordExpr, recordTy, effects)
-              // Only reduce the record term if needed to check field access
-              given ReduceContext = ReduceContext()
-              given Reducer = NaiveReducer
+              // Only reduce if needed to check field access
               val reducedRecordTerm = recordTerm match {
-                case _: RecordStmtTerm => recordTerm
-                case _ => Reducer.reduce(recordTerm)
+                case r: RecordStmtTerm => r  // Already a record, no need to reduce
+                case _ => 
+                  given ReduceContext = ReduceContext()
+                  given Reducer = NaiveReducer
+                  Reducer.reduce(recordTerm)  // Reduce only if needed
               }
               val resultTerm = FieldAccessTerm(reducedRecordTerm, fieldName, toTerm(ty), convertMeta(meta))
               state.addPropagator(RecordFieldPropagator(recordTy, fieldName, ty, expr))
+              // Add a propagator for the record type itself
+              state.addPropagator(Unify(recordTy, toId(reducedRecordTerm), expr))
               resultTerm
             case _ =>
               val problem = InvalidFieldName(fieldExpr)
               ck.reporter.apply(problem)
               ErrorTerm(problem, convertMeta(expr.meta))
           }
+        }
+      case expr @ FunctionCall(function, args, meta) =>
+        val functionExpr = elab(function, newType, effects)
+        functionExpr match {
+          case recordDef: RecordStmtTerm =>
+            // Get the record constructor type from the context
+            val constructorTyAndVal = localCtx.getKnown(ToplevelV(AbsoluteRef(localCtx.currentModule, recordDef.name), newTypeTerm, recordDef.uniqId, None)).get
+            val recordTy = constructorTyAndVal.ty
+
+            // Extract arguments from tuple
+            val tupleArgs = args match {
+              case Tuple(values, _) => values
+              case value => Vector(value)
+            }
+
+            if (tupleArgs.size != recordDef.fields.size) {
+              ck.reporter(
+                FunctionCallArityMismatchError(
+                  recordDef.fields.size,
+                  tupleArgs.size,
+                  expr
+                )
+              )
+              return ErrorTerm(FunctionCallArityMismatchError(recordDef.fields.size, tupleArgs.size, expr), None)
+            }
+
+            // Elaborate and unify each argument with its corresponding field type
+            val elaboratedArgs = tupleArgs.zip(recordDef.fields).map { case (arg, field) =>
+              val argTerm = elab(arg, toId(field.ty), effects)
+              state.addPropagator(Unify(toId(field.ty), toId(argTerm), expr))
+              argTerm
+            }
+
+            // Create the tuple type for the arguments
+            val tupleType = TupleType(recordDef.fields.map(_.ty), None)
+            val tupleArg = TupleTerm(elaboratedArgs, None)
+            state.addPropagator(Unify(toId(tupleType), toId(tupleArg), expr))
+
+            // Create the record constructor call term
+            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, Vector(tupleArg), None)
+
+            // Unify the result type with the expected type
+            state.addPropagator(Unify(ty, toId(recordTy), expr))
+
+            recordCallTerm
+
+          case _ =>
+            val functionTy = newType
+            val functionTerm = elab(function, functionTy, effects)
+            val argTy = newType
+            val argTerm = elab(args, argTy, effects)
+            val callTerm = FCallTerm(functionTerm, Vector(Calling(Vector(CallingArgTerm(argTerm, toTerm(argTy), None, false, None)), false, None)), None)
+            val resultTy = newType
+            state.addPropagator(Unify(ty, resultTy, expr))
+            callTerm
         }
       case expr: Expr => {
         val problem = NotImplemented(expr)

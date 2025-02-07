@@ -3,11 +3,13 @@ package chester.tyck
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
+import chester.syntax.core.{*, given}
 import chester.tyck.api.SemanticCollector
 import chester.reduce.{Reducer, ReduceContext, NaiveReducer}
 import chester.utils.*
 import chester.utils.propagator.*
 import chester.tyck.*
+import chester.syntax.{AbsoluteRef, ModuleRef}
 
 trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
   def elabFunctionCall(
@@ -33,31 +35,70 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
-    // Check if the function refers to a record definition
-    val functionExpr = expr.function
+    val functionExpr = elab(expr.function, newTypeTerm, effects)
 
-    val resultTerm = functionExpr match {
-      case Identifier(name, _) =>
-        ctx.getTypeDefinition(name) match {
-          case Some(recordDef: RecordStmtTerm) =>
-            // Elaborate the arguments
-            val argTerms = expr.telescopes.flatMap(_.args.map { arg =>
-              elab(arg.expr, newTypeTerm, effects)
-            })
-            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, argTerms, meta = None)
-            // TODO: Unify the type with the expected type
-            // unify(ty, recordDefType, expr)
-            recordCallTerm
-          case _ =>
-            // Proceed with default elaboration
-            defaultElabFunctionCall(expr, ty, effects)
+    functionExpr match {
+      case recordDef: RecordStmtTerm =>
+        // Get the record constructor type from the context
+        val constructorTyAndVal = ctx.getKnown(ToplevelV(AbsoluteRef(ctx.currentModule, recordDef.name), newTypeTerm, recordDef.uniqId, None)).get
+        val recordTy = constructorTyAndVal.ty match {
+          case FunctionType(_, retTy, _, _) => retTy
+          case _ => Type(LevelFinite(IntegerTerm(0, None), None), None)
         }
+
+        if (expr.telescopes.size != 1) {
+          ck.reporter(
+            FunctionCallArityMismatchError(
+              1,
+              expr.telescopes.size,
+              expr
+            )
+          )
+          return ErrorTerm(FunctionCallArityMismatchError(1, expr.telescopes.size, expr), None)
+        }
+
+        val telescopeArgs = expr.telescopes.head.args
+        val args = telescopeArgs.flatMap { arg =>
+          arg.expr match {
+            case Tuple(values, _) => values
+            case value => Vector(value)
+          }
+        }
+
+        if (args.size != recordDef.fields.size) {
+          ck.reporter(
+            FunctionCallArityMismatchError(
+              recordDef.fields.size,
+              args.size,
+              expr
+            )
+          )
+          return ErrorTerm(FunctionCallArityMismatchError(recordDef.fields.size, args.size, expr), None)
+        }
+
+        // Elaborate and unify each argument with its corresponding field type
+        val elaboratedArgs = args.zip(recordDef.fields).map { case (arg, field) =>
+          val argTerm = elab(arg, toId(field.ty), effects)
+          state.addPropagator(Unify(toId(field.ty), toId(argTerm), expr))
+          argTerm
+        }
+
+        // Create the tuple type for the arguments
+        val tupleType = TupleType(recordDef.fields.map(_.ty), None)
+        val tupleArg = TupleTerm(elaboratedArgs, None)
+        state.addPropagator(Unify(toId(tupleType), toId(tupleArg), expr))
+
+        // Create the record constructor call term
+        val recordCallTerm = RecordConstructorCallTerm(recordDef.name, Vector(tupleArg), None)
+
+        // Unify the result type with the expected type
+        state.addPropagator(Unify(ty, toId(recordTy), expr))
+
+        recordCallTerm
+
       case _ =>
-        // Proceed with default elaboration for other expressions
         defaultElabFunctionCall(expr, ty, effects)
     }
-
-    resultTerm
   }
 
   def defaultElabFunctionCall(
@@ -126,7 +167,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
     s.readUnstable(ty) match {
       case Some(FunctionType(_, resultType, _, _)) => 
         resultType match {
-          case t: Type => true
+          case _: Type => true
           case _ => false
         }
       case _ => false

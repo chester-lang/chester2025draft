@@ -6,6 +6,11 @@ import chester.syntax.*
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
+import chester.syntax.core.simple.*
+import chester.syntax.core.spec.spec.*
+import chester.syntax.core.truffle.{*, given}
+import chester.tyck.*
+import chester.utils.propagator.*
 import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
 
@@ -87,7 +92,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         stmtTerms
 
       case expr: RecordStmt =>
-        val (stmtTerms, newCtx) = processRecordStmt(expr, ctx, declarationsMap, effects)
+        val (stmtTerms, newCtx) = processRecordStmt(expr, ctx, declarationsMap, effects, ty)
         ctx = newCtx
         stmtTerms
 
@@ -238,7 +243,8 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       expr: RecordStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCell],
+      ty: CellId[Term]
   )(using
       parameter: SemanticCollector,
       ck: Tyck,
@@ -266,33 +272,58 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     // Elaborate the fields without combining them with any super class fields
     val elaboratedFields = fields.map { field =>
       val fieldType = field.ty match {
-        case Some(tyExpr) => checkType(tyExpr)
+        case Some(tyExpr) => 
+          val ty = checkType(tyExpr)
+          // Add a propagator to ensure the type is properly covered
+          val fieldTy = newType
+          state.addPropagator(Unify(toId(ty), fieldTy, tyExpr))
+          toTerm(fieldTy)
         case None         => newTypeTerm
       }
       // Create a FieldTerm representing the field in the record
-      FieldTerm(field.name.name, fieldType, convertMeta(expr.meta))
+      FieldTerm(field.name.name, fieldType, convertMeta(field.meta))
     }
 
-    // Elaborate the optional body (if any)
+    // Elaborate the body if present
     val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+      elabBlock(body, newTypeTerm, effects)
     }
 
-    // Construct the RecordStmtTerm that includes the fields and extendsClause
+    // Create the RecordStmtTerm
     val recordStmtTerm = RecordStmtTerm(
       name = name,
       uniqId = recordInfo.uniqId,
       fields = elaboratedFields,
       body = elaboratedBody,
       meta = convertMeta(expr.meta)
-      // We can store the extendsSymbol here if needed in the future
-      // For now, we add a TODO comment
-      // TODO: Handle the extendsClause during type checking
     )
 
     // Update the context with the new record definition
+    val recordTy = RecordCallTerm(recordStmtTerm, TelescopeTerm(Vector(), false, None), None)
+    val tupleType = TupleType(elaboratedFields.map(_.ty), None)
+    val recordConstructorTy = FunctionType(
+      Vector(TelescopeTerm(
+        Vector(ArgTerm(
+          newLocalv("tuple", tupleType, Uniqid.generate[LocalV], None),
+          tupleType,
+          None,
+          false,
+          None
+        )),
+        false,
+        None
+      )),
+      recordTy,
+      Effects.Empty,
+      None
+    )
+
     val newCtx = ctx
       .addTypeDefinition(recordStmtTerm)
+      .knownAdd(recordInfo.uniqId, TyAndVal(recordConstructorTy, recordStmtTerm))
+
+    // The record definition itself is a type constructor at level 0
+    state.addPropagator(Unify(ty, toId(Type(LevelFinite(IntegerTerm(0, None), None), None)), expr))
 
     // Return the statement term and the updated context
     (Seq(recordStmtTerm), newCtx)
