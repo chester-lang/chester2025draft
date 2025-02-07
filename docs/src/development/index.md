@@ -8,12 +8,15 @@ Chester implements its type system differently for different platforms (JVM and 
 
 1. **DO NOT** import from `chester.syntax.core.spec.*`
    - The spec package contains trait definitions that are reexported through platform-specific implementations
+   - These traits are internal implementation details
 
 2. **DO NOT** import directly from `chester.syntax.core.simple` or `chester.syntax.core.truffle`
    - These are platform-specific implementations that should be accessed through the core package
+   - Direct imports can lead to type mismatches and cross-platform compatibility issues
 
 3. **DO** use `import chester.syntax.core.*`
    - This will give you the correct platform-specific implementations
+   - Ensures consistent type handling across JVM and JS platforms
 
 ### Example
 
@@ -112,6 +115,45 @@ case expr =>
    - Keep reduction local to type checking logic
    - Never modify the original AST structure
    - Return original terms in elaboration results
+
+### Platform-Specific Type System Implementation
+
+#### Type System Architecture
+
+1. **Platform Independence**
+   - The type system is designed to work consistently across JVM and JS platforms
+   - Core types are defined as traits in `chester.syntax.core.spec`
+   - Platform-specific implementations are provided in `simple` and `truffle` packages
+   - Users should never need to interact with platform-specific implementations directly
+
+2. **Type Conversion**
+   - Implicit conversions are provided for seamless type handling
+   - Let the compiler handle type conversions through the core package
+   - Avoid explicit type casts or platform-specific type annotations
+
+3. **Error Handling**
+   - Type errors should be platform-agnostic
+   - Error messages should reference source code types, not internal representations
+   - Use `TyckResult` for consistent error reporting across platforms
+
+#### Testing Guidelines
+
+1. **Platform-Specific Tests**
+   - Write tests that work consistently across platforms
+   - Avoid platform-specific type assertions
+   - Use `import chester.syntax.core.*` in test files
+   - Don't directly test platform-specific implementations
+
+2. **Type Checking Tests**
+   - Test type checking without assuming implementation details
+   - Verify error messages reference source code types
+   - Ensure tests pass on both JVM and JS platforms
+
+3. **Common Test Issues**
+   - Using platform-specific imports
+   - Assuming specific type implementations
+   - Not handling both platforms in test cases
+   - Direct manipulation of internal type representations
 
 ### Lazy Reduction Approach
 

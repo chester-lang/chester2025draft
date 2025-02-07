@@ -6,9 +6,6 @@ import chester.syntax.*
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.syntax.core.simple.*
-import chester.syntax.core.spec.spec.*
-import chester.syntax.core.truffle.{*, given}
 import chester.tyck.*
 import chester.utils.propagator.*
 import chester.tyck.api.SemanticCollector

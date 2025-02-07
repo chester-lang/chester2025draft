@@ -2,8 +2,7 @@ package chester.tyck
 
 import chester.error.*
 import chester.syntax.concrete.*
-import chester.syntax.core.{*, given}
-import chester.syntax.core.truffle.*
+import chester.syntax.core.*
 import chester.tyck.api.*
 import munit.FunSuite
 
