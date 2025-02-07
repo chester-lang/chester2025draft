@@ -3,7 +3,6 @@ package chester.tyck
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.syntax.core.{*, given}
 import chester.tyck.api.SemanticCollector
 import chester.reduce.{Reducer, ReduceContext, NaiveReducer}
 import chester.utils.*
@@ -78,21 +77,26 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
 
         // Elaborate and unify each argument with its corresponding field type
         val elaboratedArgs = args.zip(recordDef.fields).map { case (arg, field) =>
-          val argTerm = elab(arg, toId(field.ty), effects)
-          state.addPropagator(Unify(toId(field.ty), toId(argTerm), expr))
+          val argTy = toId(field.ty)
+          val argTerm = elab(arg, argTy, effects)
+          // Unify at the argument level
+          state.addPropagator(Unify(argTy, toId(argTerm), arg))
           argTerm
         }
 
-        // Create the tuple type for the arguments
-        val tupleType = TupleType(recordDef.fields.map(_.ty), None)
-        val tupleArg = TupleTerm(elaboratedArgs, None)
-        state.addPropagator(Unify(toId(tupleType), toId(tupleArg), expr))
-
         // Create the record constructor call term
-        val recordCallTerm = RecordConstructorCallTerm(recordDef.name, Vector(tupleArg), None)
+        val recordCallTerm = RecordConstructorCallTerm(recordDef.name, elaboratedArgs, None)
+
+        // Create a record type with the elaborated field types
+        val resultTy = RecordType(
+          recordDef.fields.zip(elaboratedArgs).map { case (field, arg) =>
+            RecordFieldType(field.name, toTerm(toId(arg)), None)
+          },
+          None
+        )
 
         // Unify the result type with the expected type
-        state.addPropagator(Unify(ty, toId(recordTy), expr))
+        state.addPropagator(Unify(ty, toId(resultTy), expr))
 
         recordCallTerm
 

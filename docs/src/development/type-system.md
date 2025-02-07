@@ -82,6 +82,43 @@ case expr =>
   // ...
 ```
 
+## Record Constructor Handling
+
+When handling record constructors, follow these guidelines:
+
+1. **Direct Argument Handling**
+   ```scala
+   // CORRECT
+   val elaboratedArgs = args.zip(fields).map { case (arg, field) =>
+     val argTy = toId(field.ty)
+     val argTerm = elab(arg, argTy, effects)
+     state.addPropagator(Unify(argTy, toId(argTerm), arg))
+     argTerm
+   }
+   RecordConstructorCallTerm(name, elaboratedArgs, meta)
+
+   // INCORRECT - Unnecessary tuple wrapping
+   val tupleType = TupleType(fields.map(_.ty))
+   val tupleArg = TupleTerm(elaboratedArgs)
+   RecordConstructorCallTerm(name, Vector(tupleArg), meta)
+   ```
+
+2. **Type Unification**
+   - Unify at the argument level, not the tuple level
+   - Use proper error context for each argument
+   - Handle type mismatches gracefully
+
+3. **Error Handling**
+   ```scala
+   // CORRECT
+   case FunctionCallArityMismatchError(expected, actual, expr) =>
+     s"Record constructor expected $expected arguments but got $actual"
+
+   // INCORRECT
+   case TypeError(msg) =>
+     s"Type error in record constructor: $msg"
+   ```
+
 ## Error Handling
 
 1. **Platform-Agnostic Errors**
