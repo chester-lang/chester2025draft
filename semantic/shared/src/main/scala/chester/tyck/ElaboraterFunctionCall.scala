@@ -10,6 +10,7 @@ import chester.utils.*
 import chester.utils.propagator.*
 import chester.tyck.*
 import chester.syntax.{AbsoluteRef, ModuleRef}
+import chester.uniqid.Uniqid
 
 trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
   def elabFunctionCall(
@@ -78,23 +79,67 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
 
         // Elaborate and unify each argument with its corresponding field type
         val elaboratedArgs = args.zip(recordDef.fields).map { case (arg, field) =>
-          val argTerm = elab(arg, toId(field.ty), effects)
-          state.addPropagator(Unify(toId(field.ty), toId(argTerm), expr))
+          val argTy = toId(field.ty)
+          val argTerm = elab(arg, argTy, effects)
+          state.addPropagator(Unify(argTy, toId(argTerm), expr))
           argTerm
         }
 
-        // Create the tuple type for the arguments
-        val tupleType = TupleType(recordDef.fields.map(_.ty), None)
-        val tupleArg = TupleTerm(elaboratedArgs, None)
-        state.addPropagator(Unify(toId(tupleType), toId(tupleArg), expr))
+        // Create the record constructor call term directly with elaborated args
+        val recordCallTerm = RecordConstructorCallTerm(recordDef.name, elaboratedArgs, None)
 
-        // Create the record constructor call term
-        val recordCallTerm = RecordConstructorCallTerm(recordDef.name, Vector(tupleArg), None)
-
-        // Unify the result type with the expected type
+        // Unify the result type with the expected type and the record type
         state.addPropagator(Unify(ty, toId(recordTy), expr))
+        state.addPropagator(Unify(ty, toId(recordCallTerm), expr))
 
         recordCallTerm
+
+      case ref: ReferenceCall =>
+        // Handle record constructor calls by name
+        ctx.getKnown(ref) match {
+          case Some(TyAndVal(FunctionType(_, retTy, _, _), recordDef: RecordStmtTerm)) =>
+            // Process record constructor call
+            if (expr.telescopes.size != 1) {
+              ck.reporter(FunctionCallArityMismatchError(1, expr.telescopes.size, expr))
+              return ErrorTerm(FunctionCallArityMismatchError(1, expr.telescopes.size, expr), None)
+            }
+
+            val telescopeArgs = expr.telescopes.head.args
+            val args = telescopeArgs.flatMap { arg =>
+              arg.expr match {
+                case Tuple(values, _) => values
+                case value => Vector(value)
+              }
+            }
+
+            if (args.size != recordDef.fields.size) {
+              ck.reporter(FunctionCallArityMismatchError(recordDef.fields.size, args.size, expr))
+              return ErrorTerm(FunctionCallArityMismatchError(recordDef.fields.size, args.size, expr), None)
+            }
+
+            // Elaborate and unify each argument with its corresponding field type
+            val elaboratedArgs = args.zip(recordDef.fields).map { case (arg, field) =>
+              val argTy = toId(field.ty)
+              val argTerm = elab(arg, argTy, effects)
+              state.addPropagator(Unify(argTy, toId(argTerm), expr))
+              argTerm
+            }
+
+            // Create the record constructor call term
+            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, elaboratedArgs, None)
+
+            // Unify the result type with the expected type
+            state.addPropagator(Unify(ty, toId(retTy), expr))
+
+            recordCallTerm
+
+          case Some(TyAndVal(ty, value)) =>
+            // Handle other cases by delegating to default implementation
+            defaultElabFunctionCall(expr, toId(ty), effects)
+
+          case None =>
+            defaultElabFunctionCall(expr, ty, effects)
+        }
 
       case _ =>
         defaultElabFunctionCall(expr, ty, effects)

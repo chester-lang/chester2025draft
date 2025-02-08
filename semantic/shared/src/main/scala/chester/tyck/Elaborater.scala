@@ -5,10 +5,34 @@ import chester.syntax.concrete.*
 import chester.syntax.core.{*, given}
 import chester.tyck.*
 import chester.utils.*
-import chester.utils.propagator.*
+import chester.utils.propagator.{CommonPropagator, ProvideCellId, ProvideImpl, ProvideMutable}
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
 import chester.reduce.{Reducer, ReduceContext, NaiveReducer}
+import chester.syntax.concrete.{
+  ExprMeta,
+  DotCall,
+  Identifier,
+  ObjectExpr,
+  ObjectExprClause,
+  ObjectExprClauseOnValue,
+  DesaltFunctionCall,
+  Tuple
+}
+import chester.syntax.core.{
+  Term,
+  ObjectTerm,
+  ObjectType,
+  ObjectClauseValueTerm,
+  FieldAccessTerm,
+  ErrorTerm,
+  Function,
+  TelescopeTerm,
+  Type
+}
+import chester.tyck.TyckPropagator.Unify
+import chester.tyck.ElaboraterFunctionCall.UnifyFunctionCall
+import chester.tyck.{TyckPropagator, ElaboraterFunctionCall}
 
 import scala.language.implicitConversions
 import scala.util.boundary
@@ -212,59 +236,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         }
       case expr @ FunctionCall(function, args, meta) =>
         val functionExpr = elab(function, newType, effects)
-        functionExpr match {
-          case recordDef: RecordStmtTerm =>
-            // Get the record constructor type from the context
-            val constructorTyAndVal = localCtx.getKnown(ToplevelV(AbsoluteRef(localCtx.currentModule, recordDef.name), newTypeTerm, recordDef.uniqId, None)).get
-            val recordTy = constructorTyAndVal.ty
+        val desaltExpr = DesaltFunctionCall(function, Vector(DesaltCallingTelescope(Vector(CallingArg(None, args, false, meta)), false, meta)), meta)
+        elabFunctionCall(desaltExpr, ty, effects)
 
-            // Extract arguments from tuple
-            val tupleArgs = args match {
-              case Tuple(values, _) => values
-              case value => Vector(value)
-            }
-
-            if (tupleArgs.size != recordDef.fields.size) {
-              ck.reporter(
-                FunctionCallArityMismatchError(
-                  recordDef.fields.size,
-                  tupleArgs.size,
-                  expr
-                )
-              )
-              return ErrorTerm(FunctionCallArityMismatchError(recordDef.fields.size, tupleArgs.size, expr), None)
-            }
-
-            // Elaborate and unify each argument with its corresponding field type
-            val elaboratedArgs = tupleArgs.zip(recordDef.fields).map { case (arg, field) =>
-              val argTerm = elab(arg, toId(field.ty), effects)
-              state.addPropagator(Unify(toId(field.ty), toId(argTerm), expr))
-              argTerm
-            }
-
-            // Create the tuple type for the arguments
-            val tupleType = TupleType(recordDef.fields.map(_.ty), None)
-            val tupleArg = TupleTerm(elaboratedArgs, None)
-            state.addPropagator(Unify(toId(tupleType), toId(tupleArg), expr))
-
-            // Create the record constructor call term
-            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, Vector(tupleArg), None)
-
-            // Unify the result type with the expected type
-            state.addPropagator(Unify(ty, toId(recordTy), expr))
-
-            recordCallTerm
-
-          case _ =>
-            val functionTy = newType
-            val functionTerm = elab(function, functionTy, effects)
-            val argTy = newType
-            val argTerm = elab(args, argTy, effects)
-            val callTerm = FCallTerm(functionTerm, Vector(Calling(Vector(CallingArgTerm(argTerm, toTerm(argTy), None, false, None)), false, None)), None)
-            val resultTy = newType
-            state.addPropagator(Unify(ty, resultTy, expr))
-            callTerm
-        }
       case expr: Expr => {
         val problem = NotImplemented(expr)
         ck.reporter.apply(problem)
@@ -315,51 +289,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     objectTerm
   }
 
-  def elabFunctionCall(
-      expr: DesaltFunctionCall,
-      ty: CellId[Term],
-      effects: CIdOf[EffectsCell]
-  )(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
-  ): Term = {
-    val fTy = newType
-    val f = elab(expr.function, fTy, effects)
-    
-    // Only reduce if this is a type-level function
-    given ReduceContext = ReduceContext()
-    given Reducer = NaiveReducer
-    val reducedF = f match {
-      case f: Function if isTypeLevelFunction(fTy) => Reducer.reduce(f)
-      case _ => f
-    }
-    
-    // Elaborate arguments
-    val elaboratedArgs = expr.telescopes.map { calling =>
-      Calling(
-        calling.args.map { arg =>
-          val argTy = newType
-          val elaboratedValue = elab(arg.expr, argTy, effects)
-          CallingArgTerm(elaboratedValue, toTerm(argTy), arg.name.map(_.name), arg.vararg, convertMeta(arg.meta))
-        },
-        calling.implicitly,
-        convertMeta(calling.meta)
-      )
-    }
-
-    // Create function call term
-    val callTerm = FCallTerm(reducedF, elaboratedArgs, convertMeta(expr.meta))
-    
-    // For type-level functions, we need to reduce the result
-    if (isTypeLevelFunction(fTy)) {
-      Reducer.reduce(callTerm)
-    } else {
-      callTerm
-    }
-  }
-  
   private def isTypeLevelFunction(ty: CellId[Term])(using state: StateAbility[Tyck]): Boolean = {
     state.readUnstable(ty).get match {
       case FunctionType(_, resultType, _, _) => 

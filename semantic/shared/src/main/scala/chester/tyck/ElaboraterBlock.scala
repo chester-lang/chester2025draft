@@ -295,9 +295,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       meta = convertMeta(expr.meta)
     )
 
-    // Update the context with the new record definition
-    val recordTy = RecordCallTerm(recordStmtTerm, TelescopeTerm(Vector(), false, None), None)
+    // Create constructor type with tuple argument
     val tupleType = TupleType(elaboratedFields.map(_.ty), None)
+    val recordTy = RecordCallTerm(recordStmtTerm, TelescopeTerm(Vector(), false, None), None)
     val recordConstructorTy = FunctionType(
       Vector(TelescopeTerm(
         Vector(ArgTerm(
@@ -315,9 +315,14 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       None
     )
 
+    // Create a toplevel variable for the record constructor
+    val toplevelV = ToplevelV(AbsoluteRef(ctx.currentModule, name), recordConstructorTy, recordInfo.uniqId, None)
+
+    // Add both the record type and its constructor to the context
     val newCtx = ctx
       .addTypeDefinition(recordStmtTerm)
       .knownAdd(recordInfo.uniqId, TyAndVal(recordConstructorTy, recordStmtTerm))
+      .add(ContextItem(name, recordInfo.uniqId, toplevelV, recordConstructorTy, None))
 
     // The record definition itself is a type constructor at level 0
     state.addPropagator(Unify(ty, toId(Type(LevelFinite(IntegerTerm(0, None), None), None)), expr))

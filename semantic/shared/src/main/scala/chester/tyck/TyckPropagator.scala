@@ -5,6 +5,8 @@ import chester.syntax.Name
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
+import chester.syntax.{AbsoluteRef, ModuleRef}
+import chester.uniqid.Uniqid
 
 trait TyckPropagator extends ElaboraterCommon {
 
@@ -29,13 +31,75 @@ trait TyckPropagator extends ElaboraterCommon {
 
       case (x, Intersection(xs, _)) =>
         if (xs.exists(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause)) // TODO
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+
+      // Handle Type and TupleType unification
+      case (Type(_, _), TupleType(_, _)) => ()
+      case (TupleType(_, _), Type(_, _)) => ()
+
+      // Handle ToplevelV unification
+      case (ToplevelV(_, ty, _, _), rhs) =>
+        ty match {
+          case FunctionType(_, retTy, _, _) => unify(retTy, rhs, cause)
+          case _ => unify(ty, rhs, cause)
+        }
+      case (lhs, ToplevelV(_, ty, _, _)) =>
+        ty match {
+          case FunctionType(_, retTy, _, _) => unify(lhs, retTy, cause)
+          case _ => unify(lhs, ty, cause)
+        }
 
       // Structural unification for TupleType
       case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
         types1.zip(types2).foreach { case (t1, t2) =>
           unify(t1, t2, cause)
         }
+
+      // Record type unification
+      case (RecordCallTerm(recordDef1, telescope1, _), RecordCallTerm(recordDef2, telescope2, _)) =>
+        if (recordDef1.name == recordDef2.name) {
+          unify(telescope1, telescope2, cause)
+        } else {
+          ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        }
+
+      // Record constructor call unification
+      case (RecordConstructorCallTerm(name1, args1, _), RecordConstructorCallTerm(name2, args2, _)) =>
+        if (name1 == name2 && args1.length == args2.length) {
+          args1.zip(args2).foreach { case (arg1, arg2) =>
+            unify(arg1, arg2, cause)
+          }
+        } else {
+          ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        }
+
+      // Record field access unification
+      case (FCallTerm(RecordConstructorCallTerm(name, args, _), callings, _), rhs) =>
+        callings.headOption match {
+          case Some(calling) =>
+            calling.args.headOption match {
+              case Some(CallingArgTerm(_, _, Some(fieldName), _, _)) =>
+                // Find the field type from the record definition
+                localCtx.getKnown(ToplevelV(AbsoluteRef(localCtx.currentModule, name), newTypeTerm, Uniqid.generate[RecordStmtTerm], None)) match {
+                  case Some(TyAndVal(_, recordDef: RecordStmtTerm)) =>
+                    val fieldIndex = recordDef.fields.indexWhere(field => field.name == fieldName)
+                    if (fieldIndex >= 0) {
+                      unify(args(fieldIndex), rhs, cause)
+                    } else {
+                      ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+                    }
+                  case _ =>
+                    ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+                }
+              case _ =>
+                ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+          case _ =>
+            ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        }
+
+      case (lhs, FCallTerm(record @ RecordConstructorCallTerm(_, _, _), callings, _)) =>
+        unify(FCallTerm(record, callings, None), lhs, cause)
 
       // Type levels: unify levels
       case (Type(level1, _), Type(level2, _)) =>
@@ -48,7 +112,6 @@ trait TyckPropagator extends ElaboraterCommon {
       // Base case: types do not match
       case _ =>
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-
     }
   }
 

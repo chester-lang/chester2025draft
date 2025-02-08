@@ -27,32 +27,47 @@ class LazyReductionTest extends FunSuite {
         None
       )
     ),
-    None,
+    Some(UnitExpr(None)),
     None
   )
 
   test("field access - no reduction needed for direct record") {
-    val recordBlock = createRecordBlock()
-    val recordExpr = FunctionCall(
-      Identifier("Record", None),
-      Tuple(Vector(IntegerLiteral(42, None)), None),
+    val recordBlock = Block(
+      Vector(
+        RecordStmt(
+          Identifier("Record", None),
+          Vector(
+            RecordField(
+              Identifier("a", None),
+              Some(Identifier("Integer", None)),
+              None,
+              None
+            )
+          ),
+          None,
+          None,
+          None
+        )
+      ),
+      Some(DotCall(
+        FunctionCall(
+          Identifier("Record", None),
+          Tuple(Vector(IntegerLiteral(42, None)), None),
+          None
+        ),
+        Identifier("a", None),
+        Vector(),
+        None
+      )),
       None
     )
-    val fieldAccessExpr = DotCall(recordExpr, Identifier("a", None), Vector(), None)
     
     val result = tycker.check(recordBlock)
     result match {
-      case TyckResult.Success(_, _, _) =>
-        val accessResult = tycker.check(fieldAccessExpr)
-        accessResult match {
-          case TyckResult.Success(judge, _, _) =>
-            assertEquals(judge.ty, IntegerType(None))
-          case TyckResult.Failure(errors, _, _, _) =>
-            fail(s"Type checking failed with errors: $errors")
-          case _ => fail("Unexpected result type")
-        }
+      case TyckResult.Success(judge, _, _) =>
+        assertEquals(judge.ty, IntegerType(None))
       case TyckResult.Failure(errors, _, _, _) =>
-        fail(s"Record definition failed with errors: $errors")
+        fail(s"Type checking failed with errors: $errors")
       case _ => fail("Unexpected result type")
     }
   }
