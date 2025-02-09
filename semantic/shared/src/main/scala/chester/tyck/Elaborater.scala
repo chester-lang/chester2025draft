@@ -188,9 +188,11 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         } else {
           fieldExpr match {
             case Identifier(fieldName, _) =>
+              // Create a new type for the record and elaborate it
               val recordTy = newType
               val recordTerm = elab(recordExpr, recordTy, effects)
               val resultTerm = FieldAccessTerm(recordTerm, fieldName, toTerm(ty), convertMeta(meta))
+              // Add propagator to check field access is valid
               state.addPropagator(RecordFieldPropagator(recordTy, fieldName, ty, expr))
               resultTerm
             case _ =>
@@ -212,6 +214,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     }
   }
 
+  /** Elaborates an object expression, handling its fields and type structure.
+    * Creates appropriate type variables and propagators for type checking.
+    */
   def elabObjectExpr(
       expr: ObjectExpr,
       fields: Vector[ObjectClause],

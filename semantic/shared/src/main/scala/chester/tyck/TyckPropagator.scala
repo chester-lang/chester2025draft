@@ -10,30 +10,52 @@ import chester.uniqid.Uniqid
 
 trait TyckPropagator extends ElaboraterCommon {
 
+  /** Unifies two terms, ensuring they have compatible types.
+    * This is a core part of type checking that handles:
+    * - Meta variable resolution
+    * - Structural type unification
+    * - Type level compatibility
+    */
   def unify(lhs: Term, rhs: Term, cause: Expr)(using
       localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
     (lhs, rhs) match {
-      case (Meta(x), y) =>
-        state.addPropagator(Unify(x, y, cause))
-      case (x, Meta(y)) =>
-        state.addPropagator(Unify(y, x, cause))
+      // Handle meta variables
+      case (Meta(x: CellId[Term]), y) =>
+        val yId = toId(y)
+        if (x != yId) { // Prevent self-unification
+          state.addPropagator(Unify(x, yId, cause))
+        }
+      case (x, Meta(y: CellId[Term])) =>
+        val xId = toId(x)
+        if (xId != y) { // Prevent self-unification
+          state.addPropagator(Unify(xId, y, cause))
+        }
 
+      // Handle intersection types
       case (x, Intersection(xs, _)) =>
         if (xs.exists(tryUnify(x, _))) return
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
 
-      // Structural unification for TupleType
+      // Structural unification for tuple types
       case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
         types1.zip(types2).foreach { case (t1, t2) =>
           unify(t1, t2, cause)
         }
 
-      // Type levels: unify levels
+      // Structural unification for list types
+      case (ListType(elem1, _), ListType(elem2, _)) =>
+        unify(elem1, elem2, cause)
+
+      // Handle type universe levels
       case (Type(level1, _), Type(level2, _)) =>
         unify(level1, level2, cause)
+
+      // Special cases for type levels
+      case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
+      case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
 
       // Base case: terms are equal
       case (x, y) if x == y =>
@@ -119,66 +141,10 @@ trait TyckPropagator extends ElaboraterCommon {
     }
   }
 
-  case class UnionOf(
-      lhs: CellId[Term],
-      rhs: Vector[CellId[Term]],
-      cause: Expr
-  )(using Context)
-      extends Propagator[Tyck] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
-
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
-      val lhsValueOpt = state.readStable(lhs)
-      val rhsValuesOpt = rhs.map(state.readStable)
-
-      if (lhsValueOpt.isDefined && rhsValuesOpt.forall(_.isDefined)) {
-        val lhsValue = lhsValueOpt.get
-        val rhsValues = rhsValuesOpt.map(_.get)
-
-        // Check that each rhsValue is assignable to lhsValue
-        val assignable = rhsValues.forall { rhsValue =>
-          unify(lhsValue, rhsValue, cause)
-          true // Assuming unify reports errors internally
-        }
-        assignable
-      } else {
-        // Not all values are available yet
-        false
-      }
-    }
-
-    override def naiveZonk(
-        needed: Vector[CellIdAny]
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
-      val lhsValueOpt = state.readStable(lhs)
-      val rhsValuesOpt = rhs.map(state.readStable)
-
-      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
-      if (unknownRhs.nonEmpty) {
-        // Wait for all rhs values to be known
-        ZonkResult.Require(unknownRhs.toVector)
-      } else {
-        val rhsValues = rhsValuesOpt.map(_.get)
-
-        lhsValueOpt match {
-          case Some(lhsValue) =>
-            // LHS is known, unify each RHS with LHS
-            rhsValues.foreach { rhsValue =>
-              unify(lhsValue, rhsValue, cause)
-            }
-            ZonkResult.Done
-          case None =>
-            // LHS is unknown, create UnionType from RHS values and set LHS
-            val unionType = Union_.from(rhsValues.assumeNonEmpty)
-            state.fill(lhs, unionType)
-            ZonkResult.Done
-        }
-      }
-    }
-  }
-
+  /** Attempts to unify two terms without reporting errors.
+    * Used for testing type compatibility without side effects.
+    * Returns true if unification is possible.
+    */
   def tryUnify(lhs: Term, rhs: Term)(using
       state: StateAbility[Tyck],
       localCtx: Context
@@ -207,6 +173,12 @@ trait TyckPropagator extends ElaboraterCommon {
     (lhsResolved, rhsResolved) match {
       case (Type(level1, _), Type(level2, _)) =>
         level1 == level2
+
+      case (ListType(elem1, _), ListType(elem2, _)) =>
+        tryUnify(elem1, elem2)
+
+      case (LevelFinite(_, _), LevelUnrestricted(_)) => true
+      case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => true
 
       case _ => false
     }
@@ -271,6 +243,79 @@ trait TyckPropagator extends ElaboraterCommon {
       ZonkResult.Done
   }
 
+  /** Propagator for handling union types.
+    * Ensures that each right-hand side type is assignable to the left-hand side type.
+    */
+  case class UnionOf(
+      lhs: CellId[Term],
+      rhs: Vector[CellId[Term]],
+      cause: Expr
+  )(using Context)
+      extends Propagator[Tyck] {
+    override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+    override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
+    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+      val lhsValueOpt = state.readStable(lhs)
+      val rhsValuesOpt = rhs.map(state.readStable)
+
+      if (lhsValueOpt.isDefined && rhsValuesOpt.forall(_.isDefined)) {
+        val lhsValue = lhsValueOpt.get
+        val rhsValues = rhsValuesOpt.map(_.get)
+
+        // Check that each rhsValue is assignable to lhsValue
+        val assignable = rhsValues.forall { rhsValue =>
+          // Skip self-unification to prevent infinite loops
+          if (lhsValue == rhsValue) true
+          else {
+            unify(lhsValue, rhsValue, cause)
+            true // Assuming unify reports errors internally
+          }
+        }
+        assignable
+      } else {
+        // Not all values are available yet
+        false
+      }
+    }
+
+    override def naiveZonk(
+        needed: Vector[CellIdAny]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      val lhsValueOpt = state.readStable(lhs)
+      val rhsValuesOpt = rhs.map(state.readStable)
+
+      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
+      if (unknownRhs.nonEmpty) {
+        // Wait for all rhs values to be known
+        ZonkResult.Require(unknownRhs.toVector)
+      } else {
+        val rhsValues = rhsValuesOpt.map(_.get)
+
+        lhsValueOpt match {
+          case Some(lhsValue) =>
+            // LHS is known, unify each RHS with LHS
+            rhsValues.foreach { rhsValue =>
+              // Skip self-unification to prevent infinite loops
+              if (lhsValue != rhsValue) {
+                unify(lhsValue, rhsValue, cause)
+              }
+            }
+            ZonkResult.Done
+          case None =>
+            // LHS is unknown, create UnionType from RHS values and set LHS
+            val unionType = Union_.from(rhsValues.assumeNonEmpty)
+            state.fill(lhs, unionType)
+            ZonkResult.Done
+        }
+      }
+    }
+  }
+
+  /** t is rhs, listT is lhs 
+    * Propagator for list type unification
+    */
   case class ListOf(tRhs: CellId[Term], listTLhs: CellId[Term], cause: Expr)(using
       ck: Tyck,
       localCtx: Context
