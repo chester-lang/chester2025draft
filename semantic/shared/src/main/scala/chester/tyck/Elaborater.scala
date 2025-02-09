@@ -5,34 +5,9 @@ import chester.syntax.concrete.*
 import chester.syntax.core.{*, given}
 import chester.tyck.*
 import chester.utils.*
-import chester.utils.propagator.{CommonPropagator, ProvideCellId, ProvideImpl, ProvideMutable}
+import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
-import chester.reduce.{Reducer, ReduceContext, NaiveReducer}
-import chester.syntax.concrete.{
-  ExprMeta,
-  DotCall,
-  Identifier,
-  ObjectExpr,
-  ObjectExprClause,
-  ObjectExprClauseOnValue,
-  DesaltFunctionCall,
-  Tuple
-}
-import chester.syntax.core.{
-  Term,
-  ObjectTerm,
-  ObjectType,
-  ObjectClauseValueTerm,
-  FieldAccessTerm,
-  ErrorTerm,
-  Function,
-  TelescopeTerm,
-  Type
-}
-import chester.tyck.TyckPropagator.Unify
-import chester.tyck.ElaboraterFunctionCall.UnifyFunctionCall
-import chester.tyck.{TyckPropagator, ElaboraterFunctionCall}
 
 import scala.language.implicitConversions
 import scala.util.boundary
@@ -215,18 +190,8 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             case Identifier(fieldName, _) =>
               val recordTy = newType
               val recordTerm = elab(recordExpr, recordTy, effects)
-              // Only reduce if needed to check field access
-              val reducedRecordTerm = recordTerm match {
-                case r: RecordStmtTerm => r  // Already a record, no need to reduce
-                case _ => 
-                  given ReduceContext = ReduceContext()
-                  given Reducer = NaiveReducer
-                  Reducer.reduce(recordTerm)  // Reduce only if needed
-              }
-              val resultTerm = FieldAccessTerm(reducedRecordTerm, fieldName, toTerm(ty), convertMeta(meta))
+              val resultTerm = FieldAccessTerm(recordTerm, fieldName, toTerm(ty), convertMeta(meta))
               state.addPropagator(RecordFieldPropagator(recordTy, fieldName, ty, expr))
-              // Add a propagator for the record type itself
-              state.addPropagator(Unify(recordTy, toId(reducedRecordTerm), expr))
               resultTerm
             case _ =>
               val problem = InvalidFieldName(fieldExpr)

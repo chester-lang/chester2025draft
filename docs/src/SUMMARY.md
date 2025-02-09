@@ -1,18 +1,6 @@
-# Summary
-
-[Introduction](README.md)
-
-# User Guide
-- [User Guide](guide/README.md)
-  - [Records](guide/records.md)
-  - [Statements](guide/statements.md)
-  - [Traits and Interfaces](guide/traits-and-interfaces.md)
-
-# Development
-- [Development Guide](development/README.md)
-  - [Development Guidelines](development/index.md)
-  - [Type System](development/type-system.md)
-  - [Testing](development/testing.md)
-
-# Reference
-- [Reference Guide](reference/README.md)
+# https://github.com/rust-lang-nursery/mdBook/issues/677
+- [Chester](README.md)
+- [Record Syntax in Chester](Record.md)
+- [Development Memo](development.md)
+- [Statements](statements.md)
+- [Traits and Interfaces in Chester](trait-and-interface.md)
