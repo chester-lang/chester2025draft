@@ -3,6 +3,7 @@ package chester.readerv2
 import chester.error.{Pos, RangeInFile, Reporter, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
+import chester.utils.getCodePoints
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
@@ -41,13 +42,13 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val startUtf16: Int :| Positive0 = Math
       .max(
         startPos,
-        source.substring(0, startPos).codePoints().count().toInt
+        source.substring(0, startPos).getCodePoints.size
       )
       .refineUnsafe[Positive0]
     val endUtf16: Int :| Positive0 = Math
       .max(
         endPos,
-        source.substring(0, endPos).codePoints().count().toInt
+        source.substring(0, endPos).getCodePoints.size
       )
       .refineUnsafe[Positive0]
     val lineUtf16: Int :| Positive0 = line.refineUnsafe[Positive0]
