@@ -63,6 +63,22 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     val term = elab(expr, ty, effects)
     toId(term)
   }
+
+  def unify(lhs: Term, rhs: Term, cause: Expr)(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Unit = {
+    if (lhs == rhs) return
+    // Use TypeLevel reduction for type equality checking
+    given ReduceContext = localCtx.toReduceContext
+    val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
+    val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+    if (lhsResolved == rhsResolved) return
+    (lhsResolved, rhsResolved) match {
+      // ... rest of the match cases ...
+    }
+  }
 }
 
 trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFunction with ElaboraterFunctionCall with ElaboraterBlock {
@@ -190,8 +206,22 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             case Identifier(fieldName, _) =>
               val recordTy = newType
               val recordTerm = elab(recordExpr, recordTy, effects)
+              // Keep original term in elaboration result but use reduced type for checking
               val resultTerm = FieldAccessTerm(recordTerm, fieldName, toTerm(ty), convertMeta(meta))
-              state.addPropagator(RecordFieldPropagator(recordTy, fieldName, ty, expr))
+              // Use TypeLevel reduction internally for type checking
+              given ReduceContext = localCtx.toReduceContext
+              val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
+              reducedRecordTy match {
+                case RecordType(fields, _) =>
+                  fields.find(_.name == fieldName) match {
+                    case Some(field) => 
+                      state.addPropagator(Unify(ty, field.ty, expr))
+                    case None =>
+                      ck.reporter.apply(FieldNotFound(fieldName, reducedRecordTy, expr))
+                  }
+                case _ =>
+                  ck.reporter.apply(NotARecord(reducedRecordTy, expr))
+              }
               resultTerm
             case _ =>
               val problem = InvalidFieldName(fieldExpr)
