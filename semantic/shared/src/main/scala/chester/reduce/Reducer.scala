@@ -2,8 +2,19 @@ package chester.reduce
 
 import chester.syntax.core.*
 
+/** A reducer that can reduce terms to their normal forms.
+  * 
+  * IMPORTANT: Always use the passed reducer `r` for recursion, never `this.reduce` directly.
+  * This allows other reducers to be composed/wrapped around this one.
+  */
 trait Reducer {
   def reduce(term: Term)(using ReduceContext, Reducer): Term
+}
+
+/** Controls how aggressively terms are reduced */
+enum ReduceMode {
+  case TypeLevel // Only reduce type-level computations
+  case Normal    // Normal reduction strategy
 }
 
 object Reducer {
@@ -11,7 +22,19 @@ object Reducer {
 }
 
 object NaiveReducer extends Reducer {
-  override def reduce(term: Term)(using ctx: ReduceContext, r: Reducer): Term = term match {
+  /** Check if a term is a type-level computation that should be reduced */
+  private def isTypeLevel(term: Term): Boolean = term match {
+    case FCallTerm(f, _, _) => f match {
+      case Function(FunctionType(_, retTy, _, _), _, _) => retTy match {
+        case Type(_, _) => true
+        case _ => false
+      }
+      case _ => false
+    }
+    case _ => false
+  }
+
+  def reduce(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = term match {
     // WHNF terms - return as is
     case t: WHNF => t
 
@@ -35,15 +58,21 @@ object NaiveReducer extends Reducer {
         )
       )
       reducedF match {
-        case Function(FunctionType(telescopes, _, _, _), body, _) =>
+        case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
           // Substitute args into body
           val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
             telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
               acc.substitute(param.bind, arg.value)
             }
           }
-          // Reduce the substituted body
-          r.reduce(substitutedBody)
+          // Only reduce body for normal mode or type-level functions in type-level mode
+          mode match {
+            case ReduceMode.Normal => r.reduce(substitutedBody)
+            case ReduceMode.TypeLevel => retTy match {
+              case Type(_, _) => r.reduce(substitutedBody)
+              case _ => substitutedBody
+            }
+          }
         case _ => FCallTerm(reducedF, reducedArgs, meta)
       }
     }
@@ -66,4 +95,8 @@ object NaiveReducer extends Reducer {
     // For other cases, leave as is for now
     case other => other
   }
+
+  // Default to normal reduction mode for backward compatibility
+  override def reduce(term: Term)(using ctx: ReduceContext, r: Reducer): Term = 
+    reduce(term, ReduceMode.Normal)
 }
