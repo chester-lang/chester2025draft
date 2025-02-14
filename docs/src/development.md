@@ -104,20 +104,21 @@ The codebase provides implicit convert functions for these cases, so explicit ty
 ### Reduction During Type Checking
 
 1. **Keep Original Forms**
-   - The elaborator should preserve original terms in the elaborated result whenever possible
-   - Reduced forms should only be used internally during type checking
-   - This makes the elaborated code closer to source code, making it easier to:
-     - Debug and understand the code
-     - Apply further transformations
-     - Generate better error messages
+   - The elaborator MUST preserve original terms in the elaborated result
+   - NEVER reduce during elaboration
+   - Only use reduction internally during type checking when absolutely necessary
+   - This makes the elaborated code identical to source code, making it:
+     - Easier to debug
+     - Easier to understand
+     - Better for error messages
+     - More suitable for further transformations
 
 2. **When to Reduce**
-   - Only reduce terms when needed for type checking, such as:
-     - Checking field access on type-level functions
-     - Resolving type equality
-     - Evaluating type-level computations
-   - Use `ReduceMode.TypeLevel` for type-level computations
-   - Use `ReduceMode.Normal` only when full reduction is required
+   - Only TWO places should use reduction:
+     1. Type equality checking in unification
+     2. Field access checking on type-level terms
+   - Use `ReduceMode.TypeLevel` for these internal reductions
+   - NEVER use reduction in elaborated results
 
 Example:
 ```scala
@@ -126,77 +127,116 @@ def idType(x: Type): Type = x;
 let aT = idType(A);
 def getA(x: aT): Integer = x.a;
 
-// During type checking: reduce idType(A) to check field access
-// But in elaborated result: preserve idType(A) in the type annotation
+// WRONG - reducing during elaboration:
+LetStmtTerm(localv, reducer.reduce(idType(A)), ty, meta)
+
+// RIGHT - keeping original term:
+LetStmtTerm(localv, idType(A), ty, meta)
+
+// RIGHT - internal reduction only for field checking:
+def checkFieldAccess(recordTy: Term, field: Name): Term = {
+  given ReduceContext = localCtx.toReduceContext
+  val reducedTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
+  // Check field exists, but keep original term in result
+  ...
+}
 ```
 
 ### Reduction Context and Type Checking
 
 1. **Reduction Context Setup**
    - Each `Context` instance provides its own reduction context via `toReduceContext`
-   - The default reducer is `NaiveReducer`, provided as a given instance in `Context`
-   - During type checking, use the context's reduction capabilities:
-     ```scala
-     given ReduceContext = localCtx.toReduceContext
-     val reducedTerm = NaiveReducer.reduce(term, ReduceMode.TypeLevel)
-     ```
+   - Only create reduction context when needed for type checking
+   - NEVER create reduction context during elaboration
 
 2. **When to Use Reduction Context**
-   - For type equality checking
-   - When evaluating type-level expressions
-   - During field access resolution on complex types
-   - Any time type-level computation is needed
+   - ONLY for internal type checking operations:
+     - Type equality checking
+     - Field access verification
+   - NEVER for elaboration or term construction
 
 Example:
 ```scala
-// When checking field access on a type:
-given ReduceContext = localCtx.toReduceContext
-val reducedRecordTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-reducedRecordTy match {
-  case RecordType(fields, _) => // Work with the reduced type
-  case _ => // Handle non-record types
+// WRONG - reducing during elaboration:
+def processLetLetDefStmt(...) = {
+  val reduced = NaiveReducer.reduce(expr)  // DON'T do this
+  ...
+}
+
+// RIGHT - only reduce during type checking:
+def unify(lhs: Term, rhs: Term) = {
+  given ReduceContext = localCtx.toReduceContext
+  val lhsReduced = NaiveReducer.reduce(lhs, ReduceMode.TypeLevel)
+  val rhsReduced = NaiveReducer.reduce(rhs, ReduceMode.TypeLevel)
+  // Compare reduced forms internally
 }
 ```
 
-### Pattern Matching and Type Usage
+### Implementation Guidelines
 
-1. Use concrete types without suffixes for pattern matching:
-```scala
-// CORRECT
-case t: BlockTerm => {
-  val reducedStatements = t.statements.map(stmt => r.reduce(stmt))
-  val reducedResult = r.reduce(t.result)
-  BlockTerm(reducedStatements, reducedResult, t.meta)
-}
+1. **Clear Phase Separation**
+   - Elaboration: NEVER reduces, only transforms source to core terms
+   - Type Checking: Uses reduction internally only when needed
+   - Keep these phases strictly separate
 
-// INCORRECT
-case t: BlockTermC[Term] => {
-  // Don't use *C suffix traits
-}
-```
+2. **Term Preservation**
+   - Always preserve original terms in elaborated results
+   - Use reduction only for internal type checking operations
+   - Never modify terms just for elaboration
 
-2. **DO NOT** use trait versions with suffixes (e.g., `*C`, `*T`):
-```scala
-// INCORRECT
-val reducedStatements = t.statements.map { case stmt: StmtTermT[Term] =>
-  r.reduce(stmt).asInstanceOf[StmtTermT[Term]]
-}
+3. **Minimal Reduction**
+   - Only reduce when immediately necessary
+   - Keep all reductions internal to type checker
+   - Never reduce speculatively or "just in case"
 
-// INCORRECT
-case t: BlockTermC[Term] => // Don't use *C suffix
+4. **Error Handling**
+   - Report errors using original, unreduced terms
+   - Keep source locations and original structure
+   - Make error messages match source code exactly
 
-// CORRECT
-val reducedStatements = t.statements.map(stmt => r.reduce(stmt))
-```
+### Common Mistakes to Avoid
 
-The codebase provides implicit convert functions for these cases, so explicit type annotations with trait suffixes are unnecessary.
+1. **Over-reduction**
+   ```scala
+   // WRONG:
+   def elaborate(expr: Expr): Term = {
+     NaiveReducer.reduce(transform(expr))  // Don't reduce during elaboration
+   }
 
-### Why This Matters
+   // RIGHT:
+   def elaborate(expr: Expr): Term = {
+     transform(expr)  // Keep original term structure
+   }
+   ```
 
-- Using concrete types ensures cross-platform compatibility
-- The convert functions handle type conversions safely and efficiently
-- Avoiding trait suffixes makes the code more maintainable
-- This approach leverages the type system to catch potential platform-specific issues at compile time 
+2. **Premature Reduction**
+   ```scala
+   // WRONG:
+   def checkType(expr: Expr): Term = {
+     val reduced = NaiveReducer.reduce(expr)  // Don't reduce before needed
+     ...
+   }
+
+   // RIGHT:
+   def checkType(expr: Expr): Term = {
+     // Only reduce when specifically needed for type checking
+     ...
+   }
+   ```
+
+3. **Loss of Source Structure**
+   ```scala
+   // WRONG:
+   def processLet(name: Name, value: Term): Term = {
+     val reduced = NaiveReducer.reduce(value)  // Don't reduce let bindings
+     LetStmtTerm(name, reduced, ...)
+   }
+
+   // RIGHT:
+   def processLet(name: Name, value: Term): Term = {
+     LetStmtTerm(name, value, ...)  // Keep original value
+   }
+   ```
 
 ## Type Checking Implementation Thinking
 

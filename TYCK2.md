@@ -49,73 +49,59 @@ object NaiveReducer extends Reducer {
 }
 ```
 
-Example:
-```chester
-def idType(x: Type): Type = x;
-let aT = idType(A);  // Use TypeLevel mode to reduce to A
-```
-
-### Step 2: Type-Level Let Bindings
-Enhance let binding handling:
-- Use TypeLevel reduction mode for type bindings
-- Maintain original terms in core representation
+### Step 2: Preserve Original Terms
+Key principle: Keep original terms in elaborated results, only reduce internally when needed.
 
 Example:
 ```chester
-let aT = A;
-let bT = aT;  // Use TypeLevel mode to resolve to A
+let aT = idType(A);  // Keep as idType(A) in elaborated result
+let bT = aT;         // Keep as aT in elaborated result
 ```
 
 ### Step 3: Field Access with Type Reduction
-Connect field access checking with reduction:
-- Use TypeLevel mode for type references in field access
+Use type-level reduction ONLY during field access checking:
+- Keep original term in elaborated result
+- Use reduction internally to verify field exists
 - Handle field access on reduced type values
 
 Example:
 ```chester
 record A(a: Integer);
-let aT = A;
-def getA1(x: aT): Integer = x.a;  // Use TypeLevel mode to reduce aT to A
+let aT = idType(A);
+def getA1(x: aT): Integer = x.a;  // Elaborated result keeps aT
+                                  // Internally reduce to check field
 ```
 
 ## Testing Strategy
-Test both reduction modes:
+Test both preservation and reduction:
 
-1. Type-level reduction:
+1. Term preservation:
 ```chester
 def idType(x: Type): Type = x;
-def id2(x: Type): Type = idType(x);
-let aT = id2(A);  // Should reduce to A in TypeLevel mode
+let aT = idType(A);  // Should stay as idType(A) in elaborated result
 ```
 
-2. Let binding reduction:
-```chester
-let aT = A;
-let bT = aT;  // Should resolve to A in TypeLevel mode
-let x = 1;    // Should not over-reduce in TypeLevel mode
-```
-
-3. Field access with reduction:
+2. Internal reduction for type checking:
 ```chester
 record A(a: Integer);
-def idType(x: Type): Type = x;
 let aT = idType(A);
-def getA1(x: aT): Integer = x.a;  // Should work with TypeLevel mode
+def getA1(x: aT): Integer = x.a;  // Should verify field exists by reduction
+                                  // But keep aT in elaborated result
 ```
 
 ## Implementation Thinking and Pitfalls
 
 ### When to Use Type-Level Reduction
 
-1. **DO** use type-level reduction for:
+1. **DO** use type-level reduction ONLY for:
    - Type equality checking in unification
-   - Field access on type-level computations
-   - Evaluating type expressions
+   - Field access checking on type-level terms
+   - NEVER in elaborated results
 
 2. **DO NOT** use type-level reduction for:
-   - Initial elaboration of let/def bindings
-   - Places where original terms should be preserved
-   - Regular value-level computations
+   - Elaboration of any terms
+   - Let/def binding processing
+   - Any place where original terms should be kept
 
 ### Common Pitfalls
 
@@ -123,35 +109,35 @@ def getA1(x: aT): Integer = x.a;  // Should work with TypeLevel mode
    ```chester
    let aT = A;
    let bT = aT;  // WRONG: Don't reduce to A during elaboration
-                 // RIGHT: Keep as aT, only reduce when needed for type checking
+                 // RIGHT: Keep as aT in elaborated result
    ```
 
 2. **Loss of Original Terms**
    ```chester
    def idType(x: Type): Type = x;
    let aT = idType(A);
-   def getA1(x: aT): Integer = x.a;  // Keep idType(A) in elaborated result
-                                     // Only reduce to A when checking field access
+   def getA1(x: aT): Integer = x.a;  // WRONG: Reducing idType(A) in result
+                                     // RIGHT: Keep idType(A), only reduce for checking
    ```
 
 3. **Incorrect Reduction Timing**
-   - Reducing too early loses source code structure
-   - Reducing too late causes type checking errors
-   - Reduction should happen during type checking, not elaboration
+   - WRONG: Reducing during elaboration
+   - RIGHT: Only reduce during type checking when needed
+   - Keep reduction internal to type checker
 
 ### Design Principles
 
 1. **Term Preservation**
-   - Keep original terms in core representation
-   - Preserve source code structure for better error messages
-   - Allow for future transformations
+   - Always keep original terms in elaborated result
+   - Never reduce terms just for elaboration
+   - Preserve source code structure exactly
 
-2. **Lazy Reduction**
-   - Only reduce when necessary for type checking
-   - Use type-level reduction mode to control evaluation
-   - Maintain balance between preservation and correctness
+2. **Minimal Reduction**
+   - Only reduce when immediately necessary
+   - Keep reduction internal to type checker
+   - Never reduce speculatively
 
-3. **Clear Reduction Boundaries**
-   - Separate elaboration from type checking
-   - Use reduction modes to control evaluation scope
-   - Keep reduction logic centralized in reducer 
+3. **Clear Boundaries**
+   - Elaboration never reduces
+   - Type checking reduces only when needed
+   - Keep original terms everywhere else 
