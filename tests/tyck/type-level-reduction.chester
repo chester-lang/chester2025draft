@@ -1,0 +1,22 @@
+// Test term preservation in elaborated results
+record A(a: Integer);
+def idType(x: Type): Type = x;
+let aT = idType(A);  // Should preserve idType(A)
+let bT = aT;         // Should preserve aT
+
+// Test field access with type-level reduction
+def getA1(x: aT): Integer = x.a;  // Should work via reduction
+def getA2(x: idType(A)): Integer = x.a;  // Should work via direct reduction
+
+// Test nested type-level computation
+let cT = idType(aT);  // Should preserve idType(aT)
+def getA3(x: cT): Integer = x.a;  // Should work via reduction
+
+// Test error cases
+def wrongType(x: Type): Type = B;  // Non-existent type
+let dT = wrongType(A);  // Should report error about B not found
+def getA4(x: dT): Integer = x.a;  // Should report error about field access
+
+// Test type equality with reduction
+def sameType(x: aT, y: A): Integer = x.a + y.a;  // Should work via reduction
+def sameType2(x: idType(A), y: A): Integer = x.a + y.a;  // Should work via reduction 
