@@ -91,72 +91,37 @@ def getA1(x: aT): Integer = x.a;  // Should verify field exists by reduction
 
 ## Implementation Notes
 
-### Key Design Decisions
+### When to Use Reduction
 
-1. **Reduction Context Simplicity**
-   - Current `ReduceContext` is intentionally minimal
-   - No state preservation needed between reductions
-   - Each reduction is independent during type checking
-   - Future extensibility possible without breaking changes
+Type-level reduction should only happen in two specific places:
 
-2. **Field Access Implementation**
-   ```scala
-   // Keep original term in elaboration result
-   val resultTerm = FieldAccessTerm(recordTerm, fieldName, ...)
-   // Only reduce internally for type checking
-   val reducedRecordTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-   ```
-   - Original terms preserved in elaborated result
-   - Type-level reduction only used internally
-   - Field checking done on reduced type
-   - Clean separation between elaboration and type checking
+1. During type equality checking in `unify` - This is necessary to determine if two types are equal after evaluating any type-level computations.
+2. During field access type checking - When checking field access on a type constructed by a type-level function, we need to reduce the type to see its structure.
 
-3. **Type-Level Reduction Control**
-   ```scala
-   case ReduceMode.TypeLevel => retTy match {
-     case Type(_, _) => r.reduce(substitutedBody)
-     case _ => substitutedBody
-   }
-   ```
-   - Strict control over when reduction happens
-   - Only reduces type-level computations
-   - Preserves original terms in other cases
-   - Maintains clean elaboration results
+### Preserving Original Terms
 
-4. **Let/Def Statement Handling**
-   - No reduction during elaboration
-   - Original terms preserved in bindings
-   - Type checking uses reduction only when needed
-   - Clean separation of concerns
+The elaborated result should preserve the original terms whenever possible:
 
-### Implementation Invariants
+1. In field access (`DotCall`), store the original term in `FieldAccessTerm` while using the reduced type only internally for checking.
+2. In let/def bindings, store the original terms without reduction.
+3. When adding bindings to the context, use the original unreduced terms.
 
-1. **Term Preservation**
-   - Original terms MUST be preserved in elaborated results
-   - No reduction during elaboration phase
-   - Reduction only used internally for type checking
-   - Source code structure maintained exactly
+### Common Pitfalls
 
-2. **Reduction Control**
-   - Type-level reduction ONLY in two places:
-     1. Type equality checking in unification
-     2. Field access checking on type-level terms
-   - All other cases MUST preserve original terms
-   - No speculative reduction
+1. DO NOT reduce terms during elaboration unless explicitly needed for type checking.
+2. DO NOT reflect internal reductions in the elaborated result.
+3. DO NOT reduce terms when adding them to the context.
+4. DO ensure that type-level reduction is used in `unify` for type equality checking.
+5. DO ensure that field access type checking uses type-level reduction while preserving original terms.
 
-3. **Clean Separation**
-   - Elaboration phase: transforms source to core terms
-   - Type checking phase: verifies types using reduction
-   - No mixing of concerns between phases
-   - Clear boundaries for each operation
+### Testing Strategy
 
-4. **Error Reporting**
-   - Error messages use original, unreduced terms
-   - Source locations preserved
-   - Error context matches source code exactly
-   - No reduced terms in error messages
+When implementing new features:
 
-These design decisions ensure that the implementation maintains clean elaboration results while still supporting type-level computation where needed.
+1. Write tests that verify original terms are preserved in elaborated results
+2. Write tests that verify type checking works correctly with type-level computation
+3. Write tests that verify field access works with types constructed by type-level functions
+4. Write tests that verify type equality checking works with reduced types
 
 ## Implementation Thinking and Pitfalls
 
