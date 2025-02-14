@@ -197,3 +197,122 @@ The codebase provides implicit convert functions for these cases, so explicit ty
 - The convert functions handle type conversions safely and efficiently
 - Avoiding trait suffixes makes the code more maintainable
 - This approach leverages the type system to catch potential platform-specific issues at compile time 
+
+## Type Checking Implementation Thinking
+
+### Core Principles
+
+1. **Separation of Concerns**
+   - Keep elaboration separate from type checking
+   - Maintain clear boundaries between phases
+   - Use appropriate reduction modes for each phase
+
+2. **Source Code Preservation**
+   - Preserve original terms whenever possible
+   - Only transform code when necessary for type checking
+   - Maintain source code structure for better debugging
+
+3. **Controlled Reduction**
+   - Use reduction modes to control evaluation
+   - Only reduce terms when needed for type checking
+   - Keep original forms in elaborated results
+
+### Common Implementation Pitfalls
+
+1. **Premature Reduction**
+   ```scala
+   // WRONG: Don't reduce during elaboration
+   def processLetLetDefStmt(...) = {
+     val wellTyped = NaiveReducer.reduce(elab(expr.body.get))
+     // ...
+   }
+
+   // RIGHT: Keep original terms
+   def processLetLetDefStmt(...) = {
+     val wellTyped = elab(expr.body.get)
+     // ...
+   }
+   ```
+
+2. **Incorrect Context Usage**
+   ```scala
+   // WRONG: Creating new context for each reduction
+   def reduce(term: Term): Term = {
+     val ctx = Context.default // Don't create new context
+     // ...
+   }
+
+   // RIGHT: Use passed context
+   def reduce(term: Term)(using ctx: ReduceContext): Term = {
+     // ...
+   }
+   ```
+
+3. **Type Checking vs. Elaboration Confusion**
+   ```scala
+   // WRONG: Mixing concerns
+   def elab(expr: Expr): Term = {
+     // Don't do type checking here
+     val reduced = NaiveReducer.reduce(term)
+     checkType(reduced)
+     // ...
+   }
+
+   // RIGHT: Separate concerns
+   def elab(expr: Expr): Term = {
+     // Only elaborate, preserve structure
+     // Type checking happens separately
+   }
+   ```
+
+### Best Practices
+
+1. **Error Handling**
+   - Report errors at appropriate phase
+   - Maintain source code locations
+   - Provide clear error messages
+   ```scala
+   // Good error reporting
+   case _ => 
+     ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+   ```
+
+2. **Context Management**
+   - Pass context explicitly using `given`
+   - Maintain context hierarchy
+   - Use appropriate context for each phase
+   ```scala
+   def check(using ctx: Context, ck: Tyck) = {
+     // Use passed context
+   }
+   ```
+
+3. **Type-Level Computation**
+   - Use type-level reduction only when needed
+   - Preserve original type terms
+   - Handle type equality carefully
+   ```scala
+   // Only reduce for type checking
+   def unify(lhs: Term, rhs: Term) = {
+     given ReduceContext = localCtx.toReduceContext
+     val lhsReduced = NaiveReducer.reduce(lhs, ReduceMode.TypeLevel)
+     // ...
+   }
+   ```
+
+### Implementation Guidelines
+
+1. **Phase Separation**
+   - Elaboration: Transform source to core terms
+   - Type Checking: Verify types and reduce when needed
+   - Reduction: Control evaluation with modes
+
+2. **Context Flow**
+   - Pass context through using `given`
+   - Update context appropriately
+   - Maintain context hierarchy
+
+3. **Error Management**
+   - Report errors at right phase
+   - Preserve source locations
+   - Clear error messages

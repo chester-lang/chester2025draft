@@ -101,4 +101,57 @@ record A(a: Integer);
 def idType(x: Type): Type = x;
 let aT = idType(A);
 def getA1(x: aT): Integer = x.a;  // Should work with TypeLevel mode
-``` 
+```
+
+## Implementation Thinking and Pitfalls
+
+### When to Use Type-Level Reduction
+
+1. **DO** use type-level reduction for:
+   - Type equality checking in unification
+   - Field access on type-level computations
+   - Evaluating type expressions
+
+2. **DO NOT** use type-level reduction for:
+   - Initial elaboration of let/def bindings
+   - Places where original terms should be preserved
+   - Regular value-level computations
+
+### Common Pitfalls
+
+1. **Over-reduction**
+   ```chester
+   let aT = A;
+   let bT = aT;  // WRONG: Don't reduce to A during elaboration
+                 // RIGHT: Keep as aT, only reduce when needed for type checking
+   ```
+
+2. **Loss of Original Terms**
+   ```chester
+   def idType(x: Type): Type = x;
+   let aT = idType(A);
+   def getA1(x: aT): Integer = x.a;  // Keep idType(A) in elaborated result
+                                     // Only reduce to A when checking field access
+   ```
+
+3. **Incorrect Reduction Timing**
+   - Reducing too early loses source code structure
+   - Reducing too late causes type checking errors
+   - Reduction should happen during type checking, not elaboration
+
+### Design Principles
+
+1. **Term Preservation**
+   - Keep original terms in core representation
+   - Preserve source code structure for better error messages
+   - Allow for future transformations
+
+2. **Lazy Reduction**
+   - Only reduce when necessary for type checking
+   - Use type-level reduction mode to control evaluation
+   - Maintain balance between preservation and correctness
+
+3. **Clear Reduction Boundaries**
+   - Separate elaboration from type checking
+   - Use reduction modes to control evaluation scope
+   - Keep reduction logic centralized in reducer 
