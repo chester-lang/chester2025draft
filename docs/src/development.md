@@ -130,6 +130,34 @@ def getA(x: aT): Integer = x.a;
 // But in elaborated result: preserve idType(A) in the type annotation
 ```
 
+### Reduction Context and Type Checking
+
+1. **Reduction Context Setup**
+   - Each `Context` instance provides its own reduction context via `toReduceContext`
+   - The default reducer is `NaiveReducer`, provided as a given instance in `Context`
+   - During type checking, use the context's reduction capabilities:
+     ```scala
+     given ReduceContext = localCtx.toReduceContext
+     val reducedTerm = NaiveReducer.reduce(term, ReduceMode.TypeLevel)
+     ```
+
+2. **When to Use Reduction Context**
+   - For type equality checking
+   - When evaluating type-level expressions
+   - During field access resolution on complex types
+   - Any time type-level computation is needed
+
+Example:
+```scala
+// When checking field access on a type:
+given ReduceContext = localCtx.toReduceContext
+val reducedRecordTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
+reducedRecordTy match {
+  case RecordType(fields, _) => // Work with the reduced type
+  case _ => // Handle non-record types
+}
+```
+
 ### Pattern Matching and Type Usage
 
 1. Use concrete types without suffixes for pattern matching:

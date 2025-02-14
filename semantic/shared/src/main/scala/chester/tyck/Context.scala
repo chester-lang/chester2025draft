@@ -5,6 +5,8 @@ import chester.syntax.accociativity.OperatorsContext
 import chester.syntax.core.*
 import chester.tyck.api.SymbolCollector
 import chester.uniqid.UniqidOf
+import chester.reduce.ReduceContext
+import chester.reduce.{Reducer, NaiveReducer}
 
 import scala.collection.immutable.HashMap
 
@@ -93,6 +95,10 @@ case class Context(
   def getTypeDefinitionById(id: UniqidOf[TypeDefinition]): Option[TypeDefinition] = {
     typeDefinitions.get(id)
   }
+
+  def toReduceContext: ReduceContext = ReduceContext() // TODO: Implement proper state handling
+
+  given Reducer = NaiveReducer
 }
 
 object Context {}

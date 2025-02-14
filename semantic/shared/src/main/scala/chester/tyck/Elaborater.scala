@@ -3,6 +3,7 @@ package chester.tyck
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.{*, given}
+import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
 import chester.tyck.*
 import chester.utils.*
 import chester.utils.propagator.*
@@ -64,7 +65,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     toId(term)
   }
 
-  def unify(lhs: Term, rhs: Term, cause: Expr)(using
+  override def unify(lhs: Term, rhs: Term, cause: Expr)(using
       localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
@@ -72,11 +73,24 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     if (lhs == rhs) return
     // Use TypeLevel reduction for type equality checking
     given ReduceContext = localCtx.toReduceContext
+    given Reducer = localCtx.given_Reducer
     val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
     val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
     if (lhsResolved == rhsResolved) return
     (lhsResolved, rhsResolved) match {
-      // ... rest of the match cases ...
+      case (Meta(lhs), rhs) => unify(lhs, rhs, cause)
+      case (lhs, Meta(rhs)) => unify(lhs, rhs, cause)
+      case (ListType(elem1, _), ListType(elem2, _)) => unify(elem1, elem2, cause)
+      case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
+      case (x, Intersection(xs, _)) =>
+        if (xs.exists(tryUnify(x, _))) return
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
+        types1.zip(types2).foreach { case (t1, t2) => unify(t1, t2, cause) }
+      case (Type(level1, _), Type(level2, _)) => unify(level1, level2, cause)
+      case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
+      case (Union(_, _), Union(_, _)) => ???
+      case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
     }
   }
 }
@@ -210,19 +224,26 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               val resultTerm = FieldAccessTerm(recordTerm, fieldName, toTerm(ty), convertMeta(meta))
               // Use TypeLevel reduction internally for type checking
               given ReduceContext = localCtx.toReduceContext
+              given Reducer = localCtx.given_Reducer
               val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
               reducedRecordTy match {
-                case RecordType(fields, _) =>
+                case Meta(id) =>
+                  // If we have a meta term, add a propagator to check the field access once the type is known
+                  state.addPropagator(RecordFieldPropagator(id, fieldName, ty, expr))
+                  resultTerm
+                case RecordCallTerm(recordDef, _, _) =>
+                  val fields = recordDef.fields
                   fields.find(_.name == fieldName) match {
                     case Some(field) => 
-                      state.addPropagator(Unify(ty, field.ty, expr))
+                      state.addPropagator(Unify(ty, toId(field.ty), expr))
                     case None =>
-                      ck.reporter.apply(FieldNotFound(fieldName, reducedRecordTy, expr))
+                      ck.reporter.apply(FieldNotFound(fieldName, recordDef.name, expr))
                   }
+                  resultTerm
                 case _ =>
-                  ck.reporter.apply(NotARecord(reducedRecordTy, expr))
+                  ck.reporter.apply(NotARecordType(reducedRecordTy, expr))
+                  resultTerm
               }
-              resultTerm
             case _ =>
               val problem = InvalidFieldName(fieldExpr)
               ck.reporter.apply(problem)
