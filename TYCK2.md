@@ -89,6 +89,75 @@ def getA1(x: aT): Integer = x.a;  // Should verify field exists by reduction
                                   // But keep aT in elaborated result
 ```
 
+## Implementation Notes
+
+### Key Design Decisions
+
+1. **Reduction Context Simplicity**
+   - Current `ReduceContext` is intentionally minimal
+   - No state preservation needed between reductions
+   - Each reduction is independent during type checking
+   - Future extensibility possible without breaking changes
+
+2. **Field Access Implementation**
+   ```scala
+   // Keep original term in elaboration result
+   val resultTerm = FieldAccessTerm(recordTerm, fieldName, ...)
+   // Only reduce internally for type checking
+   val reducedRecordTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
+   ```
+   - Original terms preserved in elaborated result
+   - Type-level reduction only used internally
+   - Field checking done on reduced type
+   - Clean separation between elaboration and type checking
+
+3. **Type-Level Reduction Control**
+   ```scala
+   case ReduceMode.TypeLevel => retTy match {
+     case Type(_, _) => r.reduce(substitutedBody)
+     case _ => substitutedBody
+   }
+   ```
+   - Strict control over when reduction happens
+   - Only reduces type-level computations
+   - Preserves original terms in other cases
+   - Maintains clean elaboration results
+
+4. **Let/Def Statement Handling**
+   - No reduction during elaboration
+   - Original terms preserved in bindings
+   - Type checking uses reduction only when needed
+   - Clean separation of concerns
+
+### Implementation Invariants
+
+1. **Term Preservation**
+   - Original terms MUST be preserved in elaborated results
+   - No reduction during elaboration phase
+   - Reduction only used internally for type checking
+   - Source code structure maintained exactly
+
+2. **Reduction Control**
+   - Type-level reduction ONLY in two places:
+     1. Type equality checking in unification
+     2. Field access checking on type-level terms
+   - All other cases MUST preserve original terms
+   - No speculative reduction
+
+3. **Clean Separation**
+   - Elaboration phase: transforms source to core terms
+   - Type checking phase: verifies types using reduction
+   - No mixing of concerns between phases
+   - Clear boundaries for each operation
+
+4. **Error Reporting**
+   - Error messages use original, unreduced terms
+   - Source locations preserved
+   - Error context matches source code exactly
+   - No reduced terms in error messages
+
+These design decisions ensure that the implementation maintains clean elaboration results while still supporting type-level computation where needed.
+
 ## Implementation Thinking and Pitfalls
 
 ### When to Use Type-Level Reduction
