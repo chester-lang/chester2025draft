@@ -5,6 +5,7 @@ import chester.syntax.Name
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
+import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
 
 trait TyckPropagator extends ElaboraterCommon {
 
@@ -14,12 +15,19 @@ trait TyckPropagator extends ElaboraterCommon {
       state: StateAbility[Tyck]
   ): Unit = {
     if (lhs == rhs) return
-    val lhsResolved = readVar(lhs)
-    val rhsResolved = readVar(rhs)
+    // Use TypeLevel reduction for type equality checking
+    given ReduceContext = localCtx.toReduceContext
+    given Reducer = localCtx.given_Reducer
+    val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
+    val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
     if (lhsResolved == rhsResolved) return
     (lhsResolved, rhsResolved) match {
-      case (Meta(lhs), rhs) => unify(lhs, rhs, cause)
-      case (lhs, Meta(rhs)) => unify(lhs, rhs, cause)
+      case (Meta(lhs), rhs) => 
+        // Explicitly specify which overload to use
+        unify(lhs: CellId[Term], rhs: Term, cause)
+      case (lhs, Meta(rhs)) => 
+        // Explicitly specify which overload to use
+        unify(lhs: Term, rhs: CellId[Term], cause)
 
       // Structural unification for ListType
       case (ListType(elem1, _), ListType(elem2, _)) =>
@@ -29,13 +37,11 @@ trait TyckPropagator extends ElaboraterCommon {
 
       case (x, Intersection(xs, _)) =>
         if (xs.exists(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause)) // TODO
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
 
       // Structural unification for TupleType
       case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
-        types1.zip(types2).foreach { case (t1, t2) =>
-          unify(t1, t2, cause)
-        }
+        types1.zip(types2).foreach { case (t1, t2) => unify(t1, t2, cause) }
 
       // Type levels: unify levels
       case (Type(level1, _), Type(level2, _)) =>
@@ -48,7 +54,6 @@ trait TyckPropagator extends ElaboraterCommon {
       // Base case: types do not match
       case _ =>
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-
     }
   }
 
@@ -191,23 +196,26 @@ trait TyckPropagator extends ElaboraterCommon {
       localCtx: Context
   ): Boolean = {
     if (lhs == rhs) return true
-    val lhsResolved = lhs match {
+    // Use TypeLevel reduction for type equality checking
+    given ReduceContext = localCtx.toReduceContext
+    given Reducer = localCtx.given_Reducer
+    val lhsResolved = NaiveReducer.reduce(lhs, ReduceMode.TypeLevel) match {
       case varCall: ReferenceCall =>
         localCtx.getKnown(varCall) match {
           case Some(tyAndVal) =>
             state.readStable(tyAndVal.valueId).getOrElse(lhs)
           case None => lhs
         }
-      case _ => lhs
+      case other => other
     }
-    val rhsResolved = rhs match {
+    val rhsResolved = NaiveReducer.reduce(rhs, ReduceMode.TypeLevel) match {
       case varCall: ReferenceCall =>
         localCtx.getKnown(varCall) match {
           case Some(tyAndVal) =>
             state.readStable(tyAndVal.valueId).getOrElse(rhs)
           case None => rhs
         }
-      case _ => rhs
+      case other => other
     }
     if (lhsResolved == rhsResolved) return true
 
