@@ -96,7 +96,12 @@ case class Context(
     typeDefinitions.get(id)
   }
 
-  def toReduceContext: ReduceContext = ReduceContext() // TODO: Implement proper state handling
+  def toReduceContext: ReduceContext = {
+    ReduceContext(
+      knownMap = knownMap,
+      typeDefinitions = typeDefinitions
+    )
+  }
 
   given Reducer = NaiveReducer
 }
