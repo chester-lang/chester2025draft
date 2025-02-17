@@ -6,6 +6,9 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
 import chester.utils.propagator.CommonPropagator
+import scala.util.boundary
+import scala.util.boundary.break
+import scala.language.implicitConversions
 
 trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[Tyck] {
 
@@ -92,46 +95,52 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
   def readVar(
       x: Term
   )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term = {
-    var result = x
-    while (true) {
-      result match {
-        case varCall: ReferenceCall =>
-          localCtx.getKnown(varCall) match {
-            case Some(tyAndVal) =>
-              result = state.readStable(tyAndVal.valueId).getOrElse {
-                return result
-              }
-            case None => return result
-          }
-        case _ => return result
+    boundary {
+      var result = x
+      while (true) {
+        result match {
+          case varCall: ReferenceCall =>
+            localCtx.getKnown(varCall) match {
+              case Some(tyAndVal) =>
+                state.readStable(tyAndVal.valueId) match {
+                  case Some(value) => result = value
+                  case None => break(result)
+                }
+              case None => break(result)
+            }
+          case _ => break(result)
+        }
       }
+      result
     }
-    result
   }
 
   def readMetaVar(
       x: Term
   )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term = {
-    var result = x
-    while (true) {
-      result match {
-        case varCall: ReferenceCall =>
-          localCtx.getKnown(varCall) match {
-            case Some(tyAndVal) =>
-              result = state.readStable(tyAndVal.valueId).getOrElse {
-                return result
-              }
-            case None => return result
-          }
-        case Meta(id) =>
-          state.readStable(id) match {
-            case Some(x) => result = x
-            case None    => return result
-          }
-        case _ => return result
+    boundary {
+      var result = x
+      while (true) {
+        result match {
+          case varCall: ReferenceCall =>
+            localCtx.getKnown(varCall) match {
+              case Some(tyAndVal) =>
+                state.readStable(tyAndVal.valueId) match {
+                  case Some(value) => result = value
+                  case None => break(result)
+                }
+              case None => break(result)
+            }
+          case Meta(id) =>
+            state.readStable(id) match {
+              case Some(x) => result = x
+              case None    => break(result)
+            }
+          case _ => break(result)
+        }
       }
+      result
     }
-    result
   }
 
   class MutableContext(var ctx: Context) {
