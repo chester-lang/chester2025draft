@@ -226,8 +226,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               given ReduceContext = localCtx.toReduceContext
               given Reducer = localCtx.given_Reducer
               val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
-
-              def handleRecordType(recordTy: Term): Term = recordTy match {
+              reducedRecordTy match {
                 case Meta(id) =>
                   // If we have a meta term, add a propagator to check the field access once the type is known
                   state.addPropagator(RecordFieldPropagator(id, fieldName, ty, expr))
@@ -241,71 +240,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       ck.reporter.apply(FieldNotFound(fieldName, recordDef.name, expr))
                   }
                   resultTerm
-                case FCallTerm(f, args, _) =>
-                  // Try to reduce with type-level reduction first
-                  given ReduceContext = localCtx.toReduceContext
-                  given Reducer = localCtx.given_Reducer
-                  val reducedTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-                  if (reducedTy != recordTy) {
-                    handleRecordType(reducedTy)
-                  } else {
-                    // If type-level reduction didn't work, try evaluating the function
-                    f match {
-                      case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-                        // Substitute args into body
-                        val substitutedBody = telescopes.zip(args).foldLeft(body) { case (acc, (telescope, calling)) =>
-                          telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-                            acc.substitute(param.bind, arg.value)
-                          }
-                        }
-                        // Try reducing the substituted body
-                        val evaluated = NaiveReducer.reduce(substitutedBody, ReduceMode.TypeLevel)
-                        if (evaluated != substitutedBody) {
-                          handleRecordType(evaluated)
-                        } else {
-                          // If we still can't reduce, try normal reduction
-                          val normalReduced = NaiveReducer.reduce(evaluated, ReduceMode.Normal)
-                          if (normalReduced != evaluated) {
-                            handleRecordType(normalReduced)
-                          } else {
-                            ck.reporter.apply(NotARecordType(recordTy, expr))
-                            resultTerm
-                          }
-                        }
-                      case _ =>
-                        // Try normal reduction as a last resort
-                        val normalReduced = NaiveReducer.reduce(recordTy, ReduceMode.Normal)
-                        if (normalReduced != recordTy) {
-                          handleRecordType(normalReduced)
-                        } else {
-                          ck.reporter.apply(NotARecordType(recordTy, expr))
-                          resultTerm
-                        }
-                    }
-                  }
-                case ref: ReferenceCall =>
-                  // If we have a reference, try to reduce it
-                  given ReduceContext = localCtx.toReduceContext
-                  given Reducer = localCtx.given_Reducer
-                  val reducedRef = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-                  if (reducedRef != recordTy) {
-                    handleRecordType(reducedRef)
-                  } else {
-                    // Try normal reduction
-                    val normalReduced = NaiveReducer.reduce(recordTy, ReduceMode.Normal)
-                    if (normalReduced != recordTy) {
-                      handleRecordType(normalReduced)
-                    } else {
-                      ck.reporter.apply(NotARecordType(recordTy, expr))
-                      resultTerm
-                    }
-                  }
                 case _ =>
-                  ck.reporter.apply(NotARecordType(recordTy, expr))
+                  ck.reporter.apply(NotARecordType(reducedRecordTy, expr))
                   resultTerm
               }
-
-              handleRecordType(reducedRecordTy)
             case _ =>
               val problem = InvalidFieldName(fieldExpr)
               ck.reporter.apply(problem)

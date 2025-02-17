@@ -10,166 +10,99 @@ def getA(x: A): Integer = x.a;
 def getA1(x: aT): Integer = x.a;
 ```
 
-## Work In Progress - Commit Note (2024-03-21)
+## Current System
+- `Elaborater.scala`: Type checks and elaborates terms, with support for evaluation during checking
+- `Reducer.scala`: Reduces terms to normal form, including function application
+- System preserves original terms in core representation unless reduction needed
 
-### Changes Made
-1. Enhanced function call reduction:
-   - Added proper argument substitution
-   - Implemented two-phase reduction strategy (type-level then normal)
-   - Fixed handling of non-function cases
+## Implementation Plan
 
-2. Improved field access handling:
-   - Added type-level reduction as first attempt
-   - Implemented fallback to normal reduction
-   - Preserved original terms in elaborated results
+### Step 1: Add Reduction Modes
+Modify `NaiveReducer` to support different reduction modes:
+- Add `ReduceMode` enum for controlling reduction strategy
+- Make recursion explicit using passed reducer
+- Support type-level reduction mode
 
-3. Enhanced reference resolution:
-   - Added proper context handling with `knownMap`
-   - Implemented recursive resolution strategy
-   - Added support for type definitions
+Code Changes:
+```scala
+/** Controls how aggressively terms are reduced */
+enum ReduceMode {
+  case TypeLevel // Only reduce type-level computations
+  case Normal    // Normal reduction strategy
+}
 
-### Known Issues
-1. Tests not passing:
-   - `NotARecordType` error still occurring in some nested type-level computations
-   - Test file: `tests/tyck/type-level-reduction.chester`
-   - Specific test: `sameType2(x: idType(A)): Integer = x.a`
+object NaiveReducer extends Reducer {
+  def reduce(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = {
+    // ... match on term ...
+    case FCallTerm(f, args, meta) =>
+      // ... reduce function and args ...
+      case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
+        val substitutedBody = /* ... */
+        mode match {
+          case ReduceMode.Normal => r.reduce(substitutedBody)
+          case ReduceMode.TypeLevel => retTy match {
+            case Type(_, _) => r.reduce(substitutedBody)
+            case _ => substitutedBody
+          }
+        }
+  }
+}
+```
 
-2. Current hypothesis:
-   - Function call reduction may need to be more aggressive in type-level mode
-   - Reference resolution might need to try both reduction modes
-   - May need to enhance reduction order in field access checking
+### Step 2: Preserve Original Terms
+Key principle: Keep original terms in elaborated results, only reduce internally when needed.
 
-### Next Immediate Steps
-1. Fix test failures:
-   - Add more test cases for nested type-level computations
-   - Improve reduction strategy for function calls
-   - Add better error reporting for debugging
+Example:
+```chester
+let aT = idType(A);  // Keep as idType(A) in elaborated result
+let bT = aT;         // Keep as aT in elaborated result
+```
 
-2. Planned improvements:
-   - Add reduction trace for debugging
-   - Consider caching reduced terms
-   - Implement cycle detection
+### Step 3: Field Access with Type Reduction
+Use type-level reduction ONLY during field access checking:
+- Keep original term in elaborated result
+- Use reduction internally to verify field exists
+- Handle field access on reduced type values
 
-Note: This is a mid-work commit. Tests are not passing yet, but the core implementation of type-level reduction is in place.
+Example:
+```chester
+record A(a: Integer);
+let aT = idType(A);
+def getA1(x: aT): Integer = x.a;  // Elaborated result keeps aT
+                                  // Internally reduce to check field
+```
 
-## Current Implementation Status
+## Testing Strategy
+Test both preservation and reduction:
 
-### Reduction Context
-- `ReduceContext.scala`: Provides context for reduction with:
-  - `knownMap`: Maps reference IDs to their known values
-  - `typeDefinitions`: Maps type definition IDs to their definitions
-  - `resolve` method for resolving references to their known values
+1. Term preservation:
+```chester
+def idType(x: Type): Type = x;
+let aT = idType(A);  // Should stay as idType(A) in elaborated result
+```
 
-### Reducer Implementation
-- `Reducer.scala`: Implements term reduction with two modes:
-  - `ReduceMode.TypeLevel`: For type-level computations
-  - `ReduceMode.Normal`: For normal reduction
-
-Key features:
-1. Field Access Reduction:
-   ```scala
-   case FieldAccessTerm(target, field, fieldType, meta) => {
-     // Try type-level reduction first
-     val reducedTarget = r.reduce(target, ReduceMode.TypeLevel)
-     if (reducedTarget != target) {
-       FieldAccessTerm(reducedTarget, field, fieldType, meta)
-     } else {
-       // Fall back to normal reduction
-       val normalReducedTarget = r.reduce(target, ReduceMode.Normal)
-       FieldAccessTerm(normalReducedTarget, field, fieldType, meta)
-     }
-   }
-   ```
-
-2. Function Call Reduction:
-   ```scala
-   case FCallTerm(f, args, meta) => {
-     // First reduce function and args in current mode
-     val reducedF = r.reduce(f, mode)
-     val reducedArgs = args.map(calling =>
-       Calling(
-         calling.args.map(arg => CallingArgTerm(r.reduce(arg.value, mode), r.reduce(arg.ty), arg.name, arg.vararg, arg.meta)),
-         calling.implicitly,
-         calling.meta
-       )
-     )
-     
-     reducedF match {
-       case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-         // Substitute args into body
-         val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
-           telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-             acc.substitute(param.bind, arg.value)
-           }
-         }
-         // Try reducing in current mode first
-         val evaluated = r.reduce(substitutedBody, mode)
-         if (evaluated != substitutedBody) {
-           evaluated
-         } else {
-           // Try other mode if needed
-           val otherMode = mode match {
-             case ReduceMode.TypeLevel => ReduceMode.Normal
-             case ReduceMode.Normal => ReduceMode.TypeLevel
-           }
-           r.reduce(substitutedBody, otherMode)
-         }
-       case _ => 
-         // If not a function, try the other reduction mode
-         val otherMode = mode match {
-           case ReduceMode.TypeLevel => ReduceMode.Normal
-           case ReduceMode.Normal => ReduceMode.TypeLevel
-         }
-         r.reduce(term, otherMode)
-     }
-   }
-   ```
-
-3. Reference Resolution:
-   ```scala
-   case ref: ReferenceCall => {
-     val resolved = ctx.resolve(ref)
-     if (resolved != ref) {
-       r.reduce(resolved, mode)
-     } else {
-       ref
-     }
-   }
-   ```
-
-### Type Checking Strategy
-1. **Term Preservation**
-   - Original terms are preserved in elaborated results
-   - Reduction only happens internally during type checking
-   - Example:
-     ```chester
-     let aT = idType(A);  // Keeps idType(A) in result
-     ```
-
-2. **Type-Level Reduction**
-   - Used in two specific places:
-     1. Type equality checking in unification
-     2. Field access checking on type-level terms
-   - Example:
-     ```chester
-     def getA1(x: aT): Integer = x.a;  // Reduces aT to A internally
-     ```
-
-3. **Reduction Order**
-   - Try type-level reduction first for field access
-   - For function calls:
-     1. Reduce function and args in current mode
-     2. Try reducing result in current mode
-     3. Fall back to other mode if needed
-   - Handle reference resolution recursively
+2. Internal reduction for type checking:
+```chester
+record A(a: Integer);
+let aT = idType(A);
+def getA1(x: aT): Integer = x.a;  // Should verify field exists by reduction
+                                  // But keep aT in elaborated result
+```
 
 ## Testing Requirements
 
-### Test Cases
+### Before Committing Changes
+1. ALWAYS run `sbt rootJVM/test` before committing
+2. Fix any test failures before proceeding
+3. Add new tests for any new functionality
+4. Update existing tests when modifying behavior
+
+### Test Cases to Cover
 1. **Term Preservation**
    ```chester
    def idType(x: Type): Type = x;
    let aT = idType(A);  // Test elaborated result contains idType(A)
+   let bT = aT;         // Test elaborated result contains aT
    ```
 
 2. **Type-Level Reduction**
@@ -181,53 +114,152 @@ Key features:
    def getA2(x: idType(A)): Integer = x.a;  // Test direct type-level function application
    ```
 
-3. **Nested Computation**
+3. **Error Cases**
    ```chester
-   let cT = idType(aT);  // Test nested type-level computation
-   def getA3(x: cT): Integer = x.a;  // Should work via reduction
+   record A(a: Integer);
+   def wrongType(x: Type): Type = B;  // Non-existent type
+   let aT = wrongType(A);
+   def getA(x: aT): Integer = x.a;  // Should report clear error
    ```
 
-### Implementation Guidelines
-1. **Reduction Context**
-   - Properly initialize with knownMap and typeDefinitions
-   - Ensure reference resolution works correctly
-   - Handle cyclic references gracefully
+4. **Edge Cases**
+   ```chester
+   record A(a: Integer);
+   def idType(x: Type): Type = x;
+   let aT = idType(A);
+   let bT = idType(aT);  // Nested type-level computation
+   def getA(x: bT): Integer = x.a;  // Should work correctly
+   ```
 
-2. **Reducer Implementation**
-   - Handle both reduction modes correctly
-   - Properly handle function calls with argument substitution
-   - Support reference resolution with proper recursion control
-   - Maintain mode-specific reduction strategies
+### Test Implementation Guidelines
+1. **Test File Organization**
+   - Place tests in `tests/tyck/` directory
+   - Name test files descriptively (e.g., `type-level-reduction.chester`)
+   - Group related test cases together
 
-3. **Type Checking**
+2. **Test Coverage**
+   - Test both success and failure cases
+   - Test edge cases and corner cases
+   - Test error messages are clear and accurate
+   - Test term preservation in elaborated results
+
+3. **Test Verification**
+   - Verify elaborated results contain original terms
+   - Verify type checking works correctly
+   - Verify error messages match source code
+   - Verify no unnecessary reduction occurs
+
+## Implementation Requirements
+
+### Code Organization
+1. **Reducer Changes**
+   - Keep reduction modes in `Reducer.scala`
+   - Implement type-level reduction in `NaiveReducer`
+   - Make reduction context explicit
+
+2. **Type Checker Changes**
+   - Use type-level reduction in `unify` and field access
    - Preserve original terms in elaboration
-   - Use type-level reduction for type checking
-   - Handle error cases gracefully
-   - Provide clear error messages for reduction failures
+   - Keep reduction internal to type checker
 
-## Current Issues
-1. **NotARecordType Error**
-   - Still seeing this error in some test cases
-   - Current fixes:
-     - Improved function call reduction with proper arg substitution
-     - Added fallback to normal reduction when type-level fails
-     - Enhanced reference resolution
-   - Remaining work:
-     - Test more complex nested type-level computations
-     - Add better error reporting for reduction failures
-     - Consider adding reduction trace for debugging
+3. **Error Handling**
+   - Report errors using original terms
+   - Include source locations
+   - Make error messages clear and actionable
 
-## Next Steps
-1. Fix remaining test failures:
-   - Focus on nested type-level computation cases
-   - Add more test cases for complex scenarios
-2. Improve error reporting:
-   - Add reduction trace information
-   - Provide clearer messages for reduction failures
-3. Enhance reduction strategy:
-   - Consider caching reduced terms
-   - Add cycle detection for recursive types
-4. Documentation:
-   - Add examples of common reduction patterns
-   - Document error cases and their solutions
-   - Create troubleshooting guide 
+### Implementation Checklist
+- [ ] Add/update reduction modes in `Reducer.scala`
+- [ ] Update `unify` to use type-level reduction
+- [ ] Update field access checking to use type-level reduction
+- [ ] Add tests for term preservation
+- [ ] Add tests for type-level computation
+- [ ] Add tests for error cases
+- [ ] Update documentation
+- [ ] Run all tests before committing
+
+## Implementation Notes
+
+### When to Use Reduction
+
+Type-level reduction should only happen in two specific places:
+
+1. During type equality checking in `unify` - This is necessary to determine if two types are equal after evaluating any type-level computations.
+2. During field access type checking - When checking field access on a type constructed by a type-level function, we need to reduce the type to see its structure.
+
+### Preserving Original Terms
+
+The elaborated result should preserve the original terms whenever possible:
+
+1. In field access (`DotCall`), store the original term in `FieldAccessTerm` while using the reduced type only internally for checking.
+2. In let/def bindings, store the original terms without reduction.
+3. When adding bindings to the context, use the original unreduced terms.
+
+### Common Pitfalls
+
+1. DO NOT reduce terms during elaboration unless explicitly needed for type checking.
+2. DO NOT reflect internal reductions in the elaborated result.
+3. DO NOT reduce terms when adding them to the context.
+4. DO ensure that type-level reduction is used in `unify` for type equality checking.
+5. DO ensure that field access type checking uses type-level reduction while preserving original terms.
+
+### Testing Strategy
+
+When implementing new features:
+
+1. Write tests that verify original terms are preserved in elaborated results
+2. Write tests that verify type checking works correctly with type-level computation
+3. Write tests that verify field access works with types constructed by type-level functions
+4. Write tests that verify type equality checking works with reduced types
+
+## Implementation Thinking and Pitfalls
+
+### When to Use Type-Level Reduction
+
+1. **DO** use type-level reduction ONLY for:
+   - Type equality checking in unification
+   - Field access checking on type-level terms
+   - NEVER in elaborated results
+
+2. **DO NOT** use type-level reduction for:
+   - Elaboration of any terms
+   - Let/def binding processing
+   - Any place where original terms should be kept
+
+### Common Pitfalls
+
+1. **Over-reduction**
+   ```chester
+   let aT = A;
+   let bT = aT;  // WRONG: Don't reduce to A during elaboration
+                 // RIGHT: Keep as aT in elaborated result
+   ```
+
+2. **Loss of Original Terms**
+   ```chester
+   def idType(x: Type): Type = x;
+   let aT = idType(A);
+   def getA1(x: aT): Integer = x.a;  // WRONG: Reducing idType(A) in result
+                                     // RIGHT: Keep idType(A), only reduce for checking
+   ```
+
+3. **Incorrect Reduction Timing**
+   - WRONG: Reducing during elaboration
+   - RIGHT: Only reduce during type checking when needed
+   - Keep reduction internal to type checker
+
+### Design Principles
+
+1. **Term Preservation**
+   - Always keep original terms in elaborated result
+   - Never reduce terms just for elaboration
+   - Preserve source code structure exactly
+
+2. **Minimal Reduction**
+   - Only reduce when immediately necessary
+   - Keep reduction internal to type checker
+   - Never reduce speculatively
+
+3. **Clear Boundaries**
+   - Elaboration never reduces
+   - Type checking reduces only when needed
+   - Keep original terms everywhere else 
