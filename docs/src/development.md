@@ -157,4 +157,33 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
 ### Reduction Context and Type Checking
 
 1. **Reduction Context Setup**
-   - Each `Context` instance provides its own reduction context via `
+   - Each `Context` instance provides its own reduction context via `toReduceContext`
+   - This ensures consistent reduction behavior during type checking
+   - Allows for future extensions to reduction context
+
+2. **Type-Level Reduction**
+   - Only reduce type-level terms when necessary for type checking
+   - Keep original terms in elaborated results
+   - Use `ReduceMode.TypeLevel` to control reduction behavior
+
+3. **Field Access Checking**
+   - Use type-level reduction to verify field existence
+   - Keep original terms in field access expressions
+   - Report errors using original terms for better error messages
+
+### Common Pitfalls
+
+1. **Over-reduction**
+   - Don't reduce terms during elaboration
+   - Don't reduce terms when adding to context
+   - Only reduce when needed for type checking
+
+2. **Loss of Original Terms**
+   - Always preserve original terms in elaborated results
+   - Don't reflect internal reductions in output
+   - Keep source code structure intact
+
+3. **Incorrect Reduction Context**
+   - Always use proper reduction context from current context
+   - Don't create new reduction contexts unnecessarily
+   - Use consistent reduction mode for type checking

@@ -131,52 +131,6 @@ def getA1(x: aT): Integer = x.a;  // Should verify field exists by reduction
    def getA(x: bT): Integer = x.a;  // Should work correctly
    ```
 
-### Test Implementation Guidelines
-1. **Test File Organization**
-   - Place tests in `tests/tyck/` directory
-   - Name test files descriptively (e.g., `type-level-reduction.chester`)
-   - Group related test cases together
-
-2. **Test Coverage**
-   - Test both success and failure cases
-   - Test edge cases and corner cases
-   - Test error messages are clear and accurate
-   - Test term preservation in elaborated results
-
-3. **Test Verification**
-   - Verify elaborated results contain original terms
-   - Verify type checking works correctly
-   - Verify error messages match source code
-   - Verify no unnecessary reduction occurs
-
-## Implementation Requirements
-
-### Code Organization
-1. **Reducer Changes**
-   - Keep reduction modes in `Reducer.scala`
-   - Implement type-level reduction in `NaiveReducer`
-   - Make reduction context explicit
-
-2. **Type Checker Changes**
-   - Use type-level reduction in `unify` and field access
-   - Preserve original terms in elaboration
-   - Keep reduction internal to type checker
-
-3. **Error Handling**
-   - Report errors using original terms
-   - Include source locations
-   - Make error messages clear and actionable
-
-### Implementation Checklist
-- [ ] Add/update reduction modes in `Reducer.scala`
-- [ ] Update `unify` to use type-level reduction
-- [ ] Update field access checking to use type-level reduction
-- [ ] Add tests for term preservation
-- [ ] Add tests for type-level computation
-- [ ] Add tests for error cases
-- [ ] Update documentation
-- [ ] Run all tests before committing
-
 ## Implementation Notes
 
 ### When to Use Reduction
