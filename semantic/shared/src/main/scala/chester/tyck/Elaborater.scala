@@ -1,14 +1,19 @@
 package chester.tyck
 
-import chester.error.*
-import chester.syntax.concrete.*
-import chester.syntax.core.{*, given}
-import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
-import chester.tyck.*
-import chester.utils.*
-import chester.utils.propagator.*
-import chester.syntax.*
+import cats.implicits.*
+import chester.error.{Problem, Reporter, TyckProblem, VectorReporter, WithServerity, UnboundVariable, NotImplemented, NotImplementedFeature, FieldNotFound, NotARecordType}
+import chester.syntax.{Name, LoadedModules, ModuleRef, TAST, DefaultModule}
+import chester.syntax.concrete.{Expr, ExprMeta, Block, ObjectExpr, ObjectClause, FunctionExpr, DesaltFunctionCall, Identifier, IntegerLiteral, RationalLiteral, StringLiteral, SymbolLiteral, UnitExpr, ListExpr, TypeAnotationNoEffects, DotCall}
+import chester.syntax.core.{Term, Effects, Meta, Typeω, LocalV, ReferenceCall, TelescopeTerm, RecordStmtTerm, TraitStmtTerm, InterfaceStmtTerm, ObjectStmtTerm, StmtTerm, ExprStmtTerm, BlockTerm, DefStmtTerm, LetStmtTerm, UnitTerm_, ListTerm, ListType, AnyType0, Type0, Type, FieldAccessTerm, ObjectType, ObjectTerm, ObjectClauseValueTerm, AbstractIntTerm_, RationalTerm, StringTerm, SymbolTerm, UnitType, ErrorTerm, MetaTerm, FCallTerm}
+import chester.syntax.core.spec.{given, given_TypeF_Term_Type, OptionTermMeta}
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
+import chester.tyck.ElaboraterCommon.EffectsCell
+import chester.utils.{MutBox, flatMapOrdered, hasDuplication, assumeNonEmpty}
+import chester.utils.propagator.{StateAbility, Propagator, ZonkResult, ProvideCellId, Cell}
+import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
+import chester.reduce.ReduceContext.given_Conversion_Context_ReduceContext
+import chester.uniqid.{Uniqid, UniqidOf}
+import chester.resolve.{SimpleDesalt, resolveOpSeq}
 
 import scala.language.implicitConversions
 import scala.util.boundary
@@ -201,10 +206,18 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr @ TypeAnotationNoEffects(innerExpr, tyExpr, _) =>
         // Check the type annotation expression to get its type
         val declaredTyTerm = checkType(tyExpr)
-
+        // Try type-level reduction on the declared type
+        given ReduceContext = localCtx.toReduceContext
+        given Reducer = localCtx.given_Reducer
+        val reducedTyTerm = NaiveReducer.reduce(declaredTyTerm, ReduceMode.TypeLevel)
+        
+        // Unify with both the original and reduced types to maintain type preservation
         unify(ty, declaredTyTerm, expr)
+        if (reducedTyTerm != declaredTyTerm) {
+          unify(ty, reducedTyTerm, expr)
+        }
 
-        elab(innerExpr, declaredTyTerm, effects)
+        elab(innerExpr, reducedTyTerm, effects)
       case expr: FunctionExpr       => elabFunction(expr, ty, effects)
       case expr: Block              => elabBlock(expr, ty, effects)
       case expr: DesaltFunctionCall => elabFunctionCall(expr, ty, effects)
@@ -225,89 +238,81 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               // Use TypeLevel reduction internally for type checking
               given ReduceContext = localCtx.toReduceContext
               given Reducer = localCtx.given_Reducer
-              val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
+              val reducedRecordTy = summon[Reducer].reduce(toTerm(recordTy), ReduceMode.TypeLevel)
 
-              def handleRecordType(recordTy: Term): Term = recordTy match {
-                case Meta(id) =>
-                  // If we have a meta term, add a propagator to check the field access once the type is known
-                  state.addPropagator(RecordFieldPropagator(id, fieldName, ty, expr))
-                  resultTerm
-                case RecordCallTerm(recordDef, _, _) =>
-                  val fields = recordDef.fields
-                  fields.find(_.name == fieldName) match {
-                    case Some(field) => 
-                      state.addPropagator(Unify(ty, toId(field.ty), expr))
-                    case None =>
-                      ck.reporter.apply(FieldNotFound(fieldName, recordDef.name, expr))
-                  }
-                  resultTerm
-                case FCallTerm(f, args, _) =>
-                  // Try to reduce with type-level reduction first
-                  given ReduceContext = localCtx.toReduceContext
-                  given Reducer = localCtx.given_Reducer
-                  val reducedTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-                  if (reducedTy != recordTy) {
-                    handleRecordType(reducedTy)
-                  } else {
-                    // If type-level reduction didn't work, try evaluating the function
-                    f match {
-                      case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-                        // Substitute args into body
-                        val substitutedBody = telescopes.zip(args).foldLeft(body) { case (acc, (telescope, calling)) =>
-                          telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-                            acc.substitute(param.bind, arg.value)
-                          }
-                        }
-                        // Try reducing the substituted body
-                        val evaluated = NaiveReducer.reduce(substitutedBody, ReduceMode.TypeLevel)
-                        if (evaluated != substitutedBody) {
-                          handleRecordType(evaluated)
-                        } else {
-                          // If we still can't reduce, try normal reduction
-                          val normalReduced = NaiveReducer.reduce(evaluated, ReduceMode.Normal)
-                          if (normalReduced != evaluated) {
-                            handleRecordType(normalReduced)
-                          } else {
-                            ck.reporter.apply(NotARecordType(recordTy, expr))
-                            resultTerm
-                          }
-                        }
-                      case _ =>
-                        // Try normal reduction as a last resort
-                        val normalReduced = NaiveReducer.reduce(recordTy, ReduceMode.Normal)
-                        if (normalReduced != recordTy) {
-                          handleRecordType(normalReduced)
-                        } else {
-                          ck.reporter.apply(NotARecordType(recordTy, expr))
-                          resultTerm
-                        }
+              def handleRecordType(term: Term, recordTy: Term, field: String)(using ctx: Context): Term = {
+                // First try to reduce the record type aggressively
+                given ReduceContext = ctx.toReduceContext
+                given Reducer = ctx.given_Reducer
+                val reducedRecordTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
+                
+                reducedRecordTy match {
+                  case recordType: RecordStmtTerm =>
+                    // Found a record type directly, look up the field
+                    recordType.fields.find(_.name == field) match {
+                      case Some(fieldTerm) =>
+                        // Create field access with the found field type
+                        FieldAccessTerm(term, Name(field), fieldTerm.ty, term.meta)
+                      case None =>
+                        // Field not found in record type
+                        val problem = FieldNotFound(field, recordType.name, term)
+                        ck.reporter.apply(problem)
+                        ErrorTerm(problem, term.meta)
                     }
-                  }
-                case ref: ReferenceCall =>
-                  // If we have a reference, try to reduce it
-                  given ReduceContext = localCtx.toReduceContext
-                  given Reducer = localCtx.given_Reducer
-                  val reducedRef = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-                  if (reducedRef != recordTy) {
-                    handleRecordType(reducedRef)
-                  } else {
-                    // Try normal reduction
-                    val normalReduced = NaiveReducer.reduce(recordTy, ReduceMode.Normal)
-                    if (normalReduced != recordTy) {
-                      handleRecordType(normalReduced)
+                  
+                  case metaTerm: MetaTerm =>
+                    // Record type is a meta term, try to resolve it
+                    val resolved = ctx.resolve(metaTerm)
+                    if (resolved != metaTerm) {
+                      // Meta term resolved, try again with resolved type
+                      handleRecordType(term, resolved, field)
                     } else {
-                      ck.reporter.apply(NotARecordType(recordTy, expr))
-                      resultTerm
+                      // Meta term unresolved, create field access with meta type
+                      FieldAccessTerm(term, Name(field), Meta(newType), term.meta)
                     }
-                  }
-                case _ =>
-                  ck.reporter.apply(NotARecordType(recordTy, expr))
-                  resultTerm
+                  
+                  case fcall: FCallTerm =>
+                    // Record type is a function call, try to evaluate it
+                    val evaluatedTy = NaiveReducer.reduce(fcall, ReduceMode.TypeLevel)
+                    if (evaluatedTy != fcall) {
+                      // Function call reduced, try again with evaluated type
+                      handleRecordType(term, evaluatedTy, field)
+                    } else {
+                      // Function call couldn't be reduced, create error term
+                      val problem = NotARecordType(fcall, term)
+                      ck.reporter.apply(problem)
+                      ErrorTerm(problem, term.meta)
+                    }
+                  
+                  case ref: ReferenceCall =>
+                    // Record type is a reference, try to resolve it
+                    val resolvedTy = ctx.resolve(ref)
+                    if (resolvedTy != ref) {
+                      // Reference resolved, try again with resolved type
+                      handleRecordType(term, resolvedTy, field)
+                    } else {
+                      // Reference couldn't be resolved, create error term
+                      val problem = NotARecordType(ref, term)
+                      ck.reporter.apply(problem)
+                      ErrorTerm(problem, term.meta)
+                    }
+                  
+                  case errorTerm: ErrorTerm =>
+                    // Record type is already an error term, propagate it
+                    errorTerm
+                  
+                  case _ =>
+                    // Not a record type at all
+                    val problem = NotARecordType(reducedRecordTy, term)
+                    ck.reporter.apply(problem)
+                    ErrorTerm(problem, term.meta)
+                }
               }
 
-              handleRecordType(reducedRecordTy)
+              val recordResult = handleRecordType(resultTerm, reducedRecordTy, fieldName)
+              recordResult
             case _ =>
-              val problem = InvalidFieldName(fieldExpr)
+              val problem = NotImplementedFeature("Field access with non-identifier field is not yet supported", expr)
               ck.reporter.apply(problem)
               ErrorTerm(problem, convertMeta(expr.meta))
           }
@@ -335,7 +340,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     // Create collections to store field keys and types
     val fieldTypeVars = scala.collection.mutable.Map[Term, CellId[Term]]()
     val elaboratedFields = fields.flatMap {
-      case ObjectExprClauseOnValue(keyExpr, valueExpr) =>
+      case ObjectClause(keyExpr, valueExpr, _) =>
         // Elaborate the key and value expressions
         val elaboratedKey = elab(keyExpr, newType, effects)
         val fieldType = newType
@@ -343,7 +348,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         val _ = fieldTypeVars.put(elaboratedKey, fieldType)
         Some(ObjectClauseValueTerm(elaboratedKey, elaboratedValue, convertMeta(expr.meta)))
       // Handle other possible clauses
-      case _ => ???
+      case _ => None
     }
 
     // Construct the object term with elaborated fields

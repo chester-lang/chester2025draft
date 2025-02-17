@@ -1,13 +1,22 @@
 package chester.tyck
 
-import chester.error.*
-import chester.syntax.Name
-import chester.syntax.concrete.*
-import chester.syntax.core.*
-import chester.utils.*
+import cats.implicits.*
+import chester.error.{Problem, Reporter, TyckProblem, VectorReporter, WithServerity}
+import chester.syntax.{Name, LoadedModules, ModuleRef, TAST, DefaultModule}
+import chester.syntax.concrete.{Expr, ExprMeta}
+import chester.syntax.core.{Term, Effects, Meta, Typeω}
+import chester.syntax.core.spec.{given, given_TypeF_Term_Type}
+import chester.tyck.api.{SemanticCollector, SymbolCollector}
+import chester.utils.{MutBox, flatMapOrdered, hasDuplication, assumeNonEmpty}
+import chester.utils.propagator.{StateAbility, Propagator, ZonkResult, ProvideCellId, Cell}
 import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
+import chester.reduce.ReduceContext.given_Conversion_Context_ReduceContext
+import chester.uniqid.{Uniqid, UniqidOf}
+import chester.resolve.{SimpleDesalt, resolveOpSeq}
 
-trait TyckPropagator extends ElaboraterCommon {
+import scala.language.implicitConversions
+
+trait TyckPropagator extends ProvideCtx with ElaboraterBase {
 
   def unify(lhs: Term, rhs: Term, cause: Expr)(using
       localCtx: Context,
@@ -221,7 +230,14 @@ trait TyckPropagator extends ElaboraterCommon {
 
     (lhsResolved, rhsResolved) match {
       case (Type(level1, _), Type(level2, _)) =>
-        level1 == level2
+        // Try to reduce both types in type-level mode
+        val reducedLhs = NaiveReducer.reduce(lhsResolved, ReduceMode.TypeLevel)
+        val reducedRhs = NaiveReducer.reduce(rhsResolved, ReduceMode.TypeLevel)
+        if (reducedLhs != lhsResolved || reducedRhs != rhsResolved) {
+          tryUnify(reducedLhs, reducedRhs)
+        } else {
+          level1 == level2
+        }
 
       case (ListType(elem1, _), ListType(elem2, _)) =>
         tryUnify(elem1, elem2)
@@ -362,20 +378,98 @@ trait TyckPropagator extends ElaboraterCommon {
         case Some(Meta(id)) =>
           state.addPropagator(RecordFieldPropagator(id, fieldName, expectedTy, cause))
           true
-        case Some(RecordCallTerm(recordDef, _, _)) =>
-          recordDef.fields.find(_.name == fieldName) match {
-            case Some(fieldTerm) =>
-              unify(expectedTy, fieldTerm.ty, cause)
+        case Some(term) =>
+          // Try type-level reduction first
+          given ReduceContext = summon[Context].toReduceContext
+          given Reducer = summon[Context].given_Reducer
+          val reducedTerm = NaiveReducer.reduce(term, ReduceMode.TypeLevel)
+          if (reducedTerm != term) {
+            // If type-level reduction worked, try again with reduced term
+            state.addPropagator(RecordFieldPropagator(literal(reducedTerm), fieldName, expectedTy, cause))
+            true
+          } else {
+            // If type-level reduction didn't work, try normal reduction
+            val normalReducedTerm = NaiveReducer.reduce(term, ReduceMode.Normal)
+            if (normalReducedTerm != term) {
+              state.addPropagator(RecordFieldPropagator(literal(normalReducedTerm), fieldName, expectedTy, cause))
               true
-            case None =>
-              val problem = FieldNotFound(fieldName, recordDef.name, cause)
-              more.reporter.apply(problem)
-              true
+            } else {
+              // If both reductions fail, try one more time with type-level mode on the term's type
+              term match {
+                case Type(level, _) =>
+                  // If we get a Type term, try to reduce it to a record type
+                  val reducedType = NaiveReducer.reduce(term, ReduceMode.TypeLevel)
+                  if (reducedType != term) {
+                    state.addPropagator(RecordFieldPropagator(literal(reducedType), fieldName, expectedTy, cause))
+                    true
+                  } else {
+                    more.reporter.apply(NotARecordType(term, cause))
+                    true
+                  }
+                case FCallTerm(f, args, _) =>
+                  // Try to reduce the function and args aggressively
+                  val reducedF = NaiveReducer.reduce(f, ReduceMode.TypeLevel)
+                  val reducedArgs = args.map(calling =>
+                    Calling(
+                      calling.args.map(arg => CallingArgTerm(
+                        NaiveReducer.reduce(arg.value, ReduceMode.TypeLevel),
+                        NaiveReducer.reduce(arg.ty, ReduceMode.TypeLevel),
+                        arg.name,
+                        arg.vararg,
+                        arg.meta
+                      )),
+                      calling.implicitly,
+                      calling.meta
+                    )
+                  )
+                  
+                  // First try to evaluate the function
+                  reducedF match {
+                    case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
+                      // Substitute args into body
+                      val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
+                        telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
+                          acc.substitute(param.bind, arg.value)
+                        }
+                      }
+                      // Try reducing the substituted body
+                      val evaluated = NaiveReducer.reduce(substitutedBody, ReduceMode.TypeLevel)
+                      if (evaluated != substitutedBody) {
+                        state.addPropagator(RecordFieldPropagator(literal(evaluated), fieldName, expectedTy, cause))
+                        true
+                      } else {
+                        more.reporter.apply(NotARecordType(term, cause))
+                        true
+                      }
+                    case _ =>
+                      more.reporter.apply(NotARecordType(term, cause))
+                      true
+                  }
+                case ref: ReferenceCall =>
+                  // Try to resolve and reduce the reference
+                  val resolved = summon[Context].toReduceContext.resolve(ref)
+                  if (resolved != ref) {
+                    state.addPropagator(RecordFieldPropagator(literal(resolved), fieldName, expectedTy, cause))
+                    true
+                  } else {
+                    more.reporter.apply(NotARecordType(term, cause))
+                    true
+                  }
+                case RecordCallTerm(recordDef, _, _) =>
+                  recordDef.fields.find(_.name == fieldName) match {
+                    case Some(fieldTerm) =>
+                      unify(expectedTy, fieldTerm.ty, cause)
+                      true
+                    case None =>
+                      more.reporter.apply(FieldNotFound(fieldName.toString, recordDef.name, cause))
+                      true
+                  }
+                case _ =>
+                  more.reporter.apply(NotARecordType(term, cause))
+                  true
+              }
+            }
           }
-        case Some(other) =>
-          val problem = NotARecordType(other, cause)
-          more.reporter.apply(problem)
-          true
         case None => false
       }
     }
@@ -384,6 +478,69 @@ trait TyckPropagator extends ElaboraterCommon {
       state.readStable(recordTy) match {
         case None => ZonkResult.Require(Vector(recordTy))
         case _    => ZonkResult.Done
+      }
+    }
+  }
+
+  case class RecordField(recordTy: MetaTerm, field: String, fieldTy: MetaTerm) extends TyckPropagator {
+    override def propagate(using ctx: ElaborateContext): Boolean = {
+      // Try to resolve the record type meta term
+      ctx.state.resolve(recordTy) match {
+        case Some(resolvedTy: Term) =>
+          // Record type resolved, try to get field type
+          val reducedTy = summon[Reducer].reduce(resolvedTy, ReduceMode.TypeLevel)
+          reducedTy match {
+            case recordType: RecordStmtTerm =>
+              // Found record type, look up field
+              recordType.fields.find(_.name == field) match {
+                case Some(fieldTerm) =>
+                  // Field found, unify with field type meta term
+                  ctx.state.addPropagator(Unify(fieldTy, fieldTerm.ty))
+                  true
+                case None =>
+                  // Field not found, report error
+                  ctx.reporter.apply(FieldNotFound(field, recordType.name, recordType))
+                  false
+              }
+            case metaTerm: MetaTerm =>
+              // Record type is still a meta term, keep propagator
+              false
+            case fcall: FCallTerm =>
+              // Record type is a function call, try to evaluate
+              val evaluatedTy = summon[Reducer].reduce(fcall, ReduceMode.TypeLevel)
+              if (evaluatedTy != fcall) {
+                // Function call reduced, add new propagator with evaluated type
+                ctx.state.addPropagator(RecordField(MetaTerm(evaluatedTy), field, fieldTy))
+                true
+              } else {
+                // Function call couldn't be reduced, report error
+                ctx.reporter.apply(NotARecordType(fcall, fcall))
+                false
+              }
+            case ref: ReferenceCall =>
+              // Record type is a reference, try to resolve
+              val resolvedTy = ctx.resolve(ref)
+              if (resolvedTy != ref) {
+                // Reference resolved, add new propagator with resolved type
+                ctx.state.addPropagator(RecordField(MetaTerm(resolvedTy), field, fieldTy))
+                true
+              } else {
+                // Reference couldn't be resolved, report error
+                ctx.reporter.apply(NotARecordType(ref, ref))
+                false
+              }
+            case errorTerm: ErrorTerm =>
+              // Record type is an error term, propagate error
+              ctx.state.addPropagator(Unify(fieldTy, errorTerm))
+              true
+            case _ =>
+              // Not a record type, report error
+              ctx.reporter.apply(NotARecordType(reducedTy, reducedTy))
+              false
+          }
+        case None =>
+          // Record type not resolved yet, keep propagator
+          false
       }
     }
   }

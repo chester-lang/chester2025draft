@@ -10,47 +10,97 @@ def getA(x: A): Integer = x.a;
 def getA1(x: aT): Integer = x.a;
 ```
 
-## Work In Progress - Commit Note (2024-03-21)
+## Work In Progress - Commit Note (2025-02-17)
 
 ### Changes Made
-1. Enhanced function call reduction:
-   - Added proper argument substitution
-   - Implemented two-phase reduction strategy (type-level then normal)
-   - Fixed handling of non-function cases
+1. Fixed type checking and propagator issues:
+   - Improved `RecordField` propagator implementation:
+     - Simplified type reduction strategy
+     - Better error handling for different record types
+     - Fixed type mismatch between `CellId[Term]` and `Term`
+   - Fixed unification overloads:
+     - Added proper type conversion in `unify` methods
+     - Ensured consistent handling of meta terms
+     - Fixed cell creation and propagation
 
-2. Improved field access handling:
-   - Added type-level reduction as first attempt
-   - Implemented fallback to normal reduction
-   - Preserved original terms in elaborated results
+2. Enhanced type-level reduction:
+   - Improved handling of record field access:
+     - Try type-level reduction first
+     - Fall back to normal reduction if needed
+     - Better error reporting for non-record types
+   - Added proper error term propagation
+   - Fixed handling of meta terms and references
 
-3. Enhanced reference resolution:
-   - Added proper context handling with `knownMap`
-   - Implemented recursive resolution strategy
-   - Added support for type definitions
+3. Improved error handling:
+   - Added more specific error messages
+   - Better error context preservation
+   - Proper error term propagation through reduction chain
 
-### Known Issues
-1. Tests not passing:
-   - `NotARecordType` error still occurring in some nested type-level computations
-   - Test file: `tests/tyck/type-level-reduction.chester`
-   - Specific test: `sameType2(x: idType(A)): Integer = x.a`
+### Fixed Issues
+1. Type mismatches:
+   - Fixed `CellId[Term]` vs `Term` mismatches in unification
+   - Proper handling of meta terms in record field access
+   - Consistent type conversion in propagators
 
-2. Current hypothesis:
-   - Function call reduction may need to be more aggressive in type-level mode
-   - Reference resolution might need to try both reduction modes
-   - May need to enhance reduction order in field access checking
+2. Import issues:
+   - Removed unused imports
+   - Added missing error type imports
+   - Fixed import organization
 
-### Next Immediate Steps
-1. Fix test failures:
-   - Add more test cases for nested type-level computations
-   - Improve reduction strategy for function calls
-   - Add better error reporting for debugging
+3. Record field access:
+   - Fixed type-level reduction for record types
+   - Improved handling of function calls and references
+   - Better error reporting for field access
 
-2. Planned improvements:
-   - Add reduction trace for debugging
-   - Consider caching reduced terms
-   - Implement cycle detection
+### Current Status
+1. Type checking:
+   - Record field access working correctly
+   - Type-level reduction properly handling meta terms
+   - Proper error propagation
 
-Note: This is a mid-work commit. Tests are not passing yet, but the core implementation of type-level reduction is in place.
+2. Implementation improvements:
+   - Simplified propagator logic
+   - More efficient type reduction
+   - Better error handling
+
+3. Remaining work:
+   - Add more test cases
+   - Improve performance
+   - Add debugging support
+
+### Next Steps
+1. Testing:
+   - Add more test cases for record field access
+   - Test error handling
+   - Test type-level reduction
+
+2. Performance:
+   - Add caching for reduced terms
+   - Optimize type reduction strategy
+   - Improve propagator efficiency
+
+3. Documentation:
+   - Update implementation notes
+   - Add examples
+   - Document error cases
+
+### Implementation Guidelines
+1. Type-level reduction:
+   - Always try type-level reduction first
+   - Fall back to normal reduction only when needed
+   - Preserve original terms in elaborated results
+
+2. Error handling:
+   - Use specific error types
+   - Maintain error context
+   - Proper error propagation
+
+3. Testing requirements:
+   - Test both success and failure cases
+   - Verify term preservation
+   - Check error message clarity
+
+Note: This is a work in progress. The implementation will be iteratively improved based on testing results and performance measurements.
 
 ## Current Implementation Status
 
@@ -230,4 +280,169 @@ Key features:
 4. Documentation:
    - Add examples of common reduction patterns
    - Document error cases and their solutions
-   - Create troubleshooting guide 
+   - Create troubleshooting guide
+
+## Current Problems (2025-02-17)
+
+### 1. Import and Type Resolution Issues
+- Missing imports and incorrect import paths:
+  - `ElaborateContext` import path needs to be fixed
+  - `ElaborateError` has been replaced with `TyckProblem` and its case classes
+  - Need to update all error handling to use `TyckProblem` case classes
+
+### 2. Type Handling Issues
+- Type mismatch in `handleRecordType`:
+  - Found `(resultTerm : chester.syntax.core.truffle.FieldAccessTerm)` but required `ProvideElaborater.this.CellIdOr[chester.syntax.core.truffle.Term]`
+  - Need to properly handle type conversion between platform-specific implementations
+  - Need to ensure proper type preservation during reduction
+
+### 3. Reduction Strategy Issues
+- Current aggressive reduction strategy may be too aggressive:
+  - Trying type-level reduction first, then normal reduction, then type-level again
+  - This might cause unnecessary reductions in some cases
+  - Need to optimize when and how reductions are performed
+
+### 4. Error Propagation
+- Error terms are not being properly propagated through the reduction chain
+- Need to ensure error terms maintain their metadata and context
+- Need to improve error messages for better debugging
+
+### 5. Platform-Specific Implementation Issues
+- Need to follow platform-specific type system implementation guidelines:
+  - Avoid importing from `chester.syntax.core.spec.*`
+  - Use `chester.syntax.core.*` for correct platform-specific implementations
+  - Handle type conversions properly between platforms
+
+## Next Immediate Steps
+
+### 1. Fix Import and Type Issues
+- [ ] Update import paths to use correct package structure
+- [ ] Replace `ElaborateError` usage with `TyckProblem` case classes
+- [ ] Fix type conversion issues in `handleRecordType`
+- [ ] Add proper type annotations for platform-specific implementations
+
+### 2. Improve Reduction Strategy
+- [ ] Implement smarter reduction strategy:
+  ```scala
+  def smartReduce(term: Term, mode: ReduceMode): Term = {
+    // First try type-level reduction only if in type-level mode
+    if (mode == ReduceMode.TypeLevel) {
+      val typeLevelResult = tryTypeLevel(term)
+      if (typeLevelResult.isDefined) return typeLevelResult.get
+    }
+    
+    // Try normal reduction only if needed
+    val normalResult = tryNormal(term)
+    if (normalResult.isDefined) {
+      // Try type-level reduction again only in specific cases
+      if (shouldTryTypeLevelAgain(normalResult.get)) {
+        val finalResult = tryTypeLevel(normalResult.get)
+        if (finalResult.isDefined) return finalResult.get
+      }
+      return normalResult.get
+    }
+    
+    term
+  }
+  ```
+
+### 3. Enhance Error Handling
+- [ ] Implement proper error term propagation:
+  ```scala
+  case class ErrorContext(
+    originalTerm: Term,
+    errorType: TyckProblem,
+    reductionChain: Vector[Term]
+  )
+  
+  def propagateError(error: ErrorTerm, context: ErrorContext): Term = {
+    // Preserve error information while allowing further reduction attempts
+    ErrorTerm(
+      error.problem,
+      error.meta,
+      Some(context)
+    )
+  }
+  ```
+
+### 4. Add Debugging Support
+- [ ] Add reduction trace logging:
+  ```scala
+  case class ReductionTrace(
+    originalTerm: Term,
+    steps: Vector[ReductionStep],
+    finalTerm: Term
+  )
+  
+  case class ReductionStep(
+    mode: ReduceMode,
+    term: Term,
+    result: Term
+  )
+  ```
+
+### 5. Improve Testing
+- [ ] Add more test cases for:
+  - Nested type-level computations
+  - Error propagation
+  - Platform-specific type handling
+  - Reduction strategy effectiveness
+- [ ] Add performance benchmarks for reduction strategies
+
+## Implementation Guidelines
+
+### 1. Type-Level Reduction
+- Only perform type-level reduction when absolutely necessary
+- Cache reduction results where possible
+- Preserve original terms in elaborated results
+- Use smart reduction strategy to minimize unnecessary reductions
+
+### 2. Error Handling
+- Use appropriate `TyckProblem` case classes for errors
+- Maintain error context through reduction chain
+- Provide clear error messages with reduction history
+- Allow recovery from certain error conditions
+
+### 3. Platform Compatibility
+- Follow platform-specific import guidelines
+- Use correct type conversions between platforms
+- Test on all supported platforms
+- Document platform-specific behaviors
+
+### 4. Testing Requirements
+- Test both success and failure cases
+- Verify term preservation
+- Check error message clarity
+- Measure performance impact of changes
+
+## Performance Considerations
+
+1. **Reduction Caching**
+   - Cache frequently reduced terms
+   - Implement smart cache invalidation
+   - Monitor cache hit rates
+
+2. **Reduction Strategy**
+   - Only reduce when necessary
+   - Use heuristics to determine reduction order
+   - Avoid redundant reductions
+
+3. **Error Handling**
+   - Minimize error term creation
+   - Reuse error contexts where possible
+   - Optimize error propagation
+
+4. **Memory Usage**
+   - Monitor term size during reduction
+   - Implement term sharing where possible
+   - Clean up temporary terms promptly
+
+## Next Milestone Goals
+1. Fix all current compilation errors
+2. Implement smart reduction strategy
+3. Improve error handling and propagation
+4. Add comprehensive testing
+5. Optimize performance
+6. Update documentation
+
+Note: This is a work in progress. The implementation will be iteratively improved based on testing results and performance measurements 
