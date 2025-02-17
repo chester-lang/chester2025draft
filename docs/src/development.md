@@ -1,5 +1,50 @@
 # Development Memo
 
+## Development Practices
+
+### Making Changes
+
+1. **Keep Changes Small and Focused**
+   - Make one logical change at a time
+   - Break down large changes into smaller, independent steps
+   - Each change should be easily reviewable and testable
+
+2. **Testing Requirements**
+   - ALWAYS run `sbt rootJVM/test` before committing changes
+   - Fix any test failures before committing
+   - Add new tests for new functionality
+   - Update existing tests when modifying behavior
+   - Test both success and failure cases
+   - For type checking changes:
+     - Test term preservation in elaborated results
+     - Test type-level computation works correctly
+     - Test error reporting is accurate
+     - Test edge cases and corner cases
+
+3. **Verify Changes with Git**
+   ```bash
+   # After each change:
+   git diff | cat            # Review what changed (use | cat to avoid paging)
+   git add <files>          # Stage specific files
+   git status              # Verify staged changes
+   git commit -m "..."     # Commit with clear message
+   ```
+
+4. **Change Verification Checklist**
+   - [ ] Changes are minimal and focused
+   - [ ] Git diff shows only intended changes
+   - [ ] Tests pass after changes
+   - [ ] Changes align with existing code style
+
+4. **Git Command Tips**
+   - Always use `| cat` with git commands that might trigger paging:
+     ```bash
+     git diff | cat
+     git log | cat
+     git show | cat
+     ```
+   - This ensures consistent output and avoids interactive paging
+
 ## Platform-Specific Type System Implementation
 
 Chester implements its type system differently for different platforms (JVM and JS). To handle this correctly:
@@ -65,3 +110,80 @@ The codebase provides implicit convert functions for these cases, so explicit ty
 - The convert functions handle type conversions safely and efficiently
 - Avoiding trait suffixes makes the code more maintainable
 - This approach leverages the type system to catch potential platform-specific issues at compile time 
+
+## Elaboration and Reduction Strategy
+
+### Reduction During Type Checking
+
+1. **Keep Original Forms**
+   - The elaborator MUST preserve original terms in the elaborated result
+   - NEVER reduce during elaboration
+   - Only use reduction internally during type checking when absolutely necessary
+   - This makes the elaborated code identical to source code, making it:
+     - Easier to debug
+     - Easier to understand
+     - Better for error messages
+     - More suitable for further transformations
+
+2. **When to Reduce**
+   - Only TWO places should use reduction:
+     1. Type equality checking in unification
+     2. Field access checking on type-level terms
+   - Use `ReduceMode.TypeLevel` for these internal reductions
+   - NEVER use reduction in elaborated results
+
+Example:
+```scala
+// Original code
+def idType(x: Type): Type = x;
+let aT = idType(A);
+def getA(x: aT): Integer = x.a;
+
+// WRONG - reducing during elaboration:
+LetStmtTerm(localv, reducer.reduce(idType(A)), ty, meta)
+
+// RIGHT - keeping original term:
+LetStmtTerm(localv, idType(A), ty, meta)
+
+// RIGHT - internal reduction only for field checking:
+def checkFieldAccess(recordTy: Term, field: Name): Term = {
+  given ReduceContext = localCtx.toReduceContext
+  val reducedTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
+  // Check field exists, but keep original term in result
+  ...
+}
+```
+
+### Reduction Context and Type Checking
+
+1. **Reduction Context Setup**
+   - Each `Context` instance provides its own reduction context via `toReduceContext`
+   - This ensures consistent reduction behavior during type checking
+   - Allows for future extensions to reduction context
+
+2. **Type-Level Reduction**
+   - Only reduce type-level terms when necessary for type checking
+   - Keep original terms in elaborated results
+   - Use `ReduceMode.TypeLevel` to control reduction behavior
+
+3. **Field Access Checking**
+   - Use type-level reduction to verify field existence
+   - Keep original terms in field access expressions
+   - Report errors using original terms for better error messages
+
+### Common Pitfalls
+
+1. **Over-reduction**
+   - Don't reduce terms during elaboration
+   - Don't reduce terms when adding to context
+   - Only reduce when needed for type checking
+
+2. **Loss of Original Terms**
+   - Always preserve original terms in elaborated results
+   - Don't reflect internal reductions in output
+   - Keep source code structure intact
+
+3. **Incorrect Reduction Context**
+   - Always use proper reduction context from current context
+   - Don't create new reduction contexts unnecessarily
+   - Use consistent reduction mode for type checking
