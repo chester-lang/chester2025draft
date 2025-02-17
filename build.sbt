@@ -156,7 +156,7 @@ up := {
 val scala3Version = "3.6.4-RC1"
 val scala3Lib = "3.6.3"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.0-RC1-bin-20250204-d75ca7f-NIGHTLY"
+val scala3Nightly = "3.7.0-RC1-bin-20250215-43f8cdb-NIGHTLY"
 
 val graalVm = "graalvm-java23"
 val graalJdkVersion = "23.0.2"
@@ -532,7 +532,7 @@ lazy val utils = useSpire(
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M6"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4"
       ),
       commonJvmLibSettings,
       libraryDependencies ++= Seq(
@@ -550,7 +550,7 @@ lazy val utils = useSpire(
     )
     .nativeSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4-M6"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4"
       ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
@@ -658,7 +658,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(syntax, err)
   .settings(
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.12.7")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.1.1")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -783,7 +783,7 @@ object GeneratedJS {
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.12.7" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.1.1" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
