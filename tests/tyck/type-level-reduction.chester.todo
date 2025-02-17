@@ -1,0 +1,5 @@
+// Test type-level reduction with simplest case
+record A(a: Integer);
+def idType(x: Type): Type = x;
+let aT = idType(A);  // Should preserve idType(A) in elaborated result
+def getA(x: aT): Integer = x.a;  // Should work via reduction during type checking 
