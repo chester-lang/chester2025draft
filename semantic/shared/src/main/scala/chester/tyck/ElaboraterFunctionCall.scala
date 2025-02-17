@@ -1,21 +1,9 @@
 package chester.tyck
 
-import cats.implicits.*
-import chester.error.{Problem, Reporter, TyckProblem, VectorReporter, WithServerity}
-import chester.syntax.{Name, LoadedModules, ModuleRef, TAST, DefaultModule}
-import chester.syntax.concrete.{Expr, ExprMeta, Block, ObjectExpr, ObjectClause, FunctionExpr, DesaltFunctionCall, Identifier}
-import chester.syntax.core.{Term, Effects, Meta, Typeω, LocalV, ReferenceCall, TelescopeTerm, ArgTerm, FunctionType, Function, Type, FCallTerm, Calling, CallingArgTerm, RecordStmtTerm, RecordConstructorCallTerm}
-import chester.syntax.core.spec.given_TypeF_Term_Type
-import chester.syntax.core.spec.given
-import chester.tyck.api.{SemanticCollector, SymbolCollector}
-import chester.utils.{MutBox, flatMapOrdered, hasDuplication, assumeNonEmpty}
-import chester.utils.propagator.{StateAbility, Propagator, ZonkResult, ProvideCellId, Cell}
-import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
-import chester.reduce.ReduceContext.given_Conversion_Context_ReduceContext
-import chester.uniqid.{Uniqid, UniqidOf}
-import chester.resolve.{SimpleDesalt, resolveOpSeq}
-
-import scala.language.implicitConversions
+import chester.error.*
+import chester.syntax.concrete.*
+import chester.syntax.core.*
+import chester.tyck.api.SemanticCollector
 
 trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
   def elabFunctionCall(

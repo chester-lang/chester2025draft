@@ -1,23 +1,17 @@
 package chester.tyck
 
 import cats.implicits.*
-import chester.error.{Problem, Reporter, TyckProblem, VectorReporter, WithServerity}
-import chester.syntax.{Name, LoadedModules, ModuleRef, TAST, DefaultModule}
-import chester.syntax.concrete.{Expr, ExprMeta, Block, ObjectExpr, ObjectClause, FunctionExpr, DesaltFunctionCall, LetDefStmt, RecordStmt, TraitStmt, InterfaceStmt, ObjectStmt, ImportStmt, LetDefType, DefinedPattern, PatternBind}
-import chester.syntax.core.{Term, Effects, Meta, Typeω, LocalV, ReferenceCall, TelescopeTerm, RecordStmtTerm, TraitStmtTerm, InterfaceStmtTerm, ObjectStmtTerm, StmtTerm, ExprStmtTerm, BlockTerm, DefStmtTerm, LetStmtTerm, UnitExpr, UnitTerm_, Type0}
-import chester.syntax.core.spec.given_TypeF_Term_Type
-import chester.syntax.core.spec.given
-import chester.tyck.api.{SemanticCollector, SymbolCollector}
-import chester.utils.{MutBox, flatMapOrdered, hasDuplication, assumeNonEmpty}
-import chester.utils.propagator.{StateAbility, Propagator, ZonkResult, ProvideCellId, Cell}
-import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
-import chester.reduce.ReduceContext.given_Conversion_Context_ReduceContext
-import chester.uniqid.{Uniqid, UniqidOf}
-import chester.resolve.{SimpleDesalt, resolveOpSeq}
+import chester.utils.*
+import chester.syntax.*
+import chester.error.*
+import chester.syntax.concrete.*
+import chester.syntax.core.*
+import chester.tyck.api.SemanticCollector
+import chester.uniqid.*
 
 import scala.language.implicitConversions
 
-trait ElaboraterBlock extends ProvideCtx with Elaborater {
+trait ElaboraterBlock extends Elaborater {
   // Sealed trait for declaration information, for forwarding references
   sealed trait DeclarationInfo extends Product with Serializable {
     def expr: Expr
@@ -67,41 +61,6 @@ trait ElaboraterBlock extends ProvideCtx with Elaborater {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): BlockTerm
-
-  // Helper method to create a new local variable
-  protected def newLocalv(
-      name: Name,
-      ty: Term,
-      id: UniqidOf[ReferenceCall],
-      meta: Option[ExprMeta]
-  ): LocalV = {
-    LocalV(name, ty, id, convertMeta(meta))
-  }
-
-  // Helper method to convert meta information
-  protected def convertMeta(meta: Option[ExprMeta]): Option[OptionTermMeta] = {
-    meta.map(m => m.asInstanceOf[OptionTermMeta])
-  }
-
-  // Helper method to merge cell IDs
-  protected def merge(target: CellId[Term], source: CellId[Term])(using
-      state: StateAbility[Tyck]
-  ): Unit = {
-    state.addPropagator(MergeSimple(target, source))
-  }
-
-  // Helper method to convert terms to IDs
-  protected def toId(term: Term)(using
-      state: StateAbility[Tyck]
-  ): CellId[Term] = term match {
-    case Meta(id) => id
-    case _ => literal(term)
-  }
-
-  // Helper method to create a literal cell
-  protected def literal[T](value: T)(using state: StateAbility[Tyck]): CellId[T] = {
-    state.addCell(LiteralCell(value))
-  }
 }
 
 trait ProvideElaboraterBlock extends ElaboraterBlock {

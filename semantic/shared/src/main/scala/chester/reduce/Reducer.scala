@@ -24,63 +24,46 @@ object Reducer {
 
 object NaiveReducer extends Reducer {
   override def reduce(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = {
-    def tryTypeLevel(t: Term): Option[Term] = {
-      val reduced = r.reduce(t, ReduceMode.TypeLevel)
-      if (reduced != t) Some(reduced) else None
-    }
-
-    def tryNormal(t: Term): Option[Term] = {
-      val reduced = r.reduce(t, ReduceMode.Normal)
-      if (reduced != t) Some(reduced) else None
-    }
-
-    def tryAggressiveReduction(t: Term): Option[Term] = {
-      // Try type-level first
-      tryTypeLevel(t).orElse {
-        // Try normal if type-level fails
-        tryNormal(t).flatMap { normalReduced =>
-          // Try type-level again on the normal-reduced term
-          tryTypeLevel(normalReduced).orElse(Some(normalReduced))
-        }
-      }
-    }
-
     term match {
       // WHNF terms - return as is
       case t: WHNF => t
 
-      // References - try aggressive resolution and reduction
-      case ref: ReferenceCall => {
-        val resolved = ctx.resolve(ref)
-        if (resolved != ref) {
-          tryAggressiveReduction(resolved).getOrElse(resolved)
+      // Field access - reduce the target and try to access field
+      case FieldAccessTerm(target, field, fieldType, meta) => {
+        // First try type-level reduction of target
+        val reducedTarget = r.reduce(target, ReduceMode.TypeLevel)
+        if (reducedTarget != target) {
+          // If type-level reduction worked, try field access on reduced target
+          FieldAccessTerm(reducedTarget, field, fieldType, meta)
         } else {
-          ref
+          // If type-level reduction didn't work, try normal reduction
+          val normalReducedTarget = r.reduce(target, ReduceMode.Normal)
+          FieldAccessTerm(normalReducedTarget, field, fieldType, meta)
         }
       }
 
-      // Function calls - aggressive reduction strategy
+      // Block terms - reduce statements and result
+      case BlockTerm(statements, result, meta) => {
+        val reducedStatements = statements.map { case stmt: StmtTerm =>
+          r.reduce(stmt).asInstanceOf[StmtTerm]
+        }
+        val reducedResult = r.reduce(result)
+        BlockTerm(reducedStatements, reducedResult, meta)
+      }
+
+      // Function calls - reduce function and arguments
       case FCallTerm(f, args, meta) => {
-        // First try to resolve and reduce the function aggressively
-        val reducedF = tryAggressiveReduction(f).getOrElse(f)
-        
-        // Reduce args aggressively in current mode
+        // First try type-level reduction of function and args
+        val reducedF = r.reduce(f, mode)
         val reducedArgs = args.map(calling =>
           Calling(
-            calling.args.map(arg => CallingArgTerm(
-              tryAggressiveReduction(arg.value).getOrElse(arg.value),
-              tryAggressiveReduction(arg.ty).getOrElse(arg.ty),
-              arg.name,
-              arg.vararg,
-              arg.meta
-            )),
+            calling.args.map(arg => CallingArgTerm(r.reduce(arg.value, mode), r.reduce(arg.ty), arg.name, arg.vararg, arg.meta)),
             calling.implicitly,
             calling.meta
           )
         )
-
-        // Try to evaluate the function with reduced components
-        val evaluatedTerm = reducedF match {
+        
+        reducedF match {
           case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
             // Substitute args into body
             val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
@@ -88,72 +71,50 @@ object NaiveReducer extends Reducer {
                 acc.substitute(param.bind, arg.value)
               }
             }
-            
-            // Try aggressive reduction on the substituted body
-            tryAggressiveReduction(substitutedBody).getOrElse(substitutedBody)
-          
-          case _ => FCallTerm(reducedF, reducedArgs, meta)
-        }
-
-        // If evaluation produced a different term, try reducing it again
-        if (evaluatedTerm != term) {
-          tryAggressiveReduction(evaluatedTerm).getOrElse(evaluatedTerm)
-        } else {
-          evaluatedTerm
-        }
-      }
-
-      // Field access - multi-phase reduction strategy
-      case FieldAccessTerm(record, field, fieldType, meta) => {
-        // Try aggressive reduction on the record
-        val reducedRecord = tryAggressiveReduction(record).getOrElse(record)
-        
-        // If reduction worked, try field access on reduced record
-        if (reducedRecord != record) {
-          r.reduce(FieldAccessTerm(reducedRecord, field, fieldType, meta), mode)
-        } else {
-          // Handle different record types
-          reducedRecord match {
-            case Type(level, _) =>
-              // Try aggressive reduction on the level
-              val reducedLevel = tryAggressiveReduction(level).getOrElse(level)
-              if (reducedLevel != level) {
-                r.reduce(FieldAccessTerm(Type(reducedLevel, meta), field, fieldType, meta), mode)
-              } else {
-                term
+            // Try reducing the substituted body in the current mode
+            val evaluated = r.reduce(substitutedBody, mode)
+            if (evaluated != substitutedBody) {
+              evaluated
+            } else {
+              // If reduction in current mode didn't work, try the other mode
+              val otherMode = mode match {
+                case ReduceMode.TypeLevel => ReduceMode.Normal
+                case ReduceMode.Normal => ReduceMode.TypeLevel
               }
-            
-            case fcall: FCallTerm =>
-              // Try aggressive reduction on the function call
-              tryAggressiveReduction(fcall).map { reduced =>
-                r.reduce(FieldAccessTerm(reduced, field, fieldType, meta), mode)
-              }.getOrElse(term)
-            
-            case ref: ReferenceCall =>
-              // Try to resolve and reduce the reference
-              val resolved = ctx.resolve(ref)
-              if (resolved != ref) {
-                r.reduce(FieldAccessTerm(resolved, field, fieldType, meta), mode)
+              val otherReduced = r.reduce(substitutedBody, otherMode)
+              if (otherReduced != substitutedBody) {
+                otherReduced
               } else {
-                term
+                FCallTerm(reducedF, reducedArgs, meta)
               }
-            
-            case _ => term
-          }
+            }
+          case _ =>
+            // Not a function, try reducing in the other mode
+            val otherMode = mode match {
+              case ReduceMode.TypeLevel => ReduceMode.Normal
+              case ReduceMode.Normal => ReduceMode.TypeLevel
+            }
+            val otherReduced = r.reduce(term, otherMode)
+            if (otherReduced != term) {
+              otherReduced
+            } else {
+              FCallTerm(reducedF, reducedArgs, meta)
+            }
         }
       }
 
-      // Block terms - reduce statements and result
-      case BlockTerm(statements, result, meta) => {
-        val reducedStatements = statements.map { case stmt: StmtTerm =>
-          tryAggressiveReduction(stmt).getOrElse(stmt).asInstanceOf[StmtTerm]
+      // References - try to resolve and reduce
+      case ref: ReferenceCall => {
+        val resolved = ctx.resolve(ref)
+        if (resolved != ref) {
+          r.reduce(resolved, mode)
+        } else {
+          ref
         }
-        val reducedResult = tryAggressiveReduction(result).getOrElse(result)
-        BlockTerm(reducedStatements, reducedResult, meta)
       }
 
-      // Other terms - try aggressive reduction
-      case _ => tryAggressiveReduction(term).getOrElse(term)
+      // Other terms - try to reduce subterms
+      case _ => term
     }
   }
 }

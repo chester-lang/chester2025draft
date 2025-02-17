@@ -1,21 +1,10 @@
 package chester.tyck
 
-import cats.implicits.*
-import chester.error.{Problem, Reporter, TyckProblem, VectorReporter, WithServerity}
-import chester.syntax.{Name, LoadedModules, ModuleRef, TAST, DefaultModule}
-import chester.syntax.concrete.{Expr, ExprMeta, Block, ObjectExpr, ObjectClause, FunctionExpr, DesaltFunctionCall, Arg, DefTelescope}
-import chester.syntax.core.{Term, Effects, Meta, Typeω, LocalV, ReferenceCall, TelescopeTerm, ArgTerm, FunctionType, Function, Type, FCallTerm, Calling, CallingArgTerm, ErrorTerm}
-import chester.syntax.core.spec.given_TypeF_Term_Type
-import chester.syntax.core.spec.given
-import chester.tyck.api.{SemanticCollector, SymbolCollector}
-import chester.utils.{MutBox, flatMapOrdered, hasDuplication, assumeNonEmpty}
-import chester.utils.propagator.{StateAbility, Propagator, ZonkResult, ProvideCellId, Cell}
-import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
-import chester.reduce.ReduceContext.given_Conversion_Context_ReduceContext
-import chester.uniqid.{Uniqid, UniqidOf}
-import chester.resolve.{SimpleDesalt, resolveOpSeq}
-
-import scala.language.implicitConversions
+import chester.syntax.concrete.*
+import chester.syntax.core.*
+import chester.tyck.api.SemanticCollector
+import chester.error.*
+import chester.uniqid.*
 
 trait ElaboraterFunction extends ProvideCtx with Elaborater {
   def elabFunction(
@@ -41,170 +30,12 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
       state: StateAbility[Tyck]
   ): ArgTerm = {
     require(arg.decorations.isEmpty, "decorations are not supported yet")
-    // First elaborate the type
-    val ty = elabTy(arg.ty)(using localCtx.ctx, parameter, ck, state)
-    // Try type-level reduction on the type
-    given ReduceContext = localCtx.ctx.toReduceContext
-    given Reducer = localCtx.ctx.given_Reducer
-    val reducedTy = summon[Reducer].reduce(ty, ReduceMode.TypeLevel) match {
-      case Type(level, _) =>
-        // If we have a Type term, try to reduce its level
-        val reducedLevel = summon[Reducer].reduce(level, ReduceMode.TypeLevel)
-        if (reducedLevel != level) {
-          Type(reducedLevel, ty.meta)
-        } else {
-          // If type-level reduction didn't work, try normal reduction
-          val normalReducedLevel = summon[Reducer].reduce(level, ReduceMode.Normal)
-          if (normalReducedLevel != level) {
-            Type(normalReducedLevel, ty.meta)
-          } else {
-            // Try to evaluate the level term if it's a function call
-            level match {
-              case fcall: FCallTerm =>
-                // Try to evaluate the function call
-                val reducedF = summon[Reducer].reduce(fcall.f, ReduceMode.TypeLevel)
-                val reducedArgs = fcall.args.map(calling =>
-                  Calling(
-                    calling.args.map(arg => CallingArgTerm(
-                      summon[Reducer].reduce(arg.value, ReduceMode.TypeLevel),
-                      summon[Reducer].reduce(arg.ty, ReduceMode.TypeLevel),
-                      arg.name,
-                      arg.vararg,
-                      arg.meta
-                    )),
-                    calling.implicitly,
-                    calling.meta
-                  )
-                )
-                reducedF match {
-                  case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-                    // Substitute args into body
-                    val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
-                      telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-                        acc.substitute(param.bind, arg.value)
-                      }
-                    }
-                    // Try reducing the substituted body
-                    val evaluated = summon[Reducer].reduce(substitutedBody, ReduceMode.TypeLevel)
-                    if (evaluated != substitutedBody) {
-                      Type(evaluated, ty.meta)
-                    } else {
-                      ty
-                    }
-                  case _ => ty
-                }
-              case _ => ty
-            }
-          }
-        }
-      case fcall: FCallTerm =>
-        // If we have a function call, try to evaluate it in type-level mode first
-        val reducedFCall = summon[Reducer].reduce(fcall, ReduceMode.TypeLevel)
-        if (reducedFCall != fcall) {
-          reducedFCall
-        } else {
-          // If type-level reduction didn't work, try normal reduction
-          val normalReducedFCall = summon[Reducer].reduce(fcall, ReduceMode.Normal)
-          if (normalReducedFCall != fcall) {
-            normalReducedFCall
-          } else {
-            // Try to evaluate the function call
-            val reducedF = summon[Reducer].reduce(fcall.f, ReduceMode.TypeLevel)
-            val reducedArgs = fcall.args.map(calling =>
-              Calling(
-                calling.args.map(arg => CallingArgTerm(
-                  summon[Reducer].reduce(arg.value, ReduceMode.TypeLevel),
-                  summon[Reducer].reduce(arg.ty, ReduceMode.TypeLevel),
-                  arg.name,
-                  arg.vararg,
-                  arg.meta
-                )),
-                calling.implicitly,
-                calling.meta
-              )
-            )
-            reducedF match {
-              case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-                // Substitute args into body
-                val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
-                  telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-                    acc.substitute(param.bind, arg.value)
-                  }
-                }
-                // Try reducing the substituted body
-                val evaluated = summon[Reducer].reduce(substitutedBody, ReduceMode.TypeLevel)
-                if (evaluated != substitutedBody) {
-                  evaluated
-                } else {
-                  ty
-                }
-              case _ => ty
-            }
-          }
-        }
-      case ref: ReferenceCall =>
-        // If we have a reference, try to resolve it
-        val resolved = localCtx.ctx.toReduceContext.resolve(ref)
-        if (resolved != ref) {
-          // Try to reduce the resolved reference
-          val reducedResolved = summon[Reducer].reduce(resolved, ReduceMode.TypeLevel)
-          if (reducedResolved != resolved) {
-            reducedResolved
-          } else {
-            val normalReducedResolved = summon[Reducer].reduce(resolved, ReduceMode.Normal)
-            if (normalReducedResolved != resolved) {
-              normalReducedResolved
-            } else {
-              // Try to evaluate if it's a function call
-              resolved match {
-                case fcall: FCallTerm =>
-                  val reducedF = summon[Reducer].reduce(fcall.f, ReduceMode.TypeLevel)
-                  val reducedArgs = fcall.args.map(calling =>
-                    Calling(
-                      calling.args.map(arg => CallingArgTerm(
-                        summon[Reducer].reduce(arg.value, ReduceMode.TypeLevel),
-                        summon[Reducer].reduce(arg.ty, ReduceMode.TypeLevel),
-                        arg.name,
-                        arg.vararg,
-                        arg.meta
-                      )),
-                      calling.implicitly,
-                      calling.meta
-                    )
-                  )
-                  reducedF match {
-                    case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-                      // Substitute args into body
-                      val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
-                        telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-                          acc.substitute(param.bind, arg.value)
-                        }
-                      }
-                      // Try reducing the substituted body
-                      val evaluated = summon[Reducer].reduce(substitutedBody, ReduceMode.TypeLevel)
-                      if (evaluated != substitutedBody) {
-                        evaluated
-                      } else {
-                        ty
-                      }
-                    case _ => ty
-                  }
-                case _ => ty
-              }
-            }
-          }
-        } else {
-          ty
-        }
-      case _ => ty
-    }
-    
-    // Use the reduced type for the binding but keep the original type in the ArgTerm
-    val default = arg.exprOrDefault.map(elab(_, reducedTy, effects)(using localCtx.ctx, parameter, ck, state))
+    val ty = elabTy(arg.ty)
+    val default = arg.exprOrDefault.map(elab(_, ty, effects))
     val id = Uniqid.generate[LocalV]
-    val bind = newLocalv(arg.name.name, reducedTy, id, arg.meta)
-    val r = parameter.newSymbol(bind, id, arg, localCtx.ctx)
-    localCtx.update(_.add(ContextItem(arg.name.name, id, bind, reducedTy, Some(r))))
+    val bind = newLocalv(arg.name.name, ty, id, arg.meta)
+    val r = parameter.newSymbol(bind, id, arg, localCtx)
+    localCtx.update(_.add(ContextItem(arg.name.name, id, bind, ty, Some(r))))
     default match {
       case Some(defaultValue) =>
         ArgTerm(bind, ty, Some(defaultValue), arg.vararg, meta = None)
@@ -214,10 +45,10 @@ trait ProvideElaboraterFunction extends ElaboraterFunction {
   }
 
   def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
-      mutableCtx: MutableContext,
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+      MutableContext,
+      SemanticCollector,
+      Tyck,
+      StateAbility[Tyck]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
     val argTerms = telescope.args.map { arg =>

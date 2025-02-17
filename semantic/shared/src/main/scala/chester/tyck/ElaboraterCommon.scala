@@ -1,23 +1,13 @@
 package chester.tyck
 
-import cats.implicits.*
-import chester.error.{Problem, Reporter, TyckProblem, VectorReporter, WithServerity}
-import chester.syntax.{Name, LoadedModules, ModuleRef, TAST, DefaultModule}
-import chester.syntax.concrete.{Expr, ExprMeta, OpSeq}
-import chester.syntax.core.{Term, Effects, Meta, Typeω, LocalV, ReferenceCall, MetaTerm, AnyType0, OnceCell, BaseMapCell, UnstableCell, NoFill}
-import chester.syntax.core.spec.given_TypeF_Term_Type
-import chester.syntax.core.spec.given
-import chester.tyck.api.{SemanticCollector, SymbolCollector}
-import chester.utils.{MutBox, flatMapOrdered, hasDuplication, assumeNonEmpty}
-import chester.utils.propagator.{StateAbility, Propagator, ZonkResult, ProvideCellId, Cell}
-import chester.reduce.{Reducer, NaiveReducer, ReduceContext, ReduceMode}
-import chester.reduce.ReduceContext.given_Conversion_Context_ReduceContext
-import chester.uniqid.{Uniqid, UniqidOf}
+import chester.error.*
 import chester.resolve.{SimpleDesalt, resolveOpSeq}
+import chester.syntax.concrete.*
+import chester.syntax.core.*
+import chester.utils.*
+import chester.utils.propagator.CommonPropagator
 
-import scala.language.implicitConversions
-
-trait ElaboraterCommon extends ProvideCtx with Elaborater {
+trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[Tyck] {
 
   trait EffectsCell extends Cell[Effects] {
     def requireEffect(

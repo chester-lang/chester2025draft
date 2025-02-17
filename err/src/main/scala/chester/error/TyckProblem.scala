@@ -11,7 +11,7 @@ import upickle.default.*
 
 import scala.reflect.ClassTag
 
-sealed trait TyckProblem extends Problem {
+sealed trait TyckProblem extends Problem derives ReadWriter {
   final def stage: Problem.Stage = Problem.Stage.TYCK
 
   final def getMessage: String = {
@@ -31,11 +31,11 @@ sealed trait TyckProblem extends Problem {
   }
 }
 
-sealed trait TyckError extends TyckProblem {
+sealed trait TyckError extends TyckProblem derives ReadWriter {
   final override def severity: Problem.Severity = Problem.Severity.Error
 }
 
-sealed trait TyckWarning extends TyckProblem {
+sealed trait TyckWarning extends TyckProblem derives ReadWriter {
   final override def severity: Problem.Severity = Problem.Severity.Warning
 }
 
@@ -97,7 +97,7 @@ case class UnsupportedTermError(cause: Term) extends TyckError {
   ): Doc = t"Unsupported term"
 }
 
-sealed trait OpInfoError extends TyckError {
+sealed trait OpInfoError extends TyckError derives ReadWriter {
   override def cause: Term | Expr = EmptyExpr
 }
 
@@ -261,17 +261,17 @@ case class PotentialNonterminatingFunction(cause: Expr) extends TyckError {
   override def toDoc(using
       PrettierOptions
   ): Doc =
-    t"Function may not terminate - recursive call detected without clear termination condition"
+    t"Potential non-terminating function"
 }
 
-case class FieldNotFound(field: String, recordName: Name, cause: Term | Expr) extends TyckError {
+case class FieldNotFound(fieldName: Name, recordName: Name, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Field '$field' not found in record '$recordName'"
+    t"Field '${fieldName}' not found in record '${recordName}'"
 }
 
-case class NotARecordType(term: Term, cause: Term | Expr) extends TyckError {
+case class NotARecordType(ty: Term, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Expected a record type, but got: $term"
+    t"Expected a record type, got ${ty}"
 }
 
 case class InvalidFieldName(cause: Expr) extends TyckError {
@@ -279,7 +279,7 @@ case class InvalidFieldName(cause: Expr) extends TyckError {
     t"Expected an identifier for field name"
 }
 
-case class NotImplementedFeature(message: String, cause: Term | Expr) extends TyckError {
+case class NotImplementedFeature(message: String, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Not implemented: $message"
+    t"${message}"
 }

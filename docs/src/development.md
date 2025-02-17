@@ -10,8 +10,7 @@
    - Each change should be easily reviewable and testable
 
 2. **Testing Requirements**
-   - ⚠️ NEVER use `sbt test` directly - it is too slow and runs unnecessary tests
-   - ALWAYS run `sbt rootJVM/test` before committing changes - this is the correct and faster way to test
+   - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
    - Add new tests for new functionality
    - Update existing tests when modifying behavior
