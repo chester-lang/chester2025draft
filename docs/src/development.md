@@ -45,6 +45,47 @@
      ```
    - This ensures consistent output and avoids interactive paging
 
+### Terminal Control with Git Commands
+
+1. **Always Use `| cat` Suffix**
+   - Git commands that might trigger paging or interactive prompts should always end with `| cat`
+   - This ensures consistent output and prevents terminal control issues
+   - Examples:
+     ```bash
+     git checkout main | cat
+     git merge --no-ff branch | cat
+     git log | cat
+     git diff | cat
+     git show | cat
+     git branch | cat
+     ```
+
+2. **Common Git Operations**
+   ```bash
+   # Switching branches
+   git checkout main | cat
+   git checkout -b new-branch | cat
+
+   # Merging
+   git merge --no-ff feature-branch | cat
+   git merge --abort | cat  # If merge conflicts occur
+
+   # Viewing changes
+   git status | cat
+   git log --oneline | cat
+   git show HEAD | cat
+
+   # Committing
+   git add . | cat
+   git commit -m "type: description" | cat
+   ```
+
+3. **Why This Matters**
+   - Prevents terminal from entering interactive mode
+   - Ensures consistent output formatting
+   - Avoids getting stuck in pagers like `less`
+   - Makes automation and scripting more reliable
+
 ## Platform-Specific Type System Implementation
 
 Chester implements its type system differently for different platforms (JVM and JS). To handle this correctly:
