@@ -7,6 +7,8 @@ import chester.utils.getCodePoints
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
+import scala.util.boundary
+import scala.util.boundary.break
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 
@@ -114,39 +116,30 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   }
 
   private def parseString(startPos: Int): Either[ParseError, Token] = {
-    var chars = Vector.empty[StringChar]
-    var escaped = false
+    boundary[Either[ParseError, Token]] {
+      var currentPos = startPos + 1 // Skip initial quote
+      var chars = Vector.empty[StringChar]
+      var escaped = false
 
-    while (pos < source.length && (escaped || source(pos) != '"')) {
-      if (escaped) {
-        val escapeChar = source(pos) match {
-          case 'n'  => '\n'
-          case 't'  => '\t'
-          case 'r'  => '\r'
-          case '"'  => '"'
-          case '\\' => '\\'
-          case other =>
-            val error = ParseError(s"Invalid escape sequence: \\$other", createSourcePos(pos - 1, pos).range.start)
-            return Left(error)
+      while (currentPos < source.length) {
+        val c = source(currentPos)
+        if (escaped) {
+          chars = chars :+ StringChar(escapeCharToString(c), createSourcePos(currentPos - 1, currentPos + 1))
+          escaped = false
+          currentPos += 1
+        } else if (c == '\\') {
+          escaped = true
+          currentPos += 1
+        } else if (c == '"') {
+          pos = currentPos + 1 // Update position for tokenizer state
+          col += currentPos - startPos + 1 // Update column
+          break(Right(Token.StringLiteral(chars, createSourcePos(startPos, currentPos + 1))))
+        } else {
+          chars = chars :+ StringChar(c.toString, createSourcePos(currentPos, currentPos + 1))
+          currentPos += 1
         }
-        chars = chars :+ StringChar(escapeChar.toString, createSourcePos(pos - 1, pos))
-        escaped = false
-      } else if (source(pos) == '\\') {
-        escaped = true
-      } else {
-        chars = chars :+ StringChar(source(pos).toString, createSourcePos(pos, pos + 1))
       }
-      pos += 1
-      col += 1
-    }
-
-    if (pos >= source.length) {
-      val error = ParseError("Unterminated string literal", createSourcePos(startPos, pos).range.start)
-      Left(error)
-    } else {
-      pos += 1 // Skip closing quote
-      col += 1
-      Right(Token.StringLiteral(chars, createSourcePos(startPos, pos)))
+      Left(ParseError("Unterminated string literal", createSourcePos(startPos, currentPos).range.start))
     }
   }
 
@@ -165,99 +158,42 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   }
 
   private def parseNumber(initial: String, startPos: Int): Either[ParseError, Token] = {
-    val sb = new StringBuilder(initial)
-    var isRational = false
-    var hasDecimalPoint = false
-    var base = 10
-
-    def readDigits(): Unit = {
-      while (pos < source.length && source(pos).isDigit) {
-        sb.append(source(pos))
-        pos += 1
-        col += 1
-      }
-    }
-
-    def readHexDigits(): Unit = {
-      while (pos < source.length && (source(pos).isDigit || ('a' <= source(pos).toLower && source(pos).toLower <= 'f'))) {
-        sb.append(source(pos))
-        pos += 1
-        col += 1
-      }
-    }
-
-    def readBinaryDigits(): Unit = {
-      while (pos < source.length && (source(pos) == '0' || source(pos) == '1')) {
-        sb.append(source(pos))
-        pos += 1
-        col += 1
-      }
-    }
-
-    if (initial == "0" && pos < source.length) {
-      source(pos) match {
-        case 'x' | 'X' =>
-          base = 16
-          sb.append(source(pos)) // Keep the x
-          pos += 1 // Skip 'x'
-          col += 1
-          readHexDigits()
-        case 'b' | 'B' =>
-          base = 2
-          sb.append(source(pos)) // Keep the b
-          pos += 1 // Skip 'b'
-          col += 1
-          readBinaryDigits()
-        case _ =>
-          readDigits()
-      }
-    } else {
-      readDigits()
-    }
-
-    if (pos < source.length && source(pos) == '.') {
-      if (base != 10) {
-        return Left(ParseError("Decimal point not allowed in hex or binary numbers", createSourcePos(pos, pos + 1).range.start))
-      }
-      if (hasDecimalPoint) {
-        return Left(ParseError("Multiple decimal points in number", createSourcePos(pos, pos + 1).range.start))
-      }
-      hasDecimalPoint = true
-      isRational = true
-      sb.append(source(pos))
-      pos += 1
-      col += 1
-      readDigits()
-    }
-
-    // Handle exponent
-    if (pos < source.length && (source(pos) == 'e' || source(pos) == 'E')) {
-      if (base != 10) {
-        return Left(ParseError("Exponent not allowed in hex or binary numbers", createSourcePos(pos, pos + 1).range.start))
-      }
-      isRational = true
-      sb.append(source(pos))
-      pos += 1
-      col += 1
-
-      // Optional sign
-      if (pos < source.length && (source(pos) == '+' || source(pos) == '-')) {
-        sb.append(source(pos))
-        pos += 1
-        col += 1
+    boundary[Either[ParseError, Token]] {
+      def readDigits(pos: Int, base: Int): (String, Int) = {
+        val isValidDigit = base match {
+          case 2 => (c: Char) => c == '0' || c == '1'
+          case 16 => (c: Char) => c.isDigit || ('a' <= c.toLower && c.toLower <= 'f')
+          case _ => (c: Char) => c.isDigit
+        }
+        
+        boundary[(String, Int)] {
+          (pos until source.length).foldLeft((initial, pos)) { case ((acc, currentPos), p) =>
+            if (p < currentPos) (acc, currentPos)
+            else if (p < source.length && isValidDigit(source(p)))
+              (acc + source(p), p + 1)
+            else
+              break((acc, p))
+          }
+        }
       }
 
-      // Must have at least one digit after exponent
-      if (pos >= source.length || !source(pos).isDigit) {
-        return Left(ParseError("Expected digits after exponent", createSourcePos(pos, pos).range.start))
+      val (digits, finalPos) = if (initial == "0" && pos < source.length) {
+        source(pos) match {
+          case 'x' | 'X' =>
+            val (hexDigits, newPos) = readDigits(pos + 1, 16)
+            ("0x" + hexDigits, newPos)
+          case 'b' | 'B' =>
+            val (binDigits, newPos) = readDigits(pos + 1, 2)
+            ("0b" + binDigits, newPos)
+          case _ =>
+            readDigits(pos, 10)
+        }
+      } else {
+        readDigits(pos, 10)
       }
-      readDigits()
-    }
 
-    if (isRational) {
-      Right(Token.RationalLiteral(sb.toString, createSourcePos(startPos, pos)))
-    } else {
-      Right(Token.IntegerLiteral(sb.toString, createSourcePos(startPos, pos)))
+      pos = finalPos // Update position for tokenizer state
+      Right(Token.IntegerLiteral(digits, createSourcePos(startPos, finalPos)))
     }
   }
 
@@ -297,6 +233,17 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       }
       val operator = sb.toString
       Right(Token.Operator(operator, createSourcePos(startPos, pos)))
+    }
+  }
+
+  private def escapeCharToString(c: Char): String = {
+    c match {
+      case 'n'  => "\n"
+      case 't'  => "\t"
+      case 'r'  => "\r"
+      case '"'  => "\""
+      case '\\' => "\\"
+      case other => other.toString
     }
   }
 }
