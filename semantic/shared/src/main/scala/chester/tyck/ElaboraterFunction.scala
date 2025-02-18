@@ -6,7 +6,7 @@ import chester.tyck.api.SemanticCollector
 import chester.error.*
 import chester.uniqid.*
 
-trait ElaboraterFunction extends ProvideCtx with Elaborater {
+trait ElaboraterFunction { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunction(
       expr: FunctionExpr,
       ty: CellId[Term],
@@ -19,7 +19,7 @@ trait ElaboraterFunction extends ProvideCtx with Elaborater {
   ): Term
 }
 
-trait ProvideElaboraterFunction extends ElaboraterFunction {
+trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & ElaboraterBase & ElaboraterCommon =>
   // Flag to enable or disable termination checking
   val terminationCheckEnabled: Boolean = true // Set to false to disable termination checking
 
