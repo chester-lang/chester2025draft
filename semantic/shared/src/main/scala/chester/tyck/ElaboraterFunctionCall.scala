@@ -5,7 +5,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 
-trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
+trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunctionCall(
       expr: DesaltFunctionCall,
       ty: CellId[Term],
@@ -18,7 +18,7 @@ trait ElaboraterFunctionCall extends ProvideCtx with Elaborater {
   ): Term
 }
 
-trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall {
+trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elaborater & ElaboraterBase & ElaboraterCommon =>
   override def elabFunctionCall(
       expr: DesaltFunctionCall,
       ty: CellId[Term],
