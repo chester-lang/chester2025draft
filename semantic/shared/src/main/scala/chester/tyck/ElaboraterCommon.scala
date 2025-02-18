@@ -5,7 +5,7 @@ import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
-import chester.utils.propagator.CommonPropagator
+import chester.utils.propagator.*
 import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
