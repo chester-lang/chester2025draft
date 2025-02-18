@@ -463,26 +463,6 @@ lazy val kiamaCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .disablePlugins(ScalafixPlugin)
   .jvmSettings(commonJvmLibSettings)
 
-// iron & iron-cats & iron-upickle, commit 86fbe48e8c9b0f6e5d2f7261ddefaa7c671341ae, built against Scala Native 0.5
-// removed RefinedTypeOpsSuite.scala because of compilation error
-lazy val ironNative = crossProject(NativePlatform)
-  .withoutSuffixFor(NativePlatform)
-  .crossType(CrossType.Pure)
-  .in(file("vendor/iron-native"))
-  .settings(
-    commonVendorSettings
-  )
-  .disablePlugins(ScalafixPlugin)
-  .nativeSettings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "4.1.0",
-      "org.typelevel" %%% "cats-core" % "2.13.0",
-      "com.lihaoyi" %%% "utest" % "0.8.5" % Test,
-      "org.typelevel" %%% "kittens" % "3.4.0" % Test
-    ),
-    testFrameworks += new TestFramework("utest.runner.Framework")
-  )
-
 // commit 52b3692bdfe01ef6c645380b02595a9c60a9725b, core & util & platform & macros, main only, no tests
 // rewrite by scalac with 3.4-migration
 // needed project/GenProductTypes.scala
@@ -527,6 +507,11 @@ lazy val utils = useSpire(
       commonLibSettings,
       baseDeps,
       libraryDependencies ++= Seq(
+        "io.github.iltotore" %%% "iron" % "2.6.0-18-2329c7-SNAPSHOT",
+        "io.github.iltotore" %%% "iron-cats" % "2.6.0-18-2329c7-SNAPSHOT",
+        "io.github.iltotore" %%% "iron-upickle" % "2.6.0-18-2329c7-SNAPSHOT" exclude ("com.lihaoyi", "upickle_3")
+      ),
+      libraryDependencies ++= Seq(
         "org.scala-graph" %%% "graph-core" % "2.0.2"
       )
     )
@@ -535,11 +520,6 @@ lazy val utils = useSpire(
         "com.lihaoyi" %%% "os-lib" % "0.11.4"
       ),
       commonJvmLibSettings,
-      libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "2.6.0",
-        "io.github.iltotore" %%% "iron-cats" % "2.6.0",
-        "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
-      ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
       ),
@@ -556,13 +536,7 @@ lazy val utils = useSpire(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
       )
     )
-    .nativeConfigure(_.dependsOn(ironNative.native))
     .jsSettings(
-      libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "2.6.0",
-        "io.github.iltotore" %%% "iron-cats" % "2.6.0",
-        "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
-      )
     )
 )
 
@@ -1400,7 +1374,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("project/root"))
   .aggregate(
     allprojects,
-    ironNative,
     spireNative,
     typednode,
     typedstd,
