@@ -8,10 +8,11 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
+import chester.utils.propagator.*
 
 import scala.language.implicitConversions
 
-trait ElaboraterBlock extends Elaborater {
+object ElaboraterBlock {
   // Sealed trait for declaration information, for forwarding references
   sealed trait DeclarationInfo extends Product with Serializable {
     def expr: Expr
@@ -54,6 +55,10 @@ trait ElaboraterBlock extends Elaborater {
       uniqId: UniqidOf[ObjectStmtTerm],
       name: Name
   ) extends DeclarationInfo
+}
+
+trait ElaboraterBlock { this: ElaboraterBase & ElaboraterCommon =>
+  import ElaboraterBlock.*
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
@@ -63,7 +68,9 @@ trait ElaboraterBlock extends Elaborater {
   ): BlockTerm
 }
 
-trait ProvideElaboraterBlock extends ElaboraterBlock {
+trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & ElaboraterBase & ElaboraterCommon =>
+  import ElaboraterBlock.*
+
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,
       parameter: SemanticCollector,
@@ -91,13 +98,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         ctx = newCtx
         stmtTerms
 
-      // Process trait statements
       case expr: TraitStmt =>
         val (stmtTerms, newCtx) = processTraitStmt(expr, ctx, declarationsMap, effects)
         ctx = newCtx
         stmtTerms
 
-      // Process interface statements
       case expr: InterfaceStmt =>
         val (stmtTerms, newCtx) = processInterfaceStmt(expr, ctx, declarationsMap, effects)
         ctx = newCtx
@@ -112,7 +117,6 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
         ck.reporter.apply(NotImplemented(importStmt))
         Vector.empty
 
-      // Process object statements
       case expr: ObjectStmt =>
         val (stmtTerms, newCtx) = processObjectStmt(expr, ctx, declarationsMap, effects)
         ctx = newCtx
@@ -142,10 +146,8 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[DeclarationInfo], Seq[Name], Context) = {
-
     // Collect all declarations in a single pass
     val declarations = heads.collect {
-      // Collect 'def' declarations
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         val name = expr.defined match {
           // TODO: support other defined patterns
@@ -163,25 +165,21 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
           ContextItem(name, id, localv, tyAndVal.ty, Some(r))
         )
 
-      // Collect 'record' declarations
       case expr: RecordStmt =>
         val name = expr.name.name
         val id = Uniqid.generate[RecordStmtTerm]
         RecordDeclaration(expr, id, name)
 
-      // Collect 'trait' declarations
       case expr: TraitStmt =>
         val name = expr.name.name
         val id = Uniqid.generate[TraitStmtTerm]
         TraitDeclaration(expr, id, name)
 
-      // Collect 'interface' declarations
       case expr: InterfaceStmt =>
         val name = expr.name.name
         val id = Uniqid.generate[InterfaceStmtTerm]
         InterfaceDeclaration(expr, id, name)
 
-      // Collect 'object' declarations
       case expr: ObjectStmt =>
         val name = expr.name.name
         val id = Uniqid.generate[ObjectStmtTerm]
@@ -189,14 +187,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
     }
 
     val names = declarations.map(_.name)
-
-    // Collect context items from 'def' declarations
     val defContextItems = declarations.collect { case defDecl: DefDeclaration =>
       defDecl.item
     }
     val initialCtx = localCtx.add(defContextItems)
 
-    // Return all declarations, names, and the initial context
     (declarations, names, initialCtx)
   }
 
@@ -206,6 +201,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock {
       ck.reporter.apply(problem)
     }
   }
+
   def processDefLetDefStmt(
       expr: LetDefStmt,
       ctx: Context,
