@@ -14,46 +14,50 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
-    if (lhs == rhs) return
-    // Use TypeLevel reduction for type equality checking
-    given ReduceContext = localCtx.toReduceContext
-    given Reducer = localCtx.given_Reducer
-    val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-    val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
-    if (lhsResolved == rhsResolved) return
-    (lhsResolved, rhsResolved) match {
-      case (Meta(lhs), rhs) => 
-        // Explicitly specify which overload to use
-        unify(lhs: CellId[Term], rhs: Term, cause)
-      case (lhs, Meta(rhs)) => 
-        // Explicitly specify which overload to use
-        unify(lhs: Term, rhs: CellId[Term], cause)
+    if (lhs != rhs) {
+      // Use TypeLevel reduction for type equality checking
+      given ReduceContext = localCtx.toReduceContext
+      given Reducer = localCtx.given_Reducer
+      val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
+      val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+      
+      if (lhsResolved != rhsResolved) {
+        (lhsResolved, rhsResolved) match {
+          case (Meta(lhs), rhs) => 
+            // Explicitly specify which overload to use
+            unify(lhs: CellId[Term], rhs: Term, cause)
+          case (lhs, Meta(rhs)) => 
+            // Explicitly specify which overload to use
+            unify(lhs: Term, rhs: CellId[Term], cause)
 
-      // Structural unification for ListType
-      case (ListType(elem1, _), ListType(elem2, _)) =>
-        unify(elem1, elem2, cause)
+          // Structural unification for ListType
+          case (ListType(elem1, _), ListType(elem2, _)) =>
+            unify(elem1, elem2, cause)
 
-      case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
+          case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
 
-      case (x, Intersection(xs, _)) =>
-        if (xs.exists(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+          case (x, Intersection(xs, _)) =>
+            if (!xs.exists(tryUnify(x, _))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
 
-      // Structural unification for TupleType
-      case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
-        types1.zip(types2).foreach { case (t1, t2) => unify(t1, t2, cause) }
+          // Structural unification for TupleType
+          case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
+            types1.zip(types2).foreach { case (t1, t2) => unify(t1, t2, cause) }
 
-      // Type levels: unify levels
-      case (Type(level1, _), Type(level2, _)) =>
-        unify(level1, level2, cause)
+          // Type levels: unify levels
+          case (Type(level1, _), Type(level2, _)) =>
+            unify(level1, level2, cause)
 
-      case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
+          case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
 
-      case (Union(_, _), Union(_, _)) => ???
+          case (Union(_, _), Union(_, _)) => ???
 
-      // Base case: types do not match
-      case _ =>
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+          // Base case: types do not match
+          case _ =>
+            ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        }
+      }
     }
   }
 
@@ -93,22 +97,19 @@ trait TyckPropagator extends ElaboraterCommon {
     override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
       val lhs = state.readStable(this.lhs)
       val rhs = state.readStable(this.rhs)
-      if (lhs.isDefined && rhs.isDefined) {
-        unify(lhs.get, rhs.get, cause)
-        return true
-      }
+      
       (lhs, rhs) match {
-        case (Some(Meta(lhs)), _) => {
-          state.addPropagator(Unify(lhs, this.rhs, cause))
-          return true
-        }
-        case (_, Some(Meta(rhs))) => {
-          state.addPropagator(Unify(this.lhs, rhs, cause))
-          return true
-        }
-        case _ => ()
+        case (Some(l), Some(r)) =>
+          unify(l, r, cause)
+          true
+        case (Some(Meta(l)), _) =>
+          state.addPropagator(Unify(l, this.rhs, cause))
+          true
+        case (_, Some(Meta(r))) =>
+          state.addPropagator(Unify(this.lhs, r, cause))
+          true
+        case _ => false
       }
-      return false
     }
 
     override def naiveZonk(
@@ -116,17 +117,16 @@ trait TyckPropagator extends ElaboraterCommon {
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val lhs = state.readStable(this.lhs)
       val rhs = state.readStable(this.rhs)
+      
       (lhs, rhs) match {
-        case (Some(lhs), Some(rhs)) if lhs == rhs => return ZonkResult.Done
-        case (Some(lhs), None) => {
-          state.fill(this.rhs, lhs)
-          return ZonkResult.Done
-        }
-        case (None, Some(rhs)) => {
-          state.fill(this.lhs, rhs)
-          return ZonkResult.Done
-        }
-        case _ => return ZonkResult.Require(Vector(this.lhs, this.rhs))
+        case (Some(l), Some(r)) if l == r => ZonkResult.Done
+        case (Some(l), None) =>
+          state.fill(this.rhs, l)
+          ZonkResult.Done
+        case (None, Some(r)) =>
+          state.fill(this.lhs, r)
+          ZonkResult.Done
+        case _ => ZonkResult.Require(Vector(this.lhs, this.rhs))
       }
     }
   }
@@ -195,42 +195,39 @@ trait TyckPropagator extends ElaboraterCommon {
       state: StateAbility[Tyck],
       localCtx: Context
   ): Boolean = {
-    if (lhs == rhs) return true
-    // Use TypeLevel reduction for type equality checking
-    given ReduceContext = localCtx.toReduceContext
-    given Reducer = localCtx.given_Reducer
-    val lhsResolved = NaiveReducer.reduce(lhs, ReduceMode.TypeLevel) match {
+    def resolveReference(term: Term) = term match {
       case varCall: ReferenceCall =>
-        localCtx.getKnown(varCall) match {
-          case Some(tyAndVal) =>
-            state.readStable(tyAndVal.valueId).getOrElse(lhs)
-          case None => lhs
-        }
+        localCtx.getKnown(varCall)
+          .flatMap(tyAndVal => state.readStable(tyAndVal.valueId))
+          .getOrElse(term)
       case other => other
     }
-    val rhsResolved = NaiveReducer.reduce(rhs, ReduceMode.TypeLevel) match {
-      case varCall: ReferenceCall =>
-        localCtx.getKnown(varCall) match {
-          case Some(tyAndVal) =>
-            state.readStable(tyAndVal.valueId).getOrElse(rhs)
-          case None => rhs
+
+    if (lhs == rhs) true
+    else {
+      // Use TypeLevel reduction for type equality checking
+      given ReduceContext = localCtx.toReduceContext
+      given Reducer = localCtx.given_Reducer
+      
+      val lhsResolved = resolveReference(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
+      val rhsResolved = resolveReference(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+
+      if (lhsResolved == rhsResolved) true
+      else {
+        (lhsResolved, rhsResolved) match {
+          case (Type(level1, _), Type(level2, _)) =>
+            level1 == level2
+
+          case (ListType(elem1, _), ListType(elem2, _)) =>
+            tryUnify(elem1, elem2)
+
+          case (Union(_, _), Union(_, _)) => ???
+
+          case (Intersection(_, _), Intersection(_, _)) => ???
+
+          case _ => false
         }
-      case other => other
-    }
-    if (lhsResolved == rhsResolved) return true
-
-    (lhsResolved, rhsResolved) match {
-      case (Type(level1, _), Type(level2, _)) =>
-        level1 == level2
-
-      case (ListType(elem1, _), ListType(elem2, _)) =>
-        tryUnify(elem1, elem2)
-
-      case (Union(_, _), Union(_, _)) => ???
-
-      case (Intersection(_, _), Intersection(_, _)) => ???
-
-      case _ => false
+      }
     }
   }
 
