@@ -239,38 +239,36 @@ trait TyckPropagator extends ElaboraterCommon {
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
 
     override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
-      if (state.noStableValue(tyLhs)) return false
-      val ty_ = state.readStable(this.tyLhs).get
-      ty_ match {
-        case Meta(ty) => {
-          state.addPropagator(LiteralType(x, ty))
-          return true
-        }
-        case _ => ()
-      }
-      x match {
-        case IntegerLiteral(value, _) => {
-          if (value.isValidInt && tryUnify(ty_, IntType(None))) return true
-          if (value > 0 && tryUnify(ty_, NaturalType(None))) return true
-          val i = Vector(IntegerType(None)) ++
-            Vector(NaturalType(None)).filter(x => value > 0) ++
-            Vector(IntType(None)).filter(x => value.isValidInt) ++
-            Vector(UIntType(None)).filter(x => value > 0 && value.isValidInt)
-          unify(ty_, Intersection(i.assumeNonEmpty, None), x)
-          return true
-        }
-        case RationalLiteral(_, _) => {
-          unify(ty_, RationalType(None), x)
-          return true
-        }
-        case StringLiteral(_, _) => {
-          unify(ty_, StringType(None), x)
-
-          return true
-        }
-        case SymbolLiteral(_, _) => {
-          unify(ty_, SymbolType(None), x)
-          return true
+      if (state.noStableValue(tyLhs)) false
+      else {
+        val ty_ = state.readStable(this.tyLhs).get
+        ty_ match {
+          case Meta(ty) => 
+            state.addPropagator(LiteralType(x, ty))
+            true
+          case _ => 
+            x match {
+              case IntegerLiteral(value, _) => 
+                if (value.isValidInt && tryUnify(ty_, IntType(None))) true
+                else if (value > 0 && tryUnify(ty_, NaturalType(None))) true
+                else {
+                  val i = Vector(IntegerType(None)) ++
+                    Vector(NaturalType(None)).filter(x => value > 0) ++
+                    Vector(IntType(None)).filter(x => value.isValidInt) ++
+                    Vector(UIntType(None)).filter(x => value > 0 && value.isValidInt)
+                  unify(ty_, Intersection(i.assumeNonEmpty, None), x)
+                  true
+                }
+              case RationalLiteral(_, _) => 
+                unify(ty_, RationalType(None), x)
+                true
+              case StringLiteral(_, _) => 
+                unify(ty_, StringType(None), x)
+                true
+              case SymbolLiteral(_, _) => 
+                unify(ty_, SymbolType(None), x)
+                true
+            }
         }
       }
     }
