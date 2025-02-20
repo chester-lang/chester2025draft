@@ -3,9 +3,9 @@
     "overrides": {
       "xterm-pty>xterm": "$xterm",
       "xterm-readline>xterm": "$xterm",
-      "@types/react": "19.0.8",
+      "@types/react": "19.0.10",
       "@xterm/xterm": "5.6.0-beta.70",
-      "@types/react-dom": "19.0.3"
+      "@types/react-dom": "19.0.4"
     }
   },
   "name": "next-i18n-static",
@@ -31,8 +31,8 @@
     "base64-arraybuffer": "^1.0.2",
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.2",
-    "next": "15.1.6",
-    "next-intl": "^3.26.3",
+    "next": "15.1.7",
+    "next-intl": "^3.26.4",
     "pako": "^2.1.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -45,15 +45,15 @@
   "devDependencies": {
     "@types/node": "^22.13.4",
     "@types/pako": "^2.0.3",
-    "@types/react": "19.0.8",
-    "@types/react-dom": "19.0.3",
+    "@types/react": "19.0.10",
+    "@types/react-dom": "19.0.4",
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.20.1",
-    "eslint-config-next": "15.1.6",
+    "eslint-config-next": "15.1.7",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.3",
-    "postcss": "^8.5.2",
+    "postcss": "^8.5.3",
     "prettier": "^3.5.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
