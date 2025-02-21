@@ -24,7 +24,7 @@ Chester is currently undergoing a parser migration from the original `reader` im
 | Function Calls | ✅ | 🟡 | Basic support in V2 |
 | Pattern Matching | ✅ | 🔴 | Not yet implemented in V2 |
 | Object Syntax | ✅ | 🟡 | Basic support in V2 |
-| Operator Precedence | ✅ | 🟡 | Partial implementation |
+| Operator Sequence | ✅ | ✅ | Parser produces flat OpSeq nodes |
 | Error Recovery | ✅ | 🔴 | Planned for V2 |
 | Source Maps | ✅ | 🔴 | To be implemented |
 | Unicode Support | ✅ | ✅ | Full support in both |
@@ -78,7 +78,6 @@ parse block with multiple statements
 
 ### Tests Still Needed
 - Complex pattern matching
-- Advanced operator precedence
 - Error recovery scenarios
 - Edge cases in object syntax
 - Source position tracking
@@ -88,13 +87,12 @@ parse block with multiple statements
 1. **Phase 1: Core Functionality** (Current)
    - [x] Basic literal parsing
    - [x] Simple function calls
-   - [ ] Complete operator precedence
+   - [x] Basic operator sequence parsing (flat OpSeq nodes)
    - [ ] Pattern matching basics
 
 2. **Phase 2: Advanced Features**
    - [ ] Full pattern matching
    - [ ] Complex object syntax
-   - [ ] Advanced operator handling
    - [ ] Source maps
 
 3. **Phase 3: Error Handling**
@@ -122,12 +120,29 @@ When working on the parser migration:
    - Add parsing rules documentation
    - Document error messages
 
+## Important Design Principles
+
+1. **Separation of Concerns**
+   - Parser only produces flat OpSeq nodes without any knowledge of operator semantics
+   - Operator precedence, fixity (infix/prefix/postfix), and associativity are handled in later passes
+   - This separation allows flexible operator definition and extension
+
+2. **Error Handling**
+   - Designed to handle incomplete/broken source code
+   - Produces meaningful partial results when possible
+   - Uses ErrorExpr to represent recoverable parse errors
+
+3. **Incremental Parsing**
+   - Supports partial parsing of incomplete expressions
+   - Maintains parser state for potential incremental updates
+   - Useful for IDE integration
+
 ## Next Steps
 
 1. **Immediate Tasks**
-   - Complete operator precedence implementation
-   - Add basic pattern matching support
+   - Complete pattern matching support
    - Improve function call parsing
+   - Enhance error reporting
 
 2. **Future Work**
    - Implement error recovery
