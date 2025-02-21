@@ -157,7 +157,38 @@ When working on the parser migration:
    - Produces meaningful partial results when possible
    - Uses ErrorExpr to represent recoverable parse errors
 
-3. **Incremental Parsing**
+3. **Pattern Matching Newline Rules**
+   - Single expressions: `case X => expr;`
+     - Semicolon required after expression
+     - Newlines are treated like spaces (not separators)
+     - Example:
+       ```
+       case A => expr1;
+       case B => expr2;
+       ```
+   - Block expressions: `case X => { stmts }`
+     - No semicolon needed after block
+     - Newline after block acts as separator
+     - Example:
+       ```
+       case A => {
+         stmt1;
+         stmt2
+       }
+       case B => expr2;
+       ```
+   - Comments and newlines in pattern matching:
+     - Comments before case are preserved
+     - Newlines between cases are preserved
+     - Example:
+       ```
+       // First case
+       case A => expr1;
+       // Second case
+       case B => expr2;
+       ```
+
+4. **Incremental Parsing**
    - Supports partial parsing of incomplete expressions
    - Maintains parser state for potential incremental updates
    - Useful for IDE integration
