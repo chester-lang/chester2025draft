@@ -1,6 +1,8 @@
 // reads env: NATIVE_IMAGE_OPTIONS, VERSION
 import org.scalajs.linker.interface.OutputPatterns
 import sbt.librarymanagement.InclExclRule
+import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import sbtcrossproject.Platform
 
 import scala.scalanative.build.*
 import sbt.complete.DefaultParsers._
@@ -183,8 +185,14 @@ val jdk17: Boolean = false /* because of -java-output-version 8 */
 
 dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
 
-val commonSettings0 = Seq(
+def commonSettings0 = Seq(
   dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla"),
+  // Workaround for Metals: disable BSP for native/js targets to prevent compilation issues
+  // See: https://github.com/scalameta/metals-feature-requests/issues/13
+  bspEnabled := {
+    val platform = crossProjectPlatform.?.value.getOrElse(JVMPlatform)
+    platform == JVMPlatform
+  },
   // githubTokenSource := TokenSource.GitConfig("github.token") || TokenSource.Environment("GITHUB_TOKEN"),
   // resolvers += Resolver.githubPackages("edadma", "readline"),
   resolvers += "jitpack" at "https://jitpack.io",
@@ -231,13 +239,13 @@ val commonSettings0 = Seq(
     ExclusionRule("org.scala-native", "test-interface_native0.5_2.13")
   )
 )
-val commonSettings = commonSettings0 ++ Seq(
+def commonSettings = commonSettings0 ++ Seq(
   scalaVersion := scala3Version
 )
-val commonLibSettings = commonSettings0 ++ Seq(
+def commonLibSettings = commonSettings0 ++ Seq(
   scalaVersion := scala3Lib
 )
-val scala2Common = Seq(
+def scala2Common = Seq(
   scalaVersion := scala2Version,
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
@@ -270,42 +278,42 @@ val scala2Common = Seq(
     ExclusionRule("org.scala-native", "test-interface_native0.5_3")
   )
 )
-val commonVendorSettings = Seq(
+def commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala3Lib,
   scalacOptions ++= Seq("-java-output-version", "11"),
   scalacOptions += "-nowarn"
 )
-val scala2VendorSettings = Seq(
+def scala2VendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala2Version,
   scalacOptions ++= Seq("-java-output-version", "11"),
   scalacOptions += "-nowarn"
 )
-val cpsSettings = Seq(
+def cpsSettings = Seq(
   autoCompilerPlugins := true,
   addCompilerPlugin(
     "com.github.rssh" %% "dotty-cps-async-compiler-plugin" % "0.9.23"
   )
 )
-val commonJvmLibSettings = Seq(
+def commonJvmLibSettings = Seq(
   // scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
   scalacOptions ++= Seq("-java-output-version", "11")
 )
-val jvmScala3Settings = Seq(
+def jvmScala3Settings = Seq(
   scalaVersion := scala3Nightly
 )
 
 val NativeImageOptions = sys.env.get("NATIVE_IMAGE_OPTIONS").map(_.split(" ").toList).getOrElse(List[String]())
 
-val graalvmSettings = Seq(
+def graalvmSettings = Seq(
   nativeImageVersion := graalJdkVersion,
   nativeImageOptions ++= defaultNativeImageOptions,
   nativeImageOptions ++= NativeImageOptions,
   nativeImageJvm := graalVm
 )
 
-val baseDeps = Seq(
+def baseDeps = Seq(
   libraryDependencies ++= Seq(
     "org.typelevel" %%% "cats-core" % "2.13.0",
     "org.typelevel" %%% "cats-free" % "2.13.0",
