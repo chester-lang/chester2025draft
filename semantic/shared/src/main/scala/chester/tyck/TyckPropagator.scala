@@ -57,18 +57,34 @@ trait TyckPropagator extends ElaboraterCommon {
             if (!types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
+            // Add propagators for each pair that unifies
+            types2.foreach { t2 =>
+              types1.find(t1 => tryUnify(t1, t2)).foreach { t1 =>
+                unify(t1, t2, cause)
+              }
+            }
 
           // Handle Union types - rhs must be a subtype of lhs
-          case (_, Union(types2, _)) =>
+          case (lhsType, Union(types2, _)) =>
             // For a union on the right, lhs must accept ALL possible types in the union
-            if (!types2.forall(t2 => tryUnify(lhsResolved, t2))) {
+            if (!types2.forall(t2 => tryUnify(lhsType, t2))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
+            // Add propagators for each type in the union
+            types2.foreach { t2 =>
+              unify(lhsType, t2, cause)
+            }
           
-          case (Union(types1, _), rhs) =>
+          case (Union(types1, _), rhsType) =>
             // For a union on the left, ANY type in the union accepting rhs is sufficient
-            if (!types1.exists(t1 => tryUnify(t1, rhsResolved))) {
+            // This handles the case where we pass a more specific type to a union type
+            // e.g., passing Integer to Integer | String
+            if (!types1.exists(t1 => tryUnify(t1, rhsType))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+            // Add propagator for the first matching type
+            types1.find(t1 => tryUnify(t1, rhsType)).foreach { t1 =>
+              unify(t1, rhsType, cause)
             }
 
           // Base case: types do not match
@@ -126,6 +142,26 @@ trait TyckPropagator extends ElaboraterCommon {
         case (_, Some(Meta(r))) =>
           state.addPropagator(Unify(this.lhs, r, cause))
           true
+        case (Some(Union(types1, _)), Some(Union(types2, _))) =>
+          // For each type in rhs union, at least one type in lhs union must accept it
+          types2.foreach { t2 =>
+            types1.find(t1 => tryUnify(t1, t2)).foreach { t1 =>
+              state.addPropagator(Unify(toId(t1), toId(t2), cause))
+            }
+          }
+          true
+        case (Some(lhsType), Some(Union(types2, _))) =>
+          // For a union on the right, lhs must accept ALL possible types in the union
+          types2.foreach { t2 =>
+            state.addPropagator(Unify(toId(lhsType), toId(t2), cause))
+          }
+          true
+        case (Some(Union(types1, _)), Some(rhsType)) =>
+          // For a union on the left, ANY type in the union accepting rhs is sufficient
+          types1.find(t1 => tryUnify(t1, rhsType)).foreach { t1 =>
+            state.addPropagator(Unify(toId(t1), toId(rhsType), cause))
+          }
+          true
         case _ => false
       }
     }
@@ -144,6 +180,27 @@ trait TyckPropagator extends ElaboraterCommon {
         case (None, Some(r)) =>
           state.fill(this.lhs, r)
           ZonkResult.Done
+        case (Some(Union(types1, _)), Some(Union(types2, _))) =>
+          // For each type in rhs union, at least one type in lhs union must accept it
+          if (types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
+          }
+        case (Some(lhsType), Some(Union(types2, _))) =>
+          // For a union on the right, lhs must accept ALL possible types in the union
+          if (types2.forall(t2 => tryUnify(lhsType, t2))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
+          }
+        case (Some(Union(types1, _)), Some(rhsType)) =>
+          // For a union on the left, ANY type in the union accepting rhs is sufficient
+          if (types1.exists(t1 => tryUnify(t1, rhsType))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
+          }
         case _ => ZonkResult.Require(Vector(this.lhs, this.rhs))
       }
     }
@@ -167,12 +224,20 @@ trait TyckPropagator extends ElaboraterCommon {
         val lhsValue = lhsValueOpt.get
         val rhsValues = rhsValuesOpt.map(_.get)
 
-        // Check that each rhsValue is assignable to lhsValue
-        val assignable = rhsValues.forall { rhsValue =>
-          unify(lhsValue, rhsValue, cause)
-          true // Assuming unify reports errors internally
+        // Handle meta variables in lhs
+        lhsValue match {
+          case Meta(lhsId) =>
+            // Create a new union type and unify with the meta variable
+            val unionType = Union(rhsValues.assumeNonEmpty, None)
+            unify(lhsId, unionType, cause)
+            true
+          case _ =>
+            // Check that each rhsValue is assignable to lhsValue
+            rhsValues.forall { rhsValue =>
+              unify(lhsValue, rhsValue, cause)
+              true // Assuming unify reports errors internally
+            }
         }
-        assignable
       } else {
         // Not all values are available yet
         false
@@ -185,26 +250,40 @@ trait TyckPropagator extends ElaboraterCommon {
       val lhsValueOpt = state.readStable(lhs)
       val rhsValuesOpt = rhs.map(state.readStable)
 
-      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
-      if (unknownRhs.nonEmpty) {
-        // Wait for all rhs values to be known
-        ZonkResult.Require(unknownRhs.toVector)
-      } else {
-        val rhsValues = rhsValuesOpt.map(_.get)
+      // First check if any of our cells are in the needed list
+      val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
+      if (ourNeededCells.nonEmpty) {
+        // We need to handle these cells
+        val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
+        if (unknownRhs.nonEmpty) {
+          // Wait for all rhs values to be known
+          ZonkResult.Require(unknownRhs.toVector)
+        } else {
+          val rhsValues = rhsValuesOpt.map(_.get)
 
-        lhsValueOpt match {
-          case Some(lhsValue) =>
-            // LHS is known, unify each RHS with LHS
-            rhsValues.foreach { rhsValue =>
-              unify(lhsValue, rhsValue, cause)
-            }
-            ZonkResult.Done
-          case None =>
-            // LHS is unknown, create UnionType from RHS values and set LHS
-            val unionType = Union(rhsValues.assumeNonEmpty, None)
-            state.fill(lhs, unionType)
-            ZonkResult.Done
+          lhsValueOpt match {
+            case Some(Meta(lhsId)) =>
+              // Create union type and unify with meta variable
+              val unionType = Union(rhsValues.assumeNonEmpty, None)
+              unify(lhsId, unionType, cause)
+              ZonkResult.Done
+            case Some(lhsValue) =>
+              // LHS is known, check if it's compatible with all RHS values
+              if (rhsValues.forall(rhsValue => tryUnify(lhsValue, rhsValue))) {
+                ZonkResult.Done
+              } else {
+                ZonkResult.NotYet
+              }
+            case None =>
+              // LHS is unknown, create UnionType from RHS values
+              val unionType = Union(rhsValues.assumeNonEmpty, None)
+              state.fill(lhs, unionType)
+              ZonkResult.Done
+          }
         }
+      } else {
+        // None of our cells are needed
+        ZonkResult.Done
       }
     }
   }
@@ -239,7 +318,19 @@ trait TyckPropagator extends ElaboraterCommon {
           case (ListType(elem1, _), ListType(elem2, _)) =>
             tryUnify(elem1, elem2)
 
-          case (Union(_, _), Union(_, _)) => ???
+          case (Union(types1, _), Union(types2, _)) =>
+            // For each type in RHS union, at least one type in LHS union must accept it
+            types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+
+          case (lhsType, Union(types2, _)) =>
+            // For a union on the right, lhs must accept ALL possible types in the union
+            types2.forall(t2 => tryUnify(lhsType, t2))
+          
+          case (Union(types1, _), rhsType) =>
+            // For a union on the left, ANY type in the union accepting rhs is sufficient
+            // This handles the case where we pass a more specific type to a union type
+            // e.g., passing Integer to Integer | String
+            types1.exists(t1 => tryUnify(t1, rhsType))
 
           case (Intersection(_, _), Intersection(_, _)) => ???
 
