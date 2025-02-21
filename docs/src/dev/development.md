@@ -15,6 +15,14 @@
    - Add new tests for new functionality
    - Update existing tests when modifying behavior
    - Test both success and failure cases
+   - For parser changes:
+     - Some tests run against both old and new readers (V1 and V2)
+     - Some tests currently only run against V1 (original reader)
+     - When adding new parser tests:
+       - Use `parseAndCheckV1` to test against original reader
+       - Use `parseAndCheckBoth` when test should run against both
+       - Document if test is V1-only and why
+       - Plan to migrate V1-only tests to V2 when ready
    - For type checking changes:
      - Test term preservation in elaborated results
      - Test type-level computation works correctly

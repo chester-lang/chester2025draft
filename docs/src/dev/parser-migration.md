@@ -54,33 +54,57 @@ Legend:
 
 ## Test Coverage
 
-### Currently Passing Tests
-```scala
-// Basic parsing tests
-parse valid identifier
-parse identifier with symbols
-parse empty input
-parse valid decimal integer
-parse valid hexadecimal integer
-parse valid binary integer
-parse valid double with exponent
-parse double without exponent
-parse integerLiteral
-parse doubleLiteral
-parse single-line string literal
-parse escaped characters in string literal
+### Test Implementation Status
 
-// Function and block tests
-parse simple function call with no arguments
-parse function call with multiple arguments
-parse block with multiple statements
+| Test File | V1 Only | Both V1 & V2 | Notes |
+|-----------|---------|--------------|--------|
+| OpSeqParserTest | | ✅ | All tests use parseAndCheckV1 |
+| ObjectParserTest | | ✅ | All tests use parseAndCheckV1 |
+| DotParserTest | | ✅ | All tests use parseAndCheckV1 |
+| VarargParserTest | | ✅ | All tests use parseAndCheckV1 |
+| SimpleFunctionCallTest | | ✅ | All tests use parseAndCheckV1 |
+| TupleAndFunctionCallTest | | ✅ | All tests use parseAndCheckV1 |
+| ParserTest | ✅ | | Uses parseAndCheck (V1 only) |
+| SimpleOpSeqTest | ✅ | | Uses parseAndCheck (V1 only) |
+| TelescopeParserTest | ✅ | | Uses parseAndCheck (V1 only) |
+| CommentParserTest | | ✅ | All tests use parseAndCheckV1 |
+
+### Currently Passing Tests in Both V1 & V2
+```scala
+// Operator Sequence Tests
+parse simple opSeq with single operator
+parse opSeq with multiple operators
+parse opSeq with mixed operators
+parse prefix and postfix operators
+parse mixfix expressions
+
+// Object Tests
+parse empty object
+parse object with single field
+parse object with multiple fields
+parse nested objects
+
+// Function Call Tests
+parse simple function call
+parse function call with arguments
+parse nested function calls
+
+// Dot Notation Tests
+parse simple dot call
+parse dot call with arguments
+parse nested dot calls
+
+// Other Tests
+parse varargs
+parse comments
 ```
 
-### Tests Still Needed
-- Complex pattern matching
-- Error recovery scenarios
-- Edge cases in object syntax
-- Source position tracking
+### Tests Still V1-Only (Need Migration)
+- Basic parser tests (identifier, literals)
+- Telescope parsing tests
+- Some tuple parsing tests
+- Error handling tests
+- Source position tracking tests
 
 ## Implementation Plan
 
@@ -89,6 +113,7 @@ parse block with multiple statements
    - [x] Simple function calls
    - [x] Basic operator sequence parsing (flat OpSeq nodes)
    - [ ] Pattern matching basics
+   - [ ] Migrate V1-only tests to V2
 
 2. **Phase 2: Advanced Features**
    - [ ] Full pattern matching
