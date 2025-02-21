@@ -51,7 +51,25 @@ trait TyckPropagator extends ElaboraterCommon {
 
           case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
 
-          case (Union(_, _), Union(_, _)) => ???
+          // Special case: both sides are unions
+          case (Union(types1, _), Union(types2, _)) =>
+            // For each type in rhs union, at least one type in lhs union must accept it
+            if (!types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+
+          // Handle Union types - rhs must be a subtype of lhs
+          case (_, Union(types2, _)) =>
+            // For a union on the right, lhs must accept ALL possible types in the union
+            if (!types2.forall(t2 => tryUnify(lhsResolved, t2))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+          
+          case (Union(types1, _), rhs) =>
+            // For a union on the left, ANY type in the union accepting rhs is sufficient
+            if (!types1.exists(t1 => tryUnify(t1, rhsResolved))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
 
           // Base case: types do not match
           case _ =>
@@ -183,7 +201,7 @@ trait TyckPropagator extends ElaboraterCommon {
             ZonkResult.Done
           case None =>
             // LHS is unknown, create UnionType from RHS values and set LHS
-            val unionType = Union_.from(rhsValues.assumeNonEmpty)
+            val unionType = Union(rhsValues.assumeNonEmpty, None)
             state.fill(lhs, unionType)
             ZonkResult.Done
         }
@@ -325,6 +343,7 @@ trait TyckPropagator extends ElaboraterCommon {
           unify(this.listTLhs, ListType(Meta(tRhs), meta = None): Term, cause)
           true
         }
+        case _ => ???
       }
     }
 
