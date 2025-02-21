@@ -19,18 +19,34 @@ docs/
 ├── src/              # Source markdown files
 │   ├── dev/          # Development documentation
 │   │   ├── README.md              # This file
+│   │   ├── development.md         # General development notes
 │   │   ├── propagator-network.md  # Propagator implementation details
 │   │   └── union-type-analysis.md # Union type system analysis
-│   └── SUMMARY.md    # Documentation structure
-└── book.toml         # mdBook configuration
+│   └── SUMMARY.md    # Documentation structure (auto-generated)
+├── book.toml         # mdBook configuration
+└── dev.sh           # Documentation development script
 ```
+
+## Documentation Management
+
+The documentation structure is managed through several tools:
+
+1. **SUMMARY.md Generation**: 
+   - The `SUMMARY.md` file is automatically generated using the `dev.sh` script
+   - To update the summary: `cd docs && ./dev.sh summary`
+   - Do not edit `SUMMARY.md` directly as changes will be overwritten
+
+2. **Building Documentation**:
+   - Use mdBook to build and preview changes
+   - The `dev.sh` script provides various documentation management commands
 
 ## Contributing
 
 When adding new development documentation:
 
 1. Create your markdown file in the appropriate subdirectory under `docs/src/dev/`
-2. Add an entry to `SUMMARY.md` in the appropriate section
+2. Place development-related documentation in the `dev/` directory
 3. Follow the existing documentation style and structure
 4. Include code examples where appropriate
-5. Update this README.md if adding new major components 
+5. Update this README.md if adding new major components
+6. Run `./dev.sh summary` to update the documentation structure 
