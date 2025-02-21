@@ -2,7 +2,7 @@ package chester.reader
 
 import chester.syntax.concrete.*
 import munit.FunSuite
-import chester.reader.parseAndCheck
+import chester.reader.*
 
 class SimpleOpSeqTest extends FunSuite {
   test("parse simple opSeq with single operator") {
@@ -15,6 +15,6 @@ class SimpleOpSeqTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckV1(input, expected)
   }
 }
