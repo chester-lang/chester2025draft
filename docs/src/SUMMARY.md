@@ -3,6 +3,7 @@
 - [Record Syntax in Chester](Record.md)
 - [Chester Development Documentation](dev/README.md)
     - [Development Memo](dev/development.md)
+    - [Parser Migration Status](dev/parser-migration.md)
     - [Propagator Network Implementation](dev/propagator-network.md)
     - [Union Type Handling Analysis](dev/union-type-analysis.md)
 - [Statements](statements.md)
