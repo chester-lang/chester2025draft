@@ -5,10 +5,10 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  xterm-pty>xterm: npm:@xterm/xterm@5.6.0-beta.70
-  xterm-readline>xterm: npm:@xterm/xterm@5.6.0-beta.70
+  xterm-pty>xterm: npm:@xterm/xterm@^5.5.0
+  xterm-readline>xterm: npm:@xterm/xterm@^5.5.0
   '@types/react': 19.0.10
-  '@xterm/xterm': 5.6.0-beta.70
+  '@xterm/xterm': ^5.5.0
   '@types/react-dom': 19.0.4
 
 importers:
@@ -25,17 +25,17 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       '@xterm/addon-fit':
-        specifier: 0.11.0-beta.70
-        version: 0.11.0-beta.70(@xterm/xterm@5.6.0-beta.70)
+        specifier: ^0.10.0
+        version: 0.10.0(@xterm/xterm@5.5.0)
       '@xterm/addon-search':
-        specifier: 0.16.0-beta.70
-        version: 0.16.0-beta.70(@xterm/xterm@5.6.0-beta.70)
+        specifier: ^0.15.0
+        version: 0.15.0(@xterm/xterm@5.5.0)
       '@xterm/addon-web-links':
-        specifier: 0.12.0-beta.70
-        version: 0.12.0-beta.70(@xterm/xterm@5.6.0-beta.70)
+        specifier: ^0.11.0
+        version: 0.11.0(@xterm/xterm@5.5.0)
       '@xterm/xterm':
-        specifier: 5.6.0-beta.70
-        version: 5.6.0-beta.70
+        specifier: ^5.5.0
+        version: 5.5.0
       base64-arraybuffer:
         specifier: ^1.0.2
         version: 1.0.2
@@ -67,14 +67,14 @@ importers:
         specifier: ^10.0.4
         version: 10.0.4(react@19.0.0)
       xterm:
-        specifier: npm:@xterm/xterm@5.6.0-beta.70
-        version: '@xterm/xterm@5.6.0-beta.70'
+        specifier: npm:@xterm/xterm@^5.5.0
+        version: '@xterm/xterm@5.5.0'
       xterm-pty:
         specifier: ^0.10.2
         version: 0.10.2
       xterm-readline:
         specifier: ^1.1.2
-        version: 1.1.2(@xterm/xterm@5.6.0-beta.70)
+        version: 1.1.2(@xterm/xterm@5.5.0)
     devDependencies:
       '@types/node':
         specifier: ^22.13.4
@@ -525,23 +525,23 @@ packages:
       '@aws-sdk/credential-provider-web-identity':
         optional: true
 
-  '@xterm/addon-fit@0.11.0-beta.70':
-    resolution: {integrity: sha512-oNYiGBsa3OPveytJX3JGP07uqUm+D84F8YcMHnoV5ADPdWKO/2kbrWSzHSXNmKb01qqLqgDCss4T07koAeFNAA==}
+  '@xterm/addon-fit@0.10.0':
+    resolution: {integrity: sha512-UFYkDm4HUahf2lnEyHvio51TNGiLK66mqP2JoATy7hRZeXaGMRDr00JiSF7m63vR5WKATF605yEggJKsw0JpMQ==}
     peerDependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': ^5.5.0
 
-  '@xterm/addon-search@0.16.0-beta.70':
-    resolution: {integrity: sha512-uaNBf77cr5Jikj69TDkTfe3V3wHA+4tDTFcv8DwJ/KGORPLUfBk8cn9HpbIJ+0jc1kOZr5xDrEjaYNwEVDkGeQ==}
+  '@xterm/addon-search@0.15.0':
+    resolution: {integrity: sha512-ZBZKLQ+EuKE83CqCmSSz5y1tx+aNOCUaA7dm6emgOX+8J9H1FWXZyrKfzjwzV+V14TV3xToz1goIeRhXBS5qjg==}
     peerDependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': ^5.5.0
 
-  '@xterm/addon-web-links@0.12.0-beta.70':
-    resolution: {integrity: sha512-Xyaa/DnHcWF2kK1pjXIkCPWm1xReQ3Y9rSNMhKFHoL1hCHuLVkMLIg/zB54q0Qf0H0hovWePxoSYdKW2h2wHBw==}
+  '@xterm/addon-web-links@0.11.0':
+    resolution: {integrity: sha512-nIHQ38pQI+a5kXnRaTgwqSHnX7KE6+4SVoceompgHL26unAxdfP6IPqUTSYPQgSwM56hsElfoNrrW5V7BUED/Q==}
     peerDependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': ^5.5.0
 
-  '@xterm/xterm@5.6.0-beta.70':
-    resolution: {integrity: sha512-qviQMVWhRtgPn4z8PHNH6D/ffSKkNBHmUX1HyJxl325QM2xF8M8met83uFv7JZm7a5OQYScnLGsFAoTreSgdew==}
+  '@xterm/xterm@5.5.0':
+    resolution: {integrity: sha512-hqJHYaQb5OptNunnyAnkHyM8aCjZ1MEIDTQu1iIbbTD/xops91NB5yq1ZK/dC2JDbVWtF23zUtl9JE2NqwT87A==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -2033,7 +2033,7 @@ packages:
   xterm-readline@1.1.2:
     resolution: {integrity: sha512-1+W2nVuQvCYz9OUYwFBiolrSQUui51aDDyacKXt4PuxeBHqzvabQEJ2kwdBDzsmOjz5BwlDTAjJmYpH2OGqLFA==}
     peerDependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': ^5.5.0
 
   yaml@2.7.0:
     resolution: {integrity: sha512-+hSoy/QHluxmC9kCIJyL/uyFmLmc+e5CFR5Wa+bpIhIj85LVb9ZH2nVnqrHoSvKogwODv0ClqZkmiSSaIH5LTA==}
@@ -2300,7 +2300,7 @@ snapshots:
 
   '@pablo-lion/xterm-react@1.1.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': 5.5.0
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
@@ -2428,19 +2428,19 @@ snapshots:
 
   '@vercel/functions@1.6.0': {}
 
-  '@xterm/addon-fit@0.11.0-beta.70(@xterm/xterm@5.6.0-beta.70)':
+  '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
     dependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': 5.5.0
 
-  '@xterm/addon-search@0.16.0-beta.70(@xterm/xterm@5.6.0-beta.70)':
+  '@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0)':
     dependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': 5.5.0
 
-  '@xterm/addon-web-links@0.12.0-beta.70(@xterm/xterm@5.6.0-beta.70)':
+  '@xterm/addon-web-links@0.11.0(@xterm/xterm@5.5.0)':
     dependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': 5.5.0
 
-  '@xterm/xterm@5.6.0-beta.70': {}
+  '@xterm/xterm@5.5.0': {}
 
   acorn-jsx@5.3.2(acorn@8.14.0):
     dependencies:
@@ -4219,11 +4219,11 @@ snapshots:
 
   xterm-pty@0.10.2:
     dependencies:
-      xterm: '@xterm/xterm@5.6.0-beta.70'
+      xterm: '@xterm/xterm@5.5.0'
 
-  xterm-readline@1.1.2(@xterm/xterm@5.6.0-beta.70):
+  xterm-readline@1.1.2(@xterm/xterm@5.5.0):
     dependencies:
-      '@xterm/xterm': 5.6.0-beta.70
+      '@xterm/xterm': 5.5.0
       string-width: 4.2.3
 
   yaml@2.7.0: {}
