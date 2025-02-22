@@ -324,7 +324,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       debug(s"parseRest called with expr: $expr, state: $state, current terms: $terms")
       val current = skipComments(state)
       current.current match {
-        case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) => {
+        case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) | Right(Token.Semicolon(_)) => {
           debug("parseRest: Hit terminator token")
           buildOpSeq(terms).map(result => (result, current))
         }
@@ -375,8 +375,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 val functionCall = FunctionCall(
                   ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
                   tuple,
-                  createMeta(Some(sourcePos), Some(sourcePos))
-                )
+                  createMeta(Some(sourcePos), Some(sourcePos)))
                 terms = terms :+ functionCall
                 debug(s"parseRest: After function call, terms: $terms")
                 parseRest(functionCall, afterTuple)
@@ -534,11 +533,53 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  def parseAtom(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    var current = state
+  def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
     current.current match {
+      case Right(Token.LBrace(sourcePos)) => {
+        // First check for empty object
+        val afterBrace = current.advance()
+        afterBrace.current match {
+          case Right(Token.RBrace(_)) => {
+            // Empty object
+            parseObject(current)
+          }
+          case Right(Token.Identifier(_, _)) | Right(Token.SymbolLiteral(_, _)) => {
+            // Look ahead one more token to see if it's followed by = or =>
+            val afterId = afterBrace.advance()
+            afterId.current match {
+              case Right(Token.Operator(op, _)) if op == "=" || op == "=>" => {
+                // Object field
+                parseObject(current)
+              }
+              case _ => {
+                // Not an object field, treat as block
+                parseBlock(current)
+              }
+            }
+          }
+          case _ => {
+            // Not an object field, treat as block
+            parseBlock(current)
+          }
+        }
+      }
+      case Right(Token.LParen(sourcePos)) => {
+        // Always parse parenthesized expressions as tuples
+        parseTuple(current)
+      }
+      case Right(Token.Identifier(chars, sourcePos)) => {
+        val afterId = current.advance()
+        afterId.current match {
+          case Right(Token.LParen(_)) => {
+            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
+            parseTuple(afterId).map { case (tuple, nextState) =>
+              (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
+            }
+          }
+          case _ => Right((ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), afterId))
+        }
+      }
       case Right(Token.IntegerLiteral(value, sourcePos)) => {
-        current = current.advance()
         val (numStr, base) = if (value.startsWith("0x")) {
           (value.drop(2), 16)
         } else if (value.startsWith("0b")) {
@@ -547,72 +588,22 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           (value, 10)
         }
         try {
-          Right((ConcreteIntegerLiteral(BigInt(numStr, base), createMeta(Some(sourcePos), Some(sourcePos))), current))
+          Right((ConcreteIntegerLiteral(BigInt(numStr, base), createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
         } catch {
           case e: NumberFormatException =>
             Left(ParseError(s"Invalid number format: $value", sourcePos.range.start))
         }
       }
-      case Right(Token.RationalLiteral(value, sourcePos)) => {
-        current = current.advance()
-        try {
-          Right((ConcreteRationalLiteral(BigDecimal(value), createMeta(Some(sourcePos), Some(sourcePos))), current))
-        } catch {
-          case e: NumberFormatException =>
-            Left(ParseError(s"Invalid rational number format: $value", sourcePos.range.start))
-        }
-      }
-      case Right(Token.StringLiteral(chars, sourcePos)) => {
-        current = current.advance()
-        Right((ConcreteStringLiteral(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), current))
-      }
-      case Right(Token.Identifier(chars, sourcePos)) => {
-        current = current.advance()
-        current.current match {
-          case Right(Token.LParen(_)) => {
-            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
-            parseTuple(current).map { case (tuple, nextState) =>
-              (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
-            }
-          }
-          case Right(Token.LBracket(_)) => {
-            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
-            parseList(current).flatMap { case (listExpr, afterList) =>
-              afterList.current match {
-                case Right(Token.LParen(_)) => {
-                  val functionWithGenerics = FunctionCall(identifier, listExpr, createMeta(Some(sourcePos), Some(sourcePos)))
-                  parseTuple(afterList).map { case (tuple, nextState) =>
-                    (FunctionCall(functionWithGenerics, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
-                  }
-                }
-                case _ => Right((FunctionCall(identifier, listExpr, createMeta(Some(sourcePos), Some(sourcePos))), afterList))
-              }
-            }
-          }
-          case _ => {
-            Right((ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), current))
-          }
-        }
-      }
-      case Right(Token.LParen(_)) => {
-        parseTuple(current)
-      }
-      case Right(Token.LBrace(sourcePos)) => {
-        parseObject(current)
-      }
-      case Right(Token.LBracket(_)) => {
+      case Right(Token.StringLiteral(chars, sourcePos)) =>
+        Right((ConcreteStringLiteral(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
+      case Right(Token.SymbolLiteral(value, sourcePos)) =>
+        Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current.advance()))
+      case Right(Token.LBracket(sourcePos)) => {
+        // Parse list
         parseList(current)
       }
-      case Right(Token.SymbolLiteral(value, sourcePos)) => {
-        current = current.advance()
-        Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current))
-      }
-      case Right(token) => {
-        Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
-      }
-      case Left(error) => {
-        Left(error)
-      }
+      case Right(token) => Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
+      case Left(error) => Left(error)
     }
   }
 
@@ -628,8 +619,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           debug("Found RParen after expression")
           return Right((exprs, current))
         }
-        case Right(Token.Comment(text, sourcePos)) => {
-          debug("Found comment, skipping")
+        case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_)) => {
+          debug("Found comment or whitespace, skipping")
+          current = skipComments(current.advance())
+        }
+        case Right(Token.Comma(_)) | Right(Token.Semicolon(_)) => {
+          debug("Found comma or semicolon, skipping")
           current = skipComments(current.advance())
         }
         case _ => {
@@ -644,10 +639,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   debug("Found RParen after expression")
                   return Right((exprs, current))
                 }
-                case Right(Token.Comma(_)) => {
-                  debug("Found comma after expression, advancing")
+                case Right(Token.Comma(_)) | Right(Token.Semicolon(_)) => {
+                  debug("Found comma or semicolon after expression, advancing")
                   current = skipComments(current.advance())
                   maxExprs = maxExprs - 1
+                }
+                case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_)) => {
+                  debug("Found comment or whitespace after expression, skipping")
+                  current = skipComments(current.advance())
                 }
                 case Right(t)  => return Left(ParseError("Expected ',' or ')' after expression", t.sourcePos.range.start))
                 case Left(err) => return Left(err)
@@ -661,54 +660,133 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     Left(ParseError("Too many expressions in list", state.sourcePos.range.start))
   }
 
-  def parseBlock(current: LexerState): Either[ParseError, (Block, LexerState)] = {
-    var state = current
-    var maxExprs = 100 // Prevent infinite loops
-    var exprs = Vector.empty[Expr]
-
+  def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
     state.current match {
-      case Right(Token.LBrace(sourcePos)) => {
-        state = state.advance()
-        while (maxExprs > 0 && !state.current.exists(_.isInstanceOf[Token.RBrace])) {
-          // Parse each expression in the block as a potential operator sequence
-          parseExpr(state).flatMap { case (expr, afterExpr) =>
-            state = afterExpr
-            // Add the expression to our list - parseExpr already handles operator sequences
-            exprs = exprs :+ expr
-            state.current match {
-              case Right(Token.Semicolon(_)) => {
-                state = state.advance()
-                Right(())
-              }
-              case Right(Token.RBrace(_)) => Right(())
-              case Right(t)               => Left(ParseError("Expected ';' or '}' after expression in block", t.sourcePos.range.start))
-              case Left(err)              => Left(err)
+      case Right(Token.LParen(sourcePos)) => {
+        val afterLParen = skipComments(state.advance())
+        parseExprList(afterLParen).flatMap { case (exprs, afterExprs) =>
+          val afterList = skipComments(afterExprs)
+          afterList.current match {
+            case Right(Token.RParen(_)) => {
+              // Always wrap expressions in a tuple when inside parentheses
+              // This ensures type annotations are preserved
+              val tupleExprs = exprs
+              Right((Tuple(tupleExprs, createMeta(Some(sourcePos), Some(afterList.sourcePos))), afterList.advance()))
             }
-          } match {
-            case Right(_)  => ()
-            case Left(err) => return Left(err)
-          }
-          maxExprs -= 1
-        }
-
-        if (maxExprs <= 0) {
-          Left(ParseError("Block contains too many expressions", state.sourcePos.range.start))
-        } else {
-          state.current match {
-            case Right(Token.RBrace(endPos)) => {
-              state = state.advance()
-              val meta = createMeta(Some(sourcePos), Some(endPos))
-              val result = if (exprs.isEmpty) None else Some(exprs.last)
-              val stmts = if (exprs.isEmpty) Vector.empty else exprs.init
-              Right((Block(stmts, result, meta), state))
-            }
-            case Right(t)  => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
+            case Right(t) => Left(ParseError("Expected right parenthesis", t.sourcePos.range.start))
             case Left(err) => Left(err)
           }
         }
       }
-      case Right(t)  => Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+      case Right(t) => Left(ParseError("Expected left parenthesis", t.sourcePos.range.start))
       case Left(err) => Left(err)
+    }
+  }
+
+  def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+    var current = skipComments(state)
+    var statements = Vector[Expr]()
+    var result: Option[Expr] = None
+    var maxExpressions = 100 // Prevent infinite loops
+
+    // Skip the opening brace
+    current.current match {
+      case Right(Token.LBrace(sourcePos)) =>
+        current = skipComments(current.advance())
+      case Right(t) => return Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+      case Left(err) => return Left(err)
+    }
+
+    // Check for pattern matching block
+    current.current match {
+      case Right(Token.Identifier(chars, _)) if chars.map(_.text).mkString == "case" => {
+        // Pattern matching block
+        while (maxExpressions > 0) {
+          maxExpressions -= 1
+          current.current match {
+            case Right(Token.RBrace(_)) => {
+              current = current.advance()
+              return Right((Block(statements, None, None), current))
+            }
+            case Right(Token.Identifier(chars, _)) if chars.map(_.text).mkString == "case" => {
+              parseExpr(current) match {
+                case Left(err) => return Left(err)
+                case Right((expr, next)) => {
+                  statements = statements :+ expr
+                  current = skipComments(next)
+                  current.current match {
+                    case Right(Token.Semicolon(_)) => {
+                      current = skipComments(current.advance())
+                    }
+                    case Right(Token.RBrace(_)) => ()
+                    case Right(t) => return Left(ParseError("Expected ';' or '}' after pattern match case", t.sourcePos.range.start))
+                    case Left(err) => return Left(err)
+                  }
+                }
+              }
+            }
+            case Right(Token.Whitespace(_)) | Right(Token.Comment(_, _)) => {
+              current = skipComments(current.advance())
+            }
+            case Right(t) => return Left(ParseError("Expected 'case' or '}' in pattern matching block", t.sourcePos.range.start))
+            case Left(err) => return Left(err)
+          }
+        }
+        Left(ParseError("Too many expressions in pattern matching block", current.sourcePos.range.start))
+      }
+      case _ => {
+        // Regular block
+        while (maxExpressions > 0) {
+          maxExpressions -= 1
+          current.current match {
+            case Right(Token.RBrace(_)) => {
+              current = current.advance()
+              return Right((Block(statements, result, None), current))
+            }
+            case Right(Token.Semicolon(_)) => {
+              current = skipComments(current.advance())
+            }
+            case Right(Token.Whitespace(_)) => {
+              current = skipComments(current.advance())
+            }
+            case _ => {
+              parseExpr(current) match {
+                case Left(err) => return Left(err)
+                case Right((expr, next)) => {
+                  next.current match {
+                    case Right(Token.RBrace(_)) => {
+                      result = Some(expr)
+                      current = next.advance()
+                      return Right((Block(statements, result, None), current))
+                    }
+                    case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_)) => {
+                      statements = statements :+ expr
+                      current = skipComments(next)
+                    }
+                    case Right(t) => return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
+                    case Left(err) => return Left(err)
+                  }
+                }
+              }
+            }
+          }
+        }
+        Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
+      }
+    }
+  }
+
+  def parseRest(expr: Expr, current: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    current.current match {
+      case Right(Token.LParen(_)) => {
+        parseTuple(current).flatMap { case (tuple, afterTuple) =>
+          val startPos = expr.meta.flatMap(_.sourcePos)
+          val endPos = Some(afterTuple.sourcePos)
+          val functionCall = FunctionCall(expr, tuple, createMeta(startPos, endPos))
+          parseRest(functionCall, afterTuple)
+        }
+      }
+      case _ => Right((expr, current))
     }
   }
 
@@ -793,36 +871,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
-    var current = skipComments(state)
-    current.current match {
-      case Right(Token.LParen(sourcePos)) => {
-        current = skipComments(current.advance())
-        parseExprList(current).flatMap { case (exprs, afterExprs) =>
-          current = skipComments(afterExprs)
-          current.current match {
-            case Right(Token.RParen(endPos)) => {
-              current = skipComments(current.advance())
-              // Always wrap expressions in a Tuple when inside parentheses
-              Right((Tuple(exprs, createMeta(Some(sourcePos), Some(endPos))), current))
-            }
-            case Right(t)  => Left(ParseError("Expected ')' at end of tuple", t.sourcePos.range.start))
-            case Left(err) => Left(err)
-          }
-        }
-      }
-      case Right(t)  => Left(ParseError("Expected '(' at start of tuple", t.sourcePos.range.start))
-      case Left(err) => Left(err)
-    }
-  }
-
   def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
-    var current = state
+    var current = skipComments(state)
     var exprs = Vector[Expr]()
 
     current.current match {
       case Right(Token.LBracket(sourcePos)) => {
-        current = current.advance()
+        current = skipComments(current.advance())
         while (exprs.length < 50) {
           current.current match {
             case Right(Token.RBracket(endPos)) => {
@@ -830,17 +885,20 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               return Right((ListExpr(exprs, createMeta(Some(sourcePos), Some(endPos))), current))
             }
             case Right(Token.Comma(_)) => {
-              current = current.advance()
+              current = skipComments(current.advance())
+            }
+            case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_)) => {
+              current = skipComments(current.advance())
             }
             case _ => {
               parseExpr(current) match {
                 case Right((expr, afterExpr)) => {
-                  current = afterExpr
+                  current = skipComments(afterExpr)
                   exprs = exprs :+ expr
                   current.current match {
                     case Right(Token.RBracket(_)) => ()
                     case Right(Token.Comma(_)) => {
-                      current = current.advance()
+                      current = skipComments(current.advance())
                     }
                     case Right(t)  => return Left(ParseError("Expected ',' or ']' in list", t.sourcePos.range.start))
                     case Left(err) => return Left(err)
@@ -908,11 +966,27 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  private def skipComments(state: LexerState): LexerState = {
+  def skipComments(state: LexerState): LexerState = {
     var current = state
-    while (current.current.exists(_.isComment)) {
+    while (current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
       current = current.advance()
     }
     current
+  }
+
+  def parseFunctionCall(identifier: ConcreteIdentifier, sourcePos: SourcePos, current: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    val afterLParen = current.advance()
+    parseExprList(afterLParen) match {
+      case Left(error) => Left(error)
+      case Right((listExpr, afterList)) => {
+        afterList.current match {
+          case Right(Token.RParen(_)) => {
+            Right((FunctionCall(identifier, Tuple(listExpr.toVector, createMeta(Some(sourcePos), Some(sourcePos))), createMeta(Some(sourcePos), Some(sourcePos))), afterList.advance()))
+          }
+          case Right(t) => Left(ParseError("Expected right parenthesis", t.sourcePos.range.start))
+          case Left(err) => Left(err)
+        }
+      }
+    }
   }
 }
