@@ -4,12 +4,77 @@
 
 Chester is currently undergoing a parser migration from the original `reader` implementation to a new `readerv2`. This document tracks the status of this migration and outlines the goals and progress.
 
+## Design Evolution
+
+### Uniform Symbol Treatment
+- All identifiers and operators are treated uniformly in parsing
+- NO special cases for keywords like "case", "if", "then", "else" - they are just identifiers
+- Parser doesn't distinguish between keywords and regular identifiers
+- Semantic meaning determined in later passes
+- Examples:
+  ```scala
+  // These parse exactly the same way:
+  case x => y
+  myCase x => y
+  
+  // Both produce:
+  OpSeq([identifier, expr, identifier, expr])
+  
+  // Pattern matching is just a sequence of identifiers and expressions
+  x match {
+    case A => expr1;
+    case B => expr2;
+  }
+  // Parses as regular identifiers and operators:
+  OpSeq([
+    identifier("x"),
+    identifier("match"),
+    Block([
+      OpSeq([identifier("case"), identifier("A"), identifier("=>"), expr1]),
+      OpSeq([identifier("case"), identifier("B"), identifier("=>"), expr2])
+    ])
+  ])
+  ```
+- Benefits:
+  - Simpler, more maintainable parser
+  - Allows user-defined keywords and operators
+  - Consistent parsing rules
+  - Flexible operator definition
+  - Single source of truth for identifier rules
+  - Pattern matching is just regular operator sequences
+  - No special parsing rules needed for any construct
+
+### Original Parser Design (V1)
+- Parser treats all symbols uniformly from the start
+- No special cases or keyword recognition
+- All constructs parsed as operator sequences
+- Pattern matching, if/then/else, and other constructs are just identifier sequences
+- Semantic analysis happens in later passes
+- This design proved highly maintainable and flexible
+
+### Implementation Journey
+- Currently implemented with special cases in ReaderV2:
+  - Special handling for "case" keyword
+  - Pattern matching treated as special syntax
+  - Keywords recognized during parsing
+- Planning to move to generalized approach matching original reader:
+  - Remove keyword recognition in parser
+  - Implement uniform treatment of all identifiers
+  - Handle pattern matching through regular operator sequence parsing
+  - Defer semantic analysis to later passes
+- Lessons from V1:
+  - Special cases increase complexity
+  - Uniform treatment simplifies implementation
+  - Separating parsing from semantics is powerful
+  - Original design's approach is better
+
 ## Current Status
 
 ### ReaderV2 Implementation
 - Currently passes a subset of tests
-- Implements core parsing functionality
+- Implements core parsing functionality with some special cases
 - Work in progress to achieve feature parity with original reader
+- Need to remove special case handling for pattern matching
 
 ### Original Reader (Legacy)
 - Fully functional and used in production
@@ -112,7 +177,8 @@ parse comments
    - [x] Basic literal parsing
    - [x] Simple function calls
    - [x] Basic operator sequence parsing (flat OpSeq nodes)
-   - [ ] Pattern matching basics
+   - [ ] Remove special case handling for keywords
+   - [ ] Implement uniform symbol treatment
    - [ ] Migrate V1-only tests to V2
 
 2. **Phase 2: Advanced Features**
