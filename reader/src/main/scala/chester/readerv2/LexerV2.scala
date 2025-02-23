@@ -697,83 +697,43 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Left(err) => return Left(err)
     }
 
-    // Check for pattern matching block
-    current.current match {
-      case Right(Token.Identifier(chars, _)) if chars.map(_.text).mkString == "case" => {
-        // Pattern matching block
-        while (maxExpressions > 0) {
-          maxExpressions -= 1
-          current.current match {
-            case Right(Token.RBrace(_)) => {
-              current = current.advance()
-              return Right((Block(statements, None, None), current))
-            }
-            case Right(Token.Identifier(chars, _)) if chars.map(_.text).mkString == "case" => {
-              parseExpr(current) match {
-                case Left(err) => return Left(err)
-                case Right((expr, next)) => {
+    // Regular block parsing - no special case for "case"
+    while (maxExpressions > 0) {
+      maxExpressions -= 1
+      current.current match {
+        case Right(Token.RBrace(_)) => {
+          current = current.advance()
+          return Right((Block(statements, result, None), current))
+        }
+        case Right(Token.Semicolon(_)) => {
+          current = skipComments(current.advance())
+        }
+        case Right(Token.Whitespace(_)) => {
+          current = skipComments(current.advance())
+        }
+        case _ => {
+          parseExpr(current) match {
+            case Left(err) => return Left(err)
+            case Right((expr, next)) => {
+              next.current match {
+                case Right(Token.RBrace(_)) => {
+                  result = Some(expr)
+                  current = next.advance()
+                  return Right((Block(statements, result, None), current))
+                }
+                case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_)) => {
                   statements = statements :+ expr
                   current = skipComments(next)
-                  current.current match {
-                    case Right(Token.Semicolon(_)) => {
-                      current = skipComments(current.advance())
-                    }
-                    case Right(Token.RBrace(_)) => ()
-                    case Right(t) => return Left(ParseError("Expected ';' or '}' after pattern match case", t.sourcePos.range.start))
-                    case Left(err) => return Left(err)
-                  }
                 }
-              }
-            }
-            case Right(Token.Whitespace(_)) | Right(Token.Comment(_, _)) => {
-              current = skipComments(current.advance())
-            }
-            case Right(t) => return Left(ParseError("Expected 'case' or '}' in pattern matching block", t.sourcePos.range.start))
-            case Left(err) => return Left(err)
-          }
-        }
-        Left(ParseError("Too many expressions in pattern matching block", current.sourcePos.range.start))
-      }
-      case _ => {
-        // Regular block
-        while (maxExpressions > 0) {
-          maxExpressions -= 1
-          current.current match {
-            case Right(Token.RBrace(_)) => {
-              current = current.advance()
-              return Right((Block(statements, result, None), current))
-            }
-            case Right(Token.Semicolon(_)) => {
-              current = skipComments(current.advance())
-            }
-            case Right(Token.Whitespace(_)) => {
-              current = skipComments(current.advance())
-            }
-            case _ => {
-              parseExpr(current) match {
+                case Right(t) => return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
                 case Left(err) => return Left(err)
-                case Right((expr, next)) => {
-                  next.current match {
-                    case Right(Token.RBrace(_)) => {
-                      result = Some(expr)
-                      current = next.advance()
-                      return Right((Block(statements, result, None), current))
-                    }
-                    case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_)) => {
-                      statements = statements :+ expr
-                      current = skipComments(next)
-                    }
-                    case Right(t) => return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
-                    case Left(err) => return Left(err)
-                  }
-                }
               }
             }
           }
         }
-        Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
       }
     }
+    Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
   }
 
   def parseRest(expr: Expr, current: LexerState): Either[ParseError, (Expr, LexerState)] = {
