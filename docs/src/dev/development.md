@@ -31,6 +31,11 @@
        - Basic operator sequence tests
        - Pattern matching tests with uniform symbol treatment
        - Simple expression tests
+       - Function call tests
+       - Dot notation tests
+       - Object tests
+       - Tuple tests
+       - Vararg tests
      - Tests still needing migration:
        - Complex operator sequences (prefix, mixfix)
        - Telescope parsing

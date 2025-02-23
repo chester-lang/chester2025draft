@@ -9,7 +9,7 @@ class ObjectParserTest extends FunSuite {
   test("parse empty object") {
     val input = "{}"
     val expected = ObjectExpr(Vector(), meta = None)
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with single field") {
@@ -20,7 +20,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with single field 2") {
@@ -31,7 +31,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with single field 3") {
@@ -45,7 +45,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with single field 4") {
@@ -59,7 +59,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with multiple fields") {
@@ -72,7 +72,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with multiple fields with one more comma") {
@@ -85,7 +85,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with multiple fields with one more comma without spaces") {
@@ -98,7 +98,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with nested object") {
@@ -115,7 +115,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with mixed types") {
@@ -141,7 +141,7 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse object with trailing comma") {
@@ -153,6 +153,6 @@ class ObjectParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }

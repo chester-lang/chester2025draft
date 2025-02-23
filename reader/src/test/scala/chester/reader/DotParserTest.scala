@@ -20,7 +20,7 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse simple dot call") {
@@ -31,7 +31,7 @@ class DotParserTest extends FunSuite {
       Vector(),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse dot call with function call") {
@@ -47,7 +47,7 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse nested dot calls") {
@@ -63,7 +63,7 @@ class DotParserTest extends FunSuite {
       Vector(),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse dot call with arguments") {
@@ -82,7 +82,7 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse dot call with arguments arguments") {
@@ -107,7 +107,7 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse dot call with arguments block arguments") {
@@ -136,7 +136,7 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse dot + call with arguments") {
@@ -155,7 +155,7 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse dot call followed by function call") {
@@ -181,6 +181,6 @@ class DotParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }

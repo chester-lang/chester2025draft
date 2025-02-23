@@ -158,16 +158,35 @@ parse empty object
 parse object with single field
 parse object with multiple fields
 parse nested objects
+parse object with mixed types
+parse object with trailing comma
 
 // Function Call Tests
 parse simple function call
 parse function call with arguments
 parse nested function calls
+parse function call with mixed arg types
+parse function call with multiple args
+parse function call with one arg
 
 // Dot Notation Tests
 parse simple dot call
 parse dot call with arguments
 parse nested dot calls
+parse dot call with function call
+parse dot call with arguments arguments
+parse dot call with arguments block arguments
+parse dot + call with arguments
+parse dot call followed by function call
+
+// Tuple Tests
+parse tuple with type annotation
+parse function call
+parse identifier to function call conversion
+
+// Vararg Tests
+parse function call with single vararg
+parse function def with single vararg
 
 // Other Tests
 parse varargs
