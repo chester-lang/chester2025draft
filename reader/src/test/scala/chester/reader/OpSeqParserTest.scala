@@ -16,7 +16,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse simple opSeq with single operator 2") {
@@ -29,7 +29,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse opSeq with multiple operators") {
@@ -46,7 +46,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse opSeq with mixed operators and precedence") {
@@ -63,7 +63,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse prefix") {

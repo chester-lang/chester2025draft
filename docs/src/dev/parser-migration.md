@@ -86,8 +86,8 @@ Chester is currently undergoing a parser migration from the original `reader` im
 | Feature | Reader (Original) | ReaderV2 | Notes |
 |---------|------------------|----------|--------|
 | Basic Literals | ✅ | ✅ | Integers, strings, etc. |
-| Function Calls | ✅ | 🟡 | Basic support in V2 |
-| Pattern Matching | ✅ | 🔴 | Not yet implemented in V2 |
+| Function Calls | ✅ | ✅ | Full support in V2 |
+| Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
 | Object Syntax | ✅ | 🟡 | Basic support in V2 |
 | Operator Sequence | ✅ | ✅ | Parser produces flat OpSeq nodes |
 | Error Recovery | ✅ | 🔴 | Planned for V2 |
@@ -123,19 +123,29 @@ Legend:
 
 | Test File | V1 Only | Both V1 & V2 | Notes |
 |-----------|---------|--------------|--------|
-| OpSeqParserTest | | ✅ | All tests use parseAndCheckV1 |
-| ObjectParserTest | | ✅ | All tests use parseAndCheckV1 |
-| DotParserTest | | ✅ | All tests use parseAndCheckV1 |
-| VarargParserTest | | ✅ | All tests use parseAndCheckV1 |
-| SimpleFunctionCallTest | | ✅ | All tests use parseAndCheckV1 |
-| TupleAndFunctionCallTest | | ✅ | All tests use parseAndCheckV1 |
+| OpSeqParserTest | | 🟡 | Basic tests use parseAndCheckBoth, complex tests still V1-only |
+| ObjectParserTest | | ✅ | All tests use parseAndCheckBoth |
+| DotParserTest | | ✅ | All tests use parseAndCheckBoth |
+| VarargParserTest | | ✅ | All tests use parseAndCheckBoth |
+| SimpleFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
+| TupleAndFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
 | ParserTest | ✅ | | Uses parseAndCheck (V1 only) |
-| SimpleOpSeqTest | ✅ | | Uses parseAndCheck (V1 only) |
+| SimpleOpSeqTest | | ✅ | Uses parseAndCheckBoth |
 | TelescopeParserTest | ✅ | | Uses parseAndCheck (V1 only) |
-| CommentParserTest | | ✅ | All tests use parseAndCheckV1 |
+| CommentParserTest | | ✅ | All tests use parseAndCheckBoth |
+| SimplePatternMatchingTest | | ✅ | Uses parseAndCheckBoth |
+
+### Test Function Usage
+- `parseAndCheck` / `parseAndCheckV0`: Runs tests against V1 (original reader) only
+- `parseAndCheckBoth`: Runs tests against both V1 and V2 parsers
+- `parseAndCheckV1`: Deprecated alias for parseAndCheckBoth
 
 ### Currently Passing Tests in Both V1 & V2
 ```scala
+// Pattern Matching Tests
+simple pattern matching with case statements
+parse pattern matching with multiple cases
+
 // Operator Sequence Tests
 parse simple opSeq with single operator
 parse opSeq with multiple operators
@@ -165,11 +175,16 @@ parse comments
 ```
 
 ### Tests Still V1-Only (Need Migration)
-- Basic parser tests (identifier, literals)
+- Complex operator sequence tests (prefix, mixfix)
 - Telescope parsing tests
-- Some tuple parsing tests
 - Error handling tests
 - Source position tracking tests
+
+### Migration Strategy
+1. Start with `parseAndCheck` (V1-only)
+2. Once test passes in V2, upgrade to `parseAndCheckBoth`
+3. Document any V2-specific changes or improvements
+4. Remove V1-only tests once all features are supported in V2
 
 ## Implementation Plan
 
@@ -177,9 +192,9 @@ parse comments
    - [x] Basic literal parsing
    - [x] Simple function calls
    - [x] Basic operator sequence parsing (flat OpSeq nodes)
-   - [ ] Remove special case handling for keywords
-   - [ ] Implement uniform symbol treatment
-   - [ ] Migrate V1-only tests to V2
+   - [x] Remove special case handling for keywords
+   - [x] Implement uniform symbol treatment
+   - [🟡] Migrate V1-only tests to V2 (In Progress)
 
 2. **Phase 2: Advanced Features**
    - [ ] Full pattern matching

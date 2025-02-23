@@ -16,13 +16,26 @@
    - Update existing tests when modifying behavior
    - Test both success and failure cases
    - For parser changes:
-     - Some tests run against both old and new readers (V1 and V2)
-     - Some tests currently only run against V1 (original reader)
+     - Many tests now run against both old and new readers (V1 and V2)
+     - Some complex tests currently only run against V1 (original reader)
      - When adding new parser tests:
-       - Use `parseAndCheckV1` to test against original reader
-       - Use `parseAndCheckBoth` when test should run against both
+       - Use `parseAndCheckBoth` by default for new tests
+       - Only use `parseAndCheck` if testing V1-specific features
        - Document if test is V1-only and why
        - Plan to migrate V1-only tests to V2 when ready
+     - Test function usage:
+       - `parseAndCheck`: V1 parser only
+       - `parseAndCheckBoth`: Both V1 and V2 parsers
+       - `parseAndCheckV1`: Deprecated alias for parseAndCheckBoth
+     - Recently migrated tests:
+       - Basic operator sequence tests
+       - Pattern matching tests with uniform symbol treatment
+       - Simple expression tests
+     - Tests still needing migration:
+       - Complex operator sequences (prefix, mixfix)
+       - Telescope parsing
+       - Error handling
+       - Source position tracking
    - For type checking changes:
      - Test term preservation in elaborated results
      - Test type-level computation works correctly

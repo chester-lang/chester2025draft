@@ -5,7 +5,11 @@ import chester.readerv2.{LexerState, LexerV2}
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
+
+// Only runs against V1 (original reader)
 def parseAndCheck(input: String, expected: Expr): Unit = parseAndCheckV0(input, expected)
+
+// Only runs against V1 (original reader)
 def parseAndCheckV0(input: String, expected: Expr): Unit = {
   val resultignored = ChesterReader.parseExpr(
     FileNameAndContent("testFile", input)
@@ -35,26 +39,12 @@ def parseAndCheckV0(input: String, expected: Expr): Unit = {
       }
     )
 }
-@deprecated("TODO: remove this")
-def getParsed(input: String): Expr = {
-  ChesterReader.parseExpr(
-    FileNameAndContent("testFile", input)
-  ) // it must parse with location
-  ChesterReader
-    .parseExpr(
-      FileNameAndContent("testFile", input),
-      ignoreLocation = true
-    )
-    .fold(
-      error =>
-        fail(
-          s"Parsing failed for input: $input ${error.message} at index ${error.pos}"
-        ),
-      value => value
-    )
-}
 
-def parseAndCheckV1(input: String, expected: Expr): Unit = {
+@deprecated("Use parseAndCheckBoth instead")
+def parseAndCheckV1(input: String, expected: Expr): Unit = parseAndCheckBoth(input, expected)
+
+// Runs against both V1 and V2 parsers
+def parseAndCheckBoth(input: String, expected: Expr): Unit = {
   // Check old implementation first
   parseAndCheckV0(input, expected)
 
@@ -114,7 +104,10 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
   }
 }
 
-@deprecated("TODO: remove this")
+@deprecated("Use getParsedBoth instead")
+def getParsed(input: String): Expr = getParsedV1(input)
+
+@deprecated("Use getParsedBoth instead")
 def getParsedV1(input: String): Expr = {
   // Parse with location first to ensure it works
   ChesterReader
