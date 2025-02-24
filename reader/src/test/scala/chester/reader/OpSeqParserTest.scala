@@ -75,7 +75,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse prefix2") {
@@ -87,7 +87,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse mixfix") {
@@ -103,7 +103,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse mixfix2") {
@@ -138,7 +138,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse opSeq with mixed operators without spaces") {
@@ -155,7 +155,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse opSeq with not") {
@@ -167,7 +167,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse opSeq with and") {
@@ -180,7 +180,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse val input") {
@@ -194,7 +194,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse opSeq with ->") {
@@ -207,7 +207,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse infix with block") {
@@ -224,7 +224,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse function call with") {
@@ -246,7 +246,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("some macro") {
@@ -381,7 +381,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse OpSeq with identifier to integer literal mapping") {
@@ -417,7 +417,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
 }

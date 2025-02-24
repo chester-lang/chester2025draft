@@ -23,7 +23,7 @@ class BlockAndBlockCallParserTest extends FunSuite {
       Some(IntegerLiteral(3, meta = None)),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse block with multiple statements with newlines") {
@@ -44,7 +44,7 @@ class BlockAndBlockCallParserTest extends FunSuite {
       Some(IntegerLiteral(3, meta = None)),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse block call with nested block without newlines") {

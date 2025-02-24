@@ -13,7 +13,7 @@ class FunctionCallParserTest extends FunSuite {
       Tuple(Vector(), meta = None),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse function call with multiple arguments") {
@@ -29,7 +29,7 @@ class FunctionCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse function call with multiple arguments and symbol identifier") {
@@ -45,7 +45,7 @@ class FunctionCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse function call with mixed type arguments") {
@@ -62,7 +62,7 @@ class FunctionCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse function call with generics and mixed type arguments") {
@@ -96,6 +96,6 @@ class FunctionCallParserTest extends FunSuite {
       Tuple(Vector.empty, None),
       None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }

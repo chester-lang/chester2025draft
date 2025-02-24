@@ -9,13 +9,13 @@ class ListParserTest extends FunSuite {
   test("parse empty list") {
     val input = "[]"
     val expected = ListExpr(Vector(), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse list with single integer") {
     val input = "[123]"
     val expected = ListExpr(Vector(IntegerLiteral(123, meta = None)), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse list with multiple integers and trailing comma") {
@@ -28,7 +28,7 @@ class ListParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse list with mixed types") {
@@ -71,6 +71,6 @@ class ListParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }

@@ -47,19 +47,19 @@ class ParserTest extends FunSuite {
   test("parse valid decimal integer") {
     val input = "12345"
     val expected = IntegerLiteral(BigInt("12345"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse valid hexadecimal integer") {
     val input = "0x1A3F"
     val expected = IntegerLiteral(BigInt("1A3F", 16), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse valid binary integer") {
     val input = "0b1101"
     val expected = IntegerLiteral(BigInt("1101", 2), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   if (false) test("parse signed integer") { // we see it as -(6789) now
@@ -92,7 +92,7 @@ class ParserTest extends FunSuite {
   test("parse integerLiteral") {
     val input = "12345"
     val expected = IntegerLiteral(BigInt("12345"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse doubleLiteral") {
@@ -255,12 +255,12 @@ class ParserTest extends FunSuite {
   test("emoji") {
     val input = "👍"
     val expected = Identifier("👍", meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("Multiple UTF-16 characters for one codepoint") {
     val input = "𠀋好"
     val expected = Identifier("𠀋好", meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }
