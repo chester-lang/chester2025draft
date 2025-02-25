@@ -1,14 +1,14 @@
-# Parser Migration Status
+# Chester Parser Architecture and Migration Status
 
 ## Overview
 
-Chester is currently undergoing a parser migration from the original `reader` implementation to a new `readerv2`. This document tracks the status of this migration and outlines the goals and progress.
+Chester is migrating from the original `reader` implementation to a new `readerv2`. This document covers both the migration status and the key design decisions in our parser architecture.
 
-## Design Evolution
+## Syntax Design Principles
 
-### Uniform Symbol Treatment
+### 1. Uniform Symbol Treatment
 - All identifiers and operators are treated uniformly in parsing
-- NO special cases for keywords like "case", "if", "then", "else" - they are just identifiers
+- No special cases for keywords like "if", "then", "else" - they are just identifiers
 - Parser doesn't distinguish between keywords and regular identifiers
 - Semantic meaning determined in later passes
 - Examples:
@@ -19,7 +19,29 @@ Chester is currently undergoing a parser migration from the original `reader` im
   
   // Both produce:
   OpSeq([identifier, expr, identifier, expr])
-  
+  ```
+
+### 2. Operator and Identifier Rules
+- Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
+- Identifiers start with letters/emoji/underscore
+- Both can contain operator symbols and word symbols
+- Key rules:
+  - No special casing of operators - determined by character patterns
+  - All operator identification delegated to consistent rules
+  - Operators and identifiers form a uniform sequence: `expr op expr op expr ...`
+  ```scala
+  1 + 2          // OpSeq([1, +, 2])
+  if x then y    // OpSeq([if, x, then, y])  // "if" and "then" are just identifiers
+  val x = 1      // OpSeq([val, x, =, 1])    // "val" is just an identifier
+  ```
+
+### 3. Separation of Concerns
+- Parser only produces flat OpSeq nodes without any knowledge of operator semantics
+- Operator precedence, fixity (infix/prefix/postfix), and associativity are handled in later passes
+- This separation allows flexible operator definition and extension
+- No predefined keywords (if/then/else/val) or operators (+/-/*)
+- Example parsing:
+  ```scala
   // Pattern matching is just a sequence of identifiers and expressions
   x match {
     case A => expr1;
@@ -35,56 +57,115 @@ Chester is currently undergoing a parser migration from the original `reader` im
     ])
   ])
   ```
-- Benefits:
-  - Simpler, more maintainable parser
-  - Allows user-defined keywords and operators
-  - Consistent parsing rules
-  - Flexible operator definition
-  - Single source of truth for identifier rules
-  - Pattern matching is just regular operator sequences
-  - No special parsing rules needed for any construct
+
+### 4. Space and Newline Handling
+
+#### Space Significance
+- Spaces are significant in specific contexts:
+  - Function calls: `f()` vs `f ()` - space before parentheses changes interpretation
+    - Without space: Parsed as function call
+    - With space: Parsed as separate identifier and tuple
+  - Operator sequences: Spaces don't affect operator precedence
+    - `a + b` is equivalent to `a+b`
+    - Spaces around operators are for readability only
+
+#### Newline Significance
+- Newlines have special significance in specific contexts:
+
+  1. **After blocks**: Newline after a block ends the expression
+     ```scala
+     // Two separate expressions
+     f { aaa }
+     b { bbb }
+     
+     // Single expression
+     f { aaa } b { bbb }
+     ```
+
+  2. **Pattern Matching**:
+     - For single expressions: `case X => expr;`
+       - Semicolon required after expression
+       - Newlines are treated like spaces (not separators)
+     - For blocks: `case X => { stmts }`
+       - Only need newline after block (}\n)
+       - Newline after block acts as separator
+       - No semicolon needed after block
+     ```scala
+     x match {
+       case1 => expr1;
+       case2 => {
+         stmt1;
+         stmt2
+       }
+       case3 => expr3;
+     }
+     ```
+
+  3. **Within blocks**: Newlines within blocks are not significant
+     - Expressions can span multiple lines within a block
+     - Operators and operands can be split across lines
+     ```scala
+     f {
+       1 +
+       2
+     }
+     ```
+
+### 5. Block Return Value Semantics
+- Rust-like block return value semantics
+- Last expression in block is the return value
+- Examples:
+  - `{a}` -> returns value of a
+  - `{a;}` -> equivalent to `{a; ()}` -> returns unit
+  - `{a; b}` -> returns value of b
+  - `{a; b;}` -> equivalent to `{a; b; ()}` -> returns unit
+
+```scala
+{ println(1); 2 }     // returns 2
+{ println(1); 2; }    // returns unit
+{ println(1) }        // returns println result
+{ println(1); }       // returns unit
+```
+
+### 6. Error Handling
+- Designed to handle incomplete/broken source code
+- Produces meaningful partial results when possible
+- Uses ErrorExpr to represent recoverable parse errors
+
+### 7. Incremental Parsing
+- Supports partial parsing of incomplete expressions
+- Maintains parser state for potential incremental updates
+- Useful for IDE integration
+
+## Parser Implementations
 
 ### Original Parser Design (V1)
-- Parser treats all symbols uniformly from the start
-- No special cases or keyword recognition
-- All constructs parsed as operator sequences
-- Pattern matching, if/then/else, and other constructs are just identifier sequences
-- Semantic analysis happens in later passes
-- This design proved highly maintainable and flexible
-
-### Implementation Journey
-- Currently implemented with special cases in ReaderV2:
-  - Special handling for "case" keyword
-  - Pattern matching treated as special syntax
-  - Keywords recognized during parsing
-- Planning to move to generalized approach matching original reader:
-  - Remove keyword recognition in parser
-  - Implement uniform treatment of all identifiers
-  - Handle pattern matching through regular operator sequence parsing
-  - Defer semantic analysis to later passes
-- Lessons from V1:
-  - Special cases increase complexity
-  - Uniform treatment simplifies implementation
-  - Separating parsing from semantics is powerful
-  - Original design's approach is better
-
-## Current Status
-
-### ReaderV2 Implementation
-- Currently passes a subset of tests
-- Implements core parsing functionality with some special cases
-- Work in progress to achieve feature parity with original reader
-- Need to remove special case handling for pattern matching
-
-### Original Reader (Legacy)
+- Uses FastParse combinators for a declarative style
+- Context object tracks parsing state
+- Functional composition of parsers
 - Fully functional and used in production
-- Serves as reference implementation
-- Will be maintained until ReaderV2 reaches feature parity
 
-## Feature Comparison
+### ReaderV2 Approach (V2)
+- Token-based parsing with state machine
+- More imperative style with mutable state
+- Pattern matching on tokens for different constructs
+- Explicit recursion with depth tracking
 
-| Feature | Reader (Original) | ReaderV2 | Notes |
-|---------|------------------|----------|--------|
+### Implementation Benefits
+Both implementations maintain the philosophy of uniform symbol treatment, with these advantages:
+- Simpler, more maintainable parser
+- Allows user-defined keywords and operators
+- Consistent parsing rules with no special cases
+- Flexible operator definition and extension
+- Single source of truth for identifier rules
+- Pattern matching as regular operator sequences
+
+## Migration Status
+
+### Feature Comparison
+
+| Feature | Reader (V1) | ReaderV2 (V2) | Notes |
+|---------|-------------|---------------|-------|
 | Basic Literals | ✅ | ✅ | Integers, floating-point numbers fully supported |
 | Function Calls | ✅ | ✅ | Full support in V2 |
 | Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
@@ -94,37 +175,18 @@ Chester is currently undergoing a parser migration from the original `reader` im
 | Source Maps | ✅ | 🔴 | To be implemented |
 | Unicode Support | ✅ | ✅ | Full support in both |
 | Generic Type Parameters | ✅ | 🟡 | Basic support, complex cases need work |
-| Block Arguments | ✅ | 🟡 | Basic blocks work, block calls need work |
+| Block Arguments | ✅ | 🟡 | Basic blocks work, block calls need refinement |
+| Lists with Mixed Types | ✅ | ✅ | Now properly supported including floating-point |
 
 Legend:
 - ✅ Fully Implemented
 - 🟡 Partially Implemented
 - 🔴 Not Yet Implemented
 
-## Migration Goals
-
-1. **Feature Parity**
-   - Match all functionality of original reader
-   - Pass all existing test cases
-   - Maintain same error reporting quality
-
-2. **Improvements**
-   - Better error recovery
-   - More maintainable code structure
-   - Better performance
-   - Clearer separation of concerns
-
-3. **Documentation**
-   - Better documented parsing rules
-   - Clear error message guidelines
-   - Migration guide for contributors
-
-## Test Coverage
-
-### Test Implementation Status
+### Test Coverage
 
 | Test File | V1 Only | Both V1 & V2 | Notes |
-|-----------|---------|--------------|--------|
+|-----------|---------|--------------|-------|
 | OpSeqParserTest | | 🟡 | Basic tests use parseAndCheckBoth, complex tests still V1-only |
 | ObjectParserTest | | ✅ | All tests use parseAndCheckBoth |
 | DotParserTest | | ✅ | All tests use parseAndCheckBoth |
@@ -143,190 +205,63 @@ Legend:
 ### Test Function Usage
 - `parseAndCheck` / `parseAndCheckV0`: Runs tests against V1 (original reader) only
 - `parseAndCheckBoth`: Runs tests against both V1 and V2 parsers
-- `parseAndCheckV1`: Deprecated alias for parseAndCheckBoth
 
 ### Currently Passing Tests in Both V1 & V2
-```scala
-// Pattern Matching Tests
-simple pattern matching with case statements
-parse pattern matching with multiple cases
-
-// Operator Sequence Tests
-parse simple opSeq with single operator
-parse opSeq with multiple operators
-parse opSeq with mixed operators
-parse prefix and postfix operators
-parse mixfix expressions
-
-// Object Tests
-parse empty object
-parse object with single field
-parse object with multiple fields
-parse nested objects
-parse object with mixed types
-parse object with trailing comma
-
-// Function Call Tests
-parse simple function call
-parse function call with arguments
-parse nested function calls
-parse function call with mixed arg types
-parse function call with multiple args
-parse function call with one arg
-
-// Dot Notation Tests
-parse simple dot call
-parse dot call with arguments
-parse nested dot calls
-parse dot call with function call
-parse dot call with arguments arguments
-parse dot call with arguments block arguments
-parse dot + call with arguments
-parse dot call followed by function call
-
-// Tuple Tests
-parse tuple with type annotation
-parse function call
-parse identifier to function call conversion
-
-// Vararg Tests
-parse function call with single vararg
-parse function def with single vararg
-
-// Other Tests
-parse varargs
-parse comments
-
-// Number Literal Tests
-parse valid decimal integer
-parse valid hexadecimal integer
-parse valid binary integer
-parse valid double with exponent
-parse double without exponent
-parse integerLiteral
-parse doubleLiteral
-
-// List Tests
-parse empty list
-parse list with single integer
-parse list with multiple integers and trailing comma
-parse list with mixed types (including floating-point numbers)
-parse nested list
-```
+- Pattern Matching: simple case statements, multiple cases
+- Operator Sequences: simple and complex sequences, prefix/postfix/mixfix operators
+- Objects: empty objects, single/multiple fields, nested objects, mixed types
+- Function Calls: simple calls, with arguments, nested calls, mixed arg types
+- Dot Notation: simple dot calls, with arguments, nested dot calls
+- Tuples: with type annotations, function calls, identifier conversions
+- Varargs: function calls and definitions with varargs
+- Literals: integers (decimal, hex, binary), floating-point, strings
+- Lists: empty lists, single items, mixed types, nested lists
 
 ### Tests Still V1-Only (Need Migration)
 - Complex operator sequence tests (prefix, mixfix)
 - Telescope parsing tests
 - Error handling tests
 - Source position tracking tests
-
-### Migration Strategy
-1. Start with `parseAndCheck` (V1-only)
-2. Once test passes in V2, upgrade to `parseAndCheckBoth`
-3. Document any V2-specific changes or improvements
-4. Remove V1-only tests once all features are supported in V2
+- Some block call tests with complex contexts
+- Function calls with generic type parameters
 
 ## Implementation Plan
 
-1. **Phase 1: Core Functionality** (Current)
-   - [x] Basic literal parsing
-   - [x] Simple function calls
-   - [x] Basic operator sequence parsing (flat OpSeq nodes)
-   - [x] Remove special case handling for keywords
-   - [x] Implement uniform symbol treatment
-   - [🟡] Migrate V1-only tests to V2 (In Progress)
+### Phase 1: Core Functionality (✅ Mostly Complete)
+- ✅ Basic literal parsing
+- ✅ Simple function calls
+- ✅ Basic operator sequence parsing
+- ✅ Uniform symbol treatment
+- ✅ Support for floating-point numbers
+- ✅ Lists with mixed types
+- 🟡 Migrate V1-only tests to V2 (In Progress)
 
-2. **Phase 2: Advanced Features**
-   - [ ] Full pattern matching
-   - [ ] Complex object syntax
-   - [ ] Source maps
+### Phase 2: Advanced Features (🟡 Current)
+- 🟡 Full block call support
+- 🟡 Generic type parameters
+- 🔴 Complex object syntax
+- 🔴 Telescope parsing
+- 🔴 Source maps
 
-3. **Phase 3: Error Handling**
-   - [ ] Error recovery
-   - [ ] Improved error messages
-   - [ ] Source position tracking
-   - [ ] Debug information
-
-## Contributing
-
-When working on the parser migration:
-
-1. **Adding Features**
-   - Check feature status in comparison table
-   - Add tests matching original reader behavior
-   - Document any deviations or improvements
-
-2. **Testing**
-   - Run both parser implementations
-   - Compare outputs for identical inputs
-   - Document any differences
-
-3. **Documentation**
-   - Update this status document
-   - Add parsing rules documentation
-   - Document error messages
-
-## Important Design Principles
-
-1. **Separation of Concerns**
-   - Parser only produces flat OpSeq nodes without any knowledge of operator semantics
-   - Operator precedence, fixity (infix/prefix/postfix), and associativity are handled in later passes
-   - This separation allows flexible operator definition and extension
-
-2. **Error Handling**
-   - Designed to handle incomplete/broken source code
-   - Produces meaningful partial results when possible
-   - Uses ErrorExpr to represent recoverable parse errors
-
-3. **Pattern Matching Newline Rules**
-   - Single expressions: `case X => expr;`
-     - Semicolon required after expression
-     - Newlines are treated like spaces (not separators)
-     - Example:
-       ```
-       case A => expr1;
-       case B => expr2;
-       ```
-   - Block expressions: `case X => { stmts }`
-     - No semicolon needed after block
-     - Newline after block acts as separator
-     - Example:
-       ```
-       case A => {
-         stmt1;
-         stmt2
-       }
-       case B => expr2;
-       ```
-   - Comments and newlines in pattern matching:
-     - Comments before case are preserved
-     - Newlines between cases are preserved
-     - Example:
-       ```
-       // First case
-       case A => expr1;
-       // Second case
-       case B => expr2;
-       ```
-
-4. **Incremental Parsing**
-   - Supports partial parsing of incomplete expressions
-   - Maintains parser state for potential incremental updates
-   - Useful for IDE integration
+### Phase 3: Error Handling (🔴 Planned)
+- 🔴 Error recovery
+- 🔴 Improved error messages
+- 🔴 Source position tracking
+- 🔴 Debug information
 
 ## Next Steps
 
-1. **Immediate Tasks**
-   - Complete pattern matching support
-   - Improve function call parsing
-   - Enhance error reporting
+### Immediate Tasks
+- [ ] Complete block calls handling
+- [ ] Improve generic type parameter parsing
+- [ ] Migrate TelescopeParserTest to V2
 
-2. **Future Work**
-   - Implement error recovery
-   - Add source maps support
-   - Complete advanced features
+### Future Work
+- [ ] Implement error recovery
+- [ ] Add source maps support
+- [ ] Complete advanced features
 
-3. **Documentation**
-   - Document new parser architecture
-   - Create migration guide
-   - Update test documentation 
+### Documentation
+- [ ] Document new parser architecture
+- [ ] Create migration guide
+- [ ] Update test documentation 
