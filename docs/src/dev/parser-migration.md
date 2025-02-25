@@ -85,7 +85,7 @@ Chester is currently undergoing a parser migration from the original `reader` im
 
 | Feature | Reader (Original) | ReaderV2 | Notes |
 |---------|------------------|----------|--------|
-| Basic Literals | ✅ | ✅ | Integers, strings, etc. |
+| Basic Literals | ✅ | ✅ | Integers, floating-point numbers fully supported |
 | Function Calls | ✅ | ✅ | Full support in V2 |
 | Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
 | Object Syntax | ✅ | 🟡 | Basic support in V2 |
@@ -93,6 +93,8 @@ Chester is currently undergoing a parser migration from the original `reader` im
 | Error Recovery | ✅ | 🔴 | Planned for V2 |
 | Source Maps | ✅ | 🔴 | To be implemented |
 | Unicode Support | ✅ | ✅ | Full support in both |
+| Generic Type Parameters | ✅ | 🟡 | Basic support, complex cases need work |
+| Block Arguments | ✅ | 🟡 | Basic blocks work, block calls need work |
 
 Legend:
 - ✅ Fully Implemented
@@ -129,11 +131,14 @@ Legend:
 | VarargParserTest | | ✅ | All tests use parseAndCheckBoth |
 | SimpleFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
 | TupleAndFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
-| ParserTest | ✅ | | Uses parseAndCheck (V1 only) |
+| ParserTest | | ✅ | All tests now use parseAndCheckBoth, including floating-point literals |
 | SimpleOpSeqTest | | ✅ | Uses parseAndCheckBoth |
 | TelescopeParserTest | ✅ | | Uses parseAndCheck (V1 only) |
 | CommentParserTest | | ✅ | All tests use parseAndCheckBoth |
 | SimplePatternMatchingTest | | ✅ | Uses parseAndCheckBoth |
+| ListParserTest | | ✅ | All tests now use parseAndCheckBoth, including mixed types with floating-point |
+| BlockAndBlockCallParserTest | 🟡 | 🟡 | Basic blocks use Both, block calls use V1 only |
+| FunctionCallParserTest | 🟡 | 🟡 | Basic calls use Both, generic type parameters use V1 only |
 
 ### Test Function Usage
 - `parseAndCheck` / `parseAndCheckV0`: Runs tests against V1 (original reader) only
@@ -191,6 +196,22 @@ parse function def with single vararg
 // Other Tests
 parse varargs
 parse comments
+
+// Number Literal Tests
+parse valid decimal integer
+parse valid hexadecimal integer
+parse valid binary integer
+parse valid double with exponent
+parse double without exponent
+parse integerLiteral
+parse doubleLiteral
+
+// List Tests
+parse empty list
+parse list with single integer
+parse list with multiple integers and trailing comma
+parse list with mixed types (including floating-point numbers)
+parse nested list
 ```
 
 ### Tests Still V1-Only (Need Migration)

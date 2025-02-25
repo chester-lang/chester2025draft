@@ -36,6 +36,8 @@
        - Object tests
        - Tuple tests
        - Vararg tests
+       - Floating-point number parsing tests
+       - List tests with mixed types
      - Tests still needing migration:
        - Complex operator sequences (prefix, mixfix)
        - Telescope parsing
