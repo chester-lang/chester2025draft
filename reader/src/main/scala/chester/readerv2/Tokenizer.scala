@@ -93,7 +93,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
           case '@'                            => Right(Token.At(createSourcePos(startPos, pos)))
           case '"'                            => parseString(startPos)
           case '\''                           => parseSymbol(startPos)
-          case d if d.isDigit                 => parseNumber(d.toString, startPos)
+          case d if d.isDigit                 => parseNumber(startPos)
           case a if a.isLetter || a == '_'    => parseIdentifier(a.toString, startPos)
           case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
           case other =>
@@ -157,43 +157,94 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     }
   }
 
-  private def parseNumber(initial: String, startPos: Int): Either[ParseError, Token] = {
-    boundary[Either[ParseError, Token]] {
-      def readDigits(pos: Int, base: Int): (String, Int) = {
-        val isValidDigit = base match {
-          case 2 => (c: Char) => c == '0' || c == '1'
-          case 16 => (c: Char) => c.isDigit || ('a' <= c.toLower && c.toLower <= 'f')
-          case _ => (c: Char) => c.isDigit
+  private def parseNumber(startPos: Int): Either[ParseError, Token] = {
+    // Helper method to read digits for a specific base
+    def readDigits(pos: Int, base: Int): (String, Int) = {
+      val isValidDigit = base match {
+        case 2 => (c: Char) => c == '0' || c == '1'
+        case 16 => (c: Char) => c.isDigit || ('a' <= c.toLower && c.toLower <= 'f')
+        case _ => (c: Char) => c.isDigit
+      }
+      
+      var result = ""
+      var currentPos = pos
+      
+      while (currentPos < source.length && isValidDigit(source(currentPos))) {
+        result += source(currentPos)
+        currentPos += 1
+      }
+      
+      (result, currentPos)
+    }
+
+    val (prefix, digits, finalPos, base) = if (startPos + 1 < source.length) {
+      if (source(startPos) == '0' && source(startPos + 1) == 'x') {
+        val (hex, endPos) = readDigits(startPos + 2, 16)
+        (source.substring(startPos, startPos + 2), hex, endPos, 16)
+      } else if (source(startPos) == '0' && source(startPos + 1) == 'b') {
+        val (bin, endPos) = readDigits(startPos + 2, 2)
+        (source.substring(startPos, startPos + 2), bin, endPos, 2)
+      } else {
+        ("", readDigits(startPos, 10)._1, readDigits(startPos, 10)._2, 10)
+      }
+    } else {
+      ("", readDigits(startPos, 10)._1, readDigits(startPos, 10)._2, 10)
+    }
+
+    if (digits.isEmpty && prefix.isEmpty) {
+      return Left(ParseError("Expected digits", createSourcePos(startPos, startPos).range.start))
+    }
+
+    val isDecimal = prefix.isEmpty // Only decimal numbers can have decimal points or exponents
+    
+    // Check for decimal point or exponent
+    if (isDecimal && finalPos < source.length && (source(finalPos) == '.' || source(finalPos) == 'e' || source(finalPos) == 'E')) {
+      var endPos = finalPos
+      val numBuilder = new StringBuilder(prefix + digits)
+      
+      // Handle decimal point
+      if (finalPos < source.length && source(finalPos) == '.') {
+        numBuilder.append('.')
+        endPos += 1
+        
+        // Read decimal digits
+        val (decimalDigits, afterDecimal) = readDigits(endPos, 10)
+        numBuilder.append(decimalDigits)
+        endPos = afterDecimal
+      }
+      
+      // Handle exponent
+      if (endPos < source.length && (source(endPos) == 'e' || source(endPos) == 'E')) {
+        numBuilder.append(source(endPos)) // Add 'e' or 'E'
+        endPos += 1
+        
+        // Handle optional sign in exponent
+        if (endPos < source.length && (source(endPos) == '+' || source(endPos) == '-')) {
+          numBuilder.append(source(endPos))
+          endPos += 1
         }
         
-        boundary[(String, Int)] {
-          (pos until source.length).foldLeft((initial, pos)) { case ((acc, currentPos), p) =>
-            if (p < currentPos) (acc, currentPos)
-            else if (p < source.length && isValidDigit(source(p)))
-              (acc + source(p), p + 1)
-            else
-              break((acc, p))
-          }
+        // Read exponent digits
+        val (expDigits, afterExp) = readDigits(endPos, 10)
+        if (expDigits.isEmpty) {
+          return Left(ParseError("Expected digits after exponent", createSourcePos(endPos, endPos).range.start))
         }
+        numBuilder.append(expDigits)
+        endPos = afterExp
       }
-
-      val (digits, finalPos) = if (initial == "0" && pos < source.length) {
-        source(pos) match {
-          case 'x' | 'X' =>
-            val (hexDigits, newPos) = readDigits(pos + 1, 16)
-            ("0x" + hexDigits, newPos)
-          case 'b' | 'B' =>
-            val (binDigits, newPos) = readDigits(pos + 1, 2)
-            ("0b" + binDigits, newPos)
-          case _ =>
-            readDigits(pos, 10)
-        }
-      } else {
-        readDigits(pos, 10)
-      }
-
-      pos = finalPos // Update position for tokenizer state
-      Right(Token.IntegerLiteral(digits, createSourcePos(startPos, finalPos)))
+      
+      pos = endPos // Update position for tokenizer state
+      col += endPos - startPos
+      
+      // Create token with the exact string needed for BigDecimal
+      val finalNumber = numBuilder.toString()
+      Right(Token.RationalLiteral(finalNumber, createSourcePos(startPos, endPos)))
+    } else {
+      // Simple integer
+      pos = finalPos
+      col += finalPos - startPos
+      val fullNumber = prefix + digits
+      Right(Token.IntegerLiteral(fullNumber, createSourcePos(startPos, finalPos)))
     }
   }
 

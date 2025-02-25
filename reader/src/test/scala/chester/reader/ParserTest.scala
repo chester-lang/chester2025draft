@@ -72,7 +72,7 @@ class ParserTest extends FunSuite {
   test("parse valid double with exponent") {
     val input = "3.14e2"
     val expected = RationalLiteral(BigDecimal("3.14e2"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   if (false)
@@ -85,7 +85,7 @@ class ParserTest extends FunSuite {
   test("parse double without exponent") {
     val input = "456.789"
     val expected = RationalLiteral(BigDecimal("456.789"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   // General literal tests
@@ -98,7 +98,7 @@ class ParserTest extends FunSuite {
   test("parse doubleLiteral") {
     val input = "1.23e4"
     val expected = RationalLiteral(BigDecimal("1.23e4"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse single-line string literal") {

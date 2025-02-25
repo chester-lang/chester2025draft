@@ -41,7 +41,7 @@ class ListParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse nested list") {

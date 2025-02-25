@@ -594,6 +594,18 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             Left(ParseError(s"Invalid number format: $value", sourcePos.range.start))
         }
       }
+      case Right(Token.RationalLiteral(value, sourcePos)) => {
+        try {
+          // Create a BigDecimal directly from the value string to match the V1 parser's behavior
+          // This preserves exact representation of the number without extra manipulation
+          val decimal = BigDecimal(value)
+          val rational = spire.math.Rational(decimal)
+          Right((ConcreteRationalLiteral(rational, createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
+        } catch {
+          case e: NumberFormatException =>
+            Left(ParseError(s"Invalid floating-point number format: $value", sourcePos.range.start))
+        }
+      }
       case Right(Token.StringLiteral(chars, sourcePos)) =>
         Right((ConcreteStringLiteral(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
       case Right(Token.SymbolLiteral(value, sourcePos)) =>
@@ -940,8 +952,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case Left(error) => Left(error)
       case Right((listExpr, afterList)) => {
         afterList.current match {
-          case Right(Token.RParen(_)) => {
-            Right((FunctionCall(identifier, Tuple(listExpr.toVector, createMeta(Some(sourcePos), Some(sourcePos))), createMeta(Some(sourcePos), Some(sourcePos))), afterList.advance()))
+          case Right(Token.RParen(endPos)) => {
+            Right((FunctionCall(identifier, Tuple(listExpr.toVector, createMeta(Some(sourcePos), Some(endPos))), createMeta(Some(sourcePos), Some(endPos))), afterList.advance()))
           }
           case Right(t) => Left(ParseError("Expected right parenthesis", t.sourcePos.range.start))
           case Left(err) => Left(err)
