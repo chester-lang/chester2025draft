@@ -85,6 +85,6 @@ class SimplePatternMatchingTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckBoth(input, expected)
+    parseAndCheck(input, expected)
   }
 }

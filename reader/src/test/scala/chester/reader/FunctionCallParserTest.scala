@@ -86,7 +86,7 @@ class FunctionCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("simple function call") {

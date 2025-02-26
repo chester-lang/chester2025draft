@@ -69,7 +69,7 @@ class BlockAndBlockCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse block call with nested block with newlines") {
@@ -94,7 +94,7 @@ class BlockAndBlockCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse function call with block as argument without newlines") {
@@ -117,6 +117,6 @@ class BlockAndBlockCallParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }

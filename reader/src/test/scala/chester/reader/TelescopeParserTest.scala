@@ -15,7 +15,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with simple arguments ending comma") {
@@ -28,13 +28,13 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple empty") {
     val input = "()"
     val expected = Tuple(Vector(), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with simple arguments with comments") {
@@ -47,7 +47,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with arguments having type") {
@@ -65,7 +65,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with arguments having types") {
@@ -99,7 +99,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with arguments having default value") {
@@ -117,7 +117,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with arguments having default values") {
@@ -151,7 +151,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with arguments having types and default values") {
@@ -191,7 +191,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse tuple with arguments without names") {
@@ -204,7 +204,7 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse generics with arguments without names") {
@@ -215,6 +215,6 @@ class TelescopeParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }

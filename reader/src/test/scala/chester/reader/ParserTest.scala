@@ -65,7 +65,7 @@ class ParserTest extends FunSuite {
   if (false) test("parse signed integer") { // we see it as -(6789) now
     val input = "-6789"
     val expected = IntegerLiteral(BigInt("-6789"), meta = None)
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   // Tests for DoubleLiteral
@@ -79,7 +79,7 @@ class ParserTest extends FunSuite {
     test("parse signed double with exponent") { // we see it as -(1.23e-4) now
       val input = "-1.23e-4"
       val expected = RationalLiteral(BigDecimal("-1.23e-4"), meta = None)
-      parseAndCheck(input, expected)
+      parseAndCheckBoth(input, expected)
     }
 
   test("parse double without exponent") {
@@ -195,7 +195,10 @@ class ParserTest extends FunSuite {
                                   Vector(
                                     FunctionCall(
                                       Identifier("Identifier", meta = None),
-                                      Tuple(Vector(StringLiteral("b", meta = None)), meta = None),
+                                      Tuple(
+                                        Vector(StringLiteral("b", meta = None)),
+                                        meta = None
+                                      ),
                                       meta = None
                                     ),
                                     Identifier("->", meta = None),
@@ -249,7 +252,7 @@ class ParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("emoji") {

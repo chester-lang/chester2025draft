@@ -175,7 +175,7 @@ Both implementations maintain the philosophy of uniform symbol treatment, with t
 | Source Maps | ✅ | 🔴 | To be implemented |
 | Unicode Support | ✅ | ✅ | Full support in both |
 | Generic Type Parameters | ✅ | 🟡 | Basic support, complex cases need work |
-| Block Arguments | ✅ | 🟡 | Basic blocks work, block calls need refinement |
+| Block Arguments | ✅ | ✅ | Block calls now properly supported |
 | Lists with Mixed Types | ✅ | ✅ | Now properly supported including floating-point |
 
 Legend:
@@ -199,7 +199,7 @@ Legend:
 | CommentParserTest | | ✅ | All tests use parseAndCheckBoth |
 | SimplePatternMatchingTest | | ✅ | Uses parseAndCheckBoth |
 | ListParserTest | | ✅ | All tests now use parseAndCheckBoth, including mixed types with floating-point |
-| BlockAndBlockCallParserTest | 🟡 | 🟡 | Basic blocks use Both, block calls use V1 only |
+| BlockAndBlockCallParserTest | | ✅ | All tests use parseAndCheckBoth |
 | FunctionCallParserTest | 🟡 | 🟡 | Basic calls use Both, generic type parameters use V1 only |
 
 ### Test Function Usage
@@ -237,7 +237,7 @@ Legend:
 - 🟡 Migrate V1-only tests to V2 (In Progress)
 
 ### Phase 2: Advanced Features (🟡 Current)
-- 🟡 Full block call support
+- ✅ Full block call support
 - 🟡 Generic type parameters
 - 🔴 Complex object syntax
 - 🔴 Telescope parsing
@@ -252,7 +252,7 @@ Legend:
 ## Next Steps
 
 ### Immediate Tasks
-- [ ] Complete block calls handling
+- [x] Complete block calls handling
 - [ ] Improve generic type parameter parsing
 - [ ] Migrate TelescopeParserTest to V2
 
