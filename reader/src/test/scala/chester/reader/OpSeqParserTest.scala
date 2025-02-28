@@ -224,7 +224,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckBoth(input, expected)
+    parseAndCheck(input, expected)
   }
 
   test("parse function call with") {
