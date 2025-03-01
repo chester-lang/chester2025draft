@@ -309,7 +309,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    assertEquals(getParsed(input), expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("more macro") {
@@ -354,7 +354,7 @@ class OpSeqParserTest extends FunSuite {
       ),
       meta = None
     )
-    assertEquals(getParsed(input), expected)
+    parseAndCheckBoth(input, expected)
   }
 
   test("parse Identifier to IntegerLiteral") {

@@ -187,7 +187,7 @@ Legend:
 
 | Test File | V1 Only | Both V1 & V2 | Notes |
 |-----------|---------|--------------|-------|
-| OpSeqParserTest | | 🟡 | Basic tests use parseAndCheckBoth, complex tests still V1-only |
+| OpSeqParserTest | 🟡 | 🟡 | Most tests use parseAndCheckBoth, only "parse infix with block" uses V1-only due to semantic differences |
 | ObjectParserTest | | ✅ | All tests use parseAndCheckBoth |
 | DotParserTest | | ✅ | All tests use parseAndCheckBoth |
 | VarargParserTest | | ✅ | All tests use parseAndCheckBoth |
@@ -195,12 +195,13 @@ Legend:
 | TupleAndFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
 | ParserTest | | ✅ | All tests now use parseAndCheckBoth, including floating-point literals |
 | SimpleOpSeqTest | | ✅ | Uses parseAndCheckBoth |
-| TelescopeParserTest | ✅ | | Uses parseAndCheck (V1 only) |
+| TelescopeParserTest | | ✅ | All tests now use parseAndCheckBoth |
 | CommentParserTest | | ✅ | All tests use parseAndCheckBoth |
-| SimplePatternMatchingTest | | ✅ | Uses parseAndCheckBoth |
+| SimplePatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
 | ListParserTest | | ✅ | All tests now use parseAndCheckBoth, including mixed types with floating-point |
 | BlockAndBlockCallParserTest | | ✅ | All tests use parseAndCheckBoth |
 | FunctionCallParserTest | 🟡 | 🟡 | Basic calls use Both, generic type parameters use V1 only |
+| PatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
 
 ### Test Function Usage
 - `parseAndCheck` / `parseAndCheckV0`: Runs tests against V1 (original reader) only
@@ -253,8 +254,11 @@ Legend:
 
 ### Immediate Tasks
 - [x] Complete block calls handling
+- [x] Improve floating-point number parsing
+- [x] Migrate more tests to use parseAndCheckBoth
+- [ ] Migrate SimplePatternMatchingTest and PatternMatchingTest to use parseAndCheckBoth
+- [ ] Address semantic differences between V1 and V2 for infix with block expressions
 - [ ] Improve generic type parameter parsing
-- [ ] Migrate TelescopeParserTest to V2
 
 ### Future Work
 - [ ] Implement error recovery
@@ -262,6 +266,83 @@ Legend:
 - [ ] Complete advanced features
 
 ### Documentation
-- [ ] Document new parser architecture
+- [x] Document new parser architecture
 - [ ] Create migration guide
-- [ ] Update test documentation 
+- [x] Update test documentation 
+
+## Known Semantic Differences Between V1 and V2 Parsers
+
+Some expressions are parsed differently between the original reader (V1) and readerv2 (V2) implementations. These differences are not bugs but reflect fundamentally different parsing strategies.
+
+### Identifier followed by Block vs Function Call with Block Argument
+
+**Example 1:** `so getthen { doSomething }`
+
+- **V1 Parser:**
+  ```
+  OpSeq(
+    Vector(
+      Identifier("so"),
+      Identifier("getthen"),
+      Block(...)
+    )
+  )
+  ```
+
+- **V2 Parser:**
+  ```
+  OpSeq(
+    Vector(
+      Identifier("so"),
+      FunctionCall(
+        function = Identifier("getthen"),
+        telescope = Tuple(
+          Vector(
+            Block(...)
+          )
+        )
+      )
+    )
+  )
+  ```
+
+**Example 2:** `notification match { case... }`
+
+- **V1 Parser:**
+  ```
+  OpSeq(
+    Vector(
+      Identifier("notification"),
+      Identifier("match"),
+      Block(...)
+    )
+  )
+  ```
+
+- **V2 Parser:**
+  ```
+  OpSeq(
+    Vector(
+      Identifier("notification"),
+      FunctionCall(
+        function = Identifier("match"),
+        telescope = Tuple(
+          Vector(
+            Block(...)
+          )
+        )
+      )
+    )
+  )
+  ```
+
+### Implications
+
+1. **Pattern Matching:** V2 parser treats `match` as a function call, whereas V1 treats it as an operator
+2. **Block Arguments:** V2 parser treats blocks after identifiers as function call arguments, whereas V1 treats them as separate expressions
+
+### Future Work
+
+- Determine which semantics is preferred for the language design
+- Modify either V1 or V2 to be consistent with the desired semantics
+- Update tests accordingly 
