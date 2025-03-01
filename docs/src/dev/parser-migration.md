@@ -338,11 +338,19 @@ Some expressions are parsed differently between the original reader (V1) and rea
 
 ### Implications
 
-1. **Pattern Matching:** V2 parser treats `match` as a function call, whereas V1 treats it as an operator
+1. **Pattern Matching:** V2 parser treats `match` as a function call with a block argument, whereas V1 treats it as an identifier followed by a block
 2. **Block Arguments:** V2 parser treats blocks after identifiers as function call arguments, whereas V1 treats them as separate expressions
+3. **Uniform Symbol Treatment:** V2 parser maintains the principle of uniform symbol treatment with no special cases for any keywords, including "match"
+
+### Testing Strategy
+
+Due to these semantic differences:
+1. Tests that rely on V1-specific semantics (like pattern matching) should use `parseAndCheck`
+2. Tests that work with both parsers should use `parseAndCheckBoth`
+3. No special cases should be added to either parser to accommodate the other's behavior
 
 ### Future Work
 
 - Determine which semantics is preferred for the language design
 - Modify either V1 or V2 to be consistent with the desired semantics
-- Update tests accordingly 
+- Update tests accordingly

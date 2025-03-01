@@ -224,7 +224,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(afterBlock.sourcePos))
                 )
               }
-              // If previous expression is an identifier, create a function call with the block as argument
+              // If previous expression is an identifier, handle based on identifier value
               case id: ConcreteIdentifier => {
                 debug("parseRest: Creating function call with block argument from identifier")
                 FunctionCall(
@@ -241,8 +241,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
             
             // For function calls with blocks, don't wrap in OpSeq
-            if (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[chester.syntax.concrete.Identifier] || 
-                newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[FunctionCall]) {
+            if ((newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[chester.syntax.concrete.Identifier]) || 
+                (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[FunctionCall])) {
               debug("parseRest: Returning function call with block directly")
               
               // Check for additional tokens after the block
