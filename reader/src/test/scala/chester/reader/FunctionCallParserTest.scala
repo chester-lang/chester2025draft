@@ -89,6 +89,67 @@ class FunctionCallParserTest extends FunSuite {
     parseAndCheckBoth(input, expected)
   }
 
+  test("parse function call with multiple generic type parameters") {
+    val input = "Map[String, Integer](\"name\", 42, \"age\", 30)"
+    val expected = FunctionCall(
+      FunctionCall(
+        Identifier("Map", meta = None),
+        ListExpr(
+          Vector(
+            Identifier("String", meta = None),
+            Identifier("Integer", meta = None)
+          ),
+          meta = None
+        ),
+        meta = None
+      ),
+      Tuple(
+        Vector(
+          StringLiteral("name", meta = None),
+          IntegerLiteral(42, meta = None),
+          StringLiteral("age", meta = None),
+          IntegerLiteral(30, meta = None)
+        ),
+        meta = None
+      ),
+      meta = None
+    )
+    parseAndCheckBoth(input, expected)
+  }
+
+  test("parse function call with nested generic type parameters") {
+    val input = "Container[List[Integer]](values)"
+    val expected = FunctionCall(
+      FunctionCall(
+        Identifier("Container", meta = None),
+        ListExpr(
+          Vector(
+            FunctionCall(
+              Identifier("List", meta = None),
+              ListExpr(
+                Vector(
+                  Identifier("Integer", meta = None)
+                ),
+                meta = None
+              ),
+              meta = None
+            )
+          ),
+          meta = None
+        ),
+        meta = None
+      ),
+      Tuple(
+        Vector(
+          Identifier("values", meta = None)
+        ),
+        meta = None
+      ),
+      meta = None
+    )
+    parseAndCheckBoth(input, expected)
+  }
+
   test("simple function call") {
     val input = "func()"
     val expected = FunctionCall(

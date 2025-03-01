@@ -174,7 +174,7 @@ Both implementations maintain the philosophy of uniform symbol treatment, with t
 | Error Recovery | ✅ | 🔴 | Planned for V2 |
 | Source Maps | ✅ | 🔴 | To be implemented |
 | Unicode Support | ✅ | ✅ | Full support in both |
-| Generic Type Parameters | ✅ | 🟡 | Basic support, complex cases need work |
+| Generic Type Parameters | ✅ | ✅ | Full support including complex and nested generics |
 | Block Arguments | ✅ | ✅ | Block calls now properly supported |
 | Lists with Mixed Types | ✅ | ✅ | Now properly supported including floating-point |
 
@@ -200,7 +200,7 @@ Legend:
 | SimplePatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
 | ListParserTest | | ✅ | All tests now use parseAndCheckBoth, including mixed types with floating-point |
 | BlockAndBlockCallParserTest | | ✅ | All tests use parseAndCheckBoth |
-| FunctionCallParserTest | 🟡 | 🟡 | Basic calls use Both, generic type parameters use V1 only |
+| FunctionCallParserTest | | ✅ | All tests now use parseAndCheckBoth, including complex generic type parameters |
 | PatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
 
 ### Test Function Usage
@@ -239,7 +239,7 @@ Legend:
 
 ### Phase 2: Advanced Features (🟡 Current)
 - ✅ Full block call support
-- 🟡 Generic type parameters
+- ✅ Generic type parameters
 - 🔴 Complex object syntax
 - 🔴 Telescope parsing
 - 🔴 Source maps
@@ -256,9 +256,9 @@ Legend:
 - [x] Complete block calls handling
 - [x] Improve floating-point number parsing
 - [x] Migrate more tests to use parseAndCheckBoth
-- [ ] Migrate SimplePatternMatchingTest and PatternMatchingTest to use parseAndCheckBoth
-- [ ] Address semantic differences between V1 and V2 for infix with block expressions
-- [ ] Improve generic type parameter parsing
+- [x] Migrate SimplePatternMatchingTest and PatternMatchingTest (keeping them on parseAndCheck due to semantic differences)
+- [x] Address semantic differences between V1 and V2 for infix with block expressions (documented in OpSeqParserTest)
+- [x] Improve generic type parameter parsing (added tests for complex and nested generic types)
 
 ### Future Work
 - [ ] Implement error recovery
