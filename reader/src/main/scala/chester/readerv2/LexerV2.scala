@@ -123,17 +123,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     case Left(err) => err.pos
   }
 
-  private def peek(): LexerState = {
-    debug(s"peek: current state=$state")
-    state
-  }
-
   private def advance(): LexerState = {
-    if (state.index + 1 >= state.tokens.length) {
-      LexerState(state.tokens, state.index + 1)
-    } else {
-      LexerState(state.tokens, state.index + 1)
-    }
+    // Simply increment the index
+    LexerState(state.tokens, state.index + 1)
   }
 
   // See docs/src/dev/parser-migration.md for parser design documentation
@@ -541,16 +533,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   def handleOperator(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
-    var current = state
-    current = current.advance()
-    parseAtom(current).flatMap { case (next, newState) =>
-      current = newState
+    // Advance once and parse the next atom
+    parseAtom(state.advance()).flatMap { case (next, newState) =>
       val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
-      current.current match {
+      newState.current match {
         case Right(Token.Operator(nextOp, nextSourcePos)) => {
-          handleOperator(nextOp, nextSourcePos, current, updatedTerms)
+          handleOperator(nextOp, nextSourcePos, newState, updatedTerms)
         }
-        case _ => Right((next, current))
+        case _ => Right((next, newState))
       }
     }
   }
@@ -813,6 +803,16 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         state = state.advance()
         var clauses = Vector.empty[ObjectClause]
 
+        // Helper function to check for comma or right brace after object field
+        def checkAfterField(): Either[ParseError, Unit] = {
+          state.current match {
+            case Right(Token.Comma(_))  => { state = state.advance(); Right(()) }
+            case Right(Token.RBrace(_)) => Right(())
+            case Right(t)               => Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+            case Left(err)              => Left(err)
+          }
+        }
+
         def parseField(): Either[ParseError, Unit] = {
           state.current match {
             case Right(Token.Identifier(chars, idSourcePos)) => {
@@ -828,12 +828,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     } else {
                       clauses = clauses :+ ObjectExprClause(key, value)
                     }
-                    state.current match {
-                      case Right(Token.Comma(_))  => state = state.advance()
-                      case Right(Token.RBrace(_)) => ()
-                      case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-                      case Left(err)              => return Left(err)
-                    }
+                    checkAfterField()
                   }
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
@@ -855,13 +850,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                       val key = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(strSourcePos), Some(strSourcePos)))
                       clauses = clauses :+ ObjectExprClause(key, value)
                     }
-                    state.current match {
-                      case Right(Token.Comma(_))  => state = state.advance()
-                      case Right(Token.RBrace(_)) => ()
-                      case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-                      case Left(err)              => return Left(err)
-                    }
-                    Right(())
+                    checkAfterField()
                   }
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
@@ -877,12 +866,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   parseExpr(state).map { case (value, afterValue) =>
                     state = afterValue
                     clauses = clauses :+ ObjectExprClauseOnValue(key, value)
-                    state.current match {
-                      case Right(Token.Comma(_))  => state = state.advance()
-                      case Right(Token.RBrace(_)) => ()
-                      case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-                      case Left(err)              => return Left(err)
-                    }
+                    checkAfterField()
                   }
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
