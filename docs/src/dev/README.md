@@ -8,7 +8,7 @@ The type system implementation in Chester is built on two main components:
 
 1. **Propagator Network**: A constraint-based type checking system that manages the flow of type information and constraints between different parts of the program. See [Propagator Network](propagator-network.md) for details.
 
-2. **Union Types**: A key feature of Chester's type system that allows for flexible type composition. The implementation details and current development status are documented in [Union Type Analysis](union-type-analysis.md).
+2. **Type System Improvements**: A key focus of Chester's development is enhancing the type system, including union and intersection types. The current status, analysis, and planned improvements are documented in [Type System Improvements](type-system-improvements.md).
 
 ## Documentation Structure
 
@@ -18,10 +18,11 @@ We use [mdBook](https://rust-lang.github.io/mdBook/) for organizing and presenti
 docs/
 ├── src/              # Source markdown files
 │   ├── dev/          # Development documentation
-│   │   ├── README.md              # This file
-│   │   ├── development.md         # General development notes
-│   │   ├── propagator-network.md  # Propagator implementation details
-│   │   └── union-type-analysis.md # Union type system analysis
+│   │   ├── README.md                  # This file
+│   │   ├── development.md             # General development notes
+│   │   ├── propagator-network.md      # Propagator implementation details
+│   │   ├── type-system-improvements.md # Type system analysis and roadmap
+│   │   └── implementation-status.md   # Current implementation status
 │   └── SUMMARY.md    # Documentation structure (auto-generated)
 ├── book.toml         # mdBook configuration
 └── dev.sh           # Documentation development script
