@@ -311,36 +311,106 @@ trait TyckPropagator extends ElaboraterCommon {
 
       if (lhsResolved == rhsResolved) true
       else {
-        (lhsResolved, rhsResolved) match {
-          case (Type(level1, _), Type(level2, _)) =>
-            level1 == level2
+        // If structural equality check fails, try alpha-equivalence
+        // which is crucial for dependent type systems
+        if (areAlphaEquivalent(lhsResolved, rhsResolved)) true
+        else {
+          (lhsResolved, rhsResolved) match {
+            case (Type(level1, _), Type(level2, _)) =>
+              level1 == level2
 
-          case (ListType(elem1, _), ListType(elem2, _)) =>
-            tryUnify(elem1, elem2)
+            case (ListType(elem1, _), ListType(elem2, _)) =>
+              tryUnify(elem1, elem2)
 
-          case (Union(types1, _), Union(types2, _)) =>
-            // For each type in RHS union, at least one type in LHS union must accept it
-            types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+            case (Union(types1, _), Union(types2, _)) =>
+              // For each type in RHS union, at least one type in LHS union must accept it
+              types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
 
-          case (lhsType, Union(types2, _)) =>
-            // For a union on the right, lhs must accept ALL possible types in the union
-            types2.forall(t2 => tryUnify(lhsType, t2))
+            case (lhsType, Union(types2, _)) =>
+              // For a union on the right, lhs must accept ALL possible types in the union
+              types2.forall(t2 => tryUnify(lhsType, t2))
           
-          case (Union(types1, _), rhsType) =>
-            // For a union on the left, ANY type in the union accepting rhs is sufficient
-            // This handles the case where we pass a more specific type to a union type
-            // e.g., passing Integer to Integer | String
-            types1.exists(t1 => tryUnify(t1, rhsType))
+            case (Union(types1, _), rhsType) =>
+              // For a union on the left, ANY type in the union accepting rhs is sufficient
+              // This handles the case where we pass a more specific type to a union type
+              // e.g., passing Integer to Integer | String
+              types1.exists(t1 => tryUnify(t1, rhsType))
 
-          case (Intersection(types1, _), Intersection(types2, _)) =>
-            // For intersection types to be compatible, each type from the second intersection
-            // must be compatible with at least one type from the first intersection
-            types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+            case (Intersection(types1, _), Intersection(types2, _)) =>
+              // For intersection types to be compatible, each type from the second intersection
+              // must be compatible with at least one type from the first intersection
+              types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
 
-          case _ => false
+            case _ => false
+          }
         }
       }
     }
+  }
+  
+  /** 
+   * Check alpha-equivalence of two terms.
+   * This is crucial for dependent type systems where binding structure matters.
+   */
+  private def areAlphaEquivalent(lhs: Term, rhs: Term)(using
+      state: StateAbility[Tyck],
+      localCtx: Context
+  ): Boolean = {
+    // For alpha-equivalence, we need to check if terms are convertible
+    // with respect to bound variable names (alpha conversion)
+    (lhs, rhs) match {
+      // For function types in a dependent type system, need to 
+      // be careful with variable bindings in the result type
+      case (FunctionType(params1, result1, effects1, _), FunctionType(params2, result2, effects2, _)) =>
+        if (params1.length != params2.length) false
+        else if (effects1 != effects2) false
+        else {
+          val paramsEqual = params1.zip(params2).forall { case (p1, p2) =>
+            // Check telescope parameters are equivalent
+            if (p1.args.length != p2.args.length) false
+            else {
+              p1.args.zip(p2.args).forall { case (arg1, arg2) =>
+                // For each argument, check that the types are alpha-equivalent
+                areAlphaEquivalent(arg1.ty, arg2.ty)
+              }
+            }
+          }
+          
+          if (!paramsEqual) false
+          else {
+            // For the result type, need to consider bindings
+            areAlphaEquivalent(result1, result2)
+          }
+        }
+        
+      // Types with internal structure need recursive checks
+      case (Union(types1, _), Union(types2, _)) =>
+        typesEquivalentModuloOrdering(types1, types2)
+        
+      case (Intersection(types1, _), Intersection(types2, _)) =>
+        typesEquivalentModuloOrdering(types1, types2)
+        
+      // For other cases, fall back to regular equality check
+      case _ => lhs == rhs
+    }
+  }
+  
+  /**
+   * Check if two collections of types are equivalent regardless of their ordering.
+   * For union and intersection types, the order doesn't matter.
+   */
+  private def typesEquivalentModuloOrdering(types1: Vector[Term], types2: Vector[Term])(using
+      state: StateAbility[Tyck],
+      localCtx: Context
+  ): Boolean = {
+    // For union/intersection types, each type in one collection
+    // must have an equivalent in the other collection
+    if (types1.length != types2.length) return false
+    
+    // Check that each type in types1 has a match in types2
+    types1.forall(t1 => types2.exists(t2 => areAlphaEquivalent(t1, t2))) &&
+    // Check that each type in types2 has a match in types1
+    types2.forall(t2 => types1.exists(t1 => areAlphaEquivalent(t1, t2)))
   }
 
   case class LiteralType(x: Literals, tyLhs: CellId[Term])(using
