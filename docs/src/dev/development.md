@@ -2,6 +2,25 @@
 
 ## Development Practices
 
+### Planning Changes
+
+1. **Document Before Implementing**
+   - Always document the steps you plan to take BEFORE making any code changes
+   - Break down complex changes into clearly defined smaller steps
+   - For each step, explain:
+     - What will be changed
+     - Why the change is needed
+     - How the change relates to the larger goal
+     - What tests will verify the change
+   - Review your plan for completeness before starting implementation
+   - Document any deviations from the plan that occur during implementation
+
+2. **Use Step-by-Step Implementation**
+   - After documenting your plan, implement one step at a time
+   - Run the full test suite (`sbt rootJVM/test`) after each step
+   - Commit logical units of work with clear messages
+   - Do not proceed to the next step until the current step passes all tests
+
 ### Making Changes
 
 1. **Keep Changes Small and Focused**
