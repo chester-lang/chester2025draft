@@ -258,33 +258,46 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     Right(Token.Identifier(Vector(StringChar(sb.toString, createSourcePos(startPos, pos))), createSourcePos(startPos, pos)))
   }
 
-  private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
-    val sb = new StringBuilder(initial)
-    if (initial == "/" && pos < source.length && source(pos) == '/') {
-      // Handle single-line comment
-      pos += 1 // Skip the second '/'
+  // Separate method for parsing single-line comments
+  private def parseComment(startPos: Int): Either[ParseError, Token] = {
+    pos += 1 // Skip the second '/'
+    col += 1
+    val commentStart = pos
+    
+    // Read until end of line
+    while (pos < source.length && source(pos) != '\n') {
+      pos += 1
       col += 1
-      val commentStart = pos
-      while (pos < source.length && source(pos) != '\n') {
-        pos += 1
-        col += 1
-      }
-      val commentText = source.substring(commentStart, pos)
-      Right(Token.Comment(commentText, createSourcePos(startPos, pos)))
-    } else {
-      while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
-        if (initial == "=" && source(pos) == '>') {
-          pos += 1
-          col += 1
-          return Right(Token.Operator("=>", createSourcePos(startPos, pos)))
-        }
-        sb.append(source(pos))
-        pos += 1
-        col += 1
-      }
-      val operator = sb.toString
-      Right(Token.Operator(operator, createSourcePos(startPos, pos)))
     }
+    
+    val commentText = source.substring(commentStart, pos)
+    Right(Token.Comment(commentText, createSourcePos(startPos, pos)))
+  }
+
+  private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
+    // Handle comments as a special case
+    if (initial == "/" && pos < source.length && source(pos) == '/') {
+      return parseComment(startPos)
+    }
+    
+    val sb = new StringBuilder(initial)
+    
+    // Special case for the => operator
+    if (initial == "=" && pos < source.length && source(pos) == '>') {
+      pos += 1
+      col += 1
+      return Right(Token.Operator("=>", createSourcePos(startPos, pos)))
+    }
+    
+    // Parse other operators
+    while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
+      sb.append(source(pos))
+      pos += 1
+      col += 1
+    }
+    
+    val operator = sb.toString
+    Right(Token.Operator(operator, createSourcePos(startPos, pos)))
   }
 
   private def escapeCharToString(c: Char): String = {
