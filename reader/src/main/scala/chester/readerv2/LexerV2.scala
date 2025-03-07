@@ -80,59 +80,18 @@ object LexerV2 {
   def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerV2 =
     new LexerV2(tokens, sourceOffset, ignoreLocation)
 
-  var DEBUG = false // Global debug flag
-  private var globalRecursionDepth = 0 // Track global recursion depth
-  private var maxRecursionDepth = 0 // Track maximum recursion depth reached
-  private var methodCallCounts = Map[String, Int]() // Track number of calls per method
+  // Keep DEBUG flag for tests that use it
+  var DEBUG = false 
 }
 
 class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean) {
-  import LexerV2.{DEBUG, globalRecursionDepth, maxRecursionDepth, methodCallCounts}
+  import LexerV2.DEBUG
 
   private def debug(msg: => String): Unit = if (DEBUG) {
-    val indent = " " * globalRecursionDepth
-    println(s"[DEBUG]$indent $msg")
-    System.out.flush()
-  }
-
-  private def debugState(label: String): Unit = if (DEBUG) {
-    debug(s"$label:")
-    debug(s"  Current state: $state")
-    debug(s"  Loop count: $loopCount")
-    debug(s"  Recursion depth: $globalRecursionDepth")
-    debug(s"  Max recursion depth: $maxRecursionDepth")
-    debug(s"  Method call counts: ${methodCallCounts.mkString(", ")}")
-    System.out.flush()
+    println(s"[DEBUG] $msg")
   }
 
   private var state: LexerState = LexerState(tokens.toVector, 0)
-  private var loopCount = 0 // Track loop iterations
-
-  private def withRecursion[T](name: String)(f: => T): T = {
-    val MaxRecursionDepth = 100 // Add reasonable limit
-    try {
-      if (globalRecursionDepth >= MaxRecursionDepth) {
-        throw new RuntimeException(s"Maximum recursion depth ($MaxRecursionDepth) exceeded")
-      }
-      globalRecursionDepth += 1
-      maxRecursionDepth = math.max(maxRecursionDepth, globalRecursionDepth)
-      methodCallCounts = methodCallCounts.updated(name, methodCallCounts.getOrElse(name, 0) + 1)
-
-      debug(s"ENTER $name (depth=$globalRecursionDepth, calls=${methodCallCounts(name)})")
-      debugState(s"Before $name")
-
-      val result = f
-      debug(s"EXIT $name with result=$result")
-      debugState(s"After $name")
-      result
-    } catch {
-      case e: Throwable =>
-        debug(s"ERROR in $name: ${e.getMessage}")
-        throw e
-    } finally {
-      globalRecursionDepth -= 1
-    }
-  }
 
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] = {
     if (ignoreLocation) {
