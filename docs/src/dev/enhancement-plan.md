@@ -40,7 +40,7 @@ Suggested improvements:
 - Break up longer code examples with explanatory text
 - Add a section on debugging propagator issues
 
-### union-type-analysis.md
+### type-system-improvements.md
 
 Current state: Good analysis but could be more practical.
 
@@ -65,6 +65,6 @@ Suggested improvements:
 1. **implementation-status.md**: ✅ Already improved
 2. **propagator-network.md**: High priority - core to type system understanding
 3. **development.md**: Medium priority - affects all contributors
-4. **union-type-analysis.md**: Medium priority - important for type system work
+4. **type-system-improvements.md**: Medium priority - important for type system work
 5. **parser-migration.md**: Lower priority - already detailed enough
 6. **README.md**: Lower priority - already serviceable 
