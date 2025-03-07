@@ -93,6 +93,19 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private var state: LexerState = LexerState(tokens.toVector, 0)
 
+  // Helper method to convert a sequence of StringChar to a string
+  private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
+
+  // Helper method to create a common ParseError from current token
+  private def createParseError(msg: String, token: Either[ParseError, Token]): ParseError = token match {
+    case Right(t) => ParseError(msg, t.sourcePos.range.start)
+    case Left(err) => err
+  }
+
+  // Helper method for common error cases
+  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = 
+    createParseError(s"Expected $expected", token)
+
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] = {
     if (ignoreLocation) {
       None
@@ -287,7 +300,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           }
         }
         case Right(Token.Identifier(chars, sourcePos)) => {
-          val text = chars.map(_.text).mkString
+          val text = charsToString(chars)
           debug(s"parseRest: Found identifier $text")
           val afterId = current.advance()
           afterId.current match {
@@ -449,12 +462,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           }
         }
       }
-      case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(chars.map(_.text).mkString) => {
+      case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(charsToString(chars)) => {
         // Handle keyword operators like "not", "if", etc. as prefix operators
-        debug(s"parseExpr: Starting with keyword operator ${chars.map(_.text).mkString}")
+        debug(s"parseExpr: Starting with keyword operator ${charsToString(chars)}")
         val afterOp = current.advance()
         // Create an operator term
-        terms = Vector(ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))))
+        terms = Vector(ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
         parseAtom(afterOp).flatMap { case (expr, afterExpr) =>
           terms = terms :+ expr
           debug(s"parseExpr: After initial keyword operator and atom, terms: $terms")
@@ -484,7 +497,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     afterDot.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) => {
         val afterId = afterDot.advance()
-        val field = ConcreteIdentifier(chars1.map(_.text).mkString, createMeta(Some(idSourcePos1), Some(idSourcePos1)))
+        val field = ConcreteIdentifier(charsToString(chars1), createMeta(Some(idSourcePos1), Some(idSourcePos1)))
         var telescope = Vector.empty[Tuple]
 
         def parseNextTelescope(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
@@ -585,7 +598,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           case Right(Token.LBracket(_)) => {
             // Handle generic type parameters
             debug("parseAtom: Found generic type parameters after identifier")
-            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
+            val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
             
             // Parse list of type parameters within square brackets
             parseList(afterId).flatMap { case (typeParams, afterTypeParams) =>
@@ -619,12 +632,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
           }
           case Right(Token.LParen(_)) => {
-            val identifier = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos)))
+            val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
             parseTuple(afterId).map { case (tuple, nextState) =>
               (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
             }
           }
-          case _ => Right((ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), afterId))
+          case _ => Right((ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), afterId))
         }
       }
       case Right(Token.IntegerLiteral(value, sourcePos)) => {
@@ -655,7 +668,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
       }
       case Right(Token.StringLiteral(chars, sourcePos)) =>
-        Right((ConcreteStringLiteral(chars.map(_.text).mkString, createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
+        Right((ConcreteStringLiteral(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
       case Right(Token.SymbolLiteral(value, sourcePos)) =>
         Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current.advance()))
       case Right(Token.LBracket(sourcePos)) => {
@@ -667,6 +680,19 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
+  // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
+  private def isTerminator(token: Token): Boolean = token match {
+    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | 
+         _: Token.Comma | _: Token.Semicolon => true
+    case _ => false
+  }
+
+  // Helper method to check if a token is specifically a right delimiter
+  private def isRightDelimiter(token: Token): Boolean = token match {
+    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket => true
+    case _ => false
+  }
+
   def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
     var current = skipComments(state)
     var exprs = Vector.empty[Expr]
@@ -675,15 +701,15 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     while (exprs.length < maxExprs) {
       debug(s"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${current.current}")
       current.current match {
-        case Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) => {
-          debug("Found RParen after expression")
+        case Right(token) if isRightDelimiter(token) => {
+          debug("Found right delimiter after expression")
           return Right((exprs, current))
         }
-        case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_)) => {
+        case Right(_: Token.Comment | _: Token.Whitespace) => {
           debug("Found comment or whitespace, skipping")
           current = skipComments(current.advance())
         }
-        case Right(Token.Comma(_)) | Right(Token.Semicolon(_)) => {
+        case Right(_: Token.Comma | _: Token.Semicolon) => {
           debug("Found comma or semicolon, skipping")
           current = skipComments(current.advance())
         }
@@ -695,20 +721,20 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               exprs = exprs :+ expr
               debug(s"After expression: maxExprs=$maxExprs, current token=${current.current}")
               current.current match {
-                case Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) => {
-                  debug("Found RParen after expression")
+                case Right(token) if isRightDelimiter(token) => {
+                  debug("Found right delimiter after expression")
                   return Right((exprs, current))
                 }
-                case Right(Token.Comma(_)) | Right(Token.Semicolon(_)) => {
+                case Right(_: Token.Comma | _: Token.Semicolon) => {
                   debug("Found comma or semicolon after expression, advancing")
                   current = skipComments(current.advance())
                   maxExprs = maxExprs - 1
                 }
-                case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_)) => {
+                case Right(_: Token.Comment | _: Token.Whitespace) => {
                   debug("Found comment or whitespace after expression, skipping")
                   current = skipComments(current.advance())
                 }
-                case Right(t)  => return Left(ParseError("Expected ',' or ')' after expression", t.sourcePos.range.start))
+                case Right(t) => return Left(expectedError("',' or ')' after expression", Right(t)))
                 case Left(err) => return Left(err)
               }
             }
@@ -813,23 +839,39 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           }
         }
 
+        // Helper function to handle field value after operator
+        def handleFieldValue(key: Expr, op: String, keySourcePos: SourcePos): Either[ParseError, Unit] = {
+          parseExpr(state).map { case (value, afterValue) =>
+            state = afterValue
+            if (op == "=>") {
+              clauses = clauses :+ ObjectExprClauseOnValue(key, value)
+            } else { // op == "="
+              // For string literals with "=", convert to identifier
+              key match {
+                case stringLit: ConcreteStringLiteral =>
+                  val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
+                  clauses = clauses :+ ObjectExprClause(idKey, value)
+                case qualifiedName: QualifiedName =>
+                  clauses = clauses :+ ObjectExprClause(qualifiedName, value)
+                case other => 
+                  // This shouldn't happen with proper validation upstream
+                  return Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", 
+                                        keySourcePos.range.start))
+              }
+            }
+            checkAfterField()
+          }
+        }
+
         def parseField(): Either[ParseError, Unit] = {
           state.current match {
             case Right(Token.Identifier(chars, idSourcePos)) => {
               state = state.advance()
-              val key = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(idSourcePos), Some(idSourcePos)))
+              val key = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
               state.current match {
                 case Right(Token.Operator(op, _)) => {
                   state = state.advance()
-                  parseExpr(state).map { case (value, afterValue) =>
-                    state = afterValue
-                    if (op == "=>") {
-                      clauses = clauses :+ ObjectExprClauseOnValue(key, value)
-                    } else {
-                      clauses = clauses :+ ObjectExprClause(key, value)
-                    }
-                    checkAfterField()
-                  }
+                  handleFieldValue(key, op, idSourcePos)
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
@@ -837,21 +879,11 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
             case Right(Token.StringLiteral(chars, strSourcePos)) => {
               state = state.advance()
-              val keyLiteral = ConcreteStringLiteral(chars.map(_.text).mkString, createMeta(Some(strSourcePos), Some(strSourcePos)))
+              val keyLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
               state.current match {
                 case Right(Token.Operator(op, _)) => {
                   state = state.advance()
-                  parseExpr(state).map { case (value, afterValue) =>
-                    state = afterValue
-                    if (op == "=>") {
-                      clauses = clauses :+ ObjectExprClauseOnValue(keyLiteral, value)
-                    } else {
-                      // Convert string literal to identifier for = operator
-                      val key = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(strSourcePos), Some(strSourcePos)))
-                      clauses = clauses :+ ObjectExprClause(key, value)
-                    }
-                    checkAfterField()
-                  }
+                  handleFieldValue(keyLiteral, op, strSourcePos)
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
@@ -863,11 +895,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               state.current match {
                 case Right(Token.Operator(op, _)) => {
                   state = state.advance()
-                  parseExpr(state).map { case (value, afterValue) =>
-                    state = afterValue
-                    clauses = clauses :+ ObjectExprClauseOnValue(key, value)
-                    checkAfterField()
-                  }
+                  handleFieldValue(key, op, symSourcePos)
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
                 case Left(err) => Left(err)
@@ -972,7 +1000,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   def expectIdentifier(expected: String, state: LexerState): Either[ParseError, LexerState] = {
     state.current match {
-      case Right(Token.Identifier(chars, _)) if chars.map(_.text).mkString == expected => {
+      case Right(Token.Identifier(chars, _)) if charsToString(chars) == expected => {
         Right(advance())
       }
       case other => {
