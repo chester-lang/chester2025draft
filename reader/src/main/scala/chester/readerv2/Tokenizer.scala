@@ -9,6 +9,7 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import scala.util.boundary
 import scala.util.boundary.break
+import scala.util.Try
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 
@@ -115,6 +116,66 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     }
   }
 
+  // Function to handle escape sequences in strings
+  private def parseEscapeSequence(startPos: Int): Either[ParseError, (String, Int)] = {
+    if (startPos >= source.length) {
+      return Left(ParseError("Unexpected end of input in escape sequence", createSourcePos(startPos - 1, startPos).range.start))
+    }
+    
+    val c = source(startPos)
+    c match {
+      // Standard single-character escapes
+      case 'n'  => Right(("\n", startPos + 1))
+      case 't'  => Right(("\t", startPos + 1))
+      case 'r'  => Right(("\r", startPos + 1))
+      case '"'  => Right(("\"", startPos + 1))
+      case '\\' => Right(("\\", startPos + 1))
+      case 'b'  => Right(("\b", startPos + 1))
+      case 'f'  => Right(("\f", startPos + 1))
+      
+      // Unicode escapes \uXXXX
+      case 'u' => 
+        if (startPos + 4 >= source.length) {
+          Left(ParseError("Incomplete Unicode escape sequence", createSourcePos(startPos - 1, startPos + 1).range.start))
+        } else {
+          val hexDigits = source.substring(startPos + 1, startPos + 5)
+          Try(Integer.parseInt(hexDigits, 16)).toEither match {
+            case Right(codePoint) => Right((new String(Character.toChars(codePoint)), startPos + 5))
+            case Left(_) => Left(ParseError(s"Invalid Unicode escape sequence \\u$hexDigits", createSourcePos(startPos - 1, startPos + 5).range.start))
+          }
+        }
+      
+      // Hex escapes \xXX
+      case 'x' =>
+        if (startPos + 2 >= source.length) {
+          Left(ParseError("Incomplete hex escape sequence", createSourcePos(startPos - 1, startPos + 1).range.start))
+        } else {
+          val hexDigits = source.substring(startPos + 1, startPos + 3)
+          Try(Integer.parseInt(hexDigits, 16)).toEither match {
+            case Right(charValue) => Right((charValue.toChar.toString, startPos + 3))
+            case Left(_) => Left(ParseError(s"Invalid hex escape sequence \\x$hexDigits", createSourcePos(startPos - 1, startPos + 3).range.start))
+          }
+        }
+      
+      // Octal escapes (e.g., \123)
+      case c if c >= '0' && c <= '7' =>
+        var endPos = startPos + 1
+        while (endPos < source.length && endPos < startPos + 3 && 
+               source(endPos) >= '0' && source(endPos) <= '7') {
+          endPos += 1
+        }
+        val octalDigits = source.substring(startPos, endPos)
+        Try(Integer.parseInt(octalDigits, 8)).toEither match {
+          case Right(charValue) if charValue <= 0xFF => Right((charValue.toChar.toString, endPos))
+          case Right(_) => Left(ParseError(s"Octal escape sequence \\$octalDigits out of range", createSourcePos(startPos - 1, endPos).range.start))
+          case Left(_) => Left(ParseError(s"Invalid octal escape sequence \\$octalDigits", createSourcePos(startPos - 1, endPos).range.start))
+        }
+      
+      // Default - for unrecognized escapes, just use the character directly
+      case other => Right((other.toString, startPos + 1))
+    }
+  }
+
   private def parseString(startPos: Int): Either[ParseError, Token] = {
     boundary[Either[ParseError, Token]] {
       var currentPos = startPos + 1 // Skip initial quote
@@ -124,9 +185,14 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       while (currentPos < source.length) {
         val c = source(currentPos)
         if (escaped) {
-          chars = chars :+ StringChar(escapeCharToString(c), createSourcePos(currentPos - 1, currentPos + 1))
-          escaped = false
-          currentPos += 1
+          parseEscapeSequence(currentPos) match {
+            case Right((escapedText, newPos)) => {
+              chars = chars :+ StringChar(escapedText, createSourcePos(currentPos - 1, newPos))
+              escaped = false
+              currentPos = newPos
+            }
+            case Left(error) => break(Left(error))
+          }
         } else if (c == '\\') {
           escaped = true
           currentPos += 1
@@ -347,6 +413,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     Right(Token.Operator(operator, createSourcePos(startPos, pos)))
   }
 
+  // This method is now replaced by the more comprehensive parseEscapeSequence function
   private def escapeCharToString(c: Char): String = {
     c match {
       case 'n'  => "\n"
