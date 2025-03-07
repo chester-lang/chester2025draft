@@ -14,10 +14,10 @@
     "@babel/core": "^7.26.9",
     "@babel/preset-env": "^7.26.9",
     "@rollup/plugin-babel": "^6.0.4",
-    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^15.3.1",
     "@rollup/plugin-terser": "^0.4.4",
-    "rollup": "^4.34.8",
+    "rollup": "^4.34.9",
     "ts-morph": "^24.0.0"
   }
 }
