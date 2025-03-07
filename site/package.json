@@ -16,8 +16,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "copy-js": "cp .js/target/scala-3.6.4-RC1/site-opt/main.js .js/target/scala-3.6.4-RC1/site-opt/main.js.map scala/",
-    "copy-js-mjs": "cp .js/target/scala-3.6.4-RC1/site-fastopt/main.mjs .js/target/scala-3.6.4-RC1/site-fastopt/main.mjs.map scala/",
+    "copy-js": "cp .js/target/scala-3.6.4/site-opt/main.js .js/target/scala-3.6.4/site-opt/main.js.map scala/",
+    "copy-js-mjs": "cp .js/target/scala-3.6.4/site-fastopt/main.mjs .js/target/scala-3.6.4/site-fastopt/main.mjs.map scala/",
     "format": "prettier --write \"**/*.{ts,tsx,mjs}\""
   },
   "dependencies": {
@@ -32,7 +32,7 @@
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.2",
     "next": "15.1.7",
-    "next-intl": "^3.26.4",
+    "next-intl": "^3.26.5",
     "pako": "^2.1.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -43,19 +43,19 @@
     "xterm-readline": "^1.1.2"
   },
   "devDependencies": {
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.9",
     "@types/pako": "^2.0.3",
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4",
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.20.1",
+    "eslint": "^9.22.0",
     "eslint-config-next": "15.1.7",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.3",
     "postcss": "^8.5.3",
-    "prettier": "^3.5.1",
+    "prettier": "^3.5.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   }
 }

@@ -155,10 +155,10 @@ up := {
   log.success("Finished updating all dependencies")
 }
 
-val scala3Version = "3.6.4-RC1"
-val scala3Lib = "3.6.3"
+val scala3Version = "3.6.4"
+val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.0-RC1-bin-20250215-43f8cdb-NIGHTLY"
+val scala3Nightly = "3.7.0-RC1-bin-20250304-bef520f-NIGHTLY"
 
 val graalVm = "graalvm-java23"
 val graalJdkVersion = "23.0.2"
@@ -640,7 +640,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(syntax, err)
   .settings(
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.1.1")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.3")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -765,7 +765,7 @@ object GeneratedJS {
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.13.1.1" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.3" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
@@ -1294,8 +1294,8 @@ lazy val buildProtocol = crossProject(JVMPlatform)
       // "org.typelevel" %%% "cats-core" % "2.13.0",
       // "org.typelevel" %%% "cats-kernel" % "2.13.0",
       "org.log4s" %%% "log4s" % "1.10.0",
-      "org.slf4j" % "slf4j-api" % "2.0.16",
-      "org.slf4j" % "slf4j-simple" % "2.0.16",
+      "org.slf4j" % "slf4j-api" % "2.0.17",
+      "org.slf4j" % "slf4j-simple" % "2.0.17",
       "ch.epfl.scala" % "bsp4j" % "2.2.0-M4.TEST"
     )
   )
