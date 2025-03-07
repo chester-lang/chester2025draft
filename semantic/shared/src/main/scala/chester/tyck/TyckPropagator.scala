@@ -332,7 +332,10 @@ trait TyckPropagator extends ElaboraterCommon {
             // e.g., passing Integer to Integer | String
             types1.exists(t1 => tryUnify(t1, rhsType))
 
-          case (Intersection(_, _), Intersection(_, _)) => ???
+          case (Intersection(types1, _), Intersection(types2, _)) =>
+            // For intersection types to be compatible, each type from the second intersection
+            // must be compatible with at least one type from the first intersection
+            types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
 
           case _ => false
         }
