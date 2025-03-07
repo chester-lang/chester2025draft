@@ -240,9 +240,18 @@ Legend:
 ### Phase 2: Advanced Features (🟡 Current)
 - ✅ Full block call support
 - ✅ Generic type parameters
+- 🟡 Object expressions with string literals and symbol keys
 - 🔴 Complex object syntax
 - 🔴 Telescope parsing
 - 🔴 Source maps
+
+#### Key Implementation Principles for V2
+- Maintain uniform symbol treatment across all expressions
+- Handle operator sequences consistently, avoiding special cases
+- Support string literals and symbols as object field keys
+- Avoid special case logic in operator sequence parsing
+- Ensure field operators (= and =>) are treated consistently across key types
+- Preserve the same semantics as V1 parser but with cleaner implementation
 
 ### Phase 3: Error Handling (🔴 Planned)
 - 🔴 Error recovery

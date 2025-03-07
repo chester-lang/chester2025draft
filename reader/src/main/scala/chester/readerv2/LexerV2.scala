@@ -606,7 +606,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             // Empty object
             parseObject(current)
           }
-          case Right(Token.Identifier(_, _)) | Right(Token.SymbolLiteral(_, _)) => {
+          case Right(Token.Identifier(_, _)) | Right(Token.SymbolLiteral(_, _)) | Right(Token.StringLiteral(_, _)) => {
             // Look ahead one more token to see if it's followed by = or =>
             val afterId = afterBrace.advance()
             afterId.current match {
@@ -864,13 +864,45 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   state = state.advance()
                   parseExpr(state).map { case (value, afterValue) =>
                     state = afterValue
-                    clauses = clauses :+ ObjectExprClause(key, value)
+                    if (op == "=>") {
+                      clauses = clauses :+ ObjectExprClauseOnValue(key, value)
+                    } else {
+                      clauses = clauses :+ ObjectExprClause(key, value)
+                    }
                     state.current match {
                       case Right(Token.Comma(_))  => state = state.advance()
                       case Right(Token.RBrace(_)) => ()
                       case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
                       case Left(err)              => return Left(err)
                     }
+                  }
+                }
+                case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+                case Left(err) => Left(err)
+              }
+            }
+            case Right(Token.StringLiteral(chars, strSourcePos)) => {
+              state = state.advance()
+              val keyLiteral = ConcreteStringLiteral(chars.map(_.text).mkString, createMeta(Some(strSourcePos), Some(strSourcePos)))
+              state.current match {
+                case Right(Token.Operator(op, _)) => {
+                  state = state.advance()
+                  parseExpr(state).map { case (value, afterValue) =>
+                    state = afterValue
+                    if (op == "=>") {
+                      clauses = clauses :+ ObjectExprClauseOnValue(keyLiteral, value)
+                    } else {
+                      // Convert string literal to identifier for = operator
+                      val key = ConcreteIdentifier(chars.map(_.text).mkString, createMeta(Some(strSourcePos), Some(strSourcePos)))
+                      clauses = clauses :+ ObjectExprClause(key, value)
+                    }
+                    state.current match {
+                      case Right(Token.Comma(_))  => state = state.advance()
+                      case Right(Token.RBrace(_)) => ()
+                      case Right(t)               => return Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+                      case Left(err)              => return Left(err)
+                    }
+                    Right(())
                   }
                 }
                 case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
@@ -902,7 +934,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               state = state.advance()
               Right(())
             }
-            case Right(t)  => Left(ParseError("Expected identifier, symbol literal or '}' in object", t.sourcePos.range.start))
+            case Right(t)  => Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
             case Left(err) => Left(err)
           }
         }
