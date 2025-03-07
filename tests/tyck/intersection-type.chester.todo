@@ -1,0 +1,22 @@
+// Test integer literals that use intersection types internally
+// Intersection types aren't directly expressible in Chester syntax yet,
+// but they're used internally for integer literals
+
+// Integer literals with different values
+let a: Integer = 42;
+let b: Integer = -10;
+
+// Function that accepts Integer
+def addOne(x: Integer): Integer = x + 1;
+addOne(10);
+
+// Try different operations to exercise intersection type handling
+let c = a + b;    // Should work: both are Integer
+let d = a * 2;    // Should work: Integer * Integer
+
+// Function returning an integer with arithmetic
+def calculate(): Integer = {
+  let x = 10;
+  let y = 5;
+  x * y + 2
+} 

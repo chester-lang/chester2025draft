@@ -1,0 +1,14 @@
+// Test cases that should fail with Integer type
+
+// Type error: cannot assign String to Integer
+let a: Integer = "hello";
+
+// Type error: cannot use + operator with Integer and String
+let b = 42 + "world";
+
+// Type error: function expects Integer but receives String
+def process(x: Integer): Integer = x + 1;
+process("text");
+
+// Type error: function returns wrong type
+def wrongReturn(): Integer = "not a number"; 
