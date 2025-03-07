@@ -3,6 +3,22 @@
 ## Overview
 This document outlines potential improvements to the Chester parser components, specifically focusing on `Tokenizer.scala` and `LexerV2.scala`. The goal is to enhance readability, maintainability, and performance while preserving the current functionality.
 
+## ⚠️ HIGH PRIORITY: Comment Preservation
+
+### 1. Comment Attachment in LexerV2 ⚠️ URGENT
+- **Issue**: The V2 parser currently doesn't properly preserve comments and attach them to expressions via ExprMeta.commentInfo
+- **Improvement**: Implement comment collection and attachment similar to the V1 parser (Parser.scala)
+- **Benefits**: 
+  - Preserves important documentation in the code
+  - Enables proper code formatting with comments
+  - Maintains semantic information that may be in comments
+- **Implementation Plan**:
+  1. Add comment collection during lexing/parsing
+  2. Create appropriate CommentInfo structures for leading and trailing comments
+  3. Attach comments to nearest expressions using ExprMeta
+  4. Ensure whitespace and newlines are handled correctly for comment attachment
+  5. Maintain compatibility with existing comment handling in V1 parser
+
 ## Tokenizer Improvements
 
 ### 1. Number Parsing Refactoring ✅ COMPLETED
@@ -77,8 +93,7 @@ This document outlines potential improvements to the Chester parser components, 
 
 ## Next Steps
 
-1. Choose an improvement from the list above ✅
-2. Create tests that verify current behavior before making changes ✅
-3. Implement the improvement ✅
-4. Verify with tests and document any subtle changes ✅
-5. Move to the next improvement ✅ 
+1. Implement the high-priority comment preservation feature
+2. Create tests that verify comments are correctly preserved
+3. Document the comment attachment strategy
+4. Update any related components dependent on comment information 
