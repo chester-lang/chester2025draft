@@ -1,42 +1,72 @@
-# Current Implementation Status
+# Chester Implementation Status
 
-## Type System Features
+This document provides practical information about what's currently implemented in Chester, helping developers understand what they can use and what they should avoid.
 
-### Intersection Types
-- Intersection types are partially implemented in the type checker
-- They are used internally (e.g., for handling integer literal types)
-- There is an incomplete case in `TyckPropagator.scala` (line 334) for unifying two intersection types:
-  ```scala
-  case (Intersection(_, _), Intersection(_, _)) => ???
-  ```
-- No explicit syntax for declaring intersection types in Chester code yet
-- When testing type checking with intersection types:
-  - Use existing types that internally leverage intersection types (e.g., integer literals)
-  - Remember that types like `NaturalType`, `IntType`, and `UIntType` are defined in the codebase but not yet exposed in the built-in scope
-  - Only use `Integer` for testing as it's in the current built-in scope
+## Core Type System
 
-### Union Types
-- Union types are implemented and can be expressed with the `|` operator
-- Example: `Integer | String`
-- Type checking for unions works for basic cases
-- Complex union types (especially with intersection types) may not be fully supported yet
+### Available Type Features
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Basic Types | ✅ | `Integer`, `String` and basic primitives |
+| Function Types | ✅ | Function definitions and calls |
+| Records | ✅ | Record types with fields |
+| Union Types | ✅ | Using the `|` operator (`Integer | String`) |
+| Intersection Types | 🟡 | Internal use only, no syntax yet |
+| Generic Types | ✅ | Type parameters (`List[T]`) |
+
+### Type Checker Implementation
+
+The type checker is built on a propagator network (constraint-based system):
+
+1. **Implemented Cases**:
+   - Basic type unification
+   - Union type handling (including subtyping)
+   - List types and records
+
+2. **Partially Implemented**:
+   - Intersection types are used internally (e.g., for integer literals) but have an unimplemented case:
+     ```scala
+     // In TyckPropagator.scala (line 334):
+     case (Intersection(_, _), Intersection(_, _)) => ???
+     ```
+
+3. **Not Yet Implemented**:
+   - No explicit syntax for declaring intersection types
+   - Limited handling of complex union and intersection type combinations
+
+## Built-in Types and Scope
+
+Only a minimal set of types is currently available in the built-in scope:
+
+- **✅ Available**: `Integer`, `String`, `List`, basic primitives
+- **❌ Not Available**: `NaturalType`, `IntType`, `UIntType` (defined in code but not in scope)
+
+When writing tests or examples, use only the available types.
 
 ## Package System Status
 
-### Package Declaration
-- The package system is currently only a stub
-- Module declarations (e.g., `module prelude;`) exist in the codebase but aren't fully implemented
-- No actual package loading or resolution is supported yet
-- Packages folder structure exists but should not be relied upon
+The package/module system is minimal:
 
-### Built-in Types and Functions
-- Only a limited set of built-in types is currently available in the scope
-- `Integer` is available and can be used in tests
-- Many other types like `NaturalType`, `IntType`, `UIntType` are defined in the codebase but aren't yet exposed in the built-in scope
-- When writing tests, only use types that are confirmed to be in the built-in scope (primarily `Integer`)
+- **✅ Implemented**: Basic module declaration syntax
+- **❌ Not Implemented**: Actual package loading, resolution, or dependencies
 
-## Development Implications
-- When working on type checker improvements, focus on basic use cases with supported types
-- Test files should only use types currently in the built-in scope (primarily `Integer`)
-- Avoid writing tests that depend on the package system or modules
+The `module` declarations and package folders exist but are effectively stubs.
+
+## Development Guidelines
+
+1. **Testing Type Checker Changes**:
+   - Use only `Integer`, `String` and other confirmed built-in types
+   - For intersection types, test through integer literals (internal implementation)
+   - Verify both success and failure cases
+
+2. **Avoid Depending On**:
+   - Package/module system features
+   - Unimplemented types like `NaturalType`
+   - Explicit intersection type syntax
+
+3. **Focus Areas for Contribution**:
+   - Complete the unimplemented intersection type case in `TyckPropagator.scala`
+   - Improve union type handling for complex cases
+   - Extend test coverage for the type checker
  
