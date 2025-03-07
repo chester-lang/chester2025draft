@@ -8,5 +8,6 @@
     - [Type System Improvements](dev/type-system-improvements.md)
     - [Implementation Status](dev/implementation-status.md)
     - [Intersection Type Unification](dev/intersection-type-unification.md)
+    - [Reducer and Type Checking Integration](dev/reducer-tyck-integration.md)
 - [Statements](statements.md)
 - [Traits and Interfaces in Chester](trait-and-interface.md)
