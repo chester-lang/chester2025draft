@@ -67,10 +67,31 @@ This document outlines potential improvements to the Chester parser components, 
 - **Benefits**: Cleaner code structure, better separation of concerns
 - **Implementation**: Extracted `parseComment()` method and improved `parseOperator()` with clearer structure and better comments.
 
-### 5. SourcePos Creation Efficiency
-- **Issue**: `createSourcePos()` does calculations on every call
-- **Improvement**: Cache UTF-16 offset calculations when possible
-- **Benefits**: Performance improvement, especially for large files
+### 5. SourcePos Creation Efficiency ⚠️ PRIORITY
+- **Issue**: 
+  - The `createSourcePos()` method recalculates UTF-16 offsets on every call
+  - For each position, it computes `source.substring(0, pos).getCodePoints.size` which is expensive
+  - In large files, this leads to significant performance degradation
+  - Each token creation runs these calculations twice (for start and end positions)
+- **Improvement**: 
+  - Implement a caching mechanism for UTF-16 offset calculations
+  - Calculate offsets incrementally rather than from scratch each time
+  - Add a position cache that stores already computed offsets
+  - Update the cache as positions change during tokenization
+- **Benefits**: 
+  - Significant performance improvement, especially for large files
+  - Reduced tokenization time for complex expressions
+  - More responsive parsing for interactive environments
+- **Implementation Plan**:
+  1. Add a position cache (Map or Array) to store UTF-16 offsets for byte positions
+  2. Modify `createSourcePos()` to check the cache before calculating
+  3. Update the cache whenever we move the position in the tokenizer
+  4. Add incremental calculation for new positions based on cached values
+  5. Ensure all methods that modify position update the cache properly
+- **Testing Strategy**:
+  1. Verify correctness with existing tests (ensure positions are still accurate)
+  2. Add performance benchmark tests for large files if possible
+  3. Validate on files with many Unicode characters (where UTF-16 calculations matter most)
 
 ## LexerV2 Improvements
 
@@ -115,9 +136,10 @@ This document outlines potential improvements to the Chester parser components, 
 2. ✅ Create tests that verify comments are correctly preserved
 3. ✅ Document the comment attachment strategy
 4. ✅ Update any related components dependent on comment information 
-5. Fix identifier parsing correctness to ensure proper handling of all valid identifiers
-6. Focus on remaining features in Phase 2 of the Implementation Plan:
+5. ✅ Fix identifier parsing correctness to ensure proper handling of all valid identifiers
+6. Implement SourcePos Creation Efficiency to improve parser performance
+7. Focus on remaining features in Phase 2 of the Implementation Plan:
    - Complete object expressions implementation
    - Implement telescope parsing
    - Add source maps support
-7. Continue migration of V1-only tests to V2 
+8. Continue migration of V1-only tests to V2 

@@ -24,6 +24,68 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   private var pos: Int = 0
   private var line: Int = 0
   private var col: Int = 0
+  
+  // Cache for UTF-16 positions to avoid expensive recalculations
+  private val utf16PosCache = new java.util.HashMap[Int, Int]()
+  
+  // Initialize cache with position 0
+  utf16PosCache.put(0, 0)
+  
+  // Get UTF-16 position from cache or calculate and cache it
+  private def getUtf16Position(bytePos: Int): Int = {
+    if (utf16PosCache.containsKey(bytePos)) {
+      utf16PosCache.get(bytePos)
+    } else {
+      // If we have a nearby cached position, start from there to avoid recalculating from the beginning
+      val (nearestPos, nearestUtf16) = findNearestCachedPosition(bytePos)
+      
+      // Calculate the UTF-16 position incrementally from the nearest cached position
+      val utf16Pos = if (nearestPos == bytePos) {
+        nearestUtf16
+      } else {
+        nearestUtf16 + source.substring(nearestPos, bytePos).getCodePoints.size
+      }
+      
+      // Cache the result
+      utf16PosCache.put(bytePos, utf16Pos)
+      utf16Pos
+    }
+  }
+  
+  // Find the nearest cached position that's less than or equal to the target position
+  private def findNearestCachedPosition(targetPos: Int): (Int, Int) = {
+    var nearestPos = 0
+    var nearestUtf16 = 0
+    
+    val iter = utf16PosCache.entrySet().iterator()
+    while (iter.hasNext()) {
+      val entry = iter.next()
+      val pos = entry.getKey()
+      if (pos <= targetPos && pos > nearestPos) {
+        nearestPos = pos
+        nearestUtf16 = entry.getValue()
+      }
+    }
+    
+    (nearestPos, nearestUtf16)
+  }
+  
+  // Update position with proper cache handling
+  private def updatePosition(newPos: Int): Unit = {
+    // Only update cache if moving forward (which is the common case)
+    if (newPos > pos) {
+      // Calculate and cache UTF-16 position for the new position
+      // We can calculate incrementally from the current position
+      if (!utf16PosCache.containsKey(newPos) && utf16PosCache.containsKey(pos)) {
+        val currentUtf16 = utf16PosCache.get(pos)
+        val incrementalUtf16 = currentUtf16 + source.substring(pos, newPos).getCodePoints.size
+        utf16PosCache.put(newPos, incrementalUtf16)
+      }
+    }
+    
+    // Update the position
+    pos = newPos
+  }
 
   def tokenize(): TokenStream = {
     LazyList.unfold(false) { isEOF =>
@@ -42,18 +104,22 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     val zero = 0.refineUnsafe[Positive0]
     val start: Int :| Positive0 = startPos.refineUnsafe[Positive0]
     val end: Int :| Positive0 = endPos.refineUnsafe[Positive0]
+    
+    // Use cached UTF-16 positions or calculate them
     val startUtf16: Int :| Positive0 = Math
       .max(
         startPos,
-        source.substring(0, startPos).getCodePoints.size
+        getUtf16Position(startPos)
       )
       .refineUnsafe[Positive0]
+      
     val endUtf16: Int :| Positive0 = Math
       .max(
         endPos,
-        source.substring(0, endPos).getCodePoints.size
+        getUtf16Position(endPos)
       )
       .refineUnsafe[Positive0]
+      
     val lineUtf16: Int :| Positive0 = line.refineUnsafe[Positive0]
     val colUtf16: Int :| Positive0 = col.refineUnsafe[Positive0]
 
@@ -70,7 +136,9 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     } else {
       val c = source.codePointAt(pos)
       val startPos = pos
-      pos += Character.charCount(c)
+      val charCount = Character.charCount(c)
+      // Use updatePosition to properly update cache
+      updatePosition(pos + charCount)
       col += 1
 
       if (Character.isSupplementaryCodePoint(c)) {
@@ -105,6 +173,8 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   }
 
   private def skipWhitespace(): Unit = {
+    val startPos = pos
+    
     while (pos < source.length && source(pos).isWhitespace) {
       if (source(pos) == '\n') {
         line += 1
@@ -113,6 +183,16 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         col += 1
       }
       pos += 1
+    }
+    
+    // If we moved, update the cache for the new position
+    if (pos > startPos) {
+      // We've already updated pos directly, so we need to update the cache
+      if (!utf16PosCache.containsKey(pos) && utf16PosCache.containsKey(startPos)) {
+        val startUtf16 = utf16PosCache.get(startPos)
+        val incrementalUtf16 = startUtf16 + source.substring(startPos, pos).getCodePoints.size
+        utf16PosCache.put(pos, incrementalUtf16)
+      }
     }
   }
 
