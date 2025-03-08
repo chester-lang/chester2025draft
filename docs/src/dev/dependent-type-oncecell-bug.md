@@ -36,13 +36,53 @@ java.lang.IllegalArgumentException: requirement failed
     ...
 ```
 
-## Analysis
+## Detailed Analysis
 
 The root cause appears to be:
 
 1. `OnceCell` is designed to only be filled once, with a requirement check: `require(value.isEmpty)`.
 2. During the evaluation of type-level function applications like `TypeId(Integer)`, the type checking system tries to fill the same cell multiple times.
-3. This happens in `UnifyFunctionCall.run` when processing function call terms at the type level.
+
+After examining the code, we've identified specific components where the bug is occurring:
+
+### In UnifyFunctionCall.run (ElaboraterFunctionCall.scala:136)
+
+```scala
+// Construct the function call term with adjusted callings
+val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
+state.fill(functionCallTerm, fCallTerm)
+```
+
+When processing a type-level function application, this code:
+- Creates a function call term
+- Attempts to fill the `functionCallTerm` cell
+- If this cell is an `OnceCell` and has already been filled earlier in the process, it fails
+
+### In NaiveReducer (Reducer.scala)
+
+The reducer has special handling for type-level function calls:
+
+```scala
+case fcall: FCallTerm if isTypeLevel(fcall) =>
+  // First reduce normally
+  val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
+  // Then check if the result needs further type structure handling
+  reduced match {
+    // If still a complex type after reduction, process it recursively
+    case Union(_, _) | Intersection(_, _) => reduceTypeStructure(reduced)
+    case _ => reduced
+  }
+```
+
+The interaction between the reducer and type checker during dependent type evaluation seems to be causing multiple processing of the same term, leading to attempts to fill the same cell twice.
+
+## Exact Bug Location
+
+The error occurs when:
+1. The type checker processes a type-level function like `TypeId(Integer)`
+2. During this processing, it creates a function call term and fills a cell using `state.fill(functionCallTerm, fCallTerm)`
+3. Later in the process, possibly due to recursion or multiple phases of checking, it attempts to fill the same cell again
+4. The `OnceCell.fill` method checks `require(value.isEmpty)` and fails when it finds the cell already has a value
 
 ## Workaround
 
@@ -63,8 +103,9 @@ let c = Id(10);
 
 To address this issue, we should consider:
 
-1. Modifying the way type-level function applications are evaluated to avoid filling the same cell twice
-2. Using a different cell type (like `MutableCell`) for type-level computations that might need multiple updates
-3. Implementing proper handling of dependent types in the reducer and type checking integration
+1. Modifying the `UnifyFunctionCall` implementation to check if a cell has already been filled before attempting to fill it again
+2. Using `MutableCell` instead of `OnceCell` for cells that might be filled multiple times during dependent type processing
+3. Implementing a more careful tracking mechanism for type-level function reductions to avoid redundant processing
+4. Enhancing the reducer's type-level function handling to properly coordinate with the type checker
 
-This issue is directly related to the integration between the `NaiveReducer` and type checking system for dependent types. 
+This issue is directly related to the integration between the `NaiveReducer` and type checking system for dependent types. Fixing it is crucial for proper support of dependent typing in Chester. 
