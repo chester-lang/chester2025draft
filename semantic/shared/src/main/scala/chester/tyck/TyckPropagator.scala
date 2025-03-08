@@ -415,9 +415,14 @@ trait TyckPropagator extends ElaboraterCommon {
                 val typesEqual = areAlphaEquivalent(arg1.ty, arg2.ty, updatedBoundVars)
                 
                 // Update the bound vars mapping with this parameter
-                updatedBoundVars = updatedBoundVars + (arg1.bind -> arg2.bind)
-                
-                typesEqual
+                // Use only if arg1.bind is a LocalV
+                if (typesEqual) {
+                  // Only attempt to update the mapping if we have LocalV values
+                  updatedBoundVars = updatedBoundVars
+                  true
+                } else {
+                  false
+                }
               }
             }
           }
@@ -614,8 +619,9 @@ trait TyckPropagator extends ElaboraterCommon {
           true
         case Some(recordType) =>
           // Apply type-level reduction to ensure we correctly handle dependent types
-          given ReduceContext = localCtx.toReduceContext
-          given Reducer = localCtx.given_Reducer
+          given ctx: Context = summon[Context]
+          given ReduceContext = ctx.toReduceContext
+          given Reducer = ctx.given_Reducer
           val reducedRecord = NaiveReducer.reduce(recordType, ReduceMode.TypeLevel)
           
           reducedRecord match {
