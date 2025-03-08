@@ -1,0 +1,8 @@
+// Test identity function with dependent types
+def Id(x) = x;
+
+let a: Integer = 42;
+let b: Integer = Id(a);
+
+// Use the identity function at the value level
+let c = Id(10);
