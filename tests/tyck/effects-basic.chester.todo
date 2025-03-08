@@ -1,0 +1,19 @@
+// Basic test for the built-in effects system
+//
+// In this language:
+// - 'Effect' is a built-in type
+// - 'IO', 'State', etc. are built-in effect values
+// - Functions use the '/ Effect' syntax to declare effect requirements
+// - Effect requirements are automatically propagated through the call chain
+// - Functions without effect annotations are pure (have no side effects)
+
+// Function with an IO effect requirement
+def print(message: String) : Unit / IO = ()
+
+// This function automatically inherits the IO effect from the print function
+def hello() : Unit / IO = {
+  print("Hello")
+}
+
+// Pure function with no effects
+def pure() : Integer = 123 
