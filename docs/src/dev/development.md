@@ -423,3 +423,24 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
      case Reducer => handleReducer()
    }
    ```
+
+## Debugging Practices
+
+1. **Understand Before Fixing**
+   - Always understand the root cause of an issue before attempting to fix it
+   - Use the Debug utility with appropriate categories to trace program execution
+   - Analyze call stacks to identify where issues occur
+   - Create minimal test cases that reproduce the issue
+
+2. **Systematic Debugging Process**
+   - Enable relevant debug logging (`Debug.enable(DebugCategory.XXX)`)
+   - Add strategic logging points to track object state and method execution
+   - Verify assumptions about code behavior using logs and assertions
+   - Isolate the issue by creating focused test cases
+   - Document your findings to help others understand the problem
+
+3. **Debug-First Approach**
+   - When facing complex issues, prioritize debugging over immediate fixes
+   - Add temporary debugging code when needed, but mark it clearly and remove when done
+   - Consider adding permanent debugging hooks for areas prone to issues
+   - Document debugging insights even if they seem obvious
