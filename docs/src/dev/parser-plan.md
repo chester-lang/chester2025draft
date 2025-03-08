@@ -48,9 +48,33 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
   - Function calls: `f()` vs `f ()` - space before parentheses changes interpretation
   - Operator sequences: Spaces don't affect operator precedence but improve readability
 - Newlines have special significance in specific contexts:
-  - After blocks: Newline after a block ends the expression
-  - Pattern Matching: Newlines treated differently for single expressions vs blocks
+  - After blocks: Newline after a block ends the expression (i.e., `}\n` terminates the expression)
+  - Control structures: Newlines are treated differently based on context, not on specific keywords
+  - Pattern matching, conditionals, etc.: The behavior is consistent across all control structures 
   - Within blocks: Newlines within blocks are not significant
+  - Syntax patterns like `}\n` (closing brace followed by newline) have context-dependent meanings
+  - Two key cases where `}\n` has special semantic significance:
+    1. Function/method definitions: Newline after closing brace marks end of the definition
+       ```
+       def factorial(n) {
+         if n <= 1 then 1
+         else n * factorial(n - 1)
+       } // <- newline here ends the function definition
+       
+       val result = factorial(5); // Next statement
+       ```
+    2. Match expressions: Newline after closing brace marks end of the match expression
+       ```
+       val result = notification match {
+         case Email(sender, _) => {
+           println(sender);
+           "Email received"
+         } // <- block for this case
+         case SMS(number, _) => "SMS received";
+       } // <- newline here ends the match expression
+       
+       println(result); // Next statement
+       ```
 
 #### 5. Block Return Value Semantics
 - Rust-like block return value semantics
