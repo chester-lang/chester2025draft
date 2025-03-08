@@ -930,11 +930,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 case Right((expr, next)) => {
                   next.current match {
                     case Right(Token.RBrace(_)) => {
+                      // This is the V1 style: put the last expression in the result field
+                      // to match the V1 parser's behavior for blocks
                       result = Some(expr)
                       blockCurrent = next.advance()
                       return Right((Block(statements, result, None), blockCurrent))
                     }
                     case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_)) => {
+                      // Add the expression to statements for all but the last one
                       statements = statements :+ expr
                       // Collect comments after statement
                       val (_, afterStmt) = collectComments(next)
