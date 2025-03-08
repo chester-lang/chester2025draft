@@ -53,12 +53,14 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
   given reporter: Reporter[ParseError] = new Reporter[ParseError] {
     def apply(error: ParseError): Unit = {
       val errorIndex = error.pos.index.utf16
-      val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+      val lineStart = math.max(0, input.lastIndexOf('\n', errorIndex) + 1)
       val lineEnd = input.indexOf('\n', errorIndex) match {
         case -1 => input.length
         case n  => n
       }
-      val line = input.substring(lineStart, lineEnd)
+      // Ensure lineEnd > lineStart to prevent StringIndexOutOfBoundsException
+      val safeLineEnd = math.max(lineStart, lineEnd)
+      val line = input.substring(lineStart, safeLineEnd)
       val pointer = " " * (errorIndex - lineStart) + "^"
 
       fail(s"""Tokenizer error: ${error.message}
@@ -81,12 +83,14 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
       .fold(
         error => {
           val errorIndex = error.pos.index.utf16
-          val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+          val lineStart = math.max(0, input.lastIndexOf('\n', errorIndex) + 1)
           val lineEnd = input.indexOf('\n', errorIndex) match {
             case -1 => input.length
             case n  => n
           }
-          val line = input.substring(lineStart, lineEnd)
+          // Ensure lineEnd > lineStart to prevent StringIndexOutOfBoundsException
+          val safeLineEnd = math.max(lineStart, lineEnd)
+          val line = input.substring(lineStart, safeLineEnd)
           val pointer = " " * (errorIndex - lineStart) + "^"
 
           fail(s"""V2 Parsing failed for input: $input

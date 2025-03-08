@@ -88,7 +88,8 @@ class PatternMatchingTest extends FunSuite {
     parseAndCheck(input, expected)
   }
 
-  // TODO
+  // The V2 parser handles newlines differently from V1
+  // Keep using parseAndCheck (V1 only) for now
   test("match2") {
     val input =
       """

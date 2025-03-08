@@ -210,6 +210,11 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           debug("parseRest: Hit terminator token")
           buildOpSeq(localTerms).map(result => (result, current))
         }
+        // Check for Newline token after a block expression
+        case Right(Token.Newline(_)) if isBlockExpression(expr) => {
+          debug("parseRest: Found newline after block, terminating expression")
+          buildOpSeq(localTerms).map(result => (result, current.advance()))
+        }
         case Right(Token.LBrace(braceSourcePos)) => {
           debug("parseRest: Found LBrace after expression, treating as block argument")
           // The LBrace is a block argument to the previous expression
@@ -255,23 +260,37 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 // No more tokens, return the function call directly
                 Right((newExpr, afterBlock))
               } else {
-                // More tokens follow, continue parsing
-                parseRest(newExpr, afterBlock)
+                // Check for newline after the block
+                if (afterBlock.current.exists(_.isInstanceOf[Token.Newline])) {
+                  debug("parseRest: Found newline after block in function call, terminating expression")
+                  Right((newExpr, afterBlock.advance()))
+                } else {
+                  // More tokens follow, continue parsing
+                  parseRest(newExpr, afterBlock)
+                }
               }
             } else {
               // Replace the last term with the new expression that includes the block
               localTerms = localTerms.dropRight(1) :+ newExpr
               debug(s"parseRest: After handling block argument, terms: $localTerms")
-              parseRest(newExpr, afterBlock).map { case (result, finalState) =>
-                // Handle the case where parseRest returns another OpSeq
-                result match {
-                  case opSeq: OpSeq =>
-                    // If it's already an OpSeq, we need to merge with our current terms
-                    val mergedTerms = localTerms.dropRight(1) ++ opSeq.seq
-                    (OpSeq(mergedTerms, None), finalState)
-                  case _ =>
-                    // If not an OpSeq, just return our current terms as an OpSeq
-                    (OpSeq(localTerms, None), finalState)
+              
+              // Check for newline after the block
+              if (afterBlock.current.exists(_.isInstanceOf[Token.Newline])) {
+                debug("parseRest: Found newline after block, terminating expression")
+                buildOpSeq(localTerms).map(result => (result, afterBlock.advance()))
+              } else {
+                // Continue parsing
+                parseRest(newExpr, afterBlock).map { case (result, finalState) =>
+                  // Handle the case where parseRest returns another OpSeq
+                  result match {
+                    case opSeq: OpSeq =>
+                      // If it's already an OpSeq, we need to merge with our current terms
+                      val mergedTerms = localTerms.dropRight(1) ++ opSeq.seq
+                      (OpSeq(mergedTerms, None), finalState)
+                    case _ =>
+                      // If not an OpSeq, just return our current terms as an OpSeq
+                      (OpSeq(localTerms, None), finalState)
+                  }
                 }
               }
             }
@@ -1496,6 +1515,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       }
       
       Right((updatedList, finalState))
+    }
+  }
+
+  private def isBlockExpression(expr: Expr): Boolean = {
+    expr match {
+      case _: Block => true
+      case _ => false
     }
   }
 }

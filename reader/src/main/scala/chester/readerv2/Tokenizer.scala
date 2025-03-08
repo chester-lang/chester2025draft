@@ -130,7 +130,12 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
   }
 
   private def nextToken: Either[ParseError, Token] = {
-    skipWhitespace()
+    // Check for whitespace tokens first
+    val whitespaceToken = skipWhitespace()
+    if (whitespaceToken.isDefined) {
+      return Right(whitespaceToken.get)
+    }
+    
     if (pos >= source.length) {
       Right(Token.EOF(createSourcePos(0, 0)))
     } else {
@@ -172,11 +177,19 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     }
   }
 
-  private def skipWhitespace(): Unit = {
+  private def skipWhitespace(): Option[Token] = {
     val startPos = pos
+    
+    var foundNewline = false
+    var newlineStartPos = -1
     
     while (pos < source.length && source(pos).isWhitespace) {
       if (source(pos) == '\n') {
+        if (!foundNewline) {
+          // Track the position of first newline
+          foundNewline = true
+          newlineStartPos = pos
+        }
         line += 1
         col = 0
       } else {
@@ -193,6 +206,16 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
         val incrementalUtf16 = startUtf16 + source.substring(startPos, pos).getCodePoints.size
         utf16PosCache.put(pos, incrementalUtf16)
       }
+    }
+    
+    // If we found a newline, create a Newline token
+    if (foundNewline) {
+      Some(Token.Newline(createSourcePos(newlineStartPos, newlineStartPos + 1)))
+    } else if (pos > startPos) {
+      // If we found other whitespace, create a Whitespace token
+      Some(Token.Whitespace(createSourcePos(startPos, pos)))
+    } else {
+      None // No whitespace found
     }
   }
 
