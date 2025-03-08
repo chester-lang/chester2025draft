@@ -9,6 +9,7 @@ import java.nio.file.{Files, Paths}
 
 /**
  * Test class for debugging the OnceCell bug in type-level function applications.
+ * This test now verifies that the fix for the OnceCell bug works correctly.
  */
 class DebugTyckTest extends FunSuite {
 
@@ -18,10 +19,10 @@ class DebugTyckTest extends FunSuite {
     Debug.enable(DebugCategory.Tyck)
     Debug.enable(DebugCategory.Reducer)
     
-    println("=== Starting debug test for dependent type OnceCell bug ===")
+    println("=== Starting debug test for dependent type OnceCell bug fix ===")
     
-    // Get the test file path
-    val inputFile = Paths.get("tests", "tyck", "dependent-id-type-debug.chester")
+    // Get the test file path - now using the .todo file
+    val inputFile = Paths.get("tests", "tyck", "dependent-id-type-debug.chester.todo")
     assert(Files.exists(inputFile), s"Test file not found: $inputFile")
     
     // Parse the file
@@ -34,20 +35,22 @@ class DebugTyckTest extends FunSuite {
           println("=== File parsed successfully ===")
           println(s"Parsed block: $parsedBlock")
           
-          // Attempt to type check - this should trigger the bug
+          // Attempt to type check - this should now succeed with the fix
           println("=== Type checking ===")
           try {
             val result = Tycker.check(parsedBlock)
             println(s"Type check result: $result")
+            
+            // The test should now pass without exception
+            assert(result != null, "Expected type check result to be non-null")
           } catch {
             case e: Exception => 
               println("=== Exception during type checking ===")
               println(s"Exception: ${e.getMessage}")
               e.printStackTrace()
               
-              // We expect an IllegalArgumentException due to the OnceCell bug
-              assert(e.isInstanceOf[IllegalArgumentException], "Expected IllegalArgumentException")
-              assert(e.getMessage.contains("requirement failed"), "Expected 'requirement failed' message")
+              // We should no longer get an exception with the fix
+              fail(s"Test should not throw exception after fix: ${e.getMessage}")
           }
         }
       )

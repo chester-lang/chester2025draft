@@ -1,0 +1,8 @@
+// Test type-level function with debug enabled
+// This test is designed to trigger the OnceCell bug
+
+// Define a simple type-level function
+def TypeId(T: Type): Type = T;
+
+// Use the type-level function
+let c: TypeId(Integer) = 10; 
