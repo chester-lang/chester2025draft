@@ -41,10 +41,25 @@ This document outlines potential improvements to the Chester parser components, 
 - **Benefits**: More comprehensive string support, better consistency
 - **Implementation**: Created a new `parseEscapeSequence()` method with comprehensive escape handling, better error reporting, and proper position tracking.
 
-### 3. Identifier Parsing Optimization
-- **Issue**: `parseIdentifier()` builds strings character by character
-- **Improvement**: Use a pattern recognition approach to reduce string concatenation operations
-- **Benefits**: Potential performance improvement for long identifiers
+### 3. Identifier Parsing Correctness ⚠️ PRIORITY
+- **Issue**: Inconsistent character detection in `parseIdentifier()`:
+  - Uses simplified checks (`isLetterOrDigit || == '_' || == '-'`) instead of proper `IdentifierRules`
+  - Entry points use `isIdentifierFirst()` but the method uses simplified checks
+  - May not properly handle Unicode characters (like emoji) in identifiers
+- **Improvement**: 
+  - Align with `IdentifierRules.isIdentifierPart()` for character validation
+  - Ensure proper handling of supplementary code points (Unicode/emoji)
+  - Maintain consistency between entry points and internal validation
+- **Benefits**: 
+  - Correct parsing of all valid identifiers according to language specification
+  - Consistent handling of Unicode characters and emoji
+  - Better maintainability through unified validation rules
+- **Implementation Plan**:
+  1. Import `isIdentifierPart` from `IdentifierRules`
+  2. Create helper method for proper character validation
+  3. Update character checking logic to handle both ASCII and Unicode properly
+  4. Ensure supplementary code points are handled consistently
+  5. Verify correctness with comprehensive tests
 
 ### 4. Operator Parsing Clean-Up ✅ COMPLETED
 - **Issue**: Special-case handling for `=>` and comments within `parseOperator()`
@@ -100,8 +115,9 @@ This document outlines potential improvements to the Chester parser components, 
 2. ✅ Create tests that verify comments are correctly preserved
 3. ✅ Document the comment attachment strategy
 4. ✅ Update any related components dependent on comment information 
-5. Focus on remaining features in Phase 2 of the Implementation Plan:
+5. Fix identifier parsing correctness to ensure proper handling of all valid identifiers
+6. Focus on remaining features in Phase 2 of the Implementation Plan:
    - Complete object expressions implementation
    - Implement telescope parsing
    - Add source maps support
-6. Continue migration of V1-only tests to V2 
+7. Continue migration of V1-only tests to V2 

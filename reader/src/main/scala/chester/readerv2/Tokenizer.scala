@@ -4,7 +4,7 @@ import chester.error.{Pos, RangeInFile, Reporter, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
 import chester.utils.getCodePoints
-import chester.syntax.IdentifierRules.{isIdentifierFirst, isOperatorSymbol}
+import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import scala.util.boundary
@@ -361,12 +361,28 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
     parseDecimalNumber(startPos)
   }
 
+  // Helper method to check if a character at the current position is a valid identifier part
+  private def isValidIdentifierPart(pos: Int): Boolean = {
+    if (pos >= source.length) return false
+    
+    val c = source.codePointAt(pos)
+    if (Character.isSupplementaryCodePoint(c)) {
+      isIdentifierPart(c)
+    } else {
+      isIdentifierPart(c.toChar.toInt)
+    }
+  }
+
   private def parseIdentifier(initial: String, startPos: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
-    while (pos < source.length && (source(pos).isLetterOrDigit || source(pos) == '_' || source(pos) == '-')) {
-      sb.append(source(pos))
-      pos += 1
-      col += 1
+    while (pos < source.length && isValidIdentifierPart(pos)) {
+      // Handle supplementary code points (like emoji) correctly
+      val c = source.codePointAt(pos)
+      val charCount = Character.charCount(c)
+      
+      sb.append(source.substring(pos, pos + charCount))
+      pos += charCount
+      col += 1  // Note: This might need adjustment for wide characters in the future
     }
     Right(Token.Identifier(Vector(StringChar(sb.toString, createSourcePos(startPos, pos))), createSourcePos(startPos, pos)))
   }
