@@ -1,11 +1,194 @@
-# Parser Improvement Plan
+# Chester Parser Architecture and Improvement Plan
 
 ## Overview
-This document outlines potential improvements to the Chester parser components, specifically focusing on `Tokenizer.scala` and `LexerV2.scala`. The goal is to enhance readability, maintainability, and performance while preserving the current functionality.
 
-## ✅ HIGH PRIORITY: Comment Preservation
+Chester is migrating from the original `reader` implementation (V1) to a new `readerv2` (V2). This document covers both the migration status and the planned improvements to enhance readability, maintainability, and performance of the parser components.
 
-### 1. Comment Attachment in LexerV2 ✅ COMPLETED
+## Parser Architecture
+
+### Syntax Design Principles
+
+#### 1. Uniform Symbol Treatment
+- All identifiers and operators are treated uniformly in parsing
+- No special cases for keywords like "if", "then", "else" - they are just identifiers
+- Parser doesn't distinguish between keywords and regular identifiers
+- Semantic meaning determined in later passes
+- Examples:
+  ```scala
+  // These parse exactly the same way:
+  case x => y
+  myCase x => y
+  
+  // Both produce:
+  OpSeq([identifier, expr, identifier, expr])
+  ```
+
+#### 2. Operator and Identifier Rules
+- Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
+- Identifiers start with letters/emoji/underscore
+- Both can contain operator symbols and word symbols
+- Key rules:
+  - No special casing of operators - determined by character patterns
+  - All operator identification delegated to consistent rules
+  - Operators and identifiers form a uniform sequence: `expr op expr op expr ...`
+  ```scala
+  1 + 2          // OpSeq([1, +, 2])
+  if x then y    // OpSeq([if, x, then, y])  // "if" and "then" are just identifiers
+  val x = 1      // OpSeq([val, x, =, 1])    // "val" is just an identifier
+  ```
+
+#### 3. Separation of Concerns
+- Parser only produces flat OpSeq nodes without any knowledge of operator semantics
+- Operator precedence, fixity (infix/prefix/postfix), and associativity are handled in later passes
+- This separation allows flexible operator definition and extension
+- No predefined keywords (if/then/else/val) or operators (+/-/*)
+
+#### 4. Space and Newline Handling
+- Spaces are significant in specific contexts:
+  - Function calls: `f()` vs `f ()` - space before parentheses changes interpretation
+  - Operator sequences: Spaces don't affect operator precedence but improve readability
+- Newlines have special significance in specific contexts:
+  - After blocks: Newline after a block ends the expression
+  - Pattern Matching: Newlines treated differently for single expressions vs blocks
+  - Within blocks: Newlines within blocks are not significant
+
+#### 5. Block Return Value Semantics
+- Rust-like block return value semantics
+- Last expression in block is the return value
+- Examples:
+  - `{a}` -> returns value of a
+  - `{a;}` -> equivalent to `{a; ()}` -> returns unit
+  - `{a; b}` -> returns value of b
+  - `{a; b;}` -> equivalent to `{a; b; ()}` -> returns unit
+
+#### 6. Error Handling
+- Designed to handle incomplete/broken source code
+- Produces meaningful partial results when possible
+- Uses ErrorExpr to represent recoverable parse errors
+
+#### 7. Incremental Parsing
+- Supports partial parsing of incomplete expressions
+- Maintains parser state for potential incremental updates
+- Useful for IDE integration
+
+### Parser Implementations
+
+#### Original Parser Design (V1)
+- Uses FastParse combinators for a declarative style
+- Context object tracks parsing state
+- Functional composition of parsers
+- Fully functional and used in production
+
+#### ReaderV2 Approach (V2)
+- Token-based parsing with state machine
+- More imperative style with mutable state
+- Pattern matching on tokens for different constructs
+- Explicit recursion with depth tracking
+
+## Migration Status
+
+### Feature Comparison
+
+| Feature | Reader (V1) | ReaderV2 (V2) | Notes |
+|---------|-------------|---------------|-------|
+| Basic Literals | ✅ | ✅ | Integers, floating-point numbers fully supported |
+| Function Calls | ✅ | ✅ | Full support in V2 |
+| Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
+| Object Syntax | ✅ | 🟡 | Basic support in V2 |
+| Operator Sequence | ✅ | ✅ | Parser produces flat OpSeq nodes |
+| Error Recovery | ✅ | 🟡 | Comment preservation implemented, other error recovery planned |
+| Source Maps | ✅ | 🔴 | To be implemented |
+| Unicode Support | ✅ | ✅ | Full support in both |
+| Generic Type Parameters | ✅ | ✅ | Full support including complex and nested generics |
+| Block Arguments | ✅ | ✅ | Block calls now properly supported |
+| Lists with Mixed Types | ✅ | ✅ | Now properly supported including floating-point |
+| Comment Preservation | ✅ | ✅ | Now fully supported in V2 with leading and trailing comments |
+
+Legend:
+- ✅ Fully Implemented
+- 🟡 Partially Implemented
+- 🔴 Not Yet Implemented
+
+### Test Coverage
+
+| Test File | V1 Only | Both V1 & V2 | Notes |
+|-----------|---------|--------------|-------|
+| OpSeqParserTest | 🟡 | 🟡 | Most tests use parseAndCheckBoth, only "parse infix with block" uses V1-only due to semantic differences |
+| ObjectParserTest | | ✅ | All tests use parseAndCheckBoth |
+| DotParserTest | | ✅ | All tests use parseAndCheckBoth |
+| VarargParserTest | | ✅ | All tests use parseAndCheckBoth |
+| SimpleFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
+| TupleAndFunctionCallTest | | ✅ | All tests use parseAndCheckBoth |
+| ParserTest | | ✅ | All tests now use parseAndCheckBoth, including floating-point literals |
+| SimpleOpSeqTest | | ✅ | Uses parseAndCheckBoth |
+| TelescopeParserTest | | ✅ | All tests now use parseAndCheckBoth |
+| CommentParserTest | | ✅ | All tests use parseAndCheckBoth and verify comment preservation |
+| SimplePatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
+| ListParserTest | | ✅ | All tests now use parseAndCheckBoth, including mixed types with floating-point |
+| BlockAndBlockCallParserTest | | ✅ | All tests use parseAndCheckBoth |
+| FunctionCallParserTest | | ✅ | All tests now use parseAndCheckBoth, including complex generic type parameters |
+| PatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
+
+### Test Function Usage
+- `parseAndCheck` / `parseAndCheckV0`: Runs tests against V1 (original reader) only
+- `parseAndCheckBoth`: Runs tests against both V1 and V2 parsers
+
+### Currently Passing Tests in Both V1 & V2
+- Pattern Matching: simple case statements, multiple cases
+- Operator Sequences: simple and complex sequences, prefix/postfix/mixfix operators
+- Objects: empty objects, single/multiple fields, nested objects, mixed types
+- Function Calls: simple calls, with arguments, nested calls, mixed arg types
+- Dot Notation: simple dot calls, with arguments, nested dot calls
+- Tuples: with type annotations, function calls, identifier conversions
+- Varargs: function calls and definitions with varargs
+- Literals: integers (decimal, hex, binary), floating-point, strings
+- Lists: empty lists, single items, mixed types, nested lists
+
+### Tests Still V1-Only (Need Migration)
+- Complex operator sequence tests (prefix, mixfix)
+- Telescope parsing tests
+- Error handling tests
+- Source position tracking tests
+- Some block call tests with complex contexts
+- Function calls with generic type parameters
+
+## Implementation Plan
+
+### Phase 1: Core Functionality (✅ Mostly Complete)
+- ✅ Basic literal parsing
+- ✅ Simple function calls
+- ✅ Basic operator sequence parsing
+- ✅ Uniform symbol treatment
+- ✅ Support for floating-point numbers
+- ✅ Lists with mixed types
+- 🟡 Migrate V1-only tests to V2 (In Progress)
+
+### Phase 2: Advanced Features (🟡 Current)
+- ✅ Full block call support
+- ✅ Generic type parameters
+- ✅ Comment preservation and attachment
+- 🟡 Object expressions with string literals and symbol keys
+- 🔴 Complex object syntax
+- 🔴 Telescope parsing
+- 🔴 Source maps
+
+#### Key Implementation Principles for V2
+- Maintain uniform symbol treatment across all expressions
+- Handle operator sequences consistently, avoiding special cases
+- Support string literals and symbols as object field keys
+- Avoid special case logic in operator sequence parsing
+- Ensure field operators (= and =>) are treated consistently across key types
+- Preserve the same semantics as V1 parser but with cleaner implementation
+
+### Phase 3: Error Handling (🔴 Planned)
+- 🔴 Error recovery
+- 🔴 Improved error messages
+- 🔴 Source position tracking
+- 🔴 Debug information
+
+## Completed Improvements
+
+### 1. Comment Preservation ✅ COMPLETED
 - **Issue**: The V2 parser previously didn't properly preserve comments and attach them to expressions via ExprMeta.commentInfo
 - **Improvement**: Implemented comment collection and attachment similar to the V1 parser (Parser.scala)
 - **Benefits**: 
@@ -20,11 +203,9 @@ This document outlines potential improvements to the Chester parser components, 
   5. Fixed whitespace token handling for proper newline detection
   6. All 100 tests now pass, confirming compatibility with V1 parser behavior
 
-## Tokenizer Improvements
-
-### 1. Number Parsing Refactoring ✅ COMPLETED
-- **Issue**: The number parsing logic in `parseNumber()` is complex and has nested conditionals
-- **Improvement**: Extract specialized methods for different number formats:
+### 2. Number Parsing Refactoring ✅ COMPLETED
+- **Issue**: The number parsing logic in `parseNumber()` was complex and had nested conditionals
+- **Improvement**: Extracted specialized methods for different number formats:
   - `parseDecimalNumber()`
   - `parseHexNumber()`
   - `parseBinaryNumber()`
@@ -32,93 +213,99 @@ This document outlines potential improvements to the Chester parser components, 
 - **Benefits**: Improved readability, easier maintenance, better error handling
 - **Implementation**: Extracted four methods from the original complex code, improving error messages and making the logic more modular.
 
-### 2. Enhanced Escape Character Handling ✅ COMPLETED
-- **Issue**: The `escapeCharToString()` method only handles basic escape sequences
-- **Improvement**: Extend to support more escape sequences including:
+### 3. Enhanced Escape Character Handling ✅ COMPLETED
+- **Issue**: The `escapeCharToString()` method only handled basic escape sequences
+- **Improvement**: Extended to support more escape sequences including:
   - Unicode escapes (`\u1234`)
   - Octal escapes (`\123`)
   - Hex escapes (`\x12`)
 - **Benefits**: More comprehensive string support, better consistency
 - **Implementation**: Created a new `parseEscapeSequence()` method with comprehensive escape handling, better error reporting, and proper position tracking.
 
-### 3. Identifier Parsing Correctness ⚠️ PRIORITY
-- **Issue**: Inconsistent character detection in `parseIdentifier()`:
-  - Uses simplified checks (`isLetterOrDigit || == '_' || == '-'`) instead of proper `IdentifierRules`
-  - Entry points use `isIdentifierFirst()` but the method uses simplified checks
-  - May not properly handle Unicode characters (like emoji) in identifiers
+### 4. Operator Parsing Clean-Up ✅ COMPLETED
+- **Issue**: Special-case handling for `=>` and comments within `parseOperator()`
+- **Improvement**: Extracted comment parsing to a separate method
+- **Benefits**: Cleaner code structure, better separation of concerns
+- **Implementation**: Extracted `parseComment()` method and improved `parseOperator()` with clearer structure and better comments.
+
+### 5. Identifier Parsing Correctness ✅ COMPLETED
+- **Issue**: Inconsistent character detection in `parseIdentifier()`
 - **Improvement**: 
-  - Align with `IdentifierRules.isIdentifierPart()` for character validation
-  - Ensure proper handling of supplementary code points (Unicode/emoji)
-  - Maintain consistency between entry points and internal validation
+  - Aligned with `IdentifierRules.isIdentifierPart()` for character validation
+  - Ensured proper handling of supplementary code points (Unicode/emoji)
+  - Maintained consistency between entry points and internal validation
 - **Benefits**: 
   - Correct parsing of all valid identifiers according to language specification
   - Consistent handling of Unicode characters and emoji
   - Better maintainability through unified validation rules
-- **Implementation Plan**:
-  1. Import `isIdentifierPart` from `IdentifierRules`
-  2. Create helper method for proper character validation
-  3. Update character checking logic to handle both ASCII and Unicode properly
-  4. Ensure supplementary code points are handled consistently
-  5. Verify correctness with comprehensive tests
+- **Implementation**: 
+  - Added import for `isIdentifierPart` from `IdentifierRules`
+  - Created helper method for proper character validation
+  - Updated character checking logic to handle both ASCII and Unicode properly
+  - Ensured supplementary code points were handled consistently
 
-### 4. Operator Parsing Clean-Up ✅ COMPLETED
-- **Issue**: Special-case handling for `=>` and comments within `parseOperator()`
-- **Improvement**: Extract comment parsing to a separate method
-- **Benefits**: Cleaner code structure, better separation of concerns
-- **Implementation**: Extracted `parseComment()` method and improved `parseOperator()` with clearer structure and better comments.
-
-### 5. SourcePos Creation Efficiency ⚠️ PRIORITY
-- **Issue**: 
-  - The `createSourcePos()` method recalculates UTF-16 offsets on every call
-  - For each position, it computes `source.substring(0, pos).getCodePoints.size` which is expensive
-  - In large files, this leads to significant performance degradation
-  - Each token creation runs these calculations twice (for start and end positions)
+### 6. SourcePos Creation Efficiency ✅ COMPLETED
+- **Issue**: The `createSourcePos()` method recalculated UTF-16 offsets on every call
 - **Improvement**: 
-  - Implement a caching mechanism for UTF-16 offset calculations
-  - Calculate offsets incrementally rather than from scratch each time
-  - Add a position cache that stores already computed offsets
-  - Update the cache as positions change during tokenization
+  - Implemented a caching mechanism for UTF-16 offset calculations
+  - Calculated offsets incrementally rather than from scratch each time
+  - Added a position cache to store already computed offsets
+  - Updated the cache as positions change during tokenization
 - **Benefits**: 
   - Significant performance improvement, especially for large files
   - Reduced tokenization time for complex expressions
   - More responsive parsing for interactive environments
+- **Implementation**: 
+  - Added a position cache using HashMap to store UTF-16 offsets
+  - Modified `createSourcePos()` to check the cache before calculating
+  - Updated methods that modify position to use and update the cache
+  - Added incremental calculation for new positions based on cached values
+
+## Current Priorities
+
+### 1. V1/V2 Semantic Consistency ⚠️ PRIORITY
+- **Issue**: 
+  - Some tests still use `parseAndCheck` (V1-only) instead of `parseAndCheckBoth`
+  - This indicates potential semantic differences between V1 and V2 parsers
+  - The goal is to ensure both parsers produce the same AST for the same input
+- **Areas to Address**:
+  - Complex operator sequences (prefix, mixfix operators)
+  - Pattern matching with mixed expressions
+  - Telescope parsing
+  - Error handling consistency
+  - Source position tracking
 - **Implementation Plan**:
-  1. Add a position cache (Map or Array) to store UTF-16 offsets for byte positions
-  2. Modify `createSourcePos()` to check the cache before calculating
-  3. Update the cache whenever we move the position in the tokenizer
-  4. Add incremental calculation for new positions based on cached values
-  5. Ensure all methods that modify position update the cache properly
-- **Testing Strategy**:
-  1. Verify correctness with existing tests (ensure positions are still accurate)
-  2. Add performance benchmark tests for large files if possible
-  3. Validate on files with many Unicode characters (where UTF-16 calculations matter most)
+  1. Analyze test files still using `parseAndCheck` to identify semantic differences
+  2. Prioritize addressing the complex operator sequence handling first
+  3. Implement proper handling for prefix and mixfix operators in V2
+  4. Test and verify with existing test cases
+  5. Update tests to use `parseAndCheckBoth` once they pass
+  6. Document any intentional semantic differences that won't be addressed
+- **Benefits**:
+  - More consistent parsing behavior between V1 and V2
+  - Higher confidence in V2 parser for all use cases
+  - Easier migration path from V1 to V2
+  - More tests running against both parsers
 
-## LexerV2 Improvements
+### 2. Object Expressions ⚠️ PRIORITY
+- **Issue**: Object expressions support in V2 is incomplete, especially for complex objects
+- **Improvement**: 
+  - Complete object expressions implementation with string literal and symbol keys
+  - Ensure complex object syntax works properly
+  - Handle advanced object features
+- **Implementation Plan**:
+  1. Review current object parsing implementation
+  2. Identify missing features compared to V1
+  3. Implement support for complex object syntax
+  4. Test with a variety of object expressions
 
-### 1. Simplified Token Type Checking
-- **Issue**: Multiple token checking methods with similar patterns (`isIdentifier`, etc.)
-- **Improvement**: Create a generic token matcher using pattern matching
-- **Benefits**: Less code duplication, more consistent API
-
-### 2. Error Handling Consolidation
-- **Issue**: Error creation is scattered across the parser
-- **Improvement**: Centralize error creation with helper methods for common errors
-- **Benefits**: Consistent error messages, easier to maintain
-
-### 3. Enhanced Debugging Support
-- **Issue**: Debugging complex parsing scenarios is difficult
-- **Improvement**: Add comprehensive debugging helpers with proper log levels
-- **Benefits**: Easier troubleshooting and development
-
-### 4. State Management Refactoring
-- **Issue**: State management across methods could be cleaner
-- **Improvement**: Introduce more functional approaches to state transitions
-- **Benefits**: More predictable state handling, easier to reason about
-
-### 5. Parsing Result Encapsulation
-- **Issue**: Parse results return tuples which are not self-documenting
-- **Improvement**: Create dedicated result classes for different parsing operations
-- **Benefits**: Better type safety, more expressive code
+### 3. Telescope Parsing ⚠️ PRIORITY
+- **Issue**: Telescope parsing is not yet implemented in V2
+- **Improvement**: Implement telescope parsing in V2 to match V1 semantics
+- **Implementation Plan**:
+  1. Analyze V1 telescope parsing implementation
+  2. Design and implement equivalent functionality in V2
+  3. Test with existing telescope tests
 
 ## Implementation Strategy
 
@@ -132,14 +319,11 @@ This document outlines potential improvements to the Chester parser components, 
 
 ## Next Steps
 
-1. ✅ Implement the high-priority comment preservation feature
-2. ✅ Create tests that verify comments are correctly preserved
-3. ✅ Document the comment attachment strategy
-4. ✅ Update any related components dependent on comment information 
-5. ✅ Fix identifier parsing correctness to ensure proper handling of all valid identifiers
-6. Implement SourcePos Creation Efficiency to improve parser performance
-7. Focus on remaining features in Phase 2 of the Implementation Plan:
-   - Complete object expressions implementation
-   - Implement telescope parsing
-   - Add source maps support
-8. Continue migration of V1-only tests to V2 
+1. Address V1/V2 Semantic Consistency to ensure V2 parser correctly implements V1 semantics
+   - Focus on complex operator sequences (prefix, mixfix) first
+   - Address pattern matching semantic differences
+   - Implement proper telescope parsing
+2. Complete object expressions implementation
+3. Add source maps support
+4. Continue migration of V1-only tests to V2
+5. Implement error recovery mechanisms 
