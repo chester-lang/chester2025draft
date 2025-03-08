@@ -1,4 +1,4 @@
-# Propagator Network Implementation
+# Type Checking System: Propagator Network and Design
 
 ## Overview
 
@@ -308,3 +308,79 @@ class IntegrationTests {
    - [ ] Document type state rules
    - [ ] Document verification process
    - [ ] Document testing approach 
+
+## Best Practices for Cell Management
+
+### OnceCell Usage Guidelines
+
+The `OnceCell` implementation is a specialized cell type that enforces single-assignment semantics. Proper usage requires careful attention to avoid errors:
+
+#### 1. Cell Filling Best Practices
+
+- **Always check before filling**: Before calling `fill()` on any cell, check if it already has a value using `state.readUnstable(cell)`.
+  ```scala
+  val existingValue = state.readUnstable(cell)
+  if (existingValue.isEmpty) {
+    state.fill(cell, value)
+  } else {
+    // Handle already filled case
+  }
+  ```
+
+- **Handle already-filled cells gracefully**: When a cell already has a value:
+  - If the new value equals the existing value, skip the fill operation
+  - If different, log appropriate diagnostics
+  ```scala
+  if (existingValue.get == newValue) {
+    // Same value, no action needed
+  } else {
+    // Log warning or handle difference
+  }
+  ```
+
+- **Use debug assertions**: Include debug prints for cell operations to trace propagation flow
+  ```scala
+  Debug.debugPrint(DebugCategory.Cell, s"Attempting to fill cell: $cell")
+  Debug.debugPrint(DebugCategory.Cell, s"Current value: $existingValue")
+  Debug.debugPrint(DebugCategory.Cell, s"New value: $newValue")
+  ```
+
+#### 2. Propagator Implementation Guidelines
+
+- **Declare cell dependencies correctly**: Ensure all propagators correctly declare their reading and zonking cell dependencies
+  ```scala
+  override val readingCells: Set[CellIdAny] = Set(inputCell1, inputCell2)
+  override val writingCells: Set[CellIdAny] = Set(outputCell)
+  override val zonkingCells: Set[CellIdAny] = Set(outputCell)
+  ```
+
+- **Implement naiveZonk correctly**: The `naiveZonk` method should return appropriate dependencies for zonking
+  ```scala
+  override def naiveZonk(needed: Vector[CellIdAny]): ZonkResult = {
+    if (needed.contains(outputCell)) {
+      ZonkResult.Require(Vector(inputCell1, inputCell2))
+    } else {
+      ZonkResult.NotNeeded
+    }
+  }
+  ```
+
+- **Be idempotent**: Propagator's `run` method should be idempotent - multiple calls with the same input should produce the same output
+
+#### 3. Type-Level Function Handling
+
+When implementing propagators that handle type-level functions:
+
+- **Watch for recursive effects**: Type-level functions may cause recursive propagation which can attempt to fill the same cell multiple times
+- **Avoid modifications during reduction**: When reducing for type equality, don't modify the original terms
+- **Use correct reduction mode**: Use `ReduceMode.TypeLevel` for reductions needed for type equality checks
+- **Check results of unification**: After unifying types, verify the cell state before proceeding
+
+#### 4. Testing Strategies for Cell Management
+
+- **Create test cases that involve multiple fills**: Test cell behavior with patterns that could lead to multiple fill attempts
+- **Test type-level function behaviors**: Include test cases that exercise type-level function applications
+- **Enable debug logging**: Use `Debug.enable(DebugCategory.Cell)` to trace cell operations during tests
+- **Test edge cases**: Specifically test cases where the same function might be evaluated multiple times
+
+By following these guidelines, propagators can safely manage cells without triggering exceptions or creating inconsistent states. 
