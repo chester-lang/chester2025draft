@@ -331,34 +331,86 @@ Legend:
   2. Design and implement equivalent functionality in V2
   3. Test with existing telescope tests
 
-### 4. Block Termination and Newline Significance ⚠️ PRIORITY
-- **Issue**: 
-  - V2 parser doesn't properly handle the `}\n` pattern in the same way as V1 parser
-  - This affects pattern matching blocks, function definitions, and other block expressions
-  - The key pattern `}\n` (closing brace followed by newline) should terminate expressions in specific contexts
-  - Tests like `PatternMatchingTest.match2` fail due to AST structural differences
-- **Current Implementation Differences**:
-  - V1 Parser (in `Parser.scala`) uses `newLineAfterBlockMeansEnds` flag in `ParsingContext`
-  - V1 detects block endings with `val itWasBlockEnding = p.input(index - 1) == '}'`
-  - V1 checks for newlines after blocks and changes parsing behavior accordingly
-  - V2 Parser (in `LexerV2.scala`) does not have equivalent context tracking
-  - V2 treats whitespace tokens uniformly without distinguishing significant newlines after blocks
-- **Improvement**: 
-  - Implement context-aware newline handling in V2 parser
-  - Make V2 produce the same AST structure as V1 for blocks followed by newlines
-  - Ensure both parsers handle the pattern consistently, especially in match expressions
-- **Implementation Plan**:
-  1. Add a context parameter to V2 similar to V1's `newLineAfterBlockMeansEnds`
-  2. Modify `parseBlock` and related methods to be aware of this context
-  3. Update token handling to distinguish between regular whitespace and newlines after blocks
-  4. Implement special handling for statement contexts (match expressions, etc.)
-  5. Add specific tests for the `}\n` pattern in various contexts
-  6. Ensure pattern matching blocks are handled correctly
-- **Benefits**:
-  - Consistent AST structure between V1 and V2 parsers
-  - All pattern matching tests will pass with `parseAndCheckBoth`
-  - Improved language clarity regarding block termination rules
-  - Better documentation of newline significance in Chester syntax
+### 4. Block Termination and Newline Handling in V2 Parser ⚠️ PRIORITY
+
+#### Problem Analysis:
+When examining why the pattern matching test fails with V2 parser, I identified that the V1 and V2 parsers handle the `}\n` pattern (closing brace followed by newline) differently:
+
+1. **V1 Implementation (Parser.scala):**
+   - Uses a context parameter `newLineAfterBlockMeansEnds` in `ParsingContext` to determine when a newline after a block should terminate an expression
+   - Explicitly checks if the previous token was a closing brace: `val itWasBlockEnding = p.input(index - 1) == '}'`
+   - Changes parsing behavior based on this detection
+   - This creates different AST structures depending on whether a block is standalone or part of a larger expression
+
+2. **V2 Implementation (LexerV2.scala):**
+   - No equivalent context tracking for newlines after blocks
+   - Token stream treats all whitespace (including newlines) equally
+   - No special handling for the case where a closing brace is followed by a newline
+   - Doesn't distinguish between blocks in different contexts (e.g., pattern matching case blocks vs. function body blocks)
+
+3. **Specific Test Failure:**
+   - In `PatternMatchingTest.match2`, a block is used in a pattern matching case statement
+   - V1 parser treats the newline after `}` as terminating that case's expression
+   - V2 parser doesn't recognize this termination, resulting in a different AST structure
+   - Example test output shows mismatched nodes in the AST, particularly around where block handling differs
+
+#### Solution Approach:
+
+To fix this discrepancy, we need to modify the V2 parser implementation:
+
+1. **Add Context Tracking:**
+   - Create a context parameter similar to V1's `newLineAfterBlockMeansEnds`
+   - Pass this context through the parsing calls
+   
+2. **Enhance Whitespace Token Handling:**
+   - Modify the `Tokenizer` to create special `NewlineWhitespace` tokens that can be distinguished from regular whitespace
+   - Or enhance whitespace token analysis in the parser to detect newlines
+   
+3. **Add Special Handling for `}\n` Pattern:**
+   - In the `parseExpr` and `parseBlock` methods, check if:
+     a) The current expression is a block
+     b) The next token is whitespace containing a newline
+     c) We're in a context where newlines after blocks are significant
+   - If all conditions are true, terminate the current expression parsing
+   
+4. **Fix Pattern Matching Parsing:**
+   - Update the pattern matching case handling to properly attach blocks to their parent expressions
+   - Ensure the AST structure for case statements with blocks matches V1's output
+
+This approach will maintain the uniform treatment of symbols while properly handling the special case of newlines after blocks, ensuring compatibility with V1 parser behavior.
+
+#### Implementation Steps:
+
+1. **Create a ParsingContext class**:
+   ```scala
+   case class ParsingContext(
+     inOpSeq: Boolean = false,
+     dontAllowOpSeq: Boolean = false,
+     newLineAfterBlockMeansEnds: Boolean = false,
+     dontAllowBlockApply: Boolean = false
+   ) 
+   ```
+
+2. **Update Token.Whitespace or add Token.Newline**:
+   - Either enhance Whitespace token to track if it contains a newline
+   - Or create a separate Newline token type
+
+3. **Update TokenizerV2**:
+   - Modify whitespace handling to differentiate newlines from other whitespace
+
+4. **Modify LexerV2 methods**:
+   - Update `parseExpr` and related methods to accept and use the context parameter
+   - Add special handling for blocks followed by newlines in contexts where this is significant
+
+5. **Test incrementally**:
+   - Start with simple examples of blocks in different contexts
+   - Validate pattern matching test case specifically
+
+#### Benefits:
+- V1 and V2 parsers will produce consistent AST structures
+- Tests like `PatternMatchingTest.match2` will pass with both parsers
+- Better formalization of Chester's syntax rules regarding block termination and newlines
+- Cleaner separation between expression blocks and statement blocks in the language
 
 ## Implementation Strategy
 
