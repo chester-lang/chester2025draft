@@ -171,12 +171,13 @@ Both implementations maintain the philosophy of uniform symbol treatment, with t
 | Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
 | Object Syntax | ✅ | 🟡 | Basic support in V2 |
 | Operator Sequence | ✅ | ✅ | Parser produces flat OpSeq nodes |
-| Error Recovery | ✅ | 🔴 | Planned for V2 |
+| Error Recovery | ✅ | 🟡 | Comment preservation implemented, other error recovery planned |
 | Source Maps | ✅ | 🔴 | To be implemented |
 | Unicode Support | ✅ | ✅ | Full support in both |
 | Generic Type Parameters | ✅ | ✅ | Full support including complex and nested generics |
 | Block Arguments | ✅ | ✅ | Block calls now properly supported |
 | Lists with Mixed Types | ✅ | ✅ | Now properly supported including floating-point |
+| Comment Preservation | ✅ | ✅ | Now fully supported in V2 with leading and trailing comments |
 
 Legend:
 - ✅ Fully Implemented
@@ -196,7 +197,7 @@ Legend:
 | ParserTest | | ✅ | All tests now use parseAndCheckBoth, including floating-point literals |
 | SimpleOpSeqTest | | ✅ | Uses parseAndCheckBoth |
 | TelescopeParserTest | | ✅ | All tests now use parseAndCheckBoth |
-| CommentParserTest | | ✅ | All tests use parseAndCheckBoth |
+| CommentParserTest | | ✅ | All tests use parseAndCheckBoth and verify comment preservation |
 | SimplePatternMatchingTest | 🟡 | 🟡 | Some tests still use parseAndCheck |
 | ListParserTest | | ✅ | All tests now use parseAndCheckBoth, including mixed types with floating-point |
 | BlockAndBlockCallParserTest | | ✅ | All tests use parseAndCheckBoth |
@@ -240,6 +241,7 @@ Legend:
 ### Phase 2: Advanced Features (🟡 Current)
 - ✅ Full block call support
 - ✅ Generic type parameters
+- ✅ Comment preservation and attachment
 - 🟡 Object expressions with string literals and symbol keys
 - 🔴 Complex object syntax
 - 🔴 Telescope parsing
