@@ -343,10 +343,10 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - This creates different AST structures depending on whether a block is standalone or part of a larger expression
 
 2. **V2 Implementation (LexerV2.scala):**
-   - No equivalent context tracking for newlines after blocks
+   - No equivalent tracking for newlines after blocks
    - Token stream treats all whitespace (including newlines) equally
    - No special handling for the case where a closing brace is followed by a newline
-   - Doesn't distinguish between blocks in different contexts (e.g., pattern matching case blocks vs. function body blocks)
+   - Doesn't terminate OpSeq expressions when encountering `}\n`
 
 3. **Specific Test Failure:**
    - In `PatternMatchingTest.match2`, a block is used in a pattern matching case statement
@@ -354,63 +354,52 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - V2 parser doesn't recognize this termination, resulting in a different AST structure
    - Example test output shows mismatched nodes in the AST, particularly around where block handling differs
 
-#### Solution Approach:
+#### Key Requirement:
+The pattern `}\n` (closing brace followed by newline) MUST be treated as terminating an OpSeq in ALL contexts. This is a simpler and more consistent approach than using context-dependent handling.
+
+#### Simplified Solution Approach:
 
 To fix this discrepancy, we need to modify the V2 parser implementation:
 
-1. **Add Context Tracking:**
-   - Create a context parameter similar to V1's `newLineAfterBlockMeansEnds`
-   - Pass this context through the parsing calls
-   
-2. **Enhance Whitespace Token Handling:**
+1. **Enhance Whitespace Token Handling:**
    - Modify the `Tokenizer` to create special `NewlineWhitespace` tokens that can be distinguished from regular whitespace
    - Or enhance whitespace token analysis in the parser to detect newlines
    
-3. **Add Special Handling for `}\n` Pattern:**
-   - In the `parseExpr` and `parseBlock` methods, check if:
-     a) The current expression is a block
+2. **Add Special Handling for `}\n` Pattern:**
+   - In the `parseRest` method, check if:
+     a) The current expression is a block (or ends with a block)
      b) The next token is whitespace containing a newline
-     c) We're in a context where newlines after blocks are significant
-   - If all conditions are true, terminate the current expression parsing
+   - If both conditions are true, terminate the current expression parsing
    
-4. **Fix Pattern Matching Parsing:**
-   - Update the pattern matching case handling to properly attach blocks to their parent expressions
-   - Ensure the AST structure for case statements with blocks matches V1's output
+3. **Implement a Simple Rule:**
+   - Always terminate an OpSeq when encountering `}\n`, regardless of context
+   - This ensures consistent behavior across different constructs (match expressions, function definitions, etc.)
 
-This approach will maintain the uniform treatment of symbols while properly handling the special case of newlines after blocks, ensuring compatibility with V1 parser behavior.
+This simplified approach makes the parser behavior more predictable and consistent while resolving the compatibility issues with the V1 parser.
 
 #### Implementation Steps:
 
-1. **Create a ParsingContext class**:
-   ```scala
-   case class ParsingContext(
-     inOpSeq: Boolean = false,
-     dontAllowOpSeq: Boolean = false,
-     newLineAfterBlockMeansEnds: Boolean = false,
-     dontAllowBlockApply: Boolean = false
-   ) 
-   ```
-
-2. **Update Token.Whitespace or add Token.Newline**:
+1. **Update Token.Whitespace or add Token.Newline:**
    - Either enhance Whitespace token to track if it contains a newline
    - Or create a separate Newline token type
 
-3. **Update TokenizerV2**:
+2. **Update TokenizerV2:**
    - Modify whitespace handling to differentiate newlines from other whitespace
 
-4. **Modify LexerV2 methods**:
-   - Update `parseExpr` and related methods to accept and use the context parameter
-   - Add special handling for blocks followed by newlines in contexts where this is significant
+3. **Modify LexerV2.parseRest method:**
+   - Add a check after handling a block to detect if the next token is a newline
+   - If a block is followed by a newline, terminate the expression parsing
+   - This can be implemented by treating `}\n` similar to semicolons or other terminator tokens
 
-5. **Test incrementally**:
-   - Start with simple examples of blocks in different contexts
-   - Validate pattern matching test case specifically
+4. **Test with pattern matching expressions:**
+   - Verify the fix with the `PatternMatchingTest.match2` test case
+   - Ensure other block contexts still work correctly
 
 #### Benefits:
 - V1 and V2 parsers will produce consistent AST structures
 - Tests like `PatternMatchingTest.match2` will pass with both parsers
-- Better formalization of Chester's syntax rules regarding block termination and newlines
-- Cleaner separation between expression blocks and statement blocks in the language
+- Simpler parser logic without the need for context-dependent handling
+- More predictable parser behavior for all block expressions
 
 ## Implementation Strategy
 
