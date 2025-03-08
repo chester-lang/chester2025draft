@@ -34,7 +34,36 @@ object NaiveReducer extends Reducer {
     case _ => false
   }
 
-  def reduce(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = term match {
+  /** Helper method for proper reduction of type structures.
+    * This ensures consistent handling of types, especially for dependent type systems.
+    */
+  private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
+    term match {
+      // Handle complex type structures - recursively reduce their components
+      case Union(types, meta) =>
+        Union(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
+        
+      case Intersection(types, meta) =>
+        Intersection(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
+      
+      // Type-level function applications should be fully reduced for consistency
+      case fcall: FCallTerm if isTypeLevel(fcall) =>
+        // First reduce normally
+        val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
+        // Then check if the result needs further type structure handling
+        reduced match {
+          // If still a complex type after reduction, process it recursively
+          case Union(_, _) | Intersection(_, _) => reduceTypeStructure(reduced)
+          case _ => reduced
+        }
+        
+      // Other terms are handled by standard reduction
+      case _ => term
+    }
+  }
+  
+  /** Standard reduction logic for terms */
+  private def reduceStandard(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = term match {
     // WHNF terms - return as is
     case t: WHNF => t
 
@@ -94,6 +123,21 @@ object NaiveReducer extends Reducer {
 
     // For other cases, leave as is for now
     case other => other
+  }
+
+  def reduce(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = {
+    // First, apply standard reduction
+    val standardReduced = reduceStandard(term, mode)
+    
+    // For type-level mode, apply additional type structure handling
+    mode match {
+      case ReduceMode.TypeLevel => 
+        // In type-level mode, ensure complex type structures are properly handled
+        reduceTypeStructure(standardReduced)
+      case ReduceMode.Normal => 
+        // In normal mode, just use the standard reduction
+        standardReduced
+    }
   }
 
   // Default to normal reduction mode for backward compatibility

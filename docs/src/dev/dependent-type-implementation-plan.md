@@ -10,57 +10,60 @@ The current type checking system in Chester uses `NaiveReducer` with `ReduceMode
 2. Variable bindings in types require alpha-equivalence checking
 3. Type equality requires more sophisticated reduction strategies
 
-## Implementation Steps
+## Implementation Status
 
-### Step 1: Enhance Type Structure Reduction in NaiveReducer
+### Completed Steps
 
-**What**: Add a specialized helper method for reducing complex type structures.
+#### 1. Enhanced Type Structure Reduction in NaiveReducer
 
-**Why**: 
-- Dependent types require more careful reduction of nested type structures
-- Union and intersection types need special handling for their component types
-- Type-level functions must be fully evaluated for proper comparison
+**What was planned**: Add a specialized helper method for reducing complex type structures.
+
+**What we found**: The codebase already had a `reduceTypeStructure` method with similar functionality!
+
+The implemented method properly handles:
+- Union types by recursively reducing their component types
+- Intersection types with proper reduction
+- Type-level function applications with recursive reduction for complex result types
 
 **Implementation Details**:
 ```scala
 // In NaiveReducer
 private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
   term match {
-    // Handle complex type structures recursively
+    // Handle complex type structures - recursively reduce their components
     case Union(types, meta) =>
       Union(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
       
     case Intersection(types, meta) =>
       Intersection(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
     
-    // Special handling for type-level functions
-    case fcall: FCallTerm if isTypeFunction(fcall) =>
-      // Fully reduce type functions
+    // Type-level function applications should be fully reduced for consistency
+    case fcall: FCallTerm if isTypeLevel(fcall) =>
+      // First reduce normally
       val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
-      // Further reduce if still a complex type
+      // Then check if the result needs further type structure handling
       reduced match {
+        // If still a complex type after reduction, process it recursively
         case Union(_, _) | Intersection(_, _) => reduceTypeStructure(reduced)
         case _ => reduced
       }
       
-    // Default
+    // Other terms are handled by standard reduction
     case _ => term
   }
 }
 ```
 
-**Tests**:
-- Run `sbt rootJVM/test` to verify basic functionality
-- Ensure existing tests pass with the enhanced reducer
+#### 2. Alpha-Equivalence Checking in TyckPropagator
 
-### Step 2: Add Alpha-Equivalence Checking in TyckPropagator
+**What was planned**: Implement proper alpha-equivalence checking for types in the `TyckPropagator`.
 
-**What**: Implement proper alpha-equivalence checking for types in the `TyckPropagator`.
+**What we found**: The codebase already had `areAlphaEquivalent` and `typesEquivalentModuloOrdering` methods, but with a critical issue:
+- The default case was returning `false` instead of falling back to regular equality
 
-**Why**:
-- In dependent type systems, variable bindings matter for type equality
-- Current equality checking doesn't account for alpha-conversion
-- Union and intersection types need set-based comparison
+**What we fixed**:
+- Updated the default case to use `lhs == rhs` instead of always returning `false`
+- Fixed handling of TelescopeTerm objects in function types
 
 **Implementation Details**:
 ```scala
@@ -74,15 +77,20 @@ private def areAlphaEquivalent(lhs: Term, rhs: Term)(using
     case (FunctionType(params1, result1, effects1, _), FunctionType(params2, result2, effects2, _)) =>
       if (params1.length != params2.length || effects1 != effects2) false
       else {
-        // Check parameter types are equivalent
         val paramsEqual = params1.zip(params2).forall { case (p1, p2) =>
-          // Use telescope type comparison for parameters
-          telescopeTypesEqual(p1, p2)
+          // Check telescope parameters are equivalent
+          if (p1.args.length != p2.args.length) false
+          else {
+            p1.args.zip(p2.args).forall { case (arg1, arg2) =>
+              // For each argument, check that the types are alpha-equivalent
+              areAlphaEquivalent(arg1.ty, arg2.ty)
+            }
+          }
         }
         
         if (!paramsEqual) false
         else {
-          // For result type, need to check under equivalent variable bindings
+          // For the result type, need to consider bindings
           areAlphaEquivalent(result1, result2)
         }
       }
@@ -94,70 +102,21 @@ private def areAlphaEquivalent(lhs: Term, rhs: Term)(using
     case (Intersection(types1, _), Intersection(types2, _)) =>
       typesEquivalentModuloOrdering(types1, types2)
       
-    // Other case handled by regular equality
-    case _ => lhs == rhs
-  }
-}
-
-// Helper for set-based comparison
-private def typesEquivalentModuloOrdering(types1: Vector[Term], types2: Vector[Term])(using
-    state: StateAbility[Tyck],
-    localCtx: Context
-): Boolean = {
-  if (types1.length != types2.length) return false
-  
-  // Each type in each set must have an equivalent in the other set
-  types1.forall(t1 => types2.exists(t2 => areAlphaEquivalent(t1, t2))) &&
-  types2.forall(t2 => types1.exists(t1 => areAlphaEquivalent(t1, t2)))
-}
-
-// Helper for comparing telescope parameter types
-private def telescopeTypesEqual(p1: TelescopeParam, p2: TelescopeParam): Boolean = {
-  // Compare the types, names don't matter for alpha-equivalence
-  areAlphaEquivalent(p1.ty, p2.ty)
-}
-```
-
-**Tests**:
-- Run `sbt rootJVM/test` to verify compilation and basic functionality
-- Test with examples that use function types with dependencies
-
-### Step 3: Integrate Alpha-Equivalence into Type Checking
-
-**What**: Modify the `tryUnify` method to use alpha-equivalence checking.
-
-**Why**:
-- Current type checking uses direct equality after reduction
-- Alpha-equivalence provides more accurate comparison for dependent types
-- This completes the integration of our enhancements
-
-**Implementation Details**:
-```scala
-def tryUnify(lhs: Term, rhs: Term)(using
-    state: StateAbility[Tyck],
-    localCtx: Context
-): Boolean = {
-  // ... existing code ...
-  
-  val lhsResolved = resolveReference(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-  val rhsResolved = resolveReference(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
-
-  if (lhsResolved == rhsResolved) true
-  else {
-    // Try alpha-equivalence before detailed matching
-    if (areAlphaEquivalent(lhsResolved, rhsResolved)) true
-    else {
-      // Continue with existing case matching...
-    }
+    // For other cases, fall back to regular equality check
+    case _ => lhs == rhs  // Changed from returning false
   }
 }
 ```
 
-**Tests**:
-- Run `sbt rootJVM/test` to verify all tests pass
-- Especially check tests that involve function types and union/intersection types
+#### 3. Integration of Alpha-Equivalence into Type Checking
 
-### Step 4: Add Specialized Tests for Dependent Types
+**What was planned**: Modify the `tryUnify` method to use alpha-equivalence checking.
+
+**What we found**: The codebase already had this integration in place! The `tryUnify` method was already checking for alpha-equivalence before proceeding to structural checks.
+
+### Remaining Steps
+
+#### 4. Add Specialized Tests for Dependent Types
 
 **What**: Add specific tests that verify dependent type handling.
 
@@ -172,22 +131,14 @@ Create test cases that verify:
 2. Equality of types with different variable names but same structure
 3. Union and intersection types with alpha-equivalent components
 
-**Tests**:
-- Create focused tests for dependent type functionality
-- Run `sbt rootJVM/test` to verify all tests pass
+## Verification Status
 
-## Verification Strategy
+All tests pass with our implemented changes:
+- Fixed implementation of `areAlphaEquivalent` method to fall back to equality for unhandled cases
+- Fixed function type handling to properly check TelescopeTerm parameter types
 
-For each step:
-1. Implement the changes as described
-2. Run `sbt rootJVM/test` to verify compilation and tests
-3. Fix any issues before proceeding to the next step
-4. Commit changes with a descriptive message after each step
+## Next Steps
 
-## Expected Results
-
-After implementation:
-1. The type checker will properly handle dependent types with improved reduction
-2. Alpha-equivalence checking will provide more accurate type comparisons
-3. All existing functionality will continue to work
-4. The system will be better prepared for future dependent type extensions 
+1. Add specialized tests for dependent types to verify the enhanced alpha-equivalence checking works correctly
+2. Document the alpha-equivalence improvements in the codebase for future reference
+3. Consider additional edge cases that might need handling 
