@@ -370,15 +370,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             case Right(Token.LBrace(_)) => {
               debug("parseRest: Found lbrace after identifier")
               parseBlockWithComments(afterId).flatMap { case (block, afterBlock) =>
-                // Create a FunctionCall with the block as a tuple argument
-                val blockFunctionCall = FunctionCall(
-                  ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-                  Tuple(Vector(block), createMeta(None, None)),
-                  createMeta(Some(sourcePos), Some(sourcePos))
-                )
-                localTerms = localTerms :+ blockFunctionCall
-                debug(s"parseRest: After block function call, terms: $localTerms")
-                parseRest(blockFunctionCall, afterBlock).map { case (result, finalState) =>
+                // In V1 parser, a block after an identifier in an infix expression is treated as part of the OpSeq
+                // not as a function call argument
+                val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                localTerms = localTerms :+ id
+                localTerms = localTerms :+ block
+                debug(s"parseRest: After block in infix, terms: $localTerms")
+                parseRest(block, afterBlock).map { case (result, finalState) =>
                   // Handle the case where parseRest returns another OpSeq
                   result match {
                     case opSeq: OpSeq =>
