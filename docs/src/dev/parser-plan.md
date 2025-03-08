@@ -298,6 +298,9 @@ Legend:
   - Telescope parsing
   - Error handling consistency
   - Source position tracking
+- **Known Limitations**:
+  - **Pattern Matching Closing Block**: V2 parser currently struggles with properly handling the closing brace of pattern matching blocks. This is evident in `SimplePatternMatchingTest` which uses `parseAndCheck` instead of `parseAndCheckBoth`.
+  - **Complex Pattern Nesting**: More complex nested pattern matching constructs are not yet fully supported in V2 parser, as they require more sophisticated parsing of block termination.
 - **Implementation Plan**:
   1. Analyze test files still using `parseAndCheck` to identify semantic differences
   2. Prioritize addressing the complex operator sequence handling first
