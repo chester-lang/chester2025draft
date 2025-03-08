@@ -637,7 +637,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler213"))
-  .dependsOn(syntax, err)
+  .dependsOn(semantic)
   .settings(
     scala2Common,
     libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.3")
@@ -651,7 +651,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler"))
-  .dependsOn(utils, syntax, err)
+  .dependsOn(semantic)
   .jvmConfigure(_.dependsOn(compiler213.jvm))
   .jsConfigure(_.dependsOn(compiler213.js))
   .settings(
