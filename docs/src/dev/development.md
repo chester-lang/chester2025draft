@@ -83,6 +83,16 @@
    - [ ] Tests pass after changes
    - [ ] Changes align with existing code style
 
+5. **Post-Commit Verification**
+   - Always verify your changes after committing with `git diff HEAD^ HEAD | cat`
+   - Check the diff output carefully to ensure:
+     - No unintended changes were included
+     - All intended changes were properly committed
+     - File renames and deletions are correctly reflected
+     - No sensitive or debug code was accidentally committed
+   - Verify the commit message accurately describes the changes
+   - For complex changes involving multiple files, check each file's changes individually
+
 4. **Git Command Tips**
    - Always use `| cat` with git commands that might trigger paging:
      ```bash
