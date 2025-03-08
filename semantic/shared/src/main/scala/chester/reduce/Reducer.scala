@@ -1,6 +1,7 @@
 package chester.reduce
 
 import chester.syntax.core.*
+import chester.utils.Debug
 
 /** A reducer that can reduce terms to their normal forms.
   * 
@@ -38,27 +39,46 @@ object NaiveReducer extends Reducer {
     * This ensures consistent handling of types, especially for dependent type systems.
     */
   private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
+    import Debug.DebugCategory
+    
+    Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Processing term: $term")
+    
     term match {
-      // Handle complex type structures - recursively reduce their components
       case Union(types, meta) =>
-        Union(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
-        
-      case Intersection(types, meta) =>
-        Intersection(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Processing Union with types: $types")
+        val reducedTypes = types.map(ty => reduceTypeStructure(r.reduce(ty)))
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Reduced Union types: $reducedTypes")
+        Union(reducedTypes, meta)
       
-      // Type-level function applications should be fully reduced for consistency
+      case Intersection(types, meta) =>
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Processing Intersection with types: $types")
+        val reducedTypes = types.map(ty => reduceTypeStructure(r.reduce(ty)))
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Reduced Intersection types: $reducedTypes")
+        Intersection(reducedTypes, meta)
+      
       case fcall: FCallTerm if isTypeLevel(fcall) =>
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Processing type-level function call: $fcall")
         // First reduce normally
         val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Standard reduced result: $reduced")
+        
         // Then check if the result needs further type structure handling
         reduced match {
           // If still a complex type after reduction, process it recursively
-          case Union(_, _) | Intersection(_, _) => reduceTypeStructure(reduced)
-          case _ => reduced
+          case Union(_, _) | Intersection(_, _) => 
+            Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Further reducing complex type: $reduced")
+            val result = reduceTypeStructure(reduced)
+            Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Final result: $result")
+            result
+          case _ => 
+            Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: Final result: $reduced")
+            reduced
         }
         
       // Other terms are handled by standard reduction
-      case _ => term
+      case _ => 
+        Debug.debugPrint(DebugCategory.Reducer, s"reduceTypeStructure: No special handling for term: $term")
+        term
     }
   }
   

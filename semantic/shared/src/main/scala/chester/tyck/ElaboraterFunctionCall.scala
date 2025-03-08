@@ -4,6 +4,7 @@ import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
+import chester.utils.Debug
 
 trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunctionCall(
@@ -124,16 +125,35 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     override val zonkingCells: Set[CellIdAny] = Set(resultTy, functionCallTerm)
 
     override def run(using state: StateAbility[Tyck], ck: Tyck): Boolean = {
+      import Debug.DebugCategory
+      
+      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Processing function call with term: $functionTerm")
+      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Function type: $functionTy")
+      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Result type: $resultTy")
+      
       val readFunctionTy = state.readStable(functionTy)
+      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Read function type: $readFunctionTy")
+      
       readFunctionTy match {
         case Some(FunctionType(telescopes, retTy, _, _)) =>
+          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Matched FunctionType with telescopes: $telescopes, retTy: $retTy")
+          
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(telescopes, callings, cause)
+          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Adjusted callings: $adjustedCallings")
+          
           // Unify the result type
           unify(resultTy, retTy, cause)
+          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Unified result type")
+          
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
+          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Created function call term: $fCallTerm")
+          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: About to fill cell: $functionCallTerm")
+          
           state.fill(functionCallTerm, fCallTerm)
+          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Successfully filled function call term")
+          
           true
         case Some(Meta(id)) =>
           // If the function type is a meta variable, delay until it is known
