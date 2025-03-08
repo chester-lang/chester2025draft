@@ -210,3 +210,44 @@ def debugPrint(category: DebugCategory, message: => String): Unit = {
 4. **Better Maintainability**: Centralized definition of categories
 5. **Readability**: Clear, intention-revealing code
 6. **Extensibility**: Easier to add new debug categories in the future 
+
+## Implementation Progress
+
+### Completed Items
+
+1. **Bug Fix in UnifyFunctionCall**: ✅ Fixed
+   - Implemented the fix in `ElaboraterFunctionCall.scala` to check if the cell already has a value before filling it
+   - Added debug statements to track cell filling attempts and detect issues
+   - Tested with the modified `dependent-id-type-debug.chester.todo` test file
+
+2. **Debug Utility Improvements**: ✅ Completed
+   - Created `DebugCategory` enum in `Debug.scala`
+   - Replaced boolean flags with a Set of enabled categories
+   - Updated debug methods to use the enum
+   - Added proper enable/disable methods
+
+3. **Test Case**: ✅ Created
+   - Created a test case in `DebugTyckTest.scala` that specifically tests the bug fix
+   - Ensured the test uses the enum-based Debug API
+
+### Verification Results
+
+The fix has been tested and verified:
+- All tests now pass, including `DebugTyckTest`
+- No more `IllegalArgumentException` from `OnceCell.fill`
+- Debug output shows proper handling of potential double-fill attempts
+
+### Next Steps
+
+1. **Performance Analysis**:
+   - Measure performance impact of the fix
+   - Determine if there are opportunities for optimization
+
+2. **Documentation Updates**:
+   - Update the developer guide with information about OnceCell usage best practices
+   - Add notes about how to properly handle cell filling in propagators
+
+3. **Future Improvements**:
+   - Consider adding more debug categories for other components
+   - Investigate if similar double-filling issues might occur elsewhere in the codebase
+   - Add more comprehensive testing for dependent types 
