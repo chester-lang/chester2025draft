@@ -1,10 +1,10 @@
-# OnceCell Bug in Type-Level Function Application
+# Dependent Type System: OnceCell Bug & Improvements
 
 ## Bug Description
 
 When attempting to use a function at the type level in Chester's dependent type system, we encountered an `IllegalArgumentException` with the message "requirement failed". This occurred in the `OnceCell.fill` method at `ProvideCellId.scala:77`.
 
-## Reproduction
+### Reproduction
 
 The bug can be reproduced using the following Chester code:
 
@@ -16,7 +16,7 @@ def TypeId(T: Type): Type = T;
 let c: TypeId(Integer) = 10;
 ```
 
-## Stack Trace
+### Stack Trace
 
 The error occurs in `OnceCell.fill` with the following stack trace:
 
@@ -35,6 +35,10 @@ java.lang.IllegalArgumentException: requirement failed
     at chester.tyck.ProvideElaboraterFunctionCall$UnifyFunctionCall.run(ElaboraterFunctionCall.scala:126)
     ...
 ```
+
+## Problem Statement
+
+The `OnceCell.fill` method is being called multiple times for the same cell during type checking of dependent types. Specifically, in `UnifyFunctionCall.run`, the `functionCallTerm` cell is filled twice, resulting in an `IllegalArgumentException` with the message "requirement failed".
 
 ## Detailed Analysis
 
@@ -76,36 +80,133 @@ case fcall: FCallTerm if isTypeLevel(fcall) =>
 
 The interaction between the reducer and type checker during dependent type evaluation seems to be causing multiple processing of the same term, leading to attempts to fill the same cell twice.
 
-## Exact Bug Location
+## Investigation Findings
 
-The error occurs when:
-1. The type checker processes a type-level function like `TypeId(Integer)`
-2. During this processing, it creates a function call term and fills a cell using `state.fill(functionCallTerm, fCallTerm)`
-3. Later in the process, possibly due to recursion or multiple phases of checking, it attempts to fill the same cell again
-4. The `OnceCell.fill` method checks `require(value.isEmpty)` and fails when it finds the cell already has a value
+1. The issue occurs when processing function calls in the type checker, particularly for type-level functions.
+2. The error happens in `OnceCell.fill` at line 85 in `ProvideCellId.scala` where there's a requirement that `value.isEmpty`.
+3. Debug logs show that `UnifyFunctionCall.run` attempts to fill the same cell twice with the same value.
+4. This behavior is likely due to the reducer not properly identifying already processed cells.
 
-## Workaround
+## Fix Options
 
-Currently, type-level function applications cannot be used directly in type annotations. Value-level operations work correctly:
+We have two viable approaches:
 
-```chester
-// This works fine
-def Id(x) = x;
+### Option 1: Update OnceCell to Handle Idempotent Operations
 
-let a: Integer = 42;
-let b: Integer = Id(a);
+Modify `OnceCell.fill` to check if the new value is equal to the existing value before throwing an exception. This would make filling a cell with the same value multiple times an idempotent operation.
 
-// This also works - using the function at value level
-let c = Id(10);
+### Option 2: Fix UnifyFunctionCall to Prevent Double Filling
+
+Modify `UnifyFunctionCall.run` to check if the cell already has a value before attempting to fill it, preventing the redundant fill operation.
+
+After analysis, **Option 2** appears to be the better solution as it addresses the root cause rather than modifying the core propagator behavior.
+
+## Implementation Plan for Bug Fix
+
+1. Add debug assertions to better understand the flow in `UnifyFunctionCall.run`
+2. Modify `UnifyFunctionCall.run` to check if `functionCallTerm` already has a value
+3. If it has a value, compare with the value we're trying to set
+   - If equal, skip the fill operation
+   - If different, log a warning (this would be an unexpected situation)
+4. Create a test case that specifically tests the fix
+5. Run the full test suite to ensure no regressions
+
+### Code Changes in UnifyFunctionCall.run
+
+```scala
+// Construct the function call term with adjusted callings
+val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
+Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Created function call term: $fCallTerm")
+Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: About to fill cell: $functionCallTerm")
+
+// Check if the cell already has a value before attempting to fill it
+// This prevents the "requirement failed" exception when OnceCell.fill is called twice
+val existingValue = state.readUnstable(functionCallTerm)
+if (existingValue.isEmpty) {
+  Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell is empty, filling with: $fCallTerm")
+  state.fill(functionCallTerm, fCallTerm)
+  Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Successfully filled function call term")
+} else {
+  // The cell already has a value, check if it's the same value
+  Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell already has value: ${existingValue.get}")
+  if (existingValue.get == fCallTerm) {
+    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Values are equal, skipping redundant fill")
+  } else {
+    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: WARNING: Attempted to fill cell with different value")
+    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Existing: ${existingValue.get}")
+    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: New: $fCallTerm")
+  }
+}
 ```
 
-## Potential Fixes
+## Debug Utility Improvement Plan
 
-To address this issue, we should consider:
+To better diagnose and prevent similar issues in the future, we should also improve our debugging capabilities. The current debug utility in Chester uses string literals as category identifiers, which is error-prone and doesn't leverage Scala's type system.
 
-1. Modifying the `UnifyFunctionCall` implementation to check if a cell has already been filled before attempting to fill it again
-2. Using `MutableCell` instead of `OnceCell` for cells that might be filled multiple times during dependent type processing
-3. Implementing a more careful tracking mechanism for type-level function reductions to avoid redundant processing
-4. Enhancing the reducer's type-level function handling to properly coordinate with the type checker
+### Step 1: Define a Proper Enum for Debug Categories
 
-This issue is directly related to the integration between the `NaiveReducer` and type checking system for dependent types. Fixing it is crucial for proper support of dependent typing in Chester. 
+- Create `DebugCategory` enum in the `Debug` object
+- Replace boolean flags with a Set of enabled categories
+- Add proper enable/disable methods
+
+```scala
+enum DebugCategory {
+  case Cell     // For cell filling debug info
+  case Tyck     // For type checker debug info
+  case Reducer  // For reducer debug info
+}
+
+// Replace individual boolean flags
+var enabledCategories: Set[DebugCategory] = Set.empty
+```
+
+### Step 2: Update Debug Methods to Use the Enum
+
+- Modify `debugPrint` and `printCallStack` to accept enum values instead of strings
+- Update the category checking logic to use the enum
+
+```scala
+def debugPrint(category: DebugCategory, message: => String): Unit = {
+  if (isEnabled(category)) {
+    println(s"[DEBUG:${category}] $message")
+  }
+}
+```
+
+### Step 3: Update All Debug Call Sites
+
+- Update all existing calls to `debugPrint` and `printCallStack` to use enum values
+- Files to update:
+  - `ProvideCellId.scala`: Update OnceCell.fill method
+  - `ElaboraterFunctionCall.scala`: Update UnifyFunctionCall.run method
+  - `Reducer.scala`: Update reduceTypeStructure method
+  - Any other files using the Debug utility
+
+### Step 4: Update Tests
+
+- Update `DebugTyckTest.scala` to use the new enum-based API
+- Use `Debug.enable(DebugCategory.Cell)` instead of setting boolean flags
+
+## Success Criteria
+
+1. The test suite passes without any exceptions
+2. The specific test case for dependent types passes
+3. No double-filling of cells occurs during type checking
+4. Debug output provides clear information about type checking and cell operations
+
+## Test Strategy
+
+1. Run existing tests to establish a baseline
+2. Create a focused test case for the specific issue
+3. Run the full test suite after implementing the fix
+4. Test the debug output with the modified API
+5. Run the `DebugTyckTest` test to verify debug messages appear correctly with the enum-based approach
+
+## Expected Benefits
+
+1. **Fixed Dependent Type Handling**: Properly working type-level function applications
+2. **Type Safety in Debugging**: Compile-time checking of debug categories
+3. **Improved Developer Experience**: IDE autocompletion for category values
+4. **Better Maintainability**: Centralized definition of categories
+5. **Readability**: Clear, intention-revealing code
+6. **Extensibility**: Easier to add new debug categories in the future 
