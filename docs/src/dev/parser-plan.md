@@ -331,6 +331,35 @@ Legend:
   2. Design and implement equivalent functionality in V2
   3. Test with existing telescope tests
 
+### 4. Block Termination and Newline Significance ⚠️ PRIORITY
+- **Issue**: 
+  - V2 parser doesn't properly handle the `}\n` pattern in the same way as V1 parser
+  - This affects pattern matching blocks, function definitions, and other block expressions
+  - The key pattern `}\n` (closing brace followed by newline) should terminate expressions in specific contexts
+  - Tests like `PatternMatchingTest.match2` fail due to AST structural differences
+- **Current Implementation Differences**:
+  - V1 Parser (in `Parser.scala`) uses `newLineAfterBlockMeansEnds` flag in `ParsingContext`
+  - V1 detects block endings with `val itWasBlockEnding = p.input(index - 1) == '}'`
+  - V1 checks for newlines after blocks and changes parsing behavior accordingly
+  - V2 Parser (in `LexerV2.scala`) does not have equivalent context tracking
+  - V2 treats whitespace tokens uniformly without distinguishing significant newlines after blocks
+- **Improvement**: 
+  - Implement context-aware newline handling in V2 parser
+  - Make V2 produce the same AST structure as V1 for blocks followed by newlines
+  - Ensure both parsers handle the pattern consistently, especially in match expressions
+- **Implementation Plan**:
+  1. Add a context parameter to V2 similar to V1's `newLineAfterBlockMeansEnds`
+  2. Modify `parseBlock` and related methods to be aware of this context
+  3. Update token handling to distinguish between regular whitespace and newlines after blocks
+  4. Implement special handling for statement contexts (match expressions, etc.)
+  5. Add specific tests for the `}\n` pattern in various contexts
+  6. Ensure pattern matching blocks are handled correctly
+- **Benefits**:
+  - Consistent AST structure between V1 and V2 parsers
+  - All pattern matching tests will pass with `parseAndCheckBoth`
+  - Improved language clarity regarding block termination rules
+  - Better documentation of newline significance in Chester syntax
+
 ## Implementation Strategy
 
 1. Start with smaller, isolated improvements that don't affect the overall architecture ✅
