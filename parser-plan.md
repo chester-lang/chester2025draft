@@ -3,21 +3,22 @@
 ## Overview
 This document outlines potential improvements to the Chester parser components, specifically focusing on `Tokenizer.scala` and `LexerV2.scala`. The goal is to enhance readability, maintainability, and performance while preserving the current functionality.
 
-## ⚠️ HIGH PRIORITY: Comment Preservation
+## ✅ HIGH PRIORITY: Comment Preservation
 
-### 1. Comment Attachment in LexerV2 ⚠️ URGENT
-- **Issue**: The V2 parser currently doesn't properly preserve comments and attach them to expressions via ExprMeta.commentInfo
-- **Improvement**: Implement comment collection and attachment similar to the V1 parser (Parser.scala)
+### 1. Comment Attachment in LexerV2 ✅ COMPLETED
+- **Issue**: The V2 parser previously didn't properly preserve comments and attach them to expressions via ExprMeta.commentInfo
+- **Improvement**: Implemented comment collection and attachment similar to the V1 parser (Parser.scala)
 - **Benefits**: 
   - Preserves important documentation in the code
   - Enables proper code formatting with comments
   - Maintains semantic information that may be in comments
-- **Implementation Plan**:
-  1. Add comment collection during lexing/parsing
-  2. Create appropriate CommentInfo structures for leading and trailing comments
-  3. Attach comments to nearest expressions using ExprMeta
-  4. Ensure whitespace and newlines are handled correctly for comment attachment
-  5. Maintain compatibility with existing comment handling in V1 parser
+- **Implementation Details**:
+  1. Added comment collection methods (`collectComments`, `collectTrailingComments`)
+  2. Created appropriate CommentInfo structures for leading and trailing comments
+  3. Attached comments to expressions using ExprMeta with `createMetaWithComments`
+  4. Implemented comment-aware parsing methods (`parseAtomWithComments`, `parseBlockWithComments`, `parseListWithComments`)
+  5. Fixed whitespace token handling for proper newline detection
+  6. All 100 tests now pass, confirming compatibility with V1 parser behavior
 
 ## Tokenizer Improvements
 
@@ -86,14 +87,21 @@ This document outlines potential improvements to the Chester parser components, 
 ## Implementation Strategy
 
 1. Start with smaller, isolated improvements that don't affect the overall architecture ✅
-2. Add comprehensive tests before making significant changes
-3. Update one component fully before moving to the next
+2. Add comprehensive tests before making significant changes ✅
+3. Update one component fully before moving to the next ✅
 4. Prioritize improvements that enhance maintainability first ✅
 5. Verify each change with existing tests before proceeding to the next improvement ✅
+6. Complete high-priority features like comment preservation ✅
+7. Update documentation to reflect implementation progress ✅
 
 ## Next Steps
 
-1. Implement the high-priority comment preservation feature
-2. Create tests that verify comments are correctly preserved
-3. Document the comment attachment strategy
-4. Update any related components dependent on comment information 
+1. ✅ Implement the high-priority comment preservation feature
+2. ✅ Create tests that verify comments are correctly preserved
+3. ✅ Document the comment attachment strategy
+4. ✅ Update any related components dependent on comment information 
+5. Focus on remaining features in Phase 2 of the Implementation Plan:
+   - Complete object expressions implementation
+   - Implement telescope parsing
+   - Add source maps support
+6. Continue migration of V1-only tests to V2 
