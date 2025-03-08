@@ -288,6 +288,23 @@ trait TyckPropagator extends ElaboraterCommon {
     }
   }
 
+  /**
+   * Attempts to unify two terms without producing error messages.
+   * 
+   * This method performs type unification, which includes:
+   * 1. Regular structural equality after type-level reduction
+   * 2. Alpha-equivalence checking for terms with bound variables
+   * 3. Special handling for union and intersection types
+   * 
+   * In a dependent type system, this is crucial as it allows:
+   * - Different variable names but equivalent binding structure to be unifiable
+   * - Type-level computations to be properly reduced and compared
+   * - Complex type structures to be handled correctly
+   * 
+   * @param lhs Left-hand side term
+   * @param rhs Right-hand side term
+   * @return true if terms can be unified, false otherwise
+   */
   def tryUnify(lhs: Term, rhs: Term)(using
       state: StateAbility[Tyck],
       localCtx: Context
@@ -348,30 +365,59 @@ trait TyckPropagator extends ElaboraterCommon {
     }
   }
   
-  /** 
-   * Check alpha-equivalence of two terms.
-   * This is crucial for dependent type systems where binding structure matters.
+  /**
+   * Checks if two terms are alpha-equivalent.
+   * 
+   * Alpha-equivalence is a concept from lambda calculus that considers terms equivalent
+   * if they are identical up to consistent renaming of bound variables. This is crucial
+   * for dependent type systems where types can contain terms and binding structure matters.
+   * 
+   * Examples:
+   * - (x: Type) -> x and (y: Type) -> y are alpha-equivalent
+   * - (x: Type) -> (y: x) -> y and (a: Type) -> (b: a) -> b are alpha-equivalent
+   * 
+   * @param lhs First term to compare
+   * @param rhs Second term to compare
+   * @param boundVars Mapping between bound variables in lhs and rhs
+   * @return true if terms are alpha-equivalent, false otherwise
    */
-  private def areAlphaEquivalent(lhs: Term, rhs: Term)(using
+  private def areAlphaEquivalent(
+      lhs: Term, 
+      rhs: Term,
+      boundVars: Map[LocalV, LocalV] = Map()
+  )(using
       state: StateAbility[Tyck],
       localCtx: Context
   ): Boolean = {
     // For alpha-equivalence, we need to check if terms are convertible
     // with respect to bound variable names (alpha conversion)
     (lhs, rhs) match {
+      // Check if one term is a bound variable with a mapping to the other term
+      case (lv1: LocalV, lv2: LocalV) if boundVars.contains(lv1) =>
+        boundVars(lv1) == lv2
+        
       // For function types in a dependent type system, need to 
       // be careful with variable bindings in the result type
       case (FunctionType(params1, result1, effects1, _), FunctionType(params2, result2, effects2, _)) =>
         if (params1.length != params2.length) false
         else if (effects1 != effects2) false
         else {
+          // We need to build up a mapping between parameter variables
+          var updatedBoundVars = boundVars
+          
+          // Check that telescopes have equivalent types
           val paramsEqual = params1.zip(params2).forall { case (p1, p2) =>
             // Check telescope parameters are equivalent
             if (p1.args.length != p2.args.length) false
             else {
               p1.args.zip(p2.args).forall { case (arg1, arg2) =>
-                // For each argument, check that the types are alpha-equivalent
-                areAlphaEquivalent(arg1.ty, arg2.ty)
+                // For each argument, add the binding and check that the types are alpha-equivalent
+                val typesEqual = areAlphaEquivalent(arg1.ty, arg2.ty, updatedBoundVars)
+                
+                // Update the bound vars mapping with this parameter
+                updatedBoundVars = updatedBoundVars + (arg1.bind -> arg2.bind)
+                
+                typesEqual
               }
             }
           }
@@ -379,16 +425,16 @@ trait TyckPropagator extends ElaboraterCommon {
           if (!paramsEqual) false
           else {
             // For the result type, need to consider bindings
-            areAlphaEquivalent(result1, result2)
+            areAlphaEquivalent(result1, result2, updatedBoundVars)
           }
         }
         
       // Types with internal structure need recursive checks
       case (Union(types1, _), Union(types2, _)) =>
-        typesEquivalentModuloOrdering(types1, types2)
+        typesEquivalentModuloOrdering(types1, types2, boundVars)
         
       case (Intersection(types1, _), Intersection(types2, _)) =>
-        typesEquivalentModuloOrdering(types1, types2)
+        typesEquivalentModuloOrdering(types1, types2, boundVars)
         
       // For other cases, fall back to regular equality check
       case _ => lhs == rhs
@@ -398,8 +444,21 @@ trait TyckPropagator extends ElaboraterCommon {
   /**
    * Check if two collections of types are equivalent regardless of their ordering.
    * For union and intersection types, the order doesn't matter.
+   * 
+   * This is important for union and intersection types where:
+   * - A | B is equivalent to B | A
+   * - A & B is equivalent to B & A
+   * 
+   * @param types1 First collection of types
+   * @param types2 Second collection of types
+   * @param boundVars Mapping between bound variables
+   * @return true if collections are equivalent modulo ordering, false otherwise
    */
-  private def typesEquivalentModuloOrdering(types1: Vector[Term], types2: Vector[Term])(using
+  private def typesEquivalentModuloOrdering(
+      types1: Vector[Term], 
+      types2: Vector[Term],
+      boundVars: Map[LocalV, LocalV] = Map()
+  )(using
       state: StateAbility[Tyck],
       localCtx: Context
   ): Boolean = {
@@ -408,9 +467,9 @@ trait TyckPropagator extends ElaboraterCommon {
     if (types1.length != types2.length) return false
     
     // Check that each type in types1 has a match in types2
-    types1.forall(t1 => types2.exists(t2 => areAlphaEquivalent(t1, t2))) &&
+    types1.forall(t1 => types2.exists(t2 => areAlphaEquivalent(t1, t2, boundVars))) &&
     // Check that each type in types2 has a match in types1
-    types2.forall(t2 => types1.exists(t1 => areAlphaEquivalent(t1, t2)))
+    types2.forall(t2 => types1.exists(t1 => areAlphaEquivalent(t1, t2, boundVars)))
   }
 
   case class LiteralType(x: Literals, tyLhs: CellId[Term])(using
@@ -524,6 +583,19 @@ trait TyckPropagator extends ElaboraterCommon {
     }
   }
 
+  /**
+   * Handles field access on record types, accounting for dependent fields.
+   * 
+   * This propagator ensures that when accessing a field from a record type:
+   * 1. The field exists in the record type
+   * 2. Type-level computations in field types are properly reduced
+   * 3. Dependent fields (where the type depends on other fields) are correctly handled
+   * 
+   * @param recordTy The record type being accessed
+   * @param fieldName The name of the field being accessed
+   * @param expectedTy The expected type of the field
+   * @param cause The expression causing this check
+   */
   case class RecordFieldPropagator(
       recordTy: CellId[Term],
       fieldName: Name,
@@ -540,20 +612,30 @@ trait TyckPropagator extends ElaboraterCommon {
         case Some(Meta(id)) =>
           state.addPropagator(RecordFieldPropagator(id, fieldName, expectedTy, cause))
           true
-        case Some(RecordCallTerm(recordDef, _, _)) =>
-          recordDef.fields.find(_.name == fieldName) match {
-            case Some(fieldTerm) =>
-              unify(expectedTy, fieldTerm.ty, cause)
-              true
-            case None =>
-              val problem = FieldNotFound(fieldName, recordDef.name, cause)
+        case Some(recordType) =>
+          // Apply type-level reduction to ensure we correctly handle dependent types
+          given ReduceContext = localCtx.toReduceContext
+          given Reducer = localCtx.given_Reducer
+          val reducedRecord = NaiveReducer.reduce(recordType, ReduceMode.TypeLevel)
+          
+          reducedRecord match {
+            case RecordCallTerm(recordDef, _, _) =>
+              recordDef.fields.find(_.name == fieldName) match {
+                case Some(fieldTerm) =>
+                  // For dependent fields, we may need to further reduce the field type
+                  val fieldType = NaiveReducer.reduce(fieldTerm.ty, ReduceMode.TypeLevel)
+                  unify(expectedTy, fieldType, cause)
+                  true
+                case None =>
+                  val problem = FieldNotFound(fieldName, recordDef.name, cause)
+                  more.reporter.apply(problem)
+                  true
+              }
+            case other =>
+              val problem = NotARecordType(other, cause)
               more.reporter.apply(problem)
               true
           }
-        case Some(other) =>
-          val problem = NotARecordType(other, cause)
-          more.reporter.apply(problem)
-          true
         case None => false
       }
     }
