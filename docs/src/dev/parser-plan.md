@@ -384,6 +384,119 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - Define its behavior in terms of general operator handling
    - This keeps the parser more uniform with fewer special cases
 
+**Recommended Approach:** After evaluating the tradeoffs, the **Operator-Based Solution** provides the best balance between maintaining uniform symbol treatment and addressing the pattern matching needs. This approach aligns with Chester's core design principles while still handling the unique structure of pattern matching expressions.
+
+#### Integration with Existing Code:
+
+The proposed changes will affect several components of the current codebase:
+
+1. **Impact on Operator Precedence Resolution:**
+   - The operator-based approach will integrate with the existing precedence resolution system
+   - 'match' will be defined with a specific precedence level (lower than most operators)
+   - Existing precedence rules won't need modification, only the addition of the 'match' operator
+
+2. **Interaction with Block Parsing:**
+   - Block parsing will remain largely unchanged
+   - The association between match and its block will be handled at the operator level
+   - No special cases needed within the block parser itself
+
+#### Performance Considerations:
+
+1. **Token Differentiation Impact:**
+   - Adding Token.Newline will slightly increase token count but with negligible memory overhead
+   - Parsing performance should not be significantly affected
+   - May improve performance by reducing backtracking and error recovery needs
+
+2. **Operator-Based Solution Efficiency:**
+   - Leverages existing operator handling machinery
+   - No additional parsing passes required
+   - Consistent with current performance profile of operator parsing
+
+#### Examples:
+
+**Current Parsing Result (V1):**
+```scala
+// Input:
+notification match {
+  case Email(sender, _) => handleEmail(sender)
+  case SMS(number, _) => handleSMS(number)
+}
+
+// AST (simplified):
+OpSeq([
+  Identifier("notification"),
+  Identifier("match"),
+  Block([
+    OpSeq([Identifier("case"), FunctionCall("Email", ...), Identifier("=>"), ...]),
+    OpSeq([Identifier("case"), FunctionCall("SMS", ...), Identifier("=>"), ...])
+  ])
+])
+```
+
+**Desired V2 Parsing Result:**
+```scala
+// Same input should produce equivalent AST structure
+// The key is ensuring the block is properly associated with the match operator
+// and the case statements are properly recognized as part of the pattern matching structure
+```
+
+#### Reference Implementation Strategy:
+
+1. **Phased Approach:**
+   - First implement Token.Newline differentiation and fix expression termination
+   - Create an experimental branch to validate the operator-based approach
+   - Test with existing pattern matching tests before full integration
+   - Document findings and adjust the approach based on implementation feedback
+
+2. **Validation Criteria:**
+   - All existing tests should pass when using both parsers
+   - No special case handling based on specific identifiers
+   - Maintain uniform treatment of symbols throughout the parser
+   - Preserve semantic equivalence with V1 parser output
+
+#### Learning from Other Languages:
+
+1. **Scala's Approach:**
+   - Scala treats 'match' as a special keyword with defined precedence
+   - Pattern matching is handled as a distinct grammar construct
+   - This differs from Chester's uniform symbol treatment philosophy
+
+2. **Rust's Approach:**
+   - Rust uses match expressions with block-based syntax
+   - Parser explicitly recognizes the 'match' keyword
+   - Arms of match expressions have specific parsing rules
+   - Chester can adapt Rust's block structure handling while maintaining uniform symbol treatment
+
+#### Backward Compatibility Guarantees:
+
+1. **Parsing Output Compatibility:**
+   - The V2 parser will produce ASTs semantically equivalent to V1 for pattern matching
+   - Existing code that consumes ASTs will continue to work without modification
+   - The structure of OpSeq nodes for pattern matching will be preserved
+
+2. **What Might Change:**
+   - Internal source position information might be slightly different
+   - Comment attachment points could vary in edge cases
+   - Error messages may be more precise or different in wording
+
+#### Transition Plan:
+
+1. **For Test Code:**
+   - Gradually migrate tests from parseAndCheck to parseAndCheckBoth
+   - Document any tests that must remain on V1 parser temporarily
+   - Add specific tests for pattern matching edge cases
+
+2. **For Production Code:**
+   - The V2 parser implementation can be introduced behind a feature flag
+   - Allow both parsers to run in parallel initially for validation
+   - Collect metrics on parsing compatibility and performance
+   - Full migration only after all tests pass with both parsers
+
+3. **For Documentation:**
+   - Update parser documentation to reflect the new approach
+   - Provide migration notes for any edge cases
+   - Document the rationale behind the design decisions
+
 #### Implementation Plan:
 
 1. **Token Differentiation:**
