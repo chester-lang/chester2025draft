@@ -4,6 +4,53 @@
 
 Chester is migrating from the original `reader` implementation (V1) to a new `readerv2` (V2). This document covers both the migration status and the planned improvements to enhance readability, maintainability, and performance of the parser components.
 
+## Parser Development Guidelines
+
+### Core Principles
+
+1. **Maintain Context-Free Parsing**
+   - ALWAYS prefer context-free over context-dependent parsing approaches
+   - Avoid parser decisions that depend on the semantic meaning of tokens
+   - Use simple, uniform rules for terminating expressions (e.g., "}\n" pattern)
+   - Treat all identifiers uniformly regardless of their potential semantic meaning
+   - The parser should not try to "understand" what specific identifiers like 'match', 'if', or 'val' mean
+
+2. **Separation of Concerns**
+   - Maintain strict separation between parsing (syntax) and semantic analysis
+   - The parser only concerns itself with syntactic structure, not meaning
+   - Operator precedence, fixity, and associativity are handled in later passes, NOT in the parser
+   - Parser should produce flat OpSeq nodes without interpreting operator semantics
+   - Semantic meaning is determined by subsequent compilation phases
+
+3. **Verification Practices**
+   - Always verify parser changes with `git diff | cat` before committing
+   - After committing, use `git diff HEAD^ HEAD | cat` to double-check changes
+   - Special attention to accidental deletions of important parser logic
+   - Verify that changes maintain context-free parsing principles
+   - Test both parsers (V1 and V2) using parseAndCheckBoth where possible
+
+### Common Parser Development Pitfalls
+
+1. **Adding Context-Dependent Parsing**
+   - DON'T make parsing decisions based on identifier meanings
+   - DON'T add special cases for specific keywords or identifiers
+   - DON'T vary parsing behavior based on semantic context
+
+2. **Premature Operator Resolution**
+   - DON'T attempt to handle operator precedence within the parser
+   - DON'T transform flat OpSeq nodes into nested structures during parsing
+   - Keep operator resolution as a separate pass after parsing
+
+3. **Inconsistent Newline Handling**
+   - DON'T use different newline handling rules in different contexts
+   - DO apply the same syntactic rules for expression termination everywhere
+   - Ensure consistent behavior for "}\n" patterns regardless of surrounding code
+
+4. **Identifier Special-Casing**
+   - DON'T treat 'match', 'if', 'val', etc. as special during parsing
+   - DO treat all identifiers uniformly as plain identifiers
+   - Remember: parsing is about syntax structure, not identifier semantics
+
 ## Parser Architecture
 
 ### Syntax Design Principles
