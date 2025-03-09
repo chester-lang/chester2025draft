@@ -46,13 +46,6 @@
        - `parseAndCheck`: V1 parser only
        - `parseAndCheckBoth`: Both V1 and V2 parsers
        - `parseAndCheckV1`: Deprecated alias for parseAndCheckBoth
-     - Parser implementation principles:
-       - ALWAYS prefer context-free over context-dependent parsing approaches
-       - Apply a simple, consistent rule for terminating expressions (e.g., "}\n" pattern)
-       - Treat all identifiers uniformly regardless of their meaning (e.g., 'match', 'if', 'val')
-       - Remember that operator precedence is handled in later passes, NOT in the parser
-       - Maintain separation between parsing (syntax) and semantic analysis
-       - The parser should produce flat OpSeq nodes without interpreting operator semantics
      - Recently migrated tests:
        - Basic operator sequence tests
        - Pattern matching tests with uniform symbol treatment
@@ -90,7 +83,6 @@
    - [ ] Tests pass after changes
    - [ ] Changes align with existing code style
    - [ ] CAREFULLY check git diff output for any accidental deletions or modifications
-   - [ ] For parser changes, verify that proposed changes maintain context-free parsing principles
 
 5. **Post-Commit Verification**
    - Always verify your changes after committing with `git diff HEAD^ HEAD | cat`
