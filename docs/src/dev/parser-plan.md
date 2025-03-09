@@ -334,31 +334,18 @@ Legend:
 ### 4. Block Termination and Newline Handling in V2 Parser ⚠️ PRIORITY
 
 #### Problem Analysis:
-When examining why the pattern matching test fails with V2 parser, I identified that the V1 and V2 parsers handle the `}\n` pattern (closing brace followed by newline) differently:
+When examining why the pattern matching test fails with V2 parser, I identified several issues:
 
-1. **V1 Implementation (Parser.scala):**
-   - Uses a context parameter `newLineAfterBlockMeansEnds` in `ParsingContext` to determine when a newline after a block should terminate an expression
-   - Explicitly checks if the previous token was a closing brace: `val itWasBlockEnding = p.input(index - 1) == '}'`
-   - Changes parsing behavior based on this detection
-   - This creates different AST structures depending on whether a block is standalone or part of a larger expression
-
-2. **V2 Implementation (LexerV2.scala):**
-   - No equivalent tracking for newlines after blocks
-   - Token stream treats all whitespace (including newlines) equally
-   - No special handling for the case where a closing brace is followed by a newline
-   - Doesn't terminate OpSeq expressions when encountering `}\n`
-
-#### Implementation Challenges:
-
-1. **Tokenization vs. Parsing:**
-   - In V1, newline detection happens during parsing
-   - In V2, we need to distinguish newlines at the tokenization stage
-   - This requires adding a new token type `Token.Newline` distinct from `Token.Whitespace`
-
-2. **Context-Sensitive Parsing:**
-   - The meaning of a newline depends on context (after a block vs. elsewhere)
+1. **Newline Handling:**
+   - V1 parser has implicit newline handling that affects expression termination
+   - This is particularly important for blocks that end with `}`
    - V2 parser needs to check for `Token.Newline` after a block and terminate expressions appropriately
    - This affects the `parseRest` method in `LexerV2.scala`
+
+2. **Pattern Matching Block Structure:**
+   - Pattern matching has a unique structure: `identifier match { ... }`
+   - The V2 parser needs a general approach to handle this construct without introducing special cases
+   - The challenge is maintaining uniform handling while correctly parsing pattern matching
 
 3. **Test Compatibility:**
    - Many tests use `parseAndCheckBoth` which runs both V1 and V2 parsers
@@ -370,33 +357,64 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - This happens when trying to extract line information for error messages
    - Requires bounds checking to prevent exceptions
 
+5. **Parser Architecture Tradeoffs:**
+   - We need to balance flexibility with consistency
+   - Simple tokenization approach makes it hard to handle significant whitespace/newlines
+   - Excessive special cases make the parser harder to maintain and reason about
+
+#### Possible Approaches:
+
+1. **Token Differentiation Strategy:**
+   - Enhance tokenizer to differentiate between whitespace and newlines
+   - This allows the parser to recognize expression boundaries better
+   - Requires minimal special-casing in the parser
+
+2. **Contextual Parsing:**
+   - Use context information to parse expressions differently in different situations
+   - For pattern matching, recognize the context and adjust parsing rules
+   - More complex but avoids hardcoded special cases
+
+3. **Enhanced Block Parsing:**
+   - Modify block parsing to handle different types of blocks in a more general way
+   - Use structural information rather than keyword recognition
+   - This approach maintains parser consistency while handling pattern matching
+
+4. **Operator-Based Solution:**
+   - Treat 'match' as a special operator with unique precedence rules
+   - Define its behavior in terms of general operator handling
+   - This keeps the parser more uniform with fewer special cases
+
 #### Implementation Plan:
 
 1. **Token Differentiation:**
    - Add `Token.Newline` class in `Token.scala` to distinguish newlines from other whitespace
-   - Modify `Tokenizer.skipWhitespace()` to generate `Token.Newline` tokens
+   - Modify tokenizer to generate `Token.Newline` tokens with `handleWhitespace()`
 
 2. **Expression Termination:**
    - Update `LexerV2.parseRest()` to check for `Token.Newline` after blocks
-   - Add condition: `case Right(Token.Newline(_)) if isBlockExpression(expr) => ...`
-   - Terminate expression parsing when this pattern is detected
+   - Add condition to handle expression termination at block boundaries
+   - Use structural patterns rather than keyword checks
 
-3. **Error Handling Improvements:**
+3. **Operator-Based Pattern Matching:**
+   - Implement pattern matching as a specialized operator sequence
+   - Use general operator handling facilities with appropriate precedence rules
+   - This maintains parser uniformity while handling the pattern matching structure
+
+4. **Error Handling Improvements:**
    - Add bounds checking in `parseAndCheck.scala` to prevent `StringIndexOutOfBoundsException`
    - Ensure safe substring extraction for error messages
 
-4. **Testing Strategy:**
-   - Fix the core newline handling in V2 parser
+5. **Testing Strategy:**
+   - Fix the core expression termination in V2 parser
    - Ensure pattern matching tests pass with both parsers
    - Gradually migrate more tests to use `parseAndCheckBoth`
 
-#### Progress:
-- ✅ Added `Token.Newline` class in `Token.scala`
-- ✅ Modified tokenizer to generate `Token.Newline` tokens
-- ✅ Updated `LexerV2.parseRest()` to check for newlines after blocks
-- ✅ Fixed bounds checking in error reporting
-- ✅ Verified pattern matching tests pass with V1 parser
-- ⏳ Ensuring all tests pass with both parsers
+#### Current Status:
+- Need to implement newline token handling
+- Need to enhance operator-based approach for pattern matching
+- Need to improve error reporting with bounds checking
+- Pattern matching test runs with V1 parser but fails with V2
+- More work needed on general parsing of pattern matching without special cases
 
 ## Implementation Strategy
 
