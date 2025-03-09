@@ -100,22 +100,80 @@ private def areAlphaEquivalent(lhs: Term, rhs: Term)(using state: StateAbility[T
 
 ## 3. Remaining Issues and Implementation Plan
 
-### 3.1 Unimplemented Intersection Type Case
+### 3.1 Unimplemented Union Type Subtyping
 
-In `TyckPropagator.scala` (line 334), there's an unimplemented case for intersection types:
+In `Elaborater.scala` (line 91), there's an unimplemented case for union type subtyping:
 ```scala
-case (Intersection(_, _), Intersection(_, _)) => ???
+case (Union(_, _), Union(_, _)) => ???
 ```
 
 **Proposed Implementation**:
 ```scala
-case (Intersection(types1, _), Intersection(types2, _)) =>
-  // For intersection types to be compatible, each type from the second intersection
-  // must be compatible with at least one type from the first intersection
-  types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+case (Union(types1, _), Union(types2, _)) => 
+  // For union-to-union subtyping, every type in the first union
+  // must be a subtype of the second union type as a whole
+  types1.foreach { t1 =>
+    if (!types2.exists(t2 => tryUnify(t1, t2))) {
+      ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      return
+    }
+  }
 ```
 
-### 3.2 Enhanced Reducer and Type Checking Integration
+**Implementation Plan**:
+1. Implement the union-to-union subtyping case
+2. Verify existing tests pass
+3. Test with `union-subtype.chester.todo` file
+4. Rename test file to remove `.todo` suffix when passing
+
+**Success Criteria**:
+- All tests including union subtyping pass
+- File `union-subtype.chester` type checks correctly 
+
+### 3.2 Union Type Subtyping Implementation
+
+The implementation of union type subtyping in Chester requires careful integration with the propagator network. Our ongoing work has identified these key improvements needed:
+
+#### 3.2.1 Current Challenges
+
+The current implementation faces the following challenges:
+
+1. **Propagator Coverage Issue**: When handling union types, cells occasionally lack proper propagator coverage, resulting in the error:
+   ```
+   java.lang.IllegalStateException: Cells are not covered by any propagator
+   ```
+
+2. **Missing Bidirectional Connections**: The implementation needs to ensure bidirectional connections between union types and their components.
+
+3. **Proper Cell Retrieval**: Care must be taken to use the correct API (`toId()`) to retrieve cell IDs from terms.
+
+#### 3.2.2 Proposed Implementation Approach
+
+1. **Utilize Existing Propagators**: Leverage the `UnionOf` propagator specifically designed for union types:
+   ```scala
+   // For each union component
+   unionTypeIds.foreach { componentId => 
+     state.addPropagator(UnionOf(targetTypeId, unionComponentIds, cause))
+   }
+   ```
+
+2. **Ensure Bidirectional Connections**: For union-to-union subtyping, create connections in both directions:
+   - Connect left union components to right union
+   - Connect right union components to left union
+
+3. **Handle Edge Cases**:
+   - Empty union components (ensure lists are non-empty)
+   - Specific-to-union connections with compatibility checks
+   - Union-to-specific connections with all components validation
+
+4. **Comprehensive Testing**: Ensure all tests in `union-subtype.chester` pass, covering:
+   - Function parameters accepting union types
+   - Function returns with union types
+   - Direct union type assignments
+
+By implementing these improvements, Chester will have full support for union type subtyping while ensuring the propagator network remains consistent and properly connected.
+
+### 3.3 Enhanced Reducer and Type Checking Integration
 
 The interaction between `NaiveReducer` and the type checking system needs improvement to better handle dependent types:
 

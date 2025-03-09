@@ -39,6 +39,44 @@ The propagator network is a key component of Chester's type checking system. It 
    - Special cases for:
      - Meta variables
      - Union types
+     - Intersection types
+
+### 3. Union Type Subtyping
+
+Chester supports union types (`A|B`) with a sophisticated subtyping relationship managed by the propagator network. The subtyping rules are implemented in the `unify` method in `Elaborater.scala`.
+
+#### Union Subtyping Rules
+
+1. **Union-to-Union Subtyping**: `(A|B) <: (C|D)`
+   - For each type in the right union, at least one type in the left union must accept it
+   - Implemented by creating propagator connections between compatible component types
+   - The `UnionOf` propagator ensures that cells are properly covered
+
+2. **Specific-to-Union Subtyping**: `A <: (B|C)`
+   - A specific type can be used where a union is expected if it's compatible with any union member
+   - This is especially important for function parameters, where providing a more specific type should work
+   - Example: Passing an `Integer` to a function expecting `Integer|String`
+
+3. **Union-to-Specific Subtyping**: `(A|B) <: C`
+   - A union can be assigned to a specific type if all union members are compatible with that type
+   - This is critical for function returns, where returning a union type should work if all components are compatible
+   - Example: Returning an `Integer|Float` from a function that promises to return `Number`
+
+#### Implementation Details
+
+The union subtyping implementation uses two key propagators:
+
+1. **Unify Propagator**: Creates a direct connection between types
+   ```scala
+   state.addPropagator(Unify(toId(lhs), toId(rhs), cause))
+   ```
+
+2. **UnionOf Propagator**: Handles the relationship between a type and a collection of types
+   ```scala
+   state.addPropagator(UnionOf(targetType, unionComponentTypes, cause))
+   ```
+
+These propagators work together to ensure that all cells in the type graph are properly covered by at least one propagator, which is essential for the propagator network to function correctly.
      - List types
      - Record types
 
