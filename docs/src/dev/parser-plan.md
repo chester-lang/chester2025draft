@@ -380,25 +380,36 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - This approach maintains parser consistency while handling pattern matching
 
 4. **Operator-Based Solution:**
-   - Treat 'match' as a special operator with unique precedence rules
-   - Define its behavior in terms of general operator handling
-   - This keeps the parser more uniform with fewer special cases
+   - Treat 'match' as an identifier like any other in the parsing phase
+   - Parser produces a flat OpSeq without any special treatment for 'match'
+   - No precedence or operator special handling occurs in the parser
+   - All semantic meaning, including 'match' behavior, is determined in later passes
+   - This maintains the strict separation of parsing from semantic analysis
 
-**Recommended Approach:** After evaluating the tradeoffs, the **Operator-Based Solution** provides the best balance between maintaining uniform symbol treatment and addressing the pattern matching needs. This approach aligns with Chester's core design principles while still handling the unique structure of pattern matching expressions.
+5. **Whitespace with Newline Flag:**
+   - Instead of creating a separate `Token.Newline` class, enhance `Token.Whitespace` with a boolean flag
+   - Add a `canActAsNewline` flag to indicate if this whitespace contains characters that can terminate expressions
+   - This simplifies tokenization while still providing the necessary information to the parser
+   - Reduces token type proliferation and maintains a cleaner token hierarchy
+   - Parser can check `token.isWhitespace && token.canActAsNewline` when making termination decisions
+   - Avoids the overhead of creating a completely new token type while gaining the same benefits
+
+**Recommended Approach:** After evaluating the tradeoffs, the **Whitespace with Newline Flag** approach for newline detection combined with the standard operator sequence handling provides the best balance. This approach maintains Chester's core design principles of uniform symbol treatment and strict separation of parsing from operator semantics.
 
 #### Integration with Existing Code:
 
 The proposed changes will affect several components of the current codebase:
 
-1. **Impact on Operator Precedence Resolution:**
-   - The operator-based approach will integrate with the existing precedence resolution system
-   - 'match' will be defined with a specific precedence level (lower than most operators)
-   - Existing precedence rules won't need modification, only the addition of the 'match' operator
+1. **Consistency with Operator Handling:**
+   - The parser will continue to treat all symbols uniformly, including 'match'
+   - No special precedence rules will be added in the parser itself
+   - Pattern matching will be represented as a standard OpSeq in the AST
+   - Any special handling of 'match' will occur in subsequent passes, not in the parser
 
 2. **Interaction with Block Parsing:**
-   - Block parsing will remain largely unchanged
-   - The association between match and its block will be handled at the operator level
-   - No special cases needed within the block parser itself
+   - Block parsing will remain unchanged
+   - The parser will create a standard OpSeq structure for match expressions
+   - Semantic analysis of pattern matching occurs after parsing, not during
 
 #### Performance Considerations:
 
@@ -435,24 +446,33 @@ OpSeq([
 
 **Desired V2 Parsing Result:**
 ```scala
-// Same input should produce equivalent AST structure
-// The key is ensuring the block is properly associated with the match operator
-// and the case statements are properly recognized as part of the pattern matching structure
+// Same input should produce identical AST structure with flat OpSeq
+// The parser has no knowledge of what 'match' means - it's just an identifier
+// Structure interpretation happens in later passes, not during parsing
+OpSeq([
+  Identifier("notification"),
+  Identifier("match"),
+  Block([
+    OpSeq([Identifier("case"), FunctionCall("Email", ...), Identifier("=>"), ...]),
+    OpSeq([Identifier("case"), FunctionCall("SMS", ...), Identifier("=>"), ...])
+  ])
+])
 ```
 
 #### Reference Implementation Strategy:
 
 1. **Phased Approach:**
-   - First implement Token.Newline differentiation and fix expression termination
-   - Create an experimental branch to validate the operator-based approach
-   - Test with existing pattern matching tests before full integration
-   - Document findings and adjust the approach based on implementation feedback
+   - First implement the whitespace enhancement with newline flag
+   - Ensure the parser treats 'match' just like any other identifier
+   - Verify match expressions produce standard OpSeq nodes
+   - Test with existing pattern matching tests to ensure correct AST structure
 
 2. **Validation Criteria:**
    - All existing tests should pass when using both parsers
-   - No special case handling based on specific identifiers
+   - Parser should produce identical AST structures for both V1 and V2
+   - No special handling for any identifiers including 'match' in the parser
    - Maintain uniform treatment of symbols throughout the parser
-   - Preserve semantic equivalence with V1 parser output
+   - Preserve strict separation between parsing and semantic analysis
 
 #### Learning from Other Languages:
 
@@ -499,19 +519,21 @@ OpSeq([
 
 #### Implementation Plan:
 
-1. **Token Differentiation:**
-   - Add `Token.Newline` class in `Token.scala` to distinguish newlines from other whitespace
-   - Modify tokenizer to generate `Token.Newline` tokens with `handleWhitespace()`
+1. **Whitespace Enhancement:**
+   - Enhance `Token.Whitespace` with a `canActAsNewline` flag
+   - Modify tokenizer to set this flag appropriately when encountering newline characters
+   - Keep token handling simple and uniform
 
 2. **Expression Termination:**
-   - Update `LexerV2.parseRest()` to check for `Token.Newline` after blocks
+   - Update `LexerV2.parseRest()` to check for whitespace with newline flag after blocks
    - Add condition to handle expression termination at block boundaries
-   - Use structural patterns rather than keyword checks
+   - Use structural patterns for termination decisions, not keyword-based checks
 
-3. **Operator-Based Pattern Matching:**
-   - Implement pattern matching as a specialized operator sequence
-   - Use general operator handling facilities with appropriate precedence rules
-   - This maintains parser uniformity while handling the pattern matching structure
+3. **Uniform Operator Sequence Handling:**
+   - Maintain the flat OpSeq production for all expressions including pattern matching
+   - Ensure the parser has no special knowledge of the 'match' identifier
+   - Preserve the strict separation between parsing and semantic analysis
+   - Let later passes handle pattern matching semantics
 
 4. **Error Handling Improvements:**
    - Add bounds checking in `parseAndCheck.scala` to prevent `StringIndexOutOfBoundsException`
