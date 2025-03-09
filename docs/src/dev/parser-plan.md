@@ -11,7 +11,7 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
 1. **Maintain Context-Free Parsing**
    - ALWAYS prefer context-free over context-dependent parsing approaches
    - Avoid parser decisions that depend on the semantic meaning of tokens
-   - Use simple, uniform rules for terminating expressions (e.g., "}\n" pattern)
+   - Use simple, uniform rules for terminating expressions (e.g., `}\n` pattern)
    - Treat all identifiers uniformly regardless of their potential semantic meaning
    - The parser should not try to "understand" what specific identifiers like 'match', 'if', or 'val' mean
 
@@ -45,7 +45,7 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
 3. **Inconsistent Newline Handling**
    - DON'T use different newline handling rules in different contexts
    - DO apply the same syntactic rules for expression termination everywhere
-   - Ensure consistent behavior for "}\n" patterns regardless of surrounding code
+   - Ensure consistent behavior for `}\n` patterns regardless of surrounding code
 
 4. **Identifier Special-Casing**
    - DON'T treat 'match', 'if', 'val', etc. as special during parsing
@@ -107,7 +107,7 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
        def factorial(n) {
          if n <= 1 then 1
          else n * factorial(n - 1)
-       } // <- newline here ends the function definition
+       }  // <- newline here ends the function definition
        
        val result = factorial(5); // Next statement
        ```
@@ -117,9 +117,9 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
          case Email(sender, _) => {
            println(sender);
            "Email received"
-         } // <- block for this case
+         }  // <- block for this case
          case SMS(number, _) => "SMS received";
-       } // <- newline here ends the match expression
+       }  // <- newline here ends the match expression
        
        println(result); // Next statement
        ```
@@ -410,12 +410,12 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - Simple tokenization approach makes it hard to handle significant whitespace/newlines
    - Excessive special cases make the parser harder to maintain and reason about
    - **Context-free parsing is strongly preferred over context-dependent approaches**
-   - A simple, uniform rule (like always ending an OpSeq when seeing "}\n") is better than complex contextual rules
+   - A simple, uniform rule (like always ending an OpSeq when seeing `}\n`) is better than complex contextual rules
 
 #### Possible Approaches:
 
 1. **Context-Free Newline Handling (PREFERRED):**
-   - Always end OpSeq expression when encountering "}\n" (closing brace followed by newline)
+   - Always end OpSeq expression when encountering `}\n` (closing brace followed by newline)
    - Apply this rule uniformly regardless of surrounding context
    - Uniform treatment of all block terminations without special cases
    - No need to track or analyze the meaning of identifiers like "match"
@@ -451,9 +451,9 @@ When examining why the pattern matching test fails with V2 parser, I identified 
 2. Preserves strict separation of parsing from semantic analysis
 3. Applies a consistent rule for all block terminations without special cases
 4. Avoids context-dependent parsing which is harder to maintain
-5. Treats "}\n" as a syntactic boundary in all contexts, which is simpler and more predictable
+5. Treats `}\n` as a syntactic boundary in all contexts, which is simpler and more predictable
 
-The parser should simply terminate an OpSeq when encountering a "}\n" pattern, regardless of what identifiers (like "match") may be present in the sequence. This maintains the context-free nature of the parser and avoids the complexity of context-dependent rules.
+The parser should simply terminate an OpSeq when encountering a `}\n` pattern, regardless of what identifiers (like "match") may be present in the sequence. This maintains the context-free nature of the parser and avoids the complexity of context-dependent rules.
 
 #### Integration with Existing Code:
 
@@ -584,7 +584,7 @@ OpSeq([
    - Keep token handling simple and uniform
 
 2. **Context-Free Expression Termination:**
-   - Update `LexerV2.parseRest()` to implement simple "}\n" termination rule
+   - Update `LexerV2.parseRest()` to implement simple `}\n` termination rule
    - Add condition: `if (previousToken == "}" && currentToken.isWhitespace && currentToken.canActAsNewline)`
    - Always terminate OpSeq when this pattern is encountered, regardless of context
    - No special cases or context-dependent decisions

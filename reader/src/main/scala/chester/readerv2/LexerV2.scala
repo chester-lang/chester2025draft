@@ -203,6 +203,48 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       var localTerms = Vector(expr)
       
       debug(s"parseRest called with expr: $expr, state: $state, current terms: $localTerms")
+      
+      // Helper method to check if we have a "}\n" pattern
+      // (Previous token was RBrace and current is whitespace containing newline)
+      def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+        // First, we need to check if we've just processed a RBrace token
+        // (i.e., if the current expression is a block)
+        expr match {
+          case block: Block => {
+            // Now we need to check if the current token is whitespace containing a newline
+            state.current match {
+              case Right(whitespaceToken: Token.Whitespace) => {
+                // Check if there's a newline in the source
+                val startPos = whitespaceToken.sourcePos.range.start.index.utf16
+                val endPos = whitespaceToken.sourcePos.range.end.index.utf16
+                
+                val maybeSource = sourceOffset.readContent.toOption
+                maybeSource.exists { source =>
+                  if (startPos < source.length && endPos <= source.length) {
+                    val whitespaceText = source.substring(startPos, endPos)
+                    val hasNewline = whitespaceText.contains('\n')
+                    if (hasNewline) {
+                      debug("parseRest: Found }\n pattern - block followed by whitespace with newline")
+                    }
+                    hasNewline
+                  } else {
+                    false
+                  }
+                }
+              }
+              case _ => false
+            }
+          }
+          case _ => false
+        }
+      }
+      
+      // Check for }\n pattern - a block followed by whitespace with a newline
+      if (checkForRBraceNewlinePattern(state)) {
+        debug("parseRest: Terminating expression due to }\n pattern")
+        return buildOpSeq(localTerms).map(result => (result, state))
+      }
+      
       // Collect comments but don't attach them yet
       val (restComments, current) = collectComments(state)
       current.current match {
@@ -919,7 +961,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               val (_, afterSemi) = collectComments(blockCurrent.advance())
               blockCurrent = afterSemi
             }
-            case Right(Token.Whitespace(_)) => {
+            case Right(Token.Whitespace(_, _)) => {
               // Collect comments instead of skipping
               val (_, afterWs) = collectComments(blockCurrent.advance())
               blockCurrent = afterWs
@@ -936,7 +978,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                       blockCurrent = next.advance()
                       return Right((Block(statements, result, None), blockCurrent))
                     }
-                    case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_)) => {
+                    case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_, _)) => {
                       // Add the expression to statements for all but the last one
                       statements = statements :+ expr
                       // Collect comments after statement
@@ -1005,7 +1047,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                                         keySourcePos.range.start))
               }
             }
-            checkAfterField()
+            checkAfterField() match {
+              case Right(_) => // Continue
+              case Left(err) => return Left(err)
+            }
           }
         }
 
@@ -1140,7 +1185,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               val (_, afterComma) = collectComments(current.advance())
               current = afterComma
             }
-            case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_)) => {
+            case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) => {
               // Collect comments
               val (_, afterComments) = collectComments(current)
               current = afterComments
@@ -1258,7 +1303,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           )
           comments = comments :+ comment
           current = current.advance()
-        case Right(Token.Whitespace(_)) =>
+        case Right(Token.Whitespace(_, _)) =>
           // In Whitespace tokens, we don't have the actual text content
           // Just advance the token - we'll hit another token eventually
           current = current.advance()
@@ -1298,7 +1343,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           )
           comments = comments :+ comment
           current = current.advance()
-        case Right(Token.Whitespace(_)) =>
+        case Right(Token.Whitespace(_, _)) =>
           // In Whitespace tokens, we don't have the actual text content
           // Just assume any whitespace might contain a newline and stop collecting
           hitNewline = true
