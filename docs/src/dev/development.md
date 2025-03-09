@@ -83,6 +83,12 @@
    - [ ] Tests pass after changes
    - [ ] Changes align with existing code style
    - [ ] CAREFULLY check git diff output for any accidental deletions or modifications
+     ```bash
+     # Before committing, always check:
+     git diff | cat
+     ```
+   - [ ] Pay special attention to accidental deletions of important logic
+   - [ ] Verify no unrelated changes were included
 
 5. **Post-Commit Verification**
    - Always verify your changes after committing with `git diff HEAD^ HEAD | cat`
@@ -91,6 +97,7 @@
      - All intended changes were properly committed
      - File renames and deletions are correctly reflected
      - No sensitive or debug code was accidentally committed
+     - No accidental deletions of important logic
    - Verify the commit message accurately describes the changes
    - For complex changes involving multiple files, check each file's changes individually
 

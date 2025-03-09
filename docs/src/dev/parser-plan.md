@@ -23,11 +23,12 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
    - Semantic meaning is determined by subsequent compilation phases
 
 3. **Verification Practices**
-   - Always verify parser changes with `git diff | cat` before committing
-   - After committing, use `git diff HEAD^ HEAD | cat` to double-check changes
-   - Special attention to accidental deletions of important parser logic
-   - Verify that changes maintain context-free parsing principles
-   - Test both parsers (V1 and V2) using parseAndCheckBoth where possible
+   - Follow the git verification practices from development.md
+   - For parser changes specifically:
+     - Verify that changes maintain context-free parsing principles
+     - Check that uniform symbol treatment is preserved
+     - Ensure no special handling for specific identifiers was introduced
+     - Test both parsers (V1 and V2) using parseAndCheckBoth where possible
 
 ### Common Parser Development Pitfalls
 
