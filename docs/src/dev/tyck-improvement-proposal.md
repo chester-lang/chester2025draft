@@ -177,50 +177,6 @@ def verifyPropagatorCoverage(cells: Vector[CIdOf[Cell[?]]]) = {
 }
 ```
 
-### 3.5 Bug Fix for OnceCell in Type-Level Functions
-
-A critical bug occurs in `UnifyFunctionCall.run` when the `functionCallTerm` cell is filled twice for the same function call term. This issue manifests as an `IllegalArgumentException` with the message "requirement failed" when processing type-level functions.
-
-**Root Cause**: 
-- `OnceCell` is designed to only be filled once, with a requirement check: `require(value.isEmpty)`.
-- During the evaluation of type-level function applications, the type checking system attempts to fill the same cell multiple times.
-- This happens due to the interaction between the reducer and type checker during dependent type evaluation.
-
-**Solution Implemented**:
-```scala
-// Construct the function call term with adjusted callings
-val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
-Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Created function call term: $fCallTerm")
-Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: About to fill cell: $functionCallTerm")
-
-// Check if the cell already has a value before attempting to fill it
-val existingValue = state.readUnstable(functionCallTerm)
-if (existingValue.isEmpty) {
-  Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell is empty, filling with: $fCallTerm")
-  state.fill(functionCallTerm, fCallTerm)
-  Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Successfully filled function call term")
-} else {
-  // The cell already has a value, check if it's the same value
-  Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell already has value: ${existingValue.get}")
-  if (existingValue.get == fCallTerm) {
-    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Values are equal, skipping redundant fill")
-  } else {
-    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: WARNING: Attempted to fill cell with different value")
-    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Existing: ${existingValue.get}")
-    Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: New: $fCallTerm")
-  }
-}
-```
-
-**Verification**:
-- The fix has been tested with both simple test cases (`dependent-id-type-debug.chester`) and more complex real-world scenarios (`type-level-reduction.chester`).
-- All tests now pass, confirming that our fix successfully addresses the OnceCell bug.
-- No more `IllegalArgumentException` from `OnceCell.fill` occurs during type checking.
-
-**Key Design Principle**: 
-- Always check if a cell already has a value before attempting to fill it.
-- This prevents redundant fill operations without modifying the core propagator behavior.
-
 ## 4. Testing Strategy
 
 ### 4.1 Create Specialized Tests for Dependent Types
@@ -280,7 +236,6 @@ test("complex union type hierarchy resolves") {
 ### 5.1 Phase 1: Core Type System Improvements
 - [x] Document current type system architecture
 - [ ] Implement intersection type unification case
-- [ ] Fix the OnceCell bug in `UnifyFunctionCall.run`
 - [ ] Add test cases for dependent types and intersection types
 - [ ] Verify implementation with existing tests
 
@@ -323,6 +278,5 @@ test("complex union type hierarchy resolves") {
    - Intersection type comparisons
    - Union type subtyping
    - Type-level function applications
-3. No double-filling of cells occurs during type checking
-4. Documentation clearly explains dependent type concepts and usage patterns
-5. Meta variables in complex types resolve correctly 
+3. Documentation clearly explains dependent type concepts and usage patterns
+4. Meta variables in complex types resolve correctly 
