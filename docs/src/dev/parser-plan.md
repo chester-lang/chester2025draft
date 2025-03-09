@@ -361,32 +361,24 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - We need to balance flexibility with consistency
    - Simple tokenization approach makes it hard to handle significant whitespace/newlines
    - Excessive special cases make the parser harder to maintain and reason about
+   - **Context-free parsing is strongly preferred over context-dependent approaches**
+   - A simple, uniform rule (like always ending an OpSeq when seeing "}\n") is better than complex contextual rules
 
 #### Possible Approaches:
 
-1. **Token Differentiation Strategy:**
+1. **Context-Free Newline Handling (PREFERRED):**
+   - Always end OpSeq expression when encountering "}\n" (closing brace followed by newline)
+   - Apply this rule uniformly regardless of surrounding context
+   - Uniform treatment of all block terminations without special cases
+   - No need to track or analyze the meaning of identifiers like "match"
+   - Simple, predictable parsing behavior that aligns with Chester's design principles
+
+2. **Token Differentiation Strategy:**
    - Enhance tokenizer to differentiate between whitespace and newlines
    - This allows the parser to recognize expression boundaries better
    - Requires minimal special-casing in the parser
 
-2. **Contextual Parsing:**
-   - Use context information to parse expressions differently in different situations
-   - For pattern matching, recognize the context and adjust parsing rules
-   - More complex but avoids hardcoded special cases
-
-3. **Enhanced Block Parsing:**
-   - Modify block parsing to handle different types of blocks in a more general way
-   - Use structural information rather than keyword recognition
-   - This approach maintains parser consistency while handling pattern matching
-
-4. **Operator-Based Solution:**
-   - Treat 'match' as an identifier like any other in the parsing phase
-   - Parser produces a flat OpSeq without any special treatment for 'match'
-   - No precedence or operator special handling occurs in the parser
-   - All semantic meaning, including 'match' behavior, is determined in later passes
-   - This maintains the strict separation of parsing from semantic analysis
-
-5. **Whitespace with Newline Flag:**
+3. **Whitespace with Newline Flag:**
    - Instead of creating a separate `Token.Newline` class, enhance `Token.Whitespace` with a boolean flag
    - Add a `canActAsNewline` flag to indicate if this whitespace contains characters that can terminate expressions
    - This simplifies tokenization while still providing the necessary information to the parser
@@ -394,7 +386,26 @@ When examining why the pattern matching test fails with V2 parser, I identified 
    - Parser can check `token.isWhitespace && token.canActAsNewline` when making termination decisions
    - Avoids the overhead of creating a completely new token type while gaining the same benefits
 
-**Recommended Approach:** After evaluating the tradeoffs, the **Whitespace with Newline Flag** approach for newline detection combined with the standard operator sequence handling provides the best balance. This approach maintains Chester's core design principles of uniform symbol treatment and strict separation of parsing from operator semantics.
+4. **Enhanced Block Parsing:**
+   - Modify block parsing to handle different types of blocks in a more general way
+   - Use structural information rather than keyword recognition
+   - This approach maintains parser consistency while handling pattern matching
+
+5. **Contextual Parsing (LEAST PREFERRED):**
+   - Use context information to parse expressions differently in different situations
+   - For pattern matching, recognize the context and adjust parsing rules
+   - More complex and violates the preference for context-free parsing
+   - Harder to maintain and reason about
+
+**Recommended Approach:** The **Context-Free Newline Handling** approach combined with the **Whitespace with Newline Flag** provides the simplest and most maintainable solution. This approach:
+
+1. Maintains Chester's core design principles of uniform symbol treatment
+2. Preserves strict separation of parsing from semantic analysis
+3. Applies a consistent rule for all block terminations without special cases
+4. Avoids context-dependent parsing which is harder to maintain
+5. Treats "}\n" as a syntactic boundary in all contexts, which is simpler and more predictable
+
+The parser should simply terminate an OpSeq when encountering a "}\n" pattern, regardless of what identifiers (like "match") may be present in the sequence. This maintains the context-free nature of the parser and avoids the complexity of context-dependent rules.
 
 #### Integration with Existing Code:
 
@@ -524,15 +535,17 @@ OpSeq([
    - Modify tokenizer to set this flag appropriately when encountering newline characters
    - Keep token handling simple and uniform
 
-2. **Expression Termination:**
-   - Update `LexerV2.parseRest()` to check for whitespace with newline flag after blocks
-   - Add condition to handle expression termination at block boundaries
-   - Use structural patterns for termination decisions, not keyword-based checks
+2. **Context-Free Expression Termination:**
+   - Update `LexerV2.parseRest()` to implement simple "}\n" termination rule
+   - Add condition: `if (previousToken == "}" && currentToken.isWhitespace && currentToken.canActAsNewline)`
+   - Always terminate OpSeq when this pattern is encountered, regardless of context
+   - No special cases or context-dependent decisions
+   - Consistent rule application across all expressions
 
-3. **Uniform Operator Sequence Handling:**
+3. **Uniform Symbol Treatment:**
    - Maintain the flat OpSeq production for all expressions including pattern matching
-   - Ensure the parser has no special knowledge of the 'match' identifier
-   - Preserve the strict separation between parsing and semantic analysis
+   - No special handling for any identifiers (including 'match')
+   - Apply termination rules based purely on token patterns, not semantic meaning
    - Let later passes handle pattern matching semantics
 
 4. **Error Handling Improvements:**
@@ -540,8 +553,8 @@ OpSeq([
    - Ensure safe substring extraction for error messages
 
 5. **Testing Strategy:**
-   - Fix the core expression termination in V2 parser
-   - Ensure pattern matching tests pass with both parsers
+   - Fix the core expression termination in V2 parser using the context-free approach
+   - Verify pattern matching tests pass with both parsers
    - Gradually migrate more tests to use `parseAndCheckBoth`
 
 #### Current Status:
