@@ -2,6 +2,7 @@
 - [Chester](README.md)
 - [Record Syntax in Chester](Record.md)
 - [Chester Development Documentation](dev/README.md)
+    - [Development Quick Reference](dev/dev.md)
     - [Development Memo](dev/development.md)
     - [Parser Migration Status](dev/parser-migration.md)
     - [Propagator Network Implementation](dev/propagator-network.md)
