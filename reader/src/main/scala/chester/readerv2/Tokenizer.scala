@@ -47,7 +47,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       }
       
       // Cache the result
-      utf16PosCache.put(bytePos, utf16Pos)
+      utf16PosCache.put(bytePos, utf16Pos): Unit
       utf16Pos
     }
   }
@@ -79,7 +79,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       if (!utf16PosCache.containsKey(newPos) && utf16PosCache.containsKey(pos)) {
         val currentUtf16 = utf16PosCache.get(pos)
         val incrementalUtf16 = currentUtf16 + source.substring(pos, newPos).getCodePoints.size
-        utf16PosCache.put(newPos, incrementalUtf16)
+        utf16PosCache.put(newPos, incrementalUtf16): Unit
       }
     }
     
@@ -174,11 +174,13 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
 
   private def skipWhitespace(): Unit = {
     val startPos = pos
+    var hasNewline = false
     
     while (pos < source.length && source(pos).isWhitespace) {
       if (source(pos) == '\n') {
         line += 1
         col = 0
+        hasNewline = true
       } else {
         col += 1
       }
@@ -191,7 +193,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]
       if (!utf16PosCache.containsKey(pos) && utf16PosCache.containsKey(startPos)) {
         val startUtf16 = utf16PosCache.get(startPos)
         val incrementalUtf16 = startUtf16 + source.substring(startPos, pos).getCodePoints.size
-        utf16PosCache.put(pos, incrementalUtf16)
+        utf16PosCache.put(pos, incrementalUtf16): Unit
       }
     }
   }
