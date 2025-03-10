@@ -64,16 +64,37 @@ case class StmtExpr(expr: Expr)
 
 case class LexerState(
     tokens: Vector[Either[ParseError, Token]],
-    index: Int
+    index: Int,
+    previousToken: Option[Token] = None
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
-  def advance(): LexerState = LexerState(tokens, index + 1)
+  def advance(): LexerState = current match {
+    case Right(token) => LexerState(tokens, index + 1, Some(token))
+    case Left(_) => LexerState(tokens, index + 1, previousToken)
+  }
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
     case Right(t)  => t.sourcePos
   }
-  override def toString: String = s"LexerState(index=$index, current=$current, remaining=${tokens.length - index} tokens)"
+  
+  // Helper method to check if we're after a closing brace
+  def isAfterClosingBrace: Boolean = previousToken match {
+    case Some(_: Token.RBrace) => true
+    case _ => false
+  }
+  
+  // Helper method to check if current token is a newline
+  def isAtNewline: Boolean = current match {
+    case Right(Token.Whitespace(_, hasNewline)) => hasNewline
+    case Right(Token.EOF(_)) => true // EOF also counts as a terminator
+    case _ => false
+  }
+  
+  // Helper method to detect the closing brace followed by newline pattern
+  def isAtClosingBraceNewlinePattern: Boolean = isAfterClosingBrace && isAtNewline
+  
+  override def toString: String = s"LexerState(index=$index, current=$current, previousToken=$previousToken, remaining=${tokens.length - index} tokens)"
 }
 
 object LexerV2 {

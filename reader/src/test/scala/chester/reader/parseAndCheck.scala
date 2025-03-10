@@ -43,6 +43,63 @@ def parseAndCheckV0(input: String, expected: Expr): Unit = {
 @deprecated("Use parseAndCheckBoth instead")
 def parseAndCheckV1(input: String, expected: Expr): Unit = parseAndCheckBoth(input, expected)
 
+// Only runs against V2 parser
+def parseAndCheckV2(input: String, expected: Expr): Unit = {
+  val source = FileNameAndContent("testFile", input)
+  given reporter: Reporter[ParseError] = new Reporter[ParseError] {
+    def apply(error: ParseError): Unit = {
+      val errorIndex = error.pos.index.utf16
+      val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+      val lineEnd = input.indexOf('\n', errorIndex) match {
+        case -1 => input.length
+        case n  => n
+      }
+      val line = input.substring(lineStart, lineEnd)
+      val pointer = " " * (errorIndex - lineStart) + "^"
+
+      fail(s"""Tokenizer error: ${error.message}
+           |At position ${error.pos}:
+           |$line
+           |$pointer""".stripMargin)
+    }
+  }
+
+  val sourceOffset = SourceOffset(source)
+  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
+  val tokens = tokenizer.tokenize()
+  val oldDebug = LexerV2.DEBUG
+  try {
+    // LexerV2.DEBUG = true // uncomment when needed
+    val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
+
+    val result = lexer
+      .parseExpr(LexerState(tokens.toVector, 0))
+      .fold(
+        error => {
+          val errorIndex = error.pos.index.utf16
+          val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+          val lineEnd = input.indexOf('\n', errorIndex) match {
+            case -1 => input.length
+            case n  => n
+          }
+          val line = input.substring(lineStart, lineEnd)
+          val pointer = " " * (errorIndex - lineStart) + "^"
+
+          fail(s"""V2 Parsing failed for input: $input
+               |Error: ${error.message}
+               |At position ${error.pos}:
+               |$line
+               |$pointer""".stripMargin)
+        },
+        { case (expr, _) => expr }
+      )
+
+    assertEquals(result, expected, s"Failed for input: $input")
+  } finally {
+    LexerV2.DEBUG = oldDebug
+  }
+}
+
 // Runs against both V1 and V2 parsers
 def parseAndCheckBoth(input: String, expected: Expr): Unit = {
   // Check old implementation first

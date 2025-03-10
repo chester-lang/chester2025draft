@@ -612,6 +612,66 @@ OpSeq([
 - Pattern matching test runs with V1 parser but fails with V2
 - More work needed on general parsing of pattern matching without special cases
 
+## Known Issues and Solutions
+
+### The `}\n` Pattern Problem
+
+The Chester parser treats the `}\n` pattern (closing brace followed by newline) as a significant syntax element for terminating expressions in specific contexts. This pattern plays a crucial role in:
+
+1. **Function/Method Definitions**
+   ```
+   def factorial(n) {
+     if n <= 1 then 1
+     else n * factorial(n - 1)
+   }  // <- newline here ends the function definition
+   
+   val result = factorial(5); // Next statement
+   ```
+
+2. **Match Expressions**
+   ```
+   val result = notification match {
+     case Email(sender, _) => {
+       println(sender);
+       "Email received" 
+     }  // <- block for this case
+     case SMS(number, _) => "SMS received";
+   }  // <- newline here ends the match expression
+   
+   println(result); // Next statement
+   ```
+
+#### Current Implementation Issues
+
+In the V2 parser:
+1. The `parseBlock` method in `LexerV2.scala` recognizes the closing brace (`RBrace`) as terminating a block but doesn't consider what follows it (newline or not)
+2. This causes inconsistencies between V1 and V2 parsers in how expressions are terminated
+3. The V1 parser considers what comes after the closing brace, but the V2 parser currently doesn't
+
+#### Proposed Solution
+
+To address this issue while maintaining context-free parsing principles:
+
+1. **Extend Token State Tracking**
+   - Modify the `LexerState` to track if the previous token was a `RBrace`
+   - Add a helper method like `isAfterClosingBrace()` to check this state
+
+2. **Update Expression Termination Logic**
+   - In key expression parsing methods, check for the `}\n` pattern by testing if:
+     - Previous token was `RBrace`
+     - Current token is `Whitespace` containing a newline or is `EOF`
+   - This check should be made in both the `parseExpr` and `parseExprList` methods
+
+3. **Ensure Uniform Treatment**
+   - Apply the same termination rules consistently across all expression contexts
+   - This maintains the context-free parsing principle while addressing the termination issue
+
+4. **Add Test Cases**
+   - Create specific test cases for the `}\n` pattern in different contexts
+   - Verify that both parsers (V1 and V2) handle the pattern identically
+
+This solution preserves the uniform symbol treatment principle while ensuring that the `}\n` pattern is properly handled as a syntactic terminator where appropriate.
+
 ## Implementation Strategy
 
 1. Start with smaller, isolated improvements that don't affect the overall architecture ✅
