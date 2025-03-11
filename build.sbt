@@ -515,9 +515,9 @@ lazy val utils = useSpire(
       commonLibSettings,
       baseDeps,
       libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "2.6.0-18-2329c7-SNAPSHOT",
-        "io.github.iltotore" %%% "iron-cats" % "2.6.0-18-2329c7-SNAPSHOT",
-        "io.github.iltotore" %%% "iron-upickle" % "2.6.0-18-2329c7-SNAPSHOT" exclude ("com.lihaoyi", "upickle_3")
+        "io.github.iltotore" %%% "iron" % "3.0.0-RC1",
+        "io.github.iltotore" %%% "iron-cats" % "3.0.0-RC1",
+        "io.github.iltotore" %%% "iron-upickle" % "3.0.0-RC1" exclude ("com.lihaoyi", "upickle_3")
       ),
       libraryDependencies ++= Seq(
         "org.scala-graph" %%% "graph-core" % "2.0.2"
