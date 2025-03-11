@@ -7,7 +7,6 @@
     - [Development Log](dev/devlog.md)
     - [Effect System Implementation Plan](dev/effects-implementation-plan.md)
     - [Effect System Design](dev/effects-system.md)
-    - [Documentation Enhancement Plan](dev/enhancement-plan.md)
     - [Chester Implementation Status](dev/implementation-status.md)
     - [Chester Parser Architecture and Improvement Plan](dev/parser-plan.md)
     - [Comprehensive Type System Improvement Proposal](dev/tyck-improvement-proposal.md)
