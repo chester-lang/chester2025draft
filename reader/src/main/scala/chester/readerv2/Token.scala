@@ -4,7 +4,7 @@ import chester.error.SourcePos
 
 case class StringChar(text: String, sourcePos: SourcePos)
 
-sealed trait Token {
+sealed trait Token extends Product with Serializable {
   def sourcePos: SourcePos
   def isWhitespace: Boolean = false
   def isComment: Boolean = false

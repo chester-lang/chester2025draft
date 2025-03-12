@@ -105,15 +105,13 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     if (ignoreLocation) {
       None
     } else {
-      (startPos, endPos) match {
+      PartialFunction.condOpt((startPos, endPos)) {
         case (Some(start), Some(end)) =>
-          Some(ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None))
+          ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None)
         case (Some(pos), _) =>
-          Some(ExprMeta(Some(pos), None))
+          ExprMeta(Some(pos), None)
         case (_, Some(pos)) =>
-          Some(ExprMeta(Some(pos), None))
-        case _ =>
-          None
+          ExprMeta(Some(pos), None)
       }
     }
   }
@@ -186,11 +184,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
       } else {
         // Create OpSeq with the leading comments
-        val opSeqMeta = if (leadingComments.nonEmpty) {
-          Some(createMetaWithComments(None, leadingComments).get)
-        } else {
-          None
-        }
+        val opSeqMeta = Option.when(leadingComments.nonEmpty)(createMetaWithComments(None, leadingComments).get)
         Right(OpSeq(terms, opSeqMeta))
       }
     }
@@ -909,35 +903,28 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               val tupleMeta = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
                 val meta = createMeta(Some(sourcePos), Some(afterList.sourcePos))
                 meta.map { m =>
-                  val commentInfo = (leadingComments.nonEmpty, trailingComments.nonEmpty) match {
+                  val commentInfo = PartialFunction.condOpt((leadingComments.nonEmpty, trailingComments.nonEmpty)) {
                     case (true, true) =>
-                      Some(
-                        chester.syntax.concrete.CommentInfo(
+                      chester.syntax.concrete.CommentInfo(
                           commentBefore = leadingComments,
                           commentInBegin = Vector.empty,
                           commentInEnd = Vector.empty,
                           commentEndInThisLine = trailingComments
                         )
-                      )
                     case (true, false) =>
-                      Some(
-                        chester.syntax.concrete.CommentInfo(
+                      chester.syntax.concrete.CommentInfo(
                           commentBefore = leadingComments,
                           commentInBegin = Vector.empty,
                           commentInEnd = Vector.empty,
                           commentEndInThisLine = Vector.empty
                         )
-                      )
                     case (false, true) =>
-                      Some(
-                        chester.syntax.concrete.CommentInfo(
+                      chester.syntax.concrete.CommentInfo(
                           commentBefore = Vector.empty,
                           commentInBegin = Vector.empty,
                           commentInEnd = Vector.empty,
                           commentEndInThisLine = trailingComments
                         )
-                      )
-                    case _ => None
                   }
 
                   ExprMeta(m.sourcePos, commentInfo)
@@ -1141,18 +1128,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               val meta = createMeta(Some(sourcePos), Some(endPos))
               meta.map { m =>
                 val allLeadingComments = leadingComments ++ afterBraceComments
-                val commentInfo = if (allLeadingComments.nonEmpty) {
-                  Some(
-                    chester.syntax.concrete.CommentInfo(
+                val commentInfo = Option.when(allLeadingComments.nonEmpty)(chester.syntax.concrete.CommentInfo(
                       commentBefore = allLeadingComments,
                       commentInBegin = Vector.empty,
                       commentInEnd = Vector.empty,
                       commentEndInThisLine = Vector.empty
-                    )
-                  )
-                } else {
-                  None
-                }
+                    ))
 
                 ExprMeta(m.sourcePos, commentInfo)
               }
@@ -1191,15 +1172,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 val meta = createMeta(Some(sourcePos), Some(endPos))
                 meta.map { m =>
                   val allLeadingComments = leadingComments ++ afterBracketComments
-                  val commentInfo = if (allLeadingComments.nonEmpty) {
-                    Some(
-                      chester.syntax.concrete.CommentInfo(
+                  val commentInfo = Option.when(allLeadingComments.nonEmpty)(chester.syntax.concrete.CommentInfo(
                         commentBefore = allLeadingComments
-                      )
-                    )
-                  } else {
-                    None
-                  }
+                      ))
 
                   ExprMeta(m.sourcePos, commentInfo)
                 }
@@ -1398,16 +1373,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     if (sourcePos.isEmpty && leadingComments.isEmpty && trailingComments.isEmpty) {
       None
     } else {
-      val commentInfo = if (leadingComments.isEmpty && trailingComments.isEmpty) {
-        None
-      } else {
-        Some(
-          chester.syntax.concrete.CommentInfo(
+      val commentInfo = Option.unless(leadingComments.isEmpty && trailingComments.isEmpty)(chester.syntax.concrete.CommentInfo(
             commentBefore = leadingComments,
             commentEndInThisLine = trailingComments
-          )
-        )
-      }
+          ))
       Some(ExprMeta(sourcePos, commentInfo))
     }
   }

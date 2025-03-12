@@ -154,11 +154,7 @@ case class DefaultInfixDefinitions(
     val firstCharOption = name.headOption
     firstCharOption
       .flatMap { firstChar =>
-        if (prefixes.contains(firstChar)) {
-          Some(Prefix(name))
-        } else {
-          None
-        }
+        Option.when(prefixes.contains(firstChar))(Prefix(name))
       }
       .orElse(prefixOperators.get(name))
   }
@@ -167,11 +163,7 @@ case class DefaultInfixDefinitions(
     val firstCharOption = name.headOption
     firstCharOption
       .flatMap { firstChar =>
-        if (postfixes.contains(firstChar)) {
-          Some(Postfix(name))
-        } else {
-          None
-        }
+        Option.when(postfixes.contains(firstChar))(Postfix(name))
       }
       .orElse(postfixOperators.get(name))
   }

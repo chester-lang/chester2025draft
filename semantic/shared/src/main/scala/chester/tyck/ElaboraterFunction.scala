@@ -134,14 +134,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
     // Collect function calls within the term
     val functionCalls = collectFunctionCalls(term)
 
-    functionNameOpt match {
-      case Some(functionName) =>
-        // If the function calls itself, consider it potentially non-terminating
-        !functionCalls.contains(functionName)
-      case None =>
-        // Cannot determine the function name; assume it terminates
-        true
-    }
+    functionNameOpt.forall(functionName => !functionCalls.contains(functionName))
   }
 
   // Helper function to collect function call names from a Term using inspectRecursive

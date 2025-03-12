@@ -591,7 +591,7 @@ case class BlockStatement(
     meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using PrettierOptions): Doc = {
-    val bodyDoc = Doc.concat(body.map(stmt => stmt.toDoc <> Doc.line))
+    val bodyDoc = Doc.concat(body.map(_.toDoc <> Doc.line))
     Doc.text("{") <> Doc.indent(Doc.line <> bodyDoc) <> Doc.line <> Doc.text("}")
   }
 }
@@ -662,7 +662,7 @@ case class ForInStatement(
     body: Statement,
     meta: Option[Meta] = None
 ) extends Statement {
-  def leftDoc(using PrettierOptions): Doc = left.fold(varDecl => varDecl.toDoc, expr => expr.toDoc)
+  def leftDoc(using PrettierOptions): Doc = left.fold(_.toDoc, _.toDoc)
   def toDoc(using PrettierOptions): Doc = Doc.text("for (") <> leftDoc <> Doc.text(" in ") <> right.toDoc <> Doc.text(")") <+> body.toDoc
 }
 
@@ -673,7 +673,7 @@ case class ForOfStatement(
     await: Boolean = false,
     meta: Option[Meta] = None
 ) extends Statement {
-  def leftDoc(using PrettierOptions): Doc = left.fold(varDecl => varDecl.toDoc, expr => expr.toDoc)
+  def leftDoc(using PrettierOptions): Doc = left.fold(_.toDoc, _.toDoc)
   def awaitDoc(using PrettierOptions): Doc = if (await) Doc.text("await") <+> Doc.empty else Doc.empty
   def toDoc(using PrettierOptions): Doc =
     Doc.text("for") <+> awaitDoc <> Doc.text("(") <> leftDoc <> Doc.text(" of ") <> right.toDoc <> Doc.text(")") <+> body.toDoc
@@ -700,7 +700,7 @@ case class SwitchCase(
       case Some(expr) => Doc.text("case ") <> expr.toDoc <> Doc.text(":")
       case None       => Doc.text("default:")
     }
-    val consDoc = Doc.concat(consequent.map(stmt => stmt.toDoc <> Doc.line))
+    val consDoc = Doc.concat(consequent.map(_.toDoc <> Doc.line))
     testDoc <> Doc.indent(Doc.line <> consDoc)
   }
 }
@@ -845,7 +845,7 @@ case class StaticBlock(
     meta: Option[Meta] = None
 ) extends ClassElement {
   def toDoc(using PrettierOptions): Doc = {
-    val bodyDoc = Doc.concat(body.map(stmt => stmt.toDoc <> Doc.line))
+    val bodyDoc = Doc.concat(body.map(_.toDoc <> Doc.line))
     Doc.text("static {") <> Doc.indent(Doc.line <> bodyDoc) <> Doc.line <> Doc.text("}")
   }
 }

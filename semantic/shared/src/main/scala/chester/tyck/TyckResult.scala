@@ -42,9 +42,7 @@ object TyckResult {
     def unapply[S, T](
         x: TyckResult[S, T]
     ): Option[(T, S, Vector[TyckWarning])] = {
-      if (x.errorsEmpty)
-        Some((x.result, x.state, x.problems.asInstanceOf[Vector[TyckWarning]]))
-      else None
+      Option.when(x.errorsEmpty)((x.result, x.state, x.problems.asInstanceOf[Vector[TyckWarning]]))
     }
   }
 
@@ -52,18 +50,14 @@ object TyckResult {
     def unapply[S, T](
         x: TyckResult[S, T]
     ): Option[(Vector[TyckError], Vector[TyckWarning], S, T)] = {
-      if (!x.errorsEmpty)
-        Some(
-          (
+      Option.when(!x.errorsEmpty)((
             x.problems
               .collect { case e: TyckError => e },
             x.problems
               .collect { case w: TyckWarning => w },
             x.state,
             x.result
-          )
-        )
-      else None
+          ))
     }
   }
 }

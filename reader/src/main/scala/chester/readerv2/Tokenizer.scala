@@ -15,12 +15,12 @@ import scala.util.Try
 type TokenStream = LazyList[Either[ParseError, Token]]
 
 object Tokenizer {
-  def apply(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]): Tokenizer = {
+  def apply(sourceOffset: SourceOffset)(using  Reporter[ParseError]): Tokenizer = {
     new Tokenizer(sourceOffset)
   }
 }
 
-class Tokenizer(sourceOffset: SourceOffset)(using reporter: Reporter[ParseError]) {
+class Tokenizer(sourceOffset: SourceOffset)(using  Reporter[ParseError]) {
   private val source = sourceOffset.readContent.getOrElse("")
   private var pos: Int = 0
   private var line: Int = 0

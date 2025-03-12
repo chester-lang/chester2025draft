@@ -106,10 +106,9 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
         )
 
       val sourceLines = sourceReader(pos)
-        .map { lines =>
-          lines.map { case (lineNumber, line) =>
+        .map { _.map({ case (lineNumber, line) =>
             Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
-          }
+          })
         }
         .getOrElse(Vector.empty)
 
@@ -136,10 +135,10 @@ case class SourceReader(readSource: SourcePos => Option[Vector[(Int, String)]]) 
 
 object SourceReader {
   def fromFileContent(content: FileContent): SourceReader = {
-    SourceReader { pos => pos.getLinesInRange }
+    SourceReader { _.getLinesInRange }
   }
 
-  def default: SourceReader = SourceReader { pos => pos.getLinesInRange }
+  def default: SourceReader = SourceReader { _.getLinesInRange }
 
   def empty: SourceReader = SourceReader(_ => None)
 }

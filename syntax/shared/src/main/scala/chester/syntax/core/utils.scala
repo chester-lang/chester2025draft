@@ -15,9 +15,8 @@ def UnitType(meta: OptionTermMeta): TupleType =
   TupleType(Vector.empty, meta = meta)
 
 object UnitTerm_ {
-  def unapply(x: Any): Option[OptionTermMeta] = x match {
-    case TupleTerm(Vector(), meta) => Some(meta)
-    case _                         => None
+  def unapply(x: Any): Option[OptionTermMeta] = PartialFunction.condOpt(x) {
+    case TupleTerm(Vector(), meta) => meta
   }
 
   def apply(meta: OptionTermMeta): TupleTerm =
@@ -30,10 +29,9 @@ object AbstractIntTerm_ {
     if (value.isValidInt) IntTerm(value.toInt, meta)
     else IntegerTerm(value, meta)
 
-  def unapply(term: Term): Option[BigInt] = term match {
-    case IntTerm(value, _)     => Some(BigInt(value))
-    case IntegerTerm(value, _) => Some(value)
-    case _                     => None
+  def unapply(term: Term): Option[BigInt] = PartialFunction.condOpt(term) {
+    case IntTerm(value, _)     => BigInt(value)
+    case IntegerTerm(value, _) => value
   }
 }
 

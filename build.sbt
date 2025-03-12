@@ -84,7 +84,7 @@ val scalafixRules = Seq(
   "RemoveUselessParamComments",
   "RepeatedRewrite",
   "ReplaceFill",
-  "ReplacePlaceholder",
+  //"ReplacePlaceholder",
   "ReplaceSymbolLiterals",
   "ReuseInstances",
   "SameParamOverloading",
@@ -114,7 +114,7 @@ val scalafixRules = Seq(
   "UsingParamAnonymousConstructor",
   "WithFilter",
   "WithLeftWithRight"
-).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.0") ++ Seq(
+).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.2") ++ Seq(
   "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.8",
   "dependency:NonCaseException@net.pixiv:scalafix-pixiv-rule:4.5.3",
   "dependency:NeedMessageExtendsRuntimeException@net.pixiv:scalafix-pixiv-rule:4.5.3",

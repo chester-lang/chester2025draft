@@ -15,7 +15,7 @@ case class TyAndVal(
     value: Term
 ) {}
 
-object TyAndVal {}
+
 
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
@@ -25,7 +25,7 @@ case class ContextItem(
     ty: Term,
     reference: Option[SymbolCollector] = None
 )
-object ContextItem {}
+
 case class Imports()
 
 object Imports {
@@ -101,4 +101,4 @@ case class Context(
   given Reducer = NaiveReducer
 }
 
-object Context {}
+

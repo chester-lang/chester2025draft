@@ -13,10 +13,7 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
     def rec(x: CellId[Term], default: Term)(using
         state: StateAbility[Tyck]
     ): Term = {
-      state.readStable(x) match {
-        case Some(x) => x
-        case None    => default
-      }
+      state.readStable(x).getOrElse(default)
     }
 
     def apply[T <: Term](x: CellId[T])(using state: StateAbility[Tyck]): T | MetaTerm = {
