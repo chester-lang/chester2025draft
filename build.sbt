@@ -180,7 +180,7 @@ val defaultNativeImageOptions = Seq(
 val classVersion =
   java.lang.Float.parseFloat(System.getProperty("java.class.version"))
 val jdk17ClassVersion = 61.0f
-val jdk17: Boolean = false /* because of -java-output-version 8 */
+val jdk17: Boolean = false /* because of -java-output-version 11 */
 // classVersion >= jdk17ClassVersion
 
 dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
