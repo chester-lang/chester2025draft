@@ -288,20 +288,20 @@ case class NotImplementedFeature(message: String, cause: Expr) extends TyckError
 case class CannotAddEffectError(effect: Term) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Cannot add effect ${effect.toDoc} to this context"
-    
+
   override def cause: Term | Expr = effect
 }
 
 case class UnauthorizedEffectError(effect: Term, functionTerm: Term) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Function ${functionTerm.toDoc} uses effect ${effect.toDoc} but doesn't declare it"
-    
+
   override def cause: Term | Expr = functionTerm
 }
 
 case class MissingEffectHandlerError(effect: Term) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Effect ${effect.toDoc} is used but not handled in the current scope"
-    
+
   override def cause: Term | Expr = effect
 }

@@ -5,9 +5,10 @@ import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.syntax.Name
-import chester.uniqid.{Uniqid, UniqidOf}
+import chester.uniqid.Uniqid
 import chester.utils.*
 import chester.utils.propagator.*
+
 import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
@@ -20,29 +21,31 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     )(using ck: Tyck, state: StateAbility[Tyck]): LocalV = {
       // Check if this effect already exists in the cell
       val currentEffects = this.readUnstable.map(_.effects).getOrElse(Map.empty)
-      
+
       // Try to find an existing entry for this effect
-      val existingKey = currentEffects.find { case (_, existingEffect) => 
-        // Simple equality check for now
-        existingEffect == effect
-      }.map(_._1)
-      
+      val existingKey = currentEffects
+        .find { case (_, existingEffect) =>
+          // Simple equality check for now
+          existingEffect == effect
+        }
+        .map(_._1)
+
       // Return existing key or create a new one
       existingKey.getOrElse {
         // Create a new key for this effect with proper type
         val id = Uniqid.generate[LocalV]
-        val newKey = LocalV(Name("effect"), AnyType0, id, None) 
-        
+        val newKey = LocalV(Name("effect"), AnyType0, id, None)
+
         // Add the effect to the cell
         this match {
-          case cell: DynamicEffectsCell => 
+          case cell: DynamicEffectsCell =>
             val updatedCell = cell.add(newKey, effect)
             state.fill(this.asInstanceOf[CellId[Effects]], updatedCell.asInstanceOf[Effects])
-          case _ => 
+          case _ =>
             // For other cell types, we may need different handling
             ck.reporter(CannotAddEffectError(effect))
         }
-        
+
         newKey
       }
     }
@@ -132,7 +135,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
               case Some(tyAndVal) =>
                 state.readStable(tyAndVal.valueId) match {
                   case Some(value) => result = value
-                  case None => break(result)
+                  case None        => break(result)
                 }
               case None => break(result)
             }
@@ -155,7 +158,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
               case Some(tyAndVal) =>
                 state.readStable(tyAndVal.valueId) match {
                   case Some(value) => result = value
-                  case None => break(result)
+                  case None        => break(result)
                 }
               case None => break(result)
             }

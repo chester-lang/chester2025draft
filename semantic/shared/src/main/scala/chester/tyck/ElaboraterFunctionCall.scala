@@ -126,50 +126,50 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     override def run(using state: StateAbility[Tyck], ck: Tyck): Boolean = {
       import Debug.DebugCategory
-      
+
       Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Processing function call with term: $functionTerm")
       Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Function type: $functionTy")
       Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Result type: $resultTy")
-      
+
       val readFunctionTy = state.readStable(functionTy)
       Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Read function type: $readFunctionTy")
-      
+
       readFunctionTy match {
         case Some(FunctionType(telescopes, retTy, _, _)) =>
           Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Matched FunctionType with telescopes: $telescopes, retTy: $retTy")
-          
+
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(telescopes, callings, cause)
           Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Adjusted callings: $adjustedCallings")
-          
+
           // Unify the result type
           unify(resultTy, retTy, cause)
-          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Unified result type")
-          
+          Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: Unified result type")
+
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
           Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Created function call term: $fCallTerm")
           Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: About to fill cell: $functionCallTerm")
-          
+
           // Check if the cell already has a value before attempting to fill it
           // This prevents the "requirement failed" exception when OnceCell.fill is called twice
           val existingValue = state.readUnstable(functionCallTerm)
           if (existingValue.isEmpty) {
             Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell is empty, filling with: $fCallTerm")
             state.fill(functionCallTerm, fCallTerm)
-            Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Successfully filled function call term")
+            Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: Successfully filled function call term")
           } else {
             // The cell already has a value, check if it's the same value
             Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell already has value: ${existingValue.get}")
             if (existingValue.get == fCallTerm) {
-              Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Values are equal, skipping redundant fill")
+              Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: Values are equal, skipping redundant fill")
             } else {
-              Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: WARNING: Attempted to fill cell with different value")
+              Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: WARNING: Attempted to fill cell with different value")
               Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Existing: ${existingValue.get}")
               Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: New: $fCallTerm")
             }
           }
-          
+
           true
         case Some(Meta(id)) =>
           // If the function type is a meta variable, delay until it is known

@@ -5,7 +5,6 @@ import chester.utils.given
 import chester.utils.impls.*
 import upickle.default.*
 import cats.data.*
-import chester.error.Problem
 import chester.syntax.*
 import chester.syntax.core.spec.spec.*
 import chester.uniqid.*

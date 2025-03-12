@@ -8,7 +8,6 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
-import chester.utils.propagator.*
 
 import scala.language.implicitConversions
 
@@ -58,7 +57,6 @@ object ElaboraterBlock {
 }
 
 trait ElaboraterBlock { this: ElaboraterBase & ElaboraterCommon =>
-  import ElaboraterBlock.*
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
       localCtx: Context,

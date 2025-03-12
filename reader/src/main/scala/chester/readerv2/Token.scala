@@ -28,7 +28,7 @@ object Token {
   case class Dot(sourcePos: SourcePos) extends Token
   case class At(sourcePos: SourcePos) extends Token
   case class EOF(sourcePos: SourcePos) extends Token
-  case class Whitespace(sourcePos: SourcePos, hasNewline: Boolean = false) extends Token { 
+  case class Whitespace(sourcePos: SourcePos, hasNewline: Boolean = false) extends Token {
     override def isWhitespace = true
     override def containsNewline = hasNewline
   }
