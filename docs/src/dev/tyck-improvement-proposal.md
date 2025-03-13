@@ -119,7 +119,7 @@ case (Type(level1, _), Type(level2, _)) =>
   }
 ```
 
-This improvement is particularly important for dependent types where the level of a type needs to vary based on its usage context.
+This improvement is particularly important for dependent types where the level of a type needs to vary based on its usage context. The directional compatibility (finite → unrestricted but not vice versa) ensures type safety while providing increased flexibility when working with dependent types of different levels. This change aligns with the type-checking-system.md document, which emphasizes the importance of maintaining type safety while allowing for flexibility in dependent types.
 
 ## 3. Remaining Issues and Implementation Plan
 
@@ -390,6 +390,7 @@ test("complex union type hierarchy resolves") {
   // Test code
 }
 
+```
 ## 5. Implementation Steps
 
 ### 5.1 Phase 1: Core Type System Improvements
