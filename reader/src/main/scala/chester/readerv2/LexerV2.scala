@@ -77,6 +77,9 @@ object LexerV2 {
 
   // Keep DEBUG flag for tests that use it
   var DEBUG = false
+  
+  // Constants for parser configuration
+  val MAX_LIST_ELEMENTS = 50
 }
 
 class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean) {
@@ -367,7 +370,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 // If the result is an OpSeq, merge with our current terms
                 result match {
                   case opSeq: OpSeq =>
-                    // Remove the last term (which was passed to recursive call) to avoid duplication
+                    // If it's already an OpSeq, we need to merge with our current terms
                     val mergedTerms = localTerms.dropRight(1) ++ opSeq.seq
                     (OpSeq(mergedTerms, None), finalState)
                   case _ =>
@@ -790,7 +793,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     val (leadingListComments, initialState) = collectComments(state)
     var current = initialState
     var exprs = Vector.empty[Expr]
-    var maxExprs = 50
+    var maxExprs = LexerV2.MAX_LIST_ELEMENTS
 
     while (exprs.length < maxExprs) {
       debug(s"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${current.current}")
@@ -882,7 +885,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
       }
     }
-    Left(ParseError("Too many expressions in list", state.sourcePos.range.start))
+    Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", state.sourcePos.range.start))
   }
 
   def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
@@ -1164,7 +1167,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         val (afterBracketComments, afterBracket) = collectComments(current.advance())
         current = afterBracket
 
-        while (exprs.length < 50) {
+        while (exprs.length < LexerV2.MAX_LIST_ELEMENTS) {
           current.current match {
             case Right(Token.RBracket(endPos)) => {
               // Add comments to list meta
@@ -1218,7 +1221,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
           }
         }
-        Left(ParseError("Too many elements in list", sourcePos.range.start))
+        Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
       }
       case Right(t)  => Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
       case Left(err) => Left(err)
