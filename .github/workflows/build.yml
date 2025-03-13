@@ -20,7 +20,7 @@ jobs:
           - os: ubuntu-20.04
             release_name: snapshot-linux
             os_name: linux-x86_64
-          - os: windows-2022
+          - os: windows-2025
             release_name: snapshot-windows
             os_name: windows-x86_64
           - os: macos-15
