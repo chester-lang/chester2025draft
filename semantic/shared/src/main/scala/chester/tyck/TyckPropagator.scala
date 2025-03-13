@@ -64,6 +64,19 @@ trait TyckPropagator extends ElaboraterCommon {
               }
             }
 
+          // Special case: both sides are intersections
+          case (Intersection(types1, _), Intersection(types2, _)) =>
+            // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
+            if (!types1.forall(t1 => types2.exists(t2 => tryUnify(t1, t2)))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+            // Add propagators for each pair that unifies
+            types1.foreach { t1 =>
+              types2.find(t2 => tryUnify(t1, t2)).foreach { t2 =>
+                unify(t1, t2, cause)
+              }
+            }
+
           // Handle Union types - rhs must be a subtype of lhs
           case (lhsType, Union(types2, _)) =>
             // For a union on the right, lhs must accept ALL possible types in the union
@@ -85,6 +98,27 @@ trait TyckPropagator extends ElaboraterCommon {
             // Add propagator for the first matching type
             types1.find(t1 => tryUnify(t1, rhsType)).foreach { t1 =>
               unify(t1, rhsType, cause)
+            }
+
+          // Handle Intersection types - lhs must be a subtype of rhs
+          case (Intersection(types1, _), rhsType) =>
+            // For an intersection on the left, ALL types in the intersection must be compatible with rhs
+            if (!types1.forall(t1 => tryUnify(t1, rhsType))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+            // Add propagators for each type in the intersection
+            types1.foreach { t1 =>
+              unify(t1, rhsType, cause)
+            }
+
+          case (lhsType, Intersection(types2, _)) =>
+            // For an intersection on the right, ANY type in the intersection being compatible with lhs is sufficient
+            if (!types2.exists(t2 => tryUnify(lhsType, t2))) {
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+            // Add propagator for the first matching type
+            types2.find(t2 => tryUnify(lhsType, t2)).foreach { t2 =>
+              unify(lhsType, t2, cause)
             }
 
           // Base case: types do not match
@@ -162,6 +196,26 @@ trait TyckPropagator extends ElaboraterCommon {
             state.addPropagator(Unify(toId(t1), toId(rhsType), cause))
           }
           true
+        case (Some(Intersection(types1, _)), Some(Intersection(types2, _))) =>
+          // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
+          types1.foreach { t1 =>
+            types2.find(t2 => tryUnify(t1, t2)).foreach { t2 =>
+              state.addPropagator(Unify(toId(t1), toId(t2), cause))
+            }
+          }
+          true
+        case (Some(lhsType), Some(Intersection(types2, _))) =>
+          // For an intersection on the right, ANY type in the intersection being compatible with lhs is sufficient
+          types2.find(t2 => tryUnify(lhsType, t2)).foreach { t2 =>
+            state.addPropagator(Unify(toId(lhsType), toId(t2), cause))
+          }
+          true
+        case (Some(Intersection(types1, _)), Some(rhsType)) =>
+          // For an intersection on the left, ALL types in the intersection must be compatible with rhs
+          types1.foreach { t1 =>
+            state.addPropagator(Unify(toId(t1), toId(rhsType), cause))
+          }
+          true
         case _ => false
       }
     }
@@ -197,6 +251,27 @@ trait TyckPropagator extends ElaboraterCommon {
         case (Some(Union(types1, _)), Some(rhsType)) =>
           // For a union on the left, ANY type in the union accepting rhs is sufficient
           if (types1.exists(t1 => tryUnify(t1, rhsType))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
+          }
+        case (Some(Intersection(types1, _)), Some(Intersection(types2, _))) =>
+          // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
+          if (types1.forall(t1 => types2.exists(t2 => tryUnify(t1, t2)))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
+          }
+        case (Some(lhsType), Some(Intersection(types2, _))) =>
+          // For an intersection on the right, ANY type in the intersection being compatible with lhs is sufficient
+          if (types2.exists(t2 => tryUnify(lhsType, t2))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
+          }
+        case (Some(Intersection(types1, _)), Some(rhsType)) =>
+          // For an intersection on the left, ALL types in the intersection must be compatible with rhs
+          if (types1.forall(t1 => tryUnify(rhsType, t1))) {
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
@@ -288,6 +363,88 @@ trait TyckPropagator extends ElaboraterCommon {
     }
   }
 
+  case class IntersectionOf(
+      lhs: CellId[Term],
+      rhs: Vector[CellId[Term]],
+      cause: Expr
+  )(using Context)
+      extends Propagator[Tyck] {
+    override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+    override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
+    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+      val lhsValueOpt = state.readStable(lhs)
+      val rhsValuesOpt = rhs.map(state.readStable)
+
+      if (lhsValueOpt.isDefined && rhsValuesOpt.forall(_.isDefined)) {
+        val lhsValue = lhsValueOpt.get
+        val rhsValues = rhsValuesOpt.map(_.get)
+
+        // Handle meta variables in lhs
+        lhsValue match {
+          case Meta(lhsId) =>
+            // Create a new intersection type and unify with the meta variable
+            val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+            unify(lhsId, intersectionType, cause)
+            true
+          case _ =>
+            // Check that each rhsValue is a subtype of lhsValue
+            rhsValues.forall { rhsValue =>
+              unify(rhsValue, lhsValue, cause)
+              true // Assuming unify reports errors internally
+            }
+        }
+      } else {
+        // Not all values are available yet
+        false
+      }
+    }
+
+    override def naiveZonk(
+        needed: Vector[CellIdAny]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      val lhsValueOpt = state.readStable(lhs)
+      val rhsValuesOpt = rhs.map(state.readStable)
+
+      // First check if any of our cells are in the needed list
+      val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
+      if (ourNeededCells.nonEmpty) {
+        // We need to handle these cells
+        val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
+        if (unknownRhs.nonEmpty) {
+          // Wait for all rhs values to be known
+          ZonkResult.Require(unknownRhs.toVector)
+        } else {
+          val rhsValues = rhsValuesOpt.map(_.get)
+
+          lhsValueOpt match {
+            case Some(Meta(lhsId)) =>
+              // Create intersection type and unify with meta variable
+              val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+              unify(lhsId, intersectionType, cause)
+              ZonkResult.Done
+            case Some(lhsValue) =>
+              // LHS is known, check if it's compatible with all RHS values
+              if (rhsValues.forall(rhsValue => tryUnify(rhsValue, lhsValue))) {
+                ZonkResult.Done
+              } else {
+                ZonkResult.NotYet
+              }
+            case None =>
+              // LHS is unknown, create IntersectionType from RHS values
+              val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+              state.fill(lhs, intersectionType)
+              ZonkResult.Done
+          }
+        }
+      } else {
+        // None of our cells are needed
+        ZonkResult.Done
+      }
+    }
+  }
+
   /** Attempts to unify two terms without producing error messages.
     *
     * This method performs type unification, which includes:
@@ -360,6 +517,14 @@ trait TyckPropagator extends ElaboraterCommon {
               // For intersection types to be compatible, each type from the second intersection
               // must be compatible with at least one type from the first intersection
               types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+
+            case (lhsType, Intersection(types2, _)) =>
+              // For an intersection on the right, lhs must be a subtype of ALL types in the intersection
+              types2.forall(t2 => tryUnify(lhsType, t2))
+
+            case (Intersection(types1, _), rhsType) =>
+              // For an intersection on the left, ANY type in the intersection being a subtype of rhs is sufficient
+              types1.exists(t1 => tryUnify(t1, rhsType))
 
             case _ => false
           }
