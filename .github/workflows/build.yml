@@ -20,6 +20,9 @@ jobs:
           - os: ubuntu-20.04
             release_name: snapshot-linux
             os_name: linux-x86_64
+          - os: ubuntu-22.04-arm
+            release_name: snapshot-linux-arm
+            os_name: linux-aarch64
           - os: windows-2025
             release_name: snapshot-windows
             os_name: windows-x86_64
