@@ -202,6 +202,31 @@ These propagators work together to ensure that all cells in the type graph are p
    }
    ```
 
+### 3. Type Level Unification Enhancement
+
+Type unification is a critical operation in the type checking system. Recent improvements have enhanced how type levels are compared during unification:
+
+```scala
+// Previous simple equality check
+case (Type(level1, _), Type(level2, _)) =>
+  level1 == level2
+
+// Enhanced type level comparison
+case (Type(level1, _), Type(level2, _)) =>
+  (level1, level2) match {
+    case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
+    case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
+    case _ => level1 == level2 // For other cases, keep the exact equality check
+  }
+```
+
+This improvement enables:
+1. **Flexibility with Unrestricted Levels**: A finite level type can now unify with an unrestricted level type, increasing flexibility in the type system
+2. **Controlled Asymmetric Compatibility**: Unrestricted level types do not automatically unify with finite level types, maintaining type safety
+3. **Unchanged Base Semantics**: For identical level types, the behavior remains the same, preserving backward compatibility
+
+This enhancement is particularly important for dependent types where the level of a type may need to vary based on its usage context.
+
 ## Implementation Plan
 
 ### Phase 1: Coverage Verification
@@ -421,4 +446,4 @@ When implementing propagators that handle type-level functions:
 - **Enable debug logging**: Use `Debug.enable(DebugCategory.Cell)` to trace cell operations during tests
 - **Test edge cases**: Specifically test cases where the same function might be evaluated multiple times
 
-By following these guidelines, propagators can safely manage cells without triggering exceptions or creating inconsistent states. 
+By following these guidelines, propagators can safely manage cells without triggering exceptions or creating inconsistent states.
