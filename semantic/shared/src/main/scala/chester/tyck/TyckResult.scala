@@ -50,14 +50,16 @@ object TyckResult {
     def unapply[S, T](
         x: TyckResult[S, T]
     ): Option[(Vector[TyckError], Vector[TyckWarning], S, T)] = {
-      Option.when(!x.errorsEmpty)((
-            x.problems
-              .collect { case e: TyckError => e },
-            x.problems
-              .collect { case w: TyckWarning => w },
-            x.state,
-            x.result
-          ))
+      Option.when(!x.errorsEmpty)(
+        (
+          x.problems
+            .collect { case e: TyckError => e },
+          x.problems
+            .collect { case w: TyckWarning => w },
+          x.state,
+          x.result
+        )
+      )
     }
   }
 }

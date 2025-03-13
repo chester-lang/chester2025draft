@@ -15,8 +15,8 @@ def UnitType(meta: OptionTermMeta): TupleType =
   TupleType(Vector.empty, meta = meta)
 
 object UnitTerm_ {
-  def unapply(x: Any): Option[OptionTermMeta] = PartialFunction.condOpt(x) {
-    case TupleTerm(Vector(), meta) => meta
+  def unapply(x: Any): Option[OptionTermMeta] = PartialFunction.condOpt(x) { case TupleTerm(Vector(), meta) =>
+    meta
   }
 
   def apply(meta: OptionTermMeta): TupleTerm =

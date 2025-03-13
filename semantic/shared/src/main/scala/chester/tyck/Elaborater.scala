@@ -100,7 +100,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         if (xs.exists(tryUnify(x, _))) return
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
-        types1.lazyZip(types2).foreach {  (t1, t2) => unify(t1, t2, cause) }
+        types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
       case (Type(level1, _), Type(level2, _))        => unify(level1, level2, cause)
       case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
       // Union-to-Union subtyping

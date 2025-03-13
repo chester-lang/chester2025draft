@@ -43,7 +43,7 @@ trait TyckPropagator extends ElaboraterCommon {
 
           // Structural unification for TupleType
           case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
-            types1.lazyZip(types2).foreach {  (t1, t2) => unify(t1, t2, cause) }
+            types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
 
           // Type levels: unify levels
           case (Type(level1, _), Type(level2, _)) =>
@@ -556,8 +556,8 @@ trait TyckPropagator extends ElaboraterCommon {
       rhs: Term,
       boundVars: Map[LocalV, LocalV] = Map.empty
   )(using
-       StateAbility[Tyck],
-       Context
+      StateAbility[Tyck],
+      Context
   ): Boolean = {
     // For alpha-equivalence, we need to check if terms are convertible
     // with respect to bound variable names (alpha conversion)
@@ -576,11 +576,11 @@ trait TyckPropagator extends ElaboraterCommon {
           var updatedBoundVars = boundVars
 
           // Check that telescopes have equivalent types
-          val paramsEqual = params1.lazyZip(params2).forall {  (p1, p2) =>
+          val paramsEqual = params1.lazyZip(params2).forall { (p1, p2) =>
             // Check telescope parameters are equivalent
             if (p1.args.length != p2.args.length) false
             else {
-              p1.args.lazyZip(p2.args).forall {  (arg1, arg2) =>
+              p1.args.lazyZip(p2.args).forall { (arg1, arg2) =>
                 // For each argument, add the binding and check that the types are alpha-equivalent
                 val typesEqual = areAlphaEquivalent(arg1.ty, arg2.ty, updatedBoundVars)
 
@@ -636,8 +636,8 @@ trait TyckPropagator extends ElaboraterCommon {
       types2: Vector[Term],
       boundVars: Map[LocalV, LocalV] = Map.empty
   )(using
-       StateAbility[Tyck],
-       Context
+      StateAbility[Tyck],
+      Context
   ): Boolean = {
     // For union/intersection types, each type in one collection
     // must have an equivalent in the other collection

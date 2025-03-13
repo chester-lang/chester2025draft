@@ -63,10 +63,12 @@ trait CommonPropagator[Ck] extends ProvideCellId {
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(result)
 
     override def run(using state: StateAbility[Ck], more: Ck): Boolean = {
-      xs.traverse(state.readStable(_)).map(f).exists{result => {
+      xs.traverse(state.readStable(_)).map(f).exists { result =>
+        {
           state.fill(this.result, result)
           true
-        }}
+        }
+      }
     }
 
     override def naiveZonk(

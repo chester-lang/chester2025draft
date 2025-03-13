@@ -148,7 +148,7 @@ object NaiveReducer extends Reducer {
     case other => other
   }
 
-  def reduce(term: Term, mode: ReduceMode)(using  ReduceContext,  Reducer): Term = {
+  def reduce(term: Term, mode: ReduceMode)(using ReduceContext, Reducer): Term = {
     // First, apply standard reduction
     val standardReduced = reduceStandard(term, mode)
 
@@ -164,6 +164,6 @@ object NaiveReducer extends Reducer {
   }
 
   // Default to normal reduction mode for backward compatibility
-  override def reduce(term: Term)(using  ReduceContext,  Reducer): Term =
+  override def reduce(term: Term)(using ReduceContext, Reducer): Term =
     reduce(term, ReduceMode.Normal)
 }

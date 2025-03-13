@@ -15,8 +15,6 @@ case class TyAndVal(
     value: Term
 ) {}
 
-
-
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
     name: Name,
@@ -100,5 +98,3 @@ case class Context(
 
   given Reducer = NaiveReducer
 }
-
-

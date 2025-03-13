@@ -106,7 +106,8 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
         )
 
       val sourceLines = sourceReader(pos)
-        .map { _.map({ case (lineNumber, line) =>
+        .map {
+          _.map({ case (lineNumber, line) =>
             Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
           })
         }

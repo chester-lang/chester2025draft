@@ -84,7 +84,7 @@ val scalafixRules = Seq(
   "RemoveUselessParamComments",
   "RepeatedRewrite",
   "ReplaceFill",
-  //"ReplacePlaceholder",
+  // "ReplacePlaceholder",
   "ReplaceSymbolLiterals",
   "ReuseInstances",
   "SameParamOverloading",
