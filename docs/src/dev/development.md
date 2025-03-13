@@ -82,13 +82,19 @@
    - [ ] Git diff shows only intended changes
    - [ ] Tests pass after changes
    - [ ] Changes align with existing code style
-   - [ ] CAREFULLY check git diff output for any accidental deletions or modifications
+   - [ ] **CRITICAL: Always review the git diff output carefully**
      ```bash
      # Before committing, always check:
      git diff | cat
      ```
-   - [ ] Pay special attention to accidental deletions of important logic
+   - [ ] **IMPORTANT**: Reviewing git diff output is essential for catching:
+     - Accidental deletions of important methods or logic
+     - Unintended modification of critical code
+     - Formatting changes that might impact behavior
+     - Changes to files you didn't intend to modify
+   - [ ] Pay special attention to large diffs that might hide important changes
    - [ ] Verify no unrelated changes were included
+   - [ ] When making multiple changes, review each file's diff separately for clarity
 
 5. **Post-Commit Verification**
    - Always verify your changes after committing with `git diff HEAD^ HEAD | cat`
@@ -150,6 +156,23 @@
    - Ensures consistent output formatting
    - Avoids getting stuck in pagers like `less`
    - Makes automation and scripting more reliable
+
+### Troubleshooting Development Issues
+
+1. **Recovering from Broken Edit Tools**
+   - If edit tools in your IDE or development environment are broken/malfunctioning, you can use git to recover:
+     ```bash
+     # Discard changes to a specific file
+     git checkout -- path/to/file | cat
+     
+     # Discard all changes in the working directory
+     git checkout -- . | cat
+     
+     # Revert to a specific commit
+     git checkout [commit-hash] -- path/to/file | cat
+     ```
+   - This approach is especially useful when tools that normally handle editing break unexpectedly
+   - Always verify what you're checking out before executing the command to avoid losing important changes
 
 ## Platform-Specific Type System Implementation
 
@@ -431,7 +454,7 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
    - Use pattern matching for exhaustive handling
    ```scala
    // Good usage
-   import DebugCategory._
+   import DebugCategory.*
    
    val category = Cell
    
