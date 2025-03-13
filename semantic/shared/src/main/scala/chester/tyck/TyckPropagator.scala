@@ -494,7 +494,12 @@ trait TyckPropagator extends ElaboraterCommon {
         else {
           (lhsResolved, rhsResolved) match {
             case (Type(level1, _), Type(level2, _)) =>
-              level1 == level2
+              // Enhanced type level comparison to handle compatibility between finite and unrestricted levels
+              (level1, level2) match {
+                case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
+                case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
+                case _ => level1 == level2 // For other cases, keep the exact equality check
+              }
 
             case (ListType(elem1, _), ListType(elem2, _)) =>
               tryUnify(elem1, elem2)
