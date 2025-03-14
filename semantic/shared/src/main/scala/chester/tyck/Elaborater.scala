@@ -720,6 +720,6 @@ trait DefaultImpl
   }
 }
 
-object Tycker extends DefaultImpl with ProvideMutable {}
+object Tycker extends DefaultImpl with ProvideMultithread {}
 
 export Tycker.{check, checkTop}
