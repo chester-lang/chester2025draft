@@ -399,6 +399,23 @@ All tests in CommentParserTest now use parseAndCheckBoth to verify that both par
   - Updated methods that modify position to use and update the cache
   - Added incremental calculation for new positions based on cached values
 
+### 7. Uniform Operator Handling ✅ COMPLETED
+- **Issue**: Special case handling for the "=>" and "=" operators in `parseOperator()` method
+- **Improvement**: 
+  - Removed special case handling for the "=>" operator
+  - Ensured operators are treated uniformly in the tokenizer
+  - Treated "=>" like any other operator in the tokenizing process
+- **Benefits**: 
+  - More consistent operator handling
+  - Simplified code in the `parseOperator()` method
+  - Reduced special cases, making the code more maintainable
+  - Better alignment with Chester's design principles of uniform symbol treatment
+- **Implementation**: 
+  - Removed special case code for the "=>" operator in the `parseOperator()` method
+  - Modified the method to uniformly parse all operators using a `StringBuilder`
+  - Verified all tests pass with the change, including operator tests
+  - Ensured consistent behavior with the original implementation
+
 ## Current Priorities
 
 ### 1. V1/V2 Semantic Consistency ⚠️ PRIORITY
@@ -755,6 +772,7 @@ This solution preserves the uniform symbol treatment principle while ensuring th
    - Address pattern matching semantic differences
    - Implement proper telescope parsing
 2. Complete object expressions implementation
-3. Add source maps support
-4. Continue migration of V1-only tests to V2
-5. Implement error recovery mechanisms 
+3. Continue the uniform operator handling by removing any remaining special cases in operator parsing
+4. Add source maps support
+5. Continue migration of V1-only tests to V2
+6. Implement error recovery mechanisms 
