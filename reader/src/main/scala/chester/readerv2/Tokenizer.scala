@@ -396,14 +396,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
       return parseComment(startPos)
     }
 
-    // Special case for =>
-    if (initial == "=" && pos < source.length && source(pos) == '>') {
-      pos += 1
-      col += 1
-      return Right(Token.Operator("=>", createSourcePos(startPos, pos)))
-    }
-
-    // Parse other operators
+    // Parse operators
     val sb = new StringBuilder(initial)
     while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
       sb.append(source(pos))
