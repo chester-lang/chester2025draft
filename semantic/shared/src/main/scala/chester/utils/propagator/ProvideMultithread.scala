@@ -6,7 +6,6 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
 
-// currently broken too eager to use default values
 trait ProvideMultithread extends ProvideImpl {
 
   class HoldCell[+T <: Cell[?]](
@@ -16,6 +15,7 @@ trait ProvideMultithread extends ProvideImpl {
     private val storeRef = new AtomicReference[Cell[?]](initialValue)
     val readingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
     val zonkingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
+    private val didChangeRef = new AtomicBoolean(false)
 
     def store: T = storeRef.get().asInstanceOf[T]
 
@@ -24,8 +24,15 @@ trait ProvideMultithread extends ProvideImpl {
         expectedValue: Cell[?],
         newValue: Cell[?]
     ): Boolean = {
-      storeRef.compareAndSet(expectedValue, newValue)
+      val result = storeRef.compareAndSet(expectedValue, newValue)
+      if (result) {
+        didChangeRef.set(true)
+      }
+      result
     }
+
+    def didChange: Boolean = didChangeRef.get()
+    def clearDidChange(): Boolean = didChangeRef.getAndSet(false)
 
     def noAnyValue: Boolean = store.noAnyValue
     def noStableValue: Boolean = store.noStableValue
@@ -77,6 +84,47 @@ trait ProvideMultithread extends ProvideImpl {
     private val forkJoinPool = new ForkJoinPool(
       Runtime.getRuntime.availableProcessors()
     )
+    
+    // Thread-safe change tracking queue
+    private val didChanged = new ConcurrentLinkedQueue[CIdOf[?]]()
+    
+    // Progress tracking flag
+    private val didSomethingRef = new AtomicBoolean(false)
+    
+    def didSomething: Boolean = didSomethingRef.get()
+    def setDidSomething(value: Boolean): Unit = {
+      didSomethingRef.set(value)
+    }
+    
+    // Thread-local for recursion depth tracking
+    private val recursionDepthThreadLocal = new ThreadLocal[Integer] {
+      override def initialValue(): Integer = 0
+    }
+    
+    private def getRecursionDepth(): Int = {
+      val depth = recursionDepthThreadLocal.get()
+      if (depth == null) 0 else depth.intValue()
+    }
+    
+    private def setRecursionDepth(depth: Int): Unit = {
+      recursionDepthThreadLocal.set(depth)
+    }
+    
+    private def incrementRecursionDepth(): Int = {
+      val current = getRecursionDepth()
+      setRecursionDepth(current + 1)
+      current + 1
+    }
+    
+    private def decrementRecursionDepth(): Int = {
+      val current = getRecursionDepth()
+      if (current > 0) {
+        setRecursionDepth(current - 1)
+        current - 1
+      } else {
+        0
+      }
+    }
 
     override def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T] = {
       require(id.uniqId == uniqId)
@@ -93,6 +141,10 @@ trait ProvideMultithread extends ProvideImpl {
         val newValue = f(oldValue)
         updated = id.compareAndSetStore(oldValue, newValue)
         if (updated) {
+          // Track that something changed
+          setDidSomething(true)
+          // Add to the changed queue
+          didChanged.add(id)
           // Immediately process dependent propagators
           processPropagators(id)
         }
@@ -100,7 +152,14 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def tick(using Ability): Unit = {
-      // Do nothing
+      // Process all changed cells
+      var cell = didChanged.poll()
+      while (cell != null) {
+        if (cell.clearDidChange()) {
+          processPropagators(cell)
+        }
+        cell = didChanged.poll()
+      }
     }
 
     override def fill[T <: Cell[U], U](id: CIdOf[T], value: U)(using
@@ -113,6 +172,10 @@ trait ProvideMultithread extends ProvideImpl {
         val newValue = oldValue.fill(value).asInstanceOf[T]
         updated = id.compareAndSetStore(oldValue, newValue)
         if (updated) {
+          // Track that something changed
+          setDidSomething(true)
+          // Add to the changed queue
+          didChanged.add(id)
           // Immediately process dependent propagators
           processPropagators(id)
         }
@@ -128,6 +191,14 @@ trait ProvideMultithread extends ProvideImpl {
     )(using Ability): PIdOf[T] = {
       val id = new HoldPropagator[T](uniqId, propagator)
       propagators.add(id.asInstanceOf[PIdOf[Propagator[Ability]]])
+      
+      for (cell <- propagator.zonkingCells) {
+        cell.zonkingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
+      }
+      for (cell <- propagator.readingCells) {
+        cell.readingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
+      }
+      
       // Submit task to process this propagator
       forkJoinPool.execute(
         new PropagatorTask(
@@ -138,7 +209,7 @@ trait ProvideMultithread extends ProvideImpl {
       id
     }
 
-    override def stable: Boolean = propagators.isEmpty
+    override def stable: Boolean = didChanged.isEmpty
 
     // Process propagators in batches to improve performance
     private def processPropagators(
@@ -162,54 +233,123 @@ trait ProvideMultithread extends ProvideImpl {
 
     override def naiveZonk(
         cells: Vector[CIdOf[Cell[?]]]
-    )(using Ability): Unit = {
-      var cellsNeeded = cells
-      var tryFallback = 0
-      var loop = true
-
-      while (loop) {
-        // Process any remaining propagators
-        val tasks = cellsNeeded.flatMap { c =>
-          if (c.noAnyValue) {
-            c.zonkingPropagators.asScala.withFilter(_.alive).map { p =>
-              new ZonkTask(
-                c,
-                p.asInstanceOf[HoldPropagator[Propagator[Ability]]],
-                firstFallback = tryFallback == 0,
-                this
-              )
-            }
+    )(using more: Ability): Unit = {
+      val currentDepth = incrementRecursionDepth()
+      try {
+        // Skip if recursion is too deep
+        if (currentDepth > 5) {
+          setDidSomething(true)
+          return
+        }
+        
+        // Skip duplicate cells to prevent redundant processing
+        val uniqueCells = cells.distinct
+        
+        // Keep track of processed cells to detect cycles
+        val processedCellIds = scala.collection.mutable.Set[String]()
+        uniqueCells.foreach(c => processedCellIds.add(c.toString))
+        
+        var cellsNeeded = uniqueCells
+        var tryFallback = 0
+        var loop = true
+        var iterationCount = 0
+        
+        while (loop && iterationCount < 10) {
+          iterationCount += 1
+          
+          // Break if iterations are excessive
+          if (iterationCount >= 10) {
+            setDidSomething(true)
+            break()
+            return
+          }
+          
+          setDidSomething(false)
+          
+          // Process any remaining propagators
+          tick
+          
+          cellsNeeded = cellsNeeded.filter(this.noAnyValue(_))
+          
+          if (cellsNeeded.isEmpty) {
+            loop = false
           } else {
-            Vector.empty
-          }
-        }
-        if (tasks.nonEmpty) {
-          val _ = ForkJoinTask.invokeAll(tasks.asJava)
-        }
-
-        // Check if all cells have values
-        cellsNeeded = cellsNeeded.filter(_.noAnyValue)
-        if (cellsNeeded.isEmpty) {
-          loop = false
-        } else {
-          tryFallback += 1
-          if (tryFallback > 2) {
-            // Last resort: try default values
-            val defaultTasks =
-              cellsNeeded.map(c => new DefaultValueTask(c, this))
-            val _ = ForkJoinTask.invokeAll(defaultTasks.asJava)
-
-            // Check again if all cells have values
-            cellsNeeded = cellsNeeded.filter(_.noAnyValue)
-            if (cellsNeeded.nonEmpty) {
-              throw new IllegalStateException(
-                s"Cells $cellsNeeded are not covered by any propagator"
-              )
+            // Process cells that still need values
+            val tasks = cellsNeeded.flatMap { c =>
+              if (c.noAnyValue) {
+                // Limit to top propagators by score
+                val alivePropagators = c.zonkingPropagators.asScala
+                  .filter(_.alive)
+                  .toVector
+                  .sortBy(p => -p.store.score)
+                
+                // Limit number of propagators we try per cell
+                val limitedPropagators = if (alivePropagators.size > 3) {
+                  alivePropagators.take(3)
+                } else {
+                  alivePropagators
+                }
+                
+                limitedPropagators.map { p =>
+                  new ZonkTask(
+                    c,
+                    p.asInstanceOf[HoldPropagator[Propagator[Ability]]],
+                    firstFallback = tryFallback == 0,
+                    this,
+                    currentDepth,
+                    processedCellIds
+                  )
+                }
+              } else {
+                Vector.empty
+              }
+            }
+            
+            if (tasks.nonEmpty) {
+              val _ = ForkJoinTask.invokeAll(tasks.asJava)
+              tick
+            }
+            
+            // Check if we made progress
+            if (!didSomething) {
+              tryFallback += 1
             } else {
-              loop = false
+              // Reset fallback counter if we made progress
+              tryFallback = 0
+              // Update cells list
+              cellsNeeded = cellsNeeded.filter(_.noAnyValue)
+              if (cellsNeeded.isEmpty) {
+                loop = false
+              }
             }
           }
         }
+        
+        // If still not resolved, try default values
+        if (cellsNeeded.nonEmpty && tryFallback > 1) {
+          val defaultTasks = cellsNeeded.flatMap { c =>
+            if (c.noAnyValue && c.store.default.isDefined) {
+              Some(new DefaultValueTask(c, this))
+            } else {
+              None
+            }
+          }
+          
+          if (defaultTasks.nonEmpty) {
+            val _ = ForkJoinTask.invokeAll(defaultTasks.asJava)
+            // Final check for unresolved cells
+            cellsNeeded = cellsNeeded.filter(_.noAnyValue)
+          }
+          
+          // Throw exception for cells that couldn't be resolved
+          if (cellsNeeded.nonEmpty) {
+            throw new IllegalStateException(
+              s"Cells $cellsNeeded are not covered by any propagator"
+            )
+          }
+        }
+      } finally {
+        decrementRecursionDepth()
       }
     }
 
@@ -228,6 +368,7 @@ trait ProvideMultithread extends ProvideImpl {
               if (done) {
                 p.setAlive(false)
                 val _ = state.propagators.remove(p)
+                setDidSomething(true)
               }
             }
           }
@@ -254,6 +395,7 @@ trait ProvideMultithread extends ProvideImpl {
               if (done) {
                 p.setAlive(false)
                 val _ = state.propagators.remove(p)
+                setDidSomething(true)
               }
             }
           }
@@ -269,32 +411,53 @@ trait ProvideMultithread extends ProvideImpl {
         c: CIdOf[Cell[?]],
         p: PIdOf[Propagator[Ability]],
         firstFallback: Boolean,
-        state: Impl[Ability]
+        state: Impl[Ability],
+        parentRecursionDepth: Int = 0,
+        processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
     )(using more: Ability)
         extends RecursiveAction {
       override def compute(): Unit = {
         require(c.uniqId == uniqId)
         require(p.uniqId == uniqId)
         if (c.noAnyValue && p.alive) {
-          val propagator = p.store
-          val zonkResult = if (firstFallback) {
-            propagator.naiveZonk(Vector(c))(using state, more)
-          } else {
-            propagator.naiveFallbackZonk(Vector(c))(using state, more)
+          // Skip if recursion is too deep
+          if (parentRecursionDepth > 3) {
+            setDidSomething(true)
+            return
           }
+          
+          val propagator = p.store
+          val zonkResult = try {
+            if (firstFallback) {
+              propagator.naiveZonk(Vector(c))(using state, more)
+            } else {
+              propagator.naiveFallbackZonk(Vector(c))(using state, more)
+            }
+          } catch {
+            case e: Exception => ZonkResult.NotYet
+          }
+          
           zonkResult match {
             case ZonkResult.Done =>
               p.setAlive(false)
               val _ = propagators.remove(p)
+              setDidSomething(true)
             case ZonkResult.Require(needed) =>
-              needed.foreach { n =>
-                if (n.noStableValue) {
-                  // Process the newly needed cells
-                  state.naiveZonk(Vector(n))
-                }
+              // Filter out cells we've already seen to prevent cycles
+              val newNeeded = needed.toVector
+                .filter(n => n.noStableValue)
+                .filterNot(n => n == c)
+                .filterNot(n => processedCellIds.contains(n.toString))
+              
+              if (newNeeded.nonEmpty) {
+                // Mark these cells as processed before recursing
+                newNeeded.foreach(n => processedCellIds.add(n.toString))
+                // Process the newly needed cells
+                state.naiveZonk(newNeeded)
+                setDidSomething(true)
               }
             case ZonkResult.NotYet =>
-            // Do nothing
+              // No action needed
           }
         }
       }
@@ -306,8 +469,15 @@ trait ProvideMultithread extends ProvideImpl {
       override def compute(): Unit = {
         if (c.noAnyValue && c.store.default.isDefined) {
           state.fill(c.asInstanceOf[CIdOf[Cell[Any]]], c.store.default.get)
+          setDidSomething(true)
         }
       }
+    }
+    
+    // Custom break exception for clean loop termination
+    private def break(): Nothing = {
+      case class BreakException() extends RuntimeException
+      throw new BreakException()
     }
   }
 }
