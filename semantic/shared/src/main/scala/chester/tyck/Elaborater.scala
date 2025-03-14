@@ -30,6 +30,40 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     state.addPropagator(UnionOf(cell, Vector(cell), cause))
   }
 
+  // Process all terms in a function application to ensure proper cell coverage
+  private def processFunctionCall(term: Term, cause: Expr)(using
+      state: StateAbility[Tyck],
+      ctx: Context,
+      ck: Tyck
+  ): Unit = {
+    // Get cell ID
+    val cellId = toId(term)
+    
+    // Ensure this cell is covered
+    ensureCellCoverage(cellId, cause)
+    
+    // For composite terms like function calls, also ensure sub-term coverage
+    term match {
+      case fcall: FCallTerm => {
+        if (DEBUG_UNION_SUBTYPING) println(s"Processing function call: $fcall")
+        // Process function and arguments recursively
+        processFunctionCall(fcall.f, cause)
+        fcall.args.foreach(arg => processFunctionCall(arg, cause))
+      }
+      case Union(types, _) => {
+        if (DEBUG_UNION_SUBTYPING) println(s"Processing union: $term")
+        // Process all union types
+        types.foreach(t => processFunctionCall(t, cause))
+      }
+      case Intersection(types, _) => {
+        if (DEBUG_UNION_SUBTYPING) println(s"Processing intersection: $term")
+        // Process all intersection types
+        types.foreach(t => processFunctionCall(t, cause))
+      }
+      case _ => // No further processing needed for simple terms
+    }
+  }
+
   def checkType(expr: Expr)(using
       Context,
       SemanticCollector,
@@ -103,8 +137,9 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
       case (Type(level1, _), Type(level2, _))        => unify(level1, level2, cause)
       case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
-      // Union-to-Union subtyping
-      case (Union(types1, _), Union(types2, _)) =>
+      
+      // Union-to-Union subtyping - use a guard to ensure specificity
+      case (Union(types1, _), Union(types2, _)) if types1.nonEmpty && types2.nonEmpty =>
         if (DEBUG_UNION_SUBTYPING) {
           println("=== UNION-UNION SUBTYPING ===")
           println(s"LHS Union: $lhs (${lhs.getClass.getSimpleName}) with cell ID: ${toId(lhs)}")
@@ -117,7 +152,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         val lhsCell = toId(lhs)
         val rhsCell = toId(rhs)
 
-        // Ensure the main union cells are covered
+        // Ensure all cells are covered by propagators
         ensureCellCoverage(lhsCell, cause)
         ensureCellCoverage(rhsCell, cause)
 
@@ -173,7 +208,8 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         }
 
       // Specific-to-Union subtyping (function parameter case in test)
-      case (specificType, union @ Union(unionTypes, _)) =>
+      // Use a guard to make the pattern more specific and avoid conflict with general case
+      case (specificType, union @ Union(unionTypes, _)) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
         if (DEBUG_UNION_SUBTYPING) {
           println("=== SPECIFIC-TO-UNION SUBTYPING ===")
           println(s"Specific Type: $specificType (${specificType.getClass.getSimpleName}) with cell ID: ${toId(specificType)}")
@@ -227,8 +263,10 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           // Handle empty union case
           ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
         }
+
       // Union-to-Specific subtyping (function return case in test)
-      case (union @ Union(unionTypes, _), specificType) =>
+      // Use a guard to make the pattern more specific and avoid conflict with general case
+      case (union @ Union(unionTypes, _), specificType) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
         if (DEBUG_UNION_SUBTYPING) {
           println("=== UNION-TO-SPECIFIC SUBTYPING ===")
           println(s"Union Type: $union (${union.getClass.getSimpleName}) with cell ID: ${toId(union)}")
@@ -281,6 +319,39 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           // Handle empty union case
           ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
         }
+
+      // Now add the general intersection and union cases
+      case (x, Intersection(xs, _)) =>
+        if (xs.exists(tryUnify(x, _))) return
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      case (Intersection(xs, _), x) =>
+        if (xs.forall(tryUnify(_, x))) return
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      case (x, Union(xs, _)) =>
+        if (xs.forall(tryUnify(x, _))) return
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      case (Union(xs, _), x) =>
+        if (xs.exists(tryUnify(_, x))) return
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+
+      // Add cases for function calls after the specific union cases
+      case (fcall: FCallTerm, _) => {
+        if (DEBUG_UNION_SUBTYPING) println(s"Processing function call in unify: $fcall")
+        // Ensure all cells in the function call have proper coverage
+        processFunctionCall(fcall, cause)
+        
+        // Continue with normal unification
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      }
+      case (_, fcall: FCallTerm) => {
+        if (DEBUG_UNION_SUBTYPING) println(s"Processing function call in unify (RHS): $fcall")
+        // Ensure all cells in the function call have proper coverage
+        processFunctionCall(fcall, cause)
+        
+        // Continue with normal unification
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      }
+        
       case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
     }
   }
