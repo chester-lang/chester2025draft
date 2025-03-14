@@ -457,3 +457,252 @@ test("complex union type hierarchy resolves") {
    - Type-level function applications
 3. Documentation clearly explains dependent type concepts and usage patterns
 4. Meta variables in complex types resolve correctly 
+
+## 3.5 Enhanced Type-Level Function Application Reduction
+
+### 3.5.1 Current Limitation
+
+The current type checker supports basic type-level function applications (as seen in the type-level-reduction.chester test file), but has limited handling of nested or recursive function applications in type-level contexts. When complex type-level expressions involve multiple nested function calls, the reducer may not properly evaluate them during type checking, leading to:
+
+1. Type errors due to incomplete reduction of nested function applications
+2. Reduced flexibility when using type-level functions in complex ways
+3. Unclear error messages when type-level function applications fail
+
+This limitation affects the expressiveness of the type system, especially when creating sophisticated type-level abstractions.
+
+#### Specific Issues Identified
+
+Our testing with `type-level-nested-functions.chester` has confirmed several specific issues:
+
+1. **Cell Coverage Gaps**: During type checking of nested function applications, some cells in the propagator network lack proper coverage, resulting in errors during the zonking phase:
+   ```
+   java.lang.IllegalStateException: Cells Vector(...) are not covered by any propagator
+   ```
+
+2. **Propagator Lifecycle Issues**: The error occurs in `naiveZonk` during the `finalizeJudge` phase, indicating issues with propagator state tracking and cell resolution.
+
+3. **Recursive Call Handling**: When type-level functions call other type-level functions, the current system doesn't properly manage the propagator connections between intermediate results.
+
+4. **Function Composition Limitations**: The current implementation struggles with cases where type-level functions are composed or combined, as seen in our test with `composeTypes(idType, idType, A)`.
+
+### 3.5.2 Proposed Improvement
+
+Enhance the reducer's ability to handle nested type-level function applications by:
+
+1. Improving the `NaiveReducer` to better manage nested function applications
+2. Ensuring consistency in how type-level functions are reduced
+3. Preserving original function applications in elaborated results
+4. Adding cell coverage mechanisms to prevent "cells not covered" errors
+
+#### Implementation Plan
+
+The implementation requires focused changes to the following components:
+
+1. **NaiveReducer Enhancement**:
+```scala
+// In NaiveReducer.scala, enhance the reduceTypeLevel method:
+private def reduceTypeLevel(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
+  term match {
+    // ... existing cases ...
+    
+    // Improve function call handling for nested type-level functions
+    case fcall: FCallTerm if isTypeLevel(fcall) => {
+      // First reduce the function itself
+      val reducedFunc = reduce(fcall.func, ReduceMode.TypeLevel)
+      // Then reduce the arguments
+      val reducedArgs = fcall.args.map(arg => reduce(arg, ReduceMode.TypeLevel))
+      
+      // Create a new function call with reduced components
+      val reducedCall = FCallTerm(reducedFunc, reducedArgs, fcall.meta)
+      
+      // If this is a direct call to a function that we can reduce further, do so
+      val firstResult = reduceStandard(reducedCall, ReduceMode.TypeLevel)
+      
+      // Handle nested function calls in the result by recursively reducing
+      firstResult match {
+        case nestedCall: FCallTerm if isTypeLevel(nestedCall) && 
+                                      nestedCall != reducedCall => 
+          // Recursively handle nested function calls
+          reduceTypeLevel(nestedCall)
+          
+        case _ => firstResult
+      }
+    }
+    
+    // ... other cases ...
+  }
+}
+```
+
+2. **Improved Type-Level Function Detection**:
+```scala
+// In NaiveReducer.scala, enhance the isTypeLevel helper function:
+private def isTypeLevel(term: Term): Boolean = {
+  term match {
+    // Existing detection logic
+    case FCallTerm(_, _, meta) => meta.get(TypeLevelFunction).isDefined
+    
+    // Add detection of functions whose result is used in a type context
+    case FCallTerm(funcTerm, _, _) =>
+      // Check if the function's return type is Type
+      funcTerm match {
+        case name: NameRef => {
+          ctx.findDef(name.name).exists(defn => 
+            defn.ty match {
+              case FunctionType(_, result, _, _) => isType(result)
+              case _ => false
+            }
+          )
+        }
+        // Handle other cases
+        case _ => false
+      }
+      
+    case _ => false
+  }
+}
+
+// Helper to check if a term is a Type
+private def isType(term: Term): Boolean = {
+  term match {
+    case Type(_, _) => true
+    case NameRef(name) => name.toString == "Type"
+    case _ => false
+  }
+}
+```
+
+3. **Cell Coverage Mechanism**:
+```scala
+// In Elaborater.scala, add a helper method to ensure cell coverage:
+private def ensureCellCoverage(cell: CellId[Term], cause: Expr)(using
+    state: StateAbility[Tyck],
+    ctx: Context,
+    ck: Tyck
+): Unit = {
+  // Create a self-referential propagator to ensure basic coverage
+  state.addPropagator(UnionOf(cell, Vector(cell), cause))
+}
+
+// Update the processTypeLevel method to use this helper:
+def processTypeLevel(term: Term, cause: Expr)(using state: StateAbility[Tyck]): Unit = {
+  // Get cell ID
+  val cellId = toId(term)
+  
+  // Ensure this cell is covered
+  ensureCellCoverage(cellId, cause)
+  
+  // For composite terms like function calls, also ensure sub-term coverage
+  term match {
+    case fcall: FCallTerm => {
+      processTypeLevel(fcall.func, cause)
+      fcall.args.foreach(arg => processTypeLevel(arg, cause))
+    }
+    case _ => // Handle other cases as needed
+  }
+}
+```
+
+4. **Type Checking Integration**:
+```scala
+// In TyckPropagator.scala, enhance the tryUnify method:
+private def tryUnify(lhs: Term, rhs: Term, cause: Expr)(using
+    state: StateAbility[Tyck],
+    ctx: Context,
+    ck: Tyck
+): Unit = {
+  // ... existing code ...
+  
+  (lhs, rhs) match {
+    // ... existing cases ...
+    
+    // Add specific handling for function call terms
+    case (fcall: FCallTerm, _) if isTypeLevel(fcall) => {
+      // Ensure cell coverage for the function call
+      ensureCellCoverage(toId(fcall), cause)
+      
+      // Handle sub-terms
+      processTypeLevel(fcall.func, cause)
+      fcall.args.foreach(arg => processTypeLevel(arg, cause))
+      
+      // Reduce the function call for comparison
+      val reduced = reducer.reduce(fcall, ReduceMode.TypeLevel)
+      if (reduced != fcall) {
+        // If reduction succeeded, unify the reduced result
+        tryUnify(reduced, rhs, cause)
+      } else {
+        // Otherwise, report appropriate error
+        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      }
+    }
+    
+    // Similar case for right-hand side
+    case (_, fcall: FCallTerm) if isTypeLevel(fcall) => {
+      // Similar implementation as above, but flipped
+    }
+    
+    // ... other cases ...
+  }
+}
+```
+
+### 3.5.3 Testable Example
+
+This improvement can be tested with our Chester file that extends the existing type-level-reduction.chester example:
+
+```chester
+// Test enhanced type-level function application
+record A(a: Integer);
+record B(b: String);
+
+// Basic identity function for types
+def idType(x: Type): Type = x;
+
+// Function composition at the type level
+def composeTypes(f: Type -> Type, g: Type -> Type, x: Type): Type = f(g(x));
+
+// Type-level functions for wrapping types
+def wrapInRecord(name: String, innerType: Type): Type = {
+  idType(innerType) // Apply inner function first
+};
+
+// Test basic composition
+let aT = composeTypes(idType, idType, A);
+def getA(x: aT): Integer = x.a;  // Should work via reduction
+
+// Test with multiple applications
+let wrappedB = wrapInRecord("wrapper", B);
+def getB(x: wrappedB): String = x.b;  // Should also work
+
+// Test more complex composition
+let doubleWrapped = composeTypes(idType, wrapInRecord("outer", A), A);
+def getDoubleA(x: doubleWrapped): Integer = x.a;
+```
+
+When run, this test currently fails with the error:
+```
+java.lang.IllegalStateException: Cells Vector(...) are not covered by any propagator
+```
+
+Our implementation will fix this issue, allowing the test to pass.
+
+### 3.5.4 Success Criteria
+
+1. The test file type-checks correctly with no propagator errors
+2. Nested function applications are properly reduced during type checking
+3. Field access on types produced by composed functions works correctly
+4. The original function applications are preserved in elaborated results
+5. Error messages for invalid type-level functions are clear and helpful
+6. The implementation works with multiple levels of function application nesting
+7. No "cells not covered by any propagator" errors occur during zonking
+
+### 3.5.5 Alignment with Design Principles
+
+This implementation aligns with Chester's core design principles:
+
+1. **Term Preservation**: Original function application expressions are preserved in elaborated results
+2. **Controlled Reduction**: Reduction is only used internally during type checking
+3. **Propagator Network Integrity**: All cells have proper propagator coverage
+4. **Flexible Type System**: Enables sophisticated type-level programming
+
+The proposed changes are minimal and focused, addressing the specific issue while maintaining the system's architecture and design philosophy. 

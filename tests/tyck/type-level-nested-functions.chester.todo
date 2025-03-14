@@ -1,0 +1,26 @@
+// Test enhanced type-level function application
+record A(a: Integer);
+record B(b: String);
+
+// Basic identity function for types
+def idType(x: Type): Type = x;
+
+// Function composition at the type level
+def composeTypes(f: Type -> Type, g: Type -> Type, x: Type): Type = f(g(x));
+
+// Type-level functions for wrapping types
+def wrapInRecord(name: String, innerType: Type): Type = {
+  idType(innerType) // Apply inner function first
+};
+
+// Test basic composition
+let aT = composeTypes(idType, idType, A);
+def getA(x: aT): Integer = x.a;  // Should work via reduction
+
+// Test with multiple applications
+let wrappedB = wrapInRecord("wrapper", B);
+def getB(x: wrappedB): String = x.b;  // Should also work
+
+// Test more complex composition
+let doubleWrapped = composeTypes(idType, wrapInRecord("outer", A), A);
+def getDoubleA(x: doubleWrapped): Integer = x.a; 
