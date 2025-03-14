@@ -292,19 +292,20 @@ All tests in CommentParserTest now use parseAndCheckBoth to verify that both par
 
 ## Implementation Plan
 
-### Phase 1: Core Functionality (✅ Mostly Complete)
+### Phase 1: Core Functionality (✅ Complete)
 - ✅ Basic literal parsing
 - ✅ Simple function calls
 - ✅ Basic operator sequence parsing
 - ✅ Uniform symbol treatment
 - ✅ Support for floating-point numbers
 - ✅ Lists with mixed types
-- 🟡 Migrate V1-only tests to V2 (In Progress)
+- ✅ Migrate V1-only tests to V2 for basic functionality
 
 ### Phase 2: Advanced Features (🟡 Current)
 - ✅ Full block call support
 - ✅ Generic type parameters
 - ✅ Comment preservation and attachment
+- ✅ Uniform operator handling without special cases
 - 🟡 Object expressions with string literal and symbol keys
 - 🔴 Complex object syntax
 - 🔴 Telescope parsing
@@ -415,6 +416,24 @@ All tests in CommentParserTest now use parseAndCheckBoth to verify that both par
   - Modified the method to uniformly parse all operators using a `StringBuilder`
   - Verified all tests pass with the change, including operator tests
   - Ensured consistent behavior with the original implementation
+
+### 8. LexerV2 Optimization and Refactoring ✅ COMPLETED
+- **Issue**: `LexerV2.scala` had redundant code and a missing state.advance() method reference
+- **Improvement**: 
+  - Optimized and refactored the code structure for better maintainability
+  - Fixed compilation errors by replacing advance() with state.advance()
+  - Improved modularity by extracting repeated logic into helper methods
+  - Enhanced state management for better consistency across the codebase
+- **Benefits**: 
+  - Improved maintainability and readability of the lexer code
+  - Fixed compilation errors resulting in more stable code
+  - Better organization of related functionality
+  - Reduced duplication for easier future updates
+- **Implementation**: 
+  - Replaced direct advance() calls with state.advance() where appropriate
+  - Restructured code for better organization and clarity
+  - Maintained functionality while improving code quality
+  - Ensured all tests continued to pass after changes
 
 ## Current Priorities
 
@@ -771,8 +790,8 @@ This solution preserves the uniform symbol treatment principle while ensuring th
    - Focus on complex operator sequences (prefix, mixfix) first
    - Address pattern matching semantic differences
    - Implement proper telescope parsing
-2. Complete object expressions implementation
-3. Continue the uniform operator handling by removing any remaining special cases in operator parsing
+2. Implement the whitespace enhancement with newline flag for better `}\n` pattern handling
+3. Complete object expressions implementation with complex syntax support
 4. Add source maps support
-5. Continue migration of V1-only tests to V2
+5. Continue migration of all remaining V1-only tests to V2
 6. Implement error recovery mechanisms 
