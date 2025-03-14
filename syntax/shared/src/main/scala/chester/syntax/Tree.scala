@@ -31,8 +31,7 @@ trait Tree[A <: Tree[A]] extends Any {
   ).asInstanceOf[ThisTree]
 
   final def descentRecursive(f: A => A): A = thisOr {
-    f(descent { _.descentRecursive(f(_))
-    })
+    f(descent { _.descentRecursive(f(_)) })
   }
 
   def inspect(f: A => Unit): Unit = {
@@ -43,8 +42,7 @@ trait Tree[A <: Tree[A]] extends Any {
   }
 
   def inspectRecursive(operator: A => Unit): Unit = {
-    inspect { _.inspectRecursive(operator(_))
-    }
+    inspect { _.inspectRecursive(operator(_)) }
     operator(this.asInstanceOf[A])
   }
 

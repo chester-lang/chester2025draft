@@ -15,7 +15,21 @@ package chester.readerv2
  */
 import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
-import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, QualifiedName, Tuple}
+import chester.syntax.concrete.{
+  Block,
+  DotCall,
+  Expr,
+  ExprMeta,
+  FunctionCall,
+  ListExpr,
+  ObjectClause,
+  ObjectExpr,
+  ObjectExprClause,
+  ObjectExprClauseOnValue,
+  OpSeq,
+  QualifiedName,
+  Tuple
+}
 import chester.syntax.concrete.{
   Identifier as ConcreteIdentifier,
   IntegerLiteral as ConcreteIntegerLiteral,
@@ -77,7 +91,7 @@ object LexerV2 {
 
   // Keep DEBUG flag for tests that use it
   var DEBUG = false
-  
+
   // Constants for parser configuration
   val MAX_LIST_ELEMENTS = 50
 }
@@ -96,14 +110,40 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   // Helper method to create a common ParseError from current token
   private def createParseError(msg: String, token: Either[ParseError, Token]): ParseError = token match {
-    case Right(t)  => ParseError(msg, t.sourcePos.range.start)
+    case Right(t)  => ParseError(s"$msg at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}", t.sourcePos.range.start)
     case Left(err) => err
   }
 
   // Helper method for common error cases
-  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError =
-    createParseError(s"Expected $expected", token)
-
+  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = token match {
+    case Right(t) => {
+      val tokenType = t match {
+        case _: Token.Identifier      => "identifier"
+        case _: Token.IntegerLiteral  => "integer literal"
+        case _: Token.RationalLiteral => "rational literal"
+        case _: Token.StringLiteral   => "string literal"
+        case _: Token.Operator        => "operator"
+        case _: Token.LParen          => "left parenthesis '('"
+        case _: Token.RParen          => "right parenthesis ')'"
+        case _: Token.LBrace          => "left brace '{'"
+        case _: Token.RBrace          => "right brace '}'"
+        case _: Token.LBracket        => "left bracket '['"
+        case _: Token.RBracket        => "right bracket ']'"
+        case _: Token.Colon           => "colon ':'"
+        case _: Token.Comma           => "comma ','"
+        case _: Token.Dot             => "dot '.'"
+        case _: Token.Semicolon       => "semicolon ';'"
+        case _: Token.EOF             => "end of file"
+        case _: Token.Whitespace      => "whitespace"
+        case _                        => "unknown token"
+      }
+      ParseError(
+        s"Expected $expected but found $tokenType at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
+        t.sourcePos.range.start
+      )
+    }
+    case Left(err) => err
+  }
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] = {
     if (ignoreLocation) {
       None
@@ -118,7 +158,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       }
     }
   }
-
   private def getSourcePos(token: Either[ParseError, Token]): SourcePos = {
     debug(s"getSourcePos: token=$token")
     token match {
@@ -909,25 +948,25 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   val commentInfo = PartialFunction.condOpt((leadingComments.nonEmpty, trailingComments.nonEmpty)) {
                     case (true, true) =>
                       chester.syntax.concrete.CommentInfo(
-                          commentBefore = leadingComments,
-                          commentInBegin = Vector.empty,
-                          commentInEnd = Vector.empty,
-                          commentEndInThisLine = trailingComments
-                        )
+                        commentBefore = leadingComments,
+                        commentInBegin = Vector.empty,
+                        commentInEnd = Vector.empty,
+                        commentEndInThisLine = trailingComments
+                      )
                     case (true, false) =>
                       chester.syntax.concrete.CommentInfo(
-                          commentBefore = leadingComments,
-                          commentInBegin = Vector.empty,
-                          commentInEnd = Vector.empty,
-                          commentEndInThisLine = Vector.empty
-                        )
+                        commentBefore = leadingComments,
+                        commentInBegin = Vector.empty,
+                        commentInEnd = Vector.empty,
+                        commentEndInThisLine = Vector.empty
+                      )
                     case (false, true) =>
                       chester.syntax.concrete.CommentInfo(
-                          commentBefore = Vector.empty,
-                          commentInBegin = Vector.empty,
-                          commentInEnd = Vector.empty,
-                          commentEndInThisLine = trailingComments
-                        )
+                        commentBefore = Vector.empty,
+                        commentInBegin = Vector.empty,
+                        commentInEnd = Vector.empty,
+                        commentEndInThisLine = trailingComments
+                      )
                   }
 
                   ExprMeta(m.sourcePos, commentInfo)
@@ -1131,12 +1170,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
               val meta = createMeta(Some(sourcePos), Some(endPos))
               meta.map { m =>
                 val allLeadingComments = leadingComments ++ afterBraceComments
-                val commentInfo = Option.when(allLeadingComments.nonEmpty)(chester.syntax.concrete.CommentInfo(
-                      commentBefore = allLeadingComments,
-                      commentInBegin = Vector.empty,
-                      commentInEnd = Vector.empty,
-                      commentEndInThisLine = Vector.empty
-                    ))
+                val commentInfo = Option.when(allLeadingComments.nonEmpty)(
+                  chester.syntax.concrete.CommentInfo(
+                    commentBefore = allLeadingComments,
+                    commentInBegin = Vector.empty,
+                    commentInEnd = Vector.empty,
+                    commentEndInThisLine = Vector.empty
+                  )
+                )
 
                 ExprMeta(m.sourcePos, commentInfo)
               }
@@ -1175,9 +1216,11 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 val meta = createMeta(Some(sourcePos), Some(endPos))
                 meta.map { m =>
                   val allLeadingComments = leadingComments ++ afterBracketComments
-                  val commentInfo = Option.when(allLeadingComments.nonEmpty)(chester.syntax.concrete.CommentInfo(
-                        commentBefore = allLeadingComments
-                      ))
+                  val commentInfo = Option.when(allLeadingComments.nonEmpty)(
+                    chester.syntax.concrete.CommentInfo(
+                      commentBefore = allLeadingComments
+                    )
+                  )
 
                   ExprMeta(m.sourcePos, commentInfo)
                 }
@@ -1376,10 +1419,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     if (sourcePos.isEmpty && leadingComments.isEmpty && trailingComments.isEmpty) {
       None
     } else {
-      val commentInfo = Option.unless(leadingComments.isEmpty && trailingComments.isEmpty)(chester.syntax.concrete.CommentInfo(
-            commentBefore = leadingComments,
-            commentEndInThisLine = trailingComments
-          ))
+      val commentInfo = Option.unless(leadingComments.isEmpty && trailingComments.isEmpty)(
+        chester.syntax.concrete.CommentInfo(
+          commentBefore = leadingComments,
+          commentEndInThisLine = trailingComments
+        )
+      )
       Some(ExprMeta(sourcePos, commentInfo))
     }
   }

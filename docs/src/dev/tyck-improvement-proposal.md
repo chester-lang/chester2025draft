@@ -98,6 +98,29 @@ private def areAlphaEquivalent(lhs: Term, rhs: Term)(using state: StateAbility[T
 }
 ```
 
+#### 2.2.3 Enhanced Type Level Comparison
+The type level comparison in `tryUnify` method of `TyckPropagator` has been improved to:
+- Implement more flexible compatibility rules between different level types
+- Allow finite level types to be compatible with unrestricted level types
+- Maintain controlled asymmetric compatibility (unrestricted isn't automatically compatible with finite)
+- Preserve backward compatibility for identical level types
+
+```scala
+// Previous simple equality check
+case (Type(level1, _), Type(level2, _)) =>
+  level1 == level2
+
+// Enhanced type level comparison
+case (Type(level1, _), Type(level2, _)) =>
+  (level1, level2) match {
+    case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
+    case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
+    case _ => level1 == level2 // For other cases, keep the exact equality check
+  }
+```
+
+This improvement is particularly important for dependent types where the level of a type needs to vary based on its usage context. The directional compatibility (finite → unrestricted but not vice versa) ensures type safety while providing increased flexibility when working with dependent types of different levels. This change aligns with the type-checking-system.md document, which emphasizes the importance of maintaining type safety while allowing for flexibility in dependent types.
+
 ## 3. Remaining Issues and Implementation Plan
 
 ### 3.1 Unimplemented Union Type Subtyping
@@ -366,8 +389,8 @@ test("meta variables in unions resolve correctly") {
 test("complex union type hierarchy resolves") {
   // Test code
 }
-```
 
+```
 ## 5. Implementation Steps
 
 ### 5.1 Phase 1: Core Type System Improvements
