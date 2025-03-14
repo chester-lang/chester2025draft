@@ -224,6 +224,72 @@ Legend:
 - Some block call tests with complex contexts
 - Function calls with generic type parameters
 
+## Comment Preservation Implementation
+
+### Current State Analysis
+
+The V2 parser has comment token representation and support for attaching comments to expressions in the AST. Here are the key components:
+
+1. **Token Representation**: 
+   - Comments are represented as `Token.Comment(text: String, sourcePos: SourcePos)` tokens during lexing
+   - The parser handles comments during parsing and preserves them in the AST
+
+2. **Comment Structure in AST**:
+   - `chester.syntax.concrete.Comment` class with content, type (OneLine/MultiLine), and sourcePos
+   - `chester.syntax.concrete.CommentInfo` class with collections for:
+     - commentBefore: Comments before an expression
+     - commentInBegin: Comments at the beginning of a block structure
+     - commentInEnd: Comments at the end of a block structure
+     - commentEndInThisLine: Comments at the end of a line with an expression
+
+3. **Metadata Handling**:
+   - `ExprMeta` contains sourcePos and optional commentInfo
+   - `MetaFactory` has helper methods for comment attachment
+   - Expression nodes have methods like `commentAtStart`, `updateMeta` for comment handling
+
+### Implementation Components
+
+1. **Comment Collection**
+   - Methods to collect and categorize comments during parsing
+   - Conversion of Token.Comment instances to chester.syntax.concrete.Comment objects
+   - Preservation of source positions and comment text
+   - Categorization based on surrounding whitespace/newlines
+
+2. **Metadata Creation with Comments**
+   - Methods to create expression metadata with leading and trailing comments
+   - Integration with ExprMeta and CommentInfo structures
+
+3. **Comment Association with Expressions**
+   - Modified expression creation methods to include comment attachment
+   - Handling of both leading and trailing comments
+
+4. **Special Cases Handling**
+   - Block comments: Comments within blocks attached to the block or nearest expression
+   - End-of-line comments: Comments following an expression on the same line
+   - Standalone comments: Comments not directly associated with an expression
+   - Comments between expressions: Determination of which expression they belong to
+
+5. **Testing Strategy**
+   - Test cases with various comment placements:
+     - Leading comments before expressions
+     - Trailing comments after expressions
+     - Comments within blocks, lists, and objects
+     - Standalone comments between expressions
+   - Verification of comment content and positions preservation
+   - Comparison with V1 parser to ensure compatibility
+   - Edge cases testing:
+     - Multiple consecutive comments
+     - Comments with special characters
+     - Comments at file beginning and end
+
+### Compatibility Considerations
+
+- Backward compatibility with V1 parser's comment representation
+- AST consumers that use comment information
+- Code formatting tools that rely on comment positions
+
+All tests in CommentParserTest now use parseAndCheckBoth to verify that both parsers correctly preserve comments.
+
 ## Implementation Plan
 
 ### Phase 1: Core Functionality (✅ Mostly Complete)
@@ -239,7 +305,7 @@ Legend:
 - ✅ Full block call support
 - ✅ Generic type parameters
 - ✅ Comment preservation and attachment
-- 🟡 Object expressions with string literals and symbol keys
+- 🟡 Object expressions with string literal and symbol keys
 - 🔴 Complex object syntax
 - 🔴 Telescope parsing
 - 🔴 Source maps
