@@ -174,6 +174,31 @@
    - This approach is especially useful when tools that normally handle editing break unexpectedly
    - Always verify what you're checking out before executing the command to avoid losing important changes
 
+### AI Agent Testing Instructions
+
+1. **Terminal Interruption Issues**
+   - If you are an AI agent working on Chester code and notice:
+     - Frequent `^C` characters appearing in command output
+     - Commands being interrupted prematurely
+     - Test results not displaying properly
+     - Terminal output being cut off
+   - STOP attempting to run tests and:
+     - Inform the user about the terminal connection issues
+     - Ask the user to run the tests manually
+     - Request that the user provide the test results
+     - This indicates a problem with the terminal connection, not with the code itself
+   
+2. **Test Running Best Practices for AI Agents**
+   - Always run full test suites rather than individual tests when possible
+   - Verify that terminal commands execute completely before proceeding
+   - Use explicit test path specifications:
+     ```bash
+     # Preferred approach
+     sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+     ```
+   - Avoid test filtering with `-z` as it may produce unreliable results
+   - If tests are taking too long to complete, inform the user and suggest they run the tests locally
+
 ## Platform-Specific Type System Implementation
 
 Chester implements its type system differently for different platforms (JVM and JS). To handle this correctly:
