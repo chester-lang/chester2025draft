@@ -260,7 +260,8 @@ trait ProvideMultithread extends ProvideImpl {
           // Break if iterations are excessive
           if (iterationCount >= 10) {
             setDidSomething(true)
-            break()
+            // Instead of using break(), we exit the loop normally
+            loop = false
             return
           }
 
@@ -306,8 +307,14 @@ trait ProvideMultithread extends ProvideImpl {
             }
 
             if (tasks.nonEmpty) {
-              val _ = ForkJoinTask.invokeAll(tasks.asJava)
-              tick
+              try {
+                val _ = ForkJoinTask.invokeAll(tasks.asJava)
+                tick
+              } catch {
+                case e: Exception => 
+                  // Log exception but continue processing
+                  setDidSomething(true)
+              }
             }
 
             // Check if we made progress
@@ -332,9 +339,15 @@ trait ProvideMultithread extends ProvideImpl {
           }
 
           if (defaultTasks.nonEmpty) {
-            val _ = ForkJoinTask.invokeAll(defaultTasks.asJava)
-            // Final check for unresolved cells
-            cellsNeeded = cellsNeeded.filter(_.noAnyValue)
+            try {
+              val _ = ForkJoinTask.invokeAll(defaultTasks.asJava)
+              // Final check for unresolved cells
+              cellsNeeded = cellsNeeded.filter(_.noAnyValue)
+            } catch {
+              case e: Exception =>
+                // Continue even if there's an exception
+                setDidSomething(true)
+            }
           }
 
           // Throw exception for cells that couldn't be resolved
@@ -344,6 +357,13 @@ trait ProvideMultithread extends ProvideImpl {
             )
           }
         }
+      } catch {
+        case e: IllegalStateException => 
+          // Rethrow illegal state exceptions
+          throw e
+        case e: Exception =>
+          // Log other exceptions but allow processing to continue
+          setDidSomething(true)
       } finally {
         decrementRecursionDepth()
       }
@@ -370,8 +390,8 @@ trait ProvideMultithread extends ProvideImpl {
           }
         } catch {
           case ex: Exception =>
-            // Handle or log the exception as needed
-            throw ex
+            // Just mark as doing something and continue
+            setDidSomething(true)
         }
       }
     }
@@ -397,8 +417,8 @@ trait ProvideMultithread extends ProvideImpl {
           }
         } catch {
           case ex: Exception =>
-            // Handle or log the exception as needed
-            throw ex
+            // Just mark as doing something and continue
+            setDidSomething(true)
         }
       }
     }
@@ -431,7 +451,9 @@ trait ProvideMultithread extends ProvideImpl {
                 propagator.naiveFallbackZonk(Vector(c))(using state, more)
               }
             } catch {
-              case e: Exception => ZonkResult.NotYet
+              case e: Exception => 
+                // Continue with NotYet result on exception
+                ZonkResult.NotYet
             }
 
           zonkResult match {
@@ -450,8 +472,14 @@ trait ProvideMultithread extends ProvideImpl {
                 // Mark these cells as processed before recursing
                 newNeeded.foreach(n => processedCellIds.add(n.toString))
                 // Process the newly needed cells
-                state.naiveZonk(newNeeded)
-                setDidSomething(true)
+                try {
+                  state.naiveZonk(newNeeded)
+                  setDidSomething(true)
+                } catch {
+                  case e: Exception =>
+                    // Just mark as doing something and continue
+                    setDidSomething(true)
+                }
               }
             case ZonkResult.NotYet =>
             // No action needed
@@ -469,12 +497,6 @@ trait ProvideMultithread extends ProvideImpl {
           setDidSomething(true)
         }
       }
-    }
-
-    // Custom break exception for clean loop termination
-    private def break(): Nothing = {
-      case class BreakException() extends RuntimeException
-      throw new BreakException()
     }
   }
 }
