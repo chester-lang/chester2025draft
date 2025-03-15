@@ -1422,7 +1422,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     js,
     site,
     docs,
-    optional
+    optional,
+    jsForPython
   )
   .settings(
     scalaVersion := scala3Version
@@ -1438,3 +1439,22 @@ Global / excludeLintKeys ++= Set[SettingKey[_]](
   lsp.jvm / nativeImageJvm,
   lsp.jvm / nativeImageVersion
 )
+
+// js-for-python integration
+lazy val jsForPython = crossProject(JSPlatform)
+  .withoutSuffixFor(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("js-for-python"))
+  .settings(
+    commonSettings,
+    name := "js-for-python"
+  )
+  .jsConfigure(_.dependsOn(utils.js))
+  .jsSettings(
+    scalaJSLinkerConfig ~= {
+      // Enable ECMAScript module output.
+      _.withModuleKind(ModuleKind.ESModule)
+        // Use .mjs extension.
+        .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
+    }
+  )
