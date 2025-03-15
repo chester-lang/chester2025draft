@@ -29,6 +29,16 @@
    - Each change should be easily reviewable and testable
 
 2. **Testing Requirements**
+   - **ALWAYS use the following commands for running tests:**
+     ```bash
+     # Run all tests
+     sbt rootJVM/test
+     
+     # Run a specific test class
+     sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+     ```
+   - **DO NOT** use other project paths like `cli/test`, `semantic/test`, etc. as these may not execute tests correctly
+   - **DO NOT** use the `-z` test filter option as it is broken and produces unreliable results
    - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
    - Add new tests for new functionality
@@ -189,14 +199,22 @@
      - This indicates a problem with the terminal connection, not with the code itself
    
 2. **Test Running Best Practices for AI Agents**
+   - **ALWAYS use these exact commands for running tests:**
+     ```bash
+     # Run all tests
+     sbt rootJVM/test | cat
+     
+     # Run a specific test class (include quotation marks)
+     sbt "rootJVM/testOnly chester.tyck.FilesTyckTest" | cat
+     ```
+   - **NEVER** attempt to run tests with other project paths like `cli/test`, `semantic/test`, etc.
+   - **NEVER** use the `-z` test filter option as it is broken and produces unreliable results
    - Always run full test suites rather than individual tests when possible
    - Verify that terminal commands execute completely before proceeding
-   - Use explicit test path specifications:
-     ```bash
-     # Preferred approach
-     sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
-     ```
-   - Avoid test filtering with `-z` as it may produce unreliable results
+   - If a test command produces an error about not finding the test class:
+     - First try the full `rootJVM/test` command to run all tests
+     - Then check if the test class path is correct
+     - Do not experiment with different project paths
    - If tests are taking too long to complete, inform the user and suggest they run the tests locally
 
 ## Platform-Specific Type System Implementation
