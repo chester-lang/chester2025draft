@@ -83,7 +83,7 @@ jobs:
         run: sbt site/fullLinkJS # site/fastLinkJS
 
       - name: Copy generated JS files
-        run: npm run copy-js
+        run: pnpm run copy-js
         working-directory: ./site
 
       - name: Build with Next.js
