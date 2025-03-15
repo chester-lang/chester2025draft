@@ -45,9 +45,11 @@ trait TyckPropagator extends ElaboraterCommon {
           case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
             types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
 
-          // Type levels: unify levels
+          // Type levels: use our helper method for level compatibility
           case (Type(level1, _), Type(level2, _)) =>
-            unify(level1, level2, cause)
+            if (!isLevelCompatible(level1, level2)(using state, localCtx)) {
+              unify(level1, level2, cause)
+            }
 
           case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
 
@@ -493,13 +495,8 @@ trait TyckPropagator extends ElaboraterCommon {
         if (areAlphaEquivalent(lhsResolved, rhsResolved)) true
         else {
           (lhsResolved, rhsResolved) match {
-            case (Type(level1, _), Type(level2, _)) =>
-              // Enhanced type level comparison to handle compatibility between finite and unrestricted levels
-              (level1, level2) match {
-                case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
-                case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
-                case _ => level1 == level2 // For other cases, keep the exact equality check
-              }
+            case (Type(level1, _), Type(level2, _)) => 
+              isLevelCompatible(level1, level2)(using state, localCtx)
 
             case (ListType(elem1, _), ListType(elem2, _)) =>
               tryUnify(elem1, elem2)
@@ -831,6 +828,18 @@ trait TyckPropagator extends ElaboraterCommon {
         case None => ZonkResult.Require(Vector(recordTy))
         case _    => ZonkResult.Done
       }
+    }
+  }
+
+  /** Helper method to check if a source level is compatible with a target level */
+  private def isLevelCompatible(source: Term, target: Term)(using 
+      state: StateAbility[Tyck],
+      ctx: Context
+  ): Boolean = {
+    (source, target) match {
+      case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
+      case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
+      case _ => source == target // For other cases, keep the exact equality check
     }
   }
 
