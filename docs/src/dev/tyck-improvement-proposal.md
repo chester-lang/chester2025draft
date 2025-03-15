@@ -472,6 +472,25 @@ test("complex union type hierarchy resolves") {
 3. Documentation clearly explains dependent type concepts and usage patterns
 4. Meta variables in complex types resolve correctly 
 
+## 8. Running Tests
+
+To run the tests for the type checker specifically, use the following SBT command:
+
+```bash
+# Run the FilesTyckTest suite to test the type checking system
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+```
+
+⚠️ **IMPORTANT WARNING**: Do NOT use the `-z` test filter option (e.g., `sbt "rootJVM/testOnly -- -z pattern"`) as it is broken and produces unreliable results. Instead, run the entire test suite and review the results.
+
+These commands are essential for verifying the type checker implementation against the test cases. The `FilesTyckTest` suite contains tests for various type checking features including:
+- Dependent types
+- Type-level function applications
+- Record field access
+- Union type subtyping
+- Forward definitions
+- Object literals
+
 ## 3.5 Enhanced Type-Level Function Application Reduction
 
 ### 3.5.1 Current Limitation
