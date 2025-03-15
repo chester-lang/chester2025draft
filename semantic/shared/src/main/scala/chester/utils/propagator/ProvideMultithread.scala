@@ -365,7 +365,7 @@ trait ProvideMultithread extends ProvideImpl {
           // Log other exceptions but allow processing to continue
           setDidSomething(true)
       } finally {
-        decrementRecursionDepth()
+        decrementRecursionDepth(): Unit
       }
     }
 
