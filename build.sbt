@@ -209,7 +209,8 @@ def commonSettings0 = Seq(
       "-Wnonunit-statement",
       "-deprecation",
       "-feature",
-      "-experimental"
+      "-experimental",
+      "--preview"
     ),
   // scalafix
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
