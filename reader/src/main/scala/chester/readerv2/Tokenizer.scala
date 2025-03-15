@@ -51,7 +51,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
   // Update position with proper cache handling
   private def updatePosition(newPos: Int): Unit = {
     if (newPos > pos) {
-      getUtf16Position(newPos) // This will compute and cache if needed
+      val _ = getUtf16Position(newPos) // This will compute and cache if needed
     }
     pos = newPos
   }
@@ -138,7 +138,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
 
     // Update cache if we moved
     if (pos > startPos) {
-      getUtf16Position(pos) // This will compute and cache if needed
+      val _ = getUtf16Position(pos) // This will compute and cache if needed
     }
   }
 
