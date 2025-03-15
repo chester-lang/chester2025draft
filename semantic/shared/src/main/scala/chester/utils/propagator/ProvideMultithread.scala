@@ -233,7 +233,7 @@ trait ProvideMultithread extends ProvideImpl {
 
     override def naiveZonk(
         cells: Vector[CIdOf[Cell[?]]]
-    )(using more: Ability): Unit = {
+    )(using  Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
       try {
         // Skip if recursion is too deep
@@ -328,11 +328,7 @@ trait ProvideMultithread extends ProvideImpl {
         // If still not resolved, try default values
         if (cellsNeeded.nonEmpty && tryFallback > 1) {
           val defaultTasks = cellsNeeded.flatMap { c =>
-            if (c.noAnyValue && c.store.default.isDefined) {
-              Some(new DefaultValueTask(c, this))
-            } else {
-              None
-            }
+            Option.when(c.noAnyValue && c.store.default.isDefined)(new DefaultValueTask(c, this))
           }
 
           if (defaultTasks.nonEmpty) {

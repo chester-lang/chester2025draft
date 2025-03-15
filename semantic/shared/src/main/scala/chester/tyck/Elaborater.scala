@@ -32,9 +32,9 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
   // Process all terms in a function application to ensure proper cell coverage
   private def processFunctionCall(term: Term, cause: Expr)(using
-      state: StateAbility[Tyck],
-      ctx: Context,
-      ck: Tyck
+       StateAbility[Tyck],
+       Context,
+       Tyck
   ): Unit = {
     // Get cell ID
     val cellId = toId(term)

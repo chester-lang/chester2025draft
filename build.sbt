@@ -115,7 +115,7 @@ val scalafixRules = Seq(
   "WithFilter",
   "WithLeftWithRight"
 ).map(x => "dependency:" + x + "@com.github.xuwei-k:scalafix-rules:0.6.2") ++ Seq(
-  "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.8",
+  "dependency:EmptyCollectionsUnified@io.github.ghostbuster91.scalafix-unified:unified:0.0.9",
   "dependency:NonCaseException@net.pixiv:scalafix-pixiv-rule:4.5.3",
   "dependency:NeedMessageExtendsRuntimeException@net.pixiv:scalafix-pixiv-rule:4.5.3",
   "dependency:CheckIsEmpty@net.pixiv:scalafix-pixiv-rule:4.5.3",

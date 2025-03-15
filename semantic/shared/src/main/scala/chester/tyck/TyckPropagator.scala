@@ -833,8 +833,8 @@ trait TyckPropagator extends ElaboraterCommon {
 
   /** Helper method to check if a source level is compatible with a target level */
   private def isLevelCompatible(source: Term, target: Term)(using
-      state: StateAbility[Tyck],
-      ctx: Context
+       StateAbility[Tyck],
+       Context
   ): Boolean = {
     (source, target) match {
       case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
