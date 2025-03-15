@@ -839,8 +839,23 @@ trait TyckPropagator extends ElaboraterCommon {
     (source, target) match {
       case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
       case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
+      case (LevelFinite(n1, _), LevelFinite(n2, _)) => 
+        // Try to extract numeric values for comparison
+        (extractNumericValue(n1), extractNumericValue(n2)) match {
+          // If we can extract both values, lower level is compatible with higher level
+          case (Some(v1), Some(v2)) => v1 <= v2
+          // If we can't extract, fall back to exact equality
+          case _ => source == target
+        }
       case _                                         => source == target // For other cases, keep the exact equality check
     }
+  }
+
+  // Helper to extract numeric value from a term
+  private def extractNumericValue(term: Term): Option[BigInt] = term match {
+    case IntTerm(value, _) => Some(BigInt(value))
+    case IntegerTerm(value, _) => Some(value)
+    case _ => None
   }
 
 }
