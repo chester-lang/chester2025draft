@@ -38,10 +38,10 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   ): Unit = {
     // Get cell ID
     val cellId = toId(term)
-    
+
     // Ensure this cell is covered
     ensureCellCoverage(cellId, cause)
-    
+
     // For composite terms like function calls, also ensure sub-term coverage
     term match {
       case fcall: FCallTerm => {
@@ -137,7 +137,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
       case (Type(level1, _), Type(level2, _))        => unify(level1, level2, cause)
       case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
-      
+
       // Union-to-Union subtyping - use a guard to ensure specificity
       case (Union(types1, _), Union(types2, _)) if types1.nonEmpty && types2.nonEmpty =>
         if (DEBUG_UNION_SUBTYPING) {
@@ -339,7 +339,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         if (DEBUG_UNION_SUBTYPING) println(s"Processing function call in unify: $fcall")
         // Ensure all cells in the function call have proper coverage
         processFunctionCall(fcall, cause)
-        
+
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       }
@@ -347,11 +347,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         if (DEBUG_UNION_SUBTYPING) println(s"Processing function call in unify (RHS): $fcall")
         // Ensure all cells in the function call have proper coverage
         processFunctionCall(fcall, cause)
-        
+
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       }
-        
+
       case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
     }
   }

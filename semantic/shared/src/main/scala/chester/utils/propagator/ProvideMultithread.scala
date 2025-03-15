@@ -84,38 +84,38 @@ trait ProvideMultithread extends ProvideImpl {
     private val forkJoinPool = new ForkJoinPool(
       Runtime.getRuntime.availableProcessors()
     )
-    
+
     // Thread-safe change tracking queue
     private val didChanged = new ConcurrentLinkedQueue[CIdOf[?]]()
-    
+
     // Progress tracking flag
     private val didSomethingRef = new AtomicBoolean(false)
-    
+
     def didSomething: Boolean = didSomethingRef.get()
     def setDidSomething(value: Boolean): Unit = {
       didSomethingRef.set(value)
     }
-    
+
     // Thread-local for recursion depth tracking
     private val recursionDepthThreadLocal = new ThreadLocal[Integer] {
       override def initialValue(): Integer = 0
     }
-    
+
     private def getRecursionDepth(): Int = {
       val depth = recursionDepthThreadLocal.get()
       if (depth == null) 0 else depth.intValue()
     }
-    
+
     private def setRecursionDepth(depth: Int): Unit = {
       recursionDepthThreadLocal.set(depth)
     }
-    
+
     private def incrementRecursionDepth(): Int = {
       val current = getRecursionDepth()
       setRecursionDepth(current + 1)
       current + 1
     }
-    
+
     private def decrementRecursionDepth(): Int = {
       val current = getRecursionDepth()
       if (current > 0) {
@@ -191,14 +191,14 @@ trait ProvideMultithread extends ProvideImpl {
     )(using Ability): PIdOf[T] = {
       val id = new HoldPropagator[T](uniqId, propagator)
       propagators.add(id.asInstanceOf[PIdOf[Propagator[Ability]]])
-      
+
       for (cell <- propagator.zonkingCells) {
         cell.zonkingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
       }
       for (cell <- propagator.readingCells) {
         cell.readingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
       }
-      
+
       // Submit task to process this propagator
       forkJoinPool.execute(
         new PropagatorTask(
@@ -241,36 +241,36 @@ trait ProvideMultithread extends ProvideImpl {
           setDidSomething(true)
           return
         }
-        
+
         // Skip duplicate cells to prevent redundant processing
         val uniqueCells = cells.distinct
-        
+
         // Keep track of processed cells to detect cycles
         val processedCellIds = scala.collection.mutable.Set[String]()
         uniqueCells.foreach(c => processedCellIds.add(c.toString))
-        
+
         var cellsNeeded = uniqueCells
         var tryFallback = 0
         var loop = true
         var iterationCount = 0
-        
+
         while (loop && iterationCount < 10) {
           iterationCount += 1
-          
+
           // Break if iterations are excessive
           if (iterationCount >= 10) {
             setDidSomething(true)
             break()
             return
           }
-          
+
           setDidSomething(false)
-          
+
           // Process any remaining propagators
           tick
-          
+
           cellsNeeded = cellsNeeded.filter(this.noAnyValue(_))
-          
+
           if (cellsNeeded.isEmpty) {
             loop = false
           } else {
@@ -282,14 +282,14 @@ trait ProvideMultithread extends ProvideImpl {
                   .filter(_.alive)
                   .toVector
                   .sortBy(p => -p.store.score)
-                
+
                 // Limit number of propagators we try per cell
                 val limitedPropagators = if (alivePropagators.size > 3) {
                   alivePropagators.take(3)
                 } else {
                   alivePropagators
                 }
-                
+
                 limitedPropagators.map { p =>
                   new ZonkTask(
                     c,
@@ -304,12 +304,12 @@ trait ProvideMultithread extends ProvideImpl {
                 Vector.empty
               }
             }
-            
+
             if (tasks.nonEmpty) {
               val _ = ForkJoinTask.invokeAll(tasks.asJava)
               tick
             }
-            
+
             // Check if we made progress
             if (!didSomething) {
               tryFallback += 1
@@ -324,7 +324,7 @@ trait ProvideMultithread extends ProvideImpl {
             }
           }
         }
-        
+
         // If still not resolved, try default values
         if (cellsNeeded.nonEmpty && tryFallback > 1) {
           val defaultTasks = cellsNeeded.flatMap { c =>
@@ -334,13 +334,13 @@ trait ProvideMultithread extends ProvideImpl {
               None
             }
           }
-          
+
           if (defaultTasks.nonEmpty) {
             val _ = ForkJoinTask.invokeAll(defaultTasks.asJava)
             // Final check for unresolved cells
             cellsNeeded = cellsNeeded.filter(_.noAnyValue)
           }
-          
+
           // Throw exception for cells that couldn't be resolved
           if (cellsNeeded.nonEmpty) {
             throw new IllegalStateException(
@@ -425,18 +425,19 @@ trait ProvideMultithread extends ProvideImpl {
             setDidSomething(true)
             return
           }
-          
+
           val propagator = p.store
-          val zonkResult = try {
-            if (firstFallback) {
-              propagator.naiveZonk(Vector(c))(using state, more)
-            } else {
-              propagator.naiveFallbackZonk(Vector(c))(using state, more)
+          val zonkResult =
+            try {
+              if (firstFallback) {
+                propagator.naiveZonk(Vector(c))(using state, more)
+              } else {
+                propagator.naiveFallbackZonk(Vector(c))(using state, more)
+              }
+            } catch {
+              case e: Exception => ZonkResult.NotYet
             }
-          } catch {
-            case e: Exception => ZonkResult.NotYet
-          }
-          
+
           zonkResult match {
             case ZonkResult.Done =>
               p.setAlive(false)
@@ -448,7 +449,7 @@ trait ProvideMultithread extends ProvideImpl {
                 .filter(n => n.noStableValue)
                 .filterNot(n => n == c)
                 .filterNot(n => processedCellIds.contains(n.toString))
-              
+
               if (newNeeded.nonEmpty) {
                 // Mark these cells as processed before recursing
                 newNeeded.foreach(n => processedCellIds.add(n.toString))
@@ -457,7 +458,7 @@ trait ProvideMultithread extends ProvideImpl {
                 setDidSomething(true)
               }
             case ZonkResult.NotYet =>
-              // No action needed
+            // No action needed
           }
         }
       }
@@ -473,7 +474,7 @@ trait ProvideMultithread extends ProvideImpl {
         }
       }
     }
-    
+
     // Custom break exception for clean loop termination
     private def break(): Nothing = {
       case class BreakException() extends RuntimeException

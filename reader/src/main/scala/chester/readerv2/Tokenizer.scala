@@ -33,7 +33,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
   // Get UTF-16 position from cache or calculate and cache it
   private def getUtf16Position(bytePos: Int): Int = {
     if (utf16PosCache.containsKey(bytePos)) return utf16PosCache.get(bytePos)
-    
+
     // Find the nearest cached position that's less than or equal to the target position
     val (nearestPos, nearestUtf16) = {
       var np = 0
@@ -51,9 +51,9 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
     }
 
     // Calculate incrementally from nearest cached position
-    val utf16Pos = nearestUtf16 + (if (nearestPos == bytePos) 0 
+    val utf16Pos = nearestUtf16 + (if (nearestPos == bytePos) 0
                                    else source.substring(nearestPos, bytePos).getCodePoints.size)
-    
+
     // Cache and return result
     utf16PosCache.put(bytePos, utf16Pos): Unit
     utf16Pos
@@ -180,8 +180,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
         val hexDigits = source.substring(startPos + 1, startPos + 5)
         Try(Integer.parseInt(hexDigits, 16)).toEither match {
           case Right(codePoint) => Right((new String(Character.toChars(codePoint)), startPos + 5))
-          case Left(_) => Left(ParseError(s"Invalid Unicode escape sequence \\u$hexDigits", 
-                                          createSourcePos(startPos - 1, startPos + 5).range.start))
+          case Left(_) => Left(ParseError(s"Invalid Unicode escape sequence \\u$hexDigits", createSourcePos(startPos - 1, startPos + 5).range.start))
         }
       case 'u' => Left(ParseError("Incomplete Unicode escape sequence", createSourcePos(startPos - 1, startPos + 1).range.start))
 
@@ -190,8 +189,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
         val hexDigits = source.substring(startPos + 1, startPos + 3)
         Try(Integer.parseInt(hexDigits, 16)).toEither match {
           case Right(charValue) => Right((charValue.toChar.toString, startPos + 3))
-          case Left(_) => Left(ParseError(s"Invalid hex escape sequence \\x$hexDigits", 
-                                          createSourcePos(startPos - 1, startPos + 3).range.start))
+          case Left(_) => Left(ParseError(s"Invalid hex escape sequence \\x$hexDigits", createSourcePos(startPos - 1, startPos + 3).range.start))
         }
       case 'x' => Left(ParseError("Incomplete hex escape sequence", createSourcePos(startPos - 1, startPos + 1).range.start))
 
@@ -204,10 +202,8 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
         val octalDigits = source.substring(startPos, endPos)
         Try(Integer.parseInt(octalDigits, 8)).toEither match {
           case Right(charValue) if charValue <= 0xff => Right((charValue.toChar.toString, endPos))
-          case Right(_) => Left(ParseError(s"Octal escape sequence \\$octalDigits out of range", 
-                                          createSourcePos(startPos - 1, endPos).range.start))
-          case Left(_)  => Left(ParseError(s"Invalid octal escape sequence \\$octalDigits", 
-                                          createSourcePos(startPos - 1, endPos).range.start))
+          case Right(_) => Left(ParseError(s"Octal escape sequence \\$octalDigits out of range", createSourcePos(startPos - 1, endPos).range.start))
+          case Left(_)  => Left(ParseError(s"Invalid octal escape sequence \\$octalDigits", createSourcePos(startPos - 1, endPos).range.start))
         }
 
       // Default - for unrecognized escapes, just use the character directly
@@ -308,7 +304,7 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
     if (intPart.isEmpty) {
       return Left(ParseError("Expected digits", createSourcePos(startPos, startPos).range.start))
     }
-    
+
     var endPos = afterInt
     val numBuilder = new StringBuilder(intPart)
     var isRational = false
@@ -328,13 +324,13 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
       isRational = true
       numBuilder.append(source(endPos))
       endPos += 1
-      
+
       // Handle optional sign
       if (endPos < source.length && (source(endPos) == '+' || source(endPos) == '-')) {
         numBuilder.append(source(endPos))
         endPos += 1
       }
-      
+
       val (expDigits, afterExp) = readDigits(endPos, 10)
       if (expDigits.isEmpty) {
         return Left(ParseError("Expected digits after exponent", createSourcePos(endPos, endPos).range.start))
@@ -407,4 +403,3 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
     Right(Token.Operator(sb.toString, createSourcePos(startPos, pos)))
   }
 }
-

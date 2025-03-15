@@ -13,7 +13,7 @@ package chester.readerv2
  * - Block return value semantics
  * - Operator sequences with later precedence resolution
  */
-import chester.error.{Pos, RangeInFile, Reporter, SourcePos}
+import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
 import chester.syntax.concrete.{
   Block,
@@ -75,8 +75,8 @@ case class LexerState(
   def isAtClosingBraceNewlinePattern: Boolean = isAfterClosingBrace && isAtNewline
   def isAtTerminator: Boolean = current.exists(t =>
     t.isInstanceOf[Token.EOF] || t.isInstanceOf[Token.RParen] ||
-    t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
-    t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
+      t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
+      t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
 
   override def toString: String =
@@ -87,8 +87,8 @@ object LexerV2 {
   def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerV2 =
     new LexerV2(tokens, sourceOffset, ignoreLocation)
 
-  var DEBUG = false  // Keep DEBUG flag for tests that use it
-  val MAX_LIST_ELEMENTS = 50  // Constants for parser configuration
+  var DEBUG = false // Keep DEBUG flag for tests that use it
+  val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
 class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean) {
@@ -100,7 +100,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
-  
+
   private def createParseError(msg: String, token: Either[ParseError, Token]): ParseError = token match {
     case Right(t)  => ParseError(s"$msg at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}", t.sourcePos.range.start)
     case Left(err) => err
@@ -135,10 +135,10 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
     case Left(err) => err
   }
-  
+
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] = {
     if (ignoreLocation) return None
-    
+
     PartialFunction.condOpt((startPos, endPos)) {
       case (Some(start), Some(end)) =>
         ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None)
@@ -148,7 +148,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         ExprMeta(Some(pos), None)
     }
   }
-  
+
   private def getSourcePos(token: Either[ParseError, Token]): SourcePos = {
     debug(s"getSourcePos: token=$token")
     token match {
@@ -176,7 +176,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       if (terms.isEmpty) {
         return Left(ParseError("Empty operator sequence", getStartPos(state.current)))
       }
-      
+
       if (terms.length == 1) {
         val expr = terms.head
         // Attach leading comments to single expression if present
@@ -225,7 +225,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       // Check for "}\n" pattern
       def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
         expr match {
-          case block: Block => 
+          case block: Block =>
             state.current match {
               case Right(whitespaceToken: Token.Whitespace) => {
                 val startPos = whitespaceToken.sourcePos.range.start.index.utf16
@@ -250,27 +250,27 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       }
 
       val (restComments, current) = collectComments(state)
-      
+
       current.current match {
         // Handle terminators
-        case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | 
-             Right(Token.RBracket(_)) | Right(Token.Comma(_)) | Right(Token.Semicolon(_)) => {
+        case Right(Token.EOF(_)) | Right(Token.RParen(_)) | Right(Token.RBrace(_)) | Right(Token.RBracket(_)) | Right(Token.Comma(_)) |
+            Right(Token.Semicolon(_)) => {
           debug("parseRest: Hit terminator token")
           buildOpSeq(localTerms).map(result => (result, current))
         }
-        
+
         // Handle block after expression
         case Right(Token.LBrace(braceSourcePos)) => {
           debug("parseRest: Found LBrace after expression, treating as block argument")
           handleBlockArgument(expr, state, localTerms, braceSourcePos)
         }
-        
+
         // Handle colon
         case Right(Token.Colon(sourcePos)) => {
           debug("parseRest: Found colon")
           handleColon(sourcePos, state, localTerms)
         }
-        
+
         // Handle dot call
         case Right(Token.Dot(dotSourcePos)) => {
           debug("parseRest: Found dot")
@@ -280,20 +280,20 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             parseRest(dotCall, newState)
           }
         }
-        
+
         // Handle operators
         case Right(Token.Operator(op, sourcePos)) => {
           debug(s"parseRest: Found operator $op")
           handleOperatorInRest(op, sourcePos, current, localTerms)
         }
-        
+
         // Handle identifiers
         case Right(Token.Identifier(chars, sourcePos)) => {
           val text = charsToString(chars)
           debug(s"parseRest: Found identifier $text")
           handleIdentifierInRest(text, sourcePos, current, localTerms)
         }
-        
+
         // Handle other tokens
         case Right(_) => {
           debug("parseRest: Found other token, parsing as atom")
@@ -310,7 +310,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             }
           }
         }
-        
+
         // Handle errors
         case Left(error) => {
           debug(s"parseRest: Got error: $error")
@@ -349,10 +349,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         }
 
         // For function calls with blocks, don't wrap in OpSeq
-        if ((newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[ConcreteIdentifier]) ||
-            (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[FunctionCall])) {
+        if (
+          (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[ConcreteIdentifier]) ||
+          (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[FunctionCall])
+        ) {
           debug("parseRest: Returning function call with block directly")
-          
+
           if (afterBlock.isAtTerminator) {
             // No more tokens, return the function call directly
             Right((newExpr, afterBlock))
@@ -364,7 +366,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           // Replace the last term with the new expression that includes the block
           val updatedTerms = terms.dropRight(1) :+ newExpr
           debug(s"parseRest: After handling block argument, terms: $updatedTerms")
-          
+
           parseRest(newExpr, afterBlock).map { case (result, finalState) =>
             result match {
               case opSeq: OpSeq =>
@@ -381,11 +383,11 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       val afterColon = state.advance()
       val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
       debug(s"parseRest: After adding colon, terms: $updatedTerms")
-      
+
       parseAtomWithComments(afterColon).flatMap { case (next, afterNext) =>
         val newTerms = updatedTerms :+ next
         debug(s"parseRest: After parsing atom after colon, terms: $newTerms")
-        
+
         parseRest(next, afterNext).map { case (result, finalState) =>
           result match {
             case opSeq: OpSeq =>
@@ -399,7 +401,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
     def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
       val afterOp = state.advance()
-      
+
       // Check if this is a terminating operator (like * in vararg context)
       if (op == "*" && isVarargContext(state)) {
         val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
@@ -408,12 +410,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       } else {
         // Add operator to terms
         val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
-        
+
         parseAtomWithComments(afterOp).flatMap { case (next, afterNext) =>
           debug(s"parseRest: After parsing atom after operator, got: $next")
           val newTerms = updatedTerms :+ next
           debug(s"parseRest: Updated terms after operator: $newTerms")
-          
+
           // Continue parsing the rest
           parseRest(next, afterNext).map { case (result, finalState) =>
             result match {
@@ -429,7 +431,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
     def handleIdentifierInRest(text: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
       val afterId = state.advance()
-      
+
       afterId.current match {
         case Right(Token.LParen(_)) => {
           debug("parseRest: Found lparen after identifier")
@@ -441,7 +443,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             )
             val updatedTerms = terms :+ functionCall
             debug(s"parseRest: After function call, terms: $updatedTerms")
-            
+
             parseRest(functionCall, afterTuple).map { case (result, finalState) =>
               result match {
                 case opSeq: OpSeq =>
@@ -459,7 +461,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
             val updatedTerms = terms :+ id :+ block
             debug(s"parseRest: After block in infix, terms: $updatedTerms")
-            
+
             parseRest(block, afterBlock).map { case (result, finalState) =>
               result match {
                 case opSeq: OpSeq =>
@@ -476,12 +478,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           val opId = ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
           val updatedTerms = terms :+ id :+ opId
           debug(s"parseRest: After adding id and op, terms: $updatedTerms")
-          
+
           val afterOp = afterId.advance()
           parseAtomWithComments(afterOp).flatMap { case (next, afterNext) =>
             val newTerms = updatedTerms :+ next
             debug(s"parseRest: After parsing atom after operator, terms: $newTerms")
-            
+
             parseRest(next, afterNext).map { case (result, finalState) =>
               result match {
                 case opSeq: OpSeq =>
@@ -497,7 +499,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
           val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
           val updatedTerms = terms :+ id
           debug(s"parseRest: After adding bare id, terms: $updatedTerms")
-          
+
           parseRest(id, afterId).map { case (result, finalState) =>
             result match {
               case opSeq: OpSeq =>
@@ -536,7 +538,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             parseAtomWithComments(afterOp).flatMap { case (expr, afterExpr) =>
               terms = terms :+ expr
               debug(s"parseExpr: After initial operator and atom, terms: $terms")
-              
+
               if (afterExpr.isAtTerminator) {
                 debug("parseExpr: Found terminator after prefix operator, returning OpSeq directly")
                 Right((OpSeq(terms, None), afterExpr))
@@ -556,7 +558,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         parseAtomWithComments(afterOp).flatMap { case (expr, afterExpr) =>
           terms = terms :+ expr
           debug(s"parseExpr: After initial keyword operator and atom, terms: $terms")
-          
+
           if (afterExpr.isAtTerminator) {
             debug("parseExpr: Found terminator after prefix operator, returning OpSeq directly")
             Right((OpSeq(terms, None), afterExpr))

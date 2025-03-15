@@ -495,7 +495,7 @@ trait TyckPropagator extends ElaboraterCommon {
         if (areAlphaEquivalent(lhsResolved, rhsResolved)) true
         else {
           (lhsResolved, rhsResolved) match {
-            case (Type(level1, _), Type(level2, _)) => 
+            case (Type(level1, _), Type(level2, _)) =>
               isLevelCompatible(level1, level2)(using state, localCtx)
 
             case (ListType(elem1, _), ListType(elem2, _)) =>
@@ -832,14 +832,14 @@ trait TyckPropagator extends ElaboraterCommon {
   }
 
   /** Helper method to check if a source level is compatible with a target level */
-  private def isLevelCompatible(source: Term, target: Term)(using 
+  private def isLevelCompatible(source: Term, target: Term)(using
       state: StateAbility[Tyck],
       ctx: Context
   ): Boolean = {
     (source, target) match {
       case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
       case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
-      case _ => source == target // For other cases, keep the exact equality check
+      case _                                         => source == target // For other cases, keep the exact equality check
     }
   }
 
