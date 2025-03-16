@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+FROM mcr.microsoft.com/devcontainers/base:debian-12
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     clang \
     build-essential \
     zsh \
+    gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 23
@@ -33,7 +34,7 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 # Install SBT
 RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list \
     && echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee /etc/apt/sources.list.d/sbt_old.list \
-    && curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key add \
+    && curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | gpg --dearmor > /etc/apt/trusted.gpg.d/sbt.gpg \
     && apt-get update \
     && apt-get install -y sbt \
     && rm -rf /var/lib/apt/lists/*
