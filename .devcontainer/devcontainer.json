@@ -1,0 +1,31 @@
+{
+  "name": "Chester Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "chester-dev",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "java.home": "/opt/graalvm"
+      },
+      "extensions": [
+        "scala-lang.scala",
+        "scalameta.metals",
+        "ms-azuretools.vscode-docker",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [],
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "23"
+    }
+  },
+  "postCreateCommand": "pnpm install"
+} 
