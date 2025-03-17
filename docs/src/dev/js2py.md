@@ -93,22 +93,49 @@ This produces a bundled JavaScript file at `dist/bundle.js`.
 
 ### 3. JavaScript to Python with js2py
 
-The `test_js2py_bridge.py` file demonstrates how to use js2py to integrate JavaScript code with Python:
+#### Python Environment Setup with UV
+
+We use the `uv` package manager for Python dependencies due to its improved performance and reliability:
+
+```bash
+# Install uv if not already installed
+curl -sS https://raw.githubusercontent.com/astral-sh/uv/main/install.sh | bash
+
+# Create a virtual environment
+uv venv
+
+# Activate the virtual environment
+source .venv/bin/activate  # On Unix/macOS
+# or
+# .venv\Scripts\activate  # On Windows
+
+# Install js2py using uv
+uv pip install js2py
+```
+
+A bridge class is needed to interact with the JavaScript module from Python:
 
 ```python
-from Js2PyBridge import Js2PyBridge
+# js2py_bridge.py
+import os
+import js2py
 
-def main():
-    bridge = Js2PyBridge()
-    
-    # Evaluate JavaScript code
-    bridge.eval_js(js_code)
-    
-    # Get variables from JavaScript
-    result = bridge.get_value("testVar")
-    
-    # Call JavaScript functions
-    result = bridge.call_function("testFunction", "World")
+class Js2PyBridge:
+    def __init__(self):
+        self.context = js2py.EvalJs()
+        bundle_path = os.path.join(os.path.dirname(__file__), '../dist/bundle.js')
+        with open(bundle_path, 'r') as f:
+            self.context.execute(f.read())
+            
+    def eval_js(self, code):
+        return self.context.execute(code)
+        
+    def get_value(self, var_name):
+        return self.context.eval(var_name)
+        
+    def call_function(self, func_name, *args):
+        args_str = ', '.join([f"'{arg}'" if isinstance(arg, str) else str(arg) for arg in args])
+        return self.context.eval(f"{func_name}({args_str})")
 ```
 
 ## Usage Guidelines
@@ -134,8 +161,29 @@ Always test the full pipeline:
 3. Test that js2py can import and use the bundled JavaScript.
 4. Write Python unit tests for the exposed functionality.
 
+## Project Structure
+
+Recommended project structure:
+
+```
+js-for-python/
+├── js/                          # Scala.js source files
+│   └── src/main/scala/chester/
+├── python/                      # Python integration
+│   ├── js2py_bridge.py          # Bridge between JS and Python
+│   └── tests/                   # Python unit tests
+├── dist/                        # Bundled JavaScript output
+│   └── bundle.js
+├── index.js                     # Entry point for rollup
+├── package.json                 # Node.js package configuration
+├── rollup.config.mjs            # Rollup configuration
+└── requirements.txt             # Python dependencies
+```
+
 ## Troubleshooting
 
 - **CommonJS vs ESM**: Ensure module formats are compatible between Scala.js output and Rollup configuration.
 - **js2py limitations**: js2py has limited ECMAScript compatibility; avoid advanced JS features.
 - **Bundle size**: Large bundles may impact Python startup time; optimize bundle size when possible.
+- **Python version compatibility**: js2py works best with Python 3.8-3.10. Newer Python versions may have compatibility issues with js2py.
+- **uv specific issues**: When using uv, ensure you're using the correct commands to manage virtual environments.
