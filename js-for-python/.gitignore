@@ -16,4 +16,4 @@ ENV/
 # Keep .python-version for specifying Python version
 
 # Generated files
-python/generated_js_module.py
+python/chester.py

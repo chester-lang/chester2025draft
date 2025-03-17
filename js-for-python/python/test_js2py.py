@@ -7,18 +7,18 @@ import os
 import sys
 
 # Ensure the generated module exists first
-if not os.path.exists(os.path.join(os.path.dirname(__file__), 'generated_js_module.py')):
-    print("Error: The generated JavaScript module doesn't exist.")
+if not os.path.exists(os.path.join(os.path.dirname(__file__), 'chester.py')):
+    print("Error: The chester.py module doesn't exist.")
     print("Run 'python js2py_build.py' first to generate it.")
     sys.exit(1)
 
-# Import the generated JavaScript module
-import generated_js_module
+# Import the chester module
+import chester
 
 def main():
-    # Display available functions and objects in the generated module
-    print("\nAvailable JavaScript objects and functions in the generated module:")
-    js_items = [item for item in dir(generated_js_module) 
+    # Display available functions and objects in the chester module
+    print("\nAvailable JavaScript objects and functions in the chester module:")
+    js_items = [item for item in dir(chester) 
                if not item.startswith('__') and not item.startswith('_')]
     for item in js_items:
         print(f"  - {item}")
@@ -30,8 +30,8 @@ def main():
     # and what functions were exported
     try:
         # Example - modify these based on your actual JavaScript exports
-        if hasattr(generated_js_module, 'test'):
-            result = generated_js_module.test()
+        if hasattr(chester, 'test'):
+            result = chester.test()
             print(f"Result from test(): {result}")
         
         # You might need to explore the module structure further

@@ -17,7 +17,7 @@ BUNDLE_PATH = os.path.join(
 # Path for the translated Python module
 TRANSLATED_MODULE_PATH = os.path.join(
     os.path.dirname(__file__),
-    'generated_js_module.py'
+    'chester.py'
 )
 
 def translate_js_to_py(force=False):
