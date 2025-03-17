@@ -19,12 +19,15 @@ export default {
       babelHelpers: 'bundled',
       presets: [
         ['@babel/preset-env', { 
-          targets: { 
-            browsers: ['ie 11'], // Targets ES5.1 compatibility
-          },
+          targets: 'ie 11',  // IE 11 is compatible with ECMAScript 5.1
           modules: false,
           useBuiltIns: 'usage',
           corejs: 3,
+          include: [
+            '@babel/plugin-transform-arrow-functions',
+            '@babel/plugin-transform-block-scoping',
+            '@babel/plugin-transform-classes'
+          ],
           exclude: ['transform-typeof-symbol'] // Avoid issues with js2py
         }]
       ]
