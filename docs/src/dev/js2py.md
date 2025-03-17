@@ -80,6 +80,7 @@ export default {
 To bundle the JavaScript code, create an `index.js` file that imports the generated `.mjs` files, then run:
 
 ```bash
+pnpm install  # Only need to run this once to install dependencies
 pnpm run build
 ```
 
@@ -89,14 +90,14 @@ This produces a bundled JavaScript file at `dist/bundle.js`.
 
 #### Python Environment Setup with UV
 
-We use the `uv` package manager for Python dependencies due to its improved performance and reliability:
+We use the `uv` package manager for Python dependencies due to its improved performance and reliability. All Python-related work should be done in the `js-for-python` directory, which contains a `.python-version` file specifying Python 3.11:
 
 ```bash
-# Install uv if not already installed
-curl -sS https://raw.githubusercontent.com/astral-sh/uv/main/install.sh | bash
+# Navigate to the js-for-python directory
+cd js-for-python
 
-# Create a virtual environment
-uv venv
+# Create a virtual environment with the specified Python version
+uv venv -p 3.11
 
 # Activate the virtual environment
 source .venv/bin/activate  # On Unix/macOS
@@ -107,30 +108,21 @@ source .venv/bin/activate  # On Unix/macOS
 uv pip install -r requirements.txt
 ```
 
-A bridge class is needed to interact with the JavaScript module from Python:
+#### Automated Translation Process
+
+The `js2py_build.py` script in the `python` directory automates the translation process:
 
 ```python
-# js2py_bridge.py
-import os
-import js2py
-
-class Js2PyBridge:
-    def __init__(self):
-        self.context = js2py.EvalJs()
-        bundle_path = os.path.join(os.path.dirname(__file__), '../dist/bundle.js')
-        with open(bundle_path, 'r') as f:
-            self.context.execute(f.read())
-            
-    def eval_js(self, code):
-        return self.context.execute(code)
-        
-    def get_value(self, var_name):
-        return self.context.eval(var_name)
-        
-    def call_function(self, func_name, *args):
-        args_str = ', '.join([f"'{arg}'" if isinstance(arg, str) else str(arg) for arg in args])
-        return self.context.eval(f"{func_name}({args_str})")
+# Usage
+python python/js2py_build.py  # Translates the bundle.js to chester.py
+python python/js2py_build.py --force  # Forces retranslation even if chester.py exists
 ```
+
+This script performs the following steps:
+1. Verifies the bundle.js file exists
+2. Preprocesses the JavaScript to handle js2py compatibility issues
+3. Translates the JavaScript to Python using js2py.translate_file()
+4. Outputs the result to `python/chester.py`
 
 ## Usage Guidelines
 
@@ -144,33 +136,89 @@ class Js2PyBridge:
 
 2. Bundle only what's necessary to minimize final bundle size.
 
-3. Consider creating a Python package wrapper for the js2py bridge for easier distribution.
+3. Access the Chester functionality from Python:
+
+   ```python
+   # Import the Chester module
+   from chester import chester
+   
+   # Access functions via the Chester global object
+   result = chester.Chester.test()
+   ```
 
 ## Testing
 
-Always test the full pipeline:
+The project includes two test scripts:
 
-1. Verify Scala.js compilation produces the expected JavaScript.
-2. Confirm that Rollup successfully bundles the code.
-3. Test that js2py can import and use the bundled JavaScript.
-4. Write Python unit tests for the exposed functionality.
+### 1. test_js2py.py 
+
+Tests basic js2py functionality with a simple JavaScript example. It:
+- Translates example.js to Python
+- Imports and uses the translated module
+- Tests various js2py features
+- Tests the Chester JS -> Python bridge
+
+To run:
+```bash
+python python/test_js2py.py
+```
+
+### 2. test_chester.py
+
+Tests the generated Chester Python module. It:
+- Checks if the chester.py module exists and generates it if needed
+- Imports the module and tests available functions
+- Reports any errors
+
+To run:
+```bash
+python python/test_chester.py
+```
+
+## Complete Testing Sequence
+
+To fully test the JavaScript to Python conversion:
+
+```bash
+# 1. Compile Scala.js to JavaScript
+sbt jsForPython/fastLinkJS
+
+# 2. Bundle with Rollup
+cd js-for-python
+pnpm install  # First time only
+pnpm run build
+
+# 3. Set up Python environment
+uv venv -p 3.11
+source .venv/bin/activate
+uv pip install -r requirements.txt
+
+# 4. Test js2py and simple JavaScript
+python python/test_js2py.py
+
+# 5. Test Chester module
+python python/test_chester.py
+```
 
 ## Project Structure
 
-Recommended project structure:
+Current project structure:
 
 ```
 js-for-python/
 ├── js/                          # Scala.js source files
 │   └── src/main/scala/chester/
 ├── python/                      # Python integration
-│   ├── js2py_bridge.py          # Bridge between JS and Python
-│   └── tests/                   # Python unit tests
+│   ├── js2py_build.py           # Script to translate bundle.js to chester.py 
+│   ├── test_js2py.py            # Script for testing js2py functionality
+│   ├── test_chester.py          # Script for testing Chester module
+│   └── chester.py               # Generated Python module (after build)
 ├── dist/                        # Bundled JavaScript output
-│   └── bundle.js
+│   └── bundle.js                # Generated JavaScript bundle (after build)
 ├── index.js                     # Entry point for rollup
 ├── package.json                 # Node.js package configuration
 ├── rollup.config.mjs            # Rollup configuration
+├── .python-version              # Specifies Python 3.11
 └── requirements.txt             # Python dependencies
 ```
 
@@ -179,5 +227,14 @@ js-for-python/
 - **CommonJS vs ESM**: Ensure module formats are compatible between Scala.js output and Rollup configuration.
 - **js2py limitations**: js2py has limited ECMAScript compatibility; avoid advanced JS features.
 - **Bundle size**: Large bundles may impact Python startup time; optimize bundle size when possible.
-- **Python version compatibility**: js2py works best with Python 3.8-3.10. Newer Python versions may have compatibility issues with js2py.
-- **uv specific issues**: When using uv, ensure you're using the correct commands to manage virtual environments.
+- **Python version compatibility**: js2py works best with Python 3.8-3.11. We're currently using Python 3.11.
+- **Special character handling**: js2py doesn't support functions with special characters in their names (like `$`) when accessing them directly. Use `getattr()` instead:
+  ```python
+  # Instead of: module.$function()
+  getattr(module, "$function")()
+  ```
+- **Object serialization issues**: When encountering "Cannot convert object to primitive value" errors, explicitly use string conversion:
+  ```javascript
+  // Instead of: "text" + object
+  "text" + String(object)
+  ```
