@@ -405,3 +405,54 @@ This solution preserves the uniform symbol treatment principle while ensuring th
 - **Tests Added**:
   - Concurrent type-level function application collisions
   - Stress test with 100 parallel cell writes
+
+## 2025-03-15
+
+### Type System Improvements Completed
+- **Implemented Improvements**:
+  1. **Enhanced Type Structure Reduction in NaiveReducer**
+     - Improved `reduceTypeStructure` method to properly handle:
+     - Union types by recursively reducing their component types
+     - Intersection types with proper reduction
+     - Type-level function applications with recursive reduction for complex result types
+     - Enhanced handling of nested function applications
+
+  2. **Alpha-Equivalence Checking in TyckPropagator**
+     - Enhanced `areAlphaEquivalent` method to:
+     - Properly handle function types with bound variables
+     - Compare union and intersection types correctly
+     - Fall back to regular equality for other cases
+     - Added bound variable tracking in alpha-equivalence
+
+  3. **Enhanced Type Level Comparison**
+     - Improved type level comparison in `tryUnify` method:
+     - Implemented more flexible compatibility rules between different level types
+     - Allow finite level types to be compatible with unrestricted level types
+     - Maintain controlled asymmetric compatibility
+
+  4. **Cell Coverage Mechanisms**
+     - Added dedicated helper method to ensure cell coverage
+     - Implemented self-coverage for union type components
+     - Fixed early returns that left cells uncovered
+
+  5. **TraitCallTerm Implementation**
+     - Added `TraitCallTermF` and `TraitCallTermC` traits in spec/Term.scala
+     - Implemented `TraitCallTerm` in simple.scala and truffle.scala
+     - Updated converters in convertToSimple.scala and convertToTruffle.scala
+     - Laid groundwork for trait-record subtyping relationships
+
+- **Files Modified**:
+  - `semantic/shared/src/main/scala/chester/tyck/TyckPropagator.scala`
+  - `semantic/shared/src/main/scala/chester/tyck/Elaborater.scala`
+  - `semantic/shared/src/main/scala/chester/reduce/NaiveReducer.scala`
+  - `syntax/jvm/src/main/scala/chester/syntax/core/truffle.scala`
+  - `syntax/shared/src/main/scala/chester/syntax/core/simple.scala`
+  - `syntax/shared/src/main/scala/chester/syntax/core/spec/Term.scala`
+  - `syntax/jvm/src/main/scala/chester/syntax/core/convertToTruffle.scala`
+  - `syntax/shared/src/main/scala/chester/syntax/core/convertToSimple.scala`
+
+- **Next Steps**:
+  - Complete trait-record subtyping implementation
+  - Implement union-to-union subtyping case
+  - Fix remaining cell coverage issues in union-subtype.chester
+  - Add comprehensive test suite for traits and union types

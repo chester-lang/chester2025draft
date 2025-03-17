@@ -19,107 +19,13 @@ Recent improvements have focused on enhancing support for dependent types, which
 ## 2. Current Status and Progress
 
 ### 2.1 Key Improvements Already Made
-- Enhanced the `reduceTypeStructure` method in `NaiveReducer` to properly handle complex type structures
-- Fixed the `areAlphaEquivalent` method in `TyckPropagator` to properly fall back to equality checking
-- Improved handling of `TelescopeTerm` objects in function types for alpha-equivalence checks
-- Added bound variable tracking in alpha-equivalence to better handle dependent types
-- Improved documentation of key methods
-- Enhanced record field access to properly handle dependent types
 
-### 2.2 Completed Improvements
-
-#### 2.2.1 Enhanced Type Structure Reduction in NaiveReducer
-The `reduceTypeStructure` method properly handles:
-- Union types by recursively reducing their component types
-- Intersection types with proper reduction
-- Type-level function applications with recursive reduction for complex result types
-
-```scala
-private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
-  term match {
-    case Union(types, meta) =>
-      Union(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
-      
-    case Intersection(types, meta) =>
-      Intersection(types.map(t => reduce(t, ReduceMode.TypeLevel)), meta)
-    
-    case fcall: FCallTerm if isTypeLevel(fcall) =>
-      // First reduce normally
-      val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
-      // Then check if the result needs further type structure handling
-      reduced match {
-        case Union(_, _) | Intersection(_, _) => reduceTypeStructure(reduced)
-        case _ => reduced
-      }
-      
-    case _ => term
-  }
-}
-```
-
-#### 2.2.2 Alpha-Equivalence Checking in TyckPropagator
-The `areAlphaEquivalent` method has been enhanced to:
-- Properly handle function types with bound variables
-- Compare union and intersection types correctly
-- Fall back to regular equality for other cases
-
-```scala
-private def areAlphaEquivalent(lhs: Term, rhs: Term)(using state: StateAbility[Tyck], localCtx: Context): Boolean = {
-  (lhs, rhs) match {
-    case (FunctionType(params1, result1, effects1, _), FunctionType(params2, result2, effects2, _)) =>
-      if (params1.length != params2.length || effects1 != effects2) false
-      else {
-        val paramsEqual = params1.zip(params2).forall { case (p1, p2) =>
-          // Check telescope parameters are equivalent
-          if (p1.args.length != p2.args.length) false
-          else {
-            p1.args.zip(p2.args).forall { case (arg1, arg2) =>
-              areAlphaEquivalent(arg1.ty, arg2.ty)
-            }
-          }
-        }
-        
-        if (!paramsEqual) false
-        else {
-          // For the result type, need to consider bindings
-          areAlphaEquivalent(result1, result2)
-        }
-      }
-      
-    case (Union(types1, _), Union(types2, _)) =>
-      typesEquivalentModuloOrdering(types1, types2)
-      
-    case (Intersection(types1, _), Intersection(types2, _)) =>
-      typesEquivalentModuloOrdering(types1, types2)
-      
-    // For other cases, fall back to regular equality check
-    case _ => lhs == rhs  // Changed from returning false
-  }
-}
-```
-
-#### 2.2.3 Enhanced Type Level Comparison
-The type level comparison in `tryUnify` method of `TyckPropagator` has been improved to:
-- Implement more flexible compatibility rules between different level types
-- Allow finite level types to be compatible with unrestricted level types
-- Maintain controlled asymmetric compatibility (unrestricted isn't automatically compatible with finite)
-- Preserve backward compatibility for identical level types
-
-```scala
-// Previous simple equality check
-case (Type(level1, _), Type(level2, _)) =>
-  level1 == level2
-
-// Enhanced type level comparison
-case (Type(level1, _), Type(level2, _)) =>
-  (level1, level2) match {
-    case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
-    case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
-    case _ => level1 == level2 // For other cases, keep the exact equality check
-  }
-```
-
-This improvement is particularly important for dependent types where the level of a type needs to vary based on its usage context. The directional compatibility (finite → unrestricted but not vice versa) ensures type safety while providing increased flexibility when working with dependent types of different levels. This change aligns with the type-checking-system.md document, which emphasizes the importance of maintaining type safety while allowing for flexibility in dependent types.
+**Note**: The key improvements implemented so far have been moved to the devlog entry for 2025-03-15. Refer to `docs/src/dev/devlog.md` for details on completed improvements to:
+- Type structure reduction in NaiveReducer
+- Alpha-equivalence checking in TyckPropagator
+- Enhanced type level comparison
+- Cell coverage mechanisms
+- TraitCallTerm implementation
 
 ## 3. Remaining Issues and Implementation Plan
 
@@ -295,201 +201,16 @@ java.lang.IllegalStateException: Cells Vector(chester.utils.propagator.ProvideMu
 
 #### 3.4.2 Implemented Solution
 
-Our implemented solution ensures that all cells are properly covered by propagators. Key aspects include:
+Our implementation addresses these cell coverage issues in a systematic way. We've developed reusable mechanisms that ensure all cells are properly covered by propagators.
 
-1. **Self-Coverage Mechanism**: We ensure each cell is at least covered by a self-referential propagator:
+**Note**: The detailed implementation of our cell coverage solutions has been moved to the main architecture documentation in `docs/src/dev/type-checking-system.md` under the "Cell Coverage Solutions" section. This includes:
 
-```scala
-// A cell always connects to itself to ensure coverage
-state.addPropagator(UnionOf(cell, Vector(cell), cause))
-```
+1. Self-coverage mechanism using self-referential propagators
+2. Comprehensive coverage for complex types like unions
+3. Avoiding early returns that leave cells uncovered
+4. Debugging support for cell coverage issues
 
-2. **Comprehensive Coverage Check**: Applied the coverage mechanism in all union subtyping cases:
-   - Union-to-Union subtyping: Cover both union cells and all component cells
-   - Specific-to-Union subtyping: Cover specific type cell, union cell, and all union components
-   - Union-to-Specific subtyping: Cover union cell, specific type cell, and all union components
-
-3. **Debugging Support**: Added extensive debug output controlled by `DEBUG_UNION_SUBTYPING` flag:
-
-```scala
-if (DEBUG_UNION_SUBTYPING) {
-  println(s"=== SPECIFIC-UNION SUBTYPING ===")
-  println(s"Specific Type: $specificType with cell ID: $specificCell")
-  println(s"Union Type: $union with cell ID: $unionCell")
-}
-```
-
-4. **Testing Strategy**: Temporarily disabled problematic test case with `.todo` suffix while fixing the underlying issues.
-
-These solutions have successfully resolved the cell coverage issues in most cases, with ongoing work to address the remaining edge cases.
-
-## 4. Testing Strategy
-
-### 4.1 Create Specialized Tests for Dependent Types
-
-Implement tests that verify:
-- Function types with type dependencies
-- Equality of types with different variable names but same structure
-- Union and intersection types with alpha-equivalent components
-
-### 4.2 Intersection Type Testing
-
-Since intersection types aren't directly expressible in Chester yet, we can test through integer literals:
-
-```chester
-// Test integer literals with different values
-// (these use intersection types internally)
-let a: Integer = 42;    // Positive integer
-let b: Integer = -5;    // Negative integer
-```
-
-### 4.3 Union Type Testing Cases
-
-Existing test cases that need to be fixed:
-
-```chester
-// Widening (Success)
-def f(x: Integer): Integer | String = x;
-f(42);
-
-// Subtyping (Success)
-def g(x: Integer | String): Integer | String = x;
-let x: Integer = 42;
-let y: Integer | String = g(x);
-
-// Invalid Subtyping (Failure - should be detected as error)
-def f(x: Integer | String): Integer = x;
-```
-
-#### 4.3.1 Current Testing Status
-
-The union-subtype.chester tests have been temporarily disabled with a `.todo` suffix while we fix the underlying issues. Most other tests in the FilesTyckTest suite are passing successfully. The specific errors we're tackling are:
-
-```
-java.lang.IllegalStateException: Cells Vector(chester.utils.propagator.ProvideMutable$HoldCell@2f2ccc97) are not covered by any propagator
-```
-
-Our current approach has resolved most of the cell coverage issues in the general type checking system, but still faces challenges with the specific union subtyping test cases. We need to:
-
-1. Re-enable the union-subtype.chester test
-2. Add more comprehensive test cases covering all three union subtyping scenarios
-3. Add assertions to verify that proper error messages are shown for invalid subtyping cases
-
-### 4.4 Cell Coverage and Integration Tests
-
-```scala
-test("union type components have propagators") {
-  // Test code
-}
-
-test("meta variables in unions resolve correctly") {
-  // Test code
-}
-
-test("complex union type hierarchy resolves") {
-  // Test code
-}
-
-```
-## 5. Implementation Steps
-
-### 5.1 Phase 1: Core Type System Improvements
-- [x] Document current type system architecture
-- [x] Fix cell coverage issues in union type subtyping
-  - [x] Implement helper method for cell coverage
-  - [x] Ensure all union components are covered
-  - [x] Fix early returns that leave cells uncovered
-  - [ ] Fix remaining edge cases in union-subtype.chester (in progress)
-- [ ] Implement intersection type unification case
-- [ ] Add test cases for dependent types and intersection types
-
-### 5.2 Known Issues to Resolve
-
-1. **Union Subtyping Edge Cases**: The union-subtype.chester test still fails with cell coverage errors. Potential solutions:
-   - Further improve the propagator network connectivity
-   - Add more debugging output in the relevant type checking code paths
-   - Better cell tracking during unification and zonking
-
-2. **Refactorings Needed**:
-   - Consolidate union type handling in one section of the code
-   - Introduce more helper methods for common operations
-   - Add better error messages for invalid union type operations
-- [ ] Verify implementation with existing tests
-
-### 5.2 Phase 2: Meta Variable and Cell Coverage
-- [x] Add propagator coverage verification
-- [x] Implement meta variable tracking
-- [x] Add union type component tracking
-- [x] Add connection verification tests
-
-### 5.3 Phase 3: Advanced Type Features
-- [x] Enhance union and intersection type interactions
-- [x] Improve reducer-tyck integration for dependent types
-- [x] Add comprehensive test suite
-- [x] Update documentation
-
-### 5.4 Phase 4: Type-Level Function Improvements
-- [x] Add `processTypeLevel` function to handle type-level function applications
-  - [x] Implement cell coverage for function calls
-  - [x] Add recursive processing of sub-terms
-  - [x] Handle composite terms (unions, intersections)
-- [x] Enhance `unify` method to handle function calls
-  - [x] Add specific cases for function call terms
-  - [x] Ensure proper cell coverage
-  - [x] Add guards to prevent pattern matching conflicts
-- [ ] Test with complex type-level function examples
-- [ ] Verify all success criteria are met
-- [ ] Add more test cases for edge cases
-- [ ] Document implementation details and usage patterns
-
-## 6. Design Principles to Follow
-
-### 6.1 Term Preservation
-- Keep original terms in elaborated results
-- Never reduce during elaboration
-- Only use reduction for type-level comparisons
-- Preserve source structure for better error reporting
-
-### 6.2 Reduction Strategy
-- Only reduce during type equality checking
-- Use `ReduceMode.TypeLevel` for these internal reductions
-- Use proper reduction context from current context
-- Never reflect internal reductions in output
-
-### 6.3 Documentation
-- Keep this document updated with implementation progress
-- Document design decisions and trade-offs
-- Maintain clear test cases for each feature
-
-## 7. Success Criteria
-
-1. All tests pass, including the specialized dependent type tests
-2. The type checking system correctly handles:
-   - Complex dependent type scenarios
-   - Intersection type comparisons
-   - Union type subtyping
-   - Type-level function applications
-3. Documentation clearly explains dependent type concepts and usage patterns
-4. Meta variables in complex types resolve correctly 
-
-## 8. Running Tests
-
-To run the tests for the type checker specifically, use the following SBT command:
-
-```bash
-# Run the FilesTyckTest suite to test the type checking system
-sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
-```
-
-⚠️ **IMPORTANT WARNING**: Do NOT use the `-z` test filter option (e.g., `sbt "rootJVM/testOnly -- -z pattern"`) as it is broken and produces unreliable results. Instead, run the entire test suite and review the results.
-
-These commands are essential for verifying the type checker implementation against the test cases. The `FilesTyckTest` suite contains tests for various type checking features including:
-- Dependent types
-- Type-level function applications
-- Record field access
-- Union type subtyping
-- Forward definitions
-- Object literals
+These solutions have successfully resolved the cell coverage issues in most cases, with ongoing work to address the remaining edge cases for union subtyping and type-level function applications.
 
 ## 3.5 Enhanced Type-Level Function Application Reduction
 
@@ -738,7 +459,175 @@ This implementation aligns with Chester's core design principles:
 3. **Propagator Network Integrity**: All cells have proper propagator coverage
 4. **Flexible Type System**: Enables sophisticated type-level programming
 
-The proposed changes are minimal and focused, addressing the specific issue while maintaining the system's architecture and design philosophy. 
+The proposed changes are minimal and focused, addressing the specific issue while maintaining the system's architecture and design philosophy.
+
+## 4. Testing Strategy
+
+### 4.1 Create Specialized Tests for Dependent Types
+
+Implement tests that verify:
+- Function types with type dependencies
+- Equality of types with different variable names but same structure
+- Union and intersection types with alpha-equivalent components
+
+### 4.2 Intersection Type Testing
+
+Since intersection types aren't directly expressible in Chester yet, we can test through integer literals:
+
+```chester
+// Test integer literals with different values
+// (these use intersection types internally)
+let a: Integer = 42;    // Positive integer
+let b: Integer = -5;    // Negative integer
+```
+
+### 4.3 Union Type Testing Cases
+
+Existing test cases that need to be fixed:
+
+```chester
+// Widening (Success)
+def f(x: Integer): Integer | String = x;
+f(42);
+
+// Subtyping (Success)
+def g(x: Integer | String): Integer | String = x;
+let x: Integer = 42;
+let y: Integer | String = g(x);
+
+// Invalid Subtyping (Failure - should be detected as error)
+def f(x: Integer | String): Integer = x;
+```
+
+#### 4.3.1 Current Testing Status
+
+The union-subtype.chester tests have been temporarily disabled with a `.todo` suffix while we fix the underlying issues. Most other tests in the FilesTyckTest suite are passing successfully. The specific errors we're tackling are:
+
+```
+java.lang.IllegalStateException: Cells Vector(chester.utils.propagator.ProvideMutable$HoldCell@2f2ccc97) are not covered by any propagator
+```
+
+Our current approach has resolved most of the cell coverage issues in the general type checking system, but still faces challenges with the specific union subtyping test cases. We need to:
+
+1. Re-enable the union-subtype.chester test
+2. Add more comprehensive test cases covering all three union subtyping scenarios
+3. Add assertions to verify that proper error messages are shown for invalid subtyping cases
+
+### 4.4 Cell Coverage and Integration Tests
+
+```scala
+test("union type components have propagators") {
+  // Test code
+}
+
+test("meta variables in unions resolve correctly") {
+  // Test code
+}
+
+test("complex union type hierarchy resolves") {
+  // Test code
+}
+
+```
+## 5. Implementation Steps
+
+### 5.1 Phase 1: Core Type System Improvements
+- [x] Document current type system architecture
+- [x] Fix cell coverage issues in union type subtyping
+  - [x] Implement helper method for cell coverage
+  - [x] Ensure all union components are covered
+  - [x] Fix early returns that leave cells uncovered
+  - [ ] Fix remaining edge cases in union-subtype.chester (in progress)
+- [ ] Implement intersection type unification case
+- [ ] Add test cases for dependent types and intersection types
+
+### 5.2 Known Issues to Resolve
+
+1. **Union Subtyping Edge Cases**: The union-subtype.chester test still fails with cell coverage errors. Potential solutions:
+   - Further improve the propagator network connectivity
+   - Add more debugging output in the relevant type checking code paths
+   - Better cell tracking during unification and zonking
+
+2. **Refactorings Needed**:
+   - Consolidate union type handling in one section of the code
+   - Introduce more helper methods for common operations
+   - Add better error messages for invalid union type operations
+- [ ] Verify implementation with existing tests
+
+### 5.2 Phase 2: Meta Variable and Cell Coverage
+- [x] Add propagator coverage verification
+- [x] Implement meta variable tracking
+- [x] Add union type component tracking
+- [x] Add connection verification tests
+
+### 5.3 Phase 3: Advanced Type Features
+- [x] Enhance union and intersection type interactions
+- [x] Improve reducer-tyck integration for dependent types
+- [x] Add comprehensive test suite
+- [x] Update documentation
+
+### 5.4 Phase 4: Type-Level Function Improvements
+- [x] Add `processTypeLevel` function to handle type-level function applications
+  - [x] Implement cell coverage for function calls
+  - [x] Add recursive processing of sub-terms
+  - [x] Handle composite terms (unions, intersections)
+- [x] Enhance `unify` method to handle function calls
+  - [x] Add specific cases for function call terms
+  - [x] Ensure proper cell coverage
+  - [x] Add guards to prevent pattern matching conflicts
+- [ ] Test with complex type-level function examples
+- [ ] Verify all success criteria are met
+- [ ] Add more test cases for edge cases
+- [ ] Document implementation details and usage patterns
+
+## 6. Design Principles to Follow
+
+### 6.1 Term Preservation
+- Keep original terms in elaborated results
+- Never reduce during elaboration
+- Only use reduction for type-level comparisons
+- Preserve source structure for better error reporting
+
+### 6.2 Reduction Strategy
+- Only reduce during type equality checking
+- Use `ReduceMode.TypeLevel` for these internal reductions
+- Use proper reduction context from current context
+- Never reflect internal reductions in output
+
+### 6.3 Documentation
+- Keep this document updated with implementation progress
+- Document design decisions and trade-offs
+- Maintain clear test cases for each feature
+
+## 7. Success Criteria
+
+1. All tests pass, including the specialized dependent type tests
+2. The type checking system correctly handles:
+   - Complex dependent type scenarios
+   - Intersection type comparisons
+   - Union type subtyping
+   - Type-level function applications
+3. Documentation clearly explains dependent type concepts and usage patterns
+4. Meta variables in complex types resolve correctly 
+
+## 8. Running Tests
+
+To run the tests for the type checker specifically, use the following SBT command:
+
+```bash
+# Run the FilesTyckTest suite to test the type checking system
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+```
+
+⚠️ **IMPORTANT WARNING**: Do NOT use the `-z` test filter option (e.g., `sbt "rootJVM/testOnly -- -z pattern"`) as it is broken and produces unreliable results. Instead, run the entire test suite and review the results.
+
+These commands are essential for verifying the type checker implementation against the test cases. The `FilesTyckTest` suite contains tests for various type checking features including:
+- Dependent types
+- Type-level function applications
+- Record field access
+- Union type subtyping
+- Forward definitions
+- Object literals
 
 ## 9. Trait Implementation Plan
 Chester's type system needs to support traits and record-trait relationships through the `<:` syntax. This section outlines the implementation plan for this feature.
@@ -749,6 +638,7 @@ The codebase already has some infrastructure for traits:
 - AST nodes for trait definitions (`TraitStmt`, `TraitStmtTerm`)
 - Parsing support for the `<:` extends syntax
 - Basic trait elaboration in `processTraitStmt`
+- `TraitCallTerm` implementation across core term system
 
 However, the type checking system does not currently handle:
 - Trait subtyping relationships between records and traits
@@ -760,7 +650,7 @@ However, the type checking system does not currently handle:
 To implement trait support within Chester's propagator network-based type system, we will:
 
 1. **Trait Type Representation**:
-   - Use `TraitStmtTerm` as the basis for representing trait types in the type system
+   - Use `TraitCallTerm` as the basis for representing trait types in the type system
    - Add appropriate propagator connections for trait-record subtyping
 
 2. **Record-Trait Subtyping**:
@@ -775,64 +665,183 @@ To implement trait support within Chester's propagator network-based type system
 
 ### 9.3 Detailed Implementation Tasks
 
-#### 9.3.1 Trait Type Core Implementation
+#### 9.3.1 Update Elaborater.scala for Trait-Record Subtyping
 
-1. Extend the `unify` method in `Elaborater.scala` to handle trait types:
+In `Elaborater.scala`, extend the `unify` method to handle trait types:
+
 ```scala
-case (RecordCallTerm(recordDef, _, _), traitType: TraitType) =>
-  // Verify record implements trait
-  checkTraitImplementation(recordDef, traitType.traitDef, cause)
+// In the unify method's pattern matching
+(lhsResolved, rhsResolved) match {
+  // ... existing cases ...
   
-case (traitType: TraitType, RecordCallTerm(recordDef, _, _)) =>
-  // Handle contra-variant case
-  checkTraitImplementation(recordDef, traitType.traitDef, cause)
+  // New case for record extending trait (RecordCallTerm <: TraitCallTerm)
+  case (RecordCallTerm(recordDef, _, _), TraitCallTerm(traitDef, _)) =>
+    // Check if the record implements the trait
+    checkTraitImplementation(recordDef, traitDef, cause)
+    
+  // Allow traits to be used where their implementations are expected (covariance)
+  case (TraitCallTerm(traitDef, _), RecordCallTerm(recordDef, _, _)) =>
+    // Ensure the record implements the trait
+    checkTraitImplementation(recordDef, traitDef, cause)
+    
+  // ... other cases ...
+}
 ```
 
-2. Add a helper method for trait implementation checking:
+Add a helper method for trait implementation checking:
+
 ```scala
 private def checkTraitImplementation(
   recordDef: RecordStmtTerm, 
   traitDef: TraitStmtTerm,
   cause: Expr
+)(using
+    localCtx: Context,
+    ck: Tyck,
+    state: StateAbility[Tyck]
 ): Unit = {
-  // For MVP, we'll assume empty traits are always satisfied
-  // Later we can add checks for trait members
+  // For MVP, we'll just check for a direct extension relationship
+  val hasExtendsClause = recordDef.extendsClause.exists { clause =>
+    clause match {
+      case TraitCallTerm(extendedTrait, _) => 
+        extendedTrait.uniqId == traitDef.uniqId
+      case _ => false
+    }
+  }
+  
+  if (!hasExtendsClause) {
+    // Report error if record doesn't explicitly extend the trait
+    ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
+  }
+  
+  // Future enhancement: Check that record provides all trait requirements
+  // traitDef.fields.foreach { field =>
+  //   recordDef.fields.find(_.name == field.name) match {
+  //     case Some(recordField) => unify(recordField.ty, field.ty, cause)
+  //     case None => ck.reporter.apply(MissingTraitField(field.name, recordDef.name, traitDef.name, cause))
+  //   }
+  // }
 }
 ```
 
-#### 9.3.2 Record Type Definition Extension
+#### 9.3.2 Update ElaboraterBlock.scala for Record-Trait Extension
 
-Modify `processRecordStmt` in `ElaboraterBlock.scala` to handle the `<:` syntax:
+Update the `processRecordStmt` method in `ElaboraterBlock.scala` to handle the `<:` syntax:
+
 ```scala
-expr.extendsClause.foreach { clause =>
-  clause.superTypes.foreach { traitExpr =>
-    traitExpr match {
-      case Identifier(traitName, _) =>
-        ctx.getTypeDefinition(traitName) match {
-          case Some(traitDef: TraitStmtTerm) =>
-            // Register subtyping relationship
-            registerTraitImplementation(recordStmtTerm, traitDef, cause)
-          case _ =>
-            ck.reporter.apply(NotATrait(traitExpr))
-        }
-      case _ =>
-        ck.reporter.apply(UnsupportedExtendsType(traitExpr))
+def processRecordStmt(
+    expr: RecordStmt,
+    ctx: Context,
+    declarationsMap: Map[Expr, DeclarationInfo],
+    effects: CIdOf[EffectsCell]
+)(using
+    parameter: SemanticCollector,
+    ck: Tyck,
+    state: StateAbility[Tyck]
+): (Seq[StmtTerm], Context) = {
+  implicit val localCtx: Context = ctx
+  val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
+  val name = recordInfo.name
+
+  // Extract the fields from the record
+  val fields = expr.fields
+
+  // Extract and elaborate the extendsClause
+  val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
+    // Transform each super type into a proper term
+    val elaboratedSuperTypes = superTypes.map { superTypeExpr =>
+      superTypeExpr match {
+        case Identifier(traitName, _) =>
+          ctx.getTypeDefinition(traitName) match {
+            case Some(traitDef: TraitStmtTerm) =>
+              // Create a trait call term representing the trait type
+              TraitCallTerm(traitDef, convertMeta(superTypeExpr.meta))
+            case _ =>
+              ck.reporter.apply(NotATrait(superTypeExpr))
+              // Return a safe default for error recovery
+              ErrorTerm(NotATrait(superTypeExpr), convertMeta(superTypeExpr.meta))
+          }
+        case _ =>
+          ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+          ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(superTypeExpr.meta))
+      }
+    }
+    // Return the elaborated extends clause
+    elaboratedSuperTypes.head // For MVP, we only use the first trait
+  }
+
+  // ... rest of the method (field elaboration, etc.) ...
+
+  // Update RecordStmtTerm to include the elaborated extendsClause
+  val recordStmtTerm = RecordStmtTerm(
+    name = name,
+    uniqId = recordInfo.uniqId,
+    fields = elaboratedFields,
+    body = elaboratedBody,
+    extendsClause = elaboratedExtendsClause, // Add this field to RecordStmtTerm
+    meta = convertMeta(expr.meta)
+  )
+
+  // ... rest of the method ...
+}
+```
+
+#### 9.3.3 Add New Error Types
+
+In `err/src/main/scala/chester/error/TyckProblem.scala`, add new error types for trait-related issues:
+
+```scala
+// For when a record doesn't implement a required trait
+case class NotImplementingTrait(recordName: Name, traitName: Name, cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Record '${recordName}' does not implement trait '${traitName}'"
+}
+
+// For when a record is used where a trait type is expected but doesn't implement it
+case class RecordNotImplementingTrait(recordType: Term, traitType: Term, cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Type '${recordType}' does not implement required trait '${traitType}'"
+}
+
+// For when an expression is expected to be a trait but isn't
+case class NotATrait(cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Expected a trait, but got ${cause}"
+}
+
+// For when a record is missing a field required by a trait
+case class MissingTraitField(fieldName: Name, recordName: Name, traitName: Name, cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Record '${recordName}' is missing required field '${fieldName}' from trait '${traitName}'"
+}
+```
+
+#### 9.3.4 Trait-Based Type Checking
+
+Ensure that when a trait type is used, subtyping relationships are properly checked:
+
+```scala
+// In elabIdentifier in Elaborater.scala
+case expr @ Identifier(name, _) => {
+  localCtx.get(name) match {
+    case Some(c: ContextItem) => {
+      // Existing code...
+    }
+    case None => {
+      // Check if 'name' refers to a type definition
+      localCtx.getTypeDefinition(name) match {
+        // Add case for trait definition
+        case Some(traitDef: TraitStmtTerm) =>
+          val traitCallTerm = TraitCallTerm(traitDef, convertMeta(expr.meta))
+          unify(ty, Type0, expr) // Traits are types
+          traitCallTerm
+        // Existing cases...
+        case _ =>
+          // Report error...
+      }
     }
   }
 }
-```
-
-#### 9.3.3 Trait-Based Type Checking
-
-Ensure that when a trait type is used, subtyping relationships are properly checked:
-```scala
-case (nameRef @ NameRef(name), _) =>
-  ctx.getTypeDefinition(name) match {
-    case Some(traitDef: TraitStmtTerm) =>
-      val traitType = TraitType(traitDef, convertMeta(nameRef.meta))
-      state.addPropagator(Unify(lhsId, toId(traitType), cause))
-    // Other cases...
-  }
 ```
 
 ### 9.4 Testing Strategy
@@ -841,11 +850,18 @@ case (nameRef @ NameRef(name), _) =>
    - Test record extending an empty trait (basic-trait.chester.todo)
    - Verify type checking passes
 
-2. **Future Tests to Implement**:
-   - Traits with method requirements
+2. **Trait as a Type Parameter**:
+   - Test using trait as a function parameter type
+   - Test assigning record instance to trait-typed variable
+
+3. **Error Cases**:
+   - Test error reporting when record doesn't implement required trait
+   - Test using non-trait in extends clause
+
+4. **Future Tests to Implement**:
+   - Traits with field requirements
    - Records implementing multiple traits
-   - Using trait types in function parameters
-   - Error cases for missing trait implementations
+   - Error cases for missing trait fields
 
 ### 9.5 Integration with Existing Systems
 

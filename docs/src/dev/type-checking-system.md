@@ -202,7 +202,83 @@ These propagators work together to ensure that all cells in the type graph are p
    }
    ```
 
-### 3. Type Level Unification Enhancement
+### 3. Cell Coverage Solutions
+
+When cells lack proper coverage by propagators, type checking can fail during the zonking phase with errors like:
+
+```
+java.lang.IllegalStateException: Cells Vector(...) are not covered by any propagator
+    at chester.utils.propagator.ProvideMutable$Impl.naiveZonk(ProvideMutable.scala:226)
+    at chester.tyck.DefaultImpl.finalizeJudge(Elaborater.scala:557)
+```
+
+The following solutions have been implemented to address these issues:
+
+#### 1. Self-Coverage Mechanism
+
+Every cell should be covered by at least one propagator. A simple but effective approach is to ensure self-coverage:
+
+```scala
+// Helper method to ensure cell coverage
+private def ensureCellCoverage(cell: CellId[Term], cause: Expr)(using
+    state: StateAbility[Tyck],
+    ctx: Context,
+    ck: Tyck
+): Unit = {
+  // Create a self-referential propagator to ensure basic coverage
+  state.addPropagator(UnionOf(cell, Vector(cell), cause))
+}
+```
+
+This self-referential propagator creates a minimal but sufficient coverage for the cell, ensuring it won't be reported as uncovered during zonking.
+
+#### 2. Comprehensive Coverage for Complex Types
+
+For composite types like unions, it's essential to ensure coverage not only for the main type cell but also for all component cells:
+
+```scala
+// For union types, ensure coverage for all components
+val unionTypeIds = unionTypes.map(typ => {
+  val cellId = toId(typ)
+  ensureCellCoverage(cellId, cause)
+  cellId
+}).toVector
+
+// Then create the UnionOf propagator
+state.addPropagator(UnionOf(unionCell, unionTypeIds, cause))
+```
+
+#### 3. Avoiding Early Returns in Type Checking
+
+Early returns in type checking code can sometimes leave cells uncovered. A safer approach is to:
+
+```scala
+// Instead of returning early without ensuring coverage
+if (lhsResolved == rhsResolved) {
+  // Add necessary propagators first
+  ensureCellCoverage(toId(lhsResolved), cause)
+  ensureCellCoverage(toId(rhsResolved), cause)
+  // Then return
+  return
+}
+```
+
+#### 4. Debugging Cell Coverage Issues
+
+When troubleshooting cell coverage problems, targeted debug output helps identify which cells lack proper coverage:
+
+```scala
+if (DEBUG_CELL_COVERAGE) {
+  println(s"=== CHECKING CELL COVERAGE ===")
+  println(s"Cell: $cell")
+  println(s"Reading propagators: ${state.readReadingPropagators(cell)}")
+  println(s"Zonking propagators: ${state.readZonkingPropagators(cell)}")
+}
+```
+
+These mechanisms ensure that all cells in the propagator network are properly covered, preventing errors during the zonking phase and enabling more complex type checking scenarios to work correctly.
+
+### 4. Type Level Unification Enhancement
 
 Type unification is a critical operation in the type checking system. Recent improvements have enhanced how type levels are compared during unification:
 
@@ -227,7 +303,7 @@ This improvement enables:
 
 This enhancement is particularly important for dependent types where the level of a type may need to vary based on its usage context.
 
-### 4. Best Practices for Type Level Handling
+### 5. Best Practices for Type Level Handling
 
 When implementing type checking logic that deals with type level comparisons:
 
