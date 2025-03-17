@@ -13,4 +13,4 @@ __pycache__/
 env/
 venv/
 ENV/
-.python-version
+# Keep .python-version for specifying Python version
