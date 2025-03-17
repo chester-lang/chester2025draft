@@ -8,7 +8,7 @@ This document outlines the process for converting JavaScript code generated from
 
 The conversion process follows these steps:
 
-1. **Compile Scala.js to JavaScript** - Use the `jsForPython/fullLinkJS` SBT task to compile Scala code to JavaScript
+1. **Compile Scala.js to JavaScript** - Use the `sbt jsForPython/fastLinkJS` SBT task to compile Scala code to JavaScript
 2. **Bundle with Rollup** - Use Rollup to combine the generated JavaScript with any needed glue code into a single module
 3. **Convert to Python** - Use js2py to make the JavaScript functionality accessible from Python
 
