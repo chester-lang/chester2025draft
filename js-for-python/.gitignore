@@ -14,3 +14,6 @@ env/
 venv/
 ENV/
 # Keep .python-version for specifying Python version
+
+# Generated files
+python/chester.py
