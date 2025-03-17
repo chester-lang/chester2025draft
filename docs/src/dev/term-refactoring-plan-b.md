@@ -28,72 +28,70 @@ We aim to simplify the codebase by:
 3. **Reduce code duplication**: Maintain a single source of truth for term definition and serialization
 4. **Maintain platform-specific optimizations**: Use annotations to enable JVM-specific Truffle optimizations
 
-## Implementation Plan
+## Direct Migration Plan
 
-### Phase 1: Code Analysis
+This outlines a direct approach to implementing Plan B, immediately removing `simple.scala` and `Term.scala` while making `truffle.scala` work across all platforms.
 
-1. Identify all uses of `Term.scala` and `simple.scala` across the codebase
-2. Map the dependencies on platform-specific features in `truffle.scala`
-3. Identify all platform-specific annotations used in `truffle.scala`
+### Phase 1: Prepare truffle.scala for All Platforms
 
-### Phase 2: Create Cross-Platform Annotations
+1. ✅ Create no-op versions of `@child`, `@const`, and `@children` annotations for JS platform
+2. ✅ Create no-op versions of `@child`, `@const`, and `@children` annotations for Native platform
+3. Create abstraction for JVM-specific dependencies in truffle.scala:
+   - Abstract over VirtualFrame for non-JVM platforms
+   - Handle Node inheritance for non-JVM platforms
+   - Conditionally include executeGeneric method
 
-1. Define no-op versions of `@child` and `@const` annotations for JS/Native platforms:
-   ```scala
-   // For JVM
-   // (Use existing Truffle annotations)
+### Phase 2: Fix Serialization 
+
+1. Keep existing serialization in truffle.scala, but make it work without simple.scala
+2. Use derives ReadWriter where possible for case classes
+3. Implement manual ReadWriter instances for non-case classes
+
+### Phase 3: Remove Dependencies and Update Build Config
+
+1. Remove all imports of:
+   - `chester.syntax.core.simple.*`
+   - `chester.syntax.core.spec.spec.*` (from Term.scala)
    
-   // For JS/Native
-   package chester.syntax.core.truffle
-   
-   import scala.annotation.StaticAnnotation
-   
-   class child extends StaticAnnotation
-   class const extends StaticAnnotation
-   ```
+2. Update all code to use `chester.syntax.core.truffle.*` instead
 
-2. Create platform-specific build configurations to include the appropriate annotation implementation
-3. Verify the annotations work in JVM mode with Truffle and as no-ops in JS/Native
+3. Update build.sbt to:
+   - Remove simple.scala from builds for JS/Native 
+   - Use platform-specific no-op annotations
+   - Make truffle.scala available to all platforms
 
-### Phase 3: Migrate to Single Term Implementation
+### Phase 4: Delete Unused Files
 
-1. Update `truffle.scala` to work on all platforms by:
-   - Identifying and isolating platform-specific functionality
-   - Ensuring all dependencies work across platforms
-   - Adding conditional compilation for platform-specific code
+1. Delete `simple.scala` after confirming all references are updated
+2. Delete `Term.scala` after confirming all references are updated
 
-2. Update all code that currently depends on `simple.scala` to use `truffle.scala` instead
-3. Gradually remove `Term.scala` abstractions
+## Implementation Order
 
-### Phase 4: Serialization Implementation
+1. First implement the JVM-specific abstraction
+2. Update the serialization code
+3. Fix imports for key modules one at a time
+4. Run tests after each major change
+5. Finally remove unused files after all tests pass
 
-1. Implement manual `ReadWriter` instances for terms:
-   ```scala
-   implicit val rw: ReadWriter[Term] = readwriter[IntermediateType].bimap[Term](
-     fromTerm => intermediateValue,
-     intermediateValue => new Term(...)
-   )
-   ```
+## Migration Status Tracking
 
-2. Create a serialization protocol that works across all platforms
-3. Test serialization/deserialization across platform boundaries
+| Task | Status | Notes |
+|------|--------|-------|
+| No-op annotations for JS | ✅ Complete | |
+| No-op annotations for Native | ✅ Complete | |
+| JVM-specific abstraction | Not started | |
+| Update serialization | Not started | |
+| Update imports | Not started | |
+| Remove unused files | Not started | |
 
-### Phase 5: Testing & Cleanup
-
-1. Ensure all tests pass on JVM, JS, and Native platforms
-2. Remove `simple.scala` and `Term.scala`
-3. Update documentation to reflect the new unified structure
-
-## Migration Considerations
-
-### Platform-Specific Features
+## Platform-Specific Features
 
 The JVM platform uses GraalVM Truffle for optimizations:
 - `@child` and `@const` annotations enable Truffle optimizations on JVM
 - On JS/Native platforms, these will be no-op annotations
 - Code will be identical across platforms, but behavior will be optimized on JVM
 
-### Performance Impact
+## Performance Impact
 
 This approach offers several benefits:
 - Unified codebase with less maintenance overhead
@@ -102,7 +100,7 @@ This approach offers several benefits:
 - JS/Native platforms avoid unnecessary abstraction layers
 - Single serialization format works across all platforms
 
-### Potential Challenges
+## Potential Challenges
 
 1. **GraalVM Truffle Dependencies**: Ensuring Truffle dependencies don't cause issues on JS/Native
 2. **Platform-Specific Code**: Identify and handle any platform-specific behaviors
@@ -110,7 +108,7 @@ This approach offers several benefits:
 
 ## Specific Terms to Refactor
 
-The refactoring will affect the same terms as Plan A, but the approach differs by unifying implementation rather than maintaining separate versions:
+The refactoring will affect many specific term implementations, including:
 
 1. **Term Core Representations**:
    - `Term` - Unified across platforms
