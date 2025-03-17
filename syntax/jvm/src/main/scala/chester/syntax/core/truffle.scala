@@ -466,6 +466,14 @@ object truffle {
     override type ThisTree = RecordCallTerm
     override def cons: RecordCallTermF[Term, ThisTree] = this.copy
   }
+  case class TraitCallTerm(
+      @child var traitDef: TraitStmtTerm,
+      @const meta: OptionTermMeta
+  ) extends TypeTerm
+      with TraitCallTermC[Term] {
+    override type ThisTree = TraitCallTerm
+    override def cons: TraitCallTermF[Term, ThisTree] = this.copy
+  }
   case class ObjectCallTerm(
       @child var objectRef: Term,
       @const meta: OptionTermMeta

@@ -455,6 +455,14 @@ object simple {
     override type ThisTree = RecordCallTerm
     override def cons: RecordCallTermF[Term, ThisTree] = this.copy
   }
+  case class TraitCallTerm(
+      traitDef: TraitStmtTerm,
+      meta: OptionTermMeta
+  ) extends TypeTerm
+      with TraitCallTermC[Term] {
+    override type ThisTree = TraitCallTerm
+    override def cons: TraitCallTermF[Term, ThisTree] = this.copy
+  }
   case class ObjectCallTerm(
       objectRef: Term,
       meta: OptionTermMeta

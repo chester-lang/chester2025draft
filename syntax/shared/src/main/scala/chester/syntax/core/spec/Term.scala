@@ -1787,6 +1787,29 @@ object spec {
   }
 
   @FunctionalInterface
+  trait TraitCallTermF[Term <: TermT[Term], ThisTree <: TraitCallTermC[Term]] {
+    def newTraitCallTerm(traitDef: TraitStmtTermC[Term], meta: OptionTermMeta): ThisTree
+  }
+
+  trait TraitCallTermC[Term <: TermT[Term]] extends TypeTermT[Term] {
+    override type ThisTree <: TraitCallTermC[Term]
+
+    def traitDef: TraitStmtTermC[Term]
+
+    def cons: TraitCallTermF[Term, ThisTree]
+
+    override def toDoc(using PrettierOptions): Doc =
+      Doc.text("TraitCall(") <> traitDef.name.toDoc <> Doc.text(")")
+
+    def cpy(traitDef: TraitStmtTermC[Term] = traitDef, meta: OptionTermMeta = meta): ThisTree =
+      cons.newTraitCallTerm(traitDef, meta)
+
+    override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
+      cpy(traitDef = g(traitDef))
+    )
+  }
+
+  @FunctionalInterface
   trait ObjectCallTermF[Term <: TermT[Term], ObjectCallTerm <: ObjectCallTermC[Term]] {
     def newObjectCallTerm(objectRef: Term, meta: OptionTermMeta): ObjectCallTerm
   }

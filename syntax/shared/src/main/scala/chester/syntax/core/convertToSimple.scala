@@ -107,6 +107,7 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
       simple.InterfaceStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: ObjectCallTermC[Term] => simple.ObjectCallTerm(objectRef = x.objectRef, meta = x.meta)
     case x: ObjectTypeTermC[Term] => simple.ObjectTypeTerm(objectDef = x.objectDef, meta = x.meta)
+    case x: TraitCallTermC[Term] => simple.TraitCallTerm(traitDef = x.traitDef, meta = x.meta)
     case x: ObjectStmtTermC[Term] =>
       simple.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: RecordCallTermC[Term]  => simple.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)
