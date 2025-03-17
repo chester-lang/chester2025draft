@@ -18,7 +18,15 @@ export default {
     babel({
       babelHelpers: 'bundled',
       presets: [
-        ['@babel/preset-env', { targets: { node: "18" } }]
+        ['@babel/preset-env', { 
+          targets: { 
+            browsers: ['ie 11'], // Targets ES5.1 compatibility
+          },
+          modules: false,
+          useBuiltIns: 'usage',
+          corejs: 3,
+          exclude: ['transform-typeof-symbol'] // Avoid issues with js2py
+        }]
       ]
     }),
     terser({
