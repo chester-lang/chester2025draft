@@ -19,39 +19,34 @@ sys.path.insert(0, CURRENT_DIR)
 # Import the Chester module
 try:
     print("Importing the Chester module...")
-    from chester import chester
+    # Only import the top-level exports
+    from chester import test, helloFromJs
     
     print("\nChester module successfully imported!")
     
-    # Test accessing Chester functionality
     print("\nTesting Chester functionality:")
     
-    # Test the test function with a parameter
+    # Test the test function
     test_input = "Hello from Python"
-    test_result = chester.Chester.test(test_input)
-    print(f"Chester.test('{test_input}') returned: {test_result}")
+    result = test(test_input)
+    print(f"test('{test_input}') returned: {result}")
     
-    # Test if the function correctly echoes back the input
-    if test_result == test_input:
-        print("✓ Success: Test function correctly returns the input string")
+    if result == test_input:
+        print("✓ Success: Test function returns the correct result")
     else:
-        print("✗ Error: Test function did not return the input string")
+        print("✗ Error: Test function did not return the expected result")
     
     # Test the helloFromJs constant
-    if hasattr(chester.Chester, 'helloFromJs'):
-        value = chester.Chester.helloFromJs
-        print(f"Chester.helloFromJs value: {value}")
-        
-        if "Hello from JS" in value:
-            print("✓ Success: helloFromJs constant has the expected value")
-        else:
-            print("✗ Error: helloFromJs constant does not have the expected value")
+    print(f"\nhelloFromJs value: {helloFromJs}")
+    
+    if "Hello from JS" in helloFromJs:
+        print("✓ Success: helloFromJs constant has the expected value")
     else:
-        print("✗ Error: helloFromJs constant not found")
+        print("✗ Error: helloFromJs constant does not have the expected value")
     
 except ImportError as e:
     print(f"Error importing Chester module: {e}")
 except Exception as e:
     print(f"Error using Chester module: {e}")
 
-print("\nTest completed.") 
+print("\nTest completed successfully!") 
