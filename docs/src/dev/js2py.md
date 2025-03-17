@@ -86,7 +86,7 @@ export default {
 To bundle the JavaScript code, create an `index.js` file that imports the generated `.mjs` files, then run:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 This produces a bundled JavaScript file at `dist/bundle.js`.
