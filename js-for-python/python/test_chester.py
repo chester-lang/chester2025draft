@@ -26,20 +26,28 @@ try:
     # Test accessing Chester functionality
     print("\nTesting Chester functionality:")
     
-    # Test the test function
-    test_result = chester.Chester.test()
-    print(f"Chester.test() returned: {test_result}")
+    # Test the test function with a parameter
+    test_input = "Hello from Python"
+    test_result = chester.Chester.test(test_input)
+    print(f"Chester.test('{test_input}') returned: {test_result}")
     
-    # Test other available functions
-    if hasattr(chester.Chester, 'originalTest'):
-        print(f"Chester.originalTest() returned: {chester.Chester.originalTest()}")
+    # Test if the function correctly echoes back the input
+    if test_result == test_input:
+        print("✓ Success: Test function correctly returns the input string")
+    else:
+        print("✗ Error: Test function did not return the input string")
     
-    if hasattr(chester.Chester, 'hello'):
-        print(f"Chester.hello('Python') returned: {chester.Chester.hello('Python')}")
-    
-    # Check for error messages
-    if hasattr(chester.Chester, 'error'):
-        print(f"ERROR: {chester.Chester.error}")
+    # Test the helloFromJs constant
+    if hasattr(chester.Chester, 'helloFromJs'):
+        value = chester.Chester.helloFromJs
+        print(f"Chester.helloFromJs value: {value}")
+        
+        if "Hello from JS" in value:
+            print("✓ Success: helloFromJs constant has the expected value")
+        else:
+            print("✗ Error: helloFromJs constant does not have the expected value")
+    else:
+        print("✗ Error: helloFromJs constant not found")
     
 except ImportError as e:
     print(f"Error importing Chester module: {e}")

@@ -13,42 +13,20 @@ import * as chesterJS from './js/target/scala-3.6.4/js-for-python-fastopt/main.m
 // Only use ES5.1 compatible features
 var ChesterCompat = {};
 
-// Add wrapper functions that expose only what Python needs
-// This isolates Python from unsupported JS features
+// Directly expose Scala.js exported functions
+// Direct assignment of the test function
+ChesterCompat.test = chesterJS.test;
 
-// Test function
-ChesterCompat.test = function() {
-  return "Chester JavaScript compatibility layer is working!";
-};
+// Direct assignment of the helloFromJs constant
+ChesterCompat.helloFromJs = chesterJS.helloFromJs;
 
-// Add any needed functions from the original Chester JS
-// with simplified interfaces if necessary
-try {
-  if (typeof chesterJS.test === 'function') {
-    ChesterCompat.originalTest = function() {
-      try {
-        return chesterJS.test();
-      } catch(e) {
-        return "Error calling original test function: " + e.message;
-      }
-    };
-  }
-  
-  if (typeof chesterJS.helloFromJs === 'function') {
-    ChesterCompat.hello = function(name) {
-      try {
-        return chesterJS.helloFromJs(name || "World");
-      } catch(e) {
-        return "Error in hello function: " + e.message;
-      }
-    };
-  }
-  
-  // Add more wrapper functions as needed
-  // ...
-  
-} catch(e) {
-  ChesterCompat.error = "Error initializing compatibility layer: " + e.message;
+// Validate that required exports are defined
+if (typeof ChesterCompat.test !== 'function') {
+  throw new Error("Required function 'test' is not defined in Scala.js output");
+}
+
+if (typeof ChesterCompat.helloFromJs === 'undefined') {
+  throw new Error("Required constant 'helloFromJs' is not defined in Scala.js output");
 }
 
 // Set global variable for js2py to access more easily
