@@ -7,7 +7,8 @@ export default {
   input: 'index.js',
   output: {
     file: 'dist/bundle.js',
-    format: 'cjs',
+    format: 'iife',
+    name: 'Chester', // Global variable that will hold exports
     sourcemap: true,
   },
   plugins: [
@@ -26,7 +27,8 @@ export default {
           include: [
             '@babel/plugin-transform-arrow-functions',
             '@babel/plugin-transform-block-scoping',
-            '@babel/plugin-transform-classes'
+            '@babel/plugin-transform-classes',
+            '@babel/plugin-transform-for-of'
           ],
           exclude: ['transform-typeof-symbol'] // Avoid issues with js2py
         }]
