@@ -420,6 +420,7 @@ object truffle {
       @const uniqId: UniqidOf[RecordStmtTerm] = Uniqid.generate[RecordStmtTerm],
       @const fields: Vector[FieldTerm],
       @const body: Option[BlockTerm],
+      @const extendsClause: Option[Term] = None,
       @const meta: OptionTermMeta
   ) extends TypeDefinition
       with RecordStmtTermC[Term] {

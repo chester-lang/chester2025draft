@@ -30,6 +30,16 @@ trait TyckPropagator extends ElaboraterCommon {
             // Explicitly specify which overload to use
             unify(lhs: Term, rhs: CellId[Term], cause)
 
+          // Record implementing trait (structural subtyping)
+          case (RecordCallTerm(recordDef, _, _), TraitCallTerm(traitDef, _)) =>
+            // Check if the record implements the trait
+            checkTraitImplementation(recordDef, traitDef, cause)
+            
+          // Allow traits to be used where their implementations are expected (covariance)
+          case (TraitCallTerm(traitDef, _), RecordCallTerm(recordDef, _, _)) =>
+            // Ensure the record implements the trait
+            checkTraitImplementation(recordDef, traitDef, cause)
+
           // Structural unification for ListType
           case (ListType(elem1, _), ListType(elem2, _)) =>
             unify(elem1, elem2, cause)
@@ -856,6 +866,34 @@ trait TyckPropagator extends ElaboraterCommon {
     case IntTerm(value, _) => Some(BigInt(value))
     case IntegerTerm(value, _) => Some(value)
     case _ => None
+  }
+
+  // Add helper method for trait implementation checking
+  private def checkTraitImplementation(
+    recordDef: RecordStmtTerm, 
+    traitDef: TraitStmtTerm,
+    cause: Expr
+  )(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Boolean = {
+    // For MVP, we'll just check for a direct extension relationship
+    val hasExtendsClause = recordDef.extendsClause.exists { clause =>
+      clause match {
+        case traitCall: TraitCallTerm => 
+          traitCall.traitDef.uniqId == traitDef.uniqId
+        case _ => false
+      }
+    }
+    
+    if (!hasExtendsClause) {
+      // Report error if record doesn't explicitly extend the trait
+      ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
+      false
+    } else {
+      true
+    }
   }
 
 }

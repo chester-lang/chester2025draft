@@ -409,6 +409,7 @@ object simple {
       uniqId: UniqidOf[RecordStmtTerm] = Uniqid.generate[RecordStmtTerm],
       fields: Vector[FieldTerm],
       body: Option[BlockTerm],
+      extendsClause: Option[Term] = None,
       meta: OptionTermMeta
   ) extends TypeDefinition
       with RecordStmtTermC[Term] {

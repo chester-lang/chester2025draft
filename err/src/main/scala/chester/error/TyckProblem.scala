@@ -238,6 +238,22 @@ case class UnsupportedExtendsType(cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Unsupported type in extends clause")
 }
+case class NotATrait(cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Expected a trait, but got ${cause}"
+}
+case class NotImplementingTrait(recordName: Name, traitName: Name, cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Record '${recordName}' does not implement trait '${traitName}'"
+}
+case class RecordNotImplementingTrait(recordType: Term, traitType: Term, cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Type '${recordType}' does not implement required trait '${traitType}'"
+}
+case class MissingTraitField(fieldName: Name, recordName: Name, traitName: Name, cause: Expr) extends TyckError {
+  override def toDoc(using PrettierOptions): Doc =
+    t"Record '${recordName}' is missing required field '${fieldName}' from trait '${traitName}'"
+}
 case class ExpectTraitName(cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Expected a trait name, got"

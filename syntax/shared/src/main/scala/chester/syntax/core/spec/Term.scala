@@ -1713,6 +1713,7 @@ object spec {
         uniqId: UniqidOf[RecordStmtTermC[Term]],
         fields: Vector[FieldTermC[Term]],
         body: Option[BlockTermC[Term]],
+        extendsClause: Option[Term],
         meta: OptionTermMeta
     ): RecordStmtTerm
   }
@@ -1727,6 +1728,8 @@ object spec {
     def fields: Vector[FieldTermC[Term]]
 
     def body: Option[BlockTermC[Term]]
+    
+    def extendsClause: Option[Term]
 
     def cons: RecordStmtTermF[Term, ThisTree]
 
@@ -1748,14 +1751,16 @@ object spec {
         uniqId: UniqidOf[RecordStmtTermC[Term]] = uniqId,
         fields: Vector[FieldTermC[Term]] = fields,
         body: Option[BlockTermC[Term]] = body,
+        extendsClause: Option[Term] = extendsClause,
         meta: OptionTermMeta = meta
     ): ThisTree =
-      cons.newRecordStmt(name, uniqId, fields, body, meta)
+      cons.newRecordStmt(name, uniqId, fields, body, extendsClause, meta)
 
     override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
       cpy(
         fields = fields.map(g),
-        body = body.map(g)
+        body = body.map(g),
+        extendsClause = extendsClause.map(f)
       )
     )
 

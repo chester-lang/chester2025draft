@@ -391,12 +391,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
   ): Term = toTerm {
     val ty = toId(readMetaVar(toTerm(ty0)))
     resolve(expr) match {
-      case expr @ Identifier(name, _) => {
+      case expr @ Identifier(name, meta) => {
         localCtx.get(name) match {
           case Some(c: ContextItem) => {
-            if (c.reference.isDefined) {
-              c.reference.get.referencedOn(expr)
-            }
             state.addPropagator(Unify(ty, c.tyId, expr))
             c.ref
           }
@@ -411,6 +408,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 val recordCallTerm = RecordCallTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta)) // TODO
                 unify(ty, Type0, expr) // TODO: Type
                 recordCallTerm
+              case Some(traitDef: TraitStmtTerm) =>
+                val traitCallTerm = TraitCallTerm(traitDef, convertMeta(expr.meta))
+                unify(ty, Type0, expr) // Traits are types
+                traitCallTerm
               case Some(todo) => ???
               case None =>
                 val problem = UnboundVariable(name, expr)

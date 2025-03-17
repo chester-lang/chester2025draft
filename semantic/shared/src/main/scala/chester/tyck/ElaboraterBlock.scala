@@ -245,16 +245,28 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     // Extract the fields from the record
     val fields = expr.fields
 
-    // Extract the symbol from the extendsClause, if any. TODO: this is a stub only
-    val _ = expr.extendsClause.map { case clause @ ExtendsClause(superType, _) =>
-      superType.head match {
-        case Identifier(superName, _) => superName
-        case _                        =>
-          // For now, only handle simple identifiers; report a warning or error if needed
-          ck.reporter.apply(UnsupportedExtendsType(clause))
-          // Return None since we cannot handle complex types yet
-          return (Seq.empty, ctx)
+    // Extract and elaborate the extendsClause, if any.
+    val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
+      // Transform each super type into a proper term
+      val elaboratedSuperTypes = superTypes.map { superTypeExpr =>
+        superTypeExpr match {
+          case Identifier(traitName, _) =>
+            ctx.getTypeDefinition(traitName) match {
+              case Some(traitDef: TraitStmtTerm) =>
+                // Create a trait call term representing the trait type
+                TraitCallTerm(traitDef, convertMeta(superTypeExpr.meta))
+              case _ =>
+                ck.reporter.apply(NotATrait(superTypeExpr))
+                // Return a safe default for error recovery
+                ErrorTerm(NotATrait(superTypeExpr), convertMeta(superTypeExpr.meta))
+            }
+          case _ =>
+            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+            ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(superTypeExpr.meta))
+        }
       }
+      // For now, we only support extending one trait, so we take the head
+      if (elaboratedSuperTypes.nonEmpty) elaboratedSuperTypes.head else ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta))
     }
 
     // Elaborate the fields without combining them with any super class fields
@@ -278,10 +290,8 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       uniqId = recordInfo.uniqId,
       fields = elaboratedFields,
       body = elaboratedBody,
+      extendsClause = elaboratedExtendsClause,
       meta = convertMeta(expr.meta)
-      // We can store the extendsSymbol here if needed in the future
-      // For now, we add a TODO comment
-      // TODO: Handle the extendsClause during type checking
     )
 
     // Update the context with the new record definition

@@ -640,12 +640,29 @@ The codebase already has some infrastructure for traits:
 - Basic trait elaboration in `processTraitStmt`
 - `TraitCallTerm` implementation across core term system
 
-However, the type checking system does not currently handle:
-- Trait subtyping relationships between records and traits
-- Verification of trait implementation requirements
-- Using trait types in function parameters and variables
+### 9.2 Implementation Progress
 
-### 9.2 Implementation Approach
+#### 9.2.1 Completed
+- Added error types for trait implementation in `TyckProblem.scala`:
+  - `NotImplementingTrait`
+  - `RecordNotImplementingTrait`
+  - `NotATrait`
+  - `MissingTraitField`
+- Updated `RecordStmtTermC` to include the `extendsClause` field
+- Updated converters (`convertToSimple`, `convertToTruffle`) to handle the `extendsClause`
+- Enhanced `ElaboraterBlock.processRecordStmt` to elaborate the `extendsClause`
+- Added trait handling in `elabIdentifier` in `Elaborater.scala`
+- Implemented the `checkTraitImplementation` method in `TyckPropagator.scala`
+- Added record-trait subtyping cases in the `unify` method
+
+#### 9.2.2 Pending
+- Enable the `basic-trait.chester.todo` test to verify implementation
+- Support more complex trait hierarchies (trait-to-trait inheritance)
+- Implement trait field requirements checking
+- Add trait interface method support
+- Support multiple trait inheritance
+
+### 9.3 Implementation Approach
 
 To implement trait support within Chester's propagator network-based type system, we will:
 
@@ -662,187 +679,6 @@ To implement trait support within Chester's propagator network-based type system
    - Support empty traits with basic record extension
    - Add error reporting for unsatisfied trait requirements
    - Enable traits to be used as types for parameters and variables
-
-### 9.3 Detailed Implementation Tasks
-
-#### 9.3.1 Update Elaborater.scala for Trait-Record Subtyping
-
-In `Elaborater.scala`, extend the `unify` method to handle trait types:
-
-```scala
-// In the unify method's pattern matching
-(lhsResolved, rhsResolved) match {
-  // ... existing cases ...
-  
-  // New case for record extending trait (RecordCallTerm <: TraitCallTerm)
-  case (RecordCallTerm(recordDef, _, _), TraitCallTerm(traitDef, _)) =>
-    // Check if the record implements the trait
-    checkTraitImplementation(recordDef, traitDef, cause)
-    
-  // Allow traits to be used where their implementations are expected (covariance)
-  case (TraitCallTerm(traitDef, _), RecordCallTerm(recordDef, _, _)) =>
-    // Ensure the record implements the trait
-    checkTraitImplementation(recordDef, traitDef, cause)
-    
-  // ... other cases ...
-}
-```
-
-Add a helper method for trait implementation checking:
-
-```scala
-private def checkTraitImplementation(
-  recordDef: RecordStmtTerm, 
-  traitDef: TraitStmtTerm,
-  cause: Expr
-)(using
-    localCtx: Context,
-    ck: Tyck,
-    state: StateAbility[Tyck]
-): Unit = {
-  // For MVP, we'll just check for a direct extension relationship
-  val hasExtendsClause = recordDef.extendsClause.exists { clause =>
-    clause match {
-      case TraitCallTerm(extendedTrait, _) => 
-        extendedTrait.uniqId == traitDef.uniqId
-      case _ => false
-    }
-  }
-  
-  if (!hasExtendsClause) {
-    // Report error if record doesn't explicitly extend the trait
-    ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
-  }
-  
-  // Future enhancement: Check that record provides all trait requirements
-  // traitDef.fields.foreach { field =>
-  //   recordDef.fields.find(_.name == field.name) match {
-  //     case Some(recordField) => unify(recordField.ty, field.ty, cause)
-  //     case None => ck.reporter.apply(MissingTraitField(field.name, recordDef.name, traitDef.name, cause))
-  //   }
-  // }
-}
-```
-
-#### 9.3.2 Update ElaboraterBlock.scala for Record-Trait Extension
-
-Update the `processRecordStmt` method in `ElaboraterBlock.scala` to handle the `<:` syntax:
-
-```scala
-def processRecordStmt(
-    expr: RecordStmt,
-    ctx: Context,
-    declarationsMap: Map[Expr, DeclarationInfo],
-    effects: CIdOf[EffectsCell]
-)(using
-    parameter: SemanticCollector,
-    ck: Tyck,
-    state: StateAbility[Tyck]
-): (Seq[StmtTerm], Context) = {
-  implicit val localCtx: Context = ctx
-  val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
-  val name = recordInfo.name
-
-  // Extract the fields from the record
-  val fields = expr.fields
-
-  // Extract and elaborate the extendsClause
-  val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
-    // Transform each super type into a proper term
-    val elaboratedSuperTypes = superTypes.map { superTypeExpr =>
-      superTypeExpr match {
-        case Identifier(traitName, _) =>
-          ctx.getTypeDefinition(traitName) match {
-            case Some(traitDef: TraitStmtTerm) =>
-              // Create a trait call term representing the trait type
-              TraitCallTerm(traitDef, convertMeta(superTypeExpr.meta))
-            case _ =>
-              ck.reporter.apply(NotATrait(superTypeExpr))
-              // Return a safe default for error recovery
-              ErrorTerm(NotATrait(superTypeExpr), convertMeta(superTypeExpr.meta))
-          }
-        case _ =>
-          ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
-          ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(superTypeExpr.meta))
-      }
-    }
-    // Return the elaborated extends clause
-    elaboratedSuperTypes.head // For MVP, we only use the first trait
-  }
-
-  // ... rest of the method (field elaboration, etc.) ...
-
-  // Update RecordStmtTerm to include the elaborated extendsClause
-  val recordStmtTerm = RecordStmtTerm(
-    name = name,
-    uniqId = recordInfo.uniqId,
-    fields = elaboratedFields,
-    body = elaboratedBody,
-    extendsClause = elaboratedExtendsClause, // Add this field to RecordStmtTerm
-    meta = convertMeta(expr.meta)
-  )
-
-  // ... rest of the method ...
-}
-```
-
-#### 9.3.3 Add New Error Types
-
-In `err/src/main/scala/chester/error/TyckProblem.scala`, add new error types for trait-related issues:
-
-```scala
-// For when a record doesn't implement a required trait
-case class NotImplementingTrait(recordName: Name, traitName: Name, cause: Expr) extends TyckError {
-  override def toDoc(using PrettierOptions): Doc =
-    t"Record '${recordName}' does not implement trait '${traitName}'"
-}
-
-// For when a record is used where a trait type is expected but doesn't implement it
-case class RecordNotImplementingTrait(recordType: Term, traitType: Term, cause: Expr) extends TyckError {
-  override def toDoc(using PrettierOptions): Doc =
-    t"Type '${recordType}' does not implement required trait '${traitType}'"
-}
-
-// For when an expression is expected to be a trait but isn't
-case class NotATrait(cause: Expr) extends TyckError {
-  override def toDoc(using PrettierOptions): Doc =
-    t"Expected a trait, but got ${cause}"
-}
-
-// For when a record is missing a field required by a trait
-case class MissingTraitField(fieldName: Name, recordName: Name, traitName: Name, cause: Expr) extends TyckError {
-  override def toDoc(using PrettierOptions): Doc =
-    t"Record '${recordName}' is missing required field '${fieldName}' from trait '${traitName}'"
-}
-```
-
-#### 9.3.4 Trait-Based Type Checking
-
-Ensure that when a trait type is used, subtyping relationships are properly checked:
-
-```scala
-// In elabIdentifier in Elaborater.scala
-case expr @ Identifier(name, _) => {
-  localCtx.get(name) match {
-    case Some(c: ContextItem) => {
-      // Existing code...
-    }
-    case None => {
-      // Check if 'name' refers to a type definition
-      localCtx.getTypeDefinition(name) match {
-        // Add case for trait definition
-        case Some(traitDef: TraitStmtTerm) =>
-          val traitCallTerm = TraitCallTerm(traitDef, convertMeta(expr.meta))
-          unify(ty, Type0, expr) // Traits are types
-          traitCallTerm
-        // Existing cases...
-        case _ =>
-          // Report error...
-      }
-    }
-  }
-}
-```
 
 ### 9.4 Testing Strategy
 
@@ -863,7 +699,23 @@ case expr @ Identifier(name, _) => {
    - Records implementing multiple traits
    - Error cases for missing trait fields
 
-### 9.5 Integration with Existing Systems
+### 9.5 Next Steps
+
+1. **Validate Current Implementation**:
+   - Rename the `basic-trait.chester.todo` test to `basic-trait.chester` to enable it
+   - Verify that the basic test passes with our current implementation
+   - Fix any issues that arise during testing
+
+2. **Enhance Implementation**:
+   - Add support for trait field requirements
+   - Implement trait interface methods
+   - Support multiple trait inheritance
+
+3. **Add Additional Test Cases**:
+   - Create more comprehensive test suite for trait features
+   - Test edge cases and error conditions
+
+### 9.6 Integration with Existing Systems
 
 This trait implementation leverages Chester's existing propagator network to maintain type safety and subtyping relationships. It fits into the existing architecture by:
 
@@ -871,7 +723,7 @@ This trait implementation leverages Chester's existing propagator network to mai
 2. Leveraging the existing subtyping mechanisms to handle trait relationships
 3. Building on the existing elaboration infrastructure for type definitions
 
-### 9.6 Success Criteria
+### 9.7 Success Criteria
 
 The implementation is successful when:
 1. The basic-trait.chester.todo test passes
