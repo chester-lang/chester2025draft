@@ -27,6 +27,15 @@ MODIFIED_BUNDLE_PATH = os.path.join(
     'dist', 'bundle.modified.js'
 )
 
+# Python template to append to the generated module
+PYTHON_TEMPLATE = """
+# Expose top-level functions and variables for a more Pythonic API
+test = chester.Chester.test
+helloFromJs = chester.Chester.helloFromJs
+
+# More top-level exports can be added here
+"""
+
 def preprocess_js_bundle():
     """
     Preprocess the JavaScript bundle to replace problematic constructs
@@ -44,6 +53,24 @@ def preprocess_js_bundle():
         f.write(js_code)
     
     return MODIFIED_BUNDLE_PATH
+
+def post_process_py_module():
+    """
+    Add Python-friendly shortcuts to the translated module
+    """
+    if not os.path.exists(TRANSLATED_MODULE_PATH):
+        return False
+    
+    with open(TRANSLATED_MODULE_PATH, 'r') as f:
+        py_code = f.read()
+    
+    # Append our Python template to the end of the file
+    py_code += PYTHON_TEMPLATE
+    
+    with open(TRANSLATED_MODULE_PATH, 'w') as f:
+        f.write(py_code)
+    
+    return True
 
 def translate_js_to_py(force=False):
     """
@@ -75,6 +102,11 @@ def translate_js_to_py(force=False):
     try:
         print(f"Translating JavaScript bundle to Python module...")
         js2py.translate_file(modified_bundle_path, TRANSLATED_MODULE_PATH)
+        
+        # Post-process to add Python-friendly shortcuts
+        print(f"Adding Python-friendly shortcuts...")
+        post_process_py_module()
+        
         print(f"Successfully translated to {TRANSLATED_MODULE_PATH}")
         return True
     except Exception as e:
