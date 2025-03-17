@@ -6,10 +6,8 @@ Test script for js2py integration
 import sys
 import os
 
-# Add the path where our bridge file is
-sys.path.append(os.path.join(os.path.dirname(__file__), "jvm/src/main/scala/chester"))
-
-from Js2PyBridge import Js2PyBridge
+# Import our bridge module directly
+from js2py_bridge import Js2PyBridge
 
 def main():
     bridge = Js2PyBridge()

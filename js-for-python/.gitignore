@@ -1,3 +1,16 @@
+# JavaScript/Node.js
 node_modules/
 dist/
 .DS_Store
+pnpm-lock.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+# Keep .python-version for specifying Python version
