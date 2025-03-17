@@ -1,0 +1,2 @@
+# Python dependencies for js-for-python
+js2py>=0.74
