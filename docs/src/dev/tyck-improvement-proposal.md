@@ -739,3 +739,126 @@ This implementation aligns with Chester's core design principles:
 4. **Flexible Type System**: Enables sophisticated type-level programming
 
 The proposed changes are minimal and focused, addressing the specific issue while maintaining the system's architecture and design philosophy. 
+
+## 9. Trait Implementation Plan
+Chester's type system needs to support traits and record-trait relationships through the `<:` syntax. This section outlines the implementation plan for this feature.
+
+### 9.1 Current Status
+
+The codebase already has some infrastructure for traits:
+- AST nodes for trait definitions (`TraitStmt`, `TraitStmtTerm`)
+- Parsing support for the `<:` extends syntax
+- Basic trait elaboration in `processTraitStmt`
+
+However, the type checking system does not currently handle:
+- Trait subtyping relationships between records and traits
+- Verification of trait implementation requirements
+- Using trait types in function parameters and variables
+
+### 9.2 Implementation Approach
+
+To implement trait support within Chester's propagator network-based type system, we will:
+
+1. **Trait Type Representation**:
+   - Use `TraitStmtTerm` as the basis for representing trait types in the type system
+   - Add appropriate propagator connections for trait-record subtyping
+
+2. **Record-Trait Subtyping**:
+   - Add a subtyping case to `TyckPropagator` that handles record-trait relationships
+   - Implement checking that record provides all trait requirements
+   - Add appropriate propagator connections to maintain type safety
+
+3. **Minimal Requirements for MVP**:
+   - Support empty traits with basic record extension
+   - Add error reporting for unsatisfied trait requirements
+   - Enable traits to be used as types for parameters and variables
+
+### 9.3 Detailed Implementation Tasks
+
+#### 9.3.1 Trait Type Core Implementation
+
+1. Extend the `unify` method in `Elaborater.scala` to handle trait types:
+```scala
+case (RecordCallTerm(recordDef, _, _), traitType: TraitType) =>
+  // Verify record implements trait
+  checkTraitImplementation(recordDef, traitType.traitDef, cause)
+  
+case (traitType: TraitType, RecordCallTerm(recordDef, _, _)) =>
+  // Handle contra-variant case
+  checkTraitImplementation(recordDef, traitType.traitDef, cause)
+```
+
+2. Add a helper method for trait implementation checking:
+```scala
+private def checkTraitImplementation(
+  recordDef: RecordStmtTerm, 
+  traitDef: TraitStmtTerm,
+  cause: Expr
+): Unit = {
+  // For MVP, we'll assume empty traits are always satisfied
+  // Later we can add checks for trait members
+}
+```
+
+#### 9.3.2 Record Type Definition Extension
+
+Modify `processRecordStmt` in `ElaboraterBlock.scala` to handle the `<:` syntax:
+```scala
+expr.extendsClause.foreach { clause =>
+  clause.superTypes.foreach { traitExpr =>
+    traitExpr match {
+      case Identifier(traitName, _) =>
+        ctx.getTypeDefinition(traitName) match {
+          case Some(traitDef: TraitStmtTerm) =>
+            // Register subtyping relationship
+            registerTraitImplementation(recordStmtTerm, traitDef, cause)
+          case _ =>
+            ck.reporter.apply(NotATrait(traitExpr))
+        }
+      case _ =>
+        ck.reporter.apply(UnsupportedExtendsType(traitExpr))
+    }
+  }
+}
+```
+
+#### 9.3.3 Trait-Based Type Checking
+
+Ensure that when a trait type is used, subtyping relationships are properly checked:
+```scala
+case (nameRef @ NameRef(name), _) =>
+  ctx.getTypeDefinition(name) match {
+    case Some(traitDef: TraitStmtTerm) =>
+      val traitType = TraitType(traitDef, convertMeta(nameRef.meta))
+      state.addPropagator(Unify(lhsId, toId(traitType), cause))
+    // Other cases...
+  }
+```
+
+### 9.4 Testing Strategy
+
+1. **Basic Empty Trait Test**:
+   - Test record extending an empty trait (basic-trait.chester.todo)
+   - Verify type checking passes
+
+2. **Future Tests to Implement**:
+   - Traits with method requirements
+   - Records implementing multiple traits
+   - Using trait types in function parameters
+   - Error cases for missing trait implementations
+
+### 9.5 Integration with Existing Systems
+
+This trait implementation leverages Chester's existing propagator network to maintain type safety and subtyping relationships. It fits into the existing architecture by:
+
+1. Using the cell-propagator system to represent trait-based constraints
+2. Leveraging the existing subtyping mechanisms to handle trait relationships
+3. Building on the existing elaboration infrastructure for type definitions
+
+### 9.6 Success Criteria
+
+The implementation is successful when:
+1. The basic-trait.chester.todo test passes
+2. Records can extend traits using the `<:` syntax
+3. The type system correctly enforces trait-based type constraints
+4. Error messages are clear when trait requirements are not met 
