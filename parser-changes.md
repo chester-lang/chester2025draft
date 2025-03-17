@@ -15,24 +15,9 @@ var DEBUG = false // Keep DEBUG flag for tests that use it
 var DEBUG = true // Enable debug output for testing
 ```
 
-#### Added Pattern Match Detection
-```scala
-// Added new constant
-private val PATTERN_MATCH_TOKENS = Set("match", "case", "=>")
-
-// Added new helper method
-private def hasIdentifier(terms: Vector[Expr], name: String): Boolean = {
-  terms.exists {
-    case id: ConcreteIdentifier => id.name == name
-    case _ => false
-  }
-}
-```
-
 #### Block Handling Changes
 - Modified `handleBlockArgument` to be more context-free
 - Simplified block handling after different expression types
-- Special handling for blocks after `=>` in pattern matching
 
 #### Dot Call Changes
 - Simplified `handleDotCall` implementation
