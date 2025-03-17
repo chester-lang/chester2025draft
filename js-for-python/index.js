@@ -1,9 +1,9 @@
-// Import WeakMap from core-js directly
-import WeakMapPolyfill from 'core-js/es/weak-map';
+// Import Map polyfill from es6-map-shim
+import Map from 'es6-map-shim';
 
-// Make WeakMap available globally
-if (typeof WeakMap === 'undefined') {
-  var WeakMap = WeakMapPolyfill;
+// Make Map available globally for scripts
+if (typeof Map === 'undefined') {
+  window.Map = Map;
 }
 
 // Import the JavaScript generated from Scala.js (using fastLinkJS for better debugging)
@@ -51,9 +51,5 @@ try {
   ChesterCompat.error = "Error initializing compatibility layer: " + e.message;
 }
 
-// Export the compatibility layer
-export default ChesterCompat;
-
-// Also export individual functions for convenience
-export const test = ChesterCompat.test;
-export const hello = ChesterCompat.hello;
+// Set global variable for js2py to access more easily
+window.Chester = ChesterCompat;

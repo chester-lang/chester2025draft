@@ -41,7 +41,7 @@ lazy val jsForPython = crossProject(JSPlatform)
 To compile the Scala.js code, run:
 
 ```bash
-sbt jsForPython/fullLinkJS
+sbt jsForPython/fastLinkJS
 ```
 
 This produces JavaScript files in the `js-for-python/js/target/` directory.
@@ -53,7 +53,6 @@ The `rollup.config.mjs` file defines how to bundle the generated JavaScript:
 ```javascript
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
 
 export default {
@@ -73,12 +72,7 @@ export default {
       presets: [
         ['@babel/preset-env', { targets: { node: "18" } }]
       ]
-    }),
-    terser({
-      compress: {
-        dead_code: true,
-      },
-    }),
+    })
   ],
 };
 ```
@@ -109,8 +103,8 @@ source .venv/bin/activate  # On Unix/macOS
 # or
 # .venv\Scripts\activate  # On Windows
 
-# Install js2py using uv
-uv pip install js2py
+# Install dependencies using requirements.txt
+uv pip install -r requirements.txt
 ```
 
 A bridge class is needed to interact with the JavaScript module from Python:

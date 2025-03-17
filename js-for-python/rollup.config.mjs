@@ -1,6 +1,5 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
 
 export default {
@@ -22,22 +21,26 @@ export default {
         ['@babel/preset-env', { 
           targets: 'ie 11',  // IE 11 is compatible with ECMAScript 5.1
           modules: false,
-          useBuiltIns: 'usage',
-          corejs: 3,
+          useBuiltIns: false, // Don't include any polyfills automatically
+          corejs: false,      // Disable corejs polyfills
           include: [
+            // Only include minimal transforms that js2py can handle
             '@babel/plugin-transform-arrow-functions',
-            '@babel/plugin-transform-block-scoping',
-            '@babel/plugin-transform-classes',
-            '@babel/plugin-transform-for-of'
+            '@babel/plugin-transform-block-scoping'
           ],
-          exclude: ['transform-typeof-symbol'] // Avoid issues with js2py
+          exclude: [
+            // Exclude problematic transforms
+            'transform-typeof-symbol',
+            'transform-property-literals',
+            'transform-member-expression-literals',
+            'transform-reserved-words',
+            'transform-spread',
+            'transform-destructuring',
+            'transform-object-rest-spread',
+            'transform-modules-commonjs'
+          ]
         }]
       ]
-    }),
-    terser({
-      compress: {
-        dead_code: true,
-      },
     }),
   ],
 };
