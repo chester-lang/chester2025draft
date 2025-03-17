@@ -1,0 +1,3 @@
+trait Empty {}
+
+record A(a: String) <: Empty; 
