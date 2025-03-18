@@ -14,6 +14,7 @@ import chester.utils.impls.*
 import chester.error.ProblemUpickle.*
 import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
+import scala.language.implicitConversions
 
 enum CommentType derives ReadWriter {
   case OneLine
