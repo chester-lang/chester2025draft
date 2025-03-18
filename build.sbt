@@ -155,7 +155,7 @@ up := {
   log.success("Finished updating all dependencies")
 }
 
-val scala3Version = "3.6.4"
+val scala3Version = "3.7.0-RC1"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
 val scala3Nightly = "3.7.1-RC1-bin-20250313-596538b-NIGHTLY"
@@ -212,8 +212,8 @@ def commonSettings0 = Seq(
       "-experimental",
       "--preview"
     ),
-  // scalafix
-  scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
+  // scalafix - temporarily disblaed as for https://github.com/scala/scala3/issues/22812
+  // scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.7"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.0" % Test,
@@ -390,7 +390,8 @@ bumpScala := {
       file("idea-plugin/build.sbt"),
       file("site/package.json"),
       file("cli/package.json"),
-      file("packages/base/package.json")
+      file("packages/base/package.json"),
+      file("js-for-python/index.js")
     )
 
     filesToUpdate.foreach { f =>
