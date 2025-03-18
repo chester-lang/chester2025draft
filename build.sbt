@@ -212,7 +212,7 @@ def commonSettings0 = Seq(
       "-experimental",
       "--preview"
     ),
-  //scalafix - won't work on scala 3.7.0-RC1 as for https://github.com/scala/scala3/issues/22812
+  // scalafix - won't work on scala 3.7.0-RC1 as for https://github.com/scala/scala3/issues/22812
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.7"),
   libraryDependencies ++= Seq(
