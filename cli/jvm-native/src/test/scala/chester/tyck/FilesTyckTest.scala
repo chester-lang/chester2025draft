@@ -2,7 +2,7 @@ package chester.tyck
 
 import chester.reader.{*, given}
 import chester.syntax.concrete.*
-import chester.syntax.core.{Judge, convertToSimple}
+import chester.syntax.core.{Judge}
 import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*
@@ -47,7 +47,7 @@ class FilesTyckTest extends FunSuite {
                     )
                   )
                   assertEquals(
-                    StringPrinter.render(convertToSimple(result.wellTyped))(using
+                    StringPrinter.render((result.wellTyped))(using
                       PrettierOptions.Default
                     ),
                     StringPrinter.render(result.wellTyped)(using
