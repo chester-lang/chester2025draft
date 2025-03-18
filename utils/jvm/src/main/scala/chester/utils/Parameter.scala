@@ -6,6 +6,7 @@ class Parameter[T](default: => (T | Null) = null) {
   val tl: ThreadLocal[T | Null] = ThreadLocal.withInitial(() => default)
 
   def withValue[U](value: T)(block: => U): U = {
+    require(value != null)
     val previousValue = tl.get()
     try {
       tl.set(value)

@@ -5,6 +5,7 @@ class Parameter[T](default: T | Null = null) {
   var tl: T | Null = default
 
   def withValue[U](value: T)(block: => U): U = {
+    require(value != null)
     val previousValue = tl
     try {
       tl = value
