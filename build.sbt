@@ -155,7 +155,7 @@ up := {
   log.success("Finished updating all dependencies")
 }
 
-val scala3Version = "3.7.0-RC1"
+val scala3Version = "3.6.4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
 val scala3Nightly = "3.7.1-RC1-bin-20250313-596538b-NIGHTLY"
@@ -212,17 +212,16 @@ def commonSettings0 = Seq(
       "-experimental",
       "--preview"
     ),
-  // TODO - scalafix - temporarily disblaed as for https://github.com/scala/scala3/issues/22812
-  // scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
+  //scalafix - won't work on scala 3.7.0-RC1 as for https://github.com/scala/scala3/issues/22812
+  scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.7"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.0" % Test,
-    // TODO - scalatest broken with scala.js and scala 3.7
-    // "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
-    // "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
-    // "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
-    // "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test,
-    // "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
+    "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
+    "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
+    "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
+    "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test,
+    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
     "com.lihaoyi" %%% "pprint" % "0.9.0" % Test
     // "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test
   ),
@@ -259,13 +258,12 @@ def scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.0" % Test cross (CrossVersion.for2_13Use3)
-    // TODO - scalatest broken with scala.js and scala 3.7
-    // "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    // "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    // "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    // "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
-    // "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3)
+    "org.scalameta" %%% "munit" % "1.1.0" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
+    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3)
   ),
   excludeDependencies ++= Seq(
     ExclusionRule("com.lihaoyi", "fastparse_2.13"),
