@@ -32,14 +32,14 @@
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.2",
     "next": "15.2.2",
-    "next-intl": "^3.26.5",
+    "next-intl": "^4.0.2",
     "pako": "^2.1.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-syntax-highlighter": "^15.6.1",
     "use-debounce": "^10.0.4",
     "xterm": "npm:@xterm/xterm@^5.5.0",
-    "xterm-pty": "^0.10.2",
+    "xterm-pty": "^0.11.1",
     "xterm-readline": "^1.1.2"
   },
   "devDependencies": {
