@@ -8,6 +8,7 @@ before_install:
   - node -v # Should print "v17.9.1".
   - nvm current # Should print "v17.9.1".
   - corepack enable pnpm
+  - pnpm add -g pnpm
   - pnpm -v
 install:
   - sbt rootJVM/publishM2
