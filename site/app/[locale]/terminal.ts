@@ -26,7 +26,6 @@ export async function initTerminal(terminal: Terminal) {
       }
     }
   } else if (used === 'startReplPty') {
-    // @ts-expect-error xterm-pty types are not recognized
     const { openpty } = await import('xterm-pty');
     const { master, slave } = openpty();
     terminal.loadAddon(master);
