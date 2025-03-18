@@ -15,7 +15,7 @@ import scala.util.boundary
 import scala.util.boundary.break
 
 // Debug flag for union subtyping
-val DEBUG_UNION_SUBTYPING = true
+val DEBUG_UNION_SUBTYPING = false
 
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
