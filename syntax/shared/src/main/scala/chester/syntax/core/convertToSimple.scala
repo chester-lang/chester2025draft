@@ -99,7 +99,8 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
     case x: TupleTypeC[Term]             => simple.TupleType(types = x.types, meta = x.meta)
     case x: TupleTermC[Term]             => simple.TupleTerm(values = x.values, meta = x.meta)
     case x: FieldTermC[Term]             => simple.FieldTerm(name = x.name, ty = x.ty, meta = x.meta)
-    case x: RecordStmtTermC[Term]        => simple.RecordStmtTerm(name = x.name, uniqId = x.uniqId, fields = x.fields, body = x.body, extendsClause = x.extendsClause, meta = x.meta)
+    case x: RecordStmtTermC[Term] =>
+      simple.RecordStmtTerm(name = x.name, uniqId = x.uniqId, fields = x.fields, body = x.body, extendsClause = x.extendsClause, meta = x.meta)
     case x: RecordConstructorCallTermC[Term] => simple.RecordConstructorCallTerm(recordName = x.recordName, args = x.args, meta = x.meta)
     case x: TraitStmtTermC[Term] =>
       simple.TraitStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
@@ -107,7 +108,7 @@ def convertToSimple[Term <: TermT[Term]](term: Term): simple.Term = {
       simple.InterfaceStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: ObjectCallTermC[Term] => simple.ObjectCallTerm(objectRef = x.objectRef, meta = x.meta)
     case x: ObjectTypeTermC[Term] => simple.ObjectTypeTerm(objectDef = x.objectDef, meta = x.meta)
-    case x: TraitCallTermC[Term] => simple.TraitCallTerm(traitDef = x.traitDef, meta = x.meta)
+    case x: TraitCallTermC[Term]  => simple.TraitCallTerm(traitDef = x.traitDef, meta = x.meta)
     case x: ObjectStmtTermC[Term] =>
       simple.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: RecordCallTermC[Term]  => simple.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)

@@ -99,7 +99,8 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
     case x: TupleTypeC[Term]             => truffle.TupleType(types = x.types, meta = x.meta)
     case x: TupleTermC[Term]             => truffle.TupleTerm(values = x.values, meta = x.meta)
     case x: FieldTermC[Term]             => truffle.FieldTerm(name = x.name, ty = x.ty, meta = x.meta)
-    case x: RecordStmtTermC[Term]        => truffle.RecordStmtTerm(name = x.name, uniqId = x.uniqId, fields = x.fields, body = x.body, extendsClause = x.extendsClause, meta = x.meta)
+    case x: RecordStmtTermC[Term] =>
+      truffle.RecordStmtTerm(name = x.name, uniqId = x.uniqId, fields = x.fields, body = x.body, extendsClause = x.extendsClause, meta = x.meta)
     case x: RecordConstructorCallTermC[Term] => truffle.RecordConstructorCallTerm(recordName = x.recordName, args = x.args, meta = x.meta)
     case x: TraitStmtTermC[Term] =>
       truffle.TraitStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
@@ -107,7 +108,7 @@ def convertToTruffle[Term <: TermT[Term]](term: Term): truffle.Term = {
       truffle.InterfaceStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: ObjectCallTermC[Term] => truffle.ObjectCallTerm(objectRef = x.objectRef, meta = x.meta)
     case x: ObjectTypeTermC[Term] => truffle.ObjectTypeTerm(objectDef = x.objectDef, meta = x.meta)
-    case x: TraitCallTermC[Term] => truffle.TraitCallTerm(traitDef = x.traitDef, meta = x.meta)
+    case x: TraitCallTermC[Term]  => truffle.TraitCallTerm(traitDef = x.traitDef, meta = x.meta)
     case x: ObjectStmtTermC[Term] =>
       truffle.ObjectStmtTerm(name = x.name, uniqId = x.uniqId, extendsClause = x.extendsClause, body = x.body, meta = x.meta)
     case x: RecordCallTermC[Term]  => truffle.RecordCallTerm(recordDef = x.recordDef, telescope = x.telescope, meta = x.meta)

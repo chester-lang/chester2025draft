@@ -136,20 +136,19 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     case Left(err) => err
   }
 
-  /**
-   * Creates expression metadata from source positions and comments.
-   */
+  /** Creates expression metadata from source positions and comments.
+    */
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] = {
     if (ignoreLocation) return None
-    
+
     (startPos, endPos) match {
-      case (Some(start), Some(end)) => 
+      case (Some(start), Some(end)) =>
         Some(ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None))
-      case (Some(pos), None) => 
+      case (Some(pos), None) =>
         Some(ExprMeta(Some(pos), None))
-      case (None, Some(pos)) => 
+      case (None, Some(pos)) =>
         Some(ExprMeta(Some(pos), None))
-      case _ => 
+      case _ =>
         None
     }
   }
@@ -780,19 +779,19 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
   private def isTerminator(token: Token): Boolean = token match {
     case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon | _: Token.EOF => true
-    case _ => false
+    case _                                                                                                          => false
   }
 
   // Helper to check if current state has a terminator
   private def isAtTerminator(state: LexerState): Boolean = state.current match {
     case Right(token) => isTerminator(token)
-    case _ => false
+    case _            => false
   }
 
   // Helper method to check if a token is specifically a right delimiter
   private def isRightDelimiter(token: Token): Boolean = token match {
     case _: Token.RParen | _: Token.RBrace | _: Token.RBracket => true
-    case _ => false
+    case _                                                     => false
   }
 
   def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {

@@ -218,9 +218,9 @@ def commonSettings0 = Seq(
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.0" % Test,
     // TODO - scalatest broken with scala.js and scala 3.7
-    //"org.scalatest" %%% "scalatest" % "3.2.19" % Test,
-    //"org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
-    //"org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
+    // "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
+    // "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
+    // "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
     // "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test,
     // "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
     "com.lihaoyi" %%% "pprint" % "0.9.0" % Test

@@ -1728,7 +1728,7 @@ object spec {
     def fields: Vector[FieldTermC[Term]]
 
     def body: Option[BlockTermC[Term]]
-    
+
     def extendsClause: Option[Term]
 
     def cons: RecordStmtTermF[Term, ThisTree]

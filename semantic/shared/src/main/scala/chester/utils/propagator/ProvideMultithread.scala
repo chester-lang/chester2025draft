@@ -233,7 +233,7 @@ trait ProvideMultithread extends ProvideImpl {
 
     override def naiveZonk(
         cells: Vector[CIdOf[Cell[?]]]
-    )(using  Ability): Unit = {
+    )(using Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
       try {
         // Skip if recursion is too deep
@@ -311,7 +311,7 @@ trait ProvideMultithread extends ProvideImpl {
                 val _ = ForkJoinTask.invokeAll(tasks.asJava)
                 tick
               } catch {
-                case e: Exception => 
+                case e: Exception =>
                   // Log exception but continue processing
                   setDidSomething(true)
               }
@@ -358,7 +358,7 @@ trait ProvideMultithread extends ProvideImpl {
           }
         }
       } catch {
-        case e: IllegalStateException => 
+        case e: IllegalStateException =>
           // Rethrow illegal state exceptions
           throw e
         case e: Exception =>
@@ -451,7 +451,7 @@ trait ProvideMultithread extends ProvideImpl {
                 propagator.naiveFallbackZonk(Vector(c))(using state, more)
               }
             } catch {
-              case e: Exception => 
+              case e: Exception =>
                 // Continue with NotYet result on exception
                 ZonkResult.NotYet
             }

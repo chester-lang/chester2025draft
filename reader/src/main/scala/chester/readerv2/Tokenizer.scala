@@ -32,24 +32,28 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
 
   // Get UTF-16 position from cache or calculate and cache it
   private def getUtf16Position(bytePos: Int): Int = {
-    utf16PosCache.computeIfAbsent(bytePos, pos => {
-      // Find the nearest cached position that's less than or equal to the target position
-      // Using Scala collections instead of Java Stream API for Scala.js compatibility
-      val entry = {
-        import scala.jdk.CollectionConverters._
-        val entries = utf16PosCache.entrySet().asScala
-        entries.filter(e => e.getKey() <= bytePos)
-               .maxByOption(e => e.getKey())
-               .getOrElse(new java.util.AbstractMap.SimpleEntry(0, 0))
+    utf16PosCache.computeIfAbsent(
+      bytePos,
+      pos => {
+        // Find the nearest cached position that's less than or equal to the target position
+        // Using Scala collections instead of Java Stream API for Scala.js compatibility
+        val entry = {
+          import scala.jdk.CollectionConverters._
+          val entries = utf16PosCache.entrySet().asScala
+          entries
+            .filter(e => e.getKey() <= bytePos)
+            .maxByOption(e => e.getKey())
+            .getOrElse(new java.util.AbstractMap.SimpleEntry(0, 0))
+        }
+
+        val nearestPos = entry.getKey()
+        val nearestUtf16 = entry.getValue()
+
+        // Calculate incrementally from nearest cached position
+        nearestUtf16 + (if (nearestPos == bytePos) 0
+                        else source.substring(nearestPos, bytePos).getCodePoints.size)
       }
-      
-      val nearestPos = entry.getKey()
-      val nearestUtf16 = entry.getValue()
-      
-      // Calculate incrementally from nearest cached position
-      nearestUtf16 + (if (nearestPos == bytePos) 0
-                     else source.substring(nearestPos, bytePos).getCodePoints.size)
-    })
+    )
   }
 
   // Update position with proper cache handling

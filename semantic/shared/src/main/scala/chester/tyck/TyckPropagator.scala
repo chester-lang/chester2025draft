@@ -34,7 +34,7 @@ trait TyckPropagator extends ElaboraterCommon {
           case (RecordCallTerm(recordDef, _, _), TraitCallTerm(traitDef, _)) =>
             // Check if the record implements the trait
             checkTraitImplementation(recordDef, traitDef, cause)
-            
+
           // Allow traits to be used where their implementations are expected (covariance)
           case (TraitCallTerm(traitDef, _), RecordCallTerm(recordDef, _, _)) =>
             // Ensure the record implements the trait
@@ -843,13 +843,13 @@ trait TyckPropagator extends ElaboraterCommon {
 
   /** Helper method to check if a source level is compatible with a target level */
   private def isLevelCompatible(source: Term, target: Term)(using
-       StateAbility[Tyck],
-       Context
+      StateAbility[Tyck],
+      Context
   ): Boolean = {
     (source, target) match {
       case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
       case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
-      case (LevelFinite(n1, _), LevelFinite(n2, _)) => 
+      case (LevelFinite(n1, _), LevelFinite(n2, _))  =>
         // Try to extract numeric values for comparison
         (extractNumericValue(n1), extractNumericValue(n2)) match {
           // If we can extract both values, lower level is compatible with higher level
@@ -857,22 +857,22 @@ trait TyckPropagator extends ElaboraterCommon {
           // If we can't extract, fall back to exact equality
           case _ => source == target
         }
-      case _                                         => source == target // For other cases, keep the exact equality check
+      case _ => source == target // For other cases, keep the exact equality check
     }
   }
 
   // Helper to extract numeric value from a term
   private def extractNumericValue(term: Term): Option[BigInt] = term match {
-    case IntTerm(value, _) => Some(BigInt(value))
+    case IntTerm(value, _)     => Some(BigInt(value))
     case IntegerTerm(value, _) => Some(value)
-    case _ => None
+    case _                     => None
   }
 
   // Add helper method for trait implementation checking
   private def checkTraitImplementation(
-    recordDef: RecordStmtTerm, 
-    traitDef: TraitStmtTerm,
-    cause: Expr
+      recordDef: RecordStmtTerm,
+      traitDef: TraitStmtTerm,
+      cause: Expr
   )(using
       localCtx: Context,
       ck: Tyck,
@@ -881,12 +881,12 @@ trait TyckPropagator extends ElaboraterCommon {
     // For MVP, we'll just check for a direct extension relationship
     val hasExtendsClause = recordDef.extendsClause.exists { clause =>
       clause match {
-        case traitCall: TraitCallTerm => 
+        case traitCall: TraitCallTerm =>
           traitCall.traitDef.uniqId == traitDef.uniqId
         case _ => false
       }
     }
-    
+
     if (!hasExtendsClause) {
       // Report error if record doesn't explicitly extend the trait
       ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
