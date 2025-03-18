@@ -1,5 +1,7 @@
 package chester.utils.doc
 
+import scala.language.implicitConversions
+
 trait PrettierOptionsKey[T] {
   def default: T
 
