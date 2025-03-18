@@ -259,12 +259,13 @@ def scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.0" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3)
+    "org.scalameta" %%% "munit" % "1.1.0" % Test cross (CrossVersion.for2_13Use3)
+    // TODO - scalatest broken with scala.js and scala 3.7
+    // "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    // "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    // "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
+    // "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
+    // "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3)
   ),
   excludeDependencies ++= Seq(
     ExclusionRule("com.lihaoyi", "fastparse_2.13"),
