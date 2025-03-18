@@ -638,7 +638,7 @@ The codebase already has some infrastructure for traits:
 - AST nodes for trait definitions (`TraitStmt`, `TraitStmtTerm`)
 - Parsing support for the `<:` extends syntax
 - Basic trait elaboration in `processTraitStmt`
-- `TraitCallTerm` implementation across core term system
+- `TraitCallTerm` implementation in `Term.scala`
 
 ### 9.2 Implementation Progress
 
@@ -648,8 +648,7 @@ The codebase already has some infrastructure for traits:
   - `RecordNotImplementingTrait`
   - `NotATrait`
   - `MissingTraitField`
-- Updated `RecordStmtTermC` to include the `extendsClause` field
-- Updated converters (`convertToSimple`, `convertToTruffle`) to handle the `extendsClause`
+- Updated `RecordStmtTerm` to include the `extendsClause` field
 - Enhanced `ElaboraterBlock.processRecordStmt` to elaborate the `extendsClause`
 - Added trait handling in `elabIdentifier` in `Elaborater.scala`
 - Implemented the `checkTraitImplementation` method in `TyckPropagator.scala`

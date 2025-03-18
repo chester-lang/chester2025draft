@@ -312,16 +312,16 @@ When implementing type checking logic that deals with type level comparisons:
 2. **Test with Different Level Combinations**: Test your code with various combinations of level types:
    ```scala
    // Test cases to consider
-   val finite1 = LevelFinite(0, loc)
-   val finite2 = LevelFinite(1, loc)  
-   val unrestricted = LevelUnrestricted(loc)
+   val finite1 = LevelFinite(IntegerTerm(0, meta = None), meta = None)
+   val finite2 = LevelFinite(IntegerTerm(1, meta = None), meta = None)  
+   val unrestricted = LevelUnrestricted(meta = None)
    
    // These should succeed
-   tryUnify(Type(finite1, loc), Type(unrestricted, loc))  // finite -> unrestricted
-   tryUnify(Type(finite1, loc), Type(finite1, loc))       // same level
+   tryUnify(Type(finite1, meta = None), Type(unrestricted, meta = None))  // finite -> unrestricted
+   tryUnify(Type(finite1, meta = None), Type(finite1, meta = None))       // same level
    
    // These should fail
-   tryUnify(Type(unrestricted, loc), Type(finite1, loc))  // unrestricted -> finite
+   tryUnify(Type(unrestricted, meta = None), Type(finite1, meta = None))  // unrestricted -> finite
    ```
 
 3. **Debug Level Mismatches**: When debugging type errors involving levels, check both the level types and their compatibility direction.

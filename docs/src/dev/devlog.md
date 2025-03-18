@@ -436,23 +436,57 @@ This solution preserves the uniform symbol treatment principle while ensuring th
      - Fixed early returns that left cells uncovered
 
   5. **TraitCallTerm Implementation**
-     - Added `TraitCallTermF` and `TraitCallTermC` traits in spec/Term.scala
-     - Implemented `TraitCallTerm` in simple.scala and truffle.scala
-     - Updated converters in convertToSimple.scala and convertToTruffle.scala
+     - Added `TraitCallTerm` in Term.scala
      - Laid groundwork for trait-record subtyping relationships
 
 - **Files Modified**:
   - `semantic/shared/src/main/scala/chester/tyck/TyckPropagator.scala`
   - `semantic/shared/src/main/scala/chester/tyck/Elaborater.scala`
   - `semantic/shared/src/main/scala/chester/reduce/NaiveReducer.scala`
-  - `syntax/jvm/src/main/scala/chester/syntax/core/truffle.scala`
-  - `syntax/shared/src/main/scala/chester/syntax/core/simple.scala`
-  - `syntax/shared/src/main/scala/chester/syntax/core/spec/Term.scala`
-  - `syntax/jvm/src/main/scala/chester/syntax/core/convertToTruffle.scala`
-  - `syntax/shared/src/main/scala/chester/syntax/core/convertToSimple.scala`
+  - `syntax/shared/src/main/scala/chester/syntax/core/Term.scala`
 
 - **Next Steps**:
   - Complete trait-record subtyping implementation
   - Implement union-to-union subtyping case
   - Fix remaining cell coverage issues in union-subtype.chester
   - Add comprehensive test suite for traits and union types
+
+## 2025-03-16
+
+### Term Definition Refactoring
+- **Implemented Changes**:
+  1. **Unified Term Definitions**
+     - Consolidated all Term definitions into a single Term.scala file
+     - Eliminated the separate spec/simple/truffle files
+     - Simplified the codebase by removing the need for converters
+     
+  2. **Updated Documentation**
+     - Updated development.md with new Term implementation approach
+     - Updated tyck-improvement-proposal.md to reflect Term changes
+     - Updated type-checking-system.md with current Term usage examples
+     
+  3. **Simplified Type System**
+     - Removed the need for trait interfaces with *C and *F suffixes
+     - Streamlined the inheritance hierarchy
+     - Made the codebase more maintainable with simplified Term definitions
+
+- **Files Modified**:
+  - `syntax/shared/src/main/scala/chester/syntax/core/Term.scala`
+  - `docs/src/dev/development.md`
+  - `docs/src/dev/tyck-improvement-proposal.md`
+  - `docs/src/dev/type-checking-system.md`
+  - `docs/src/dev/devlog.md`
+
+- **Files Removed**:
+  - `syntax/shared/src/main/scala/chester/syntax/core/spec/Term.scala`
+  - `syntax/shared/src/main/scala/chester/syntax/core/simple.scala`
+  - `syntax/jvm/src/main/scala/chester/syntax/core/truffle.scala`
+  - `syntax/jvm/src/main/scala/chester/syntax/core/convertToTruffle.scala`
+  - `syntax/shared/src/main/scala/chester/syntax/core/convertToSimple.scala`
+
+- **Benefits**:
+  - Simplified codebase structure
+  - Reduced code duplication
+  - Eliminated need for converters
+  - Made adding new Term types easier and less error-prone
+  - Improved maintainability

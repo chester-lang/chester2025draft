@@ -219,33 +219,27 @@
 
 ## Platform-Specific Type System Implementation
 
-Chester implements its type system differently for different platforms (JVM and JS). To handle this correctly:
+Chester implements its type system with a unified Term definition in `Term.scala`.
 
 ### Import Guidelines
 
-1. **DO NOT** import from `chester.syntax.core.spec.*`
-   - The spec package contains trait definitions that are reexported through platform-specific implementations
-
-2. **DO NOT** import directly from `chester.syntax.core.simple` or `chester.syntax.core.truffle`
-   - These are platform-specific implementations that should be accessed through the core package
-
-3. **DO** use `import chester.syntax.core.*`
-   - This will give you the correct platform-specific implementations
+1. **DO** use `import chester.syntax.core.*`
+   - This will give you access to all the Term implementations
 
 ### Example
 
 ```scala
+// CORRECT
+import chester.syntax.core.*
+
 // INCORRECT
 import chester.syntax.core.spec.*
 import chester.syntax.core.simple.{BlockTerm, FCallTerm}
-
-// CORRECT
-import chester.syntax.core.*
 ```
 
 ### Pattern Matching and Type Usage
 
-1. Use concrete types without suffixes for pattern matching:
+1. Use concrete types for pattern matching:
 ```scala
 // CORRECT
 case t: BlockTerm => {
@@ -289,108 +283,52 @@ Chester uses a carefully designed architecture for its term representation to su
 
 ### Core Files and Their Relationships
 
-1. **spec/Term.scala** (`syntax/shared/src/main/scala/chester/syntax/core/spec/Term.scala`)
-   - Contains the trait specifications (`*C` and `*F` interfaces) that define the API
+1. **Term.scala** (`syntax/shared/src/main/scala/chester/syntax/core/Term.scala`)
+   - Contains all Term definitions
    - Shared across all platforms
-   - Defines behavior and structure but not implementation
-   - All concrete implementations must implement these traits
+   - Defines behavior, structure and implementation
+   - Used by all platforms
 
-2. **simple.scala** (`syntax/shared/src/main/scala/chester/syntax/core/simple.scala`)
-   - Contains the portable implementation used by JS platform
-   - Implements all the traits defined in spec/Term.scala
-   - Simpler implementation without platform-specific optimizations
-   - Used as the serialization format for terms
-
-3. **truffle.scala** (`syntax/jvm/src/main/scala/chester/syntax/core/truffle.scala`)
-   - Contains the JVM-specific implementation with Truffle annotations
-   - Implements all the traits defined in spec/Term.scala
-   - Includes JVM-specific optimizations using Truffle
-   - Uses annotations like `@child` and `@const` for Truffle optimizations
-
-4. **Converters**:
-   - **convertToSimple.scala**: Converts from the trait interfaces to simple.scala implementations
-   - **convertToTruffle.scala**: Converts from the trait interfaces to truffle.scala implementations
+The previous architecture with separate files (`spec/Term.scala`, `simple.scala`, and `truffle.scala`) has been refactored. Now all Term definitions are in a single `Term.scala` file.
 
 ### Platform-Specific Export Mechanism
 
-The core term implementation is exported through platform-specific files:
-
-- **JVM**: `syntax/jvm/src/main/scala/chester/syntax/core/core.scala` exports from truffle.scala
-- **JS**: `syntax/js-native/src/main/scala/chester/syntax/core/core.scala` exports from simple.scala
+The core term implementation is exported through a single unified Term.scala file.
 
 ### Making Changes to the Term System
 
-When adding or modifying types in the term system, changes must be coordinated across multiple files:
+When adding or modifying types in the term system, changes should be made directly in `Term.scala`:
 
-1. **First**: Define or modify the trait interfaces in `spec/Term.scala`
-   - Add both `*C` trait and `*F` functional interface
-   - Define all required methods and fields
-   - Follow the naming conventions described in Term.scala
-
-2. **Second**: Implement in both platform-specific files:
-   - Add implementation to `simple.scala`
-   - Add implementation to `truffle.scala` with appropriate Truffle annotations
-
-3. **Third**: Update converters:
-   - Add case handler in `convertToSimple.scala`
-   - Add case handler in `convertToTruffle.scala`
+1. Define the trait or case class in `Term.scala`
+   - Follow the existing patterns for similar term types
+   - Use appropriate annotations like `@child` and `@const` for fields
+   - Implement the required methods like `descent` and `toDoc`
 
 ### Example: Adding a New Term Type
 
-To add a new term type (e.g., `TraitType`), you must:
+To add a new term type (e.g., `TraitType`), you would add it directly to `Term.scala`:
 
-1. Define in `spec/Term.scala`:
-   ```scala
-   @FunctionalInterface
-   trait TraitTypeF[Term <: TermT[Term], ThisTree <: TraitTypeC[Term]] {
-     def newTraitType(traitDef: TraitStmtTermC[Term], meta: OptionTermMeta): ThisTree
-   }
+```scala
+case class TraitType(
+  @child var traitDef: TraitStmtTerm,
+  @const meta: OptionTermMeta
+) extends TypeTerm {
+  override type ThisTree = TraitType
+  override def toDoc(using PrettierOptions): Doc = 
+    Doc.text("TraitType(") <> traitDef.toDoc <> Doc.text(")")
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = 
+    thisOr(copy(traitDef = g(traitDef)))
+}
+```
 
-   trait TraitTypeC[Term <: TermT[Term]] extends TypeTermT[Term] {
-     override type ThisTree <: TraitTypeC[Term]
-     def traitDef: TraitStmtTermC[Term]
-     def cons: TraitTypeF[Term, ThisTree]
-     // Additional methods...
-   }
-   ```
+### IMPORTANT: Keeping Types Consistent
 
-2. Implement in `simple.scala`:
-   ```scala
-   case class TraitType(
-     traitDef: TraitStmtTerm,
-     meta: OptionTermMeta
-   ) extends TypeTerm with TraitTypeC[Term] {
-     override type ThisTree = TraitType
-     override def cons: TraitTypeF[Term, ThisTree] = this.copy
-   }
-   ```
+It is **crucial** that:
 
-3. Implement in `truffle.scala`:
-   ```scala
-   case class TraitType(
-     @child var traitDef: TraitStmtTerm,
-     @const meta: OptionTermMeta
-   ) extends TypeTerm with TraitTypeC[Term] {
-     override type ThisTree = TraitType
-     override def cons: TraitTypeF[Term, ThisTree] = this.copy
-   }
-   ```
-
-4. Update converters:
-   - In `convertToSimple.scala`: `case x: TraitTypeC[Term] => simple.TraitType(traitDef = x.traitDef, meta = x.meta)`
-   - In `convertToTruffle.scala`: `case x: TraitTypeC[Term] => truffle.TraitType(traitDef = x.traitDef, meta = x.meta)`
-
-### IMPORTANT: Keeping Types in Sync
-
-It is **crucial** that all term types exist in all three files and remain compatible:
-
-- All terms in simple.scala must have corresponding terms in truffle.scala
-- All implementations must satisfy the interfaces defined in spec/Term.scala
-- Converters must handle all term types for serialization to work correctly
-- Fields should have the same names and semantics across implementations
-- Truffle annotations should be applied consistently in truffle.scala
-
-Failure to keep these files in sync will result in runtime errors, serialization failures, or cross-platform incompatibilities.
+- All term types follow a consistent pattern
+- Field annotations are applied correctly
+- All required methods are implemented
+- Serialization with ReadWriter is handled properly
 
 ## Elaboration and Reduction Strategy
 
