@@ -1,11 +1,12 @@
 jdk:
   - openjdk17
 before_install:
+  # Using Node.js 18 because JitPack's Linux distro is too old for newer versions
   - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
   - \. "$HOME/.nvm/nvm.sh"
-  - nvm install 22
-  - node -v # Should print "v22.14.0".
-  - nvm current # Should print "v22.14.0".
+  - nvm install 18
+  - node -v # Should print "v18.20.7".
+  - nvm current # Should print "v18.20.7".
   - corepack enable pnpm
   - pnpm -v
 install:
