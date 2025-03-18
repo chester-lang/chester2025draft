@@ -1,7 +1,7 @@
 package chester.scala
 
 import chester.backend.scala.Scala
-import chester.syntax.core.simple._
+import chester.syntax.core._
 
 import scala.meta
 import scala.meta._
