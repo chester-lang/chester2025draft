@@ -2,7 +2,6 @@ package chester.syntax.core
 
 import cats.data.*
 import chester.syntax.*
-import chester.syntax.core.spec.spec.*
 import chester.uniqid.*
 import chester.utils.*
 

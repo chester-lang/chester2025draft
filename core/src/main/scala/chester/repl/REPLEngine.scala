@@ -2,7 +2,7 @@ package chester.repl
 
 import cats.implicits.*
 import chester.doc.*
-import chester.doc.const.{Colors, ReplaceBracketsWithWord}
+import chester.doc.consts.{Colors, ReplaceBracketsWithWord}
 import chester.error.*
 import chester.reader.ReaderREPL
 import chester.syntax.concrete.Expr

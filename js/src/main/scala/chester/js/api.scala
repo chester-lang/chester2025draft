@@ -1,6 +1,6 @@
 package chester.js
 
-import chester.doc.const.LightMode
+import chester.doc.consts.LightMode
 import chester.reader.{ChesterReader, FileNameAndContent}
 import chester.tyck.*
 import chester.utils.doc.ColorfulToHtml.colorfulToHtml

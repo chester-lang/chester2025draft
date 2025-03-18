@@ -1,5 +1,5 @@
 package chester.syntax.core
-import chester.doc.const.Docs
+import chester.doc.consts.Docs
 import chester.uniqid.*
 import chester.utils.doc.*
 import upickle.default.*

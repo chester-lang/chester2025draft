@@ -1,4 +1,4 @@
-package chester.doc.const
+package chester.doc.consts
 
 import chester.utils.doc.PrettierOptionsKey
 

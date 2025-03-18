@@ -3,7 +3,7 @@ package chester.syntax.concrete
 
 import cats.data.*
 import chester.doc.*
-import chester.doc.const.Docs
+import chester.doc.consts.Docs
 import chester.error.*
 import chester.syntax.*
 import chester.utils.doc.*

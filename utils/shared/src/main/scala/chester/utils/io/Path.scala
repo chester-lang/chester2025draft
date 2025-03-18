@@ -1,4 +1,5 @@
 package chester.utils.io
+import scala.language.implicitConversions
 
 trait PathOps[T] {
   def of(path: String): T
