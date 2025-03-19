@@ -897,38 +897,37 @@ trait TyckPropagator extends ElaboraterCommon {
       ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
       false
     } else {
-      // For extension to be valid, we need to check two conditions:
-      // 1. Record directly extends the trait (already checked above)
-      // 2. Record implements all required fields from the trait
-      
-      // Get all required fields from the trait
+      // Verify that the record implements all required fields from the trait
       val traitFields = getTraitFields(traitDef)
-      
-      // If there are no required fields, extension is valid
-      if (traitFields.isEmpty) {
-        return true
-      }
-      
-      // Get record fields as a map for faster lookup
       val recordFieldMap = recordDef.fields.map(f => (f.name, f)).toMap
       
-      // Check if all trait fields are implemented by the record
-      var allFieldsImplemented = true
-      
-      for (traitField <- traitFields) {
+      // Check each trait field is present in the record with compatible type
+      val allFieldsImplemented = traitFields.forall { traitField =>
         recordFieldMap.get(traitField.name) match {
-          case Some(recordField) => 
-            // Field exists, but we still need to check type compatibility
-            // For now, we just check that the field exists
+          case Some(recordField) =>
+            // Verify type compatibility
+            val typesMatch = tryUnify(recordField.ty, traitField.ty)
+            if (!typesMatch) {
+              // Report error for incompatible field type
+              ck.reporter.apply(TraitFieldTypeMismatch(
+                traitField.name, 
+                recordDef.name, 
+                traitDef.name, 
+                traitField.ty,
+                recordField.ty,
+                cause
+              ))
+            }
+            typesMatch
           case None =>
-            // Field is missing - record error and mark implementation as invalid
+            // Report missing field error
             ck.reporter.apply(MissingTraitField(
               traitField.name, 
               recordDef.name, 
               traitDef.name, 
               cause
             ))
-            allFieldsImplemented = false
+            false
         }
       }
       
