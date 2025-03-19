@@ -918,8 +918,20 @@ trait TyckPropagator extends ElaboraterCommon {
       for (traitField <- traitFields) {
         recordFieldMap.get(traitField.name) match {
           case Some(recordField) => 
-            // Field exists, but we still need to check type compatibility
-            // For now, we just check that the field exists
+            // Field exists, now check for type compatibility
+            val typesCompatible = areTypesCompatible(recordField.ty, traitField.ty)
+            if (!typesCompatible) {
+              // Report type incompatibility error
+              ck.reporter.apply(TraitFieldTypeMismatch(
+                traitField.name,
+                recordDef.name,
+                traitDef.name,
+                traitField.ty,
+                recordField.ty,
+                cause
+              ))
+              allFieldsImplemented = false
+            }
           case None =>
             // Field is missing - record error and mark implementation as invalid
             ck.reporter.apply(MissingTraitField(
@@ -1003,6 +1015,20 @@ trait TyckPropagator extends ElaboraterCommon {
         }
       case _ => false
     }
+  }
+
+  // Helper method to check if two types are compatible
+  private def areTypesCompatible(
+      recordType: Term,
+      traitType: Term
+  )(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Boolean = {
+    // For a simple first implementation, we just check for exact equality
+    // In the future, we'll need to handle subtyping relationships
+    recordType == traitType
   }
 
   // Helper method to attempt unification without reporting errors
