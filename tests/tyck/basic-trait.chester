@@ -1,3 +1,11 @@
 trait Empty {}
 
-record A(a: String) <: Empty; 
+record A(a: String) <: Empty;
+
+// More complex trait with a field requirement
+trait TraitA {
+  def a: String;
+}
+
+// Record implementing TraitA
+record B(a: String, b: Int) <: TraitA; 
