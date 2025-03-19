@@ -387,7 +387,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       // Create a temporary context for elaborating the trait body
       // Mark that we're processing a trait body
       val bodyCtx = ctx.withProcessingType("trait")
-      
+
       // Use elabBlock to elaborate the body with the temporary context
       elabBlock(body, newTypeTerm, effects)(using bodyCtx, parameter, ck, state)
     }

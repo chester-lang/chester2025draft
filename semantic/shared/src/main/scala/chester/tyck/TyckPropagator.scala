@@ -39,7 +39,7 @@ trait TyckPropagator extends ElaboraterCommon {
           case (TraitTypeTerm(traitDef, _), RecordTypeTerm(recordDef, _, _)) =>
             // Ensure the record implements the trait
             checkTraitImplementation(recordDef, traitDef, cause): Unit
-            
+
           // Trait-to-trait relationship (trait inheritance)
           case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
             // Check if child trait extends parent trait
@@ -900,7 +900,7 @@ trait TyckPropagator extends ElaboraterCommon {
       true
     }
   }
-  
+
   // Helper method to check if one trait extends another
   private def checkTraitExtends(
       childTraitDef: TraitStmtTerm,
@@ -915,14 +915,14 @@ trait TyckPropagator extends ElaboraterCommon {
     if (childTraitDef.uniqId == parentTraitDef.uniqId) {
       return true
     }
-    
+
     // Check direct parent
     val directParent = childTraitDef.extendsClause match {
       case Some(traitCall: TraitTypeTerm) =>
         traitCall.traitDef.uniqId == parentTraitDef.uniqId
       case _ => false
     }
-    
+
     directParent
   }
 
