@@ -883,8 +883,8 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Boolean = {
-    // For MVP, we'll just check for a direct extension relationship
-    val hasExtendsClause = recordDef.extendsClause.exists { clause =>
+    // Check for direct extension relationship
+    val directExtends = recordDef.extendsClause.exists { clause =>
       clause match {
         case traitCall: TraitTypeTerm =>
           traitCall.traitDef.uniqId == traitDef.uniqId
@@ -892,12 +892,86 @@ trait TyckPropagator extends ElaboraterCommon {
       }
     }
 
-    if (!hasExtendsClause) {
+    if (!directExtends) {
       // Report error if record doesn't explicitly extend the trait
       ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
       false
     } else {
-      true
+      // Verify that the record implements all required fields from the trait
+      val traitFields = getTraitFields(traitDef)
+      val recordFieldMap = recordDef.fields.map(f => (f.name, f)).toMap
+      
+      // Check each trait field is present in the record with compatible type
+      val allFieldsImplemented = traitFields.forall { traitField =>
+        recordFieldMap.get(traitField.name) match {
+          case Some(recordField) =>
+            // Verify type compatibility
+            val typesMatch = tryUnify(recordField.ty, traitField.ty)
+            if (!typesMatch) {
+              // Report error for incompatible field type
+              ck.reporter.apply(TraitFieldTypeMismatch(
+                traitField.name, 
+                recordDef.name, 
+                traitDef.name, 
+                traitField.ty,
+                recordField.ty,
+                cause
+              ))
+            }
+            typesMatch
+          case None =>
+            // Report missing field error
+            ck.reporter.apply(MissingTraitField(
+              traitField.name, 
+              recordDef.name, 
+              traitDef.name, 
+              cause
+            ))
+            false
+        }
+      }
+      
+      allFieldsImplemented
+    }
+  }
+  
+  // Helper method to get fields from a trait, including inherited fields
+  private def getTraitFields(traitDef: TraitStmtTerm)(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Vector[FieldTerm] = {
+    // Get fields directly declared in this trait
+    val directFields = extractFieldsFromTraitBody(traitDef)
+    
+    // Get fields from parent traits if any
+    val inheritedFields = traitDef.extendsClause match {
+      case Some(TraitTypeTerm(parentTraitDef, _)) => getTraitFields(parentTraitDef)
+      case _ => Vector.empty
+    }
+    
+    // Combine fields, with direct fields taking precedence
+    inheritedFields ++ directFields
+  }
+  
+  // Helper method to extract field declarations from a trait body
+  private def extractFieldsFromTraitBody(traitDef: TraitStmtTerm)(using
+      localCtx: Context
+  ): Vector[FieldTerm] = {
+    // Extract field declarations from the trait body
+    traitDef.body match {
+      case Some(blockTerm) =>
+        // Find all field declarations in the block
+        blockTerm.stmts.collect {
+          case defStmt: DefStmtTerm =>
+            // Convert DefStmtTerm to FieldTerm
+            FieldTerm(
+              name = defStmt.ref.name,
+              ty = defStmt.ty,
+              meta = defStmt.meta
+            )
+        }
+      case None => Vector.empty
     }
   }
 
@@ -911,19 +985,47 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Boolean = {
-    // Check if they're the same trait (reflexivity)
+    // A trait extends itself
     if (childTraitDef.uniqId == parentTraitDef.uniqId) {
       return true
     }
 
-    // Check direct parent
-    val directParent = childTraitDef.extendsClause match {
-      case Some(traitCall: TraitTypeTerm) =>
-        traitCall.traitDef.uniqId == parentTraitDef.uniqId
+    // Check if the child trait directly extends the parent trait
+    childTraitDef.extendsClause match {
+      case Some(TraitTypeTerm(extendedTrait, _)) =>
+        if (extendedTrait.uniqId == parentTraitDef.uniqId) {
+          return true
+        } else {
+          // Check if the extended trait extends the parent trait (recursive check)
+          return checkTraitExtends(extendedTrait, parentTraitDef, cause)
+        }
       case _ => false
     }
+  }
 
-    directParent
+  // Helper method to attempt unification without reporting errors
+  private def tryUnify(lhs: Term, rhs: Term)(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Boolean = {
+    try {
+      // Create a silent context that doesn't report errors
+      val silentReporter = new Reporter[TyckError] {
+        override def apply(problem: TyckError): Unit = {}
+      }
+      
+      // Create a temporary Tyck with silent reporter
+      val silentTyck = new Tyck {
+        override val reporter: Reporter[TyckError] = silentReporter
+      }
+      
+      // Try to unify with silent error reporting
+      unify(lhs, rhs, ErrorTerm(NotImplemented(UnitExpr(None)), None))(using localCtx, silentTyck, state)
+      true
+    } catch {
+      case _: Exception => false
+    }
   }
 
 }
