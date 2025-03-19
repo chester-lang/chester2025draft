@@ -160,9 +160,9 @@ val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
 val scala3Nightly = "3.7.1-RC1-bin-20250313-596538b-NIGHTLY"
 
-val graalVm = "graalvm-java23"
-val graalJdkVersion = "23.0.2"
-val graalvmVersion = "24.1.2"
+val graalVm = "graalvm-java24"
+val graalJdkVersion = "24.0.0"
+val graalvmVersion = "24.2.0"
 
 val defaultNativeImageOptions = Seq(
   // "-H:-CheckToolchain",
