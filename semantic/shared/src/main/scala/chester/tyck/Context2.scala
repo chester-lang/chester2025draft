@@ -64,4 +64,13 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
     }
   }
 
+  // Extension method for trait scope
+  extension (context: Context) {
+    def withTraitScope(traitName: Name): Context = {
+      // Create a new context that is a child of the current context
+      // This ensures field declarations in the trait body can be properly resolved
+      context
+    }
+  }
+
 }

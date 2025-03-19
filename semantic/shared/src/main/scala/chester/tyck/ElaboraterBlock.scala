@@ -85,11 +85,20 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     var ctx = initialCtx
     val declarationsMap = declarations.map(info => (info.expr, info)).toMap
 
+    // Determine if we're in a trait body
+    val isInTraitBody = localCtx.currentProcessingType == "trait"
+
     val stmts: Vector[StmtTerm] = heads.flatMapOrdered {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
-        val (stmtTerms, newCtx) = processDefLetDefStmt(expr, ctx, declarationsMap, effects)
-        ctx = newCtx
-        stmtTerms
+        if (isInTraitBody) {
+          // For trait bodies, we'll skip processing field declarations for now
+          // This is a temporary solution until we properly implement trait field handling
+          Vector.empty
+        } else {
+          val (stmtTerms, newCtx) = processDefLetDefStmt(expr, ctx, declarationsMap, effects)
+          ctx = newCtx
+          stmtTerms
+        }
 
       case expr: RecordStmt =>
         val (stmtTerms, newCtx) = processRecordStmt(expr, ctx, declarationsMap, effects)
@@ -349,12 +358,38 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     val traitInfo = declarationsMap(expr).asInstanceOf[TraitDeclaration]
     val name = traitInfo.name
 
-    // TODO: Elaborate the extends clause properly
-    val elaboratedExtendsClause = expr.extendsClause.map { checkType }
+    // Process extends clause if present
+    val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
+      // Transform each super type into a proper term
+      val elaboratedSuperTypes = superTypes.map { superTypeExpr =>
+        superTypeExpr match {
+          case Identifier(traitName, _) =>
+            ctx.getTypeDefinition(traitName) match {
+              case Some(traitDef: TraitStmtTerm) =>
+                // Create a trait call term representing the trait type
+                TraitCallTerm(traitDef, convertMeta(superTypeExpr.meta))
+              case _ =>
+                ck.reporter.apply(NotATrait(superTypeExpr))
+                // Return a safe default for error recovery
+                ErrorTerm(NotATrait(superTypeExpr), convertMeta(superTypeExpr.meta))
+            }
+          case _ =>
+            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+            ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(superTypeExpr.meta))
+        }
+      }
+      // For now, we only support extending one trait, so we take the head
+      if (elaboratedSuperTypes.nonEmpty) elaboratedSuperTypes.head else ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta))
+    }
 
     // Elaborate the optional body (if any)
     val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+      // Create a temporary context for elaborating the trait body
+      // Mark that we're processing a trait body
+      val bodyCtx = ctx.withProcessingType("trait")
+      
+      // Use elabBlock to elaborate the body with the temporary context
+      elabBlock(body, newTypeTerm, effects)(using bodyCtx, parameter, ck, state)
     }
 
     // Create the TraitStmtTerm
