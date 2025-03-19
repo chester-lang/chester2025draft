@@ -462,3 +462,42 @@ The inconsistent handling of the `}\n` pattern between V1 and V2 parsers remains
 2. **Match Expressions**: Where newlines after closing braces terminate match expressions
 
 The solution requires enhancing whitespace token handling and implementing consistent expression termination rules.
+
+### Pattern Matching Block Termination Fix
+
+#### Current Status
+Tests in `PatternMatchingTest.scala` have revealed inconsistencies between V1 and V2 parsers specifically around pattern matching with blocks:
+- Simple pattern matching cases work correctly with both parsers
+- Pattern matching with blocks after `=>` operators only passes in V1
+
+#### Root Cause
+The issue relates to how the `}\n` pattern is handled in the context of pattern matching:
+
+1. **V1 Implementation**: Uses `ParsingContext(newLineAfterBlockMeansEnds = true)` to define how block termination works
+2. **V2 Implementation**: Has a more general `checkForRBraceNewlinePattern` mechanism that doesn't properly account for pattern matching contexts
+
+#### Implementation Plan
+
+**IMPORTANT: General Handling Approach Required**
+Our implementation MUST follow Chester's principle of uniform symbol treatment. We SHOULD NOT add special handling for the `=>` operator specifically. Instead, we should implement a general solution for consistent `}\n` pattern handling that works across ALL contexts, including but not limited to pattern matching.
+
+The `}\n` pattern should be treated uniformly based on syntactic structure, NOT on the semantic meaning of operators like `=>`. This ensures the parser remains truly general without special cases.
+
+1. **Enhanced Newline Significance**:
+   - Improve the newline significance detection after closing braces
+   - Ensure consistent behavior across all expression contexts
+   - Apply uniform rules for expression termination based on syntax, not specific operators
+
+2. **Syntactic Pattern Detection**:
+   - Focus on detecting the `}\n` pattern based purely on syntactic structure
+   - Avoid introducing operator-specific special cases (like "=>")
+   - Maintain consistent handling of block termination regardless of context
+
+3. **Expression Structure Preservation**:
+   - Ensure consistent AST structure between V1 and V2 parsers
+   - Preserve the hierarchical structure of nested blocks and expressions
+   - Match V1 behavior for block-terminating contexts without operator-specific logic
+
+This approach will ensure compatibility between V1 and V2 parsers while maintaining strict adherence to the principle of general, uniform handling of syntax patterns, addressing one of the key challenges in the parser migration.
+
+## Future Optimization Opportunities
