@@ -139,7 +139,8 @@ up := {
   val folders = Seq(
     file("site"),
     file("vscode"),
-    file("js-for-jvm")
+    file("js-for-jvm"),
+    file("js-for-python")
   )
 
   folders.foreach { dir =>
@@ -158,7 +159,7 @@ up := {
 val scala3Version = "3.6.4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.1-RC1-bin-20250313-596538b-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250317-744ba92-NIGHTLY"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.0"

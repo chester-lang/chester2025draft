@@ -15,11 +15,11 @@
     "@babel/preset-env": "^7.26.9",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
     "core-js": "^3.41.0",
     "es6-map-shim": "^0.2.1",
     "rollup": "^4.35.0",
-    "ts-morph": "^24.0.0"
+    "ts-morph": "^25.0.1"
   }
 }

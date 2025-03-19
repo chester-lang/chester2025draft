@@ -26,8 +26,14 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.36.0)
+      core-js:
+        specifier: ^3.41.0
+        version: 3.41.0
+      es6-map-shim:
+        specifier: ^0.2.1
+        version: 0.2.1
       rollup:
-        specifier: ^4.36.0
+        specifier: ^4.35.0
         version: 4.36.0
       ts-morph:
         specifier: ^25.0.1
@@ -766,6 +772,9 @@ packages:
   core-js-compat@3.41.0:
     resolution: {integrity: sha512-RFsU9LySVue9RTwdDVX/T0e2Y6jRYWXERKElIjpuEOEnxaXffI0X7RUwVzfYLfzuLXSNJDYoRYUAmRUcyln20A==}
 
+  core-js@3.41.0:
+    resolution: {integrity: sha512-SJ4/EHwS36QMJd6h/Rg+GyR4A5xE0FSI3eZ+iBVpfqf1x0eTSg1smWLHrA+2jQThZSh97fmSgFSU8B61nxosxA==}
+
   debug@4.4.0:
     resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
     engines: {node: '>=6.0'}
@@ -781,6 +790,10 @@ packages:
 
   electron-to-chromium@1.5.120:
     resolution: {integrity: sha512-oTUp3gfX1gZI+xfD2djr2rzQdHCwHzPQrrK0CD7WpTdF0nPdQ/INcRVjWgLdCT4a9W3jFObR9DAfsuyFQnI8CQ==}
+
+  es6-map-shim@0.2.1:
+    resolution: {integrity: sha512-BLK6hFtMdWDj7f4/TzVDX+R5ochkTKfrv7uW7b+b5JGwArAU5jHZ03Ly58aGTxUhcB57HLgIYlqCcq3Ix3hEcg==}
+    engines: {node: '>= 0.8.0'}
 
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
@@ -1882,6 +1895,8 @@ snapshots:
     dependencies:
       browserslist: 4.24.4
 
+  core-js@3.41.0: {}
+
   debug@4.4.0:
     dependencies:
       ms: 2.1.3
@@ -1889,6 +1904,8 @@ snapshots:
   deepmerge@4.3.1: {}
 
   electron-to-chromium@1.5.120: {}
+
+  es6-map-shim@0.2.1: {}
 
   escalade@3.2.0: {}
 

@@ -2,7 +2,6 @@
 node_modules/
 dist/
 .DS_Store
-pnpm-lock.yaml
 
 # Python
 __pycache__/
