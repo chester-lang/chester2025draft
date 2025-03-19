@@ -679,7 +679,7 @@ To implement the remaining trait features within Chester's propagator network-ba
       def getName(p: Person): String = p.name;
       
       // Test with an actual instance
-      let john = Person(name: "John", age: 30);
+      let john = Person(name = "John", age = 30);
       getName(john);
       ```
       This test is designed to work with minimal field verification that ensures the record contains all required trait fields.
