@@ -263,7 +263,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
             ctx.getTypeDefinition(traitName) match {
               case Some(traitDef: TraitStmtTerm) =>
                 // Create a trait call term representing the trait type
-                TraitCallTerm(traitDef, convertMeta(superTypeExpr.meta))
+                TraitTypeTerm(traitDef, convertMeta(superTypeExpr.meta))
               case _ =>
                 ck.reporter.apply(NotATrait(superTypeExpr))
                 // Return a safe default for error recovery
@@ -367,7 +367,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
             ctx.getTypeDefinition(traitName) match {
               case Some(traitDef: TraitStmtTerm) =>
                 // Create a trait call term representing the trait type
-                TraitCallTerm(traitDef, convertMeta(superTypeExpr.meta))
+                TraitTypeTerm(traitDef, convertMeta(superTypeExpr.meta))
               case _ =>
                 ck.reporter.apply(NotATrait(superTypeExpr))
                 // Return a safe default for error recovery

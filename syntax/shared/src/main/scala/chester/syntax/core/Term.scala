@@ -815,12 +815,12 @@ case class RecordStmtTerm(
     )
   )
 }
-case class RecordConstructorCallTerm(
+case class RecordConstructTerm(
     @const recordName: Name,
     @const args: Vector[Term],
     @const meta: OptionTermMeta
 ) extends Uneval derives ReadWriter {
-  override type ThisTree = RecordConstructorCallTerm
+  override type ThisTree = RecordConstructTerm
   override def toDoc(using PrettierOptions): Doc = {
     val argsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,`)(args.map(_.toDoc))
     Doc.text(recordName) <> argsDoc
@@ -873,12 +873,12 @@ case class InterfaceStmtTerm(
     copy(extendsClause = extendsClause.map(g), body = body.map(g))
   )
 }
-case class RecordCallTerm(
+case class RecordTypeTerm(
     recordDef: RecordStmtTerm,
     telescope: TelescopeTerm,
     meta: OptionTermMeta
 ) extends TypeTerm derives ReadWriter {
-  override type ThisTree = RecordCallTerm
+  override type ThisTree = RecordTypeTerm
   override def toDoc(using PrettierOptions): Doc =
     group("RecordCall" <+> recordDef.toDoc <> telescope.toDoc)
 
@@ -886,11 +886,11 @@ case class RecordCallTerm(
     copy(recordDef = g(recordDef), telescope = g(telescope))
   )
 }
-case class TraitCallTerm(
+case class TraitTypeTerm(
     @child var traitDef: TraitStmtTerm,
     @const meta: OptionTermMeta
 ) extends TypeTerm derives ReadWriter {
-  override type ThisTree = TraitCallTerm
+  override type ThisTree = TraitTypeTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("TraitCall(") <> traitDef.name.toDoc <> Doc.text(")")
 
@@ -898,11 +898,11 @@ case class TraitCallTerm(
     copy(traitDef = g(traitDef))
   )
 }
-case class ObjectCallTerm(
+case class ObjectConstructTerm(
     @child var objectRef: Term,
     @const meta: OptionTermMeta
 ) extends Uneval derives ReadWriter {
-  override type ThisTree = ObjectCallTerm
+  override type ThisTree = ObjectConstructTerm
   override def toDoc(using PrettierOptions): Doc =
     group("ObjectCall" <+> objectRef.toDoc)
 

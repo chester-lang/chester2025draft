@@ -42,7 +42,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
             val argTerms = expr.telescopes.flatMap(_.args.map { arg =>
               elab(arg.expr, newTypeTerm, effects)
             })
-            val recordCallTerm = RecordConstructorCallTerm(recordDef.name, argTerms, meta = None)
+            val recordCallTerm = RecordConstructTerm(recordDef.name, argTerms, meta = None)
             // TODO: Unify the type with the expected type
             // unify(ty, recordDefType, expr)
             recordCallTerm

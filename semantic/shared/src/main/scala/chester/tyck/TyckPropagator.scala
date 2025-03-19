@@ -31,17 +31,17 @@ trait TyckPropagator extends ElaboraterCommon {
             unify(lhs: Term, rhs: CellId[Term], cause)
 
           // Record implementing trait (structural subtyping)
-          case (RecordCallTerm(recordDef, _, _), TraitCallTerm(traitDef, _)) =>
+          case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
             // Check if the record implements the trait
             checkTraitImplementation(recordDef, traitDef, cause): Unit
 
           // Allow traits to be used where their implementations are expected (covariance)
-          case (TraitCallTerm(traitDef, _), RecordCallTerm(recordDef, _, _)) =>
+          case (TraitTypeTerm(traitDef, _), RecordTypeTerm(recordDef, _, _)) =>
             // Ensure the record implements the trait
             checkTraitImplementation(recordDef, traitDef, cause): Unit
             
           // Trait-to-trait relationship (trait inheritance)
-          case (TraitCallTerm(childTraitDef, _), TraitCallTerm(parentTraitDef, _)) =>
+          case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
             // Check if child trait extends parent trait
             checkTraitExtends(childTraitDef, parentTraitDef, cause): Unit
 
@@ -817,7 +817,7 @@ trait TyckPropagator extends ElaboraterCommon {
           val reducedRecord = NaiveReducer.reduce(recordType, ReduceMode.TypeLevel)
 
           reducedRecord match {
-            case RecordCallTerm(recordDef, _, _) =>
+            case RecordTypeTerm(recordDef, _, _) =>
               recordDef.fields.find(_.name == fieldName) match {
                 case Some(fieldTerm) =>
                   // For dependent fields, we may need to further reduce the field type
@@ -886,7 +886,7 @@ trait TyckPropagator extends ElaboraterCommon {
     // For MVP, we'll just check for a direct extension relationship
     val hasExtendsClause = recordDef.extendsClause.exists { clause =>
       clause match {
-        case traitCall: TraitCallTerm =>
+        case traitCall: TraitTypeTerm =>
           traitCall.traitDef.uniqId == traitDef.uniqId
         case _ => false
       }
@@ -918,7 +918,7 @@ trait TyckPropagator extends ElaboraterCommon {
     
     // Check direct parent
     val directParent = childTraitDef.extendsClause match {
-      case Some(traitCall: TraitCallTerm) =>
+      case Some(traitCall: TraitTypeTerm) =>
         traitCall.traitDef.uniqId == parentTraitDef.uniqId
       case _ => false
     }

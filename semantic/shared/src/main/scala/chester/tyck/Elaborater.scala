@@ -401,15 +401,15 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             // Check if 'name' refers to an object definition
             localCtx.getTypeDefinition(name) match {
               case Some(objectDef: ObjectStmtTerm) =>
-                val objectCallTerm = ObjectCallTerm(objectDef, convertMeta(expr.meta))
+                val objectCallTerm = ObjectConstructTerm(objectDef, convertMeta(expr.meta))
                 unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
                 objectCallTerm
               case Some(recordDef: RecordStmtTerm) =>
-                val recordCallTerm = RecordCallTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta)) // TODO
+                val recordCallTerm = RecordTypeTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta)) // TODO
                 unify(ty, Type0, expr) // TODO: Type
                 recordCallTerm
               case Some(traitDef: TraitStmtTerm) =>
-                val traitCallTerm = TraitCallTerm(traitDef, convertMeta(expr.meta))
+                val traitCallTerm = TraitTypeTerm(traitDef, convertMeta(expr.meta))
                 unify(ty, Type0, expr) // Traits are types
                 traitCallTerm
               case Some(todo) => ???
@@ -494,7 +494,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                   // If we have a meta term, add a propagator to check the field access once the type is known
                   state.addPropagator(RecordFieldPropagator(id, fieldName, ty, expr))
                   resultTerm
-                case RecordCallTerm(recordDef, _, _) =>
+                case RecordTypeTerm(recordDef, _, _) =>
                   val fields = recordDef.fields
                   fields.find(_.name == fieldName) match {
                     case Some(field) =>
