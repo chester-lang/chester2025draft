@@ -2,23 +2,10 @@ package chester.tyck
 
 import chester.error.*
 import chester.syntax.Name
-import chester.syntax.core.{Term, ErrorTerm, RecordTypeTerm, TraitTypeTerm, IntType, IntegerType, UIntType, NaturalType}
-import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
-import chester.{*, given}
-import chester.Symbol
-import chester.parse.*
-import chester.intern.*
-import Chester.*
-import chester.ErrorCode
-import ErrorCode.*
-import chester.types.{*, given}
-import chester.std.{*, given}
-import chester.instances.DefaultInstance.*
-import chester.instances.{*, given}
-import chester.reduce.*
-import cats.effect.SyncEffect
 import chester.syntax.concrete.*
+import chester.syntax.core.*
 import chester.utils.*
+import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
 
 trait TyckPropagator extends ElaboraterCommon {
 
@@ -1039,39 +1026,9 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Boolean = {
-    // For exact equality
-    if (recordType == traitType) {
-      return true
-    }
-    
-    // Use type-level reduction for comparing types
-    given ReduceContext = localCtx.toReduceContext
-    given Reducer = localCtx.given_Reducer
-    
-    val reducedRecordType = NaiveReducer.reduce(recordType, ReduceMode.TypeLevel)
-    val reducedTraitType = NaiveReducer.reduce(traitType, ReduceMode.TypeLevel)
-    
-    // After reduction, check again for exact equality
-    if (reducedRecordType == reducedTraitType) {
-      return true
-    }
-    
-    // Handle special cases for certain type relations
-    (reducedRecordType, reducedTraitType) match {
-      // Record type implementing a trait type
-      case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
-        checkTraitImplementation(recordDef, traitDef, ErrorTerm(NotImplemented(UnitExpr(None)), None))
-        
-      // More specific numeric types are compatible with less specific ones
-      case (IntType(_), IntegerType(_)) => true
-      case (UIntType(_), IntegerType(_)) => true
-      case (NaturalType(_), IntegerType(_)) => true
-      
-      // Other special cases can be added here
-      
-      // For all other cases, return false
-      case _ => false
-    }
+    // For a simple first implementation, we just check for exact equality
+    // In the future, we'll need to handle subtyping relationships
+    recordType == traitType
   }
 
   // Helper method to attempt unification without reporting errors
