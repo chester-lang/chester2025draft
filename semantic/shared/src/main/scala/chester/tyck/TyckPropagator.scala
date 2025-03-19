@@ -33,12 +33,17 @@ trait TyckPropagator extends ElaboraterCommon {
           // Record implementing trait (structural subtyping)
           case (RecordCallTerm(recordDef, _, _), TraitCallTerm(traitDef, _)) =>
             // Check if the record implements the trait
-            checkTraitImplementation(recordDef, traitDef, cause)
+            checkTraitImplementation(recordDef, traitDef, cause): Unit
 
           // Allow traits to be used where their implementations are expected (covariance)
           case (TraitCallTerm(traitDef, _), RecordCallTerm(recordDef, _, _)) =>
             // Ensure the record implements the trait
-            checkTraitImplementation(recordDef, traitDef, cause)
+            checkTraitImplementation(recordDef, traitDef, cause): Unit
+            
+          // Trait-to-trait relationship (trait inheritance)
+          case (TraitCallTerm(childTraitDef, _), TraitCallTerm(parentTraitDef, _)) =>
+            // Check if child trait extends parent trait
+            checkTraitExtends(childTraitDef, parentTraitDef, cause): Unit
 
           // Structural unification for ListType
           case (ListType(elem1, _), ListType(elem2, _)) =>
@@ -894,6 +899,31 @@ trait TyckPropagator extends ElaboraterCommon {
     } else {
       true
     }
+  }
+  
+  // Helper method to check if one trait extends another
+  private def checkTraitExtends(
+      childTraitDef: TraitStmtTerm,
+      parentTraitDef: TraitStmtTerm,
+      cause: Expr
+  )(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Boolean = {
+    // Check if they're the same trait (reflexivity)
+    if (childTraitDef.uniqId == parentTraitDef.uniqId) {
+      return true
+    }
+    
+    // Check direct parent
+    val directParent = childTraitDef.extendsClause match {
+      case Some(traitCall: TraitCallTerm) =>
+        traitCall.traitDef.uniqId == parentTraitDef.uniqId
+      case _ => false
+    }
+    
+    directParent
   }
 
 }
