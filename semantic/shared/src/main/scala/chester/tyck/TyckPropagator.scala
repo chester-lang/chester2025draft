@@ -935,25 +935,6 @@ trait TyckPropagator extends ElaboraterCommon {
     }
   }
   
-  // Helper method to get fields from a trait, including inherited fields
-  private def getTraitFields(traitDef: TraitStmtTerm)(using
-      localCtx: Context,
-      ck: Tyck,
-      state: StateAbility[Tyck]
-  ): Vector[FieldTerm] = {
-    // Get fields directly declared in this trait
-    val directFields = extractFieldsFromTraitBody(traitDef)
-    
-    // Get fields from parent traits if any
-    val inheritedFields = traitDef.extendsClause match {
-      case Some(TraitTypeTerm(parentTraitDef, _)) => getTraitFields(parentTraitDef)
-      case _ => Vector.empty
-    }
-    
-    // Combine fields, with direct fields taking precedence
-    inheritedFields ++ directFields
-  }
-  
   // Helper method to extract field declarations from a trait body
   private def extractFieldsFromTraitBody(traitDef: TraitStmtTerm)(using
       localCtx: Context
@@ -973,6 +954,26 @@ trait TyckPropagator extends ElaboraterCommon {
         }
       case None => Vector.empty
     }
+  }
+  
+  // Helper method to get fields from a trait, including inherited fields
+  private def getTraitFields(traitDef: TraitStmtTerm)(using
+      localCtx: Context
+  ): Vector[FieldTerm] = {
+    // Get fields directly declared in this trait
+    val directFields = extractFieldsFromTraitBody(traitDef)
+    
+    // Get fields from parent traits if any
+    val inheritedFields = traitDef.extendsClause match {
+      case Some(TraitTypeTerm(parentTraitDef, _)) => getTraitFields(parentTraitDef)
+      case _ => Vector.empty
+    }
+    
+    // Combine fields, with direct fields taking precedence
+    val fieldMap = inheritedFields.map(f => (f.name, f)).toMap ++
+                   directFields.map(f => (f.name, f)).toMap
+                   
+    fieldMap.values.toVector
   }
 
   // Helper method to check if one trait extends another
