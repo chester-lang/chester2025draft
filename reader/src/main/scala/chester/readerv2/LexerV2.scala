@@ -52,13 +52,14 @@ case class StmtExpr(expr: Expr)
 case class LexerState(
     tokens: Vector[Either[ParseError, Token]],
     index: Int,
-    previousToken: Option[Token] = None
+    previousToken: Option[Token] = None,
+    newLineAfterBlockMeansEnds: Boolean = false
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
   def advance(): LexerState = current match {
-    case Right(token) => LexerState(tokens, index + 1, Some(token))
-    case Left(_)      => LexerState(tokens, index + 1, previousToken)
+    case Right(token) => LexerState(tokens, index + 1, Some(token), newLineAfterBlockMeansEnds)
+    case Left(_)      => LexerState(tokens, index + 1, previousToken, newLineAfterBlockMeansEnds)
   }
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
@@ -78,6 +79,11 @@ case class LexerState(
       t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
       t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
+  
+  // Helper method to create a state with modified context
+  def withNewLineTermination(enabled: Boolean): LexerState = 
+    if (this.newLineAfterBlockMeansEnds == enabled) this
+    else copy(newLineAfterBlockMeansEnds = enabled)
 
   override def toString: String =
     s"LexerState(index=$index, current=$current, previousToken=$previousToken, remaining=${tokens.length - index} tokens)"
