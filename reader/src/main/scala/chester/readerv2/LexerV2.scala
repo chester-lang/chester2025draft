@@ -965,8 +965,12 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+    // IMPORTANT: Enable newLineAfterBlockMeansEnds for all blocks
+    // This preserves uniform treatment without special-casing any operators
+    val contextState = state.withNewLineTermination(true)
+    
     // Replace skipComments with collectComments
-    val (_, current) = collectComments(state)
+    val (_, current) = collectComments(contextState)
     var statements = Vector[Expr]()
     var result: Option[Expr] = None
     var maxExpressions = 100 // Prevent infinite loops
