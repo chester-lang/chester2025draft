@@ -234,6 +234,9 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
       // Check for "}\n" pattern
       def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+        // Only consider }\n as terminating if we're in the right context
+        if (!state.newLineAfterBlockMeansEnds) return false
+        
         expr match {
           case block: Block =>
             state.current match {
