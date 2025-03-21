@@ -146,6 +146,100 @@ current.current match {
 }
 ```
 
+## Pattern Matching Block Termination Fix
+
+The V2 parser faced a specific challenge with pattern matching expressions containing blocks after the `=>` operator. This section details the implementation approach for fixing this issue while maintaining uniform symbol treatment.
+
+### Block Termination Context Implementation
+
+A key insight in fixing pattern matching was understanding how the V1 parser uses context to determine when a `}\n` pattern should terminate an expression. In V1, this is handled via `ParsingContext(newLineAfterBlockMeansEnds = true)`, while V2 needed a similar mechanism.
+
+#### 1. Adding Context to LexerState
+
+We added a boolean flag to track when newlines after blocks should terminate expressions:
+
+```scala
+case class LexerState(
+    tokens: Vector[Either[ParseError, Token]],
+    index: Int,
+    previousToken: Option[Token] = None,
+    newLineAfterBlockMeansEnds: Boolean = false  // NEW FIELD
+) {
+  // Existing methods
+  
+  // Helper method to create a state with modified context
+  def withNewLineTermination(enabled: Boolean): LexerState = 
+    if (this.newLineAfterBlockMeansEnds == enabled) this
+    else copy(newLineAfterBlockMeansEnds = enabled)
+}
+```
+
+This approach:
+- Adds minimal context tracking to the parser
+- Uses immutable state modification via the helper method
+- Maintains the default behavior (false) for backward compatibility
+
+#### 2. Context-Aware Block Termination
+
+The `checkForRBraceNewlinePattern` method was updated to consider the context flag:
+
+```scala
+def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+  // Only consider }\n as terminating if we're in the right context
+  if (!state.newLineAfterBlockMeansEnds) return false
+  
+  expr match {
+    case block: Block =>
+      state.current match {
+        case Right(whitespaceToken: Token.Whitespace) => {
+          // Existing check for newline in whitespace
+          val startPos = whitespaceToken.sourcePos.range.start.index.utf16
+          val endPos = whitespaceToken.sourcePos.range.end.index.utf16
+          val maybeSource = sourceOffset.readContent.toOption
+          maybeSource.exists { source =>
+            if (startPos < source.length && endPos <= source.length) {
+              val whitespaceText = source.substring(startPos, endPos)
+              whitespaceText.contains('\n')
+            } else false
+          }
+        }
+        case _ => false
+      }
+    case _ => false
+  }
+}
+```
+
+This change preserves the existing logic for detecting newlines after blocks while adding context awareness.
+
+#### 3. Enabling Context for All Blocks
+
+Finally, we modified the `parseBlock` method to enable the context flag for all blocks:
+
+```scala
+def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+  // IMPORTANT: Enable newLineAfterBlockMeansEnds for all blocks
+  // This preserves uniform treatment without special-casing any operators
+  val contextState = state.withNewLineTermination(true)
+  
+  // Replace skipComments with collectComments
+  val (_, current) = collectComments(contextState)
+  
+  // Rest of existing implementation, using current
+  // ...
+}
+```
+
+### Uniform Symbol Treatment Preservation
+
+A critical aspect of this fix was preserving Chester's uniform symbol treatment principle. No special handling was added for the `=>` operator or any other identifiers:
+
+- The context affects only how block termination works, not how specific operators are treated
+- All operators continue to be parsed as plain identifiers without any semantic meaning
+- The `=>` token is treated exactly like any other identifier in the parser
+
+The implementation details show how we can maintain context-free parsing principles while still handling contextual significance of newlines after blocks. For implementation status and next steps, see the devlog entry for 2025-03-22.
+
 ## Future Optimization Opportunities
 
 1. **Further Token Stream Optimizations**:

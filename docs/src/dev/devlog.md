@@ -542,3 +542,140 @@ This solution preserves the uniform symbol treatment principle while ensuring th
   - Add support for multiple trait inheritance
   - Implement trait method and default implementations
   - Add more comprehensive trait test cases
+
+## 2025-03-22
+
+### Pattern Matching Fix Implementation for V2 Parser
+
+#### Problem Analysis
+
+The V2 parser was failing to correctly parse pattern matching expressions with blocks after the `=>` operator. This issue was particularly visible in the `match2` test in `PatternMatchingTest`, which showed a mismatch between expected and actual AST structures.
+
+#### Root Cause
+
+1. **Missing Context Tracking**: 
+   - V1 parser used `ParsingContext(newLineAfterBlockMeansEnds = true)` for contextual parsing
+   - V2 parser lacked this contextual awareness for block termination after newlines
+
+2. **AST Structure Discrepancies**:
+   - V1 produces consistent OpSeq structures with Identifiers for operators
+   - V2 wasn't properly maintaining this structure in pattern matching contexts
+
+#### Critical Insight: Uniform Symbol Treatment
+
+The key insight that guided our solution was the need to maintain Chester's uniform symbol treatment:
+
+- V1 parser treats ALL operators uniformly with no special cases
+- `=>` is handled as a plain identifier, not a special operator
+- Context affects only block termination, not token parsing
+
+#### Implementation Approach
+
+We implemented a 3-step fix that maintains uniform symbol treatment:
+
+1. **Added Context to LexerState**:
+   ```scala
+   case class LexerState(
+       // Existing fields...
+       newLineAfterBlockMeansEnds: Boolean = false
+   ) {
+     def withNewLineTermination(enabled: Boolean): LexerState = 
+       if (this.newLineAfterBlockMeansEnds == enabled) this
+       else copy(newLineAfterBlockMeansEnds = enabled)
+   }
+   ```
+
+2. **Updated `checkForRBraceNewlinePattern`**:
+   - Added context-awareness to only terminate expressions in the right context
+   - Maintained the existing newline detection logic
+   ```scala
+   def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+     // Only consider }\n as terminating if we're in the right context
+     if (!state.newLineAfterBlockMeansEnds) return false
+     
+     // Rest of existing implementation
+     // ...
+   }
+   ```
+
+3. **Enabled Context for All Blocks**:
+   ```scala
+   def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+     val contextState = state.withNewLineTermination(true)
+     // Rest of implementation using contextState
+     // ...
+   }
+   ```
+
+#### AST Structure Matching
+
+While the block termination fix allows basic pattern matching to work, there remain differences in the AST structure between V1 and V2 parsers:
+
+```
+=> Diff (- expected, + obtained)
+           meta = None
+-        )
+-      ),
+-      meta = None
+-    ),
+-    OpSeq(
+-      seq = Vector(
++        ),
+         Identifier(
+               Identifier(
++                name = "name",
++                meta = None
++              ),
++              Identifier(
+                 name = ...,
+                 meta = ...
+-              ),
+-              ...
++              )
+             ),
+```
+
+These structural differences need to be resolved to ensure full compatibility between parsers. Current theories:
+- Different handling of nested OpSeq structures
+- Variance in how block expressions are attached to pattern matches
+- Potential issues with comment attachment or source positions
+
+#### Testing Approach
+
+We're using a phased testing approach:
+
+```scala
+// Current test approach - used during development
+parseAndCheck(input, expected)  // Tests with V1 parser only
+
+// Goal after full AST compatibility is achieved
+parseAndCheckBoth(input, expected)  // Tests with both V1 and V2 parsers
+```
+
+Current tests in `PatternMatchingTest` show:
+- All tests using `parseAndCheck` pass with V1 parser
+- Simple pattern matching (no blocks after `=>`) passes with `parseAndCheckBoth`
+- Complex pattern matching with blocks still shows AST differences
+
+#### Next Steps
+
+1. Investigate exact AST structural differences
+   - Run detailed tests with AST structure dumps
+   - Compare parsing behavior for complex pattern matching
+
+2. Enhance debug output
+   - Add more detailed logging of AST structures
+   - Enable easier comparison between V1 and V2 outputs
+
+3. Add targeted fixes for AST compatibility
+   - Maintain uniform symbol treatment
+   - Ensure consistent structure for nested expressions
+
+4. Update tests to use `parseAndCheckBoth` when fully fixed
+   - Migrate tests incrementally as compatibility issues are resolved
+   - Document any intentional differences
+
+#### Files Modified
+- `reader/src/main/scala/chester/readerv2/LexerV2.scala`
+
+This implementation represents significant progress in aligning V1 and V2 parser behaviors while maintaining Chester's core design principles of uniform symbol treatment and context-free parsing.

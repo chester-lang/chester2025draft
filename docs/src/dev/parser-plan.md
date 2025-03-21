@@ -483,21 +483,20 @@ Our implementation MUST follow Chester's principle of uniform symbol treatment. 
 
 The `}\n` pattern should be treated uniformly based on syntactic structure, NOT on the semantic meaning of operators like `=>`. This ensures the parser remains truly general without special cases.
 
-1. **Enhanced Newline Significance**:
-   - Improve the newline significance detection after closing braces
-   - Ensure consistent behavior across all expression contexts
-   - Apply uniform rules for expression termination based on syntax, not specific operators
+1. **Enhanced Context Tracking**:
+   - Add context tracking to `LexerState` to know when newlines after blocks should terminate expressions
+   - Maintain immutable state through appropriate helper methods
+   - Keep uniform treatment without special-casing operators
 
-2. **Syntactic Pattern Detection**:
-   - Focus on detecting the `}\n` pattern based purely on syntactic structure
-   - Avoid introducing operator-specific special cases (like "=>")
-   - Maintain consistent handling of block termination regardless of context
+2. **Context-Aware Block Termination**:
+   - Update the block termination logic to consider the context flag
+   - Detect `}\n` patterns based on pure syntax, not semantics
 
 3. **Expression Structure Preservation**:
    - Ensure consistent AST structure between V1 and V2 parsers
-   - Preserve the hierarchical structure of nested blocks and expressions
-   - Match V1 behavior for block-terminating contexts without operator-specific logic
+   - Preserve the AST structure for pattern matching expressions
+   - Match V1 behavior without operator-specific logic
 
-This approach will ensure compatibility between V1 and V2 parsers while maintaining strict adherence to the principle of general, uniform handling of syntax patterns, addressing one of the key challenges in the parser migration.
+This approach will ensure compatibility between V1 and V2 parsers while maintaining strict adherence to the principle of general, uniform handling of syntax patterns.
 
 ## Future Optimization Opportunities
