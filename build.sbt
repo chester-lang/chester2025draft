@@ -159,7 +159,7 @@ up := {
 val scala3Version = "3.6.4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.1-RC1-bin-20250317-744ba92-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250320-a5e029a-NIGHTLY"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.0"
@@ -813,7 +813,7 @@ lazy val optional = crossProject(JVMPlatform)
       "org.bytedeco" % "llvm-platform" % "19.1.3-1.5.11"
     )
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(jvmScala3Settings, commonJvmLibSettings)
 
 lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -1122,8 +1122,6 @@ lazy val compatibility = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     _.dependsOn(jsTypings.js)
   )
   .settings(
-    name := "chester",
-    assembly / assemblyOutputPath := file("target") / "chester-common.jar",
     commonSettings
   )
   .jvmSettings(
