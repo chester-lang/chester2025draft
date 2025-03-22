@@ -9,6 +9,8 @@ import chester.utils.*
 import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
+import scala.collection.immutable.{Vector => StdVector}
+import cats.data.NonEmptyVector
 
 import scala.language.implicitConversions
 import scala.util.boundary
@@ -30,6 +32,41 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     state.addPropagator(UnionOf(cell, Vector(cell), cause))
   }
 
+  // Helper method to ensure cell coverage for all union components
+  private def ensureUnionComponentsCoverage(
+      unionTypes: NonEmptyVector[Term], 
+      cause: Expr
+  )(using
+      state: StateAbility[Tyck],
+      ctx: Context,
+      ck: Tyck
+  ): Vector[CellId[Term]] = {
+    // Get cell IDs for all union component types and ensure they're covered
+    val unionTypeIds = unionTypes.map(typ => {
+      val cellId = toId(typ)
+      ensureCellCoverage(cellId, cause)
+      cellId
+    }).toVector
+    
+    unionTypeIds
+  }
+
+  // Helper method for connecting union types to their components
+  private def connectUnionToComponents(
+      unionCell: CellId[Term],
+      componentIds: Vector[CellId[Term]],
+      cause: Expr
+  )(using
+      state: StateAbility[Tyck],
+      ctx: Context,
+      ck: Tyck
+  ): Unit = {
+    if (DEBUG_UNION_SUBTYPING) {
+      println(s"Creating UnionOf propagator: union cell $unionCell connected to components: ${componentIds.mkString(", ")}")
+    }
+    state.addPropagator(UnionOf(unionCell, componentIds, cause))
+  }
+  
   // Process all terms in a function application to ensure proper cell coverage
   private def processFunctionCall(term: Term, cause: Expr)(using
       StateAbility[Tyck],
@@ -161,164 +198,49 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         state.addPropagator(Unify(lhsCell, rhsCell, cause))
 
         // Get cell IDs for all component types and ensure they're covered
-        val lhsTypeIds = types1
-          .map(typ => {
-            val cellId = toId(typ)
-            ensureCellCoverage(cellId, cause)
-            cellId
-          })
-          .toVector
-        val rhsTypeIds = types2
-          .map(typ => {
-            val cellId = toId(typ)
-            ensureCellCoverage(cellId, cause)
-            cellId
-          })
-          .toVector
+        val lhsTypeIds = ensureUnionComponentsCoverage(types1, cause)
+        val rhsTypeIds = ensureUnionComponentsCoverage(types2, cause)
 
-        if (lhsTypeIds.nonEmpty && rhsTypeIds.nonEmpty) {
-          // Create UnionOf propagators to establish the union relationship
-          // Connect the LHS union to its component types
-          if (DEBUG_UNION_SUBTYPING) {
-            println(s"Creating UnionOf propagator: LHS cell $lhsCell connected to component types: ${lhsTypeIds.mkString(", ")}")
-          }
-          state.addPropagator(UnionOf(lhsCell, lhsTypeIds, cause))
+        // Connect unions to their components
+        connectUnionToComponents(lhsCell, lhsTypeIds, cause)
+        connectUnionToComponents(rhsCell, rhsTypeIds, cause)
 
-          // Connect the RHS union to its component types
-          if (DEBUG_UNION_SUBTYPING) {
-            println(s"Creating UnionOf propagator: RHS cell $rhsCell connected to component types: ${rhsTypeIds.mkString(", ")}")
-          }
-          state.addPropagator(UnionOf(rhsCell, rhsTypeIds, cause))
-
-          // Create direct connections between compatible component types
-          for (t1 <- types1; t2 <- types2) {
-            if (tryUnify(t1, t2)) {
-              val t1Cell = toId(t1)
-              val t2Cell = toId(t2)
-              if (DEBUG_UNION_SUBTYPING) {
-                println(s"Creating connection between component types: $t1 (${t1.getClass.getSimpleName}) and $t2 (${t2.getClass.getSimpleName})")
-                println(s"  Cell IDs: $t1Cell <-> $t2Cell")
-              }
-              state.addPropagator(Unify(t1Cell, t2Cell, cause))
+        // Create direct connections between compatible component types
+        for (t1 <- types1; t2 <- types2) {
+          if (tryUnify(t1, t2)) {
+            val t1Cell = toId(t1)
+            val t2Cell = toId(t2)
+            if (DEBUG_UNION_SUBTYPING) {
+              println(s"Creating connection between component types: $t1 and $t2")
+              println(s"  Cell IDs: $t1Cell <-> $t2Cell")
             }
+            state.addPropagator(Unify(t1Cell, t2Cell, cause))
           }
-        } else {
-          // Handle edge case of empty union types
-          ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
         }
 
       // Specific-to-Union subtyping (function parameter case in test)
-      // Use a guard to make the pattern more specific and avoid conflict with general case
       case (specificType, union @ Union(unionTypes, _)) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
         if (DEBUG_UNION_SUBTYPING) {
           println("=== SPECIFIC-TO-UNION SUBTYPING ===")
-          println(s"Specific Type: $specificType (${specificType.getClass.getSimpleName}) with cell ID: ${toId(specificType)}")
-          println(s"Union Type: $union (${union.getClass.getSimpleName}) with cell ID: ${toId(union)}")
+          println(s"Specific Type: $specificType with cell ID: ${toId(specificType)}")
+          println(s"Union Type: $union with cell ID: ${toId(union)}")
           println(s"Union Component Types: ${unionTypes.mkString(", ")}")
         }
 
         // A specific type can be used where a union is expected if it matches any union component
-        val specificCell = toId(specificType)
-        val unionCell = toId(union).asInstanceOf[CellId[Term]]
-
-        // Ensure all cells are covered by propagators
-        ensureCellCoverage(specificCell, cause)
-        ensureCellCoverage(unionCell, cause)
-
-        if (DEBUG_UNION_SUBTYPING) println(s"Creating specific-to-union connection between $specificCell and $unionCell")
-
-        // Direct connection between the specific type and the union type
-        state.addPropagator(Unify(specificCell, unionCell, cause))
-
-        // Get cell IDs for all union component types and ensure they're covered
-        val unionTypeIds = unionTypes
-          .map(typ => {
-            val cellId = toId(typ)
-            ensureCellCoverage(cellId, cause)
-            cellId
-          })
-          .toVector
-
-        if (unionTypeIds.nonEmpty) {
-          // Connect the union to its components
-          if (DEBUG_UNION_SUBTYPING) println(s"Creating UnionOf propagator for $unionCell with components $unionTypeIds")
-          state.addPropagator(UnionOf(unionCell, unionTypeIds, cause))
-
-          // Find compatible union components and create direct connections
-          var foundCompatible = false
-          for (unionType <- unionTypes) {
-            val unionTypeCell = toId(unionType)
-
-            if (tryUnify(specificType, unionType)) {
-              foundCompatible = true
-              if (DEBUG_UNION_SUBTYPING) println(s"Creating compatible connection: $specificType <: $unionType")
-              state.addPropagator(Unify(specificCell, unionTypeCell, cause))
-            }
-          }
-
-          if (!foundCompatible) {
-            ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-          }
-        } else {
-          // Handle empty union case
-          ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-        }
+        specificToUnion(specificType, union, unionTypes, cause)
 
       // Union-to-Specific subtyping (function return case in test)
-      // Use a guard to make the pattern more specific and avoid conflict with general case
       case (union @ Union(unionTypes, _), specificType) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
         if (DEBUG_UNION_SUBTYPING) {
           println("=== UNION-TO-SPECIFIC SUBTYPING ===")
-          println(s"Union Type: $union (${union.getClass.getSimpleName}) with cell ID: ${toId(union)}")
-          println(s"Specific Type: $specificType (${specificType.getClass.getSimpleName}) with cell ID: ${toId(specificType)}")
+          println(s"Union Type: $union with cell ID: ${toId(union)}")
+          println(s"Specific Type: $specificType with cell ID: ${toId(specificType)}")
           println(s"Union Component Types: ${unionTypes.mkString(", ")}")
         }
 
-        val unionCell = toId(union).asInstanceOf[CellId[Term]]
-        val specificCell = toId(specificType)
-
-        if (DEBUG_UNION_SUBTYPING) println(s"Creating union-to-specific connection between $unionCell and $specificCell")
-
-        // Ensure all cells are covered by propagators
-        ensureCellCoverage(unionCell, cause)
-        ensureCellCoverage(specificCell, cause)
-
-        // Direct connection between the union and specific type
-        state.addPropagator(Unify(unionCell, specificCell, cause))
-
-        // Get cell IDs for all union component types and ensure they're covered
-        val unionTypeIds = unionTypes
-          .map(typ => {
-            val cellId = toId(typ)
-            ensureCellCoverage(cellId, cause)
-            cellId
-          })
-          .toVector
-
-        if (unionTypeIds.nonEmpty) {
-          // Connect the union to its components
-          if (DEBUG_UNION_SUBTYPING) println(s"Creating UnionOf propagator for $unionCell with components $unionTypeIds")
-          state.addPropagator(UnionOf(unionCell, unionTypeIds, cause))
-
-          // Check compatibility of all components
-          var allCompatible = true
-          for (unionType <- unionTypes) {
-            val unionTypeCell = toId(unionType)
-
-            if (!tryUnify(unionType, specificType)) {
-              allCompatible = false
-              ck.reporter.apply(TypeMismatch(unionType, specificType, cause))
-              // Don't abort early - continue to ensure all cells are covered
-            } else {
-              // Create direct connection from union component to specific type
-              if (DEBUG_UNION_SUBTYPING) println(s"Creating connection: $unionType <: $specificType")
-              state.addPropagator(Unify(unionTypeCell, specificCell, cause))
-            }
-          }
-        } else {
-          // Handle empty union case
-          ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-        }
+        // A union can be used where a specific type is expected if all components match it
+        unionToSpecific(union, unionTypes, specificType, cause)
 
       // Now add the general intersection and union cases
       case (x, Intersection(xs, _)) =>
@@ -353,6 +275,59 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       }
 
       case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+    }
+  }
+
+  // Helper method to handle specific-to-union subtyping
+  private def specificToUnion(
+      specificType: Term, 
+      union: Term,
+      unionTypes: NonEmptyVector[Term],
+      cause: Expr
+  )(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Unit = {
+    // Check if the specific type can be used for any of the union types
+    var foundCompatible = false
+    for (unionType <- unionTypes) {
+      if (tryUnify(specificType, unionType)) {
+        foundCompatible = true
+        // No need to break, just set the flag
+      }
+    }
+
+    // If no compatible union component was found, report error
+    if (!foundCompatible) {
+      ck.reporter.apply(TypeMismatch(specificType, union, cause))
+    }
+  }
+
+  // Helper method to handle union-to-specific subtyping
+  private def unionToSpecific(
+      union: Term,
+      unionTypes: NonEmptyVector[Term],
+      specificType: Term,
+      cause: Expr
+  )(using
+      localCtx: Context,
+      ck: Tyck,
+      state: StateAbility[Tyck]
+  ): Unit = {
+    // Check if all union components can be used where specificType is expected
+    var allCompatible = true
+    for (unionType <- unionTypes) {
+      if (!tryUnify(unionType, specificType)) {
+        allCompatible = false
+        ck.reporter.apply(TypeMismatch(unionType, specificType, cause))
+        // No need to break, we want to report all errors
+      }
+    }
+
+    // If any union component doesn't match, the overall unification fails
+    if (!allCompatible) {
+      ck.reporter.apply(TypeMismatch(union, specificType, cause))
     }
   }
 }

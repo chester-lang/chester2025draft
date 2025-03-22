@@ -17,6 +17,37 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term
+
+  /**
+   * Safely fills a cell with a value, handling the case where the cell already has a value.
+   * This prevents "requirement failed" exceptions when OnceCell.fill is called twice.
+   */
+  protected def safelyFillCell[T](
+      cell: CellId[T],
+      value: T,
+      debugCategory: Debug.DebugCategory = Debug.DebugCategory.Tyck
+  )(using
+      state: StateAbility[Tyck],
+      more: Tyck
+  ): Unit = {
+    // Check if the cell already has a value before attempting to fill it
+    val existingValue = state.readUnstable(cell)
+    if (existingValue.isEmpty) {
+      Debug.debugPrint(debugCategory, s"Cell is empty, filling with: $value")
+      state.fill(cell, value)
+      Debug.debugPrint(debugCategory, "Successfully filled cell")
+    } else {
+      // The cell already has a value, check if it's the same value
+      Debug.debugPrint(debugCategory, s"Cell already has value: ${existingValue.get}")
+      if (existingValue.get == value) {
+        Debug.debugPrint(debugCategory, "Values are equal, skipping redundant fill")
+      } else {
+        Debug.debugPrint(debugCategory, "WARNING: Attempted to fill cell with different value")
+        Debug.debugPrint(debugCategory, s"Existing: ${existingValue.get}")
+        Debug.debugPrint(debugCategory, s"New: $value")
+      }
+    }
+  }
 }
 
 trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elaborater & ElaboraterBase & ElaboraterCommon =>
@@ -151,24 +182,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
           Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Created function call term: $fCallTerm")
           Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: About to fill cell: $functionCallTerm")
 
-          // Check if the cell already has a value before attempting to fill it
-          // This prevents the "requirement failed" exception when OnceCell.fill is called twice
-          val existingValue = state.readUnstable(functionCallTerm)
-          if (existingValue.isEmpty) {
-            Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell is empty, filling with: $fCallTerm")
-            state.fill(functionCallTerm, fCallTerm)
-            Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: Successfully filled function call term")
-          } else {
-            // The cell already has a value, check if it's the same value
-            Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Cell already has value: ${existingValue.get}")
-            if (existingValue.get == fCallTerm) {
-              Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: Values are equal, skipping redundant fill")
-            } else {
-              Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: WARNING: Attempted to fill cell with different value")
-              Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Existing: ${existingValue.get}")
-              Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: New: $fCallTerm")
-            }
-          }
+          // Use the helper method to safely fill the cell
+          safelyFillCell(functionCallTerm, fCallTerm, DebugCategory.Tyck)
 
           true
         case Some(Meta(id)) =>

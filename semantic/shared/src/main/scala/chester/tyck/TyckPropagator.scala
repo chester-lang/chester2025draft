@@ -6,6 +6,11 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
 import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
+import chester.utils.propagator.*
+import cats.data.NonEmptyVector
+
+import scala.collection.mutable
+import scala.language.implicitConversions
 
 trait TyckPropagator extends ElaboraterCommon {
 
@@ -33,17 +38,17 @@ trait TyckPropagator extends ElaboraterCommon {
           // Record implementing trait (structural subtyping)
           case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
             // Check if the record implements the trait
-            checkTraitImplementation(recordDef, traitDef, cause): Unit
+            checkTraitImplementation(recordDef, traitDef, cause); ()
 
           // Allow traits to be used where their implementations are expected (covariance)
           case (TraitTypeTerm(traitDef, _), RecordTypeTerm(recordDef, _, _)) =>
             // Ensure the record implements the trait
-            checkTraitImplementation(recordDef, traitDef, cause): Unit
+            checkTraitImplementation(recordDef, traitDef, cause); ()
 
           // Trait-to-trait relationship (trait inheritance)
           case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
             // Check if child trait extends parent trait
-            checkTraitExtends(childTraitDef, parentTraitDef, cause): Unit
+            checkTraitExtends(childTraitDef, parentTraitDef, cause); ()
 
           // Structural unification for ListType
           case (ListType(elem1, _), ListType(elem2, _)) =>
@@ -194,24 +199,13 @@ trait TyckPropagator extends ElaboraterCommon {
           state.addPropagator(Unify(this.lhs, r, cause))
           true
         case (Some(Union(types1, _)), Some(Union(types2, _))) =>
-          // For each type in rhs union, at least one type in lhs union must accept it
-          types2.foreach { t2 =>
-            types1.find(t1 => tryUnify(t1, t2)).foreach { t1 =>
-              state.addPropagator(Unify(toId(t1), toId(t2), cause))
-            }
-          }
+          handleUnionUnionPropagation(types1, types2, cause)
           true
         case (Some(lhsType), Some(Union(types2, _))) =>
-          // For a union on the right, lhs must accept ALL possible types in the union
-          types2.foreach { t2 =>
-            state.addPropagator(Unify(toId(lhsType), toId(t2), cause))
-          }
+          handleSpecificUnionPropagation(lhsType, types2, cause)
           true
         case (Some(Union(types1, _)), Some(rhsType)) =>
-          // For a union on the left, ANY type in the union accepting rhs is sufficient
-          types1.find(t1 => tryUnify(t1, rhsType)).foreach { t1 =>
-            state.addPropagator(Unify(toId(t1), toId(rhsType), cause))
-          }
+          handleUnionSpecificPropagation(types1, rhsType, cause)
           true
         case (Some(Intersection(types1, _)), Some(Intersection(types2, _))) =>
           // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
@@ -252,22 +246,31 @@ trait TyckPropagator extends ElaboraterCommon {
           state.fill(this.lhs, r)
           ZonkResult.Done
         case (Some(Union(types1, _)), Some(Union(types2, _))) =>
-          // For each type in rhs union, at least one type in lhs union must accept it
-          if (types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))) {
+          // First check compatibility
+          if (unionUnionCompatible(types1, types2)) {
+            // Ensure all types are covered by propagators
+            types1.foreach(t => ensureCellIsCovered(toId(t)))
+            types2.foreach(t => ensureCellIsCovered(toId(t)))
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
           }
         case (Some(lhsType), Some(Union(types2, _))) =>
-          // For a union on the right, lhs must accept ALL possible types in the union
-          if (types2.forall(t2 => tryUnify(lhsType, t2))) {
+          // First check compatibility
+          if (specificUnionCompatible(lhsType, types2)) {
+            // Ensure all types are covered by propagators
+            ensureCellIsCovered(toId(lhsType))
+            types2.foreach(t => ensureCellIsCovered(toId(t)))
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
           }
         case (Some(Union(types1, _)), Some(rhsType)) =>
-          // For a union on the left, ANY type in the union accepting rhs is sufficient
-          if (types1.exists(t1 => tryUnify(t1, rhsType))) {
+          // First check compatibility
+          if (unionSpecificCompatible(types1, rhsType)) {
+            // Ensure all types are covered by propagators
+            types1.foreach(t => ensureCellIsCovered(toId(t)))
+            ensureCellIsCovered(toId(rhsType))
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
@@ -288,13 +291,68 @@ trait TyckPropagator extends ElaboraterCommon {
           }
         case (Some(Intersection(types1, _)), Some(rhsType)) =>
           // For an intersection on the left, ALL types in the intersection must be compatible with rhs
-          if (types1.forall(t1 => tryUnify(rhsType, t1))) {
+          if (types1.forall(t1 => tryUnify(t1, rhsType))) {
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
           }
         case _ => ZonkResult.Require(Vector(this.lhs, this.rhs))
       }
+    }
+
+    private def handleUnionUnionPropagation(
+        types1: NonEmptyVector[Term], 
+        types2: NonEmptyVector[Term], 
+        cause: Expr
+    )(using
+        state: StateAbility[Tyck],
+        more: Tyck
+    ): Unit = {
+      // For each type in rhs union, at least one type in lhs union must accept it
+      types2.foreach { t2 =>
+        types1.find(t1 => tryUnify(t1, t2)).foreach { t1 =>
+          state.addPropagator(Unify(toId(t1), toId(t2), cause))
+        }
+      }
+    }
+
+    private def handleSpecificUnionPropagation(
+        specificType: Term, 
+        unionTypes: NonEmptyVector[Term], 
+        cause: Expr
+    )(using
+        state: StateAbility[Tyck],
+        more: Tyck
+    ): Unit = {
+      // For a union on the right, lhs must accept ALL possible types in the union
+      unionTypes.foreach { unionType =>
+        state.addPropagator(Unify(toId(specificType), toId(unionType), cause))
+      }
+    }
+
+    private def handleUnionSpecificPropagation(
+        unionTypes: NonEmptyVector[Term], 
+        specificType: Term, 
+        cause: Expr
+    )(using
+        state: StateAbility[Tyck],
+        more: Tyck
+    ): Unit = {
+      // For a union on the left, ANY type in the union accepting rhs is sufficient
+      unionTypes.find(t1 => tryUnify(t1, specificType)).foreach { compatibleType =>
+        state.addPropagator(Unify(toId(compatibleType), toId(specificType), cause))
+      }
+    }
+
+    // Helper method to ensure a cell is covered by at least one propagator during zonking
+    private def ensureCellIsCovered(cell: CellId[Term])(using 
+        state: StateAbility[Tyck],
+        more: Tyck
+    ): Unit = {
+      // Create a self-unify propagator for coverage to ensure the cell is covered
+      // We can't easily check if it's already covered, so we add a self-unify propagator
+      // which is a no-op if the cell is already covered
+      state.addPropagator(Unify(cell, cell, EmptyExpr))
     }
   }
 
@@ -518,17 +576,17 @@ trait TyckPropagator extends ElaboraterCommon {
 
             case (Union(types1, _), Union(types2, _)) =>
               // For each type in RHS union, at least one type in LHS union must accept it
-              types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+              unionUnionCompatible(types1, types2)
 
             case (lhsType, Union(types2, _)) =>
               // For a union on the right, lhs must accept ALL possible types in the union
-              types2.forall(t2 => tryUnify(lhsType, t2))
+              specificUnionCompatible(lhsType, types2)
 
             case (Union(types1, _), rhsType) =>
               // For a union on the left, ANY type in the union accepting rhs is sufficient
               // This handles the case where we pass a more specific type to a union type
               // e.g., passing Integer to Integer | String
-              types1.exists(t1 => tryUnify(t1, rhsType))
+              unionSpecificCompatible(types1, rhsType)
 
             case (Intersection(types1, _), Intersection(types2, _)) =>
               // For intersection types to be compatible, each type from the second intersection
@@ -924,6 +982,31 @@ trait TyckPropagator extends ElaboraterCommon {
     }
 
     directParent
+  }
+
+  // Add helper methods for union subtyping compatibility checking
+  private def unionUnionCompatible(types1: NonEmptyVector[Term], types2: NonEmptyVector[Term])(using 
+      state: StateAbility[Tyck],
+      localCtx: Context
+  ): Boolean = {
+    // For each type in RHS union, at least one type in LHS union must accept it
+    types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
+  }
+
+  private def specificUnionCompatible(specificType: Term, unionTypes: NonEmptyVector[Term])(using 
+      state: StateAbility[Tyck],
+      localCtx: Context
+  ): Boolean = {
+    // For a union on the right, specific type must accept ALL possible types in the union
+    unionTypes.forall(unionType => tryUnify(specificType, unionType))
+  }
+
+  private def unionSpecificCompatible(unionTypes: NonEmptyVector[Term], specificType: Term)(using 
+      state: StateAbility[Tyck],
+      localCtx: Context
+  ): Boolean = {
+    // For a union on the left, ANY type in the union accepting rhs is sufficient
+    unionTypes.exists(unionType => tryUnify(unionType, specificType))
   }
 
 }
