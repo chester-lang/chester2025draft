@@ -1,1 +1,0 @@
-def f(x: Integer): Integer | String = x;
