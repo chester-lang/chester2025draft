@@ -1348,3 +1348,23 @@ case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
     copy(meta = updater(meta))
 }
+
+// Define an expression representing a union type (A | B | C)
+case class UnionTypeExpr(
+    types: Vector[Expr],
+    meta: Option[ExprMeta]
+) extends Expr {
+  override type ThisTree = UnionTypeExpr
+
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): UnionTypeExpr = thisOr {
+    copy(types = types.map(f))
+  }
+
+  override def updateMeta(
+      updater: Option[ExprMeta] => Option[ExprMeta]
+  ): UnionTypeExpr = copy(meta = updater(meta))
+
+  override def toDoc(using PrettierOptions): Doc = group(
+    Doc.wrapperlist(Doc.empty, Doc.empty, Doc.text(" | "))(types.map(_.toDoc))
+  )
+}

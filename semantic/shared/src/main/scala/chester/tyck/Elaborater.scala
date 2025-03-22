@@ -448,6 +448,30 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr: DesaltFunctionCall => elabFunctionCall(expr, ty, effects)
       case expr @ ObjectExpr(fields, _) =>
         elabObjectExpr(expr, fields, ty, effects)
+      case expr @ UnionTypeExpr(types, meta) =>
+        // Handle union type expressions
+        
+        // Elaborate each type in the union
+        val elaboratedTypes = types.map { typeExpr =>
+          // Each component should be a type
+          elab(typeExpr, Typeω, effects)
+        }
+        
+        // Ensure we have at least one type in the union
+        if (elaboratedTypes.isEmpty) {
+          val errorTerm = ErrorTerm(NotImplemented(expr), convertMeta(meta))
+          unify(ty, errorTerm, expr)
+          errorTerm
+        } else {
+          // Create a NonEmptyVector from the elaborated types
+          import cats.data.NonEmptyVector
+          val unionTerm = Union(NonEmptyVector.fromVectorUnsafe(elaboratedTypes), convertMeta(meta))
+          
+          // Unify with the expected type
+          unify(ty, unionTerm, expr)
+          
+          unionTerm
+        }
       case expr @ DotCall(recordExpr, fieldExpr, telescopes, meta) =>
         if (telescopes.nonEmpty) {
           val problem = NotImplementedFeature("Field access with arguments is not yet supported", expr)
