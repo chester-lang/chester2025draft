@@ -1,4 +1,5 @@
 // Simple union type test
 // Integer is a subtype of Integer | String
+// TEST MARKER: This comment helps confirm the file is loaded
 let x: Integer = 42;
-let y: Integer | String = x; 
+let y: Integer | String = x;

@@ -11,6 +11,10 @@ import cats.data.NonEmptyVector
 
 import scala.collection.mutable
 import scala.language.implicitConversions
+import java.util.concurrent.atomic.AtomicInteger
+
+// Add debug flags to control println statements
+private val DEBUG_UNION_MATCHING = false
 
 trait TyckPropagator extends ElaboraterCommon {
 
@@ -19,135 +23,83 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
-    if (lhs != rhs) {
-      // Use TypeLevel reduction for type equality checking
-      given ReduceContext = localCtx.toReduceContext
-      given Reducer = localCtx.given_Reducer
-      val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-      val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+    def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]) = {
+      state.addPropagator(Unify(lhsId, rhsId, cause))
+    }
 
-      if (lhsResolved != rhsResolved) {
-        (lhsResolved, rhsResolved) match {
-          case (Meta(lhs), rhs) =>
-            // Explicitly specify which overload to use
-            unify(lhs: CellId[Term], rhs: Term, cause)
-          case (lhs, Meta(rhs)) =>
-            // Explicitly specify which overload to use
-            unify(lhs: Term, rhs: CellId[Term], cause)
+    // Handle meta variables
+    (toTerm(lhs), toTerm(rhs)) match {
+      case (Meta(cellId), rhs) => {
+        addUnificationPropagator(cellId, toId(rhs))
+      }
+      case (lhs, Meta(cellId)) => {
+        addUnificationPropagator(toId(lhs), cellId)
+      }
+      case (lhs, rhs) if lhs != rhs =>
+        // Use TypeLevel reduction for type equality checking
+        given ReduceContext = localCtx.toReduceContext
+        given Reducer = localCtx.given_Reducer
 
-          // Record implementing trait (structural subtyping)
-          case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
-            // Check if the record implements the trait
-            checkTraitImplementation(recordDef, traitDef, cause); ()
-
-          // Allow traits to be used where their implementations are expected (covariance)
-          case (TraitTypeTerm(traitDef, _), RecordTypeTerm(recordDef, _, _)) =>
-            // Ensure the record implements the trait
-            checkTraitImplementation(recordDef, traitDef, cause); ()
-
-          // Trait-to-trait relationship (trait inheritance)
-          case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
-            // Check if child trait extends parent trait
-            checkTraitExtends(childTraitDef, parentTraitDef, cause); ()
-
-          // Structural unification for ListType
-          case (ListType(elem1, _), ListType(elem2, _)) =>
-            unify(elem1, elem2, cause)
-
-          case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
-
-          case (x, Intersection(xs, _)) =>
-            if (!xs.exists(tryUnify(x, _))) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-
-          // Structural unification for TupleType
-          case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
-            types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
-
-          // Type levels: use our helper method for level compatibility
-          case (Type(level1, _), Type(level2, _)) =>
-            if (!isLevelCompatible(level1, level2)(using state, localCtx)) {
-              unify(level1, level2, cause)
-            }
-
-          case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
-
-          // Special case: both sides are unions
-          case (Union(types1, _), Union(types2, _)) =>
-            // For each type in rhs union, at least one type in lhs union must accept it
-            if (!types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-            // Add propagators for each pair that unifies
-            types2.foreach { t2 =>
-              types1.find(t1 => tryUnify(t1, t2)).foreach { t1 =>
-                unify(t1, t2, cause)
-              }
-            }
-
-          // Special case: both sides are intersections
-          case (Intersection(types1, _), Intersection(types2, _)) =>
-            // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
-            if (!types1.forall(t1 => types2.exists(t2 => tryUnify(t1, t2)))) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-            // Add propagators for each pair that unifies
-            types1.foreach { t1 =>
-              types2.find(t2 => tryUnify(t1, t2)).foreach { t2 =>
-                unify(t1, t2, cause)
-              }
-            }
-
+        (NaiveReducer.reduce(lhs, ReduceMode.TypeLevel), NaiveReducer.reduce(rhs, ReduceMode.TypeLevel)) match {
           // Handle Union types - rhs must be a subtype of lhs
           case (lhsType, Union(types2, _)) =>
-            // For a union on the right, lhs must accept ALL possible types in the union
-            if (!types2.forall(t2 => tryUnify(lhsType, t2))) {
+            // For a union on the right (like Integer | String), 
+            // the left side type (like Integer) just needs to match ONE component
+            val lhsTypeId = toId(lhsType)
+            
+            // Find any compatible union component
+            val compatibleComponent = types2.find(t2 => tryUnify(lhsType, t2))
+            
+            if (compatibleComponent.isDefined) {
+              // Create a propagator connecting lhs to the matching component
+              addUnificationPropagator(lhsTypeId, toId(compatibleComponent.get))
+            } else {
+              // No compatible component found
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-            // Add propagators for each type in the union
-            types2.foreach { t2 =>
-              unify(lhsType, t2, cause)
             }
 
           case (Union(types1, _), rhsType) =>
-            // For a union on the left, ANY type in the union accepting rhs is sufficient
-            // This handles the case where we pass a more specific type to a union type
-            // e.g., passing Integer to Integer | String
+            // For a union on the left, ANY type in the union must be compatible with rhs
+            // We need to check if at least one component is compatible
+            val anyCompatible = types1.exists(t1 => tryUnify(t1, rhsType))
+            
+            if (anyCompatible) {
+              // At least one component is compatible, create propagators for that component
+              types1.find(t1 => tryUnify(t1, rhsType)).foreach(t1 => 
+                addUnificationPropagator(toId(t1), toId(rhsType))
+              )
+            } else {
+              // No compatible components
+              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            }
+  
+          // Record implementing trait (structural subtyping)
+          case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
+            checkTraitImplementation(recordDef, traitDef, cause); ()
+
+          // Trait extending trait (structural subtyping)
+          case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
+            checkTraitExtends(childTraitDef, parentTraitDef, cause); ()
+
+          // Handle Intersection types
+          case (Intersection(types1, _), rhsType) =>
             if (!types1.exists(t1 => tryUnify(t1, rhsType))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
-            // Add propagator for the first matching type
-            types1.find(t1 => tryUnify(t1, rhsType)).foreach { t1 =>
-              unify(t1, rhsType, cause)
-            }
-
-          // Handle Intersection types - lhs must be a subtype of rhs
-          case (Intersection(types1, _), rhsType) =>
-            // For an intersection on the left, ALL types in the intersection must be compatible with rhs
-            if (!types1.forall(t1 => tryUnify(t1, rhsType))) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-            // Add propagators for each type in the intersection
-            types1.foreach { t1 =>
-              unify(t1, rhsType, cause)
-            }
 
           case (lhsType, Intersection(types2, _)) =>
-            // For an intersection on the right, ANY type in the intersection being compatible with lhs is sufficient
-            if (!types2.exists(t2 => tryUnify(lhsType, t2))) {
+            if (!types2.forall(t2 => tryUnify(lhsType, t2))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
-            // Add propagator for the first matching type
-            types2.find(t2 => tryUnify(lhsType, t2)).foreach { t2 =>
-              unify(lhsType, t2, cause)
-            }
-
-          // Base case: types do not match
-          case _ =>
-            ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+            
+          // For other cases, add a direct unification propagator
+          case (lhsType, rhsType) =>
+            // If terms are not identical after reduction, add a propagator
+            val lhsId = toId(lhsType)
+            val rhsId = toId(rhsType)
+            addUnificationPropagator(lhsId, rhsId)
         }
-      }
+      case _ => // Terms are already equal, nothing to do
     }
   }
 
@@ -261,6 +213,14 @@ trait TyckPropagator extends ElaboraterCommon {
             // Ensure all types are covered by propagators
             ensureCellIsCovered(toId(lhsType))
             types2.foreach(t => ensureCellIsCovered(toId(t)))
+            
+            // Add a propagator to connect the specific type to the union
+            // This is critical for cases like `let y: Integer | String = x` where x: Integer
+            // Find each compatible union component and connect the specific type to it
+            types2.filter(unionType => tryUnify(lhsType, unionType)(using state, summon[Context])).foreach { compatibleType =>
+              state.addPropagator(Unify(toId(lhsType), toId(compatibleType), cause)(using summon[Context]))
+            }
+            
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
@@ -271,6 +231,8 @@ trait TyckPropagator extends ElaboraterCommon {
             // Ensure all types are covered by propagators
             types1.foreach(t => ensureCellIsCovered(toId(t)))
             ensureCellIsCovered(toId(rhsType))
+            // Connect the compatible union component to the specific type
+            connectUnionAndSpecific(this.lhs, types1, this.rhs, rhsType, cause)(using state, more, summon[Context])
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
@@ -324,9 +286,16 @@ trait TyckPropagator extends ElaboraterCommon {
         state: StateAbility[Tyck],
         more: Tyck
     ): Unit = {
-      // For a union on the right, lhs must accept ALL possible types in the union
-      unionTypes.foreach { unionType =>
-        state.addPropagator(Unify(toId(specificType), toId(unionType), cause))
+      // For a specific type to be compatible with a union type,
+      // the specific type must be compatible with at least one of the union components
+      // This is for cases like: let y: Integer | String = x
+      // where x: Integer
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Checking if $specificType is compatible with at least one of union components: ${unionTypes.mkString(", ")}")
+      
+      // Find compatible union components and connect them
+      unionTypes.filter(unionType => tryUnify(specificType, unionType)).foreach { compatibleType =>
+        if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Found compatible component: $compatibleType")
+        state.addPropagator(Unify(toId(specificType), toId(compatibleType), cause))
       }
     }
 
@@ -338,10 +307,17 @@ trait TyckPropagator extends ElaboraterCommon {
         state: StateAbility[Tyck],
         more: Tyck
     ): Unit = {
-      // For a union on the left, ANY type in the union accepting rhs is sufficient
-      unionTypes.find(t1 => tryUnify(t1, specificType)).foreach { compatibleType =>
-        state.addPropagator(Unify(toId(compatibleType), toId(specificType), cause))
-      }
+      // For a union type to be compatible with a specific type,
+      // at least one type in the union must be compatible with the specific type
+      // This is for cases like: let x: Integer | String; let y: SomeType = x;
+      // where y: SomeType must accept at least one of Integer or String
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Checking if any union component ${unionTypes.mkString(", ")} is compatible with $specificType")
+      val result = unionTypes.exists(unionType => {
+        val compatible = tryUnify(unionType, specificType)
+        if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Component check: $unionType compatible with $specificType? $compatible")
+        compatible
+      })
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Final result: $result")
     }
 
     // Helper method to ensure a cell is covered by at least one propagator during zonking
@@ -543,69 +519,87 @@ trait TyckPropagator extends ElaboraterCommon {
       state: StateAbility[Tyck],
       localCtx: Context
   ): Boolean = {
-    def resolveReference(term: Term) = term match {
-      case varCall: ReferenceCall =>
-        localCtx
-          .getKnown(varCall)
-          .flatMap(tyAndVal => state.readStable(tyAndVal.valueId))
-          .getOrElse(term)
-      case other => other
-    }
+    // Recursion counter for debugging
+    val counter = new AtomicInteger(0)
+    
+    def tryUnifyInternal(lhs: Term, rhs: Term, depth: Int): Boolean = {
+      val indent = " " * depth
+      if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG] Trying to unify: $lhs with $rhs")
+      
+      def resolveReference(term: Term) = term match {
+        case varCall: ReferenceCall =>
+          val result = localCtx
+            .getKnown(varCall)
+            .flatMap(tyAndVal => state.readStable(tyAndVal.valueId))
+            .getOrElse(term)
+          if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Resolved reference $term to $result")
+          result
+        case other => other
+      }
 
-    if (lhs == rhs) true
-    else {
-      // Use TypeLevel reduction for type equality checking
-      given ReduceContext = localCtx.toReduceContext
-      given Reducer = localCtx.given_Reducer
+      if (lhs == rhs) {
+        if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Terms are equal, returning true")
+        true
+      } else {
+        // Use TypeLevel reduction for type equality checking
+        given ReduceContext = localCtx.toReduceContext
+        given Reducer = localCtx.given_Reducer
 
-      val lhsResolved = resolveReference(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-      val rhsResolved = resolveReference(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+        val lhsResolved = resolveReference(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
+        val rhsResolved = resolveReference(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+        
+        if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   After reduction: $lhsResolved with $rhsResolved")
 
-      if (lhsResolved == rhsResolved) true
-      else {
-        // If structural equality check fails, try alpha-equivalence
-        // which is crucial for dependent type systems
-        if (areAlphaEquivalent(lhsResolved, rhsResolved)) true
-        else {
-          (lhsResolved, rhsResolved) match {
-            case (Type(level1, _), Type(level2, _)) =>
-              isLevelCompatible(level1, level2)(using state, localCtx)
+        if (lhsResolved == rhsResolved) {
+          if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Reduced terms are equal, returning true")
+          true
+        } else {
+          // If structural equality check fails, try alpha-equivalence
+          // which is crucial for dependent type systems
+          if (areAlphaEquivalent(lhsResolved, rhsResolved)) {
+            if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Terms are alpha-equivalent, returning true")
+            true
+          } else {
+            (lhsResolved, rhsResolved) match {
+              case (Type(level1, _), Type(level2, _)) =>
+                val result = isLevelCompatible(level1, level2)(using state, localCtx)
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Type level check: $level1 compatible with $level2? $result")
+                result
 
-            case (ListType(elem1, _), ListType(elem2, _)) =>
-              tryUnify(elem1, elem2)
+              case (ListType(elem1, _), ListType(elem2, _)) =>
+                val result = tryUnifyInternal(elem1, elem2, depth + 1)
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   List element check: $result")
+                result
 
-            case (Union(types1, _), Union(types2, _)) =>
-              // For each type in RHS union, at least one type in LHS union must accept it
-              unionUnionCompatible(types1, types2)
+              case (lhsType, Union(types2, _)) =>
+                // For a specific type and a union type, check if the specific type
+                // is compatible with at least one union component
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Checking specific type against union: $lhsType with ${types2.mkString(", ")}")
+                val result = types2.exists(t2 => tryUnifyInternal(lhsType, t2, depth + 1))
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Specific-to-union check: $result")
+                result
 
-            case (lhsType, Union(types2, _)) =>
-              // For a union on the right, lhs must accept ALL possible types in the union
-              specificUnionCompatible(lhsType, types2)
+              case (Union(types1, _), rhsType) =>
+                // For a union type and a specific type, check if at least one union component
+                // is compatible with the specific type (NOT all components need to be compatible)
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Checking union type against specific: ${types1.mkString(", ")} with $rhsType")
+                val result = types1.exists(t1 => tryUnifyInternal(t1, rhsType, depth + 1))
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   Union-to-specific check: $result")
+                result
 
-            case (Union(types1, _), rhsType) =>
-              // For a union on the left, ANY type in the union accepting rhs is sufficient
-              // This handles the case where we pass a more specific type to a union type
-              // e.g., passing Integer to Integer | String
-              unionSpecificCompatible(types1, rhsType)
-
-            case (Intersection(types1, _), Intersection(types2, _)) =>
-              // For intersection types to be compatible, each type from the second intersection
-              // must be compatible with at least one type from the first intersection
-              types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
-
-            case (lhsType, Intersection(types2, _)) =>
-              // For an intersection on the right, lhs must be a subtype of ALL types in the intersection
-              types2.forall(t2 => tryUnify(lhsType, t2))
-
-            case (Intersection(types1, _), rhsType) =>
-              // For an intersection on the left, ANY type in the intersection being a subtype of rhs is sufficient
-              types1.exists(t1 => tryUnify(t1, rhsType))
-
-            case _ => false
+              case _ => 
+                if (DEBUG_UNION_MATCHING) println(s"${indent}[UNIFY DEBUG]   No match found, returning false")
+                false
+            }
           }
         }
       }
     }
+    
+    // Start the recursion
+    val result = tryUnifyInternal(lhs, rhs, 0)
+    if (DEBUG_UNION_MATCHING) println(s"[UNIFY DEBUG] Final result for unifying $lhs with $rhs: $result")
+    result
   }
 
   /** Checks if two terms are alpha-equivalent.
@@ -997,16 +991,101 @@ trait TyckPropagator extends ElaboraterCommon {
       state: StateAbility[Tyck],
       localCtx: Context
   ): Boolean = {
-    // For a union on the right, specific type must accept ALL possible types in the union
-    unionTypes.forall(unionType => tryUnify(specificType, unionType))
+    // For a specific type to be compatible with a union type,
+    // the specific type must be compatible with at least one of the union components
+    // This is for cases like: let y: Integer | String = x
+    // where x: Integer
+    if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Checking if $specificType is compatible with at least one of union components: ${unionTypes.mkString(", ")}")
+    val result = unionTypes.exists(unionType => {
+      val compatible = tryUnify(specificType, unionType)
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Component check: $specificType compatible with $unionType? $compatible")
+      compatible
+    })
+    if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Final result: $result")
+    result
   }
 
   private def unionSpecificCompatible(unionTypes: NonEmptyVector[Term], specificType: Term)(using 
       state: StateAbility[Tyck],
       localCtx: Context
   ): Boolean = {
-    // For a union on the left, ANY type in the union accepting rhs is sufficient
-    unionTypes.exists(unionType => tryUnify(unionType, specificType))
+    // For a union type to be compatible with a specific type,
+    // at least one type in the union must be compatible with the specific type
+    // This is for cases like: let x: Integer | String; let y: SomeType = x;
+    // where y: SomeType must accept at least one of Integer or String
+    if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Checking if any union component ${unionTypes.mkString(", ")} is compatible with $specificType")
+    val result = unionTypes.exists(unionType => {
+      val compatible = tryUnify(unionType, specificType)
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Component check: $unionType compatible with $specificType? $compatible")
+      compatible
+    })
+    if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Final result: $result")
+    result
+  }
+
+  // Propagator to ensure a cell is covered
+  case class EnsureCellCoverage(
+      cell: CellId[Term],
+      cause: Expr
+  ) extends Propagator[Tyck] {
+    override val readingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
+    override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
+    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
+    
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+      // This propagator simply ensures the cell has at least one propagator
+      // It always succeeds immediately
+      true
+    }
+    
+    override def naiveZonk(
+        needed: Vector[CellIdAny]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      // Nothing to zonk - just ensure the cell is included
+      ZonkResult.Done
+    }
+  }
+
+  // Connect a union type to a specific type for compatibility checks
+  private def connectUnionAndSpecific(
+      unionId: CellId[Term],
+      unionTypes: NonEmptyVector[Term],
+      specificId: CellId[Term],
+      specificType: Term,
+      cause: Expr
+  )(using
+      state: StateAbility[Tyck], 
+      more: Tyck,
+      ctx: Context
+  ): Unit = {
+    // For a union type and a specific type, find the compatible component
+    // and connect it to the specific type
+    if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Connecting union ${unionTypes.mkString(", ")} with specific $specificType")
+    unionTypes.find(unionType => tryUnify(unionType, specificType)(using state, ctx)).foreach { compatibleType =>
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Found compatible component: $compatibleType")
+      state.addPropagator(Unify(toId(compatibleType), specificId, cause)(using ctx))
+    }
+  }
+
+  // Connect a specific type to a union type for compatibility checks
+  private def connectSpecificAndUnion(
+      specificId: CellId[Term],
+      specificType: Term,
+      unionId: CellId[Term],
+      unionTypes: NonEmptyVector[Term],
+      cause: Expr
+  )(using
+      state: StateAbility[Tyck], 
+      more: Tyck,
+      ctx: Context
+  ): Unit = {
+    // For a specific type and a union type, find all compatible union components
+    // and connect the specific type to them
+    if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Connecting specific $specificType with union ${unionTypes.mkString(", ")}")
+    unionTypes.filter(unionType => tryUnify(specificType, unionType)(using state, ctx)).foreach { compatibleType =>
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Found compatible component: $compatibleType")
+      state.addPropagator(Unify(specificId, toId(compatibleType), cause)(using ctx))
+    }
   }
 
 }

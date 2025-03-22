@@ -28,8 +28,8 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ck: Tyck
   ): Unit = {
     if (DEBUG_UNION_SUBTYPING) println(s"Ensuring cell coverage for cell $cell")
-    // Simply connect the cell to itself to ensure it's covered by at least one propagator
-    state.addPropagator(UnionOf(cell, Vector(cell), cause))
+    // Use EnsureCellCoverage propagator to ensure the cell is covered
+    state.addPropagator(EnsureCellCoverage(cell, cause))
   }
 
   // Helper method to ensure cell coverage for all union components
@@ -228,7 +228,34 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         }
 
         // A specific type can be used where a union is expected if it matches any union component
-        specificToUnion(specificType, union, unionTypes, cause)
+        var foundCompatible = false
+        for (unionType <- unionTypes) {
+          // We need to check if specificType is a subtype of unionType
+          // For this case, we should try to unify specificType with unionType directly
+          if (tryUnify(specificType, unionType)) {
+            foundCompatible = true
+            
+            // Create a direct connection between the specific type and the compatible union component
+            val specificTypeCell = toId(specificType)
+            val unionTypeCell = toId(unionType)
+            
+            if (DEBUG_UNION_SUBTYPING) {
+              println(s"Creating propagator for specific-to-union: $specificType -> $unionType")
+              println(s"  Cell IDs: $specificTypeCell -> $unionTypeCell")
+            }
+            
+            // Add a propagator to establish the relationship
+            state.addPropagator(Unify(specificTypeCell, unionTypeCell, cause))
+          }
+        }
+
+        // If no compatible union component was found, report error
+        if (!foundCompatible) {
+          ck.reporter.apply(TypeMismatch(specificType, union, cause))
+        } else {
+          // Ensure the cell for the union itself is covered
+          ensureCellIsCovered(toId(union), cause)
+        }
 
       // Union-to-Specific subtyping (function return case in test)
       case (union @ Union(unionTypes, _), specificType) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
@@ -278,32 +305,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     }
   }
 
-  // Helper method to handle specific-to-union subtyping
-  private def specificToUnion(
-      specificType: Term, 
-      union: Term,
-      unionTypes: NonEmptyVector[Term],
-      cause: Expr
-  )(using
-      localCtx: Context,
-      ck: Tyck,
-      state: StateAbility[Tyck]
-  ): Unit = {
-    // Check if the specific type can be used for any of the union types
-    var foundCompatible = false
-    for (unionType <- unionTypes) {
-      if (tryUnify(specificType, unionType)) {
-        foundCompatible = true
-        // No need to break, just set the flag
-      }
-    }
-
-    // If no compatible union component was found, report error
-    if (!foundCompatible) {
-      ck.reporter.apply(TypeMismatch(specificType, union, cause))
-    }
-  }
-
   // Helper method to handle union-to-specific subtyping
   private def unionToSpecific(
       union: Term,
@@ -318,7 +319,19 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     // Check if all union components can be used where specificType is expected
     var allCompatible = true
     for (unionType <- unionTypes) {
-      if (!tryUnify(unionType, specificType)) {
+      if (tryUnify(unionType, specificType)) {
+        // Add a propagator for each compatible union component
+        val unionTypeCell = toId(unionType)
+        val specificTypeCell = toId(specificType)
+        
+        if (DEBUG_UNION_SUBTYPING) {
+          println(s"Creating propagator for union-to-specific: $unionType -> $specificType")
+          println(s"  Cell IDs: $unionTypeCell -> $specificTypeCell")
+        }
+        
+        // Create a propagator from the union component to the specific type
+        state.addPropagator(Unify(unionTypeCell, specificTypeCell, cause))
+      } else {
         allCompatible = false
         ck.reporter.apply(TypeMismatch(unionType, specificType, cause))
         // No need to break, we want to report all errors
@@ -328,7 +341,29 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     // If any union component doesn't match, the overall unification fails
     if (!allCompatible) {
       ck.reporter.apply(TypeMismatch(union, specificType, cause))
+    } else {
+      // Ensure the cell for the union and specific type are covered
+      ensureCellIsCovered(toId(union), cause)
+      ensureCellIsCovered(toId(specificType), cause)
     }
+  }
+
+  // Ensure a cell has coverage by checking or adding a propagator if needed
+  private def ensureCellIsCovered(
+      cellId: CellId[Term], 
+      cause: Expr
+  )(using
+      localCtx: Context,
+      state: StateAbility[Tyck],
+      ck: Tyck
+  ): Unit = {
+    if (DEBUG_UNION_SUBTYPING) {
+      println(s"Ensuring cell coverage for cell ID: $cellId")
+    }
+    
+    // Add a special propagator that ensures the cell is covered
+    // This is especially important for cells that might not be directly involved in other constraints
+    state.addPropagator(EnsureCellCoverage(cellId, cause))
   }
 }
 
@@ -465,11 +500,28 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         } else {
           // Create a NonEmptyVector from the elaborated types
           import cats.data.NonEmptyVector
-          val unionTerm = Union(NonEmptyVector.fromVectorUnsafe(elaboratedTypes), convertMeta(meta))
+          val unionTypes = NonEmptyVector.fromVectorUnsafe(elaboratedTypes)
+          val unionTerm = Union(unionTypes, convertMeta(meta))
           
-          // Unify with the expected type
-          unify(ty, unionTerm, expr)
+          // This is a type, so it should be in the Type universe
+          unify(ty, Type0, expr)
           
+          // Ensure each component type has a propagator for cell coverage
+          val componentCellIds = elaboratedTypes.map { componentType => 
+            val cellId = toId(componentType)
+            // Add a propagator to ensure this cell is covered
+            state.addPropagator(EnsureCellCoverage(cellId, expr))
+            cellId
+          }.toVector
+          
+          // Get the cell ID for the union term and ensure it's covered
+          val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
+          state.addPropagator(EnsureCellCoverage(unionCellId, expr))
+          
+          // Connect the union to its components
+          state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))
+          
+          // Return the union term
           unionTerm
         }
       case expr @ DotCall(recordExpr, fieldExpr, telescopes, meta) =>
