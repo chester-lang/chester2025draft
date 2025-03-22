@@ -1068,7 +1068,7 @@ trait TyckPropagator extends ElaboraterCommon {
   }
 
   // Connect a specific type to a union type for compatibility checks
-  private def connectSpecificAndUnion(
+  def connectSpecificAndUnion(
       specificId: CellId[Term],
       specificType: Term,
       unionId: CellId[Term],
@@ -1079,12 +1079,45 @@ trait TyckPropagator extends ElaboraterCommon {
       more: Tyck,
       ctx: Context
   ): Unit = {
-    // For a specific type and a union type, find all compatible union components
-    // and connect the specific type to them
+    // For a specific type and a union type, we need to:
+    // 1. Find all compatible union components
+    // 2. Connect the specific type to each compatible component
+    // 3. Connect the specific type directly to the union type
+    // 4. Make sure both specific and union cells are covered by propagators
+    
     if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG] Connecting specific $specificType with union ${unionTypes.mkString(", ")}")
-    unionTypes.filter(unionType => tryUnify(specificType, unionType)(using state, ctx)).foreach { compatibleType =>
-      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Found compatible component: $compatibleType")
-      state.addPropagator(Unify(specificId, toId(compatibleType), cause)(using ctx))
+    
+    // Find all compatible union components
+    val compatibleComponents = unionTypes.filter(unionType => 
+      tryUnify(specificType, unionType)(using state, ctx)
+    )
+    
+    if (compatibleComponents.nonEmpty) {
+      // Step 1: Connect the specific type to each compatible component
+      compatibleComponents.foreach { compatibleType =>
+        if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Connecting specific to component: $compatibleType")
+        state.addPropagator(Unify(specificId, toId(compatibleType), cause)(using ctx))
+      }
+      
+      // Step 2: Connect the specific type directly to the union
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Adding direct connection from specific $specificId to union $unionId")
+      state.addPropagator(Unify(specificId, unionId, cause)(using ctx))
+      
+      // Step 3: Ensure cell coverage for all involved cells
+      // This is critical: ensure both the specific and union cells have coverage
+      state.addPropagator(EnsureCellCoverage(specificId, cause))
+      state.addPropagator(EnsureCellCoverage(unionId, cause))
+      
+      // Step 4: Add a propagator for each component to ensure it's covered
+      compatibleComponents.foreach { component =>
+        state.addPropagator(EnsureCellCoverage(toId(component), cause))
+      }
+    } else {
+      // If no compatible components found, report an error
+      if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   No compatible components found between $specificType and union")
+      more.reporter.apply(TypeMismatch(specificType, 
+        Union(unionTypes, None), 
+        cause))
     }
   }
 
