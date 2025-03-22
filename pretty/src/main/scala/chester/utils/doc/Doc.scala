@@ -134,6 +134,7 @@ implicit class DocPrinterOps[T <: DocPrinter](val printer: T) extends AnyVal {
 
 trait ToDoc extends Any {
   def toDoc(using options: PrettierOptions): Doc
+  override def toString: String = StringPrinter.render(this)(using PrettierOptions.Default)
 }
 
 case class `$<>`(left: Doc, right: Doc) extends Doc {
