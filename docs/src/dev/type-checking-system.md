@@ -40,43 +40,6 @@ The propagator network is a key component of Chester's type checking system. It 
      - Meta variables
      - Union types
      - Intersection types
-
-### 3. Union Type Subtyping
-
-Chester supports union types (`A|B`) with a sophisticated subtyping relationship managed by the propagator network. The subtyping rules are implemented in the `unify` method in `Elaborater.scala`.
-
-#### Union Subtyping Rules
-
-1. **Union-to-Union Subtyping**: `(A|B) <: (C|D)`
-   - For each type in the right union, at least one type in the left union must accept it
-   - Implemented by creating propagator connections between compatible component types
-   - The `UnionOf` propagator ensures that cells are properly covered
-
-2. **Specific-to-Union Subtyping**: `A <: (B|C)`
-   - A specific type can be used where a union is expected if it's compatible with any union member
-   - This is especially important for function parameters, where providing a more specific type should work
-   - Example: Passing an `Integer` to a function expecting `Integer|String`
-
-3. **Union-to-Specific Subtyping**: `(A|B) <: C`
-   - A union can be assigned to a specific type if all union members are compatible with that type
-   - This is critical for function returns, where returning a union type should work if all components are compatible
-   - Example: Returning an `Integer|Float` from a function that promises to return `Number`
-
-#### Implementation Details
-
-The union subtyping implementation uses two key propagators:
-
-1. **Unify Propagator**: Creates a direct connection between types
-   ```scala
-   state.addPropagator(Unify(toId(lhs), toId(rhs), cause))
-   ```
-
-2. **UnionOf Propagator**: Handles the relationship between a type and a collection of types
-   ```scala
-   state.addPropagator(UnionOf(targetType, unionComponentTypes, cause))
-   ```
-
-These propagators work together to ensure that all cells in the type graph are properly covered by at least one propagator, which is essential for the propagator network to function correctly.
      - List types
      - Record types
 
@@ -133,6 +96,74 @@ These propagators work together to ensure that all cells in the type graph are p
      }
    }
    ```
+
+### 3. Union Type Subtyping
+
+Chester supports union types (`A|B`) with a sophisticated subtyping relationship managed by the propagator network. The subtyping rules are implemented in the `unify` method in `Elaborater.scala`.
+
+#### Union Subtyping Rules
+
+1. **Union-to-Union Subtyping**: `(A|B) <: (C|D)`
+   - For each type in the right union, at least one type in the left union must accept it
+   - Implemented by creating propagator connections between compatible component types
+   - The `UnionOf` propagator ensures that cells are properly covered
+
+2. **Specific-to-Union Subtyping**: `A <: (B|C)`
+   - A specific type can be used where a union is expected if it's compatible with any union member
+   - This is especially important for function parameters, where providing a more specific type should work
+   - Example: Passing an `Integer` to a function expecting `Integer|String`
+
+3. **Union-to-Specific Subtyping**: `(A|B) <: C`
+   - A union can be assigned to a specific type if all union members are compatible with that type
+   - This is critical for function returns, where returning a union type should work if all components are compatible
+   - Example: Returning an `Integer|Float` from a function that promises to return `Number`
+
+#### Implementation Details
+
+The union subtyping implementation uses two key propagators:
+
+1. **Unify Propagator**: Creates a direct connection between types
+   ```scala
+   state.addPropagator(Unify(toId(lhs), toId(rhs), cause))
+   ```
+
+2. **UnionOf Propagator**: Handles the relationship between a type and a collection of types
+   ```scala
+   state.addPropagator(UnionOf(targetType, unionComponentTypes, cause))
+   ```
+
+These propagators work together to ensure that all cells in the type graph are properly covered by at least one propagator, which is essential for the propagator network to function correctly.
+
+#### Union-to-Union Subtyping Example
+
+```scala
+case (Union(types1, _), Union(types2, _)) if types1.nonEmpty && types2.nonEmpty => {
+  // Ensure all cells are covered by propagators
+  ensureCellCoverage(lhsCell, cause)
+  ensureCellCoverage(rhsCell, cause)
+
+  // Create direct connection between the union types
+  state.addPropagator(Unify(lhsCell, rhsCell, cause))
+
+  // Ensure all component types are covered
+  val lhsTypeIds = types1.map(typ => {
+    val cellId = toId(typ)
+    ensureCellCoverage(cellId, cause)
+    cellId
+  }).toVector
+
+  // Connect the unions to their components
+  state.addPropagator(UnionOf(lhsCell, lhsTypeIds, cause))
+  state.addPropagator(UnionOf(rhsCell, rhsTypeIds, cause))
+
+  // Create connections between compatible component types
+  for (t1 <- types1; t2 <- types2) {
+    if (tryUnify(t1, t2)) {
+      state.addPropagator(Unify(toId(t1), toId(t2), cause))
+    }
+  }
+}
+```
 
 ## Current Implementation Issues
 
@@ -456,22 +487,66 @@ class IntegrationTests {
 }
 ```
 
-## Next Steps
+## Trait Implementation
 
-1. **Implementation**
-   - [ ] Add type state tracking
-   - [ ] Add coverage verification
-   - [ ] Add connection management
+Chester's type system now supports traits and record-trait subtyping relationships through the `<:` syntax, with the following features implemented:
 
-2. **Testing**
-   - [ ] Implement coverage tests
-   - [ ] Implement state tests
-   - [ ] Implement integration tests
+### 1. Trait Definition and Implementation
 
-3. **Documentation**
-   - [ ] Document type state rules
-   - [ ] Document verification process
-   - [ ] Document testing approach 
+```scala
+// Define a trait
+trait WithName {
+  def name: String;
+}
+
+// Record implementing a trait
+record Person(name: String, age: Integer) <: WithName;
+
+// Using the record with correct field
+def getName(p: Person): String = p.name;
+```
+
+### 2. Trait Subtyping Rules
+
+The type system implements several trait-related subtyping rules:
+
+1. **Record-Trait Subtyping**: Records that extend traits are considered subtypes of those traits
+   ```scala
+   case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
+     // Check if the record implements the trait
+     checkTraitImplementation(recordDef, traitDef, cause)
+   ```
+
+2. **Trait-Record Compatibility**: Traits can be used where their implementing records are expected
+   ```scala
+   case (TraitTypeTerm(traitDef, _), RecordTypeTerm(recordDef, _, _)) =>
+     // Ensure the record implements the trait
+     checkTraitImplementation(recordDef, traitDef, cause)
+   ```
+
+3. **Trait-Trait Inheritance**: Traits can extend other traits
+   ```scala
+   case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
+     // Check if child trait extends parent trait
+     checkTraitExtends(childTraitDef, parentTraitDef, cause)
+   ```
+
+### 3. Implementation Components
+
+The trait implementation consists of several key components:
+
+1. **TraitTypeTerm** in `Term.scala` for trait type representation
+2. **TraitStmtTerm** for trait definitions with optional bodies
+3. **processTraitStmt** in `ElaboraterBlock.scala` to handle trait declarations
+4. **checkTraitImplementation** in `TyckPropagator.scala` to verify trait implementation
+5. Special context tracking with `withProcessingType` to handle trait bodies
+
+### 4. Future Enhancements
+
+Future work will focus on:
+- Complete field requirement verification
+- Multiple trait inheritance
+- Trait methods and default implementations
 
 ## Best Practices for Cell Management
 
