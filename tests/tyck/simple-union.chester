@@ -1,0 +1,4 @@
+// Simple union type test
+// Integer is a subtype of Integer | String
+let x: Integer = 42;
+let y: Integer | String = x; 
