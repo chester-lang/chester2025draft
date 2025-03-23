@@ -703,7 +703,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                     // Use the original typeParams expression, but convert to ListExpr if needed
                     val typeParamsList = typeParams match {
                       case list: ListExpr => list
-                      case other => ListExpr(Vector(other), None) // Fallback but shouldn't happen
+                      case other => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
                     }
                     val funcWithGenericTypes = FunctionCall(
                       identifier,
@@ -725,7 +725,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                   // Use the original typeParams expression, but convert to ListExpr if needed
                   val typeParamsList = typeParams match {
                     case list: ListExpr => list
-                    case other => ListExpr(Vector(other), None) // Fallback but shouldn't happen
+                    case other => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
                   }
                   Right(
                     (
@@ -1292,8 +1292,16 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   private def expectToken[T <: Token](state: LexerState)(using tag: ClassTag[T]): Either[ParseError, LexerState] = {
     state.current.fold(
       err => Left(err),
-      token => if (token.isInstanceOf[T]) Right(state.advance()) 
-              else Left(ParseError(s"Expected token of type ${tag.runtimeClass.getSimpleName} but got: $token", token.sourcePos.range.start))
+      token => {
+        val expectedClassName = tag.runtimeClass.getSimpleName
+        val actualClassName = token.getClass.getSimpleName
+        
+        if (tag.runtimeClass.isInstance(token)) {
+          Right(state.advance())
+        } else {
+          Left(ParseError(s"Expected token of type $expectedClassName but got: $actualClassName", token.sourcePos.range.start))
+        }
+      }
     )
   }
 
