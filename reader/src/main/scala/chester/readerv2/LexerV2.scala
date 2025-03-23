@@ -181,10 +181,8 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     def buildOpSeq(terms: Vector[Expr]): Either[ParseError, Expr] = {
       debug(s"Building OpSeq with terms: $terms")
       if (terms.isEmpty) {
-        return Left(ParseError("Empty operator sequence", getStartPos(state.current)))
-      }
-
-      if (terms.length == 1) {
+        Left(ParseError("Empty operator sequence", getStartPos(state.current)))
+      } else if (terms.length == 1) {
         val expr = terms.head
         // Attach leading comments to single expression if present
         if (leadingComments.nonEmpty) {
@@ -803,32 +801,31 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
     // Replace skipComments with collectComments to preserve comments
     val (leadingListComments, initialState) = collectComments(state)
-    var current = initialState
-    var exprs = Vector.empty[Expr]
-    var maxExprs = LexerV2.MAX_LIST_ELEMENTS
-
-    while (exprs.length < maxExprs) {
-      debug(s"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${current.current}")
-      current.current match {
-        case Right(token) if isRightDelimiter(token) => {
-          debug("Found right delimiter after expression")
-          return Right((exprs, current))
-        }
-        case Right(_: Token.Comment | _: Token.Whitespace) => {
-          // Collect comments instead of skipping them
-          val (comments, afterComments) = collectComments(current)
-          current = afterComments
-        }
-        case Right(_: Token.Comma | _: Token.Semicolon) => {
-          debug("Found comma or semicolon, skipping")
-          // Collect any comments after comma/semicolon
-          val (_, afterDelimiter) = collectComments(current.advance())
-          current = afterDelimiter
-        }
-        case _ => {
-          debug("Parsing expression")
-          parseExpr(current) match {
-            case Right((expr, afterExpr)) => {
+    
+    def parseElements(current: LexerState, exprs: Vector[Expr], maxExprs: Int): Either[ParseError, (Vector[Expr], LexerState)] = {
+      if (exprs.length >= maxExprs) {
+        Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", state.sourcePos.range.start))
+      } else {
+        debug(s"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${current.current}")
+        current.current match {
+          case Right(token) if isRightDelimiter(token) => {
+            debug("Found right delimiter after expression")
+            Right((exprs, current))
+          }
+          case Right(_: Token.Comment | _: Token.Whitespace) => {
+            // Collect comments instead of skipping them
+            val (comments, afterComments) = collectComments(current)
+            parseElements(afterComments, exprs, maxExprs)
+          }
+          case Right(_: Token.Comma | _: Token.Semicolon) => {
+            debug("Found comma or semicolon, skipping")
+            // Collect any comments after comma/semicolon
+            val (_, afterDelimiter) = collectComments(current.advance())
+            parseElements(afterDelimiter, exprs, maxExprs)
+          }
+          case _ => {
+            debug("Parsing expression")
+            parseExpr(current).flatMap { case (expr, afterExpr) =>
               // Collect comments after the expression
               val (trailingComments, afterComments) = collectComments(afterExpr)
 
@@ -867,37 +864,32 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 expr
               }
 
-              current = afterComments
-              exprs = exprs :+ updatedExpr
-
-              debug(s"After expression: maxExprs=$maxExprs, current token=${current.current}")
-              current.current match {
+              afterComments.current match {
                 case Right(token) if isRightDelimiter(token) => {
                   debug("Found right delimiter after expression")
-                  return Right((exprs, current))
+                  Right((exprs :+ updatedExpr, afterComments))
                 }
                 case Right(_: Token.Comma | _: Token.Semicolon) => {
                   debug("Found comma or semicolon after expression, advancing")
                   // Collect any comments after comma/semicolon
-                  val (_, afterDelimiter) = collectComments(current.advance())
-                  current = afterDelimiter
-                  maxExprs = maxExprs - 1
+                  val (_, afterDelimiter) = collectComments(afterComments.advance())
+                  parseElements(afterDelimiter, exprs :+ updatedExpr, maxExprs - 1)
                 }
                 case Right(_: Token.Comment | _: Token.Whitespace) => {
                   // Collect comments instead of skipping them
-                  val (comments, afterComments) = collectComments(current)
-                  current = afterComments
+                  val (comments, afterMoreComments) = collectComments(afterComments)
+                  parseElements(afterMoreComments, exprs :+ updatedExpr, maxExprs)
                 }
-                case Right(t)  => return Left(expectedError("',' or ')' after expression", Right(t)))
-                case Left(err) => return Left(err)
+                case Right(t) => Left(expectedError("',' or ')' after expression", Right(t)))
+                case Left(err) => Left(err)
               }
             }
-            case Left(err) => return Left(err)
           }
         }
       }
     }
-    Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", state.sourcePos.range.start))
+    
+    parseElements(initialState, Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
   }
 
   def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
