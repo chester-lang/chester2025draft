@@ -1257,20 +1257,21 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   def collectIdentifier(state: LexerState): (Vector[StringChar], LexerState) = {
-    var chars = Vector.empty[StringChar]
-    var currentState = state
-
-    while (!currentState.isAtEnd && currentState.current.exists(token => token.isInstanceOf[Token.Identifier])) {
-      currentState.current match {
-        case Right(id: Token.Identifier) => {
-          chars = chars ++ id.parts
-          currentState = currentState.advance()
+    @scala.annotation.tailrec
+    def collectRec(current: LexerState, chars: Vector[StringChar]): (Vector[StringChar], LexerState) = {
+      if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Identifier])) {
+        current.current match {
+          case Right(id: Token.Identifier) =>
+            collectRec(current.advance(), chars ++ id.parts)
+          case _ => 
+            throw new RuntimeException("Unreachable: exists check guarantees we have an Identifier token")
         }
-        case _ => { throw new RuntimeException("Unreachable: exists check ensures this case never happens") }
+      } else {
+        (chars, current)
       }
     }
-
-    (chars, currentState)
+    
+    collectRec(state, Vector.empty)
   }
 
   def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
@@ -1352,8 +1353,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             // Just advance the token - we'll hit another token eventually
             collectRec(current.advance(), comments)
           case _ =>
-            // Should never happen due to the while condition
-            collectRec(current.advance(), comments)
+            throw new RuntimeException("Unreachable: exists check guarantees we have a Comment or Whitespace token")
         }
       } else {
         (comments, current)
@@ -1391,8 +1391,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             // Just assume any whitespace might contain a newline and stop collecting
             collectRec(current.advance(), comments, true)
           case _ =>
-            // Should never happen due to the while condition
-            collectRec(current.advance(), comments, hitNewline)
+            throw new RuntimeException("Unreachable: exists check guarantees we have a Comment or Whitespace token")
         }
       } else {
         (comments, current)
