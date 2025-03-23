@@ -693,16 +693,21 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
 
             // Parse list of type parameters within square brackets
-            parseListWithComments(afterId).flatMap { case (typeParams: ListExpr, afterTypeParams) =>
+            parseListWithComments(afterId).flatMap { case (typeParams, afterTypeParams) =>
               // Now check if there are parentheses for function arguments
               afterTypeParams.current match {
                 case Right(Token.LParen(_)) => {
                   // Function call with generic type parameters and arguments
                   parseTuple(afterTypeParams).map { case (tuple, afterArgs) =>
                     // Create nested function call: func[T](args) -> FunctionCall(FunctionCall(func, [T]), (args))
+                    // Use the original typeParams expression, but convert to ListExpr if needed
+                    val typeParamsList = typeParams match {
+                      case list: ListExpr => list
+                      case other => ListExpr(Vector(other), None) // Fallback but shouldn't happen
+                    }
                     val funcWithGenericTypes = FunctionCall(
                       identifier,
-                      typeParams,
+                      typeParamsList,
                       createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
                     )
                     (
@@ -717,11 +722,16 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 }
                 case _ => {
                   // Just the generic type parameters without function arguments
+                  // Use the original typeParams expression, but convert to ListExpr if needed
+                  val typeParamsList = typeParams match {
+                    case list: ListExpr => list
+                    case other => ListExpr(Vector(other), None) // Fallback but shouldn't happen
+                  }
                   Right(
                     (
                       FunctionCall(
                         identifier,
-                        typeParams,
+                        typeParamsList,
                         createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
                       ),
                       afterTypeParams
