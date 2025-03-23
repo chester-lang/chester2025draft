@@ -55,7 +55,7 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
 
 | Feature | Reader (V1) | ReaderV2 (V2) | Notes |
 |---------|-------------|---------------|-------|
-| Basic Literals | ✅ | ✅ | Integers, floating-point numbers supported |
+| Basic Literals | ✅ | ✅ | Integers, floating-point numbers, binary, hex support |
 | Function Calls | ✅ | ✅ | Full support in V2 |
 | Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
 | Object Syntax | ✅ | 🟡 | Basic support in V2 |
@@ -64,6 +64,7 @@ Chester is migrating from the original `reader` implementation (V1) to a new `re
 | Generic Type Parameters | ✅ | ✅ | Full support |
 | Block Arguments | ✅ | ✅ | Properly supported |
 | Comment Preservation | ✅ | ✅ | Fully supported |
+| Unicode & Emoji Support | ✅ | ✅ | Robust UTF-16 handling |
 
 Legend:
 - ✅ Fully Implemented
@@ -77,6 +78,8 @@ Legend:
 - Lists with mixed types
 - Generic type parameters
 - Comment preservation
+- Unicode and emoji support
+- Optimized tokenizer implementation
 
 ### Phase 2: Advanced Features (🟡 Current)
 - 🟡 Object expressions with string literal and symbol keys
@@ -92,15 +95,15 @@ Legend:
 ## Current Priorities
 
 ### 1. V1/V2 Semantic Consistency
-- Ensure both parsers produce the same AST for identical inputs
-- Focus on remaining differences in complex operator sequences
-- Address pattern matching semantic differences
+- ✅ Ensure both parsers produce the same AST for identical inputs
+- ✅ Address pattern matching semantic differences
+- 🟡 Focus on remaining differences in complex operator sequences
 
 ### 2. Object Expressions
-- Complete object expressions implementation with complex syntax support
+- 🟡 Complete object expressions implementation with complex syntax support
 
 ### 3. Block Termination and Newline Handling
-- Address the `}\n` pattern handling for expression termination
+- ✅ Address the `}\n` pattern handling for expression termination
 
 ## Next Steps
 
@@ -108,3 +111,4 @@ Legend:
 2. Add source maps support
 3. Implement error recovery mechanisms
 4. Continue migration of all remaining V1-only tests to V2
+5. Add more comprehensive test coverage for edge cases
