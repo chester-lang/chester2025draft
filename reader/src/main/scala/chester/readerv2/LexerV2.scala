@@ -1036,143 +1036,128 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  def parseObject(current: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
+  def parseObject(initialState: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
     // Collect comments before the object
-    val (leadingComments, initialState) = collectComments(current)
-    var state = initialState
+    val (leadingComments, current) = collectComments(initialState)
 
-    state.current match {
+    current.current match {
       case Right(Token.LBrace(sourcePos)) => {
         // Collect comments after the opening brace
-        val (afterBraceComments, afterBrace) = collectComments(state.advance())
-        state = afterBrace
-        var clauses = Vector.empty[ObjectClause]
-
-        // Helper function to check for comma or right brace after object field
-        def checkAfterField(): Either[ParseError, Unit] = {
+        val (afterBraceComments, afterBrace) = collectComments(current.advance())
+        
+        def parseFields(state: LexerState, clauses: Vector[ObjectClause]): Either[ParseError, (Vector[ObjectClause], LexerState)] = {
+          state.current match {
+            case Right(Token.RBrace(_)) => 
+              Right((clauses, state))
+            case Right(Token.Identifier(chars, idSourcePos)) => 
+              val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
+              parseField(state.advance(), identifier, idSourcePos).flatMap { case (clause, nextState) => 
+                checkAfterField(nextState).flatMap { nextStateAfterComma =>
+                  parseFields(nextStateAfterComma, clauses :+ clause) 
+                }
+              }
+            case Right(Token.StringLiteral(chars, strSourcePos)) => 
+              val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
+              parseField(state.advance(), stringLiteral, strSourcePos).flatMap { case (clause, nextState) => 
+                checkAfterField(nextState).flatMap { nextStateAfterComma =>
+                  parseFields(nextStateAfterComma, clauses :+ clause) 
+                }
+              }
+            case Right(Token.SymbolLiteral(value, symSourcePos)) => 
+              val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
+              parseField(state.advance(), symbolLiteral, symSourcePos).flatMap { case (clause, nextState) => 
+                checkAfterField(nextState).flatMap { nextStateAfterComma =>
+                  parseFields(nextStateAfterComma, clauses :+ clause) 
+                }
+              }
+            case Right(t) => 
+              Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
+            case Left(err) => 
+              Left(err)
+          }
+        }
+        
+        def parseField(state: LexerState, key: Expr, keySourcePos: SourcePos): Either[ParseError, (ObjectClause, LexerState)] = {
+          state.current match {
+            case Right(Token.Operator(op, _)) => {
+              val afterOp = state.advance()
+              parseExpr(afterOp).flatMap { case (value, afterValue) =>
+                if (op == "=>") {
+                  Right((ObjectExprClauseOnValue(key, value), afterValue))
+                } else { // op == "="
+                  // For string literals with "=", convert to identifier
+                  key match {
+                    case stringLit: ConcreteStringLiteral =>
+                      val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
+                      Right((ObjectExprClause(idKey, value), afterValue))
+                    case qualifiedName: QualifiedName =>
+                      Right((ObjectExprClause(qualifiedName, value), afterValue))
+                    case other => 
+                      // This case should never happen due to validation in caller
+                      Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
+                  }
+                }
+              }
+            }
+            case Right(t) => 
+              Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+            case Left(err) => 
+              Left(err)
+          }
+        }
+        
+        def checkAfterField(state: LexerState): Either[ParseError, LexerState] = {
           state.current match {
             case Right(Token.Comma(_)) => {
               // Collect comments after comma
               val (_, afterComma) = collectComments(state.advance())
-              state = afterComma
-              Right(())
+              Right(afterComma)
             }
-            case Right(Token.RBrace(_)) => Right(())
-            case Right(t)               => Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-            case Left(err)              => Left(err)
+            case Right(Token.RBrace(_)) => 
+              Right(state)
+            case Right(t) => 
+              Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+            case Left(err) => 
+              Left(err)
           }
         }
 
-        // Helper function to handle field value after operator
-        def handleFieldValue(key: Expr, op: String, keySourcePos: SourcePos): Either[ParseError, Unit] = {
-          parseExpr(state).flatMap { case (value, afterValue) =>
-            state = afterValue
-            if (op == "=>") {
-              clauses = clauses :+ ObjectExprClauseOnValue(key, value)
-              checkAfterField()
-            } else { // op == "="
-              // For string literals with "=", convert to identifier
-              key match {
-                case stringLit: ConcreteStringLiteral =>
-                  val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
-                  clauses = clauses :+ ObjectExprClause(idKey, value)
-                  checkAfterField()
-                case qualifiedName: QualifiedName =>
-                  clauses = clauses :+ ObjectExprClause(qualifiedName, value)
-                  checkAfterField()
-                case other =>
-                  // This shouldn't happen with proper validation upstream
-                  Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
-              }
-            }
-          }
-        }
-
-        def parseField(): Either[ParseError, Unit] = {
-          state.current match {
-            case Right(Token.Identifier(chars, idSourcePos)) => {
-              state = state.advance()
-              val key = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
-              state.current match {
-                case Right(Token.Operator(op, _)) => {
-                  state = state.advance()
-                  handleFieldValue(key, op, idSourcePos)
-                }
-                case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
-                case Left(err) => Left(err)
-              }
-            }
-            case Right(Token.StringLiteral(chars, strSourcePos)) => {
-              state = state.advance()
-              val keyLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
-              state.current match {
-                case Right(Token.Operator(op, _)) => {
-                  state = state.advance()
-                  handleFieldValue(keyLiteral, op, strSourcePos)
-                }
-                case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
-                case Left(err) => Left(err)
-              }
-            }
-            case Right(Token.SymbolLiteral(value, symSourcePos)) => {
-              state = state.advance()
-              val key = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
-              state.current match {
-                case Right(Token.Operator(op, _)) => {
-                  state = state.advance()
-                  handleFieldValue(key, op, symSourcePos)
-                }
-                case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
-                case Left(err) => Left(err)
-              }
-            }
+        parseFields(afterBrace, Vector.empty).flatMap { case (clauses, finalState) =>
+          finalState.current match {
             case Right(Token.RBrace(endPos)) => {
-              state = state.advance()
-              Right(())
-            }
-            case Right(t)  => Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
-            case Left(err) => Left(err)
-          }
-        }
-
-        while (!state.current.exists(_.isInstanceOf[Token.RBrace])) {
-          parseField() match {
-            case Right(_)  => ()
-            case Left(err) => return Left(err)
-          }
-        }
-
-        state.current match {
-          case Right(Token.RBrace(endPos)) => {
-            // Create meta with comments
-            val objectMeta = if (leadingComments.nonEmpty || afterBraceComments.nonEmpty) {
-              val meta = createMeta(Some(sourcePos), Some(endPos))
-              meta.map { m =>
-                val allLeadingComments = leadingComments ++ afterBraceComments
-                val commentInfo = Option.when(allLeadingComments.nonEmpty)(
-                  chester.syntax.concrete.CommentInfo(
-                    commentBefore = allLeadingComments,
-                    commentInBegin = Vector.empty,
-                    commentInEnd = Vector.empty,
-                    commentEndInThisLine = Vector.empty
+              // Create meta with comments
+              val objectMeta = if (leadingComments.nonEmpty || afterBraceComments.nonEmpty) {
+                val meta = createMeta(Some(sourcePos), Some(endPos))
+                meta.map { m =>
+                  val allLeadingComments = leadingComments ++ afterBraceComments
+                  val commentInfo = Option.when(allLeadingComments.nonEmpty)(
+                    chester.syntax.concrete.CommentInfo(
+                      commentBefore = allLeadingComments,
+                      commentInBegin = Vector.empty,
+                      commentInEnd = Vector.empty,
+                      commentEndInThisLine = Vector.empty
+                    )
                   )
-                )
 
-                ExprMeta(m.sourcePos, commentInfo)
+                  ExprMeta(m.sourcePos, commentInfo)
+                }
+              } else {
+                createMeta(Some(sourcePos), Some(endPos))
               }
-            } else {
-              createMeta(Some(sourcePos), Some(endPos))
-            }
 
-            state = state.advance()
-            Right((ObjectExpr(clauses, objectMeta), state))
+              Right((ObjectExpr(clauses, objectMeta), finalState.advance()))
+            }
+            case Right(t) => 
+              Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
+            case Left(err) => 
+              Left(err)
           }
-          case Right(t)  => Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
-          case Left(err) => Left(err)
         }
       }
-      case Right(t)  => Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
-      case Left(err) => Left(err)
+      case Right(t) => 
+        Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
+      case Left(err) => 
+        Left(err)
     }
   }
 
