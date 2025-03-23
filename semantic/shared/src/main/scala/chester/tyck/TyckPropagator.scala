@@ -347,7 +347,6 @@ trait TyckPropagator extends ElaboraterCommon {
         val lhsValue = lhsValueOpt.get
         val rhsValues = rhsValuesOpt.map(_.get)
 
-        // Handle meta variables in lhs
         lhsValue match {
           case Meta(lhsId) =>
             // Create a new union type and unify with the meta variable
@@ -375,38 +374,36 @@ trait TyckPropagator extends ElaboraterCommon {
 
       // First check if any of our cells are in the needed list
       val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
-      if (ourNeededCells.nonEmpty) {
-        // We need to handle these cells
-        val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
-        if (unknownRhs.nonEmpty) {
-          // Wait for all rhs values to be known
-          ZonkResult.Require(unknownRhs.toVector)
-        } else {
-          val rhsValues = rhsValuesOpt.map(_.get)
+      if (ourNeededCells.isEmpty) {
+        return ZonkResult.Done // None of our cells are needed
+      }
+      
+      // Check if we're waiting for rhs values
+      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
+      if (unknownRhs.nonEmpty) {
+        return ZonkResult.Require(unknownRhs.toVector)
+      }
+      
+      val rhsValues = rhsValuesOpt.map(_.get)
 
-          lhsValueOpt match {
-            case Some(Meta(lhsId)) =>
-              // Create union type and unify with meta variable
-              val unionType = Union(rhsValues.assumeNonEmpty, None)
-              unify(lhsId, unionType, cause)
-              ZonkResult.Done
-            case Some(lhsValue) =>
-              // LHS is known, check if it's compatible with all RHS values
-              if (rhsValues.forall(rhsValue => tryUnify(lhsValue, rhsValue))) {
-                ZonkResult.Done
-              } else {
-                ZonkResult.NotYet
-              }
-            case None =>
-              // LHS is unknown, create UnionType from RHS values
-              val unionType = Union(rhsValues.assumeNonEmpty, None)
-              state.fill(lhs, unionType)
-              ZonkResult.Done
+      lhsValueOpt match {
+        case Some(Meta(lhsId)) =>
+          // Create union type and unify with meta variable
+          val unionType = Union(rhsValues.assumeNonEmpty, None)
+          unify(lhsId, unionType, cause)
+          ZonkResult.Done
+        case Some(lhsValue) =>
+          // LHS is known, check if it's compatible with all RHS values
+          if (rhsValues.forall(rhsValue => tryUnify(lhsValue, rhsValue))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
           }
-        }
-      } else {
-        // None of our cells are needed
-        ZonkResult.Done
+        case None =>
+          // LHS is unknown, create UnionType from RHS values
+          val unionType = Union(rhsValues.assumeNonEmpty, None)
+          state.fill(lhs, unionType)
+          ZonkResult.Done
       }
     }
   }
@@ -429,7 +426,6 @@ trait TyckPropagator extends ElaboraterCommon {
         val lhsValue = lhsValueOpt.get
         val rhsValues = rhsValuesOpt.map(_.get)
 
-        // Handle meta variables in lhs
         lhsValue match {
           case Meta(lhsId) =>
             // Create a new intersection type and unify with the meta variable
@@ -457,38 +453,36 @@ trait TyckPropagator extends ElaboraterCommon {
 
       // First check if any of our cells are in the needed list
       val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
-      if (ourNeededCells.nonEmpty) {
-        // We need to handle these cells
-        val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
-        if (unknownRhs.nonEmpty) {
-          // Wait for all rhs values to be known
-          ZonkResult.Require(unknownRhs.toVector)
-        } else {
-          val rhsValues = rhsValuesOpt.map(_.get)
+      if (ourNeededCells.isEmpty) {
+        return ZonkResult.Done // None of our cells are needed
+      }
+      
+      // Check if we're waiting for rhs values
+      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
+      if (unknownRhs.nonEmpty) {
+        return ZonkResult.Require(unknownRhs.toVector)
+      }
+      
+      val rhsValues = rhsValuesOpt.map(_.get)
 
-          lhsValueOpt match {
-            case Some(Meta(lhsId)) =>
-              // Create intersection type and unify with meta variable
-              val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
-              unify(lhsId, intersectionType, cause)
-              ZonkResult.Done
-            case Some(lhsValue) =>
-              // LHS is known, check if it's compatible with all RHS values
-              if (rhsValues.forall(rhsValue => tryUnify(rhsValue, lhsValue))) {
-                ZonkResult.Done
-              } else {
-                ZonkResult.NotYet
-              }
-            case None =>
-              // LHS is unknown, create IntersectionType from RHS values
-              val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
-              state.fill(lhs, intersectionType)
-              ZonkResult.Done
+      lhsValueOpt match {
+        case Some(Meta(lhsId)) =>
+          // Create intersection type and unify with meta variable
+          val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+          unify(lhsId, intersectionType, cause)
+          ZonkResult.Done
+        case Some(lhsValue) =>
+          // LHS is known, check if it's compatible with all RHS values
+          if (rhsValues.forall(rhsValue => tryUnify(rhsValue, lhsValue))) {
+            ZonkResult.Done
+          } else {
+            ZonkResult.NotYet
           }
-        }
-      } else {
-        // None of our cells are needed
-        ZonkResult.Done
+        case None =>
+          // LHS is unknown, create IntersectionType from RHS values
+          val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+          state.fill(lhs, intersectionType)
+          ZonkResult.Done
       }
     }
   }
