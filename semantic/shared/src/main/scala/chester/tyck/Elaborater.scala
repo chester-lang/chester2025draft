@@ -16,8 +16,11 @@ import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
 
-// Debug flag for union subtyping
-val DEBUG_UNION_SUBTYPING = false
+// Debug flags for various components
+val DEBUG_UNION_SUBTYPING = sys.env.get("ENV_DEBUG_UNION_SUBTYPING").isDefined || sys.env.get("ENV_DEBUG").isDefined
+val DEBUG_UNION_MATCHING = sys.env.get("ENV_DEBUG_UNION_MATCHING").isDefined || sys.env.get("ENV_DEBUG").isDefined
+val DEBUG_LITERALS = sys.env.get("ENV_DEBUG_LITERALS").isDefined || sys.env.get("ENV_DEBUG").isDefined
+val DEBUG_IDENTIFIERS = sys.env.get("ENV_DEBUG_IDENTIFIERS").isDefined || sys.env.get("ENV_DEBUG").isDefined
 
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
@@ -227,65 +230,21 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           println(s"Union Component Types: ${unionTypes.mkString(", ")}")
         }
 
-        // For specific-to-union subtyping, we need to:
-        // 1. Check if the specific type is compatible with any union component
-        // 2. Create propagators to establish the relationship
-        // 3. Ensure all relevant cells are covered
-
+        // For specific-to-union subtyping, delegate to the connectSpecificAndUnion method
+        // which handles all the necessary propagators and cell coverage
+        
         // Get cell IDs for both types
         val specificCellId = toId(specificType).asInstanceOf[CellId[Term]]
         val unionCellId = toId(union).asInstanceOf[CellId[Term]]
         
-        // Ensure both cells have coverage first
-        state.addPropagator(EnsureCellCoverage(specificCellId, cause))
-        state.addPropagator(EnsureCellCoverage(unionCellId, cause))
-        
-        // Check if specificType is compatible with any unionType
-        var foundCompatible = false
-        for (unionType <- unionTypes) {
-          if (tryUnify(specificType, unionType)) {
-            foundCompatible = true
-            
-            // Create a direct connection between the specific type and this union component
-            val unionTypeCell = toId(unionType)
-            
-            if (DEBUG_UNION_SUBTYPING) {
-              println(s"Creating propagator for specific-to-union: $specificType -> $unionType")
-              println(s"  Cell IDs: $specificCellId -> $unionTypeCell")
-            }
-            
-            // Add a propagator to establish the relationship
-            state.addPropagator(Unify(specificCellId, unionTypeCell, cause))
-            
-            // Also ensure the union component cell is covered
-            state.addPropagator(EnsureCellCoverage(unionTypeCell.asInstanceOf[CellId[Term]], cause))
-          }
-        }
-
-        // If no compatible union component was found, report error
-        if (!foundCompatible) {
-          ck.reporter.apply(TypeMismatch(specificType, union, cause))
-        } else {
-          // Add a direct connection between the specific type and the union itself
-          // This is critical for the test case to pass
-          if (DEBUG_UNION_SUBTYPING) {
-            println(s"Creating direct connection between specific and union: $specificCellId -> $unionCellId")
-          }
-          state.addPropagator(Unify(specificCellId, unionCellId, cause))
-          
-          // Connect via TyckPropagator helper for consistency
-          connectSpecificAndUnion(
-            specificId = specificCellId,
-            specificType = specificType,
-            unionId = unionCellId,
-            unionTypes = unionTypes,
-            cause = cause
-          )
-          
-          // Ensure the union components are properly connected to the union
-          val unionComponentCellIds = unionTypes.map(t => toId(t).asInstanceOf[CellId[Term]]).toVector
-          state.addPropagator(UnionOf(unionCellId, unionComponentCellIds, cause))
-        }
+        // Use the helper method to connect the specific type to the union
+        connectSpecificAndUnion(
+          specificId = specificCellId,
+          specificType = specificType,
+          unionId = unionCellId,
+          unionTypes = unionTypes,
+          cause = cause
+        )
 
       // Union-to-Specific subtyping (function return case in test)
       case (union @ Union(unionTypes, _), specificType) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
@@ -432,38 +391,176 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     val ty = toId(readMetaVar(toTerm(ty0)))
     resolve(expr) match {
       case expr @ Identifier(name, meta) => {
-        localCtx.get(name) match {
-          case Some(c: ContextItem) => {
-            state.addPropagator(Unify(ty, c.tyId, expr))
-            c.ref
+        if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Processing identifier $name")
+        
+        // Get the expected type (if already specified)
+        val expectedType = state.readStable(ty)
+        if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Expected type: ${expectedType.getOrElse("unknown")}")
+        
+        // Special handling for assigning a variable to a union type
+        expectedType match {
+          case Some(Union(unionTypes, _)) => {
+            if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
+            
+            // Look up the identifier in context
+            localCtx.get(name) match {
+              case Some(c: ContextItem) => {
+                if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Found identifier $name in context")
+                
+                // Get the source type of the identifier
+                val sourceTypeOpt = state.readStable(c.tyId)
+                if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Source type: ${sourceTypeOpt.getOrElse("unknown")}")
+                
+                sourceTypeOpt match {
+                  case Some(sourceType) => {
+                    // If the source is an Integer type and the union contains Integer, establish the connection
+                    given ReduceContext = localCtx.toReduceContext
+                    given Reducer = localCtx.given_Reducer
+                    
+                    val reducedSourceType = NaiveReducer.reduce(sourceType, ReduceMode.TypeLevel)
+                    
+                    // Check if source is compatible with any union component
+                    val compatibleComponent = unionTypes.find { unionType =>
+                      val reducedUnionType = NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)
+                      if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Checking union component: $unionType (reduced: $reducedUnionType)")
+                      
+                      tryUnify(reducedSourceType, reducedUnionType)(using state, localCtx)
+                    }
+                    
+                    if (compatibleComponent.isDefined) {
+                      if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Found compatible union component: ${compatibleComponent.get}")
+                      
+                      // Connect to the specific component
+                      val componentId = toId(compatibleComponent.get)
+                      state.addPropagator(Unify(c.tyId, componentId, expr))
+                      
+                      // Return the reference
+                      c.ref
+                    } else {
+                      if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] No compatible union component found, using regular unification")
+                      // Fall back to regular unification
+                      state.addPropagator(Unify(ty, c.tyId, expr))
+                      c.ref
+                    }
+                  }
+                  case None => {
+                    if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] No source type yet, using regular unification")
+                    // No source type yet, fall back to normal handling
+                    state.addPropagator(Unify(ty, c.tyId, expr))
+                    c.ref
+                  }
+                }
+              }
+              case None => {
+                if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Identifier $name not found in context")
+                // Regular handling for unbound identifiers
+                localCtx.getTypeDefinition(name) match {
+                  case Some(objectDef: ObjectStmtTerm) =>
+                    val objectCallTerm = ObjectConstructTerm(objectDef, convertMeta(expr.meta))
+                    unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
+                    objectCallTerm
+                  case Some(recordDef: RecordStmtTerm) =>
+                    val recordCallTerm = RecordTypeTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta))
+                    unify(ty, Type0, expr)
+                    recordCallTerm
+                  case Some(traitDef: TraitStmtTerm) =>
+                    val traitCallTerm = TraitTypeTerm(traitDef, convertMeta(expr.meta))
+                    unify(ty, Type0, expr)
+                    traitCallTerm
+                  case Some(todo) => ???
+                  case None =>
+                    val problem = UnboundVariable(name, expr)
+                    ck.reporter.apply(problem)
+                    ErrorTerm(problem, convertMeta(expr.meta))
+                }
+              }
+            }
           }
-          case None => {
-            // Check if 'name' refers to an object definition
-            localCtx.getTypeDefinition(name) match {
-              case Some(objectDef: ObjectStmtTerm) =>
-                val objectCallTerm = ObjectConstructTerm(objectDef, convertMeta(expr.meta))
-                unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
-                objectCallTerm
-              case Some(recordDef: RecordStmtTerm) =>
-                val recordCallTerm = RecordTypeTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta)) // TODO
-                unify(ty, Type0, expr) // TODO: Type
-                recordCallTerm
-              case Some(traitDef: TraitStmtTerm) =>
-                val traitCallTerm = TraitTypeTerm(traitDef, convertMeta(expr.meta))
-                unify(ty, Type0, expr) // Traits are types
-                traitCallTerm
-              case Some(todo) => ???
-              case None =>
-                val problem = UnboundVariable(name, expr)
-                ck.reporter.apply(problem)
-                ErrorTerm(problem, convertMeta(expr.meta))
+          case _ => {
+            if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Expected type is not a union, using regular unification")
+            // Regular identifier handling (no union type involved)
+            localCtx.get(name) match {
+              case Some(c: ContextItem) => {
+                state.addPropagator(Unify(ty, c.tyId, expr))
+                c.ref
+              }
+              case None => {
+                // Check if 'name' refers to an object definition
+                localCtx.getTypeDefinition(name) match {
+                  case Some(objectDef: ObjectStmtTerm) =>
+                    val objectCallTerm = ObjectConstructTerm(objectDef, convertMeta(expr.meta))
+                    unify(ty, ObjectTypeTerm(objectDef, convertMeta(expr.meta)), expr)
+                    objectCallTerm
+                  case Some(recordDef: RecordStmtTerm) =>
+                    val recordCallTerm = RecordTypeTerm(recordDef, TelescopeTerm(Vector(), meta = None), convertMeta(expr.meta))
+                    unify(ty, Type0, expr)
+                    recordCallTerm
+                  case Some(traitDef: TraitStmtTerm) =>
+                    val traitCallTerm = TraitTypeTerm(traitDef, convertMeta(expr.meta))
+                    unify(ty, Type0, expr)
+                    traitCallTerm
+                  case Some(todo) => ???
+                  case None =>
+                    val problem = UnboundVariable(name, expr)
+                    ck.reporter.apply(problem)
+                    ErrorTerm(problem, convertMeta(expr.meta))
+                }
+              }
             }
           }
         }
       }
       case expr @ IntegerLiteral(value, meta) => {
-        state.addPropagator(LiteralType(expr, ty))
-        AbstractIntTerm_.from(value, convertMeta(meta))
+        // Get the expected type (if already specified)
+        val expectedType = state.readStable(ty)
+        
+        if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] Processing integer literal $value with expected type ${expectedType.getOrElse("unknown")}")
+        
+        expectedType match {
+          // If the expected type is a union type, we need special handling
+          case Some(Union(unionTypes, _)) => {
+            if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
+            
+            // Check if any union component is compatible with Integer
+            val integerTypeComponent = unionTypes.find { unionType =>
+              if (DEBUG_UNION_MATCHING) println(s"[LITERAL DEBUG] Checking union component: $unionType")
+              
+              given ReduceContext = localCtx.toReduceContext
+              given Reducer = localCtx.given_Reducer
+              val reduced = NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)
+              if (DEBUG_UNION_MATCHING) println(s"[LITERAL DEBUG] Reduced union component: $reduced")
+              
+              reduced match {
+                case IntegerType(_) => true
+                case _ => false
+              }
+            }
+            
+            if (integerTypeComponent.isDefined) {
+              if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] Found compatible integer component in union: ${integerTypeComponent.get}")
+              
+              // Create the integer term with Integer type 
+              val integerTerm = AbstractIntTerm_.from(value, convertMeta(meta))
+              
+              // Connect to the union type directly
+              state.addPropagator(Unify(ty, toId(integerTypeComponent.get), expr))
+              
+              // Return the integer term
+              integerTerm
+            } else {
+              // If no Integer type found in the union, default to normal handling
+              if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] No compatible Integer component found in union")
+              state.addPropagator(LiteralType(expr, ty))
+              AbstractIntTerm_.from(value, convertMeta(meta))
+            }
+          }
+          
+          // Normal case - not a union type or no expected type yet
+          case _ => {
+            state.addPropagator(LiteralType(expr, ty))
+            AbstractIntTerm_.from(value, convertMeta(meta))
+          }
+        }
       }
       case expr @ RationalLiteral(value, meta) => {
         state.addPropagator(LiteralType(expr, ty))
