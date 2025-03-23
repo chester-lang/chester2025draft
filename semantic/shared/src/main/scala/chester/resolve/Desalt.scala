@@ -299,22 +299,22 @@ case object SimpleDesalt {
     expr match {
       case OpSeq(xs, _) if xs.length == 1 => xs.head
       case _ @DesaltCaseClauseMatch(x)    => x
-      
+
       // Handle OpSeq that might contain pipe operators for union types
       case opseq @ OpSeq(seq, meta) if seq.exists {
-        case Identifier("|", _) => true
-        case _ => false
-      } =>
+            case Identifier("|", _) => true
+            case _                  => false
+          } =>
         // Check if this OpSeq contains pipe operators that should be treated as union types
         // Delegate to OpSeqDesalt to handle union type expressions
         OpSeqDesalt.desugar(opseq) match {
           case unionExpr: UnionTypeExpr => unionExpr
-          case _ => 
+          case _                        =>
             // Proceed with normal OpSeq desugaring
             // For non-union cases, fallback to regular behavior
             if (seq.length == 1) seq.head else opseq
         }
-        
+
       case block @ Block(heads, tail, _)
           if heads.exists(_.isInstanceOf[DesaltCaseClause]) ||
             tail.exists(_.isInstanceOf[DesaltCaseClause]) =>
@@ -600,10 +600,10 @@ case object OpSeqDesalt {
   def desugar(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = expr match {
     case opseq @ OpSeq(seq, meta) =>
       // Look for pipe operators in the sequence
-      val pipeIndices = seq.zipWithIndex.collect {
-        case (Identifier("|", _), idx) => idx
+      val pipeIndices = seq.zipWithIndex.collect { case (Identifier("|", _), idx) =>
+        idx
       }
-      
+
       if (pipeIndices.isEmpty) {
         // No pipe operators found, return the original expression
         opseq
@@ -611,7 +611,7 @@ case object OpSeqDesalt {
         // Found pipe operators, construct a union type
         // We need to ensure the sequence is properly formed like: A | B | C
         // Where the pipe operators should be at odd indices (1, 3, 5, ...)
-        
+
         // Check if the first pipe operator is at an odd index (meaning we have a type before it)
         val firstPipeIdx = pipeIndices.head
         if (firstPipeIdx % 2 == 0) {
@@ -619,7 +619,7 @@ case object OpSeqDesalt {
           reporter(NotImplemented(opseq))
           return opseq
         }
-        
+
         // Check if all pipe operators are at odd indices
         val validPipePositions = pipeIndices.forall(_ % 2 == 1)
         if (!validPipePositions) {
@@ -627,16 +627,16 @@ case object OpSeqDesalt {
           reporter(NotImplemented(opseq))
           return opseq
         }
-        
+
         // Extract the types (which should be at even indices: 0, 2, 4, ...)
         val typeIndices = (0 until seq.length).filter(_ % 2 == 0)
         if (typeIndices.isEmpty) {
           reporter(NotImplemented(opseq))
           return opseq
         }
-        
+
         val types = typeIndices.map(seq(_)).toVector
-        
+
         // Create a UnionTypeExpr with the extracted types
         UnionTypeExpr(types, meta)
       }

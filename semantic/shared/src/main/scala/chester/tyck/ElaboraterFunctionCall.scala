@@ -18,10 +18,9 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       state: StateAbility[Tyck]
   ): Term
 
-  /**
-   * Safely fills a cell with a value, handling the case where the cell already has a value.
-   * This prevents "requirement failed" exceptions when OnceCell.fill is called twice.
-   */
+  /** Safely fills a cell with a value, handling the case where the cell already has a value. This prevents "requirement failed" exceptions when
+    * OnceCell.fill is called twice.
+    */
   protected def safelyFillCell[T](
       cell: CellId[T],
       value: T,

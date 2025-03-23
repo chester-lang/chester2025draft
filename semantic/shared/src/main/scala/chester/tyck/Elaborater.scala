@@ -37,7 +37,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
   // Helper method to ensure cell coverage for all union components
   private def ensureUnionComponentsCoverage(
-      unionTypes: NonEmptyVector[Term], 
+      unionTypes: NonEmptyVector[Term],
       cause: Expr
   )(using
       state: StateAbility[Tyck],
@@ -45,12 +45,14 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ck: Tyck
   ): Vector[CellId[Term]] = {
     // Get cell IDs for all union component types and ensure they're covered
-    val unionTypeIds = unionTypes.map(typ => {
-      val cellId = toId(typ)
-      ensureCellCoverage(cellId, cause)
-      cellId
-    }).toVector
-    
+    val unionTypeIds = unionTypes
+      .map(typ => {
+        val cellId = toId(typ)
+        ensureCellCoverage(cellId, cause)
+        cellId
+      })
+      .toVector
+
     unionTypeIds
   }
 
@@ -69,7 +71,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     }
     state.addPropagator(UnionOf(unionCell, componentIds, cause))
   }
-  
+
   // Process all terms in a function application to ensure proper cell coverage
   private def processFunctionCall(term: Term, cause: Expr)(using
       StateAbility[Tyck],
@@ -232,11 +234,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
         // For specific-to-union subtyping, delegate to the connectSpecificAndUnion method
         // which handles all the necessary propagators and cell coverage
-        
+
         // Get cell IDs for both types
         val specificCellId = toId(specificType).asInstanceOf[CellId[Term]]
         val unionCellId = toId(union).asInstanceOf[CellId[Term]]
-        
+
         // Use the helper method to connect the specific type to the union
         connectSpecificAndUnion(
           specificId = specificCellId,
@@ -312,12 +314,12 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         // Add a propagator for each compatible union component
         val unionTypeCell = toId(unionType)
         val specificTypeCell = toId(specificType)
-        
+
         if (DEBUG_UNION_SUBTYPING) {
           println(s"Creating propagator for union-to-specific: $unionType -> $specificType")
           println(s"  Cell IDs: $unionTypeCell -> $specificTypeCell")
         }
-        
+
         // Create a propagator from the union component to the specific type
         state.addPropagator(Unify(unionTypeCell, specificTypeCell, cause))
       } else {
@@ -339,7 +341,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
   // Ensure a cell has coverage by checking or adding a propagator if needed
   private def ensureCellIsCovered(
-      cellId: CellId[Term], 
+      cellId: CellId[Term],
       cause: Expr
   )(using
       localCtx: Context,
@@ -349,7 +351,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     if (DEBUG_UNION_SUBTYPING) {
       println(s"Ensuring cell coverage for cell ID: $cellId")
     }
-    
+
     // Add a special propagator that ensures the cell is covered
     // This is especially important for cells that might not be directly involved in other constraints
     state.addPropagator(EnsureCellCoverage(cellId, cause))
@@ -392,48 +394,48 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     resolve(expr) match {
       case expr @ Identifier(name, meta) => {
         if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Processing identifier $name")
-        
+
         // Get the expected type (if already specified)
         val expectedType = state.readStable(ty)
         if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Expected type: ${expectedType.getOrElse("unknown")}")
-        
+
         // Special handling for assigning a variable to a union type
         expectedType match {
           case Some(Union(unionTypes, _)) => {
             if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
-            
+
             // Look up the identifier in context
             localCtx.get(name) match {
               case Some(c: ContextItem) => {
                 if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Found identifier $name in context")
-                
+
                 // Get the source type of the identifier
                 val sourceTypeOpt = state.readStable(c.tyId)
                 if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Source type: ${sourceTypeOpt.getOrElse("unknown")}")
-                
+
                 sourceTypeOpt match {
                   case Some(sourceType) => {
                     // If the source is an Integer type and the union contains Integer, establish the connection
                     given ReduceContext = localCtx.toReduceContext
                     given Reducer = localCtx.given_Reducer
-                    
+
                     val reducedSourceType = NaiveReducer.reduce(sourceType, ReduceMode.TypeLevel)
-                    
+
                     // Check if source is compatible with any union component
                     val compatibleComponent = unionTypes.find { unionType =>
                       val reducedUnionType = NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)
                       if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Checking union component: $unionType (reduced: $reducedUnionType)")
-                      
+
                       tryUnify(reducedSourceType, reducedUnionType)(using state, localCtx)
                     }
-                    
+
                     if (compatibleComponent.isDefined) {
                       if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Found compatible union component: ${compatibleComponent.get}")
-                      
+
                       // Connect to the specific component
                       val componentId = toId(compatibleComponent.get)
                       state.addPropagator(Unify(c.tyId, componentId, expr))
-                      
+
                       // Return the reference
                       c.ref
                     } else {
@@ -513,38 +515,38 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr @ IntegerLiteral(value, meta) => {
         // Get the expected type (if already specified)
         val expectedType = state.readStable(ty)
-        
+
         if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] Processing integer literal $value with expected type ${expectedType.getOrElse("unknown")}")
-        
+
         expectedType match {
           // If the expected type is a union type, we need special handling
           case Some(Union(unionTypes, _)) => {
             if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
-            
+
             // Check if any union component is compatible with Integer
             val integerTypeComponent = unionTypes.find { unionType =>
               if (DEBUG_UNION_MATCHING) println(s"[LITERAL DEBUG] Checking union component: $unionType")
-              
+
               given ReduceContext = localCtx.toReduceContext
               given Reducer = localCtx.given_Reducer
               val reduced = NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)
               if (DEBUG_UNION_MATCHING) println(s"[LITERAL DEBUG] Reduced union component: $reduced")
-              
+
               reduced match {
                 case IntegerType(_) => true
-                case _ => false
+                case _              => false
               }
             }
-            
+
             if (integerTypeComponent.isDefined) {
               if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] Found compatible integer component in union: ${integerTypeComponent.get}")
-              
-              // Create the integer term with Integer type 
+
+              // Create the integer term with Integer type
               val integerTerm = AbstractIntTerm_.from(value, convertMeta(meta))
-              
+
               // Connect to the union type directly
               state.addPropagator(Unify(ty, toId(integerTypeComponent.get), expr))
-              
+
               // Return the integer term
               integerTerm
             } else {
@@ -554,7 +556,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               AbstractIntTerm_.from(value, convertMeta(meta))
             }
           }
-          
+
           // Normal case - not a union type or no expected type yet
           case _ => {
             state.addPropagator(LiteralType(expr, ty))
@@ -612,13 +614,13 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         elabObjectExpr(expr, fields, ty, effects)
       case expr @ UnionTypeExpr(types, meta) =>
         // Handle union type expressions
-        
+
         // Elaborate each type in the union
         val elaboratedTypes = types.map { typeExpr =>
           // Each component should be a type
           elab(typeExpr, Typeω, effects)
         }
-        
+
         // Ensure we have at least one type in the union
         if (elaboratedTypes.isEmpty) {
           val errorTerm = ErrorTerm(NotImplemented(expr), convertMeta(meta))
@@ -629,25 +631,25 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           import cats.data.NonEmptyVector
           val unionTypes = NonEmptyVector.fromVectorUnsafe(elaboratedTypes)
           val unionTerm = Union(unionTypes, convertMeta(meta))
-          
+
           // This is a type, so it should be in the Type universe
           unify(ty, Type0, expr)
-          
+
           // Ensure each component type has a propagator for cell coverage
-          val componentCellIds = elaboratedTypes.map { componentType => 
+          val componentCellIds = elaboratedTypes.map { componentType =>
             val cellId = toId(componentType)
             // Add a propagator to ensure this cell is covered
             state.addPropagator(EnsureCellCoverage(cellId, expr))
             cellId
           }.toVector
-          
+
           // Get the cell ID for the union term and ensure it's covered
           val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
           state.addPropagator(EnsureCellCoverage(unionCellId, expr))
-          
+
           // Connect the union to its components
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))
-          
+
           // Return the union term
           unionTerm
         }

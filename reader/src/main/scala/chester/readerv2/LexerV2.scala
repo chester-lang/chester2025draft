@@ -79,9 +79,9 @@ case class LexerState(
       t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
       t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
-  
+
   // Helper method to create a state with modified context
-  def withNewLineTermination(enabled: Boolean): LexerState = 
+  def withNewLineTermination(enabled: Boolean): LexerState =
     if (this.newLineAfterBlockMeansEnds == enabled) this
     else copy(newLineAfterBlockMeansEnds = enabled)
 
@@ -236,7 +236,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
         // Only consider }\n as terminating if we're in the right context
         if (!state.newLineAfterBlockMeansEnds) return false
-        
+
         expr match {
           case block: Block =>
             state.current match {
@@ -968,7 +968,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     // IMPORTANT: Enable newLineAfterBlockMeansEnds for all blocks
     // This preserves uniform treatment without special-casing any operators
     val contextState = state.withNewLineTermination(true)
-    
+
     // Replace skipComments with collectComments
     val (_, current) = collectComments(contextState)
     var statements = Vector[Expr]()

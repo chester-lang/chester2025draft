@@ -508,6 +508,8 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
+val AIRFRAME_VERSION = "2025.1.8"
+
 // split modules trying to increase incremental compilation speed
 lazy val utils = useSpire(
   crossProject(JSPlatform, JVMPlatform, NativePlatform)
@@ -518,7 +520,18 @@ lazy val utils = useSpire(
       commonLibSettings,
       baseDeps,
       libraryDependencies ++= Seq(
-        "org.scala-graph" %%% "graph-core" % "2.0.2"
+        "org.scala-graph" %%% "graph-core" % "2.0.2",
+        "com.outr" %%% "scribe" % "3.16.0",
+        "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
+        "org.wvlet.airframe" %%% "airframe-codec" % AIRFRAME_VERSION, // MessagePack-based schema-on-read codec
+        "org.wvlet.airframe" %%% "airframe-control" % AIRFRAME_VERSION, // Library for retryable execution
+        "org.wvlet.airframe" %%% "airframe-json" % AIRFRAME_VERSION, // Pure Scala JSON parser
+        "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION, // Logging
+        "org.wvlet.airframe" %%% "airframe-msgpack" % AIRFRAME_VERSION, // Pure-Scala MessagePack
+        "org.wvlet.airframe" %%% "airframe-metrics" % AIRFRAME_VERSION, // Metrics units
+        "org.wvlet.airframe" %%% "airframe-rx" % AIRFRAME_VERSION, // ReactiveX interface
+        "org.wvlet.airframe" %%% "airframe-surface" % AIRFRAME_VERSION, // Object surface inspector
+        "org.wvlet.airframe" %%% "airframe-ulid" % AIRFRAME_VERSION // ULID generator
       )
     )
     .jvmSettings(
