@@ -1063,26 +1063,25 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
         // Helper function to handle field value after operator
         def handleFieldValue(key: Expr, op: String, keySourcePos: SourcePos): Either[ParseError, Unit] = {
-          parseExpr(state).map { case (value, afterValue) =>
+          parseExpr(state).flatMap { case (value, afterValue) =>
             state = afterValue
             if (op == "=>") {
               clauses = clauses :+ ObjectExprClauseOnValue(key, value)
+              checkAfterField()
             } else { // op == "="
               // For string literals with "=", convert to identifier
               key match {
                 case stringLit: ConcreteStringLiteral =>
                   val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                   clauses = clauses :+ ObjectExprClause(idKey, value)
+                  checkAfterField()
                 case qualifiedName: QualifiedName =>
                   clauses = clauses :+ ObjectExprClause(qualifiedName, value)
+                  checkAfterField()
                 case other =>
                   // This shouldn't happen with proper validation upstream
-                  return Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
+                  Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
               }
-            }
-            checkAfterField() match {
-              case Right(_)  => // Continue
-              case Left(err) => return Left(err)
             }
           }
         }
@@ -1178,16 +1177,49 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
     // Replace skipComments with collectComments
     val (leadingComments, initialState) = collectComments(state)
-    var current = initialState
-    var exprs = Vector[Expr]()
 
-    current.current match {
+    initialState.current match {
       case Right(Token.LBracket(sourcePos)) => {
-        val (afterBracketComments, afterBracket) = collectComments(current.advance())
-        current = afterBracket
-
-        while (exprs.length < LexerV2.MAX_LIST_ELEMENTS) {
-          current.current match {
+        val (afterBracketComments, afterBracket) = collectComments(initialState.advance())
+        
+        def parseElements(current: LexerState, exprs: Vector[Expr]): Either[ParseError, (Vector[Expr], LexerState)] = {
+          if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
+            Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
+          } else {
+            current.current match {
+              case Right(Token.RBracket(_)) => 
+                Right((exprs, current))
+              case Right(Token.Comma(_)) => 
+                // Collect comments after comma
+                val (_, afterComma) = collectComments(current.advance())
+                parseElements(afterComma, exprs)
+              case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) => 
+                // Collect comments
+                val (_, afterComments) = collectComments(current)
+                parseElements(afterComments, exprs)
+              case _ => 
+                parseExpr(current).flatMap { case (expr, afterExpr) =>
+                  // Collect any comments after the expression
+                  val (_, afterComments) = collectComments(afterExpr)
+                  
+                  afterComments.current match {
+                    case Right(Token.RBracket(_)) => 
+                      Right((exprs :+ expr, afterComments))
+                    case Right(Token.Comma(_)) => 
+                      val (_, afterComma) = collectComments(afterComments.advance())
+                      parseElements(afterComma, exprs :+ expr)
+                    case Right(t) => 
+                      Left(expectedError("',' or ']' in list", Right(t)))
+                    case Left(err) => 
+                      Left(err)
+                  }
+                }
+            }
+          }
+        }
+        
+        parseElements(afterBracket, Vector.empty).flatMap { case (exprs, finalState) =>
+          finalState.current match {
             case Right(Token.RBracket(endPos)) => {
               // Add comments to list meta
               val listMeta = if (leadingComments.nonEmpty || afterBracketComments.nonEmpty) {
@@ -1206,46 +1238,19 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
                 createMeta(Some(sourcePos), Some(endPos))
               }
 
-              current = current.advance()
-              return Right((ListExpr(exprs, listMeta), current))
+              Right((ListExpr(exprs, listMeta), finalState.advance()))
             }
-            case Right(Token.Comma(_)) => {
-              // Collect comments after comma
-              val (_, afterComma) = collectComments(current.advance())
-              current = afterComma
-            }
-            case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) => {
-              // Collect comments
-              val (_, afterComments) = collectComments(current)
-              current = afterComments
-            }
-            case _ => {
-              parseExpr(current) match {
-                case Right((expr, afterExpr)) => {
-                  // Collect any comments after the expression
-                  val (_, afterComments) = collectComments(afterExpr)
-                  current = afterComments
-                  exprs = exprs :+ expr
-
-                  current.current match {
-                    case Right(Token.RBracket(_)) => ()
-                    case Right(Token.Comma(_)) => {
-                      val (_, afterComma) = collectComments(current.advance())
-                      current = afterComma
-                    }
-                    case Right(t)  => return Left(expectedError("',' or ']' in list", Right(t)))
-                    case Left(err) => return Left(err)
-                  }
-                }
-                case Left(err) => return Left(err)
-              }
-            }
+            case Right(t) => 
+              Left(ParseError("Expected ']' at end of list", t.sourcePos.range.start))
+            case Left(err) => 
+              Left(err)
           }
         }
-        Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
       }
-      case Right(t)  => Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
-      case Left(err) => Left(err)
+      case Right(t) => 
+        Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
+      case Left(err) => 
+        Left(err)
     }
   }
 
@@ -1292,7 +1297,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   def isVarargContext(state: LexerState): Boolean = {
     // Check if we're in a function call argument list or type annotation
-    var lookAhead = state.advance()
+    val lookAhead = state.advance()
     lookAhead.current match {
       case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
       case _                                              => false
