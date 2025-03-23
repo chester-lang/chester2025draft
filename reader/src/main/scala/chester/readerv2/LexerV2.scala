@@ -207,60 +207,21 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
     
     // Helper for source position extractors
-    private def sourcePosExtractor(tokenTest: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
-      case Right(token) if tokenTest(token) => Some(token.sourcePos)
+    private def posExtract(f: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
+      case Right(token) if f(token) => Some(token.sourcePos)
       case _ => None
     }
     
-    object LParen {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.LParen])(token)
-    }
-    
-    object RParen {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.RParen])(token)
-    }
-    
-    object LBrace {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.LBrace])(token)
-    }
-    
-    object RBrace {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.RBrace])(token)
-    }
-    
-    object LBracket {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.LBracket])(token)
-    }
-    
-    object RBracket {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.RBracket])(token)
-    }
-    
-    object Dot {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.Dot])(token)
-    }
-    
-    object Comma {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.Comma])(token)
-    }
-    
-    object Colon {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.Colon])(token)
-    }
-    
-    object Semi {
-      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = 
-        sourcePosExtractor(_.isInstanceOf[Token.Semicolon])(token)
-    }
+    object LParen  { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t) }
+    object RParen  { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
+    object LBrace  { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
+    object RBrace  { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
+    object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
+    object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
+    object Dot     { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Dot])(t) }
+    object Comma   { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
+    object Colon   { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Colon])(t) }
+    object Semi    { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Semicolon])(t) }
     
     object Int {
       def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
