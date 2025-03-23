@@ -11,7 +11,7 @@ import scala.util.{Try, boundary}
 type TokenStream = LazyList[Either[ParseError, Token]]
 
 object Tokenizer {
-  def apply(sourceOffset: SourceOffset)(using Reporter[ParseError]): Tokenizer = new Tokenizer(sourceOffset)
+  def apply(sourceOffset: SourceOffset): Tokenizer = new Tokenizer(sourceOffset)
   private val escapes = Map('n' -> "\n", 't' -> "\t", 'r' -> "\r", '"' -> "\"", '\\' -> "\\", 'b' -> "\b", 'f' -> "\f")
   private val tokens: Map[Char, SourcePos => Token] = Map(
     '(' -> Token.LParen.apply, ')' -> Token.RParen.apply, 
@@ -22,7 +22,7 @@ object Tokenizer {
   )
 }
 
-class Tokenizer(src: SourceOffset)(using Reporter[ParseError]) {
+class Tokenizer(src: SourceOffset) {
   import Tokenizer.*, boundary.break
   
   private val text = src.readContent.getOrElse("")
