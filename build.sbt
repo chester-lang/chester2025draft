@@ -316,21 +316,6 @@ def graalvmSettings = Seq(
   nativeImageJvm := graalVm
 )
 
-def baseDeps = Seq(
-  libraryDependencies ++= Seq(
-    "org.typelevel" %%% "cats-core" % "2.13.0",
-    "org.typelevel" %%% "cats-free" % "2.13.0",
-    "com.lihaoyi" %%% "upickle" % "4.1.0",
-    "com.lihaoyi" %%% "fansi" % "0.5.0",
-    "com.lihaoyi" %%% "fastparse" % "3.1.1"
-    // "com.lihaoyi" %%% "scalatags" % "0.13.1",
-    // "com.github.rssh" %%% "dotty-cps-async" % "0.9.23",
-    // "io.getkyo" %%% "kyo-prelude" % "0.12.2",
-    // "io.getkyo" %%% "kyo-data" % "0.12.2",
-    // "io.getkyo" %%% "kyo-tag" % "0.12.2",
-  )
-)
-
 commonSettings
 
 lazy val bump = inputKey[Unit]("Bump version in multiple files")
@@ -519,10 +504,20 @@ lazy val utils = useSpire(
     .in(file("utils"))
     .settings(
       commonLibSettings,
-      baseDeps,
       libraryDependencies ++= Seq(
+        "org.typelevel" %%% "cats-core" % "2.13.0",
+        "org.typelevel" %%% "cats-free" % "2.13.0",
+        "com.lihaoyi" %%% "upickle" % "4.1.0",
+        "com.lihaoyi" %%% "fansi" % "0.5.0",
+        "com.lihaoyi" %%% "fastparse" % "3.1.1",
+        // "com.lihaoyi" %%% "scalatags" % "0.13.1",
+        // "com.github.rssh" %%% "dotty-cps-async" % "0.9.23",
+        "io.getkyo" %%% "kyo-prelude" % "0.17.0",
+        "io.getkyo" %%% "kyo-core" % "0.17.0",
+        "io.getkyo" %%% "kyo-direct" % "0.17.0",
+        "io.getkyo" %%% "kyo-data" % "0.17.0",
         "org.scala-graph" %%% "graph-core" % "2.0.2",
-        "com.outr" %%% "scribe" % "3.16.0",
+        "com.outr" %%% "scribe" % "3.16.0"
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
         "org.wvlet.airframe" %%% "airframe-codec" % AIRFRAME_VERSION, // MessagePack-based schema-on-read codec
@@ -534,7 +529,7 @@ lazy val utils = useSpire(
         "org.wvlet.airframe" %%% "airframe-rx" % AIRFRAME_VERSION, // ReactiveX interface
         "org.wvlet.airframe" %%% "airframe-surface" % AIRFRAME_VERSION, // Object surface inspector
         "org.wvlet.airframe" %%% "airframe-ulid" % AIRFRAME_VERSION // ULID generator
-        */
+         */
       )
     )
     .jvmSettings(
