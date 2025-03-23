@@ -782,3 +782,130 @@ While significant progress has been made, some areas still need work:
 - `semantic/shared/src/main/scala/chester/reduce/NaiveReducer.scala`
 - `syntax/shared/src/main/scala/chester/syntax/core/Term.scala`
 - `semantic/shared/src/main/scala/chester/tyck/ElaboraterBlock.scala`
+
+## 2025-03-24
+
+### Parser Improvements Completed
+
+#### Uniform Operator Handling ✅
+- **Issue**: Special case handling for the "=>" and "=" operators in `parseOperator()` method
+- **Improvement**: 
+  - Removed special case handling for the "=>" operator
+  - Ensured operators are treated uniformly in the tokenizer
+  - Treated "=>" like any other operator in the tokenizing process
+- **Benefits**: 
+  - More consistent operator handling
+  - Simplified code in the `parseOperator()` method
+  - Reduced special cases, making the code more maintainable
+  - Better alignment with Chester's design principles of uniform symbol treatment
+- **Implementation**: 
+  - Removed special case code for the "=>" operator in the `parseOperator()` method
+  - Modified the method to uniformly parse all operators using a `StringBuilder`
+  - Verified all tests pass with the change, including operator tests
+  - Ensured consistent behavior with the original implementation
+
+#### LexerV2 Optimization and Refactoring ✅
+- **Issue**: `LexerV2.scala` had redundant code and a missing state.advance() method reference
+- **Improvement**: 
+  - Optimized and refactored the code structure for better maintainability
+  - Fixed compilation errors by replacing advance() with state.advance()
+  - Improved modularity by extracting repeated logic into helper methods
+  - Enhanced state management for better consistency across the codebase
+- **Benefits**: 
+  - Improved maintainability and readability of the lexer code
+  - Fixed compilation errors resulting in more stable code
+  - Better organization of related functionality
+  - Reduced duplication for easier future updates
+- **Implementation**: 
+  - Replaced direct advance() calls with state.advance() where appropriate
+  - Restructured code for better organization and clarity
+  - Maintained functionality while improving code quality
+  - Ensured all tests continued to pass after changes
+
+#### Comment Preservation Implementation ✅
+- **Issue**: V2 parser didn't preserve comments in the AST, unlike V1
+- **Improvement**: 
+  - Added comment collection and attachment similar to V1 parser
+  - Implemented support for both leading and trailing comments
+  - Created mechanism for handling comments in blocks and at block boundaries
+- **Benefits**:
+  - Full feature parity with V1 parser for comment handling
+  - Source code formatting preservation
+  - Support for documentation generation tools
+- **Implementation**:
+  - Added methods to collect and categorize comments during parsing
+  - Integrated with ExprMeta and CommentInfo structures
+  - Enhanced expression creation to include comment attachment
+  - Added test cases with various comment placements
+
+#### TokenExtractors Refinement ✅
+- **Issue**: Verbose and redundant token extractors made the code harder to maintain
+- **Improvement**:
+  - Simplified token extractors using a common helper function
+  - Reduced code duplication for source position extraction
+  - Made the code more maintainable with concise patterns
+- **Benefits**:
+  - More readable and maintainable token handling
+  - Less code duplication
+  - Better abstraction of common patterns
+- **Implementation**:
+  - Created a `posExtract` function to centralize extraction logic
+  - Refactored individual token extractors to use the helper
+  - Maintained the same semantics with less code
+
+#### Pattern Matching Block Termination Fix ✅
+- **Issue**: Inconsistent handling of the `}\n` pattern between V1 and V2 parsers in pattern matching
+- **Improvement**:
+  - Added context tracking to LexerState
+  - Implemented context-aware block termination checks
+  - Enabled context for all blocks uniformly
+- **Benefits**:
+  - Consistent behavior between V1 and V2 parsers
+  - Maintained uniform symbol treatment principle
+  - Fixed pattern matching tests
+- **Implementation**:
+  - Added `newLineAfterBlockMeansEnds` flag to LexerState
+  - Created `withNewLineTermination` helper method
+  - Updated `checkForRBraceNewlinePattern` to consider context
+  - Enabled context for all blocks in `parseBlock`
+
+#### Previously Completed Improvements
+
+1. **Number Parsing Refactoring** ✅
+   - Extracted specialized methods for different number formats
+   - Improved error handling for number parsing
+
+2. **Enhanced Escape Character Handling** ✅
+   - Extended support for escape sequences (Unicode, octal, hex)
+   - Improved error reporting for invalid escape sequences
+
+3. **Basic Operator Parsing Clean-Up** ✅
+   - Extracted comment parsing to a separate method
+   - Improved structure of `parseOperator()` method
+
+4. **Identifier Parsing Correctness** ✅
+   - Aligned with IdentifierRules for consistent character validation
+   - Improved handling of Unicode characters and emoji
+
+5. **SourcePos Creation Efficiency** ✅
+   - Implemented caching for UTF-16 offset calculations
+   - Reduced tokenization time for complex expressions
+
+### Updated Feature Coverage
+
+The V2 parser now has complete implementations for:
+- Basic literals (integers, floating-point numbers)
+- Function calls (including nested and with type parameters)
+- Pattern matching (with correct block termination)
+- Operator sequences (with uniform treatment)
+- Generic type parameters (including complex and nested generics)
+- Block arguments
+- Lists with mixed types
+- Comment preservation (leading and trailing)
+
+### Next Steps
+Focus is now shifting to:
+1. Object expressions implementation 
+2. Source maps support
+3. Error recovery mechanisms
+4. Migrating remaining V1-only tests
