@@ -10,17 +10,23 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 import scala.util.boundary
 import scala.util.boundary.break
 import scala.util.Try
-import scala.collection.mutable
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 
 object Tokenizer {
   def apply(sourceOffset: SourceOffset)(using Reporter[ParseError]): Tokenizer = new Tokenizer(sourceOffset)
   
-  // Lookup tables for escape sequences
   private val simpleEscapes = Map(
     'n' -> "\n", 't' -> "\t", 'r' -> "\r", '"' -> "\"", 
     '\\' -> "\\", 'b' -> "\b", 'f' -> "\f"
+  )
+  
+  private val simpleTokens: Map[Char, (SourcePos => Token)] = Map(
+    '(' -> Token.LParen, ')' -> Token.RParen,
+    '[' -> Token.LBracket, ']' -> Token.RBracket, 
+    '{' -> Token.LBrace, '}' -> Token.RBrace,
+    ',' -> Token.Comma, ';' -> Token.Semicolon,
+    ':' -> Token.Colon, '.' -> Token.Dot, '@' -> Token.At
   )
 }
 
@@ -28,26 +34,22 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
   import Tokenizer._
   
   private val source = sourceOffset.readContent.getOrElse("")
-  private var pos = 0
-  private var line = 0
-  private var col = 0
-  private var utf16Pos = 0  // Track UTF-16 position directly instead of using a cache
+  private var pos, line, col, utf16Pos = 0
 
-  def tokenize(): TokenStream = LazyList.unfold(false) { isEOF =>
-    if (isEOF) None
-    else if (pos >= source.length) Some((Right(Token.EOF(sourcePos(0, 0))), true))
-    else Some((nextToken, false))
-  }
+  def tokenize(): TokenStream = 
+    LazyList.unfold(false)(isEOF => 
+      if (isEOF) None
+      else if (pos >= source.length) Some((Right(Token.EOF(makePos(0, 0))), true))
+      else Some((nextToken, false))
+    )
 
-  // Create source position with UTF-16 tracking
-  private def sourcePos(startPos: Int, endPos: Int): SourcePos = {
+  private def makePos(startPos: Int, endPos: Int): SourcePos = {
     val zero = 0.refineUnsafe[Positive0]
     val start = startPos.refineUnsafe[Positive0]
     val end = endPos.refineUnsafe[Positive0]
     
-    // Calculate UTF-16 positions based on substring lengths
-    val startUtf16 = calculateUtf16Position(0, startPos).refineUnsafe[Positive0]
-    val endUtf16 = calculateUtf16Position(0, endPos).refineUnsafe[Positive0]
+    val startUtf16 = source.substring(0, startPos).length.refineUnsafe[Positive0]
+    val endUtf16 = source.substring(0, endPos).length.refineUnsafe[Positive0]
     val lineUtf16 = line.refineUnsafe[Positive0]
     val colUtf16 = col.refineUnsafe[Positive0]
 
@@ -56,93 +58,65 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
 
     SourcePos(sourceOffset, RangeInFile(startPosition, endPosition))
   }
-  
-  // Calculate UTF-16 position of a character position
-  private def calculateUtf16Position(from: Int, to: Int): Int = {
-    if (from == to) return 0
-    source.substring(from, to).length()
-  }
 
-  // Helper for token creation with a streamlined approach
   private def token[T <: Token](f: SourcePos => T, startPos: Int): Either[ParseError, T] = 
-    Right(f(sourcePos(startPos, pos)))
+    Right(f(makePos(startPos, pos)))
+
+  private def parseError(msg: String, pos: Int): Left[ParseError, Nothing] = 
+    Left(ParseError(msg, makePos(pos, pos).range.start))
 
   private def nextToken: Either[ParseError, Token] = {
     skipWhitespace()
-    if (pos >= source.length) return Right(Token.EOF(sourcePos(0, 0)))
+    if (pos >= source.length) return Right(Token.EOF(makePos(0, 0)))
 
     val c = source.codePointAt(pos)
     val startPos = pos
     val charCount = Character.charCount(c)
     pos += charCount
     col += 1
-    utf16Pos = utf16Pos + (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
+    utf16Pos += (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
 
-    // Handle different character types
     if (Character.isSupplementaryCodePoint(c)) {
       if (isIdentifierFirst(c)) parseIdentifier(String.valueOf(Character.toChars(c)), startPos)
-      else Left(ParseError(s"Unexpected character: ${String.valueOf(Character.toChars(c))}", sourcePos(startPos, pos).range.start))
-    } else {
-      c.toChar match {
-        // Simple tokens
-        case '(' => token(Token.LParen(_), startPos)
-        case ')' => token(Token.RParen(_), startPos)
-        case '[' => token(Token.LBracket(_), startPos)
-        case ']' => token(Token.RBracket(_), startPos)
-        case '{' => token(Token.LBrace(_), startPos)
-        case '}' => token(Token.RBrace(_), startPos)
-        case ',' => token(Token.Comma(_), startPos)
-        case ';' => token(Token.Semicolon(_), startPos)
-        case ':' => token(Token.Colon(_), startPos)
-        case '.' => token(Token.Dot(_), startPos)
-        case '@' => token(Token.At(_), startPos)
-        
-        // Complex tokens that require more parsing
-        case '"' => parseString(startPos)
-        case '\'' => parseSymbol(startPos)
-        case d if d.isDigit => parseNumber(startPos)
-        case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
-        case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
-        case other => Left(ParseError(s"Unexpected character: $other", sourcePos(startPos, pos).range.start))
-      }
+      else parseError(s"Unexpected character: ${String.valueOf(Character.toChars(c))}", startPos)
+    } else c.toChar match {
+      case c if simpleTokens.contains(c) => token(simpleTokens(c), startPos)
+      case '"' => parseString(startPos)
+      case '\'' => parseSymbol(startPos)
+      case d if d.isDigit => parseNumber(startPos)
+      case a if a.isLetter || a == '_' => parseIdentifier(a.toString, startPos)
+      case o if isOperatorSymbol(o.toInt) => parseOperator(o.toString, startPos)
+      case other => parseError(s"Unexpected character: $other", startPos)
     }
   }
 
-  private def skipWhitespace(): Unit = {
+  private def skipWhitespace(): Unit = 
     while (pos < source.length && source(pos).isWhitespace) {
-      if (source(pos) == '\n') { 
-        line += 1
-        col = 0 
-      } else {
-        col += 1
-      }
-      utf16Pos = utf16Pos + 1  // ASCII whitespace is always 1 UTF-16 unit
+      if (source(pos) == '\n') { line += 1; col = 0 } else col += 1
       pos += 1
+      utf16Pos += 1
     }
-  }
 
   private def parseEscapeSequence(startPos: Int): Either[ParseError, (String, Int)] = {
     if (startPos >= source.length) 
-      return Left(ParseError("Unexpected end of input in escape sequence", sourcePos(startPos - 1, startPos).range.start))
+      return parseError("Unexpected end of input in escape sequence", startPos - 1)
 
-    val c = source(startPos)
-    c match {
-      case c if simpleEscapes.contains(c) => 
-        Right((simpleEscapes(c), startPos + 1))
+    source(startPos) match {
+      case c if simpleEscapes.contains(c) => Right((simpleEscapes(c), startPos + 1))
       
       case 'u' if startPos + 4 < source.length =>
         val hexDigits = source.substring(startPos + 1, startPos + 5)
         Try(Integer.parseInt(hexDigits, 16)).toEither match {
           case Right(cp) => Right((new String(Character.toChars(cp)), startPos + 5))
-          case Left(_) => Left(ParseError(s"Invalid Unicode escape \\u$hexDigits", sourcePos(startPos - 1, startPos + 5).range.start))
+          case Left(_) => parseError(s"Invalid Unicode escape \\u$hexDigits", startPos - 1)
         }
       
       case 'x' if startPos + 2 < source.length =>
         val hexDigits = source.substring(startPos + 1, startPos + 3)
-        Try(Integer.parseInt(hexDigits, 16)).toEither.map(v => (v.toChar.toString, startPos + 3))
-          .left.map(_ => ParseError(s"Invalid hex escape \\x$hexDigits", sourcePos(startPos - 1, startPos + 3).range.start))
+        Try(Integer.parseInt(hexDigits, 16)).toEither
+          .map(v => (v.toChar.toString, startPos + 3))
+          .left.map(_ => ParseError(s"Invalid hex escape \\x$hexDigits", makePos(startPos - 1, startPos + 3).range.start))
       
-      // Handle octal escape sequences
       case c if c >= '0' && c <= '7' =>
         val endPos = (startPos + 1 to Math.min(startPos + 3, source.length))
           .takeWhile(i => i < source.length && source(i) >= '0' && source(i) <= '7')
@@ -151,10 +125,9 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
         val octalDigits = source.substring(startPos, endPos)
         Try(Integer.parseInt(octalDigits, 8)).toEither match {
           case Right(v) if v <= 0xff => Right((v.toChar.toString, endPos))
-          case _ => Left(ParseError(s"Invalid octal escape \\$octalDigits", sourcePos(startPos - 1, endPos).range.start))
+          case _ => parseError(s"Invalid octal escape \\$octalDigits", startPos - 1)
         }
 
-      // Any other character is used as-is when escaped
       case other => Right((other.toString, startPos + 1))
     }
   }
@@ -168,119 +141,101 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
       val c = source(currentPos)
       if (escaped) {
         parseEscapeSequence(currentPos) match {
-          case Right((text, newPos)) => {
-            chars = chars :+ StringChar(text, sourcePos(currentPos - 1, newPos))
+          case Right((text, newPos)) => 
+            chars :+= StringChar(text, makePos(currentPos - 1, newPos))
             escaped = false
             currentPos = newPos
-          }
           case Left(error) => break(Left(error))
         }
-      } else if (c == '\\') {
-        escaped = true
-        currentPos += 1
-      } else if (c == '"') {
-        pos = currentPos + 1
-        col += currentPos - startPos + 1
-        utf16Pos = utf16Pos + (pos - startPos)  // Update UTF-16 position based on characters processed
-        break(Right(Token.StringLiteral(chars, sourcePos(startPos, currentPos + 1))))
-      } else {
-        chars = chars :+ StringChar(c.toString, sourcePos(currentPos, currentPos + 1))
-        currentPos += 1
+      } else c match {
+        case '\\' => escaped = true; currentPos += 1
+        case '"' => 
+          pos = currentPos + 1
+          col += currentPos - startPos + 1
+          utf16Pos += (pos - startPos)
+          break(Right(Token.StringLiteral(chars, makePos(startPos, currentPos + 1))))
+        case _ =>
+          chars :+= StringChar(c.toString, makePos(currentPos, currentPos + 1))
+          currentPos += 1
       }
     }
-    Left(ParseError("Unterminated string literal", sourcePos(startPos, currentPos).range.start))
+    parseError("Unterminated string literal", startPos)
   }
 
-  private def parseSymbol(startPos: Int): Either[ParseError, Token] = {
-    val sb = new StringBuilder
-    while (pos < source.length && (source(pos).isLetterOrDigit || source(pos) == '_')) {
+  private def consumeWhile(pred: Char => Boolean, sb: StringBuilder = new StringBuilder): String = {
+    while (pos < source.length && pred(source(pos))) {
       sb.append(source(pos))
       pos += 1
       col += 1
-      utf16Pos = utf16Pos + 1  // ASCII symbols are always 1 UTF-16 unit
+      utf16Pos += 1
     }
-    if (sb.isEmpty) Left(ParseError("Empty symbol literal", sourcePos(startPos, pos).range.start))
-    else token(Token.SymbolLiteral(sb.toString, _), startPos)
+    sb.toString
   }
 
-  // Parse a number with a specific base (10, 16, 2)
-  private def parseBaseNumber(startPos: Int, prefix: String, isValid: Char => Boolean): Either[ParseError, Token] = {
-    val prefixLength = prefix.length
-    val (digits, endPos) = readDigitSequence(startPos + prefixLength, isValid)
-    if (digits.isEmpty) 
-      return Left(ParseError(s"Expected digits after '$prefix'", sourcePos(startPos + prefixLength, startPos + prefixLength).range.start))
-    
-    pos = endPos
-    col += endPos - startPos
-    utf16Pos = utf16Pos + (endPos - startPos)
-    token(Token.IntegerLiteral(s"$prefix$digits", _), startPos)
+  private def parseSymbol(startPos: Int): Either[ParseError, Token] = {
+    val symbol = consumeWhile(c => c.isLetterOrDigit || c == '_')
+    if (symbol.isEmpty) parseError("Empty symbol literal", startPos)
+    else token(Token.SymbolLiteral(symbol, _), startPos)
   }
 
   private def parseNumber(startPos: Int): Either[ParseError, Token] = {
     // Check for hex or binary
     if (startPos + 1 < source.length && source(startPos) == '0') {
       source(startPos + 1) match {
-        case 'x' => return parseBaseNumber(startPos, "0x", c => c.isDigit || ('a' <= c.toLower && c.toLower <= 'f'))
-        case 'b' => return parseBaseNumber(startPos, "0b", c => c == '0' || c == '1')
+        case 'x' => 
+          pos = startPos + 2
+          val hex = consumeWhile(c => c.isDigit || ('a' <= c.toLower && c.toLower <= 'f'))
+          if (hex.isEmpty) return parseError("Expected hex digits after '0x'", startPos + 2)
+          return token(Token.IntegerLiteral(s"0x$hex", _), startPos)
+        case 'b' => 
+          pos = startPos + 2
+          val bin = consumeWhile(c => c == '0' || c == '1')
+          if (bin.isEmpty) return parseError("Expected binary digits after '0b'", startPos + 2)
+          return token(Token.IntegerLiteral(s"0b$bin", _), startPos)
         case _ => // Continue with decimal parsing
       }
     }
 
-    // Handle decimal and floating point
-    val (intPart, afterInt) = readDigitSequence(startPos, _.isDigit)
-    if (intPart.isEmpty) return Left(ParseError("Expected digits", sourcePos(startPos, startPos).range.start))
-
-    var endPos = afterInt
-    val numBuilder = new StringBuilder(intPart)
+    // Handle regular numbers: we need to preserve the original character
+    val sb = new StringBuilder()
+    if (startPos < source.length) {
+      sb.append(source(startPos))
+      pos = startPos + 1
+      col += 1
+      utf16Pos += 1
+    }
+    
+    // Append remaining digits
+    sb.append(consumeWhile(_.isDigit))
+    
     var isRational = false
-
     // Parse decimal point and fraction
-    if (endPos < source.length && source(endPos) == '.') {
+    if (pos < source.length && source(pos) == '.') {
       isRational = true
-      numBuilder.append('.')
-      endPos += 1
-      val (decimalDigits, afterDecimal) = readDigitSequence(endPos, _.isDigit)
-      numBuilder.append(decimalDigits)
-      endPos = afterDecimal
+      sb.append('.')
+      pos += 1; col += 1; utf16Pos += 1
+      sb.append(consumeWhile(_.isDigit))
     }
 
     // Parse exponent
-    if (endPos < source.length && (source(endPos) == 'e' || source(endPos) == 'E')) {
+    if (pos < source.length && (source(pos) == 'e' || source(pos) == 'E')) {
       isRational = true
-      numBuilder.append(source(endPos))
-      endPos += 1
+      sb.append(source(pos))
+      pos += 1; col += 1; utf16Pos += 1
 
-      // Handle optional sign
-      if (endPos < source.length && (source(endPos) == '+' || source(endPos) == '-')) {
-        numBuilder.append(source(endPos))
-        endPos += 1
+      if (pos < source.length && (source(pos) == '+' || source(pos) == '-')) {
+        sb.append(source(pos))
+        pos += 1; col += 1; utf16Pos += 1
       }
 
-      val (expDigits, afterExp) = readDigitSequence(endPos, _.isDigit)
-      if (expDigits.isEmpty) 
-        return Left(ParseError("Expected digits after exponent", sourcePos(endPos, endPos).range.start))
-      
-      numBuilder.append(expDigits)
-      endPos = afterExp
+      val expDigits = consumeWhile(_.isDigit)
+      if (expDigits.isEmpty) return parseError("Expected digits after exponent", pos)
+      sb.append(expDigits)
     }
-
-    pos = endPos
-    col += endPos - startPos
-    utf16Pos = utf16Pos + (endPos - startPos)
     
-    val numStr = numBuilder.toString
+    val numStr = sb.toString
     if (isRational) token(Token.RationalLiteral(numStr, _), startPos)
     else token(Token.IntegerLiteral(numStr, _), startPos)
-  }
-  
-  private def readDigitSequence(startPos: Int, isValid: Char => Boolean): (String, Int) = {
-    var currentPos = startPos
-    val sb = new StringBuilder
-    while (currentPos < source.length && isValid(source(currentPos))) {
-      sb.append(source(currentPos))
-      currentPos += 1
-    }
-    (sb.toString, currentPos)
   }
 
   private def parseIdentifier(initial: String, startPos: Int): Either[ParseError, Token] = {
@@ -291,9 +246,9 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
       sb.append(source.substring(pos, pos + charCount))
       pos += charCount
       col += 1
-      utf16Pos = utf16Pos + (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
+      utf16Pos += (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
     }
-    token(Token.Identifier(Vector(StringChar(sb.toString, sourcePos(startPos, pos))), _), startPos)
+    token(Token.Identifier(Vector(StringChar(sb.toString, makePos(startPos, pos))), _), startPos)
   }
 
   private def isValidIdentifierPart(pos: Int): Boolean = {
@@ -303,34 +258,15 @@ class Tokenizer(sourceOffset: SourceOffset)(using Reporter[ParseError]) {
     else isIdentifierPart(c.toChar.toInt)
   }
 
-  private def parseComment(startPos: Int): Either[ParseError, Token] = {
-    pos += 1 // Skip the second '/'
-    col += 1
-    utf16Pos = utf16Pos + 1
-    val commentStart = pos
-
-    while (pos < source.length && source(pos) != '\n') {
-      pos += 1
-      col += 1
-      utf16Pos = utf16Pos + 1
-    }
-
-    token(Token.Comment(source.substring(commentStart, pos), _), startPos)
-  }
-
   private def parseOperator(initial: String, startPos: Int): Either[ParseError, Token] = {
     // Handle comments
-    if (initial == "/" && pos < source.length && source(pos) == '/') 
-      return parseComment(startPos)
-
-    val sb = new StringBuilder(initial)
-    while (pos < source.length && isOperatorSymbol(source(pos).toInt)) {
-      sb.append(source(pos))
-      pos += 1
-      col += 1
-      utf16Pos = utf16Pos + 1  // Operators are always ASCII, so 1 UTF-16 unit
+    if (initial == "/" && pos < source.length && source(pos) == '/') {
+      pos += 1; col += 1; utf16Pos += 1 // Skip the second '/'
+      val comment = consumeWhile(_ != '\n')
+      return token(Token.Comment(comment, _), startPos)
     }
 
-    token(Token.Operator(sb.toString, _), startPos)
+    val op = initial + consumeWhile(c => isOperatorSymbol(c.toInt))
+    token(Token.Operator(op, _), startPos)
   }
 }
