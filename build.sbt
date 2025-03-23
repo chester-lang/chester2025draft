@@ -1359,6 +1359,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     assembly / assemblyOutputPath := file("target") / "chester-interpreter.jar"
   )
   .jvmSettings(
+    javaSemanticdbEnabled := false, // https://github.com/scalameta/metals/issues/3903
     libraryDependencies += "org.jetbrains" % "annotations" % "26.0.2",
     assembly / test := {},
     assembly / assemblyExcludedJars := {
