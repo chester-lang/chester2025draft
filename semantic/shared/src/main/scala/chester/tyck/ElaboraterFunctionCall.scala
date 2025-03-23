@@ -32,19 +32,10 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
     // Check if the cell already has a value before attempting to fill it
     val existingValue = state.readUnstable(cell)
     if (existingValue.isEmpty) {
-      Debug.debugPrint(debugCategory, s"Cell is empty, filling with: $value")
       state.fill(cell, value)
-      Debug.debugPrint(debugCategory, "Successfully filled cell")
-    } else {
-      // The cell already has a value, check if it's the same value
-      Debug.debugPrint(debugCategory, s"Cell already has value: ${existingValue.get}")
-      if (existingValue.get == value) {
-        Debug.debugPrint(debugCategory, "Values are equal, skipping redundant fill")
-      } else {
-        Debug.debugPrint(debugCategory, "WARNING: Attempted to fill cell with different value")
-        Debug.debugPrint(debugCategory, s"Existing: ${existingValue.get}")
-        Debug.debugPrint(debugCategory, s"New: $value")
-      }
+    } else if (existingValue.get != value && Debug.isEnabled(debugCategory)) {
+      // Only log a warning when debug is enabled and values differ
+      Debug.debugPrint(debugCategory, s"WARNING: Cell already has different value: ${existingValue.get} vs new: $value")
     }
   }
 }
@@ -157,33 +148,36 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     override def run(using state: StateAbility[Tyck], ck: Tyck): Boolean = {
       import Debug.DebugCategory
 
-      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Processing function call with term: $functionTerm")
-      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Function type: $functionTy")
-      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Result type: $resultTy")
+      val debugTyck = Debug.isEnabled(DebugCategory.Tyck)
+      if (debugTyck) {
+        Debug.debugPrint(DebugCategory.Tyck, 
+          s"""UnifyFunctionCall.run: 
+             |  Function term: $functionTerm
+             |  Function type cell: $functionTy
+             |  Result type cell: $resultTy""".stripMargin)
+      }
 
       val readFunctionTy = state.readStable(functionTy)
-      Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Read function type: $readFunctionTy")
+      if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Read function type: $readFunctionTy")
 
       readFunctionTy match {
         case Some(FunctionType(telescopes, retTy, _, _)) =>
-          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Matched FunctionType with telescopes: $telescopes, retTy: $retTy")
+          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Matched FunctionType with telescopes: $telescopes, retTy: $retTy")
 
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(telescopes, callings, cause)
-          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Adjusted callings: $adjustedCallings")
+          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Adjusted callings: $adjustedCallings")
 
           // Unify the result type
           unify(resultTy, retTy, cause)
-          Debug.debugPrint(DebugCategory.Tyck, "UnifyFunctionCall.run: Unified result type")
-
+          
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
-          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: Created function call term: $fCallTerm")
-          Debug.debugPrint(DebugCategory.Tyck, s"UnifyFunctionCall.run: About to fill cell: $functionCallTerm")
+          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Created function call term: $fCallTerm")
 
           // Use the helper method to safely fill the cell
           safelyFillCell(functionCallTerm, fCallTerm, DebugCategory.Tyck)
-
+          
           true
         case Some(Meta(id)) =>
           // If the function type is a meta variable, delay until it is known
@@ -220,8 +214,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     ): Vector[Calling] = {
       var actualIndex = 0
       var adjustedCallings: Vector[Calling] = Vector.empty
+      var continueProcessing = true
 
-      expected.foreach { expectedTele =>
+      expected.takeWhile(_ => continueProcessing).foreach { expectedTele =>
         val hasActual = actualIndex < actual.length
         val actualTeleOpt = Option.when(hasActual)(actual(actualIndex))
 
@@ -247,7 +242,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
           } else {
             // Expected explicit telescope not matched; report error
             ck.reporter(FunctionCallArityMismatchError(expected.length, actual.length, cause))
-            return adjustedCallings
+            continueProcessing = false
           }
         }
       }

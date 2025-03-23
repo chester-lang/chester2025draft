@@ -249,53 +249,37 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
-    val name = recordInfo.name
-
-    // Extract the fields from the record
-    val fields = expr.fields
-
-    // Extract and elaborate the extendsClause, if any.
+    
+    // Extract and elaborate the extends clause
     val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
-      // Transform each super type into a proper term
-      val elaboratedSuperTypes = superTypes.map { superTypeExpr =>
-        superTypeExpr match {
-          case Identifier(traitName, _) =>
-            ctx.getTypeDefinition(traitName) match {
-              case Some(traitDef: TraitStmtTerm) =>
-                // Create a trait call term representing the trait type
-                TraitTypeTerm(traitDef, convertMeta(superTypeExpr.meta))
-              case _ =>
-                ck.reporter.apply(NotATrait(superTypeExpr))
-                // Return a safe default for error recovery
-                ErrorTerm(NotATrait(superTypeExpr), convertMeta(superTypeExpr.meta))
-            }
-          case _ =>
-            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
-            ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(superTypeExpr.meta))
-        }
-      }
-      // For now, we only support extending one trait, so we take the head
-      if (elaboratedSuperTypes.nonEmpty) elaboratedSuperTypes.head else ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta))
+      superTypes.headOption.map { 
+        case Identifier(traitName, _) =>
+          ctx.getTypeDefinition(traitName) match {
+            case Some(traitDef: TraitStmtTerm) => 
+              TraitTypeTerm(traitDef, convertMeta(clause.meta))
+            case _ =>
+              ck.reporter.apply(NotATrait(superTypes.head))
+              ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
+          }
+        case superTypeExpr =>
+          ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+          ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
+      }.getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
     }
 
-    // Elaborate the fields without combining them with any super class fields
-    val elaboratedFields = fields.map { field =>
-      val fieldType = field.ty match {
-        case Some(tyExpr) => checkType(tyExpr)
-        case None         => newTypeTerm
-      }
-      // Create a FieldTerm representing the field in the record
+    // Elaborate the fields and body
+    val elaboratedFields = expr.fields.map { field =>
+      val fieldType = field.ty.map(checkType).getOrElse(newTypeTerm)
       FieldTerm(field.name.name, fieldType, convertMeta(expr.meta))
     }
-
-    // Elaborate the optional body (if any)
+    
     val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
+      elabBlock(body, newTypeTerm, effects)
     }
 
-    // Construct the RecordStmtTerm that includes the fields and extendsClause
+    // Create the record statement term and update the context
     val recordStmtTerm = RecordStmtTerm(
-      name = name,
+      name = recordInfo.name,
       uniqId = recordInfo.uniqId,
       fields = elaboratedFields,
       body = elaboratedBody,
@@ -303,12 +287,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       meta = convertMeta(expr.meta)
     )
 
-    // Update the context with the new record definition
-    val newCtx = ctx
-      .addTypeDefinition(recordStmtTerm)
-
-    // Return the statement term and the updated context
-    (Seq(recordStmtTerm), newCtx)
+    (Seq(recordStmtTerm), ctx.addTypeDefinition(recordStmtTerm))
   }
 
   def processLetLetDefStmt(
@@ -354,58 +333,40 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
-    implicit val localCtx: Context = ctx
     val traitInfo = declarationsMap(expr).asInstanceOf[TraitDeclaration]
-    val name = traitInfo.name
 
     // Process extends clause if present
     val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
-      // Transform each super type into a proper term
-      val elaboratedSuperTypes = superTypes.map { superTypeExpr =>
-        superTypeExpr match {
-          case Identifier(traitName, _) =>
-            ctx.getTypeDefinition(traitName) match {
-              case Some(traitDef: TraitStmtTerm) =>
-                // Create a trait call term representing the trait type
-                TraitTypeTerm(traitDef, convertMeta(superTypeExpr.meta))
-              case _ =>
-                ck.reporter.apply(NotATrait(superTypeExpr))
-                // Return a safe default for error recovery
-                ErrorTerm(NotATrait(superTypeExpr), convertMeta(superTypeExpr.meta))
-            }
-          case _ =>
-            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
-            ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(superTypeExpr.meta))
-        }
-      }
-      // For now, we only support extending one trait, so we take the head
-      if (elaboratedSuperTypes.nonEmpty) elaboratedSuperTypes.head else ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta))
+      superTypes.headOption.map { 
+        case Identifier(traitName, _) =>
+          ctx.getTypeDefinition(traitName) match {
+            case Some(traitDef: TraitStmtTerm) => 
+              TraitTypeTerm(traitDef, convertMeta(clause.meta))
+            case _ =>
+              ck.reporter.apply(NotATrait(superTypes.head))
+              ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
+          }
+        case superTypeExpr =>
+          ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+          ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
+      }.getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
     }
 
-    // Elaborate the optional body (if any)
+    // Elaborate the body within a trait-specific context
     val elaboratedBody = expr.body.map { body =>
-      // Create a temporary context for elaborating the trait body
-      // Mark that we're processing a trait body
-      val bodyCtx = ctx.withProcessingType("trait")
-
-      // Use elabBlock to elaborate the body with the temporary context
-      elabBlock(body, newTypeTerm, effects)(using bodyCtx, parameter, ck, state)
+      elabBlock(body, newTypeTerm, effects)(using ctx.withProcessingType("trait"), parameter, ck, state)
     }
 
     // Create the TraitStmtTerm
     val traitStmtTerm = TraitStmtTerm(
-      name = name,
+      name = traitInfo.name,
       uniqId = traitInfo.uniqId,
       extendsClause = elaboratedExtendsClause,
       body = elaboratedBody,
       meta = convertMeta(expr.meta)
     )
 
-    // Update the context with the new trait definition
-    val newCtx = ctx.addTypeDefinition(traitStmtTerm)
-
-    // Return the statement term and the updated context
-    (Seq(traitStmtTerm), newCtx)
+    (Seq(traitStmtTerm), ctx.addTypeDefinition(traitStmtTerm))
   }
 
   def processInterfaceStmt(
@@ -458,28 +419,18 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]
-    val name = objectInfo.name
 
-    // Elaborate the extends clause if present
-    val elaboratedExtendsClause = expr.extendsClause.map { checkType }
+    val elaboratedExtendsClause = expr.extendsClause.map(checkType)
+    val elaboratedBody = expr.body.map(body => elabBlock(body, newTypeTerm, effects))
 
-    // Elaborate the body if present
-    val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
-    }
-
-    // Create the ObjectStmtTerm
     val objectStmtTerm = ObjectStmtTerm(
-      name = name,
+      name = objectInfo.name,
       uniqId = objectInfo.uniqId,
       extendsClause = elaboratedExtendsClause,
       body = elaboratedBody,
       meta = convertMeta(expr.meta)
     )
 
-    val newCtx = ctx.addTypeDefinition(objectStmtTerm)
-
-    // Return the statement term and the updated context
-    (Seq(objectStmtTerm), newCtx)
+    (Seq(objectStmtTerm), ctx.addTypeDefinition(objectStmtTerm))
   }
 }

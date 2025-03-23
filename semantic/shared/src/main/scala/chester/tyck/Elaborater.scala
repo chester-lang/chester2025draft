@@ -2,14 +2,14 @@ package chester.tyck
 
 import chester.error.*
 import chester.syntax.concrete.*
-import chester.syntax.core.{*, given}
+import chester.syntax.core.*
 import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
 import chester.tyck.*
 import chester.utils.*
 import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
-import scala.collection.immutable.{Vector => StdVector}
+import scala.collection.immutable.{Vector => _}
 import cats.data.NonEmptyVector
 
 import scala.language.implicitConversions
@@ -27,7 +27,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   // Helper method to ensure a cell is covered by a propagator
   private def ensureCellCoverage(cell: CellId[Term], cause: Expr)(using
       state: StateAbility[Tyck],
-      ctx: Context,
       ck: Tyck
   ): Unit = {
     if (DEBUG_UNION_SUBTYPING) println(s"Ensuring cell coverage for cell $cell")
@@ -261,17 +260,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         unionToSpecific(union, unionTypes, specificType, cause)
 
       // Now add the general intersection and union cases
-      case (x, Intersection(xs, _)) =>
-        if (xs.exists(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       case (Intersection(xs, _), x) =>
         if (xs.forall(tryUnify(_, x))) return
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       case (x, Union(xs, _)) =>
         if (xs.forall(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-      case (Union(xs, _), x) =>
-        if (xs.exists(tryUnify(_, x))) return
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
 
       // Add cases for function calls after the specific union cases
