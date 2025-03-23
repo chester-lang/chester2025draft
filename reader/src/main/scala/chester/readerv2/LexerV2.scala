@@ -1315,49 +1315,52 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   def skipComments(state: LexerState): LexerState = {
-    var current = state
-    while (current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
-      current = current.advance()
+    @scala.annotation.tailrec
+    def skipRec(current: LexerState): LexerState = {
+      if (current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
+        skipRec(current.advance())
+      } else {
+        current
+      }
     }
-    current
+    
+    skipRec(state)
   }
 
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
     */
   def collectComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
-    var comments = Vector.empty[chester.syntax.concrete.Comment]
-    var current = state
+    @scala.annotation.tailrec
+    def collectRec(current: LexerState, comments: Vector[chester.syntax.concrete.Comment]): (Vector[chester.syntax.concrete.Comment], LexerState) = {
+      if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
+        current.current match {
+          case Right(Token.Comment(text, sourcePos)) =>
+            val commentType = if (text.trim.startsWith("//")) {
+              chester.syntax.concrete.CommentType.OneLine
+            } else {
+              chester.syntax.concrete.CommentType.MultiLine
+            }
 
-    while (
-      !current.isAtEnd &&
-      current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
-    ) {
-      current.current match {
-        case Right(Token.Comment(text, sourcePos)) =>
-          val commentType = if (text.trim.startsWith("//")) {
-            chester.syntax.concrete.CommentType.OneLine
-          } else {
-            chester.syntax.concrete.CommentType.MultiLine
-          }
-
-          val comment = chester.syntax.concrete.Comment(
-            content = text.trim,
-            typ = commentType,
-            sourcePos = Some(sourcePos)
-          )
-          comments = comments :+ comment
-          current = current.advance()
-        case Right(Token.Whitespace(_, _)) =>
-          // In Whitespace tokens, we don't have the actual text content
-          // Just advance the token - we'll hit another token eventually
-          current = current.advance()
-        case _ =>
-          // Should never happen due to the while condition
-          current = current.advance()
+            val comment = chester.syntax.concrete.Comment(
+              content = text.trim,
+              typ = commentType,
+              sourcePos = Some(sourcePos)
+            )
+            collectRec(current.advance(), comments :+ comment)
+          case Right(Token.Whitespace(_, _)) =>
+            // In Whitespace tokens, we don't have the actual text content
+            // Just advance the token - we'll hit another token eventually
+            collectRec(current.advance(), comments)
+          case _ =>
+            // Should never happen due to the while condition
+            collectRec(current.advance(), comments)
+        }
+      } else {
+        (comments, current)
       }
     }
-
-    (comments, current)
+    
+    collectRec(state, Vector.empty)
   }
 
   /** Collects trailing comments after an expression until a newline or non-comment token.
@@ -1365,41 +1368,38 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   def collectTrailingComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
     // For trailing comments, we only collect comments that appear on the same line
     // (until we hit a newline in whitespace)
-    var comments = Vector.empty[chester.syntax.concrete.Comment]
-    var current = state
-    var hitNewline = false
+    @scala.annotation.tailrec
+    def collectRec(current: LexerState, comments: Vector[chester.syntax.concrete.Comment], hitNewline: Boolean): (Vector[chester.syntax.concrete.Comment], LexerState) = {
+      if (!current.isAtEnd && !hitNewline &&
+          current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
+        current.current match {
+          case Right(Token.Comment(text, sourcePos)) =>
+            val commentType = if (text.trim.startsWith("//")) {
+              chester.syntax.concrete.CommentType.OneLine
+            } else {
+              chester.syntax.concrete.CommentType.MultiLine
+            }
 
-    while (
-      !current.isAtEnd && !hitNewline &&
-      current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
-    ) {
-      current.current match {
-        case Right(Token.Comment(text, sourcePos)) =>
-          val commentType = if (text.trim.startsWith("//")) {
-            chester.syntax.concrete.CommentType.OneLine
-          } else {
-            chester.syntax.concrete.CommentType.MultiLine
-          }
-
-          val comment = chester.syntax.concrete.Comment(
-            content = text.trim,
-            typ = commentType,
-            sourcePos = Some(sourcePos)
-          )
-          comments = comments :+ comment
-          current = current.advance()
-        case Right(Token.Whitespace(_, _)) =>
-          // In Whitespace tokens, we don't have the actual text content
-          // Just assume any whitespace might contain a newline and stop collecting
-          hitNewline = true
-          current = current.advance()
-        case _ =>
-          // Should never happen due to the while condition
-          current = current.advance()
+            val comment = chester.syntax.concrete.Comment(
+              content = text.trim,
+              typ = commentType,
+              sourcePos = Some(sourcePos)
+            )
+            collectRec(current.advance(), comments :+ comment, hitNewline)
+          case Right(Token.Whitespace(_, _)) =>
+            // In Whitespace tokens, we don't have the actual text content
+            // Just assume any whitespace might contain a newline and stop collecting
+            collectRec(current.advance(), comments, true)
+          case _ =>
+            // Should never happen due to the while condition
+            collectRec(current.advance(), comments, hitNewline)
+        }
+      } else {
+        (comments, current)
       }
     }
-
-    (comments, current)
+    
+    collectRec(state, Vector.empty, false)
   }
 
   /** Creates ExprMeta with comments.
