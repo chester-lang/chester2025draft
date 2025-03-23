@@ -102,52 +102,51 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private def debug(msg: => String): Unit = if (DEBUG) println(s"[DEBUG] $msg")
 
-  private var state: LexerState = LexerState(tokens.toVector, 0)
-
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
 
-  private def createParseError(msg: String, token: Either[ParseError, Token]): ParseError = token match {
-    case Right(t)  => ParseError(s"$msg at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}", t.sourcePos.range.start)
-    case Left(err) => err
-  }
+  private def createParseError(msg: String, token: Either[ParseError, Token]): ParseError = 
+    token.fold(
+      identity, 
+      t => ParseError(s"$msg at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}", t.sourcePos.range.start)
+    )
 
-  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = token match {
-    case Right(t) => {
-      val tokenType = t match {
-        case _: Token.Identifier      => "identifier"
-        case _: Token.IntegerLiteral  => "integer literal"
-        case _: Token.RationalLiteral => "rational literal"
-        case _: Token.StringLiteral   => "string literal"
-        case _: Token.Operator        => "operator"
-        case _: Token.LParen          => "left parenthesis '('"
-        case _: Token.RParen          => "right parenthesis ')'"
-        case _: Token.LBrace          => "left brace '{'"
-        case _: Token.RBrace          => "right brace '}'"
-        case _: Token.LBracket        => "left bracket '['"
-        case _: Token.RBracket        => "right bracket ']'"
-        case _: Token.Colon           => "colon ':'"
-        case _: Token.Comma           => "comma ','"
-        case _: Token.Dot             => "dot '.'"
-        case _: Token.Semicolon       => "semicolon ';'"
-        case _: Token.EOF             => "end of file"
-        case _: Token.Whitespace      => "whitespace"
-        case _                        => "unknown token"
-      }
-      ParseError(
-        s"Expected $expected but found $tokenType at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
+  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
+    def getTokenType(t: Token): String = t match {
+      case _: Token.Identifier      => "identifier"
+      case _: Token.IntegerLiteral  => "integer literal"
+      case _: Token.RationalLiteral => "rational literal"
+      case _: Token.StringLiteral   => "string literal"
+      case _: Token.Operator        => "operator"
+      case _: Token.LParen          => "left parenthesis '('"
+      case _: Token.RParen          => "right parenthesis ')'"
+      case _: Token.LBrace          => "left brace '{'"
+      case _: Token.RBrace          => "right brace '}'"
+      case _: Token.LBracket        => "left bracket '['"
+      case _: Token.RBracket        => "right bracket ']'"
+      case _: Token.Colon           => "colon ':'"
+      case _: Token.Comma           => "comma ','"
+      case _: Token.Dot             => "dot '.'"
+      case _: Token.Semicolon       => "semicolon ';'"
+      case _: Token.EOF             => "end of file"
+      case _: Token.Whitespace      => "whitespace"
+      case _                        => "unknown token"
+    }
+    
+    token.fold(
+      identity,
+      t => ParseError(
+        s"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
         t.sourcePos.range.start
       )
-    }
-    case Left(err) => err
+    )
   }
 
   /** Creates expression metadata from source positions and comments.
     */
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] = {
-    if (ignoreLocation) return None
-
-    (startPos, endPos) match {
+    if (ignoreLocation) None
+    else (startPos, endPos) match {
       case (Some(start), Some(end)) =>
         Some(ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None))
       case (Some(pos), None) =>
@@ -161,16 +160,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   private def getSourcePos(token: Either[ParseError, Token]): SourcePos = {
     debug(s"getSourcePos: token=$token")
-    token match {
-      case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
-      case Right(t)  => t.sourcePos
-    }
+    token.fold(
+      err => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero))),
+      t => t.sourcePos
+    )
   }
 
-  private def getStartPos(token: Either[ParseError, Token]): Pos = token match {
-    case Right(t)  => t.sourcePos.range.start
-    case Left(err) => err.pos
-  }
+  private def getStartPos(token: Either[ParseError, Token]): Pos = 
+    token.fold(_.pos, _.sourcePos.range.start)
 
   // Type alias for clarity
   type LexerError = ParseError
@@ -1286,11 +1283,11 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   private def expectToken[T <: Token](state: LexerState)(using tag: ClassTag[T]): Either[ParseError, LexerState] = {
-    state.current match {
-      case Right(token) if token.isInstanceOf[T] => Right(state.advance())
-      case Right(token) => Left(ParseError(s"Expected token of type ${tag.runtimeClass.getSimpleName}", token.sourcePos.range.start))
-      case Left(err)    => Left(err)
-    }
+    state.current.fold(
+      err => Left(err),
+      token => if (token.isInstanceOf[T]) Right(state.advance()) 
+              else Left(ParseError(s"Expected token of type ${tag.runtimeClass.getSimpleName} but got: $token", token.sourcePos.range.start))
+    )
   }
 
   def isVarargContext(state: LexerState): Boolean = {
