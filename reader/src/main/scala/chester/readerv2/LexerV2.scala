@@ -105,12 +105,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
 
-  private def createParseError(msg: String, token: Either[ParseError, Token]): ParseError = 
-    token.fold(
-      identity, 
-      t => ParseError(s"$msg at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}", t.sourcePos.range.start)
-    )
-
   private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
     def getTokenType(t: Token): String = t match {
       case _: Token.Identifier      => "identifier"
@@ -156,14 +150,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case _ =>
         None
     }
-  }
-
-  private def getSourcePos(token: Either[ParseError, Token]): SourcePos = {
-    debug(s"getSourcePos: token=$token")
-    token.fold(
-      err => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero))),
-      t => t.sourcePos
-    )
   }
 
   private def getStartPos(token: Either[ParseError, Token]): Pos = 
@@ -1260,22 +1246,6 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         Left(ParseError(s"Expected identifier '$expected' but got $other", state.sourcePos.range.start))
       }
     }
-  }
-
-  private def expectToken[T <: Token](state: LexerState)(using tag: ClassTag[T]): Either[ParseError, LexerState] = {
-    state.current.fold(
-      err => Left(err),
-      token => {
-        val expectedClassName = tag.runtimeClass.getSimpleName
-        val actualClassName = token.getClass.getSimpleName
-        
-        if (tag.runtimeClass.isInstance(token)) {
-          Right(state.advance())
-        } else {
-          Left(ParseError(s"Expected token of type $expectedClassName but got: $actualClassName", token.sourcePos.range.start))
-        }
-      }
-    )
   }
 
   def isVarargContext(state: LexerState): Boolean = {
