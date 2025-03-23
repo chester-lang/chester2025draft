@@ -194,6 +194,130 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
       case (meta, None) => meta
     }
 
+  // Token extractors for cleaner pattern matching
+  private object TokenExtractors {
+    object Id {
+      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = token match {
+        case Right(Token.Identifier(chars, pos)) => Some((chars, pos))
+        case _ => None
+      }
+    }
+    
+    object Op {
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
+        case Right(Token.Operator(op, pos)) => Some((op, pos))
+        case _ => None
+      }
+    }
+    
+    object Str {
+      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = token match {
+        case Right(Token.StringLiteral(chars, pos)) => Some((chars, pos))
+        case _ => None
+      }
+    }
+    
+    object Sym {
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
+        case Right(Token.SymbolLiteral(value, pos)) => Some((value, pos))
+        case _ => None
+      }
+    }
+    
+    object LParen {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.LParen(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object RParen {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.RParen(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object LBrace {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.LBrace(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object RBrace {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.RBrace(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object LBracket {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.LBracket(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object RBracket {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.RBracket(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object Dot {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.Dot(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object Comma {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.Comma(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object Colon {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.Colon(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object Semi {
+      def unapply(token: Either[ParseError, Token]): Option[SourcePos] = token match {
+        case Right(Token.Semicolon(pos)) => Some(pos)
+        case _ => None
+      }
+    }
+    
+    object Int {
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
+        case Right(Token.IntegerLiteral(value, pos)) => Some((value, pos))
+        case _ => None
+      }
+    }
+    
+    object Rat {
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
+        case Right(Token.RationalLiteral(value, pos)) => Some((value, pos))
+        case _ => None
+      }
+    }
+    
+    object Err {
+      def unapply(token: Either[ParseError, Token]): Option[ParseError] = token match {
+        case Left(err) => Some(err)
+        case _ => None
+      }
+    }
+  }
+  
+  import TokenExtractors._
+
   // Main parsing methods
   def parseExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     val (leadingComments, current) = collectComments(state)
@@ -640,141 +764,104 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
 
   def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
     current.current match {
-      case Right(Token.LBrace(sourcePos)) => {
-        // First check for empty object
-        val afterBrace = current.advance()
-        afterBrace.current match {
-          case Right(Token.RBrace(_)) => {
-            // Empty object
-            parseObject(current)
-          }
-          case Right(Token.Identifier(_, _)) | Right(Token.SymbolLiteral(_, _)) | Right(Token.StringLiteral(_, _)) => {
-            // Look ahead one more token to see if it's followed by = or =>
-            val afterId = afterBrace.advance()
+      case Left(err) => Left(err)
+      case LBrace(sourcePos) => 
+        // Check for empty object or block
+        current.advance().current match {
+          case Left(err) => Left(err)
+          case RBrace(_) => parseObject(current) // Empty object
+          case Id(_, _) | Sym(_, _) | Str(_, _) => 
+            // Look ahead for = or => to determine if it's an object
+            val afterId = current.advance().advance()
             afterId.current match {
-              case Right(Token.Operator(op, _)) if op == "=" || op == "=>" => {
-                // Object field
-                parseObject(current)
-              }
-              case _ => {
-                // Not an object field, treat as block
-                parseBlockWithComments(current)
-              }
+              case Left(err) => Left(err)
+              case Op(op, _) if op == "=" || op == "=>" => parseObject(current)
+              case _ => parseBlockWithComments(current)
             }
-          }
-          case _ => {
-            // Not an object field, treat as block
-            parseBlockWithComments(current)
-          }
+          case _ => parseBlockWithComments(current)
         }
-      }
-      case Right(Token.LParen(sourcePos)) => {
-        // Always parse parenthesized expressions as tuples
-        parseTuple(current)
-      }
-      case Right(Token.Identifier(chars, sourcePos)) => {
+        
+      case LParen(sourcePos) => parseTuple(current)
+      
+      case Id(chars, sourcePos) => 
         val afterId = current.advance()
         afterId.current match {
-          case Right(Token.LBracket(_)) => {
-            // Handle generic type parameters
-            debug("parseAtom: Found generic type parameters after identifier")
+          case LBracket(_) => 
+            // Generic type parameters
             val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
-
-            // Parse list of type parameters within square brackets
             parseListWithComments(afterId).flatMap { case (typeParams, afterTypeParams) =>
-              // Now check if there are parentheses for function arguments
               afterTypeParams.current match {
-                case Right(Token.LParen(_)) => {
-                  // Function call with generic type parameters and arguments
+                case LParen(_) => 
+                  // Function call with generic type args
                   parseTuple(afterTypeParams).map { case (tuple, afterArgs) =>
-                    // Create nested function call: func[T](args) -> FunctionCall(FunctionCall(func, [T]), (args))
-                    // Use the original typeParams expression, but convert to ListExpr if needed
                     val typeParamsList = typeParams match {
                       case list: ListExpr => list
                       case other => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
                     }
-                    val funcWithGenericTypes = FunctionCall(
-                      identifier,
-                      typeParamsList,
-                      createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
-                    )
-                    (
-                      FunctionCall(
-                        funcWithGenericTypes,
-                        tuple,
-                        createMeta(Some(sourcePos), Some(afterArgs.sourcePos))
-                      ),
-                      afterArgs
-                    )
+                    (FunctionCall(
+                      FunctionCall(identifier, typeParamsList, createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))),
+                      tuple,
+                      createMeta(Some(sourcePos), Some(afterArgs.sourcePos))
+                    ), afterArgs)
                   }
-                }
-                case _ => {
-                  // Just the generic type parameters without function arguments
-                  // Use the original typeParams expression, but convert to ListExpr if needed
+                case _ =>
+                  // Just the generic type parameters
                   val typeParamsList = typeParams match {
                     case list: ListExpr => list
                     case other => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
                   }
-                  Right(
-                    (
-                      FunctionCall(
-                        identifier,
-                        typeParamsList,
-                        createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
-                      ),
-                      afterTypeParams
-                    )
-                  )
-                }
+                  Right((FunctionCall(
+                    identifier, 
+                    typeParamsList,
+                    createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
+                  ), afterTypeParams))
               }
             }
-          }
-          case Right(Token.LParen(_)) => {
+          case LParen(_) => 
+            // Regular function call
             val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
             parseTuple(afterId).map { case (tuple, nextState) =>
               (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
             }
-          }
-          case _ => Right((ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), afterId))
+          case _ => 
+            // Plain identifier
+            Right((ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), afterId))
         }
-      }
-      case Right(Token.IntegerLiteral(value, sourcePos)) => {
-        val (numStr, base) = if (value.startsWith("0x")) {
-          (value.drop(2), 16)
-        } else if (value.startsWith("0b")) {
-          (value.drop(2), 2)
-        } else {
-          (value, 10)
-        }
+        
+      case Int(value, sourcePos) =>
+        // Parse integer with appropriate base
+        val (numStr, base) = if (value.startsWith("0x")) (value.drop(2), 16)
+                            else if (value.startsWith("0b")) (value.drop(2), 2)
+                            else (value, 10)
         try {
           Right((ConcreteIntegerLiteral(BigInt(numStr, base), createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
         } catch {
-          case e: NumberFormatException =>
+          case _: NumberFormatException =>
             Left(ParseError(s"Invalid number format: $value", sourcePos.range.start))
         }
-      }
-      case Right(Token.RationalLiteral(value, sourcePos)) => {
+        
+      case Rat(value, sourcePos) =>
         try {
-          // Create a BigDecimal directly from the value string to match the V1 parser's behavior
-          // This preserves exact representation of the number without extra manipulation
-          val decimal = BigDecimal(value)
-          val rational = spire.math.Rational(decimal)
-          Right((ConcreteRationalLiteral(rational, createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
+          Right((ConcreteRationalLiteral(
+            spire.math.Rational(BigDecimal(value)), 
+            createMeta(Some(sourcePos), Some(sourcePos))
+          ), current.advance()))
         } catch {
-          case e: NumberFormatException =>
+          case _: NumberFormatException =>
             Left(ParseError(s"Invalid floating-point number format: $value", sourcePos.range.start))
         }
-      }
-      case Right(Token.StringLiteral(chars, sourcePos)) =>
+        
+      case Str(chars, sourcePos) =>
         Right((ConcreteStringLiteral(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
-      case Right(Token.SymbolLiteral(value, sourcePos)) =>
+        
+      case Sym(value, sourcePos) =>
         Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current.advance()))
-      case Right(Token.LBracket(sourcePos)) => {
-        // Parse list
-        parseListWithComments(current)
-      }
+        
+      case LBracket(sourcePos) => parseListWithComments(current)
+      
       case Right(token) => Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
-      case Left(error)  => Left(error)
+      
+      case Err(error) => Left(error)
     }
   }
 
@@ -870,38 +957,25 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     parseElements(initialState, Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
   }
 
-  def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = {
-    state.current match {
-      case Right(Token.LParen(sourcePos)) => {
-        // Use collectComments instead of skipComments
-        val (leadingComments, afterLParen) = collectComments(state.advance())
-        parseExprList(afterLParen).flatMap { case (exprs, afterExprs) =>
-          // Use collectComments instead of skipComments
-          val (trailingComments, afterList) = collectComments(afterExprs)
-          afterList.current match {
-            case Right(Token.RParen(_)) => {
-              // Always wrap expressions in a tuple when inside parentheses
-              // This ensures type annotations are preserved
-              val tupleExprs = exprs
-
-              // Create meta with comments
-              val tupleMeta = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
-                val meta = createMeta(Some(sourcePos), Some(afterList.sourcePos))
-                meta.map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments, trailingComments)))
-              } else {
+  def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = state.current match {
+    case LParen(sourcePos) =>
+      val (leadingComments, afterLParen) = collectComments(state.advance())
+      for {
+        (exprs, afterExprs) <- parseExprList(afterLParen)
+        (trailingComments, afterList) = collectComments(afterExprs)
+        result <- afterList.current match {
+          case RParen(_) => 
+            val meta = (leadingComments.nonEmpty || trailingComments.nonEmpty) match {
+              case true => 
                 createMeta(Some(sourcePos), Some(afterList.sourcePos))
-              }
-
-              Right((Tuple(tupleExprs, tupleMeta), afterList.advance()))
+                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments, trailingComments)))
+              case false => createMeta(Some(sourcePos), Some(afterList.sourcePos))
             }
-            case Right(t)  => Left(ParseError("Expected right parenthesis", t.sourcePos.range.start))
-            case Left(err) => Left(err)
-          }
+            Right((Tuple(exprs, meta), afterList.advance()))
+          case _ => Left(expectedError("right parenthesis", afterList.current))
         }
-      }
-      case Right(t)  => Left(ParseError("Expected left parenthesis", t.sourcePos.range.start))
-      case Left(err) => Left(err)
-    }
+      } yield result
+    case _ => Left(expectedError("left parenthesis", state.current))
   }
 
   def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
@@ -1091,73 +1165,54 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
   }
 
   def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
-    // Replace skipComments with collectComments
     val (leadingComments, initialState) = collectComments(state)
 
     initialState.current match {
-      case Right(Token.LBracket(sourcePos)) => {
+      case LBracket(sourcePos) =>
         val (afterBracketComments, afterBracket) = collectComments(initialState.advance())
         
+        @scala.annotation.tailrec
         def parseElements(current: LexerState, exprs: Vector[Expr]): Either[ParseError, (Vector[Expr], LexerState)] = {
           if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
             Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
-          } else {
-            current.current match {
-              case Right(Token.RBracket(_)) => 
-                Right((exprs, current))
-              case Right(Token.Comma(_)) => 
-                // Collect comments after comma
-                val (_, afterComma) = collectComments(current.advance())
-                parseElements(afterComma, exprs)
-              case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) => 
-                // Collect comments
-                val (_, afterComments) = collectComments(current)
-                parseElements(afterComments, exprs)
-              case _ => 
-                parseExpr(current).flatMap { case (expr, afterExpr) =>
-                  // Collect any comments after the expression
+          } else current.current match {
+            case RBracket(_) => Right((exprs, current))
+            case Comma(_) => 
+              val (_, afterComma) = collectComments(current.advance())
+              parseElements(afterComma, exprs)
+            case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
+              val (_, afterComments) = collectComments(current)
+              parseElements(afterComments, exprs)
+            case _ => 
+              parseExpr(current) match {
+                case Left(err) => Left(err)
+                case Right((expr, afterExpr)) =>
                   val (_, afterComments) = collectComments(afterExpr)
-                  
                   afterComments.current match {
-                    case Right(Token.RBracket(_)) => 
-                      Right((exprs :+ expr, afterComments))
-                    case Right(Token.Comma(_)) => 
+                    case RBracket(_) => Right((exprs :+ expr, afterComments))
+                    case Comma(_) => 
                       val (_, afterComma) = collectComments(afterComments.advance())
                       parseElements(afterComma, exprs :+ expr)
-                    case Right(t) => 
-                      Left(expectedError("',' or ']' in list", Right(t)))
-                    case Left(err) => 
-                      Left(err)
+                    case _ => Left(expectedError("',' or ']' in list", afterComments.current))
                   }
-                }
-            }
+              }
           }
         }
         
         parseElements(afterBracket, Vector.empty).flatMap { case (exprs, finalState) =>
           finalState.current match {
-            case Right(Token.RBracket(endPos)) => {
-              // Add comments to list meta
+            case RBracket(endPos) =>
               val listMeta = if (leadingComments.nonEmpty || afterBracketComments.nonEmpty) {
-                val meta = createMeta(Some(sourcePos), Some(endPos))
-                meta.map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments ++ afterBracketComments)))
+                createMeta(Some(sourcePos), Some(endPos))
+                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments ++ afterBracketComments)))
               } else {
                 createMeta(Some(sourcePos), Some(endPos))
               }
-
               Right((ListExpr(exprs, listMeta), finalState.advance()))
-            }
-            case Right(t) => 
-              Left(ParseError("Expected ']' at end of list", t.sourcePos.range.start))
-            case Left(err) => 
-              Left(err)
+            case _ => Left(expectedError("']' at end of list", finalState.current))
           }
         }
-      }
-      case Right(t) => 
-        Left(ParseError("Expected '[' at start of list", t.sourcePos.range.start))
-      case Left(err) => 
-        Left(err)
+      case _ => Left(expectedError("[", initialState.current))
     }
   }
 
@@ -1342,14 +1397,14 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
     }
   }
 
-  /** Parse an atom expression with comments. This collects leading and trailing comments and attaches them to the expression.
-    */
-  def parseAtomWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+  /** Generic parser combinator that adds comment handling to any parse method */
+  private def withComments[T <: Expr](parseMethod: LexerState => Either[ParseError, (T, LexerState)])
+                               (state: LexerState): Either[ParseError, (T, LexerState)] = {
     // Collect leading comments
     val (leadingComments, afterLeadingComments) = collectComments(state)
 
-    // Parse the actual expression
-    parseAtom(afterLeadingComments).flatMap { case (expr, afterExpr) =>
+    // Parse the expression using the provided method
+    parseMethod(afterLeadingComments).flatMap { case (expr, afterExpr) =>
       // Collect trailing comments
       val (trailingComments, finalState) = collectTrailingComments(afterExpr)
 
@@ -1361,7 +1416,7 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
             leadingComments,
             trailingComments
           )
-
+          
           // Merge the existing meta with new comment information
           mergeMeta(existingMeta, newMeta)
         }
@@ -1369,71 +1424,20 @@ class LexerV2(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: B
         expr
       }
 
-      Right((updatedExpr, finalState))
+      // Cast is safe because we're only modifying metadata
+      Right((updatedExpr.asInstanceOf[T], finalState))
     }
   }
-
-  /** Parse a block with comments.
-    */
-  def parseBlockWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    // Collect leading comments
-    val (leadingComments, afterLeadingComments) = collectComments(state)
-
-    // Parse the block
-    parseBlock(afterLeadingComments).flatMap { case (block, afterBlock) =>
-      // Collect trailing comments after the block
-      val (trailingComments, finalState) = collectTrailingComments(afterBlock)
-
-      // Update block with comments
-      val updatedBlock = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
-        block.updateMeta { existingMeta =>
-          val newMeta = createMetaWithComments(
-            existingMeta.flatMap(_.sourcePos),
-            leadingComments,
-            trailingComments
-          )
-
-          // Merge the existing meta with new comment information
-          mergeMeta(existingMeta, newMeta)
-        }
-      } else {
-        block
-      }
-
-      Right((updatedBlock, finalState))
-    }
-  }
-
-  /** Parse a list with comments.
-    */
-  def parseListWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    // Collect leading comments
-    val (leadingComments, afterLeadingComments) = collectComments(state)
-
-    // Parse the list using the original parseList method
-    parseList(afterLeadingComments).flatMap { case (list, afterList) =>
-      // Collect trailing comments after the list
-      val (trailingComments, finalState) = collectTrailingComments(afterList)
-
-      // Update list with comments
-      val updatedList = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
-        list.updateMeta { existingMeta =>
-          val newMeta = createMetaWithComments(
-            existingMeta.flatMap(_.sourcePos),
-            leadingComments,
-            trailingComments
-          )
-
-          // Merge the existing meta with new comment information
-          mergeMeta(existingMeta, newMeta)
-        }
-      } else {
-        list
-      }
-
-      Right((updatedList, finalState))
-    }
-  }
+  
+  // Simplified versions using the withComments combinator
+  def parseAtomWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] = 
+    withComments(parseAtom)(state)
+    
+  def parseBlockWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] = 
+    withComments(parseBlock)(state)
+    
+  def parseListWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] = 
+    withComments(parseList)(state)
 
   private def createCommentInfo(
     leadingComments: Vector[chester.syntax.concrete.Comment],
