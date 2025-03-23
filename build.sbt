@@ -238,7 +238,8 @@ def commonSettings0 = Seq(
     ExclusionRule("com.lihaoyi", "geny_sjs1_2.13"),
     ExclusionRule("com.lihaoyi", "geny_native0.5_2.13"),
     ExclusionRule("org.scala-native", "junit-runtime_native0.5_2.13"),
-    ExclusionRule("org.scala-native", "test-interface_native0.5_2.13")
+    ExclusionRule("org.scala-native", "test-interface_native0.5_2.13"),
+    ExclusionRule("org.scala-lang.modules", "scala-collection-compat_2.13")
   )
 )
 def commonSettings = commonSettings0 ++ Seq(
@@ -522,6 +523,7 @@ lazy val utils = useSpire(
       libraryDependencies ++= Seq(
         "org.scala-graph" %%% "graph-core" % "2.0.2",
         "com.outr" %%% "scribe" % "3.16.0",
+        /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
         "org.wvlet.airframe" %%% "airframe-codec" % AIRFRAME_VERSION, // MessagePack-based schema-on-read codec
         "org.wvlet.airframe" %%% "airframe-control" % AIRFRAME_VERSION, // Library for retryable execution
@@ -532,6 +534,7 @@ lazy val utils = useSpire(
         "org.wvlet.airframe" %%% "airframe-rx" % AIRFRAME_VERSION, // ReactiveX interface
         "org.wvlet.airframe" %%% "airframe-surface" % AIRFRAME_VERSION, // Object surface inspector
         "org.wvlet.airframe" %%% "airframe-ulid" % AIRFRAME_VERSION // ULID generator
+        */
       )
     )
     .jvmSettings(
