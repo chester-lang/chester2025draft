@@ -208,23 +208,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       }
     }
 
-    // Helper for source position extractors
-    private def posExtract(f: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
-      case Right(token) if f(token) => Some(token.sourcePos)
-      case _                        => None
-    }
-
-    object LParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t) }
-    object RParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
-    object LBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
-    object RBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
-    object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
-    object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
-    object Dot { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Dot])(t) }
-    object Comma { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
-    object Colon { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Colon])(t) }
-    object Semi { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Semicolon])(t) }
-
     object Int {
       def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
         case Right(Token.IntegerLiteral(value, pos)) => Some((value, pos))
@@ -238,6 +221,24 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         case _                                        => None
       }
     }
+
+    // Helper for source position extractors - consolidated into a single implementation
+    private def posExtract(tokenPredicate: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
+      case Right(token) if tokenPredicate(token) => Some(token.sourcePos)
+      case _                                     => None
+    }
+
+    // Define all delimiter token extractors using the posExtract helper
+    object LParen   { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t) }
+    object RParen   { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
+    object LBrace   { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
+    object RBrace   { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
+    object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
+    object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
+    object Dot      { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Dot])(t) }
+    object Comma    { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
+    object Colon    { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Colon])(t) }
+    object Semi     { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Semicolon])(t) }
 
     object Err {
       def unapply(token: Either[ParseError, Token]): Option[ParseError] = token match {
@@ -632,7 +633,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     afterDot.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) => {
         val afterId = afterDot.advance()
-        val field = ConcreteIdentifier(charsToString(chars1), createMeta(Some(idSourcePos1), Some(idSourcePos1)))
+        val field = createIdentifier(chars1, idSourcePos1)
         var telescope = Vector.empty[Tuple]
 
         def parseNextTelescope(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
@@ -650,11 +651,11 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
               }
             }
             case Right(Token.Dot(nextDotSourcePos)) => {
-              val dotCall = DotCall(terms.last, field, telescope, createMeta(Some(dotSourcePos), Some(state.sourcePos)))
+              val dotCall = createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(state.sourcePos))
               handleDotCall(nextDotSourcePos, state, Vector(dotCall))
             }
             case _ => {
-              Right((DotCall(terms.last, field, telescope, createMeta(Some(dotSourcePos), Some(state.sourcePos))), state))
+              Right((createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(state.sourcePos)), state))
             }
           }
         }
@@ -667,11 +668,11 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         afterOp.current match {
           case Right(Token.LParen(_)) => {
             parseTuple(afterOp).map { case (args, afterArgs) =>
-              (DotCall(terms.last, field, Vector(args), createMeta(Some(dotSourcePos), Some(afterArgs.sourcePos))), afterArgs)
+              (createDotCall(terms.last, field, Vector(args), Some(dotSourcePos), Some(afterArgs.sourcePos)), afterArgs)
             }
           }
           case _ => {
-            Right((DotCall(terms.last, field, Vector.empty, createMeta(Some(dotSourcePos), Some(idSourcePos))), afterOp))
+            Right((createDotCall(terms.last, field, Vector.empty, Some(dotSourcePos), Some(idSourcePos)), afterOp))
           }
         }
       }
@@ -719,7 +720,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         afterId.current match {
           case LBracket(_) =>
             // Generic type parameters
-            val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
+            val identifier = createIdentifier(chars, sourcePos)
             parseListWithComments(afterId).flatMap { case (typeParams, afterTypeParams) =>
               afterTypeParams.current match {
                 case LParen(_) =>
@@ -729,14 +730,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
                       case list: ListExpr => list
                       case other          => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
                     }
-                    (
-                      FunctionCall(
-                        FunctionCall(identifier, typeParamsList, createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))),
-                        tuple,
-                        createMeta(Some(sourcePos), Some(afterArgs.sourcePos))
-                      ),
-                      afterArgs
-                    )
+                    val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
+                    (createFunctionCall(typeCall, tuple, Some(sourcePos), Some(afterArgs.sourcePos)), afterArgs)
                   }
                 case _ =>
                   // Just the generic type parameters
@@ -744,63 +739,22 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
                     case list: ListExpr => list
                     case other          => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
                   }
-                  Right(
-                    (
-                      FunctionCall(
-                        identifier,
-                        typeParamsList,
-                        createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
-                      ),
-                      afterTypeParams
-                    )
-                  )
+                  Right((createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos)), afterTypeParams))
               }
             }
           case LParen(_) =>
             // Regular function call
-            val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
-            parseTuple(afterId).map { case (tuple, nextState) =>
-              (FunctionCall(identifier, tuple, createMeta(Some(sourcePos), Some(sourcePos))), nextState)
-            }
+            val identifier = createIdentifier(chars, sourcePos) 
+            parseFunctionCallWithId(identifier, afterId)
           case _ =>
             // Plain identifier
-            Right((ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), afterId))
+            Right((createIdentifier(chars, sourcePos), afterId))
         }
 
-      case Int(value, sourcePos) =>
-        // Parse integer with appropriate base
-        val (numStr, base) =
-          if (value.startsWith("0x")) (value.drop(2), 16)
-          else if (value.startsWith("0b")) (value.drop(2), 2)
-          else (value, 10)
-        try {
-          Right((ConcreteIntegerLiteral(BigInt(numStr, base), createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
-        } catch {
-          case _: NumberFormatException =>
-            Left(ParseError(s"Invalid number format: $value", sourcePos.range.start))
-        }
-
-      case Rat(value, sourcePos) =>
-        try {
-          Right(
-            (
-              ConcreteRationalLiteral(
-                spire.math.Rational(BigDecimal(value)),
-                createMeta(Some(sourcePos), Some(sourcePos))
-              ),
-              current.advance()
-            )
-          )
-        } catch {
-          case _: NumberFormatException =>
-            Left(ParseError(s"Invalid floating-point number format: $value", sourcePos.range.start))
-        }
-
-      case Str(chars, sourcePos) =>
-        Right((ConcreteStringLiteral(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), current.advance()))
-
-      case Sym(value, sourcePos) =>
-        Right((chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(sourcePos), None)), current.advance()))
+      case Int(value, sourcePos) => parseInt(current).asInstanceOf[Either[ParseError, (Expr, LexerState)]]
+      case Rat(value, sourcePos) => parseRational(current).asInstanceOf[Either[ParseError, (Expr, LexerState)]]
+      case Str(chars, sourcePos) => parseString(current)
+      case Sym(value, sourcePos) => parseSymbol(current)
 
       case LBracket(sourcePos) => parseListWithComments(current)
 
@@ -809,6 +763,25 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       case Err(error) => Left(error)
     }
   }
+
+  // Helper method to check for expected delimiter tokens and advance
+  private def expectDelimiter(state: LexerState, expectedType: Token => Boolean, errorMsg: String): Either[ParseError, LexerState] = {
+    state.current match {
+      case Right(token) if expectedType(token) => Right(state.advance())
+      case Right(token) => Left(ParseError(errorMsg, token.sourcePos.range.start))
+      case Left(err) => Left(err)
+    }
+  }
+  
+  // Simplified versions for common delimiters
+  private def expectRParen(state: LexerState): Either[ParseError, LexerState] = 
+    expectDelimiter(state, _.isInstanceOf[Token.RParen], "Expected right parenthesis ')'")
+    
+  private def expectRBrace(state: LexerState): Either[ParseError, LexerState] = 
+    expectDelimiter(state, _.isInstanceOf[Token.RBrace], "Expected right brace '}'")
+    
+  private def expectRBracket(state: LexerState): Either[ParseError, LexerState] = 
+    expectDelimiter(state, _.isInstanceOf[Token.RBracket], "Expected right bracket ']'")
 
   // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
   private def isTerminator(token: Token): Boolean = token match {
@@ -1320,28 +1293,47 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       ExprMeta(sourcePos, createCommentInfo(leadingComments, trailingComments))
     }
 
-  def parseFunctionCall(identifier: ConcreteIdentifier, sourcePos: SourcePos, current: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    val afterLParen = current.advance()
-    parseExprList(afterLParen) match {
-      case Left(error) => Left(error)
-      case Right((listExpr, afterList)) => {
-        afterList.current match {
-          case Right(Token.RParen(endPos)) => {
-            Right(
-              (
-                FunctionCall(
-                  identifier,
-                  Tuple(listExpr.toVector, createMeta(Some(sourcePos), Some(endPos))),
-                  createMeta(Some(sourcePos), Some(endPos))
-                ),
-                afterList.advance()
-              )
-            )
-          }
-          case Right(t)  => Left(ParseError("Expected right parenthesis", t.sourcePos.range.start))
-          case Left(err) => Left(err)
+  // Helper for creating function calls
+  private def createFunctionCall(
+      func: Expr, 
+      args: Expr, 
+      startSourcePos: Option[SourcePos], 
+      endSourcePos: Option[SourcePos]
+  ): FunctionCall = {
+    FunctionCall(
+      func, 
+      args.asInstanceOf[Tuple], 
+      createMeta(startSourcePos, endSourcePos)
+    )
+  }
+  
+  // Special version for type parameters
+  private def createFunctionCallWithTypeParams(
+      func: Expr,
+      typeParams: ListExpr,
+      startSourcePos: Option[SourcePos],
+      endSourcePos: Option[SourcePos]
+  ): FunctionCall = {
+    FunctionCall(
+      func,
+      typeParams,
+      createMeta(startSourcePos, endSourcePos)
+    )
+  }
+  
+  // Parse a function call with the given identifier
+  def parseFunctionCallWithId(
+      identifier: ConcreteIdentifier, 
+      state: LexerState
+  ): Either[ParseError, (FunctionCall, LexerState)] = {
+    state.current match {
+      case LParen(_) =>
+        parseTuple(state).map { case (args, afterArgs) =>
+          val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
+          (createFunctionCall(identifier, args, funcSourcePos, Some(afterArgs.sourcePos)), afterArgs)
         }
-      }
+      case _ => 
+        Left(ParseError("Expected left parenthesis for function call", state.sourcePos.range.start))
     }
   }
 
@@ -1411,22 +1403,162 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       case right     => right
     }
 
-  // Helper that combines collecting comments and parsing
+  // Helper that combines collecting comments and parsing with error handling
   private def withCommentsAndErrorHandling[T <: Expr](
       parser: LexerState => Either[ParseError, (T, LexerState)],
       errorMsg: String
-  ): LexerState => Either[ParseError, (T, LexerState)] =
-    withComments(withErrorHandling(parser, errorMsg))
+  ): LexerState => Either[ParseError, (T, LexerState)] = state => {
+    val (leadingComments, afterLeadingComments) = collectComments(state)
+    
+    withErrorHandling(parser, errorMsg)(afterLeadingComments).flatMap { case (expr, afterExpr) =>
+      val (trailingComments, finalState) = collectTrailingComments(afterExpr)
+      
+      // Update expression with comments if needed
+      val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
+        expr.updateMeta { existingMeta =>
+          val newMeta = createMetaWithComments(
+            existingMeta.flatMap(_.sourcePos),
+            leadingComments,
+            trailingComments
+          )
+          mergeMeta(existingMeta, newMeta)
+        }
+      } else {
+        expr
+      }
+      
+      Right((updatedExpr.asInstanceOf[T], finalState))
+    }
+  }
 
-  def parseString(state: LexerState): Either[ParseError, (Expr, LexerState)] =
+  def parseString(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     withCommentsAndErrorHandling(
-      st =>
-        state.current match {
-          case Str(chars, sourcePos) =>
-            Right((ConcreteStringLiteral(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))), st.advance()))
-          case _ =>
-            Left(ParseError("Expected string literal", state.sourcePos.range.start))
+      st => parseLiteral(
+        st,
+        token => token match {
+          case Token.StringLiteral(chars, sourcePos) => Some((charsToString(chars), sourcePos))
+          case _ => None
         },
+        (value, meta) => ConcreteStringLiteral(value, meta),
+        "Expected string literal"
+      ),
       "Error parsing string"
     )(state)
+  }
+
+  // Create a helper method for parsing literals with common pattern
+  private def parseLiteral[T <: Expr](
+      state: LexerState,
+      extract: Token => Option[(String, SourcePos)],
+      create: (String, Option[ExprMeta]) => T,
+      errorMsg: String
+  ): Either[ParseError, (T, LexerState)] = {
+    state.current match {
+      case Right(token) =>
+        extract(token) match {
+          case Some((value, sourcePos)) =>
+            val meta = createMeta(Some(sourcePos), Some(sourcePos))
+            Right((create(value, meta), state.advance()))
+          case None =>
+            Left(ParseError(errorMsg, state.sourcePos.range.start))
+        }
+      case Left(err) => Left(err)
+    }
+  }
+
+  // Helper functions for other literal types
+  def parseInt(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    withCommentsAndErrorHandling(
+      st => parseLiteral(
+        st,
+        token => token match {
+          case Token.IntegerLiteral(value, sourcePos) => 
+            // Handle different bases
+            val (numStr, base) =
+              if (value.startsWith("0x")) (value.drop(2), 16)
+              else if (value.startsWith("0b")) (value.drop(2), 2)
+              else (value, 10)
+            try {
+              Some((BigInt(numStr, base).toString, sourcePos))
+            } catch {
+              case _: NumberFormatException => None
+            }
+          case _ => None
+        },
+        (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
+        "Expected integer literal"
+      ),
+      "Error parsing integer"
+    )(state)
+  }
+
+  def parseRational(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    withCommentsAndErrorHandling(
+      st => parseLiteral(
+        st,
+        token => token match {
+          case Token.RationalLiteral(value, sourcePos) => 
+            try {
+              Some((value, sourcePos))
+            } catch {
+              case _: NumberFormatException => None
+            }
+          case _ => None
+        },
+        (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
+        "Expected rational literal"
+      ),
+      "Error parsing rational number"
+    )(state)
+  }
+
+  def parseSymbol(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    withCommentsAndErrorHandling(
+      st => parseLiteral(
+        st,
+        token => token match {
+          case Token.SymbolLiteral(value, sourcePos) => Some((value, sourcePos))
+          case _ => None
+        },
+        (value, meta) => chester.syntax.concrete.SymbolLiteral(value, meta),
+        "Expected symbol literal"
+      ),
+      "Error parsing symbol"
+    )(state)
+  }
+
+  // Helper to create identifier expressions
+  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos): ConcreteIdentifier = {
+    ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
+  }
+  
+  // Parse a simple identifier (no function calls or type parameters)
+  def parseIdentifier(state: LexerState): Either[ParseError, (ConcreteIdentifier, LexerState)] = {
+    withCommentsAndErrorHandling(
+      st => st.current match {
+        case Right(Token.Identifier(chars, sourcePos)) => 
+          Right((createIdentifier(chars, sourcePos), st.advance()))
+        case _ => 
+          Left(ParseError("Expected identifier", st.sourcePos.range.start))
+      },
+      "Error parsing identifier"
+    )(state).asInstanceOf[Either[ParseError, (ConcreteIdentifier, LexerState)]]
+  }
+
+  // Helper for creating field access expressions
+  private def createDotCall(
+      target: Expr,
+      field: ConcreteIdentifier,
+      args: Vector[Tuple] = Vector.empty,
+      startSourcePos: Option[SourcePos],
+      endSourcePos: Option[SourcePos]
+  ): DotCall = {
+    DotCall(
+      target,
+      field,
+      args,
+      createMeta(startSourcePos, endSourcePos)
+    )
+  }
+
 }
