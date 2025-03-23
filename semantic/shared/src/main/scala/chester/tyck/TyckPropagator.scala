@@ -13,10 +13,6 @@ import scala.collection.mutable
 import scala.language.implicitConversions
 import java.util.concurrent.atomic.AtomicInteger
 
-// Constants for debugging
-val DEBUG_UNION_MATCHING = sys.env.get("ENV_DEBUG").exists(_.toLowerCase == "true") || 
-                          sys.env.get("DEBUG_UNION").exists(_.toLowerCase == "true")
-
 trait TyckPropagator extends ElaboraterCommon {
 
   def unify(lhs: Term, rhs: Term, cause: Expr)(using
