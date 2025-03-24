@@ -103,6 +103,9 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
 
+  // Store current state in a mutable variable
+  private var currentState: LexerState = LexerState(_tokens.toVector, 0)
+
   private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
     def getTokenType(t: Token): String = t match {
       case _: Token.Identifier      => "identifier"
@@ -811,7 +814,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
             Right((exprs, current))
           }
           case Right(_: Token.Comment | _: Token.Whitespace) => {
-            // Collect comments instead of skipping them
+            // Collect comments instead of skipping
             val (_, afterComments) = collectComments(current)
             parseElements(afterComments, exprs, maxExprs)
           }
@@ -1560,6 +1563,56 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       args,
       createMeta(startSourcePos, endSourcePos)
     )
+  }
+
+  // This method uses the internal state directly
+  def parse(): Either[ParseError, Vector[Expr]] = {
+    // Initialize the mutable state
+    currentState = LexerState(_tokens.toVector, 0)
+    
+    var results = Vector[Expr]()
+    
+    // Skip comments at top of file
+    skipWhitespaceAndUpdateState()
+    
+    while (!currentState.isAtEnd) {
+      parseExprAndUpdateState() match {
+        case Left(err) => 
+          return Left(err)
+        case Right(expr) => {
+          results :+= expr
+          
+          // Skip any terminating semicolons and whitespace after expressions
+          skipWhitespaceAndUpdateState()
+        }
+      }
+    }
+    
+    Right(results)
+  }
+
+  // Helper methods to manage state
+  private def updateState(newState: LexerState): Unit = {
+    currentState = newState
+  }
+  
+  private def advanceState(): Unit = {
+    currentState = currentState.advance()
+  }
+  
+  // Wrapped versions of common methods that maintain state directly
+  private def skipWhitespaceAndUpdateState(): Unit = {
+    currentState = skipComments(currentState)
+  }
+  
+  private def parseExprAndUpdateState(): Either[ParseError, Expr] = {
+    parseExpr(currentState) match {
+      case Left(err) => Left(err)
+      case Right((expr, nextState)) => {
+        updateState(nextState)
+        Right(expr)
+      }
+    }
   }
 
 }
