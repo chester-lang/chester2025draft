@@ -51,7 +51,6 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
-
     // Check if the function refers to a record definition
     val functionExpr = expr.function
 
@@ -89,19 +88,18 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
-
     // Elaborate the function expression to get its term and type
     val functionTy = newType
     val functionTerm = elab(expr.function, functionTy, effects)
 
-    // **No need to infer implicit arguments here**
-    // We will handle implicit arguments during unification
+    // Create a new effects cell for the function call
+    val callEffects = newEffects
 
     // Elaborate the arguments in the telescopes
     val callings = expr.telescopes.map { telescope =>
       val callingArgs = telescope.args.map { arg =>
         val argTy = newTypeTerm
-        val argTerm = elab(arg.expr, argTy, effects)
+        val argTerm = elab(arg.expr, argTy, callEffects)
         CallingArgTerm(argTerm, argTy, arg.name.map(_.name), arg.vararg, meta = None)
       }
       Calling(callingArgs, telescope.implicitly, meta = None)
@@ -121,7 +119,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         resultTy,
         expr,
         functionTerm,
-        functionCallTerm
+        functionCallTerm,
+        callEffects,
+        effects
       )
     )
 
@@ -137,7 +137,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       resultTy: CellId[Term],
       cause: Expr,
       functionTerm: Term,
-      functionCallTerm: CellId[Term]
+      functionCallTerm: CellId[Term],
+      callEffects: CIdOf[EffectsCell],
+      outerEffects: CIdOf[EffectsCell]
   )(using Context)
       extends Propagator[Tyck] {
 
@@ -155,7 +157,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
           s"""UnifyFunctionCall.run: 
              |  Function term: $functionTerm
              |  Function type cell: $functionTy
-             |  Result type cell: $resultTy""".stripMargin
+             |  Result type cell: $resultTy
+             |  Call effects: $callEffects
+             |  Outer effects: $outerEffects""".stripMargin
         )
       }
 
@@ -163,8 +167,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Read function type: $readFunctionTy")
 
       readFunctionTy match {
-        case Some(FunctionType(telescopes, retTy, _, _)) =>
-          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Matched FunctionType with telescopes: $telescopes, retTy: $retTy")
+        case Some(FunctionType(telescopes, retTy, functionEffects, _)) =>
+          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Matched FunctionType with telescopes: $telescopes, retTy: $retTy, effects: $functionEffects")
 
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(telescopes, callings, cause)
@@ -172,6 +176,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
           // Unify the result type
           unify(resultTy, retTy, cause)
+
+          // Propagate effects from the function call to the outer effects
+          propagateEffects(functionEffects, outerEffects, cause)
 
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
@@ -190,7 +197,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
               resultTy,
               cause,
               functionTerm,
-              functionCallTerm
+              functionCallTerm,
+              callEffects,
+              outerEffects
             )
           )
           true
@@ -202,6 +211,26 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         case None =>
           // Function type is not yet known; cannot proceed
           false
+      }
+    }
+
+    // Propagate effects from function call to outer effects
+    private def propagateEffects(
+        functionEffects: Term,
+        outerEffects: CIdOf[EffectsCell],
+        cause: Expr
+    )(using state: StateAbility[Tyck], ck: Tyck): Unit = {
+      functionEffects match {
+        case Effects(effects, _) =>
+          // Add each effect from the function to the outer effects
+          effects.foreach { (_, effect) =>
+            val effectsCell = state.readCell(outerEffects).asInstanceOf[EffectsCell]
+            effectsCell.requireEffect(effect)
+          }
+        case Meta(id) =>
+          // If effects are a meta variable, create a propagator to handle them once resolved
+          state.addPropagator(PropagateEffects(id, outerEffects, cause))
+        case _ => // do nothing for other cases
       }
     }
 
@@ -282,6 +311,37 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         needed: Vector[CellIdAny]
     )(using StateAbility[Tyck], Tyck): ZonkResult = {
       ZonkResult.Require(Vector(functionTy))
+    }
+  }
+
+  // Helper case class for effect propagation
+  case class PropagateEffects(
+      effectsCell: CellId[Term],
+      callerEffects: CIdOf[EffectsCell],
+      expr: Expr
+  ) extends Propagator[Tyck] {
+    override def readingCells: Set[CIdOf[Cell[?]]] = Set(effectsCell)
+    override def writingCells: Set[CIdOf[Cell[?]]] = Set(callerEffects)
+    override def zonkingCells: Set[CIdOf[Cell[?]]] = Set()
+
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+      state.readStable(effectsCell) match {
+        case Some(Effects(effects, _)) =>
+          // Add each effect from the callee to the caller's effects
+          effects.foreach { (_, effect) =>
+            val effectsCell = state.readCell(callerEffects).asInstanceOf[EffectsCell]
+            effectsCell.requireEffect(effect)
+          }
+          true
+        case Some(Meta(_)) => false // Effects not yet resolved
+        case _ => true // No effects to propagate
+      }
+    }
+
+    override def naiveZonk(
+        needed: Vector[CIdOf[Cell[?]]]
+    )(using StateAbility[Tyck], Tyck): ZonkResult = {
+      ZonkResult.Require(Vector(effectsCell))
     }
   }
 
