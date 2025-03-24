@@ -8,12 +8,12 @@
 // - Functions without effect annotations are pure (have no side effects)
 
 // Function with an IO effect requirement
-def print(message: String) : Unit / IO = ()
+def print(message: String) : Unit / IO = ();
 
 // This function automatically inherits the IO effect from the print function
 def hello() : Unit / IO = {
-  print("Hello")
+  print("Hello");
 }
 
 // Pure function with no effects
-def pure() : Integer = 123 
+def pure() : Integer = 123;
