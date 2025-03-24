@@ -1,0 +1,3 @@
+
+let a = 42;
+let b: a = 0;  // Should fail: cannot use value 42 as a type 
