@@ -104,6 +104,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
 
   // Store current state in a mutable variable
+  // We use a hybrid approach: LexerState remains immutable for clean state transitions
+  // but we maintain a mutable reference for convenience in the parser implementation
   private var currentState: LexerState = LexerState(_tokens.toVector, 0)
 
   private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
@@ -760,25 +762,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       case Err(error) => Left(error)
     }
   }
-
-  // Helper method to check for expected delimiter tokens and advance
-  private def expectDelimiter(state: LexerState, expectedType: Token => Boolean, errorMsg: String): Either[ParseError, LexerState] = {
-    state.current match {
-      case Right(token) if expectedType(token) => Right(state.advance())
-      case Right(token)                        => Left(ParseError(errorMsg, token.sourcePos.range.start))
-      case Left(err)                           => Left(err)
-    }
-  }
-
-  // Simplified versions for common delimiters
-  private def expectRParen(state: LexerState): Either[ParseError, LexerState] =
-    expectDelimiter(state, _.isInstanceOf[Token.RParen], "Expected right parenthesis ')'")
-
-  private def expectRBrace(state: LexerState): Either[ParseError, LexerState] =
-    expectDelimiter(state, _.isInstanceOf[Token.RBrace], "Expected right brace '}'")
-
-  private def expectRBracket(state: LexerState): Either[ParseError, LexerState] =
-    expectDelimiter(state, _.isInstanceOf[Token.RBracket], "Expected right bracket ']'")
 
   // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
   private def isTerminator(token: Token): Boolean = token match {
@@ -1523,7 +1506,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
             PartialFunction.condOpt(token) {
               case Token.SymbolLiteral(value, sourcePos) => (value, sourcePos)
             },
-          chester.syntax.concrete.SymbolLiteral,
+          chester.syntax.concrete.SymbolLiteral.apply,
           "Expected symbol literal"
         ),
       "Error parsing symbol"
@@ -1565,7 +1548,15 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     )
   }
 
-  // This method uses the internal state directly
+  /** Parses a complete Chester program into a sequence of expressions.
+   * 
+   * This implementation uses mutable state internally for efficiency while preserving
+   * the immutability of the LexerState class itself. This hybrid approach offers both
+   * the clean state transition model of immutable state and the convenience of 
+   * direct state updates.
+   *
+   * @return Either an error or a vector of parsed expressions
+   */
   def parse(): Either[ParseError, Vector[Expr]] = {
     // Initialize the mutable state
     currentState = LexerState(_tokens.toVector, 0)
@@ -1594,10 +1585,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   // Helper methods to manage state
   private def updateState(newState: LexerState): Unit = {
     currentState = newState
-  }
-  
-  private def advanceState(): Unit = {
-    currentState = currentState.advance()
   }
   
   // Wrapped versions of common methods that maintain state directly
