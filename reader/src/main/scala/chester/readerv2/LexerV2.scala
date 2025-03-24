@@ -445,15 +445,18 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
       val afterOp = state.advance()
 
-      // Check if this is a terminating operator (like * in vararg context)
-      if (op == "*" && isVarargContext(state)) {
-        val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
-        debug(s"parseRest: Added terminating operator *, terms: $updatedTerms")
+      // Add operator to terms
+      val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
+      
+      // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
+      if (afterOp.current match {
+        case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
+        case _ => false
+      }) {
+        debug(s"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
         buildOpSeq(updatedTerms).map(result => (result, afterOp))
       } else {
-        // Add operator to terms
-        val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
-
+        // Continue parsing the rest of the expression
         parseAtomWithComments(afterOp).flatMap { case (next, afterNext) =>
           debug(s"parseRest: After parsing atom after operator, got: $next")
           val newTerms = updatedTerms :+ next
@@ -1172,15 +1175,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       case other => {
         Left(ParseError(s"Expected identifier '$expected' but got $other", state.sourcePos.range.start))
       }
-    }
-  }
-
-  def isVarargContext(state: LexerState): Boolean = {
-    // Check if we're in a function call argument list or type annotation
-    val lookAhead = state.advance()
-    lookAhead.current match {
-      case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-      case _                                              => false
     }
   }
 
