@@ -1560,13 +1560,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   def parse(): Either[ParseError, Vector[Expr]] = {
     // Initialize the mutable state
     currentState = LexerState(_tokens.toVector, 0)
-    parseFromCurrentState()
-  }
-  
-  /** Parses a Chester program from the current state.
-   * Useful for resuming parsing from a specific point.
-   */
-  def parseFromCurrentState(): Either[ParseError, Vector[Expr]] = {
+    
     var results = Vector[Expr]()
     
     // Skip comments at top of file
@@ -1593,15 +1587,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     currentState = newState
   }
   
-  // Get the current state for methods that still need it
-  private def getState(): LexerState = currentState
-  
-  // Update state and return a value (useful for chaining)
-  private def withState[T](value: T, newState: LexerState): T = {
-    updateState(newState)
-    value
-  }
-  
   // Wrapped versions of common methods that maintain state directly
   private def skipWhitespaceAndUpdateState(): Unit = {
     currentState = skipComments(currentState)
@@ -1614,37 +1599,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         updateState(nextState)
         Right(expr)
       }
-    }
-  }
-
-  // Additional helper methods for common parser operations
-  
-  /** Collect comments and update state. Returns the collected comments. */
-  private def collectCommentsAndUpdateState(): Vector[chester.syntax.concrete.Comment] = {
-    val (comments, newState) = collectComments(currentState)
-    updateState(newState)
-    comments
-  }
-  
-  /** Parse an atom with comments and update state. Returns either a ParseError or the parsed expression. */
-  private def parseAtomAndUpdateState(): Either[ParseError, Expr] = {
-    val comments = collectCommentsAndUpdateState()
-    val result = parseAtom(currentState)
-    result match {
-      case Left(error) => Left(error)
-      case Right((expr, newState)) =>
-        updateState(newState)
-        Right(expr)
-    }
-  }
-  
-  /** Safely advance the parser state, capturing errors. Returns either a ParseError or a unit. */
-  private def safeAdvance(): Either[ParseError, Unit] = {
-    currentState.current match {
-      case Left(error) => Left(error)
-      case Right(_) => 
-        updateState(currentState.advance())
-        Right(())
     }
   }
 
