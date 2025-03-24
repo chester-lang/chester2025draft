@@ -6,7 +6,7 @@ import chester.syntax.concrete.Expr
 
 object ChesterReaderV2 {
   // Helper method to set up tokenizer and lexer with common logic
-  private def setupLexer(source: FileNameAndContent, ignoreLocation: Boolean = false): LexerV2 = {
+  private def setupLexer(source: FileNameAndContent, ignoreLocation: Boolean = false): (LexerV2, LexerState) = {
     given reporter: Reporter[ParseError] = new Reporter[ParseError] {
       def apply(error: ParseError): Unit = {}
       def const(e: ParseError): Reporter[ParseError] = this
@@ -15,17 +15,18 @@ object ChesterReaderV2 {
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()
     val lexer = new LexerV2(tokens, sourceOffset, ignoreLocation)
-    lexer
+    val initialState = LexerState(tokens.toVector, 0)
+    (lexer, initialState)
   }
 
   def parseExpr(source: FileNameAndContent): Either[ParseError, Expr] = {
-    val lexer = setupLexer(source)
-    lexer.parse().map(_.headOption.getOrElse(throw new RuntimeException("No expressions found")))
+    val (lexer, state) = setupLexer(source)
+    lexer.parseExpr(state).map(_._1)
   }
 
   def parseExprList(source: FileNameAndContent): Either[ParseError, Vector[Expr]] = {
-    val lexer = setupLexer(source)
-    lexer.parse()
+    val (lexer, state) = setupLexer(source)
+    lexer.parseExprList(state).map(_._1)
   }
 
   // Add other parsing methods here with the same pattern
