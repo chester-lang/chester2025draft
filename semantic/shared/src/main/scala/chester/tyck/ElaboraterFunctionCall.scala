@@ -150,11 +150,13 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
       val debugTyck = Debug.isEnabled(DebugCategory.Tyck)
       if (debugTyck) {
-        Debug.debugPrint(DebugCategory.Tyck, 
+        Debug.debugPrint(
+          DebugCategory.Tyck,
           s"""UnifyFunctionCall.run: 
              |  Function term: $functionTerm
              |  Function type cell: $functionTy
-             |  Result type cell: $resultTy""".stripMargin)
+             |  Result type cell: $resultTy""".stripMargin
+        )
       }
 
       val readFunctionTy = state.readStable(functionTy)
@@ -170,14 +172,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
           // Unify the result type
           unify(resultTy, retTy, cause)
-          
+
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
           if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Created function call term: $fCallTerm")
 
           // Use the helper method to safely fill the cell
           safelyFillCell(functionCallTerm, fCallTerm, DebugCategory.Tyck)
-          
+
           true
         case Some(Meta(id)) =>
           // If the function type is a meta variable, delay until it is known

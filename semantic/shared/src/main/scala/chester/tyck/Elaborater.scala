@@ -9,9 +9,9 @@ import chester.utils.*
 import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
-import scala.collection.immutable.{Vector => _}
 import cats.data.NonEmptyVector
 
+import scala.collection.immutable.Vector as _
 import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
@@ -432,14 +432,14 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       // Return the reference
                       c.ref
                     } else {
-                      if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] No compatible union component found, using regular unification")
+                      if (DEBUG_IDENTIFIERS) println("[IDENTIFIER DEBUG] No compatible union component found, using regular unification")
                       // Fall back to regular unification
                       state.addPropagator(Unify(ty, c.tyId, expr))
                       c.ref
                     }
                   }
                   case None => {
-                    if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] No source type yet, using regular unification")
+                    if (DEBUG_IDENTIFIERS) println("[IDENTIFIER DEBUG] No source type yet, using regular unification")
                     // No source type yet, fall back to normal handling
                     state.addPropagator(Unify(ty, c.tyId, expr))
                     c.ref
@@ -472,7 +472,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             }
           }
           case _ => {
-            if (DEBUG_IDENTIFIERS) println(s"[IDENTIFIER DEBUG] Expected type is not a union, using regular unification")
+            if (DEBUG_IDENTIFIERS) println("[IDENTIFIER DEBUG] Expected type is not a union, using regular unification")
             // Regular identifier handling (no union type involved)
             localCtx.get(name) match {
               case Some(c: ContextItem) => {
@@ -544,7 +544,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               integerTerm
             } else {
               // If no Integer type found in the union, default to normal handling
-              if (DEBUG_LITERALS) println(s"[LITERAL DEBUG] No compatible Integer component found in union")
+              if (DEBUG_LITERALS) println("[LITERAL DEBUG] No compatible Integer component found in union")
               state.addPropagator(LiteralType(expr, ty))
               AbstractIntTerm_.from(value, convertMeta(meta))
             }

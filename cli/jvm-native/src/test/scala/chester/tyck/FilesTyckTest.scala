@@ -2,7 +2,7 @@ package chester.tyck
 
 import chester.reader.{*, given}
 import chester.syntax.concrete.*
-import chester.syntax.core.{Judge}
+import chester.syntax.core.Judge
 import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*

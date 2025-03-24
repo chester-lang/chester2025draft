@@ -6,10 +6,8 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
 import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
-import chester.utils.propagator.*
 import cats.data.NonEmptyVector
 
-import scala.collection.mutable
 import scala.language.implicitConversions
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -377,13 +375,13 @@ trait TyckPropagator extends ElaboraterCommon {
       if (ourNeededCells.isEmpty) {
         return ZonkResult.Done // None of our cells are needed
       }
-      
+
       // Check if we're waiting for rhs values
       val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
       if (unknownRhs.nonEmpty) {
         return ZonkResult.Require(unknownRhs.toVector)
       }
-      
+
       val rhsValues = rhsValuesOpt.map(_.get)
 
       lhsValueOpt match {
@@ -456,13 +454,13 @@ trait TyckPropagator extends ElaboraterCommon {
       if (ourNeededCells.isEmpty) {
         return ZonkResult.Done // None of our cells are needed
       }
-      
+
       // Check if we're waiting for rhs values
       val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
       if (unknownRhs.nonEmpty) {
         return ZonkResult.Require(unknownRhs.toVector)
       }
-      
+
       val rhsValues = rhsValuesOpt.map(_.get)
 
       lhsValueOpt match {
@@ -511,7 +509,7 @@ trait TyckPropagator extends ElaboraterCommon {
       localCtx: Context
   ): Boolean = {
     // Recursion counter for debugging
-    val counter = new AtomicInteger(0)
+    new AtomicInteger(0)
 
     def tryUnifyInternal(lhs: Term, rhs: Term, depth: Int): Boolean = {
       val indent = " " * depth

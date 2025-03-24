@@ -8,7 +8,6 @@ import chester.syntax.concrete.*
 import chester.utils.*
 
 import scala.annotation.tailrec
-import scala.collection.mutable
 
 case class DesugarInfo()
 

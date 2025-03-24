@@ -14,20 +14,11 @@ import spire.math.{Rational, Trilean}
 import upickle.default.*
 import chester.error.ProblemUpickle.problemRW
 import chester.utils.impls.rationalRW
-
-import scala.language.implicitConversions
-import cats.data.*
-import chester.doc.consts.Docs
-import chester.error.*
-import chester.syntax.*
-import chester.uniqid.*
-import chester.utils.*
-import chester.utils.doc.{Doc, PrettierOptions}
 import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
-import upickle.default.*
 
-import scala.collection.immutable.{ArraySeq, HashMap}
+import scala.language.implicitConversions
+import scala.collection.immutable.HashMap
 
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 

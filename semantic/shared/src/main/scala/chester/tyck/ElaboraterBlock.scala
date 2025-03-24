@@ -249,22 +249,24 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
-    
+
     // Extract and elaborate the extends clause
     val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
-      superTypes.headOption.map { 
-        case Identifier(traitName, _) =>
-          ctx.getTypeDefinition(traitName) match {
-            case Some(traitDef: TraitStmtTerm) => 
-              TraitTypeTerm(traitDef, convertMeta(clause.meta))
-            case _ =>
-              ck.reporter.apply(NotATrait(superTypes.head))
-              ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
-          }
-        case superTypeExpr =>
-          ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
-          ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
-      }.getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
+      superTypes.headOption
+        .map {
+          case Identifier(traitName, _) =>
+            ctx.getTypeDefinition(traitName) match {
+              case Some(traitDef: TraitStmtTerm) =>
+                TraitTypeTerm(traitDef, convertMeta(clause.meta))
+              case _ =>
+                ck.reporter.apply(NotATrait(superTypes.head))
+                ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
+            }
+          case superTypeExpr =>
+            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+            ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
+        }
+        .getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
     }
 
     // Elaborate the fields and body
@@ -272,7 +274,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       val fieldType = field.ty.map(checkType).getOrElse(newTypeTerm)
       FieldTerm(field.name.name, fieldType, convertMeta(expr.meta))
     }
-    
+
     val elaboratedBody = expr.body.map { body =>
       elabBlock(body, newTypeTerm, effects)
     }
@@ -337,19 +339,21 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
 
     // Process extends clause if present
     val elaboratedExtendsClause = expr.extendsClause.map { case clause @ ExtendsClause(superTypes, _) =>
-      superTypes.headOption.map { 
-        case Identifier(traitName, _) =>
-          ctx.getTypeDefinition(traitName) match {
-            case Some(traitDef: TraitStmtTerm) => 
-              TraitTypeTerm(traitDef, convertMeta(clause.meta))
-            case _ =>
-              ck.reporter.apply(NotATrait(superTypes.head))
-              ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
-          }
-        case superTypeExpr =>
-          ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
-          ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
-      }.getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
+      superTypes.headOption
+        .map {
+          case Identifier(traitName, _) =>
+            ctx.getTypeDefinition(traitName) match {
+              case Some(traitDef: TraitStmtTerm) =>
+                TraitTypeTerm(traitDef, convertMeta(clause.meta))
+              case _ =>
+                ck.reporter.apply(NotATrait(superTypes.head))
+                ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
+            }
+          case superTypeExpr =>
+            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+            ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
+        }
+        .getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
     }
 
     // Elaborate the body within a trait-specific context

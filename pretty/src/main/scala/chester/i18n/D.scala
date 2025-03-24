@@ -1,6 +1,7 @@
 package chester.i18n
 
 import chester.utils.doc.{<>, Doc, PrettierOptions, ToDoc}
+
 import scala.language.implicitConversions
 
 trait D {

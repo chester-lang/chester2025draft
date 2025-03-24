@@ -1,11 +1,12 @@
 package chester.readerv2
 
-import chester.error.{Pos, RangeInFile, Reporter, SourcePos}
+import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
 import chester.utils.WithUTF16
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
+
 import scala.util.{Try, boundary}
 
 type TokenStream = LazyList[Either[ParseError, Token]]
