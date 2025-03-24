@@ -139,14 +139,13 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] =
     if (ignoreLocation) None
     else
-      (startPos, endPos) match {
+      PartialFunction.condOpt((startPos, endPos)) {
         case (Some(start), Some(end)) =>
-          Some(ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None))
+          ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None)
         case (Some(pos), None) =>
-          Some(ExprMeta(Some(pos), None))
+          ExprMeta(Some(pos), None)
         case (None, Some(pos)) =>
-          Some(ExprMeta(Some(pos), None))
-        case _ => None
+          ExprMeta(Some(pos), None)
       }
 
   private def getStartPos(token: Either[ParseError, Token]): Pos =
@@ -181,44 +180,38 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   private object TokenExtractors {
     // Define extractors using pattern matching
     object Id {
-      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = token match {
-        case Right(Token.Identifier(chars, pos)) => Some((chars, pos))
-        case _                                   => None
+      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
+        case Right(Token.Identifier(chars, pos)) => (chars, pos)
       }
     }
 
     object Op {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
-        case Right(Token.Operator(op, pos)) => Some((op, pos))
-        case _                              => None
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+        case Right(Token.Operator(op, pos)) => (op, pos)
       }
     }
 
     object Str {
-      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = token match {
-        case Right(Token.StringLiteral(chars, pos)) => Some((chars, pos))
-        case _                                      => None
+      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
+        case Right(Token.StringLiteral(chars, pos)) => (chars, pos)
       }
     }
 
     object Sym {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
-        case Right(Token.SymbolLiteral(value, pos)) => Some((value, pos))
-        case _                                      => None
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+        case Right(Token.SymbolLiteral(value, pos)) => (value, pos)
       }
     }
 
     object Int {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
-        case Right(Token.IntegerLiteral(value, pos)) => Some((value, pos))
-        case _                                       => None
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+        case Right(Token.IntegerLiteral(value, pos)) => (value, pos)
       }
     }
 
     object Rat {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = token match {
-        case Right(Token.RationalLiteral(value, pos)) => Some((value, pos))
-        case _                                        => None
+      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+        case Right(Token.RationalLiteral(value, pos)) => (value, pos)
       }
     }
 
@@ -241,9 +234,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     object Semi { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Semicolon])(t) }
 
     object Err {
-      def unapply(token: Either[ParseError, Token]): Option[ParseError] = token match {
-        case Left(err) => Some(err)
-        case _         => None
+      def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) {
+        case Left(err) => err
       }
     }
   }
@@ -1439,9 +1431,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         parseLiteral(
           st,
           token =>
-            token match {
-              case Token.StringLiteral(chars, sourcePos) => Some((charsToString(chars), sourcePos))
-              case _                                     => None
+            PartialFunction.condOpt(token) {
+              case Token.StringLiteral(chars, sourcePos) => (charsToString(chars), sourcePos)
             },
           (value, meta) => ConcreteStringLiteral(value, meta),
           "Expected string literal"
@@ -1526,11 +1517,10 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         parseLiteral(
           st,
           token =>
-            token match {
-              case Token.SymbolLiteral(value, sourcePos) => Some((value, sourcePos))
-              case _                                     => None
+            PartialFunction.condOpt(token) {
+              case Token.SymbolLiteral(value, sourcePos) => (value, sourcePos)
             },
-          (value, meta) => chester.syntax.concrete.SymbolLiteral(value, meta),
+          chester.syntax.concrete.SymbolLiteral,
           "Expected symbol literal"
         ),
       "Error parsing symbol"

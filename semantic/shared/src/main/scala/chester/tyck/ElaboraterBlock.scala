@@ -417,9 +417,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-      parameter: SemanticCollector,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       SemanticCollector,
+       Tyck,
+       StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]

@@ -120,7 +120,7 @@ class Tokenizer(src: SourceOffset) {
             .lastOption
             .getOrElse(start + 1)
           Try(Integer.parseInt(text.substring(start, end), 8))
-            .filter(_ <= 0xff)
+            .withFilter(_ <= 0xff)
             .map(v => (v.toChar.toString, end))
             .toEither
             .left

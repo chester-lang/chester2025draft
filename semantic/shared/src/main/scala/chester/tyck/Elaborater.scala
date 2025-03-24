@@ -39,9 +39,9 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       unionTypes: NonEmptyVector[Term],
       cause: Expr
   )(using
-      state: StateAbility[Tyck],
-      ctx: Context,
-      ck: Tyck
+       StateAbility[Tyck],
+       Context,
+       Tyck
   ): Vector[CellId[Term]] = {
     // Get cell IDs for all union component types and ensure they're covered
     val unionTypeIds = unionTypes

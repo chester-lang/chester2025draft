@@ -210,7 +210,7 @@ trait TyckPropagator extends ElaboraterCommon {
             // Add a propagator to connect the specific type to the union
             // This is critical for cases like `let y: Integer | String = x` where x: Integer
             // Find each compatible union component and connect the specific type to it
-            types2.filter(unionType => tryUnify(lhsType, unionType)(using state, summon[Context])).foreach { compatibleType =>
+            types2.withFilter(unionType => tryUnify(lhsType, unionType)(using state, summon[Context])).foreach { compatibleType =>
               state.addPropagator(Unify(toId(lhsType), toId(compatibleType), cause)(using summon[Context]))
             }
 
@@ -287,7 +287,7 @@ trait TyckPropagator extends ElaboraterCommon {
         println(s"[UNION DEBUG] Checking if $specificType is compatible with at least one of union components: ${unionTypes.mkString(", ")}")
 
       // Find compatible union components and connect them
-      unionTypes.filter(unionType => tryUnify(specificType, unionType)).foreach { compatibleType =>
+      unionTypes.withFilter(unionType => tryUnify(specificType, unionType)).foreach { compatibleType =>
         if (DEBUG_UNION_MATCHING) println(s"[UNION DEBUG]   Found compatible component: $compatibleType")
         state.addPropagator(Unify(toId(specificType), toId(compatibleType), cause))
       }
@@ -298,8 +298,8 @@ trait TyckPropagator extends ElaboraterCommon {
         specificType: Term,
         cause: Expr
     )(using
-        state: StateAbility[Tyck],
-        more: Tyck
+         StateAbility[Tyck],
+         Tyck
     ): Unit = {
       // For a union type to be compatible with a specific type,
       // at least one type in the union must be compatible with the specific type
@@ -1142,10 +1142,9 @@ trait TyckPropagator extends ElaboraterCommon {
   }
 
   // Helper to extract numeric value from a term
-  private def extractNumericValue(term: Term): Option[BigInt] = term match {
-    case IntTerm(value, _)     => Some(BigInt(value))
-    case IntegerTerm(value, _) => Some(value)
-    case _                     => None
+  private def extractNumericValue(term: Term): Option[BigInt] = PartialFunction.condOpt(term) {
+    case IntTerm(value, _)     => BigInt(value)
+    case IntegerTerm(value, _) => value
   }
 
   // Add helper method for trait implementation checking
@@ -1159,8 +1158,7 @@ trait TyckPropagator extends ElaboraterCommon {
       state: StateAbility[Tyck]
   ): Boolean = {
     // For MVP, we'll just check for a direct extension relationship
-    val hasExtendsClause = recordDef.extendsClause.exists { clause =>
-      clause match {
+    val hasExtendsClause = recordDef.extendsClause.exists {  {
         case traitCall: TraitTypeTerm =>
           traitCall.traitDef.uniqId == traitDef.uniqId
         case _ => false
@@ -1182,9 +1180,9 @@ trait TyckPropagator extends ElaboraterCommon {
       parentTraitDef: TraitStmtTerm,
       cause: Expr
   )(using
-      localCtx: Context,
-      ck: Tyck,
-      state: StateAbility[Tyck]
+       Context,
+       Tyck,
+       StateAbility[Tyck]
   ): Boolean = {
     // Check if they're the same trait (reflexivity)
     if (childTraitDef.uniqId == parentTraitDef.uniqId) {
@@ -1203,16 +1201,16 @@ trait TyckPropagator extends ElaboraterCommon {
 
   // Add helper methods for union subtyping compatibility checking
   private def unionUnionCompatible(types1: NonEmptyVector[Term], types2: NonEmptyVector[Term])(using
-      state: StateAbility[Tyck],
-      localCtx: Context
+       StateAbility[Tyck],
+       Context
   ): Boolean = {
     // For each type in RHS union, at least one type in LHS union must accept it
     types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
   }
 
   private def specificUnionCompatible(specificType: Term, unionTypes: NonEmptyVector[Term])(using
-      state: StateAbility[Tyck],
-      localCtx: Context
+       StateAbility[Tyck],
+       Context
   ): Boolean = {
     // For a specific type to be compatible with a union type,
     // the specific type must be compatible with at least one of the union components
@@ -1230,8 +1228,8 @@ trait TyckPropagator extends ElaboraterCommon {
   }
 
   private def unionSpecificCompatible(unionTypes: NonEmptyVector[Term], specificType: Term)(using
-      state: StateAbility[Tyck],
-      localCtx: Context
+       StateAbility[Tyck],
+       Context
   ): Boolean = {
     // For a union type to be compatible with a specific type,
     // at least one type in the union must be compatible with the specific type
@@ -1256,7 +1254,7 @@ trait TyckPropagator extends ElaboraterCommon {
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
 
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+    override def run(using  StateAbility[Tyck],  Tyck): Boolean = {
       // This propagator simply ensures the cell has at least one propagator
       // It always succeeds immediately
       true
@@ -1264,7 +1262,7 @@ trait TyckPropagator extends ElaboraterCommon {
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+    )(using  StateAbility[Tyck],  Tyck): ZonkResult = {
       // Nothing to zonk - just ensure the cell is included
       ZonkResult.Done
     }
