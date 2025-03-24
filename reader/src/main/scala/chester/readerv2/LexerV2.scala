@@ -105,7 +105,9 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
 
   // Store current state in a mutable variable
   // We use a hybrid approach: LexerState remains immutable for clean state transitions
-  // but we maintain a mutable reference for convenience in the parser implementation
+  // but we maintain a mutable reference for convenience in the parser implementation.
+  // This allows us to avoid passing state objects through every method call
+  // while still preserving the benefits of immutable data structures.
   private var currentState: LexerState = LexerState(_tokens.toVector, 0)
 
   private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
@@ -1566,18 +1568,19 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   /** Parses a Chester program from the current state.
    * Useful for resuming parsing from a specific point.
    */
-  def parseFromCurrentState(): Either[ParseError, Vector[Expr]] = {
+  private def parseFromCurrentState(): Either[ParseError, Vector[Expr]] = {
     var results = Vector[Expr]()
     
     // Skip comments at top of file
     skipWhitespaceAndUpdateState()
     
     while (!currentState.isAtEnd) {
-      parseExprAndUpdateState() match {
+      parseExpr(currentState) match {
         case Left(err) => 
           return Left(err)
-        case Right(expr) => {
+        case Right((expr, nextState)) => {
           results :+= expr
+          currentState = nextState
           
           // Skip any terminating semicolons and whitespace after expressions
           skipWhitespaceAndUpdateState()
@@ -1596,56 +1599,9 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   // Get the current state for methods that still need it
   private def getState(): LexerState = currentState
   
-  // Update state and return a value (useful for chaining)
-  private def withState[T](value: T, newState: LexerState): T = {
-    updateState(newState)
-    value
-  }
-  
   // Wrapped versions of common methods that maintain state directly
   private def skipWhitespaceAndUpdateState(): Unit = {
     currentState = skipComments(currentState)
-  }
-  
-  private def parseExprAndUpdateState(): Either[ParseError, Expr] = {
-    parseExpr(currentState) match {
-      case Left(err) => Left(err)
-      case Right((expr, nextState)) => {
-        updateState(nextState)
-        Right(expr)
-      }
-    }
-  }
-
-  // Additional helper methods for common parser operations
-  
-  /** Collect comments and update state. Returns the collected comments. */
-  private def collectCommentsAndUpdateState(): Vector[chester.syntax.concrete.Comment] = {
-    val (comments, newState) = collectComments(currentState)
-    updateState(newState)
-    comments
-  }
-  
-  /** Parse an atom with comments and update state. Returns either a ParseError or the parsed expression. */
-  private def parseAtomAndUpdateState(): Either[ParseError, Expr] = {
-    val comments = collectCommentsAndUpdateState()
-    val result = parseAtom(currentState)
-    result match {
-      case Left(error) => Left(error)
-      case Right((expr, newState)) =>
-        updateState(newState)
-        Right(expr)
-    }
-  }
-  
-  /** Safely advance the parser state, capturing errors. Returns either a ParseError or a unit. */
-  private def safeAdvance(): Either[ParseError, Unit] = {
-    currentState.current match {
-      case Left(error) => Left(error)
-      case Right(_) => 
-        updateState(currentState.advance())
-        Right(())
-    }
   }
 
 }
