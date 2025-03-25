@@ -419,5 +419,44 @@ class OpSeqParserTest extends FunSuite {
     )
     parseAndCheckBoth(input, expected)
   }
+  test("parse case pattern with underscore and block") {
+    val input = "case Email(sender, title, _) => { println(sender) }"
+    val expected = OpSeq(
+      Vector(
+        Identifier("case", None),
+        FunctionCall(
+          Identifier("Email", None),
+          Tuple(
+            Vector(
+              Identifier("sender", None),
+              Identifier("title", None),
+              Identifier("_", None)
+            ),
+            None
+          ),
+          None
+        ),
+        Identifier("=>", None),
+        Block(
+          Vector(),
+          Some(
+            FunctionCall(
+              Identifier("println", None),
+              Tuple(
+                Vector(
+                  Identifier("sender", None)
+                ),
+                None
+              ),
+              None
+            )
+          ),
+          None
+        )
+      ),
+      None
+    )
+    parseAndCheck(input, expected)
+  }
 
 }
