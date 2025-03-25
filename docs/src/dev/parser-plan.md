@@ -98,6 +98,9 @@ Legend:
 - ✅ Ensure both parsers produce the same AST for identical inputs
 - ✅ Address pattern matching semantic differences
 - 🟡 Focus on remaining differences in complex operator sequences
+- 🔴 Resolve pattern matching blocks with nested expressions difference between V1 and V2 parsers
+  - The `match2` test case in `PatternMatchingTest.scala` shows differences in AST structure
+  - Need to align V2 parser's block handling in pattern matching context with V1 behavior
 
 ### 2. Object Expressions
 - 🟡 Complete object expressions implementation with complex syntax support
