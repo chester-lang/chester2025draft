@@ -91,9 +91,18 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     val stmts: Vector[StmtTerm] = heads.flatMapOrdered {
       case expr: LetDefStmt if expr.kind == LetDefType.Def =>
         if (isInTraitBody) {
-          // For trait bodies, we'll skip processing field declarations for now
-          // This is a temporary solution until we properly implement trait field handling
-          Vector.empty
+          // Process trait field declarations as DefStmtTerm
+          val name = expr.defined match {
+            case DefinedPattern(PatternBind(name, _)) => name.name
+            case _                                    => ???
+          }
+          val ty = expr.ty match {
+            case Some(tyExpr) => checkType(tyExpr)
+            case None         => newTypeTerm
+          }
+          val id = Uniqid.generate[LocalV]
+          val localv = newLocalv(name, ty, id, expr.meta)
+          Vector(DefStmtTerm(localv, Meta(newType), ty, convertMeta(expr.meta)))
         } else {
           val (stmtTerms, newCtx) = processDefLetDefStmt(expr, ctx, declarationsMap, effects)
           ctx = newCtx
@@ -257,7 +266,22 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
           case Identifier(traitName, _) =>
             ctx.getTypeDefinition(traitName) match {
               case Some(traitDef: TraitStmtTerm) =>
-                TraitTypeTerm(traitDef, convertMeta(clause.meta))
+                val traitType = TraitTypeTerm(traitDef, convertMeta(clause.meta))
+                // Create a record type for this record
+                val recordStmtTerm = RecordStmtTerm(
+                  name = recordInfo.name,
+                  uniqId = recordInfo.uniqId,
+                  fields = expr.fields.map { field =>
+                    val fieldType = field.ty.map(checkType).getOrElse(newTypeTerm)
+                    FieldTerm(field.name.name, fieldType, convertMeta(expr.meta))
+                  },
+                  body = None,
+                  extendsClause = Some(traitType),
+                  meta = convertMeta(expr.meta)
+                )
+                // Check that the record implements the trait
+                state.addPropagator(CheckTraitImplementation(recordStmtTerm, traitDef, expr))
+                traitType
               case _ =>
                 ck.reporter.apply(NotATrait(superTypes.head))
                 ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
@@ -417,9 +441,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-       SemanticCollector,
-       Tyck,
-       StateAbility[Tyck]
+      SemanticCollector,
+      Tyck,
+      StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]

@@ -234,8 +234,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     object Semi { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Semicolon])(t) }
 
     object Err {
-      def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) {
-        case Left(err) => err
+      def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) { case Left(err) =>
+        err
       }
     }
   }
@@ -447,12 +447,14 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
 
       // Add operator to terms
       val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
-      
+
       // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
-      if (afterOp.current match {
-        case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-        case _ => false
-      }) {
+      if (
+        afterOp.current match {
+          case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
+          case _                                              => false
+        }
+      ) {
         debug(s"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
         buildOpSeq(updatedTerms).map(result => (result, afterOp))
       } else {
@@ -1425,8 +1427,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         parseLiteral(
           st,
           token =>
-            PartialFunction.condOpt(token) {
-              case Token.StringLiteral(chars, sourcePos) => (charsToString(chars), sourcePos)
+            PartialFunction.condOpt(token) { case Token.StringLiteral(chars, sourcePos) =>
+              (charsToString(chars), sourcePos)
             },
           (value, meta) => ConcreteStringLiteral(value, meta),
           "Expected string literal"
@@ -1511,8 +1513,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         parseLiteral(
           st,
           token =>
-            PartialFunction.condOpt(token) {
-              case Token.SymbolLiteral(value, sourcePos) => (value, sourcePos)
+            PartialFunction.condOpt(token) { case Token.SymbolLiteral(value, sourcePos) =>
+              (value, sourcePos)
             },
           chester.syntax.concrete.SymbolLiteral,
           "Expected symbol literal"
