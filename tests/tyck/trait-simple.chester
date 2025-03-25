@@ -1,0 +1,5 @@
+trait T {
+  def x: Int;
+}
+
+record R(x: Int) <: T; 

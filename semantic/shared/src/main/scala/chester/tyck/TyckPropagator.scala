@@ -1157,20 +1157,36 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Boolean = {
-    // For MVP, we'll just check for a direct extension relationship
-    val hasExtendsClause = recordDef.extendsClause.exists {  {
+    // First check for direct extension relationship
+    val hasExtendsClause = recordDef.extendsClause.exists {
         case traitCall: TraitTypeTerm =>
-          traitCall.traitDef.uniqId == traitDef.uniqId
+            traitCall.traitDef.uniqId == traitDef.uniqId
         case _ => false
-      }
     }
 
     if (!hasExtendsClause) {
-      // Report error if record doesn't explicitly extend the trait
-      ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
-      false
+        ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
+        false
     } else {
-      true
+        // Check that all required fields from the trait are present in the record
+        val traitFields = traitDef.body.map(_.statements).getOrElse(Vector.empty).collect {
+            case ExprStmtTerm(DefStmtTerm(localv, _, ty, _), _, _) => (localv.name, ty)
+        }
+
+        val recordFields = recordDef.fields.map(field => (field.name, field.ty)).toMap
+
+        // Check each trait field
+        traitFields.forall { case (fieldName, fieldTy) =>
+            recordFields.get(fieldName) match {
+                case None =>
+                    ck.reporter.apply(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
+                    false
+                case Some(recordFieldTy) =>
+                    // Add type compatibility check
+                    state.addPropagator(Unify(toId(recordFieldTy), toId(fieldTy), cause))
+                    true
+            }
+        }
     }
   }
 
