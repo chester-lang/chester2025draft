@@ -941,17 +941,43 @@ sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid derive
 
   override def switchUniqId(r: UReplacer): TypeDefinition
 }
-case class FieldAccessTerm(
+case class DotCallTerm(
     @child var record: Term,
     @const fieldName: Name,
+    @const args: Vector[Calling] = Vector.empty,
     @child var fieldType: Term,
     @const meta: OptionTermMeta
 ) extends Uneval derives ReadWriter {
-  override type ThisTree = FieldAccessTerm
+  override type ThisTree = DotCallTerm
   override def toDoc(using PrettierOptions): Doc = {
-    group(record.toDoc <> Docs.`.` <> fieldName.toDoc)
+    val argsDoc = if (args.isEmpty) {
+      Doc.empty
+    } else {
+      args.map(_.toDoc).reduceOption(_ <+> _).getOrElse(Doc.empty)
+    }
+    group(record.toDoc <> Docs.`.` <> fieldName.toDoc <> argsDoc)
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(record = f(record), fieldType = f(fieldType))
+    copy(record = f(record), args = args.map(g), fieldType = f(fieldType))
   )
+}
+case class DotTerm(record: Term, field: Term, meta: OptionTermMeta = None) extends Term {
+  type ThisTree = DotTerm
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = DotTerm(f(record), f(field), meta)
+  override def whnf: Trilean = record.whnf
+  override def toDoc(using PrettierOptions): Doc = record.toDoc <> Docs.`.` <> field.toDoc
+}
+
+case class MethodCallTerm(record: Term, methodName: String, args: Seq[Term], meta: OptionTermMeta = None) extends Term {
+  type ThisTree = MethodCallTerm
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = MethodCallTerm(f(record), methodName, args.map(f), meta)
+  override def whnf: Trilean = record.whnf
+  override def toDoc(using PrettierOptions): Doc = {
+    val argsDoc = if (args.isEmpty) {
+      Doc.empty
+    } else {
+      args.map(_.toDoc).reduceOption(_ <+> _).getOrElse(Doc.empty)
+    }
+    group(record.toDoc <> Docs.`.` <> Doc.text(methodName) <> argsDoc)
+  }
 }

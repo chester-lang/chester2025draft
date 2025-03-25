@@ -21,6 +21,7 @@ val DEBUG_UNION_SUBTYPING = sys.env.get("ENV_DEBUG_UNION_SUBTYPING").isDefined |
 val DEBUG_UNION_MATCHING = sys.env.get("ENV_DEBUG_UNION_MATCHING").isDefined || sys.env.get("ENV_DEBUG").isDefined
 val DEBUG_LITERALS = sys.env.get("ENV_DEBUG_LITERALS").isDefined || sys.env.get("ENV_DEBUG").isDefined
 val DEBUG_IDENTIFIERS = sys.env.get("ENV_DEBUG_IDENTIFIERS").isDefined || sys.env.get("ENV_DEBUG").isDefined
+val DEBUG_METHOD_CALLS = sys.env.get("ENV_DEBUG_METHOD_CALLS").isDefined || sys.env.get("ENV_DEBUG").isDefined
 
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
@@ -646,45 +647,64 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           // Return the union term
           unionTerm
         }
-      case expr @ DotCall(recordExpr, fieldExpr, telescopes, meta) =>
-        if (telescopes.nonEmpty) {
-          val problem = NotImplementedFeature("Field access with arguments is not yet supported", expr)
-          ck.reporter.apply(problem)
-          ErrorTerm(problem, convertMeta(expr.meta))
-        } else {
-          fieldExpr match {
-            case Identifier(fieldName, _) =>
-              val recordTy = newType
-              val recordTerm = elab(recordExpr, recordTy, effects)
-              // Keep original term in elaboration result but use reduced type for checking
-              val resultTerm = FieldAccessTerm(recordTerm, fieldName, toTerm(ty), convertMeta(meta))
-              // Use TypeLevel reduction internally for type checking
-              given ReduceContext = localCtx.toReduceContext
-              given Reducer = localCtx.given_Reducer
-              val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
-              reducedRecordTy match {
-                case Meta(id) =>
-                  // If we have a meta term, add a propagator to check the field access once the type is known
-                  state.addPropagator(RecordFieldPropagator(id, fieldName, ty, expr))
-                  resultTerm
-                case RecordTypeTerm(recordDef, _, _) =>
-                  val fields = recordDef.fields
-                  fields.find(_.name == fieldName) match {
-                    case Some(field) =>
-                      state.addPropagator(Unify(ty, toId(field.ty), expr))
-                    case None =>
-                      ck.reporter.apply(FieldNotFound(fieldName, recordDef.name, expr))
-                  }
-                  resultTerm
-                case _ =>
-                  ck.reporter.apply(NotARecordType(reducedRecordTy, expr))
-                  resultTerm
-              }
-            case _ =>
-              val problem = InvalidFieldName(fieldExpr)
-              ck.reporter.apply(problem)
-              ErrorTerm(problem, convertMeta(expr.meta))
-          }
+      case expr @ DotCall(record, field: Identifier, args, meta) =>
+        val recordTy = newType
+        val recordTerm = elab(record, recordTy, effects)
+        
+        given ReduceContext = localCtx.toReduceContext
+        given Reducer = localCtx.given_Reducer
+        val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
+        
+        if (DEBUG_METHOD_CALLS) {
+          println(s"[METHOD CALL DEBUG] Processing method call: ${field.name}")
+          println(s"[METHOD CALL DEBUG] Record type: $reducedRecordTy")
+        }
+        
+        reducedRecordTy match {
+          case IntegerType(_) if field.name == "+" =>
+            if (DEBUG_METHOD_CALLS) println("[METHOD CALL DEBUG] Found Integer.+ method call")
+            args.headOption match {
+              case Some(arg) => 
+                val argTy = newType
+                val argTerm = elab(arg, argTy, effects)
+                if (DEBUG_METHOD_CALLS) println(s"[METHOD CALL DEBUG] Argument term: $argTerm")
+                
+                state.addPropagator(Unify(argTy, toId(IntegerType(None)), arg))
+                state.addPropagator(Unify(ty, toId(IntegerType(None)), expr))
+                
+                // Create a method call term with the argument
+                MethodCallTerm(recordTerm, field.name, Vector(argTerm), convertMeta(meta))
+              case None =>
+                if (DEBUG_METHOD_CALLS) println("[METHOD CALL DEBUG] Missing method call argument")
+                val problem = NotImplementedFeature("Missing method call argument", expr)
+                ck.reporter.apply(problem)
+                ErrorTerm(problem, convertMeta(meta))
+            }
+          case RecordTypeTerm(recordDef, _, _) =>
+            val fields = recordDef.fields
+            fields.find(_.name == field.name) match {
+              case Some(field) =>
+                if (args.isEmpty) {
+                  state.addPropagator(Unify(ty, toId(field.ty), expr))
+                  DotCallTerm(recordTerm, field.name, Vector.empty, toTerm(ty), convertMeta(meta))
+                } else {
+                  val problem = NotImplementedFeature("Field access with arguments not supported", expr)
+                  ck.reporter.apply(problem)
+                  ErrorTerm(problem, convertMeta(meta))
+                }
+              case None =>
+                val problem = FieldNotFound(field.name, recordDef.name, expr)
+                ck.reporter.apply(problem)
+                ErrorTerm(problem, convertMeta(meta))
+            }
+          case Meta(id) =>
+            // If we have a meta term, add a propagator to check the field access once the type is known
+            state.addPropagator(RecordFieldPropagator(id, field.name, ty, expr))
+            DotCallTerm(recordTerm, field.name, Vector.empty, toTerm(ty), convertMeta(meta))
+          case _ =>
+            val problem = NotARecordType(reducedRecordTy, expr)
+            ck.reporter.apply(problem)
+            ErrorTerm(problem, convertMeta(meta))
         }
       case expr: Expr => {
         val problem = NotImplemented(expr)

@@ -1144,6 +1144,11 @@ trait TyckPropagator extends ElaboraterCommon {
           val reducedRecord = NaiveReducer.reduce(recordType, ReduceMode.TypeLevel)
 
           reducedRecord match {
+            case IntegerType(_) | IntType(_) if fieldName == "+" =>
+              // Special handling for Integer.+ method
+              // For Integer.+, the return type is always Integer
+              unify(expectedTy, IntegerType(None), cause)
+              true
             case RecordTypeTerm(recordDef, _, _) =>
               recordDef.fields.find(_.name == fieldName) match {
                 case Some(fieldTerm) =>
