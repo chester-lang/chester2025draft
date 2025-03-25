@@ -38,6 +38,8 @@
      sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
      ```
    - **DO NOT** use other project paths like `cli/test`, `semantic/test`, etc. as these may not execute tests correctly
+   - **DO NOT** run tests from subdirectories - always run from the root project directory
+   - **NEVER** use commands like `cd reader && sbt test` as this will not work correctly
    - **DO NOT** use the `-z` test filter option as it is broken and produces unreliable results
    - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
