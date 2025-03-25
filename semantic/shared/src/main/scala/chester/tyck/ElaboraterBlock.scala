@@ -94,11 +94,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
           // Process trait field declarations as DefStmtTerm
           val name = expr.defined match {
             case DefinedPattern(PatternBind(name, _)) => name.name
-            case _ => ???
+            case _                                    => ???
           }
           val ty = expr.ty match {
             case Some(tyExpr) => checkType(tyExpr)
-            case None => newTypeTerm
+            case None         => newTypeTerm
           }
           val id = Uniqid.generate[LocalV]
           val localv = newLocalv(name, ty, id, expr.meta)
@@ -441,9 +441,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-       SemanticCollector,
-       Tyck,
-       StateAbility[Tyck]
+      SemanticCollector,
+      Tyck,
+      StateAbility[Tyck]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]

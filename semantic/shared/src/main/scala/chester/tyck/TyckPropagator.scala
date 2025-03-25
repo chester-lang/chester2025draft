@@ -350,8 +350,8 @@ trait TyckPropagator extends ElaboraterCommon {
         specificType: Term,
         cause: Expr
     )(using
-         StateAbility[Tyck],
-         Tyck
+        StateAbility[Tyck],
+        Tyck
     ): Unit = {
       // For a union type to be compatible with a specific type,
       // at least one type in the union must be compatible with the specific type
@@ -1213,55 +1213,55 @@ trait TyckPropagator extends ElaboraterCommon {
 
     // First check for direct extension relationship
     val hasExtendsClause = recordDef.extendsClause.exists {
-        case traitCall: TraitTypeTerm =>
-            val matches = traitCall.traitDef.uniqId == traitDef.uniqId
-            if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Found extends clause: ${traitCall.traitDef.name}, matches target trait? $matches")
-            matches
-        case other =>
-            if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Found non-trait extends clause: $other")
-            false
+      case traitCall: TraitTypeTerm =>
+        val matches = traitCall.traitDef.uniqId == traitDef.uniqId
+        if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Found extends clause: ${traitCall.traitDef.name}, matches target trait? $matches")
+        matches
+      case other =>
+        if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Found non-trait extends clause: $other")
+        false
     }
 
     if (!hasExtendsClause) {
-        if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Record ${recordDef.name} does not extend trait ${traitDef.name}")
-        ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
-        false
+      if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Record ${recordDef.name} does not extend trait ${traitDef.name}")
+      ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
+      false
     } else {
-        // Check that all required fields from the trait are present in the record
-        val traitFields = traitDef.body.map(_.statements).getOrElse(Vector.empty).collect {
-            case ExprStmtTerm(DefStmtTerm(localv, _, ty, _), _, _) => (localv.name, ty)
-            case DefStmtTerm(localv, _, ty, _) => (localv.name, ty)
+      // Check that all required fields from the trait are present in the record
+      val traitFields = traitDef.body.map(_.statements).getOrElse(Vector.empty).collect {
+        case ExprStmtTerm(DefStmtTerm(localv, _, ty, _), _, _) => (localv.name, ty)
+        case DefStmtTerm(localv, _, ty, _)                     => (localv.name, ty)
+      }
+
+      if (DEBUG_TRAIT_MATCHING) {
+        println(s"[TRAIT DEBUG] Trait ${traitDef.name} fields:")
+        traitFields.foreach { case (name, ty) => println(s"[TRAIT DEBUG]   - $name: $ty") }
+      }
+
+      val recordFields = recordDef.fields.map(field => (field.name, field.ty)).toMap
+
+      if (DEBUG_TRAIT_MATCHING) {
+        println(s"[TRAIT DEBUG] Record ${recordDef.name} fields:")
+        recordFields.foreach { case (name, ty) => println(s"[TRAIT DEBUG]   - $name: $ty") }
+      }
+
+      // Check each trait field
+      val allFieldsPresent = traitFields.forall { case (fieldName, fieldTy) =>
+        recordFields.get(fieldName) match {
+          case None =>
+            if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Missing field $fieldName in record ${recordDef.name}")
+            ck.reporter.apply(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
+            false
+          case Some(recordFieldTy) =>
+            if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Checking type compatibility for field $fieldName")
+            // Add type compatibility check
+            state.addPropagator(Unify(toId(recordFieldTy), toId(fieldTy), cause))
+            true
         }
+      }
 
-        if (DEBUG_TRAIT_MATCHING) {
-            println(s"[TRAIT DEBUG] Trait ${traitDef.name} fields:")
-            traitFields.foreach { case (name, ty) => println(s"[TRAIT DEBUG]   - $name: $ty") }
-        }
-
-        val recordFields = recordDef.fields.map(field => (field.name, field.ty)).toMap
-
-        if (DEBUG_TRAIT_MATCHING) {
-            println(s"[TRAIT DEBUG] Record ${recordDef.name} fields:")
-            recordFields.foreach { case (name, ty) => println(s"[TRAIT DEBUG]   - $name: $ty") }
-        }
-
-        // Check each trait field
-        val allFieldsPresent = traitFields.forall { case (fieldName, fieldTy) =>
-            recordFields.get(fieldName) match {
-                case None =>
-                    if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Missing field $fieldName in record ${recordDef.name}")
-                    ck.reporter.apply(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
-                    false
-                case Some(recordFieldTy) =>
-                    if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] Checking type compatibility for field $fieldName")
-                    // Add type compatibility check
-                    state.addPropagator(Unify(toId(recordFieldTy), toId(fieldTy), cause))
-                    true
-            }
-        }
-
-        if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] All fields present and compatible? $allFieldsPresent")
-        allFieldsPresent
+      if (DEBUG_TRAIT_MATCHING) println(s"[TRAIT DEBUG] All fields present and compatible? $allFieldsPresent")
+      allFieldsPresent
     }
   }
 
@@ -1271,9 +1271,9 @@ trait TyckPropagator extends ElaboraterCommon {
       parentTraitDef: TraitStmtTerm,
       cause: Expr
   )(using
-       Context,
-       Tyck,
-       StateAbility[Tyck]
+      Context,
+      Tyck,
+      StateAbility[Tyck]
   ): Boolean = {
     // Check if they're the same trait (reflexivity)
     if (childTraitDef.uniqId == parentTraitDef.uniqId) {
@@ -1292,16 +1292,16 @@ trait TyckPropagator extends ElaboraterCommon {
 
   // Add helper methods for union subtyping compatibility checking
   private def unionUnionCompatible(types1: NonEmptyVector[Term], types2: NonEmptyVector[Term])(using
-       StateAbility[Tyck],
-       Context
+      StateAbility[Tyck],
+      Context
   ): Boolean = {
     // For each type in RHS union, at least one type in LHS union must accept it
     types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
   }
 
   private def specificUnionCompatible(specificType: Term, unionTypes: NonEmptyVector[Term])(using
-       StateAbility[Tyck],
-       Context
+      StateAbility[Tyck],
+      Context
   ): Boolean = {
     // For a specific type to be compatible with a union type,
     // the specific type must be compatible with at least one of the union components
@@ -1319,8 +1319,8 @@ trait TyckPropagator extends ElaboraterCommon {
   }
 
   private def unionSpecificCompatible(unionTypes: NonEmptyVector[Term], specificType: Term)(using
-       StateAbility[Tyck],
-       Context
+      StateAbility[Tyck],
+      Context
   ): Boolean = {
     // For a union type to be compatible with a specific type,
     // at least one type in the union must be compatible with the specific type
@@ -1345,7 +1345,7 @@ trait TyckPropagator extends ElaboraterCommon {
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
 
-    override def run(using  StateAbility[Tyck],  Tyck): Boolean = {
+    override def run(using StateAbility[Tyck], Tyck): Boolean = {
       // This propagator simply ensures the cell has at least one propagator
       // It always succeeds immediately
       true
@@ -1353,7 +1353,7 @@ trait TyckPropagator extends ElaboraterCommon {
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using  StateAbility[Tyck],  Tyck): ZonkResult = {
+    )(using StateAbility[Tyck], Tyck): ZonkResult = {
       // Nothing to zonk - just ensure the cell is included
       ZonkResult.Done
     }
@@ -1527,7 +1527,7 @@ trait TyckPropagator extends ElaboraterCommon {
         // Check that all required fields from the trait are present in the record
         val traitFields = traitDef.body.map(_.statements).getOrElse(Vector.empty).collect {
           case ExprStmtTerm(DefStmtTerm(localv, _, ty, _), _, _) => (localv.name, ty)
-          case DefStmtTerm(localv, _, ty, _) => (localv.name, ty)
+          case DefStmtTerm(localv, _, ty, _)                     => (localv.name, ty)
         }
 
         if (DEBUG_TRAIT_MATCHING) {
