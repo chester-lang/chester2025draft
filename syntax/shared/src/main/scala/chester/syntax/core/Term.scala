@@ -961,16 +961,3 @@ case class DotCallTerm(
     copy(record = f(record), args = args.map(g), fieldType = f(fieldType))
   )
 }
-case class MethodCallTerm(record: Term, methodName: String, args: Seq[Term], meta: OptionTermMeta = None) extends Term {
-  type ThisTree = MethodCallTerm
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = MethodCallTerm(f(record), methodName, args.map(f), meta)
-  override def whnf: Trilean = record.whnf
-  override def toDoc(using PrettierOptions): Doc = {
-    val argsDoc = if (args.isEmpty) {
-      Doc.empty
-    } else {
-      args.map(_.toDoc).reduceOption(_ <+> _).getOrElse(Doc.empty)
-    }
-    group(record.toDoc <> Docs.`.` <> Doc.text(methodName) <> argsDoc)
-  }
-}

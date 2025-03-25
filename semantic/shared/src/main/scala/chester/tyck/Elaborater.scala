@@ -672,8 +672,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 state.addPropagator(Unify(argTy, toId(IntegerType(None)), arg))
                 state.addPropagator(Unify(ty, toId(IntegerType(None)), expr))
                 
-                // Create a method call term with the argument
-                MethodCallTerm(recordTerm, field.name, Vector(argTerm), convertMeta(meta))
+                // Create a dot call term with the argument wrapped in Calling
+                val calling = Calling(Vector(CallingArgTerm(argTerm, toTerm(argTy), None, false, convertMeta(meta))), false, convertMeta(meta))
+                DotCallTerm(recordTerm, field.name, Vector(calling), toTerm(ty), convertMeta(meta))
               case None =>
                 if (DEBUG_METHOD_CALLS) println("[METHOD CALL DEBUG] Missing method call argument")
                 val problem = NotImplementedFeature("Missing method call argument", expr)
