@@ -143,7 +143,7 @@ trait TyckPropagator extends ElaboraterCommon {
             val lhsId = toId(lhsType)
             val rhsId = toId(rhsType)
             addUnificationPropagator(lhsId, rhsId)
-        }
+      }
       case _ => // Terms are already equal, nothing to do
     }
   }
