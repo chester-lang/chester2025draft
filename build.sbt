@@ -505,6 +505,9 @@ lazy val utils = useSpire(
     .settings(
       commonLibSettings,
       libraryDependencies ++= Seq(
+        "io.github.iltotore" %%% "iron" % "3.0.0",
+        "io.github.iltotore" %%% "iron-cats" % "3.0.0",
+        "io.github.iltotore" %%% "iron-upickle" % "3.0.0" exclude ("com.lihaoyi", "upickle_3"),
         "org.typelevel" %%% "cats-core" % "2.13.0",
         "org.typelevel" %%% "cats-free" % "2.13.0",
         "com.lihaoyi" %%% "upickle" % "4.1.0",
@@ -543,11 +546,6 @@ lazy val utils = useSpire(
       libraryDependencies ++= Seq(
         // "it.unimi.dsi" % "fastutil" % "8.5.14",
       ),
-      libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "3.0.0-RC1",
-        "io.github.iltotore" %%% "iron-cats" % "3.0.0-RC1",
-        "io.github.iltotore" %%% "iron-upickle" % "3.0.0-RC1" exclude ("com.lihaoyi", "upickle_3")
-      ),
       libraryDependencies += "org.graalvm.sdk" % "nativeimage" % graalvmVersion
     )
     .nativeSettings(
@@ -555,20 +553,10 @@ lazy val utils = useSpire(
         "com.lihaoyi" %%% "os-lib" % "0.11.4"
       ),
       libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "3.0.0-RC1",
-        "io.github.iltotore" %%% "iron-cats" % "3.0.0-RC1",
-        "io.github.iltotore" %%% "iron-upickle" % "3.0.0-RC1" exclude ("com.lihaoyi", "upickle_3")
-      ),
-      libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
       )
     )
     .jsSettings(
-      libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "2.6.0",
-        "io.github.iltotore" %%% "iron-cats" % "2.6.0",
-        "io.github.iltotore" %%% "iron-upickle" % "2.6.0" exclude ("com.lihaoyi", "upickle_3")
-      )
     )
 )
 
