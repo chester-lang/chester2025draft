@@ -159,7 +159,7 @@ up := {
 val scala3Version = "3.6.4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.1-RC1-bin-20250320-a5e029a-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250323-451fdcd-NIGHTLY"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.0"

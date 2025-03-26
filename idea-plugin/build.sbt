@@ -5,6 +5,7 @@ ThisBuild / intellijPluginName := "Chester Language Support"
 ThisBuild / intellijBuild := "243.23654.117"
 ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity
 
+addCommandAlias("updates", ";dependencyUpdates; reload plugins; dependencyUpdates")
 addCommandAlias("format", "scalafmtAll ; scalafmtSbt ; scalafixAll")
 addCommandAlias("fmt", "scalafmtAll ; scalafmtSbt")
 inThisBuild(
@@ -20,7 +21,7 @@ lazy val chesterPlugin =
     .settings(
       name := "ChesterLanguageSupport",
       version := "0.0.31",
-      scalaVersion := "3.7.1-RC1-bin-20250320-a5e029a-NIGHTLY",
+      scalaVersion := "3.7.1-RC1-bin-20250323-451fdcd-NIGHTLY",
       Compile / javacOptions ++= Seq("--release", "17"),
       Compile / scalacOptions ++= Seq("--release", "17"),
       intellijPlugins ++= Seq(
