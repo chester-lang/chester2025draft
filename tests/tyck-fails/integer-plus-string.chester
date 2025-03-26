@@ -1,0 +1,2 @@
+// Test that adding a string to an integer fails type checking
+let result: Integer = 1.+("a"); // Explicitly annotate as Integer to enforce a type error 

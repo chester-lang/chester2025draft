@@ -941,17 +941,23 @@ sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid derive
 
   override def switchUniqId(r: UReplacer): TypeDefinition
 }
-case class FieldAccessTerm(
+case class DotCallTerm(
     @child var record: Term,
     @const fieldName: Name,
+    @const args: Vector[Calling] = Vector.empty,
     @child var fieldType: Term,
     @const meta: OptionTermMeta
 ) extends Uneval derives ReadWriter {
-  override type ThisTree = FieldAccessTerm
+  override type ThisTree = DotCallTerm
   override def toDoc(using PrettierOptions): Doc = {
-    group(record.toDoc <> Docs.`.` <> fieldName.toDoc)
+    val argsDoc = if (args.isEmpty) {
+      Doc.empty
+    } else {
+      args.map(_.toDoc).reduceOption(_ <+> _).getOrElse(Doc.empty)
+    }
+    group(record.toDoc <> Docs.`.` <> fieldName.toDoc <> argsDoc)
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(record = f(record), fieldType = f(fieldType))
+    copy(record = f(record), args = args.map(g), fieldType = f(fieldType))
   )
 }

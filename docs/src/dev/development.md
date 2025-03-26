@@ -40,7 +40,13 @@
    - **DO NOT** use other project paths like `cli/test`, `semantic/test`, etc. as these may not execute tests correctly
    - **DO NOT** run tests from subdirectories - always run from the root project directory
    - **NEVER** use commands like `cd reader && sbt test` as this will not work correctly
-   - **DO NOT** use the `-z` test filter option as it is broken and produces unreliable results
+   - ⚠️ **CRITICAL: NEVER use the `-z` test filter option** ⚠️
+     - This option is broken and produces unreliable results
+     - Tests may appear to pass when they actually fail
+     - This can lead to false confidence in your changes
+   - ⚠️ **CRITICAL: NEVER use `--` to pass arguments to tests** ⚠️ 
+     - Example of what NOT to do: `sbt "rootJVM/testOnly -- -t MyTest"`
+     - This is not supported and will cause tests to run incorrectly
    - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
    - Add new tests for new functionality
@@ -210,7 +216,15 @@
      sbt "rootJVM/testOnly chester.tyck.FilesTyckTest" | cat
      ```
    - **NEVER** attempt to run tests with other project paths like `cli/test`, `semantic/test`, etc.
-   - **NEVER** use the `-z` test filter option as it is broken and produces unreliable results
+   - ⚠️ **CRITICAL: NEVER use the `-z` test filter option** ⚠️
+     - Example of what NOT to do: `sbt "rootJVM/testOnly chester.tyck.FilesTyckTest -z myTest"`
+     - The `-z` flag is completely broken and will cause misleading results
+     - Tests might appear to pass when they should fail
+     - Using `-z` will lead to incorrect conclusions about code behavior
+   - ⚠️ **CRITICAL: NEVER use `--` to pass arguments to tests** ⚠️
+     - Example of what NOT to do: `sbt "rootJVM/testOnly -- -t MyTest"`
+     - This will cause tests to run incorrectly or not at all
+     - No arguments should be passed after the test class name
    - Always run full test suites rather than individual tests when possible
    - Verify that terminal commands execute completely before proceeding
    - If a test command produces an error about not finding the test class:
