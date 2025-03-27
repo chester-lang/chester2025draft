@@ -814,6 +814,19 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               ErrorTerm(problem, convertMeta(meta))
           }
         }
+      case expr @ InfixExpr(left, op, right, associativity, meta) =>
+        if (DEBUG_METHOD_CALLS) {
+          println(s"[INFIX DEBUG] Processing infix expression: ${op.name}")
+          println(s"[INFIX DEBUG] Left: $left, Right: $right")
+        }
+        
+        // Create a synthetic DotCall and process it
+        val argsTuple = Tuple(Vector(right), right.meta)
+        val dotCall = DotCall(left, op, Vector(argsTuple), meta)
+        
+        // Now delegate to our existing implementation for DotCall
+        elab(dotCall, ty, effects)
+
       case expr: Expr => {
         val problem = NotImplemented(expr)
         ck.reporter.apply(problem)

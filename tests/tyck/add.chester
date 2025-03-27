@@ -1,1 +1,3 @@
 let a = 1.+(1);
+let b = 1 + 2;
+let c: Integer = 12 + 2;
