@@ -336,6 +336,39 @@ def graalvmSettings = Seq(
   nativeImageJvm := graalVm
 )
 
+// https://scalablytyped.org/docs/remotecache
+// sbt stPublishCache
+Global / stRemoteCache := {
+  import java.io.File
+  import scala.io.Source
+  import scala.util.{Try, Success, Failure}
+  
+  val homeDir = System.getProperty("user.home")
+  val configFile = new File(homeDir, "chester-st-cache")
+  
+  // For custom SSH ports, add a host entry in ~/.ssh/config like:
+  // Host myserver
+  //   HostName xx
+  //   User xx
+  //   Port xx
+  // Then use "myserver:/path/to/cache" as the pushAddress
+  val pushAddress = Try {
+    if (configFile.exists) {
+      Source.fromFile(configFile).getLines().mkString.trim
+    } else {
+      "user@server.com:/path/to/cache"
+    }
+  } match {
+    case Success(addr) if addr.nonEmpty => addr
+    case _ => "user@server.com:/path/to/cache"
+  }
+  
+  RemoteCache.Rsync(
+    push = pushAddress, 
+    pull = new java.net.URI("https://cache.the-lingo.org/st")
+  )
+}
+
 commonSettings
 
 lazy val bump = inputKey[Unit]("Bump version in multiple files")
@@ -810,274 +843,19 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-lazy val typednode = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typednode"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/node_sjs1_3/22.5.5-6bc698/srcs/node_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/node_sjs1_3/22.5.5-6bc698/jars/node_sjs1_3.jar"
-    )
-  )
-lazy val typedstd = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedstd"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/std_sjs1_3/4.3-5d95db/srcs/std_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/std_sjs1_3/4.3-5d95db/jars/std_sjs1_3.jar"
-    )
-  )
-lazy val typedundici = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedundici"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/undici-types_sjs1_3/6.19.8-4dee3c/srcs/undici-types_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/undici-types_sjs1_3/6.19.8-4dee3c/jars/undici-types_sjs1_3.jar"
-    )
-  )
-lazy val typedxterm = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedxterm"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/xterm__xterm_sjs1_3/5.5.0-951203/srcs/xterm__xterm_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/xterm__xterm_sjs1_3/5.5.0-951203/jars/xterm__xterm_sjs1_3.jar"
-    )
-  )
-lazy val typedcsstype = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedcsstype"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/csstype_sjs1_3/3.1.3-3d3924/srcs/csstype_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/csstype_sjs1_3/3.1.3-3d3924/jars/csstype_sjs1_3.jar"
-    )
-  )
-lazy val typednext = crossProject(JSPlatform, JVMPlatform, NativePlatform)
-  .withoutSuffixFor(JVMPlatform)
-  .in(file("js-typings/typednext"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/next_sjs1_3/11.1.4-68204a/srcs/next_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/next_sjs1_3/11.1.4-68204a/jars/next_sjs1_3.jar"
-    )
-  )
-lazy val typedproptypes = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedproptypes"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/prop-types_sjs1_3/15.7.13-49b294/srcs/prop-types_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/prop-types_sjs1_3/15.7.13-49b294/jars/prop-types_sjs1_3.jar"
-    )
-  )
-lazy val typedreactdom = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedreactdom"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/react-dom_sjs1_3/18.3.0-d84423/srcs/react-dom_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/react-dom_sjs1_3/18.3.0-d84423/jars/react-dom_sjs1_3.jar"
-    )
-  )
-lazy val typedreact = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedreact"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/react_sjs1_3/18.3.7-ca07dd/srcs/react_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/react_sjs1_3/18.3.7-ca07dd/jars/react_sjs1_3.jar"
-    )
-  )
-lazy val typedxtermreadline = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedxtermreadline"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/xterm-readline_sjs1_3/1.1.1-a2b93f/srcs/xterm-readline_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/xterm-readline_sjs1_3/1.1.1-a2b93f/jars/xterm-readline_sjs1_3.jar"
-    )
-  )
-lazy val typedxterm2 = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedxterm2"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/xterm_sjs1_3/5.3.0-80131f/srcs/xterm_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/xterm_sjs1_3/5.3.0-80131f/jars/xterm_sjs1_3.jar"
-    )
-  )
-lazy val typedxtermpty = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedxtermpty"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/xterm-pty_sjs1_3/0.9.6-3b34b4/srcs/xterm-pty_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/xterm-pty_sjs1_3/0.9.6-3b34b4/jars/xterm-pty_sjs1_3.jar"
-    )
-  )
-lazy val typedvscodeJsonrpc = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedvscodeJsonrpc"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/vscode-jsonrpc_sjs1_3/8.2.0-224d90/srcs/vscode-jsonrpc_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/vscode-jsonrpc_sjs1_3/8.2.0-224d90/jars/vscode-jsonrpc_sjs1_3.jar"
-    )
-  )
-
-lazy val typedvscodeLanguageserverProtocol = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedvscodeLanguageserverProtocol"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver-protocol_sjs1_3/3.17.5-a68af5/srcs/vscode-languageserver-protocol_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver-protocol_sjs1_3/3.17.5-a68af5/jars/vscode-languageserver-protocol_sjs1_3.jar"
-    )
-  )
-
-lazy val typedvscodeLanguageserverTextdocument = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedvscodeLanguageserverTextdocument"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver-textdocument_sjs1_3/1.0.12-0aa4d4/srcs/vscode-languageserver-textdocument_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver-textdocument_sjs1_3/1.0.12-0aa4d4/jars/vscode-languageserver-textdocument_sjs1_3.jar"
-    )
-  )
-
-lazy val typedvscodeLanguageserverTypes = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedvscodeLanguageserverTypes"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver-types_sjs1_3/3.17.5-6935e7/srcs/vscode-languageserver-types_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver-types_sjs1_3/3.17.5-6935e7/jars/vscode-languageserver-types_sjs1_3.jar"
-    )
-  )
-
-lazy val typedvscodeLanguageserver = crossProject(JSPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .in(file("js-typings/typedvscodeLanguageserver"))
-  .settings(commonVendorSettings)
-  .jsSettings(
-    Compile / packageSrc := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver_sjs1_3/9.0.1-28aecf/srcs/vscode-languageserver_sjs1_3-sources.jar"
-    ),
-    Compile / packageBin := file(
-      "js-typings/local/org.scalablytyped/vscode-languageserver_sjs1_3/9.0.1-28aecf/jars/vscode-languageserver_sjs1_3.jar"
-    )
-  )
-
-// Update the jsTypings project to include the new dependencies
 lazy val jsTypings = crossProject(JSPlatform)
   .withoutSuffixFor(JSPlatform)
   .crossType(CrossType.Pure)
   .in(file("js-typings"))
-  // Remove comments to generate typings again
-  // .jsEnablePlugins(ScalablyTypedConverterPlugin)
+  .jsEnablePlugins(ScalablyTypedConverterPlugin)
   .settings(
     commonVendorSettings
   )
-  .jsConfigure(
-    _.dependsOn(
-      typednode.js,
-      typedstd.js,
-      typedundici.js,
-      typedxterm.js,
-      typedcsstype.js,
-      typednext.js,
-      typedproptypes.js,
-      typedreactdom.js,
-      typedreact.js,
-      typedxtermreadline.js,
-      typedxterm2.js,
-      typedxtermpty.js,
-      typedvscodeJsonrpc.js,
-      typedvscodeLanguageserverProtocol.js,
-      typedvscodeLanguageserverTextdocument.js,
-      typedvscodeLanguageserverTypes.js,
-      typedvscodeLanguageserver.js
-    )
-  )
   .jsSettings(
-    resolvers += Resolver.file("local-ivy2", file("js-typings/local"))(
-      Resolver.ivyStylePatterns
-    ),
     libraryDependencies ++= Seq(
       "com.olvind" %%% "scalablytyped-runtime" % "2.4.2",
       "org.scala-js" %%% "scalajs-dom" % "2.8.0"
     ),
-    libraryDependencies ++= Seq(
-      "org.scalablytyped" %%% "node" % "22.5.5-6bc698" % Compile,
-      "org.scalablytyped" %%% "std" % "4.3-5d95db" % Compile,
-      "org.scalablytyped" %%% "undici-types" % "6.19.8-4dee3c" % Compile,
-      "org.scalablytyped" %%% "xterm__xterm" % "5.5.0-951203" % Compile,
-      "org.scalablytyped" %%% "csstype" % "3.1.3-3d3924" % Compile,
-      "org.scalablytyped" %%% "next" % "11.1.4-68204a" % Compile,
-      "org.scalablytyped" %%% "prop-types" % "15.7.13-49b294" % Compile,
-      "org.scalablytyped" %%% "react-dom" % "18.3.0-d84423" % Compile,
-      "org.scalablytyped" %%% "react" % "18.3.7-ca07dd" % Compile,
-      "org.scalablytyped" %%% "xterm-readline" % "1.1.1-a2b93f" % Compile,
-      "org.scalablytyped" %%% "xterm" % "5.3.0-80131f" % Compile,
-      "org.scalablytyped" %%% "xterm-pty" % "0.9.6-3b34b4" % Compile,
-      "org.scalablytyped" %%% "vscode-jsonrpc" % "8.2.0-224d90" % Compile,
-      "org.scalablytyped" %%% "vscode-languageserver-protocol" % "3.17.5-a68af5" % Compile,
-      "org.scalablytyped" %%% "vscode-languageserver-textdocument" % "1.0.12-0aa4d4" % Compile,
-      "org.scalablytyped" %%% "vscode-languageserver-types" % "3.17.5-6935e7" % Compile,
-      "org.scalablytyped" %%% "vscode-languageserver" % "9.0.1-28aecf" % Compile
-    )
-    /*
     Compile / npmDependencies ++= Seq(
       "vscode-languageserver" -> "9.0.1",
       "vscode-languageserver-textdocument" -> "1.0.12",
@@ -1092,7 +870,6 @@ lazy val jsTypings = crossProject(JSPlatform)
       "xterm-readline" -> "1.1.1",
       "xterm-pty" -> "0.9.6", // use old version because of https://github.com/mame/xterm-pty/issues/35
     ),
-     */
   )
 
 lazy val compatibility = crossProject(JSPlatform, JVMPlatform, NativePlatform)
@@ -1377,23 +1154,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .aggregate(
     allprojects,
     spireNative,
-    typednode,
-    typedstd,
-    typedundici,
-    typedxterm,
-    typedcsstype,
-    typednext,
-    typedproptypes,
-    typedreactdom,
-    typedreact,
-    typedxtermreadline,
-    typedxterm2,
-    typedxtermpty,
-    typedvscodeJsonrpc,
-    typedvscodeLanguageserverProtocol,
-    typedvscodeLanguageserverTextdocument,
-    typedvscodeLanguageserverTypes,
-    typedvscodeLanguageserver,
     kiamaCore,
     jsTypings,
     utils,
