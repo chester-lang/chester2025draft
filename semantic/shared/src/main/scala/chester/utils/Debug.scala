@@ -7,15 +7,15 @@ object Debug {
   /** Debug categories for specifying what type of debug output to enable.
     */
   enum DebugCategory {
-    case Cell        // For cell filling debug info
-    case Tyck        // For type checker debug info
-    case Reducer     // For reducer debug info
+    case Cell // For cell filling debug info
+    case Tyck // For type checker debug info
+    case Reducer // For reducer debug info
     case UnionSubtyping // For union subtyping debug info
-    case UnionMatching  // For union matching debug info
-    case Literals     // For literal type handling debug info
-    case Identifiers  // For identifier handling debug info
-    case MethodCalls  // For method call handling debug info
-    case StringArgs   // For string arguments handling debug info
+    case UnionMatching // For union matching debug info
+    case Literals // For literal type handling debug info
+    case Identifiers // For identifier handling debug info
+    case MethodCalls // For method call handling debug info
+    case StringArgs // For string arguments handling debug info
     case TraitMatching // For trait implementation matching
   }
 

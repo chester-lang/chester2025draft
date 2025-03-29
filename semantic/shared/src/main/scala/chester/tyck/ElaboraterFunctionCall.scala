@@ -323,7 +323,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   ) extends Propagator[Tyck] {
     override def readingCells: Set[CIdOf[Cell[?]]] = Set(effectsCell)
     override def writingCells: Set[CIdOf[Cell[?]]] = Set(callerEffects)
-    override def zonkingCells: Set[CIdOf[Cell[?]]] = Set()
+    override def zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
 
     override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
       state.readStable(effectsCell) match {
