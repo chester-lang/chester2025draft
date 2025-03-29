@@ -10,6 +10,11 @@ export default {
     format: 'cjs',
     sourcemap: true,
   },
+  onwarn(warning, warn) {
+    if (warning.code === 'THIS_IS_UNDEFINED') return;
+    
+    warn(warning);
+  },
   plugins: [
     resolve({
       preferBuiltins: false,
