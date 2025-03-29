@@ -17,7 +17,7 @@
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
-    "rollup": "^4.37.0",
+    "rollup": "^4.38.0",
     "ts-morph": "^25.0.1"
   }
 }

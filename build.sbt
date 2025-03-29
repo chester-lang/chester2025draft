@@ -1,4 +1,18 @@
 // reads env: NATIVE_IMAGE_OPTIONS, VERSION
+
+val scala3Version = "3.6.4"
+val scala3Lib = "3.6.4"
+val scala2Version = "2.13.16"
+val scala3Nightly = "3.7.1-RC1-bin-20250328-d519790-NIGHTLY"
+
+val graalVm = "graalvm-java24"
+val graalJdkVersion = "24.0.0"
+val graalvmVersion = "24.2.0"
+
+
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.31")
+ThisBuild / organization := "com.github.chester-lang"
+
 import org.scalajs.linker.interface.OutputPatterns
 import sbt.librarymanagement.InclExclRule
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
@@ -8,9 +22,6 @@ import scala.scalanative.build.*
 import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
-
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.31")
-ThisBuild / organization := "com.github.chester-lang"
 
 addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
 addCommandAlias("testWinCi", ";rootJVM/test; rootJS/test; rootNative/compile") // we have some bugs on ci
@@ -153,15 +164,28 @@ up := {
 
   log.success("Finished updating all dependencies")
 }
+lazy val outdated = inputKey[Unit]("Run pnpm outdated in site and vscode folders")
+outdated := {
+  val log = streams.value.log
+  val folders = Seq(
+    file("site"),
+    file("vscode"),
+    file("js-for-jvm"),
+    file("js-for-python")
+  )
 
-val scala3Version = "3.6.4"
-val scala3Lib = "3.6.4"
-val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.1-RC1-bin-20250328-d519790-NIGHTLY"
+  folders.foreach { dir =>
+    if (dir.exists()) {
+      log.info(s"Checking outdated dependencies in ${dir.getName}...")
+      Process("pnpm outdated", dir) ! log
+    } else {
+      log.warn(s"Directory ${dir.getName} does not exist, skipping")
+    }
+  }
 
-val graalVm = "graalvm-java24"
-val graalJdkVersion = "24.0.0"
-val graalvmVersion = "24.2.0"
+  log.success("Finished checking all dependencies")
+}
+
 
 val defaultNativeImageOptions = Seq(
   // "-H:-CheckToolchain",
@@ -516,7 +540,7 @@ lazy val utils = useSpire(
         "io.getkyo" %%% "kyo-core" % "0.17.0",
         "io.getkyo" %%% "kyo-direct" % "0.17.0",
         "io.getkyo" %%% "kyo-data" % "0.17.0",
-        "org.scala-graph" %%% "graph-core" % "2.0.2",
+        "org.scala-graph" %%% "graph-core" % "2.0.3",
         "com.outr" %%% "scribe" % "3.16.0"
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
@@ -1272,7 +1296,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-val jgitVersion = "7.2.0.202503040940-r"
+val jgitVersion = "7.2.0.302503040940-r"
 lazy val buildTool = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
