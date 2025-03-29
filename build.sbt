@@ -9,8 +9,6 @@ import sbt.complete.DefaultParsers._
 
 import scala.sys.process._
 
-import sbt.dsl.LinterLevel.Ignore
-
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.31")
 ThisBuild / organization := "com.github.chester-lang"
 
@@ -426,7 +424,6 @@ ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.
   [error] /usr/bin/ld: /tmp/lto-llvm-7d968c.o: relocation R_AARCH64_ADR_PREL_PG_HI21 against symbol `__stack_chk_guard@@GLIBC_2.17' which may bind externally can not be used when making a shared object; recompile with -fPIC
   [error] /usr/bin/ld: /tmp/lto-llvm-7d968c.o(.text.MutatorThreads_init+0x8): unresolvable R_AARCH64_ADR_PREL_PG_HI21 relocation against symbol `__stack_chk_guard@@GLIBC_2.17'
   [error] /usr/bin/ld: final link failed: bad value
-  [error] clang++: error: linker command failed with exit code 1 (use -v to see invocation)
   [info] Total (36687 ms)
    */
   // Archlinux aarch64 Virtual Machine on Apple Silicon: LTO is broken too
@@ -713,61 +710,25 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     Compile / compile := (Compile / compile)
       .dependsOn(jsForJvm.js / Compile / fastLinkJS)
       .value,
-    /*
-    // Modify the source generator to use Def.taskDyn
-    Compile / sourceGenerators += Def.taskDyn {
-      // Use Def.taskDyn to create a dynamic dependency on jsForJvm.js / fastLinkJS
-      (jsForJvm.js / Compile / fastLinkJS).map { jsLinkerOutput =>
-        val jsArtifact = (jsForJvm.js / Compile / fastLinkJSOutput).value / jsLinkerOutput.data.publicModules.head.jsFileName
-
-        val log = streams.value.log
-
-        // Copy to file("js-for-jvm") / "index.js"
-        IO.copyFile(jsArtifact, file("js-for-jvm") / "index.js")
-        Process("pnpm install", file("js-for-jvm")) ! log
-        Process("pnpm run build", file("js-for-jvm")) ! log
-
-        // Read the content of the JS file
-        val jsContent = IO.read(file("js-for-jvm") / "dist" / "bundle.js")
-
-        // Escape special characters in the JS content
-        val escapedJsContent = jsContent
-          .replace("\\", "\\\\") // Escape backslashes
-          .replace("\"\"\"", "\\\"\\\"\\\"") // Escape triple quotes if any
-
-        // Define where to place the generated Scala file
-        val sourceDir = (Compile / sourceManaged).value
-        val generatedFile = sourceDir / "chester" / "generated" / "GeneratedJS.scala"
-
-        // Generate the content of the Scala file
-        val content =
-          s"""package chester.generated
-object GeneratedJS {
-  val jsCode: String = \"\"\"$escapedJsContent\"\"\"
-}
-          """
-
-        // Write the content to the Scala file
-        IO.write(generatedFile, content)
-
-        // Return the generated file
-        Seq(generatedFile)
-      }
-    }.taskValue,
-     */
     // note that won't run on compile only package and run  - https://github.com/sbt/sbt/issues/1832
     Compile / resourceGenerators += Def.taskDyn {
-      (jsForJvm.js / Compile / fastLinkJS).map { jsLinkerOutput =>
-        val jsArtifact = (jsForJvm.js / Compile / fastLinkJSOutput).value / jsLinkerOutput.data.publicModules.head.jsFileName
-
+      // Step 1: Get dependencies before the mapping function
+      val linkTask = jsForJvm.js / Compile / fastLinkJS
+      
+      Def.task {
+        val jsOutput = linkTask.value
+        val outputPath = (jsForJvm.js / Compile / fastLinkJSOutput).value
         val log = streams.value.log
-
+        
+        // Use values safely inside a task
+        val jsArtifact = outputPath / jsOutput.data.publicModules.head.jsFileName
+        val dest = (Compile / resourceManaged).value
+        
         // Copy to file("js-for-jvm") / "index.js"
         IO.copyFile(jsArtifact, file("js-for-jvm") / "index.js")
         Process("pnpm install", file("js-for-jvm")) ! log
         Process("pnpm run build", file("js-for-jvm")) ! log
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
-        val dest = (Compile / resourceManaged).value
 
         org.mozilla.javascript.tools.jsc.Main
           .main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
