@@ -206,6 +206,102 @@ sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
 
 ⚠️ **IMPORTANT WARNING**: Do NOT use the `-z` test filter option (e.g., `sbt "rootJVM/testOnly -- -z pattern"`) as it is broken and produces unreliable results. Instead, run the entire test suite and review the results.
 
+## 8.5 Quick Test Guide
+
+### Basic Test Cases By Feature
+
+Below are minimal test cases for each feature that can be used for quick verification. Create these in separate `.chester` files in the `tests/tyck/` directory to validate implementation.
+
+#### 1. Union Type Tests
+
+```chester
+// FILE: union_basic.chester
+// Tests basic union type assignment
+let a: Integer | String = 42;
+let b: Integer | String = "hello";
+```
+
+```chester
+// FILE: union_function.chester
+// Tests function with union type parameters and return
+def identity(x: Integer | String): Integer | String = x;
+let a = identity(42);
+let b = identity("hello");
+```
+
+```chester
+// FILE: union_specific.chester
+// Tests union-to-specific subtyping
+def expectNumber(x: Number): Number = x;
+let a: Integer | Float = 42;
+expectNumber(a);  // Should succeed if Integer|Float <: Number
+```
+
+#### 2. Trait Tests
+
+```chester
+// FILE: trait_basic.chester
+// Tests basic trait implementation
+trait Showable {
+  def show: String;
+}
+
+record Person(name: String, age: Integer) <: Showable {
+  def show: String = name;
+}
+
+let p = Person("Alice", 30);
+let s: Showable = p;
+let name = s.show;
+```
+
+```chester
+// FILE: trait_field.chester
+// Tests trait field access
+trait HasName {
+  def name: String;
+}
+
+record User(name: String, email: String) <: HasName;
+
+def getName(x: HasName): String = x.name;
+let u = User("Bob", "bob@example.com");
+getName(u);
+```
+
+#### 3. Type-Level Function Tests
+
+```chester
+// FILE: type_function.chester
+// Tests type-level function application
+def idType(x: Type): Type = x;
+
+record Point(x: Integer, y: Integer);
+let pointType = idType(Point);
+
+def makePoint(p: pointType): pointType = p;
+let p = Point(1, 2);
+makePoint(p);
+```
+
+### Running Individual Test Cases
+
+To run a specific test file:
+
+```bash
+# Compile and run a specific test file
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest -- -only add.chester"
+```
+
+### Test Verification Checklist
+
+For each test case, verify:
+
+1. ✅ Compilation succeeds without errors
+2. ✅ Type checks pass correctly
+3. ✅ No "cells not covered by any propagator" errors
+4. ✅ Error messages are clear and helpful when intentional errors are introduced
+
 ## 9. Trait Implementation Plan
 
 Basic trait implementation has been completed and documented in the development log (see `docs/src/dev/devlog.md` entry for 2025-03-19).

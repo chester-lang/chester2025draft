@@ -1,8 +1,50 @@
 # Type Checking System: Propagator Network and Design
 
-## Overview
+## Quick Start Guide
 
-The propagator network is a key component of Chester's type checking system. It manages the flow of type information and constraints between different parts of the program.
+Chester's type checking system is powered by a **propagator network** - a constraint-based approach that allows for complex type relationships.
+
+### Simple Visual Overview
+
+```
+                      ┌─────────────┐
+                      │ Type System │
+                      └─────────────┘
+                             │
+                             ▼
+                     ┌───────────────┐
+                     │ Type Checking │
+                     └───────────────┘
+                             │
+                             ▼
+┌────────────────────────────────────────────────────┐
+│                 Propagator Network                 │
+├────────────────┬─────────────────┬────────────────┤
+│                │                 │                │
+│    ┌───────┐   │    ┌───────┐    │   ┌───────┐   │
+│    │ Cell  │◄──┼────┤Prop 1 │◄───┼───┤ Cell  │   │
+│    └───────┘   │    └───────┘    │   └───────┘   │
+│        ▲       │        ▲        │       ▲       │
+│        │       │        │        │       │       │
+│    ┌───────┐   │    ┌───────┐    │   ┌───────┐   │
+│    │Prop 2 │◄──┼────┤ Cell  │◄───┼───┤Prop 3 │   │
+│    └───────┘   │    └───────┘    │   └───────┘   │
+│                │                 │                │
+└────────────────┴─────────────────┴────────────────┘
+```
+
+### Key Concepts in 30 Seconds
+
+1. **Cells** - Hold type information and track connections to propagators
+2. **Propagators** - Define constraints between cells and propagate type information
+3. **Network** - The collection of cells and propagators that work together
+
+When type checking:
+- Cells store type information (like "this variable has type Integer")
+- Propagators enforce constraints (like "parameter type must match argument type")
+- When a cell value changes, connected propagators activate to propagate that change
+
+This reactive network allows complex type relationships (like union types) to be modeled effectively.
 
 ## Architecture
 
