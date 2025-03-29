@@ -591,3 +591,65 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
    - Add temporary debugging code when needed, but mark it clearly and remove when done
    - Consider adding permanent debugging hooks for areas prone to issues
    - Document debugging insights even if they seem obvious
+
+### Debug Flags Management
+
+Chester uses a centralized debug system that categorizes debug output by component type. This approach:
+- Allows targeted debugging of specific components without noise from others
+- Prevents debug flags scattered throughout the codebase
+- Enables easy enabling/disabling of debug output
+
+1. **Debug Category System**
+   - All debug output is organized into categories defined in `Debug.scala`:
+     ```scala
+     enum DebugCategory {
+       case Cell          // For cell filling debug info
+       case Tyck          // For type checker debug info
+       case Reducer       // For reducer debug info
+       case UnionSubtyping// For union subtyping debug info
+       case UnionMatching // For union matching debug info
+       case Literals      // For literal type handling debug info
+       case Identifiers   // For identifier handling debug info
+       case MethodCalls   // For method call handling debug info
+       case StringArgs    // For string args handling debug info
+       case TraitMatching // For trait implementation matching
+     }
+     ```
+
+2. **Using Debug Logging**
+   - Enable categories explicitly with `Debug.enable(DebugCategory.XXX)`
+   - Log with category specificity: `Debug.debugPrint(DebugCategory.Tyck, "message")`
+   - Check if category enabled: `if (Debug.isEnabled(DebugCategory.Tyck)) { ... }`
+   - Stack traces: `Debug.printCallStack(DebugCategory.Tyck)`
+
+3. **Debug Flags Utility Script**
+   - Use `scripts/debug-flags.sh` for convenient flag management:
+     ```bash
+     # Show current debug flag status
+     ./scripts/debug-flags.sh status
+     
+     # Enable specific debug categories
+     ./scripts/debug-flags.sh enable ENV_DEBUG_UNION_MATCHING
+     
+     # Enable all debug categories
+     ./scripts/debug-flags.sh enable-all
+     
+     # Disable all debug categories
+     ./scripts/debug-flags.sh disable-all
+     
+     # List available debug flags
+     ./scripts/debug-flags.sh list
+     ```
+
+4. **Environment Variables**
+   - Any debug category can be enabled via environment variables
+   - Global debug flag: `ENV_DEBUG=true`
+   - Category-specific flags: `ENV_DEBUG_UNION_MATCHING=true`
+   - One-time usage: `ENV_DEBUG=true sbt rootJVM/test`
+
+5. **Best Practices for Debug Logging**
+   - Debug flags are all disabled by default for better performance
+   - Enable only the specific categories you need
+   - Keep debug statements clear, concise, and helpful
+   - Clean up any temporary debug code when done
+   - Add new categories to `DebugCategory` enum when needed for new components
