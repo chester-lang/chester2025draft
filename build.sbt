@@ -1071,7 +1071,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-val jgitVersion = "7.2.0.302503040940-r"
+val jgitVersion = "7.2.0.202503040940-r"
 lazy val buildTool = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
