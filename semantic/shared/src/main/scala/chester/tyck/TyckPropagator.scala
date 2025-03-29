@@ -86,7 +86,6 @@ trait TyckPropagator extends ElaboraterCommon {
                 Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Record ${recordDef.name} does not implement trait ${traitDef.name}")
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
-            true
 
           // Record type implementing trait type (structural subtyping)
           case (lhsType @ RecordStmtTerm(name, _, fields, _, extendsClause, _), rhsType @ TraitStmtTerm(traitName, _, _, _, _)) =>
@@ -96,7 +95,6 @@ trait TyckPropagator extends ElaboraterCommon {
               if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Record $name does not implement trait $traitName")
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
-            true
 
           // Trait extending trait (structural subtyping)
           case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
@@ -107,7 +105,6 @@ trait TyckPropagator extends ElaboraterCommon {
                 Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Trait ${childTraitDef.name} does not extend trait ${parentTraitDef.name}")
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
-            true
 
           // Handle Intersection types
           case (Intersection(types1, _), rhsType) =>
@@ -1270,7 +1267,6 @@ trait TyckPropagator extends ElaboraterCommon {
         Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Checking compatibility: $reducedSpecificType with $unionType - Result: $isCompatible")
       isCompatible
     })
-    (compatibleComponents, compatibleComponents.nonEmpty)
 
     if (compatibleComponents.nonEmpty) {
       if (Debug.isEnabled(UnionMatching))
