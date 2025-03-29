@@ -9,7 +9,6 @@ val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.0"
 val graalvmVersion = "24.2.0"
 
-
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.31")
 ThisBuild / organization := "com.github.chester-lang"
 
@@ -185,7 +184,6 @@ outdated := {
 
   log.success("Finished checking all dependencies")
 }
-
 
 val defaultNativeImageOptions = Seq(
   // "-H:-CheckToolchain",
