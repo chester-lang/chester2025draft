@@ -98,27 +98,6 @@ trait TyckPropagator extends ElaboraterCommon {
             }
             true
 
-          // Record type implementing trait type (structural subtyping)
-          case (lhsType @ RecordTypeTerm(recordDef, _, _), rhsType @ TraitTypeTerm(traitDef, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Unifying record type ${recordDef.name} with trait type ${traitDef.name}")
-            if (!checkTraitImplementation(recordDef, traitDef, cause)) {
-              if (Debug.isEnabled(TraitMatching))
-                Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Record ${recordDef.name} does not implement trait ${traitDef.name}")
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-            true
-
-          // Record type implementing trait type (structural subtyping)
-          case (lhsType @ RecordStmtTerm(name, _, fields, _, extendsClause, _), rhsType @ TraitStmtTerm(traitName, _, _, _, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Unifying record type $name with trait type $traitName")
-            if (!checkTraitImplementation(lhsType, rhsType, cause)) {
-              if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Record $name does not implement trait $traitName")
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-            }
-            true
-
           // Trait extending trait (structural subtyping)
           case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
             if (Debug.isEnabled(TraitMatching))
@@ -204,35 +183,6 @@ trait TyckPropagator extends ElaboraterCommon {
         case (_, Some(Meta(r))) =>
           state.addPropagator(Unify(this.lhs, r, cause))
           true
-        case (Some(Union(types1, _)), Some(Union(types2, _))) =>
-          handleUnionUnionPropagation(types1, types2, cause)
-          true
-        case (Some(lhsType), Some(Union(types2, _))) =>
-          handleSpecificUnionPropagation(lhsType, types2, cause)
-          true
-        case (Some(Union(types1, _)), Some(rhsType)) =>
-          handleUnionSpecificPropagation(types1, rhsType, cause)
-          true
-        case (Some(Intersection(types1, _)), Some(Intersection(types2, _))) =>
-          // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
-          types1.foreach { t1 =>
-            types2.find(t2 => tryUnify(t1, t2)).foreach { t2 =>
-              state.addPropagator(Unify(toId(t1), toId(t2), cause))
-            }
-          }
-          true
-        case (Some(lhsType), Some(Intersection(types2, _))) =>
-          // For an intersection on the right, ANY type in the intersection being compatible with lhs is sufficient
-          types2.find(t2 => tryUnify(lhsType, t2)).foreach { t2 =>
-            state.addPropagator(Unify(toId(lhsType), toId(t2), cause))
-          }
-          true
-        case (Some(Intersection(types1, _)), Some(rhsType)) =>
-          // For an intersection on the left, ALL types in the intersection must be compatible with rhs
-          types1.foreach { t1 =>
-            state.addPropagator(Unify(toId(t1), toId(rhsType), cause))
-          }
-          true
         case _ => false
       }
     }
@@ -314,73 +264,6 @@ trait TyckPropagator extends ElaboraterCommon {
           }
         case _ => ZonkResult.Require(Vector(this.lhs, this.rhs))
       }
-    }
-
-    private def handleUnionUnionPropagation(
-        types1: NonEmptyVector[Term],
-        types2: NonEmptyVector[Term],
-        cause: Expr
-    )(using
-        state: StateAbility[Tyck],
-        more: Tyck
-    ): Unit = {
-      // For each type in rhs union, at least one type in lhs union must accept it
-      types2.foreach { t2 =>
-        types1.find(t1 => tryUnify(t1, t2)).foreach { t1 =>
-          state.addPropagator(Unify(toId(t1), toId(t2), cause))
-        }
-      }
-    }
-
-    private def handleSpecificUnionPropagation(
-        specificType: Term,
-        unionTypes: NonEmptyVector[Term],
-        cause: Expr
-    )(using
-        state: StateAbility[Tyck],
-        more: Tyck
-    ): Unit = {
-      // For a specific type to be compatible with a union type,
-      // the specific type must be compatible with at least one of the union components
-      // This is for cases like: let y: Integer | String = x
-      // where x: Integer
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(
-          UnionMatching,
-          s"[UNION DEBUG] Checking if $specificType is compatible with at least one of union components: ${unionTypes.mkString(", ")}"
-        )
-
-      // Find compatible union components and connect them
-      unionTypes.withFilter(unionType => tryUnify(specificType, unionType)).foreach { compatibleType =>
-        if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG]   Found compatible component: $compatibleType")
-        state.addPropagator(Unify(toId(specificType), toId(compatibleType), cause))
-      }
-    }
-
-    private def handleUnionSpecificPropagation(
-        unionTypes: NonEmptyVector[Term],
-        specificType: Term,
-        cause: Expr
-    )(using
-        StateAbility[Tyck],
-        Tyck
-    ): Unit = {
-      // For a union type to be compatible with a specific type,
-      // at least one type in the union must be compatible with the specific type
-      // This is for cases like: let x: Integer | String; let y: SomeType = x;
-      // where y: SomeType must accept at least one of Integer or String
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(
-          UnionMatching,
-          s"[UNION DEBUG] Checking if any union component ${unionTypes.mkString(", ")} is compatible with $specificType"
-        )
-      val result = unionTypes.exists(unionType => {
-        val compatible = tryUnify(unionType, specificType)
-        if (Debug.isEnabled(UnionMatching))
-          Debug.debugPrint(UnionMatching, s"[UNION DEBUG]   Component check: $unionType compatible with $specificType? $compatible")
-        compatible
-      })
-      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Final result: $result")
     }
 
     // Helper method to ensure a cell is covered by at least one propagator during zonking
@@ -669,116 +552,6 @@ trait TyckPropagator extends ElaboraterCommon {
           case (IntegerType(_), lit: IntegerTerm) =>
             if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   IntegerType matches integer literal: true")
             return true
-
-          // Special case for literal values like 42 that need to match with Integer type
-          case (v: AbstractIntTerm, IntegerType(_)) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Abstract integer literal matches IntegerType: true")
-            return true
-          case (IntegerType(_), v: AbstractIntTerm) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   IntegerType matches abstract integer literal: true")
-            return true
-
-          // Special cases for int literals with union types
-          case (v: AbstractIntTerm, Union(types, _)) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(
-                UnionMatching,
-                s"${indent}[UNIFY DEBUG]   Checking if AbstractIntTerm $v can be unified with Union ${types.mkString(", ")}"
-              )
-            // Check if any of the union types is compatible with Integer
-            val containsInteger = types.exists {
-              case IntegerType(_) =>
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Union directly contains IntegerType - match found")
-                true
-              case t =>
-                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
-                val isInteger = reduced match {
-                  case IntegerType(_) => true
-                  case _              => false
-                }
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Checking reduced type $reduced: isInteger = $isInteger")
-                isInteger
-            }
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   AbstractIntTerm with Union: contains Integer? $containsInteger")
-            if (containsInteger) return true
-
-          case (Union(types, _), v: AbstractIntTerm) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(
-                UnionMatching,
-                s"${indent}[UNIFY DEBUG]   Checking if Union ${types.mkString(", ")} can be unified with AbstractIntTerm $v"
-              )
-            // Check if any of the union types is compatible with Integer
-            val containsInteger = types.exists {
-              case IntegerType(_) =>
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Union directly contains IntegerType - match found")
-                true
-              case t =>
-                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
-                val isInteger = reduced match {
-                  case IntegerType(_) => true
-                  case _              => false
-                }
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Checking reduced type $reduced: isInteger = $isInteger")
-                isInteger
-            }
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Union with AbstractIntTerm: contains Integer? $containsInteger")
-            if (containsInteger) return true
-
-          // Handle IntTerm cases with Union (specific for 42 and similar literals)
-          case (v: IntTerm, Union(types, _)) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Checking if IntTerm $v can be unified with Union ${types.mkString(", ")}")
-            // Check if any of the union types is compatible with Integer
-            val containsInteger = types.exists {
-              case IntegerType(_) =>
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Union directly contains IntegerType - match found")
-                true
-              case t =>
-                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
-                val isInteger = reduced match {
-                  case IntegerType(_) => true
-                  case _              => false
-                }
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Checking reduced type $reduced: isInteger = $isInteger")
-                isInteger
-            }
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   IntTerm with Union: contains Integer? $containsInteger")
-            if (containsInteger) return true
-
-          case (Union(types, _), v: IntTerm) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Checking if Union ${types.mkString(", ")} can be unified with IntTerm $v")
-            // Check if any of the union types is compatible with Integer
-            val containsInteger = types.exists {
-              case IntegerType(_) =>
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Union directly contains IntegerType - match found")
-                true
-              case t =>
-                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
-                val isInteger = reduced match {
-                  case IntegerType(_) => true
-                  case _              => false
-                }
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]     Checking reduced type $reduced: isInteger = $isInteger")
-                isInteger
-            }
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Union with IntTerm: contains Integer? $containsInteger")
-            if (containsInteger) return true
 
           case _ => // Continue with normal processing
         }
@@ -1335,7 +1108,7 @@ trait TyckPropagator extends ElaboraterCommon {
   private def checkTraitExtends(
       childTraitDef: TraitStmtTerm,
       parentTraitDef: TraitStmtTerm,
-      cause: Expr
+      _cause: Expr
   )(using
       Context,
       Tyck,
@@ -1433,7 +1206,7 @@ trait TyckPropagator extends ElaboraterCommon {
 
   // Connect a union type to a specific type for compatibility checks
   private def connectUnionAndSpecific(
-      unionId: CellId[Term],
+      _unionId: CellId[Term],
       unionTypes: NonEmptyVector[Term],
       specificId: CellId[Term],
       specificType: Term,

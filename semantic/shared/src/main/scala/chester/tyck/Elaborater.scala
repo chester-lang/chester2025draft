@@ -340,7 +340,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       cellId: CellId[Term],
       cause: Expr
   )(using
-      localCtx: Context,
+      _localCtx: Context,
       state: StateAbility[Tyck],
       ck: Tyck
   ): Unit = {
@@ -683,13 +683,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           // This is done by adding a special case for string literal arguments
           // and also adding a propagator for String type detection
           arg match {
-            case StringLiteral(value, _) =>
-              if (Debug.isEnabled(MethodCalls)) {
-                Debug.debugPrint(MethodCalls, s"[METHOD CALL DEBUG] Found string literal argument '$value' to + method - reporting error")
-              }
-              val problem = TypeMismatch(IntegerType(None), StringType(None), arg)
-              ck.reporter.apply(problem)
-              return ErrorTerm(problem, convertMeta(meta))
             case _ =>
               // Not a direct string literal, so use a propagator to check the type later
               if (Debug.isEnabled(MethodCalls)) {
