@@ -622,23 +622,26 @@ Chester uses a centralized debug system that categorizes debug output by compone
    - Check if category enabled: `if (Debug.isEnabled(DebugCategory.Tyck)) { ... }`
    - Stack traces: `Debug.printCallStack(DebugCategory.Tyck)`
 
-3. **Debug Flags Utility Script**
-   - Use `scripts/debug-flags.sh` for convenient flag management:
+3. **Debug Flags Script**
+   - Use `debug-flags.sh` to manage debug flags in your shell sessions:
      ```bash
-     # Show current debug flag status
-     ./scripts/debug-flags.sh status
+     # First, source the script to load functions
+     source ./debug-flags.sh
      
      # Enable specific debug categories
-     ./scripts/debug-flags.sh enable ENV_DEBUG_UNION_MATCHING
+     enable_debug ENV_DEBUG_UNION_MATCHING
      
      # Enable all debug categories
-     ./scripts/debug-flags.sh enable-all
+     enable_all_debug
      
      # Disable all debug categories
-     ./scripts/debug-flags.sh disable-all
+     disable_all_debug
+     
+     # Show current debug flag status
+     show_debug_status
      
      # List available debug flags
-     ./scripts/debug-flags.sh list
+     list_debug_flags
      ```
 
 4. **Environment Variables**
@@ -653,3 +656,4 @@ Chester uses a centralized debug system that categorizes debug output by compone
    - Keep debug statements clear, concise, and helpful
    - Clean up any temporary debug code when done
    - Add new categories to `DebugCategory` enum when needed for new components
+   - Remember to source the `debug-flags.sh` script when starting a new shell
