@@ -580,9 +580,7 @@ case class Parameter(
 ) extends ASTNode {
   def toDoc(using PrettierOptions): Doc = id.toDoc
   def isSimple: Boolean = id match {
-    case Identifier(_, _)         => true
-    case TypedIdentifier(_, _, _) => true
-    case _                        => false
+    case _ => false
   }
 }
 

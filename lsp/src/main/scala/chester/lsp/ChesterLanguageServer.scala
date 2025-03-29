@@ -264,8 +264,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   }
 
   private def provideCompletions(
-      uri: String,
-      position: Position
+      _uri: String,
+      _position: Position
   ): List[CompletionItem] = {
     // Implement logic to provide code completions based on the position
     List(new CompletionItem("exampleCompletion"))
@@ -279,8 +279,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   }
 
   private def provideHoverInformation(
-      uri: String,
-      position: Position
+      _uri: String,
+      _position: Position
   ): MarkupContent = {
     // Logic to fetch hover information based on position
     val content = new MarkupContent()

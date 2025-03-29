@@ -772,16 +772,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
   }
 
-  // Simplified versions for common delimiters
-  private def expectRParen(state: LexerState): Either[ParseError, LexerState] =
-    expectDelimiter(state, _.isInstanceOf[Token.RParen], "Expected right parenthesis ')'")
-
-  private def expectRBrace(state: LexerState): Either[ParseError, LexerState] =
-    expectDelimiter(state, _.isInstanceOf[Token.RBrace], "Expected right brace '}'")
-
-  private def expectRBracket(state: LexerState): Either[ParseError, LexerState] =
-    expectDelimiter(state, _.isInstanceOf[Token.RBracket], "Expected right bracket ']'")
-
   // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
   private def isTerminator(token: Token): Boolean = token match {
     case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon | _: Token.EOF => true

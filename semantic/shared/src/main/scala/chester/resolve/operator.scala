@@ -219,8 +219,6 @@ def parseExpression(
           output.push(operators.pop())
         }
         operators.push(tokenInfoWithType)
-      case _ =>
-        reporter.apply(UnknownOperator(tokenInfo.expr))
     }
   }
 

@@ -157,7 +157,7 @@ up := {
 val scala3Version = "3.6.4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.1-RC1-bin-20250323-451fdcd-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250328-d519790-NIGHTLY"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.0"
@@ -714,16 +714,16 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     Compile / resourceGenerators += Def.taskDyn {
       // Step 1: Get dependencies before the mapping function
       val linkTask = jsForJvm.js / Compile / fastLinkJS
-      
+
       Def.task {
         val jsOutput = linkTask.value
         val outputPath = (jsForJvm.js / Compile / fastLinkJSOutput).value
         val log = streams.value.log
-        
+
         // Use values safely inside a task
         val jsArtifact = outputPath / jsOutput.data.publicModules.head.jsFileName
         val dest = (Compile / resourceManaged).value
-        
+
         // Copy to file("js-for-jvm") / "index.js"
         IO.copyFile(jsArtifact, file("js-for-jvm") / "index.js")
         Process("pnpm install", file("js-for-jvm")) ! log
