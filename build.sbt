@@ -342,10 +342,10 @@ Global / stRemoteCache := {
   import java.io.File
   import scala.io.Source
   import scala.util.{Try, Success, Failure}
-  
+
   val homeDir = System.getProperty("user.home")
   val configFile = new File(homeDir, "chester-st-cache")
-  
+
   // For custom SSH ports, add a host entry in ~/.ssh/config like:
   // Host myserver
   //   HostName xx
@@ -360,11 +360,11 @@ Global / stRemoteCache := {
     }
   } match {
     case Success(addr) if addr.nonEmpty => addr
-    case _ => "user@server.com:/path/to/cache"
+    case _                              => "user@server.com:/path/to/cache"
   }
-  
+
   RemoteCache.Rsync(
-    push = pushAddress, 
+    push = pushAddress,
     pull = new java.net.URI("https://cache.the-lingo.org/st")
   )
 }
@@ -852,24 +852,21 @@ lazy val jsTypings = crossProject(JSPlatform)
     commonVendorSettings
   )
   .jsSettings(
-    libraryDependencies ++= Seq(
-      "com.olvind" %%% "scalablytyped-runtime" % "2.4.2",
-      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
-    ),
     Compile / npmDependencies ++= Seq(
       "vscode-languageserver" -> "9.0.1",
       "vscode-languageserver-textdocument" -> "1.0.12",
-      "vscode-languageserver-protocol" -> "3.17.5",
+      "vscode-languageserver-protocol" -> "3.17.5"
     ),
     Compile / npmDependencies ++= Seq(
-      "@types/node" -> "22.5.5",
+      "@types/node" -> "22.7.0", // the latest version broken
       "@xterm/xterm" -> "5.5.0",
-      "@types/react" -> "18.3.7",
-      "@types/react-dom" -> "18.3.0",
+      "@types/react" -> "19.0.0", // the latest version broken
+      "@types/react-dom" -> "19.0.0", // the latest version broken
       "next" -> "11.1.4", // next.js 14/12 breaks scalablytyped
       "xterm-readline" -> "1.1.1",
       "xterm-pty" -> "0.9.6", // use old version because of https://github.com/mame/xterm-pty/issues/35
-    ),
+      "ts-morph" -> "25.0.1"
+    )
   )
 
 lazy val compatibility = crossProject(JSPlatform, JVMPlatform, NativePlatform)
