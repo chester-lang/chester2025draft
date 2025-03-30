@@ -17,7 +17,7 @@ class NodejsSimpleTerminal(init: TerminalInit) extends AbstractInTerminal[Future
 
   private var reading: Promise[String] = null
 
-  private def closeCallback(): Unit = {
+  private def closeCallback(): Unit =
     if (live) {
       if (reading != null) {
         val r = reading
@@ -25,7 +25,6 @@ class NodejsSimpleTerminal(init: TerminalInit) extends AbstractInTerminal[Future
         r.success(null)
       }
     }
-  }
 
   rl.on("close", x => closeCallback())
 

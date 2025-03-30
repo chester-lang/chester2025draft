@@ -7,28 +7,25 @@ import chester.syntax.concrete.*
 object IntegrityCheck {
   private val tests = scala.collection.mutable.ListBuffer[() => Unit]()
 
-  private def test(name: String)(f: => Unit): Unit = {
+  private def test(name: String)(f: => Unit): Unit =
     tests += (() => {
       println(s"Running test: $name")
       f
     })
-  }
 
   private def assertEquals[T](
       actual: T,
       expected: T,
       message: String = ""
-  ): Unit = {
+  ): Unit =
     if (actual != expected) {
       throw new AssertionError(
         s"$message. Expected: $expected, Actual: $actual"
       )
     }
-  }
 
-  private def fail(message: String): Unit = {
+  private def fail(message: String): Unit =
     throw new AssertionError(message)
-  }
 
   private def parseAndCheck(input: String, expected: Expr): Unit = {
     val _ = ChesterReader.parseExpr(
@@ -116,7 +113,6 @@ object IntegrityCheck {
     parseAndCheck(input, expected)
   }
 
-  def apply(): Unit = {
+  def apply(): Unit =
     tests.foreach(_())
-  }
 }

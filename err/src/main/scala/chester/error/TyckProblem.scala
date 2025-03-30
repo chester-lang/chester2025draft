@@ -143,9 +143,8 @@ case class NotImplemented(cause: Expr) extends TyckError {
 case class TypeMismatch(lhs: Term, rhs: Term, cause: Expr) extends TyckError {
   override def toDoc(using
       PrettierOptions
-  ): Doc = {
+  ): Doc =
     Doc.text("Type mismatch: expected ") <> lhs.toDoc <> Doc.text(" but got ") <> rhs.toDoc <> cause.toDoc
-  }
 }
 
 case class DuplicateDefinition(cause: Expr) extends TyckError {

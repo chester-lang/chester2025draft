@@ -14,7 +14,7 @@ abstract class AbstractInTerminal[F[_]](using Runner[F]) extends InTerminal[F] {
 
   private var inited: Boolean = false
 
-  private def checkInit: F[Unit] = {
+  private def checkInit: F[Unit] =
     if (!inited) {
       inited = true
       initHistory.map { h =>
@@ -23,7 +23,6 @@ abstract class AbstractInTerminal[F[_]](using Runner[F]) extends InTerminal[F] {
     } else {
       Runner.pure(())
     }
-  }
 
   def initHistory: F[Seq[String]]
 
@@ -34,7 +33,7 @@ abstract class AbstractInTerminal[F[_]](using Runner[F]) extends InTerminal[F] {
   def saveALine(line: String): F[Unit] = Runner.pure(())
 
   override def readline(info: TerminalInfo): F[ReadLineResult] = {
-    def loop(prompt: fansi.Str): F[ReadLineResult] = {
+    def loop(prompt: fansi.Str): F[ReadLineResult] =
       readALine(prompt).flatMap { line =>
         if (line == null) {
           Runner.pure(EndOfFile)
@@ -60,7 +59,6 @@ abstract class AbstractInTerminal[F[_]](using Runner[F]) extends InTerminal[F] {
           } yield result
         }
       }
-    }
 
     for {
       _ <- checkInit

@@ -79,12 +79,11 @@ case class Context(
     }
     copy(map = newMap, contextItems = newContextItems)
   }
-  def addTypeDefinition(typeDef: TypeDefinition): Context = {
+  def addTypeDefinition(typeDef: TypeDefinition): Context =
     copy(
       typeDefinitionNames = typeDefinitionNames + (typeDef.name -> typeDef.uniqId),
       typeDefinitions = typeDefinitions + (typeDef.uniqId -> typeDef)
     )
-  }
 
   def getTypeDefinition(name: Name): Option[TypeDefinition] = {
     val uniqId = typeDefinitionNames.get(name)
@@ -93,9 +92,8 @@ case class Context(
     return r
   }
 
-  def getTypeDefinitionById(id: UniqidOf[TypeDefinition]): Option[TypeDefinition] = {
+  def getTypeDefinitionById(id: UniqidOf[TypeDefinition]): Option[TypeDefinition] =
     typeDefinitions.get(id)
-  }
 
   def toReduceContext: ReduceContext = ReduceContext() // TODO: Implement proper state handling
 

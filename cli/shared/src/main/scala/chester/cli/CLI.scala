@@ -28,11 +28,10 @@ object CLI {
       path: FilePathImpl,
       spawn: Spawn[F],
       io: IO[F]
-  ): Unit = {
+  ): Unit =
     Spawn.spawn {
       (new CLI[F]).run(config)
     }
-  }
 }
 
 class CLI[F[_]](using
@@ -42,7 +41,7 @@ class CLI[F[_]](using
     path: FilePathImpl,
     io: IO[F]
 ) {
-  def run(configOpt: Option[Config]): F[Unit] = {
+  def run(configOpt: Option[Config]): F[Unit] =
     configOpt match {
       case Some(config) =>
         config match {
@@ -73,17 +72,14 @@ class CLI[F[_]](using
         // Arguments are bad, error message will have been displayed
         this.noop()
     }
-  }
 
-  def noop(): F[Unit] = {
+  def noop(): F[Unit] =
     Runner.pure(())
-  }
 
-  def spawnREPLEngine(): F[Unit] = {
+  def spawnREPLEngine(): F[Unit] =
     Terminal.runTerminal(TerminalInit.Default) {
       REPLEngine[F]
     }
-  }
 
   def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
     _ <- IO.println(s"Expect one file for type checking (more support will be added later) $fileOrDir...")
@@ -95,13 +91,12 @@ class CLI[F[_]](using
           assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
           assert(readBinary[Expr](writeBinary[Expr](parsedBlock)) == parsedBlock)
           Tycker.check(parsedBlock) match {
-            case TyckResult.Success(result, _, _) => {
+            case TyckResult.Success(result, _, _) =>
               if (result.collectMeta.nonEmpty) {
                 ???
               }
               val text = StringPrinter.render(result)(using PrettierOptions.Default)
               IO.println(text)
-            }
             case TyckResult.Failure(errors, warnings, _, _) =>
               given sourceReader: SourceReader = SourceReader.default
               given prettierOptions: PrettierOptions = PrettierOptions.Default
@@ -121,13 +116,12 @@ class CLI[F[_]](using
     _ <- Runner.pure(())
   } yield ()
 
-  def compileFiles(inputs: Seq[String], targetDir: String, tastDirs: Seq[String]): F[Unit] = {
+  def compileFiles(inputs: Seq[String], targetDir: String, tastDirs: Seq[String]): F[Unit] =
     inputs.foldLeft(Runner.pure(())) { (acc, inputFile) =>
       acc.flatMap(_ => this.compileFile(inputFile, targetDir, tastDirs))
     }
-  }
 
-  def loadTASTs(tastDirs: Seq[String]): F[LoadedModules] = {
+  def loadTASTs(tastDirs: Seq[String]): F[LoadedModules] =
     tastDirs.foldLeft(Runner.pure(LoadedModules.Empty)) { (acc, dir) =>
       for {
         modules <- acc
@@ -151,7 +145,6 @@ class CLI[F[_]](using
           }
       } yield newModules
     }
-  }
 
   def compileFile(inputFile: String, targetDir: String, tastDirs: Seq[String]): F[Unit] = {
     // Expected input file extension
@@ -209,7 +202,7 @@ class CLI[F[_]](using
     }
   }
 
-  def decompileFile(inputFile: String): F[Unit] = {
+  def decompileFile(inputFile: String): F[Unit] =
     for {
       inputPath = stringToPath(inputFile)
       fileExists <- IO.exists(inputPath)
@@ -227,7 +220,6 @@ class CLI[F[_]](using
           IO.println(s"Error: File $inputFile does not exist.")
         }
     } yield ()
-  }
 
   private def content(name: String): String =
     s"""{
@@ -247,14 +239,13 @@ class CLI[F[_]](using
        |  "author": "",
        |  "license": ""
        |}""".stripMargin
-  def initializePackageJson(): F[Unit] = {
+  def initializePackageJson(): F[Unit] =
     for {
       currentDir <- IO.workingDir
       packageJsonPath = io.pathOps.join(currentDir, "package.json")
       _ <- IO.writeString(packageJsonPath, content(io.pathOps.baseName(currentDir)))
       _ <- IO.println("Initialized package.json in the current directory.")
     } yield ()
-  }
 
   def installDependencies(): F[Unit] = for {
     _ <- IO.call(Vector("pnpm", "install"))
@@ -268,11 +259,10 @@ class CLI[F[_]](using
     _ <- IO.call(Vector("proto", "install", "chester"))
   } yield ()
 
-  def formatFiles(files: Seq[String]): F[Unit] = {
+  def formatFiles(files: Seq[String]): F[Unit] =
     for {
       _ <- IO.println(s"Formatting files: ${files.mkString(", ")}")
       _ <- IO.println("WIP")
       _ <- Runner.pure(())
     } yield ()
-  }
 }

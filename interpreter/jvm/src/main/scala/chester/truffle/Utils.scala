@@ -9,21 +9,19 @@ import chester.tyck.*
 
 object Utils {
   @throws[Exception]
-  def parse(lang: ChesterLang, request: TruffleLanguage.ParsingRequest): CallTarget = {
+  def parse(lang: ChesterLang, request: TruffleLanguage.ParsingRequest): CallTarget =
     ChesterReader
       .parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString))
       .fold(
         err => ???,
         parsedBlock =>
           Tycker.check(parsedBlock) match {
-            case TyckResult.Success(result, _, _) => {
+            case TyckResult.Success(result, _, _) =>
               val t: Term = result.wellTyped
               val root = new ChesterRootNode(lang, t)
               root.getCallTarget
-            }
             case TyckResult.Failure(errors, _, _, _) => ???
             case _                                   => unreachable()
           }
       )
-  }
 }

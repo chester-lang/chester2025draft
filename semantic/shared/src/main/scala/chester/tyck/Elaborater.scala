@@ -47,13 +47,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       Tyck
   ): Vector[CellId[Term]] = {
     // Get cell IDs for all union component types and ensure they're covered
-    val unionTypeIds = unionTypes
-      .map(typ => {
-        val cellId = toId(typ)
-        ensureCellCoverage(cellId, cause)
-        cellId
-      })
-      .toVector
+    val unionTypeIds = unionTypes.map { typ =>
+      val cellId = toId(typ)
+      ensureCellCoverage(cellId, cause)
+      cellId
+    }.toVector
 
     unionTypeIds
   }
@@ -88,22 +86,19 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
     // For composite terms like function calls, also ensure sub-term coverage
     term match {
-      case fcall: FCallTerm => {
+      case fcall: FCallTerm =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, s"Processing function call: $fcall")
         // Process function and arguments recursively
         processFunctionCall(fcall.f, cause)
         fcall.args.foreach(arg => processFunctionCall(arg, cause))
-      }
-      case Union(types, _) => {
+      case Union(types, _) =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, s"Processing union: $term")
         // Process all union types
         types.foreach(t => processFunctionCall(t, cause))
-      }
-      case Intersection(types, _) => {
+      case Intersection(types, _) =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, s"Processing intersection: $term")
         // Process all intersection types
         types.foreach(t => processFunctionCall(t, cause))
-      }
       case _ => // No further processing needed for simple terms
     }
   }
@@ -125,9 +120,8 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       SemanticCollector,
       Tyck,
       StateAbility[Tyck]
-  ): CellId[Term] = {
+  ): CellId[Term] =
     toId(checkType(expr))
-  }
 
   def elabTy(expr: Option[Expr])(using
       Context,
@@ -178,7 +172,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         if (xs.exists(tryUnify(x, _))) return
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
-        types1.lazyZip(types2).foreach { (t1, t2) => unify(t1, t2, cause) }
+        types1.lazyZip(types2).foreach((t1, t2) => unify(t1, t2, cause))
       case (Type(level1, _), Type(level2, _))        => unify(level1, level2, cause)
       case (LevelFinite(_, _), LevelUnrestricted(_)) => ()
 
@@ -213,7 +207,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         connectUnionToComponents(rhsCell, rhsTypeIds, cause)
 
         // Create direct connections between compatible component types
-        for (t1 <- types1; t2 <- types2) {
+        for (t1 <- types1; t2 <- types2)
           if (tryUnify(t1, t2)) {
             val t1Cell = toId(t1)
             val t2Cell = toId(t2)
@@ -223,7 +217,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
             }
             state.addPropagator(Unify(t1Cell, t2Cell, cause))
           }
-        }
 
       // Specific-to-Union subtyping (function parameter case in test)
       case (specificType, union @ Union(unionTypes, _)) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
@@ -271,22 +264,20 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
 
       // Add cases for function calls after the specific union cases
-      case (fcall: FCallTerm, _) => {
+      case (fcall: FCallTerm, _) =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, s"Processing function call in unify: $fcall")
         // Ensure all cells in the function call have proper coverage
         processFunctionCall(fcall, cause)
 
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-      }
-      case (_, fcall: FCallTerm) => {
+      case (_, fcall: FCallTerm) =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, s"Processing function call in unify (RHS): $fcall")
         // Ensure all cells in the function call have proper coverage
         processFunctionCall(fcall, cause)
 
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
-      }
 
       case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
     }
@@ -305,7 +296,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   ): Unit = {
     // Check if all union components can be used where specificType is expected
     var allCompatible = true
-    for (unionType <- unionTypes) {
+    for (unionType <- unionTypes)
       if (tryUnify(unionType, specificType)) {
         // Add a propagator for each compatible union component
         val unionTypeCell = toId(unionType)
@@ -323,7 +314,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         ck.reporter.apply(TypeMismatch(unionType, specificType, cause))
         // No need to break, we want to report all errors
       }
-    }
 
     // If any union component doesn't match, the overall unification fails
     if (!allCompatible) {
@@ -388,7 +378,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
   ): Term = toTerm {
     val ty = toId(readMetaVar(toTerm(ty0)))
     resolve(expr) match {
-      case expr @ Identifier(name, meta) => {
+      case expr @ Identifier(name, meta) =>
         if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Processing identifier $name")
 
         // Get the expected type (if already specified)
@@ -397,13 +387,13 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
         // Special handling for assigning a variable to a union type
         expectedType match {
-          case Some(Union(unionTypes, _)) => {
+          case Some(Union(unionTypes, _)) =>
             if (Debug.isEnabled(Identifiers))
               Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
 
             // Look up the identifier in context
             localCtx.get(name) match {
-              case Some(c: ContextItem) => {
+              case Some(c: ContextItem) =>
                 if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Found identifier $name in context")
 
                 // Get the source type of the identifier
@@ -412,7 +402,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                   Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Source type: ${sourceTypeOpt.getOrElse("unknown")}")
 
                 sourceTypeOpt match {
-                  case Some(sourceType) => {
+                  case Some(sourceType) =>
                     // If the source is an Integer type and the union contains Integer, establish the connection
                     given ReduceContext = localCtx.toReduceContext
                     given Reducer = localCtx.given_Reducer
@@ -445,17 +435,14 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       state.addPropagator(Unify(ty, c.tyId, expr))
                       c.ref
                     }
-                  }
-                  case None => {
+                  case None =>
                     if (Debug.isEnabled(Identifiers))
                       Debug.debugPrint(Identifiers, "[IDENTIFIER DEBUG] No source type yet, using regular unification")
                     // No source type yet, fall back to normal handling
                     state.addPropagator(Unify(ty, c.tyId, expr))
                     c.ref
-                  }
                 }
-              }
-              case None => {
+              case None =>
                 if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Identifier $name not found in context")
                 // Regular handling for unbound identifiers
                 localCtx.getTypeDefinition(name) match {
@@ -477,19 +464,16 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                     ck.reporter.apply(problem)
                     ErrorTerm(problem, convertMeta(expr.meta))
                 }
-              }
             }
-          }
-          case _ => {
+          case _ =>
             if (Debug.isEnabled(Identifiers))
               Debug.debugPrint(Identifiers, "[IDENTIFIER DEBUG] Expected type is not a union, using regular unification")
             // Regular identifier handling (no union type involved)
             localCtx.get(name) match {
-              case Some(c: ContextItem) => {
+              case Some(c: ContextItem) =>
                 state.addPropagator(Unify(ty, c.tyId, expr))
                 c.ref
-              }
-              case None => {
+              case None =>
                 // Check if 'name' refers to an object definition
                 localCtx.getTypeDefinition(name) match {
                   case Some(objectDef: ObjectStmtTerm) =>
@@ -510,12 +494,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                     ck.reporter.apply(problem)
                     ErrorTerm(problem, convertMeta(expr.meta))
                 }
-              }
             }
-          }
         }
-      }
-      case expr @ IntegerLiteral(value, meta) => {
+      case expr @ IntegerLiteral(value, meta) =>
         // Get the expected type (if already specified)
         val expectedType = state.readStable(ty)
 
@@ -524,7 +505,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
         expectedType match {
           // If the expected type is a union type, we need special handling
-          case Some(Union(unionTypes, _)) => {
+          case Some(Union(unionTypes, _)) =>
             if (Debug.isEnabled(Literals)) Debug.debugPrint(Literals, s"[LITERAL DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
 
             // Check if any union component is compatible with Integer
@@ -560,33 +541,26 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               state.addPropagator(LiteralType(expr, ty))
               AbstractIntTerm_.from(value, convertMeta(meta))
             }
-          }
 
           // Normal case - not a union type or no expected type yet
-          case _ => {
+          case _ =>
             state.addPropagator(LiteralType(expr, ty))
             AbstractIntTerm_.from(value, convertMeta(meta))
-          }
         }
-      }
-      case expr @ RationalLiteral(value, meta) => {
+      case expr @ RationalLiteral(value, meta) =>
         state.addPropagator(LiteralType(expr, ty))
         RationalTerm(value, convertMeta(meta))
-      }
-      case expr @ StringLiteral(value, meta) => {
+      case expr @ StringLiteral(value, meta) =>
         // Normal string handling
         state.addPropagator(LiteralType(expr, ty))
         StringTerm(value, convertMeta(meta))
-      }
-      case expr @ SymbolLiteral(value, meta) => {
+      case expr @ SymbolLiteral(value, meta) =>
         state.addPropagator(LiteralType(expr, ty))
         SymbolTerm(value, convertMeta(meta))
-      }
-      case expr @ UnitExpr(meta) => {
+      case expr @ UnitExpr(meta) =>
         unify(ty, UnitType(convertMeta(meta)), expr)
         UnitTerm_(convertMeta(meta))
-      }
-      case expr @ ListExpr(terms, meta) => {
+      case expr @ ListExpr(terms, meta) =>
         val t = newType
         // Relate the list type 'ty' to 'ListType(t)'
         state.addPropagator(ListOf(t, ty, expr))
@@ -605,7 +579,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         if (elemTypes.nonEmpty) state.addPropagator(UnionOf(t, elemTypes, expr))
 
         ListTerm(termResults.map(_._1), convertMeta(meta))
-      }
       case expr @ TypeAnotationNoEffects(innerExpr, tyExpr, _) =>
         // Check the type annotation expression to get its type
         val declaredTyTerm = checkType(tyExpr)
@@ -694,7 +667,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 override val writingCells = Set.empty
                 override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(toId(argTy).asInstanceOf[CIdOf[Cell[?]]])
 
-                override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+                override def run(using state: StateAbility[Tyck], more: Tyck): Boolean =
                   // Read the argument type
                   state.readStable(toId(argTy)) match {
                     case Some(Meta(id)) =>
@@ -728,11 +701,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       // Not ready yet
                       false
                   }
-                }
 
-                override def naiveZonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult = {
+                override def naiveZonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult =
                   ZonkResult.Done
-                }
               })
           }
 
@@ -830,11 +801,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         // Now delegate to our existing implementation for DotCall
         elab(dotCall, ty, effects)
 
-      case expr: Expr => {
+      case expr: Expr =>
         val problem = NotImplemented(expr)
         ck.reporter.apply(problem)
         ErrorTerm(problem, convertMeta(expr.meta))
-      }
     }
   }
 
@@ -901,23 +871,19 @@ trait DefaultImpl
     implicit val get: Tyck = new Get(reporter, new MutBox(()))
     implicit val able: StateAbility[Tyck] = stateAbilityImpl
     val ty1: CellId[Term] = ty match {
-      case Some(ty) => {
+      case Some(ty) =>
         val cell = literal[Term](ty)
         cell
-      }
-      case None => {
+      case None =>
         val cell = newType
         cell
-      }
     }
     val effects1: CIdOf[EffectsCell] = effects match {
-      case Some(effects) => {
+      case Some(effects) =>
         val cell = toEffectsCell(effects)
         cell
-      }
-      case None => {
+      case None =>
         newEffects
-      }
     }
     implicit val ctx: Context = Context.default
     val wellTyped = elabId(expr, ty1, effects1)
@@ -960,9 +926,9 @@ trait DefaultImpl
             }
           }
 
-          try {
+          try
             able.naiveZonk(metas.map(x => x.unsafeRead[CellId[Term]]))
-          } catch {
+          catch {
             case e: IllegalStateException if e.getMessage.contains("not covered by any propagator") =>
               if (Debug.isEnabled(UnionSubtyping)) {
                 Debug.debugPrint(UnionSubtyping, "\n=== ERROR: CELLS NOT COVERED BY PROPAGATOR ===")

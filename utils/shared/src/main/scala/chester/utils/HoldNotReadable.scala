@@ -6,9 +6,7 @@ import upickle.default.*
 given HoldNotReadableRW: ReadWriter[HoldNotReadable[?]] =
   readwriter[NotReadableRW].bimap(
     _ => NotReadableRW(),
-    _ => {
-      throw new UnsupportedOperationException("Cannot read HoldNotReadable")
-    }
+    _ => throw new UnsupportedOperationException("Cannot read HoldNotReadable")
   )
 
 case class HoldNotReadable[T](inner: T) extends AnyVal
@@ -22,7 +20,5 @@ case class HoldOptionNoRead[T](inner: Option[T]) extends AnyVal {
 given HoldOptionNoReadRW[T]: ReadWriter[HoldOptionNoRead[T]] =
   readwriter[NotReadableRW].bimap(
     _ => NotReadableRW(),
-    _ => {
-      HoldOptionNoRead(None)
-    }
+    _ => HoldOptionNoRead(None)
   )

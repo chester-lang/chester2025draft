@@ -17,12 +17,11 @@ object Colorful {
 }
 
 object ColorfulToHtml {
-  def colorfulToHtml(colorful: Colorful): String = {
+  def colorfulToHtml(colorful: Colorful): String =
     colorful.pieces.map { piece =>
       val style = styleToCss(piece.style)
       s"<span style='$style'>${escapeHtml(piece.text)}</span>"
     }.mkString
-  }
 
   def styleToCss(style: Style): String = {
     val fgColor = style.foreground
@@ -83,12 +82,11 @@ object ColorfulToHtml {
     boldStyle
   }
 
-  def escapeHtml(text: String): String = {
+  def escapeHtml(text: String): String =
     text
       .replace("&", "&amp;")
       .replace("<", "&lt;")
       .replace(">", "&gt;")
       .replace("\"", "&quot;")
       .replace("'", "&#39;")
-  }
 }

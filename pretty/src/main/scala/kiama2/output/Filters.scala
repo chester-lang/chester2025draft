@@ -51,7 +51,7 @@ trait Filters {
       n: Int,
       s: String,
       mkrepl: (Int, String) => String = indentedEllipsis
-  ): String = {
+  ): String =
     s.linesWithSeparators
       .foldLeft((Vector[String](), true)) { case ((result, first), l) =>
         if (indentOf(l) >= n)
@@ -64,7 +64,6 @@ trait Filters {
       }
       ._1
       .mkString
-  }
 
 }
 

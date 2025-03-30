@@ -17,7 +17,7 @@ import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 @JSExportTopLevel("startRepl")
-def startRepl(terminal: Terminal): js.Promise[Unit] = {
+def startRepl(terminal: Terminal): js.Promise[Unit] =
   XtermTerminal(terminal)
     .runTerminal(
       TerminalInit.Default, {
@@ -26,10 +26,9 @@ def startRepl(terminal: Terminal): js.Promise[Unit] = {
       }
     )
     .toJSPromise
-}
 
 @JSExportTopLevel("startReplPty")
-def startReplPty(pty: Slave): js.Promise[Unit] = {
+def startReplPty(pty: Slave): js.Promise[Unit] =
   XtermPty(pty)
     .runTerminal(
       TerminalInit.Default, {
@@ -38,10 +37,9 @@ def startReplPty(pty: Slave): js.Promise[Unit] = {
       }
     )
     .toJSPromise
-}
 
 @JSExportTopLevel("startReplReadline")
-def startReplReadline(rl: Readline): js.Promise[Unit] = {
+def startReplReadline(rl: Readline): js.Promise[Unit] =
   XtermReadline(rl)
     .runTerminal(
       TerminalInit.Default, {
@@ -50,16 +48,13 @@ def startReplReadline(rl: Readline): js.Promise[Unit] = {
       }
     )
     .toJSPromise
-}
 
 inline private def runFileFuture(
     content: String,
     lightMode: Boolean
-): Future[String] = {
+): Future[String] =
   Future.successful(runFileTopLevel(content, lightMode))
-}
 
 @JSExportTopLevel("runFile")
-def runFile(content: String, lightMode: Boolean): js.Promise[String] = {
+def runFile(content: String, lightMode: Boolean): js.Promise[String] =
   runFileFuture(content, lightMode).toJSPromise
-}

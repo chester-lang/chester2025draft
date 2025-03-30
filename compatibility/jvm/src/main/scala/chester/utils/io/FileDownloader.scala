@@ -20,16 +20,14 @@ object FileDownloader {
 
         // Move the temporary file to the target location
         val _ = Files.move(tempFile, targetPath, StandardCopyOption.REPLACE_EXISTING)
-      } finally {
-        inputStream.close()
-      }
+      } finally inputStream.close()
 
     } catch {
       case e: IOException =>
         // Clean up in case of failure
-        try {
+        try
           Files.deleteIfExists(tempFile)
-        } catch {
+        catch {
           case _: IOException =>
         }
         throw e // Rethrow the exception to indicate failure

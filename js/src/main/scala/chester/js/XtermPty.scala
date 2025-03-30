@@ -20,11 +20,11 @@ final class InXtermPty(pty: Slave) extends InTerminalNoHistory[Future] {
     pty.write(prompt.render)
     val onReadable =
       pty.onReadable.asInstanceOf[js.Function1[js.Function0[Unit], Unit]]
-    onReadable(() => {
+    onReadable(() =>
       promise.success(
         new String(pty.read().map(_.toByte).toArray, StandardCharsets.UTF_8)
       )
-    })
+    )
     promise.future
   }
 }
@@ -33,7 +33,6 @@ case class XtermPty(pty: Slave) extends Terminal[Future] {
   def runTerminal[T](
       init: TerminalInit,
       block: InTerminal[Future] ?=> Future[T]
-  ): Future[T] = {
+  ): Future[T] =
     block(using InXtermPty(pty))
-  }
 }

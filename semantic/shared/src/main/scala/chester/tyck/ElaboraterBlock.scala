@@ -211,12 +211,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     (declarations, names, initialCtx)
   }
 
-  def checkForDuplicateNames(names: Seq[Name], expr: Expr)(using ck: Tyck): Unit = {
+  def checkForDuplicateNames(names: Seq[Name], expr: Expr)(using ck: Tyck): Unit =
     if (names.hasDuplication) {
       val problem = DuplicateDefinition(expr)
       ck.reporter.apply(problem)
     }
-  }
 
   def processDefLetDefStmt(
       expr: LetDefStmt,
@@ -412,7 +411,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     val name = interfaceInfo.name
 
     // TODO: Elaborate the extends clause properly
-    val elaboratedExtendsClause = expr.extendsClause.map { checkType }
+    val elaboratedExtendsClause = expr.extendsClause.map(checkType)
 
     // Elaborate the optional body (if any)
     val elaboratedBody = expr.body.map { body =>

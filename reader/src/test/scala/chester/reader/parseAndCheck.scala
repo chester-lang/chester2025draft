@@ -95,9 +95,7 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
       )
 
     assertEquals(result, expected, s"Failed for input: $input")
-  } finally {
-    LexerV2.DEBUG = oldDebug
-  }
+  } finally LexerV2.DEBUG = oldDebug
 }
 
 // Runs against both V1 and V2 parsers
@@ -156,9 +154,7 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
       )
 
     assertEquals(result, expected, s"Failed for input: $input")
-  } finally {
-    LexerV2.DEBUG = oldDebug
-  }
+  } finally LexerV2.DEBUG = oldDebug
 }
 
 @deprecated("Use getParsedBoth instead")

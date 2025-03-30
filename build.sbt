@@ -472,9 +472,8 @@ ThisBuild / assemblyMergeStrategy := {
 val supportNativeBuildForTermux = System.getProperty("java.vm.vendor") == "Termux"
 
 ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.getProperty("os.arch").toLowerCase) match {
-  case (mac, _) if mac.contains("mac") => { // mac has some bugs with optimizations
+  case (mac, _) if mac.contains("mac") => // mac has some bugs with optimizations
     _.withGC(GC.commix)
-  }
   /*
   [error] /usr/bin/ld: /tmp/lto-llvm-7d968c.o: relocation R_AARCH64_ADR_PREL_PG_HI21 against symbol `__stack_chk_guard@@GLIBC_2.17' which may bind externally can not be used when making a shared object; recompile with -fPIC
   [error] /usr/bin/ld: /tmp/lto-llvm-7d968c.o(.text.MutatorThreads_init+0x8): unresolvable R_AARCH64_ADR_PREL_PG_HI21 relocation against symbol `__stack_chk_guard@@GLIBC_2.17'
@@ -482,15 +481,13 @@ ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.
   [info] Total (36687 ms)
    */
   // Archlinux aarch64 Virtual Machine on Apple Silicon: LTO is broken too
-  case (linux, "aarch64") if linux.contains("linux") => {
+  case (linux, "aarch64") if linux.contains("linux") =>
     _.withMode(Mode.releaseFast)
       .withGC(GC.commix)
-  }
-  case _ => {
+  case _ =>
     _.withLTO(LTO.thin)
       .withMode(Mode.releaseFast)
       .withGC(GC.commix)
-  }
 })
 
 ThisBuild / nativeConfig ~= (if (supportNativeBuildForTermux) {

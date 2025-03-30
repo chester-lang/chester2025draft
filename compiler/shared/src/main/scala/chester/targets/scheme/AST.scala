@@ -79,9 +79,8 @@ def DefineExpression(
     name: Identifier,
     value: Expression,
     meta: Option[Meta] = None
-): ListExpression = {
+): ListExpression =
   ListExpression(Vector(Identifier("define"), name, value), meta)
-}
 
 // LambdaExpression function
 def LambdaExpression(
@@ -109,17 +108,15 @@ def SetExpression(
     name: Identifier,
     value: Expression,
     meta: Option[Meta] = None
-): ListExpression = {
+): ListExpression =
   ListExpression(Vector(Identifier("set!"), name, value), meta)
-}
 
 // BeginExpression function
 def BeginExpression(
     expressions: Vector[Expression],
     meta: Option[Meta] = None
-): ListExpression = {
+): ListExpression =
   ListExpression(Identifier("begin") +: expressions, meta)
-}
 
 // LetExpression function
 def LetExpression(
@@ -214,7 +211,6 @@ case class Program(
     expressions: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ASTNode {
-  def toDoc(using PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc =
     meta.link(Doc.concat(expressions.map(_.toDoc <> Doc.line)))
-  }
 }

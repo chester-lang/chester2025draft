@@ -26,35 +26,30 @@ final class InXterm(terminal: mod.Terminal, init: TerminalInit) extends InTermin
 
   private var reading: Promise[String] = null
 
-  def handleLine(data: String): Unit = {
+  def handleLine(data: String): Unit =
     if (reading != null) {
       val r = reading
       reading = null
       r.success(data)
     }
-  }
 
   var command = ""
 
   def handler(data: String, unit: Unit): Unit = data match {
-    case "\r" => {
+    case "\r" =>
       handleLine(command)
       terminal.writeln("")
       command = ""
-    }
-    case "\u007F" => {
+    case "\u007F" =>
       if (command.nonEmpty) {
         terminal.write("\b \b")
         command = command.slice(0, command.length - 1)
       }
-    }
-    case "\n" => {
+    case "\n" =>
       // ignore
-    }
-    case _ => {
+    case _ =>
       terminal.write(data)
       command += data
-    }
   }
 
   private inline def readOneLine: Future[String] = {
@@ -81,8 +76,7 @@ case class XtermTerminal(terminal: mod.Terminal) extends Terminal[Future] {
   def runTerminal[T](
       init: TerminalInit,
       block: InTerminal[Future] ?=> Future[T]
-  ): Future[T] = {
+  ): Future[T] =
     block(using new InXterm(terminal, init))
-  }
 
 }

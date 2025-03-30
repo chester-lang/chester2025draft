@@ -90,9 +90,8 @@ trait ProvideCellId {
   case class MutableCell[T](value: Option[T]) extends Cell[T] {
     override def readStable: Option[T] = value
 
-    override def fill(newValue: T): MutableCell[T] = {
+    override def fill(newValue: T): MutableCell[T] =
       copy(value = Some(newValue))
-    }
   }
 
   case class CollectionCell[T](value: Vector[T] = Vector.empty) extends SeqCell[T] {
@@ -165,19 +164,16 @@ trait ProvideCellId {
         Ability
     ): Unit
 
-    def fill[T <: Cell[U], U](id: CIdOf[T], f: U)(using Ability): Unit = {
+    def fill[T <: Cell[U], U](id: CIdOf[T], f: U)(using Ability): Unit =
       update[T](id, _.fill(f).asInstanceOf[T])
-    }
 
-    def add[T <: SeqCell[U], U](id: CIdOf[T], f: U)(using Ability): Unit = {
+    def add[T <: SeqCell[U], U](id: CIdOf[T], f: U)(using Ability): Unit =
       update[T](id, _.add(f).asInstanceOf[T])
-    }
 
     def add[T <: MapCell[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
         Ability
-    ): Unit = {
+    ): Unit =
       update[T](id, _.add(key, value).asInstanceOf[T])
-    }
 
     def addCell[T <: Cell[?]](cell: T): CIdOf[T]
 
@@ -208,11 +204,9 @@ trait ProvideCellId {
 
     def stable: Boolean
 
-    def tickAll(using more: Ability): Unit = {
-      while (!stable) {
+    def tickAll(using more: Ability): Unit =
+      while (!stable)
         tick(using more)
-      }
-    }
 
     @deprecated("impure")
     def readingZonkings(
@@ -224,11 +218,10 @@ trait ProvideCellId {
 
     def toId[T](x: CellIdOr[T]): CIdOf[Cell[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[Cell[T]]]
-      case x => {
+      case x =>
         val t = x.asInstanceOf[T]
         val cell = addCell(LiteralCell[T](t))
         cell.asInstanceOf[CIdOf[Cell[T]]]
-      }
     }
   }
 

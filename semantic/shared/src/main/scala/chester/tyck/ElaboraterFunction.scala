@@ -142,19 +142,17 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
     val calls = scala.collection.mutable.Set[String]()
 
     term.inspectRecursive {
-      {
-        case FCallTerm(function, _, _) =>
-          function match {
-            // TODO: calls += name
-            case _ =>
-              // Continue traversing the function term
-              function.inspectRecursive {
-                // TODO: calls += name
-                _ =>
-              }
-          }
-        case _ =>
-      }
+      case FCallTerm(function, _, _) =>
+        function match {
+          // TODO: calls += name
+          case _ =>
+            // Continue traversing the function term
+            function.inspectRecursive {
+              // TODO: calls += name
+              _ =>
+            }
+        }
+      case _ =>
     }
 
     calls.toSet

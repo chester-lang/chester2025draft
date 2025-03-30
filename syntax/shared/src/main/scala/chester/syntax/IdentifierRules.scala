@@ -11,9 +11,8 @@ object IdentifierRules {
   val AllowedMiddleWordingSymbols: Set[Int] = "-".toSet.map(_.toInt)
   val ReservedSymbols = ";,#()[]{}'\""
 
-  def isEmoji(codePoint: Int): Boolean = {
+  def isEmoji(codePoint: Int): Boolean =
     codePointIsEmoji(codePoint)
-  }
 
   def isWording(x: Character): Boolean = isLetter(x) || isEmoji(x)
 

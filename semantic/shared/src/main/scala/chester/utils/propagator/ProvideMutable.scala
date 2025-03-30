@@ -70,12 +70,10 @@ trait ProvideMutable extends ProvideImpl {
     )(using more: Ability): PIdOf[T] = {
       didSomething = true
       val id = new HoldPropagator[T](uniqId, propagator)
-      for (cell <- propagator.zonkingCells) {
+      for (cell <- propagator.zonkingCells)
         cell.zonkingPropagators = cell.zonkingPropagators :+ id.asInstanceOf[PIdOf[Propagator[?]]]
-      }
-      for (cell <- propagator.readingCells) {
+      for (cell <- propagator.readingCells)
         cell.readingPropagators = cell.readingPropagators :+ id.asInstanceOf[PIdOf[Propagator[?]]]
-      }
       if (propagator.run(using this, more)) {
         id.alive = false
       }
@@ -84,7 +82,7 @@ trait ProvideMutable extends ProvideImpl {
 
     override def stable: Boolean = didChanged.isEmpty
 
-    override def tick(using more: Ability): Unit = {
+    override def tick(using more: Ability): Unit =
       while (didChanged.nonEmpty) {
         val id = didChanged.removeHead()
         if (id.didChange) {
@@ -100,16 +98,14 @@ trait ProvideMutable extends ProvideImpl {
           }
         }
       }
-    }
 
     @deprecated("impure")
     override def readingZonkings(
         cells: Vector[CIdOf[Cell[?]]]
-    ): Vector[Propagator[Ability]] = {
+    ): Vector[Propagator[Ability]] =
       cells
         .flatMap(_.zonkingPropagators)
         .map(_.store.asInstanceOf[Propagator[Ability]])
-    }
 
     @deprecated("impure")
     override def requireRemovePropagatorZonking(
@@ -120,12 +116,11 @@ trait ProvideMutable extends ProvideImpl {
       for (
         p <- cell1.zonkingPropagators
           .filter(x => x.store.identify == Some(identify))
-      ) {
+      )
         if (p.alive) {
           didSomething = true
           p.alive = false
         }
-      }
     }
 
     var didSomething = false
@@ -213,12 +208,11 @@ trait ProvideMutable extends ProvideImpl {
           }
         }
         if (tryFallback > 1 && !didSomething) {
-          for (c <- cellsNeeded) {
+          for (c <- cellsNeeded)
             if (c.noAnyValue && c.store.default.isDefined) {
               fill(c.asInstanceOf[CellId[Any]], c.store.default.get)
               didSomething = true
             }
-          }
         }
         if (!didSomething) {
           if (tryFallback > 1) {

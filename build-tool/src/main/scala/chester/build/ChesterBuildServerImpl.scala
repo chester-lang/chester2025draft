@@ -65,10 +65,9 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
     CompletableFuture.completedFuture(result)
   }
 
-  override def onBuildInitialized(): Unit = {
+  override def onBuildInitialized(): Unit =
     logger.info("Build server has been initialized")
     // Additional initialization logic
-  }
 
   override def buildShutdown(): CompletableFuture[Object] = {
     logger.info("Received buildShutdown request")
@@ -81,8 +80,8 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
     System.exit(0)
   }
 
-  override def workspaceBuildTargets(): CompletableFuture[WorkspaceBuildTargetsResult] = {
-    CompletableFuture.supplyAsync(() => {
+  override def workspaceBuildTargets(): CompletableFuture[WorkspaceBuildTargetsResult] =
+    CompletableFuture.supplyAsync { () =>
       val targets = new java.util.ArrayList[BuildTarget]()
 
       val btCapabilities = new BuildTargetCapabilities()
@@ -111,8 +110,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       targets.add(testTarget)
 
       new WorkspaceBuildTargetsResult(targets)
-    })
-  }
+    }
 
   override def buildTargetSources(
       params: SourcesParams
@@ -160,8 +158,8 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
 
   override def buildTargetCompile(
       params: CompileParams
-  ): CompletableFuture[CompileResult] = {
-    CompletableFuture.supplyAsync(() => {
+  ): CompletableFuture[CompileResult] =
+    CompletableFuture.supplyAsync { () =>
       logger.info(s"Received buildTargetCompile request with params: $params")
       try {
         // Call the type checking and object generation methods
@@ -177,8 +175,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
           val result = new CompileResult(StatusCode.ERROR)
           result
       }
-    })
-  }
+    }
 
   override def buildTargetTest(
       params: TestParams
@@ -256,8 +253,8 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
 
   override def buildTargetChesterOptions(
       params: ChesterOptionsParams
-  ): CompletableFuture[ChesterOptionsResult] = {
-    CompletableFuture.supplyAsync(() => {
+  ): CompletableFuture[ChesterOptionsResult] =
+    CompletableFuture.supplyAsync { () =>
       logger.info(
         s"Received buildTargetChesterOptions request with params: $params"
       )
@@ -277,8 +274,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       }.asJava
 
       new ChesterOptionsResult(items)
-    })
-  }
+    }
 
   def typeCheckSources(): Unit = {
     val sourceDirs = Seq(

@@ -32,13 +32,12 @@ object TASTPackage {
       effects.collectU(collector)
     }
 
-    override def replaceU(reranger: UReplacer): TAST = {
+    override def replaceU(reranger: UReplacer): TAST =
       copy(
         ast = ast.replaceU(reranger).asInstanceOf[BlockTerm],
         ty = ty.replaceU(reranger),
         effects = effects.replaceU(reranger).asInstanceOf[Effects]
       )
-    }
 
     def writeBinary: Array[Byte] = upickle.writeBinary[TAST](this)
 
@@ -50,7 +49,7 @@ object TASTPackage {
   }
 
   case class LoadedModules(map: HashMap[ModuleRef, Vector[TAST]] = HashMap()) extends AnyVal {
-    def add(tast: TAST): LoadedModules = {
+    def add(tast: TAST): LoadedModules =
       if (
         map.contains(tast.module) && map
           .apply(tast.module)
@@ -63,7 +62,6 @@ object TASTPackage {
         val newTASTs = map.getOrElse(tast.module, Vector()) :+ tast
         LoadedModules(map.updated(tast.module, newTASTs))
       }
-    }
   }
 
   object LoadedModules {

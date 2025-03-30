@@ -47,11 +47,10 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
   }
 
   // TODO: optimize
-  final def substitute[A <: TermWithUniqid](mapping: Seq[(A, Term)]): Term = {
+  final def substitute[A <: TermWithUniqid](mapping: Seq[(A, Term)]): Term =
     mapping.foldLeft(this) { case (acc, (from, to)) =>
       acc.substitute(from, to)
     }
-  }
 
   final def substitute(from: TermWithUniqid, to: Term): Term = {
     if (from == to) return this
@@ -73,7 +72,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
       case _              =>
     }
     var result = Vector.empty[MetaTerm]
-    inspect { x => result ++= x.collectMeta }
+    inspect(x => result ++= x.collectMeta)
     result
   }
 
@@ -654,9 +653,8 @@ case class LetStmtTerm(
     @const meta: OptionTermMeta
 ) extends StmtTerm derives ReadWriter {
   override type ThisTree = LetStmtTerm
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using PrettierOptions): Doc =
     Doc.text("let ") <> localv.toDoc <> Doc.text(": ") <> ty.toDoc <> Doc.text(" = ") <> value.toDoc
-  }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(
@@ -673,9 +671,8 @@ case class DefStmtTerm(
     @const meta: OptionTermMeta
 ) extends StmtTerm derives ReadWriter {
   override type ThisTree = DefStmtTerm
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using PrettierOptions): Doc =
     Doc.text("def ") <> localv.toDoc <> Doc.text(": ") <> ty.toDoc <> Doc.text(" = ") <> value.toDoc
-  }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(
       localv = g(localv),
@@ -707,18 +704,16 @@ case class NonlocalOrLocalReturn(@child var value: Term, @const meta: OptionTerm
 }
 case class TupleType(@const types: Vector[Term], @const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
   override type ThisTree = TupleType
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist("Tuple" <> Docs.`[`, Docs.`]`, ",")(types)
-  }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(types = types.map(f))
   )
 }
 case class TupleTerm(@const values: Vector[Term], @const meta: OptionTermMeta) extends WHNF derives ReadWriter {
   override type ThisTree = TupleTerm
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`(`, Docs.`)`, ",")(values)
-  }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(values = values.map(f))
   )
@@ -729,11 +724,10 @@ case class BlockTerm(
     @const meta: OptionTermMeta
 ) extends Uneval derives ReadWriter {
   override type ThisTree = BlockTerm
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ";")(
       (statements.map(_.toDoc) :+ result.toDoc)
     )
-  }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(
       statements = statements.map(g),

@@ -62,9 +62,8 @@ object ExampleLang {
     ctx.initialize("example")
     ctx.enter()
     val res =
-      try {
-        f(ExampleLang.INSTANCE)
-      } finally {
+      try f(ExampleLang.INSTANCE)
+      finally {
         ctx.leave()
         ctx.close()
       }
@@ -170,12 +169,11 @@ class DummyLoop extends Node with RepeatingNode {
 }
 
 object Test {
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
     ExampleLang { lang =>
       Truffle.getRuntime
       val rootNode = new TestRootNode(lang)
       val target = rootNode.getCallTarget()
       println(target.call())
     }
-  }
 }

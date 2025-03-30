@@ -52,9 +52,8 @@ object MetaTerm_ {
 
 object FunctionType_ {
   @deprecated("meta")
-  def apply(telescope: TelescopeTerm, resultTy: Term): FunctionType = {
+  def apply(telescope: TelescopeTerm, resultTy: Term): FunctionType =
     new FunctionType(Vector(telescope), resultTy, meta = None)
-  }
 }
 
 def TyToty: FunctionType = {

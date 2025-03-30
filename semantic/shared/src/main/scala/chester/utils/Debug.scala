@@ -39,49 +39,41 @@ object Debug {
   // Initialize from environment variables
   {
     // Enable categories from specific env vars
-    for ((envVar, category) <- envDebugMap) {
+    for ((envVar, category) <- envDebugMap)
       if (sys.env.get(envVar).isDefined || ENV_DEBUG_ENABLED) {
         enabledCategories += category
       }
-    }
   }
 
   // Enable/disable debug for specific categories
-  def enable(category: DebugCategory): Unit = {
+  def enable(category: DebugCategory): Unit =
     enabledCategories += category
-  }
 
-  def disable(category: DebugCategory): Unit = {
+  def disable(category: DebugCategory): Unit =
     enabledCategories -= category
-  }
 
-  def isEnabled(category: DebugCategory): Boolean = {
+  def isEnabled(category: DebugCategory): Boolean =
     enabledCategories.contains(category)
-  }
 
   // Enable/disable multiple categories at once
-  def enableAll(categories: DebugCategory*): Unit = {
+  def enableAll(categories: DebugCategory*): Unit =
     enabledCategories ++= categories
-  }
 
-  def disableAll(categories: DebugCategory*): Unit = {
+  def disableAll(categories: DebugCategory*): Unit =
     enabledCategories --= categories
-  }
 
   // Reset all debug flags
-  def disableAllCategories(): Unit = {
+  def disableAllCategories(): Unit =
     enabledCategories = Set.empty
-  }
 
   // Debug print method that respects debug flags
-  def debugPrint(category: DebugCategory, message: => String): Unit = {
+  def debugPrint(category: DebugCategory, message: => String): Unit =
     if (isEnabled(category)) {
       println(s"[DEBUG:${category}] $message")
     }
-  }
 
   // Print a call stack trace for debugging
-  def printCallStack(category: DebugCategory, depth: Int = 15): Unit = {
+  def printCallStack(category: DebugCategory, depth: Int = 15): Unit =
     if (isEnabled(category)) {
       println(s"[DEBUG:${category}] Call stack:")
       Thread
@@ -93,5 +85,4 @@ object Debug {
           println(s"[DEBUG:${category}]   at ${element.getClassName}.${element.getMethodName}(${element.getFileName}:${element.getLineNumber})")
         )
     }
-  }
 }

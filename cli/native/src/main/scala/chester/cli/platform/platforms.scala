@@ -1,5 +1,4 @@
 package chester.cli.platform
 
-def testFunctionalities(): Unit = {
+def testFunctionalities(): Unit =
   ()
-}

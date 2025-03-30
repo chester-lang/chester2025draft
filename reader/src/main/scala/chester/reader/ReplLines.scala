@@ -4,9 +4,8 @@ class ReplLines {
   private var history: Vector[String] = Vector()
   private var pendingLines: Vector[String] = Vector()
 
-  def addLine(line: String): Unit = {
+  def addLine(line: String): Unit =
     pendingLines = pendingLines :+ line
-  }
 
   def getPendingLines: Vector[String] = pendingLines
 

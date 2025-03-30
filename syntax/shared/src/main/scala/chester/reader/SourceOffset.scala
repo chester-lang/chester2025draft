@@ -43,10 +43,9 @@ object FilePath {
 
 case class FilePath private (fileName: String) extends ParserSource {
   private[chester] var impl: FilePathImpl = null
-  override lazy val readContent: Either[ParseError, String] = {
+  override lazy val readContent: Either[ParseError, String] =
     if (impl == null) Left(ParseError("No FilePathImpl provided", Pos.zero))
     else impl.readContent(fileName)
-  }
 }
 
 // TODO: maybe column offset for the first line also

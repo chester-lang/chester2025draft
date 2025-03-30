@@ -44,7 +44,7 @@ def precedenceOf(
     opInfo: OpInfo,
     groupPrecedence: Map[QualifiedIDString, Int],
     reporter: Reporter[TyckError]
-): Int = {
+): Int =
   opInfo match {
     case op: OpWithGroup =>
       val groupName = op.group.name
@@ -59,15 +59,13 @@ def precedenceOf(
       // Assign default precedence for operators without a group
       groupPrecedence.getOrElse(DefaultPrecedenceGroup.name, Int.MaxValue)
   }
-}
 
 // Determines the associativity of an operator
-def associativityOf(opInfo: OpInfo): Associativity = {
+def associativityOf(opInfo: OpInfo): Associativity =
   opInfo match {
     case op: OpWithGroup => op.group.associativity
     case _               => Associativity.None
   }
-}
 
 // Determines the operator type (Infix, Prefix, Postfix, Operand) based on context
 def determineOpType(
@@ -102,7 +100,7 @@ def parseTokens(
     opContext: OperatorsContext,
     groupPrecedence: Map[QualifiedIDString, Int],
     reporter: Reporter[TyckError]
-): Vector[TokenInfo] = {
+): Vector[TokenInfo] =
   seq.map {
     case id @ Identifier(name, _) =>
       val possibleOps = Seq(
@@ -133,14 +131,13 @@ def parseTokens(
       // Non-identifier expressions are treated as operands
       TokenInfo(expr, Int.MaxValue, Associativity.None, Set(OpType.Operand))
   }
-}
 
 // Builds the expression tree from the output stack using operator information
 def buildExpr(
     stack: mutable.Stack[TokenInfo],
     opContext: OperatorsContext,
     reporter: Reporter[TyckError]
-): Expr = {
+): Expr =
   if (stack.isEmpty) {
     reporter.apply(UnexpectedTokens(List.empty))
     Identifier("error", meta = None)
@@ -169,7 +166,6 @@ def buildExpr(
         expr
     }
   }
-}
 
 // Determines whether to pop operators from the stack based on precedence and associativity
 def shouldPopOperator(
@@ -215,17 +211,15 @@ def parseExpression(
             tokenInfo.precedence,
             tokenInfo.associativity
           )
-        ) {
+        )
           output.push(operators.pop())
-        }
         operators.push(tokenInfoWithType)
     }
   }
 
   // Pop any remaining operators onto the output stack
-  while (operators.nonEmpty) {
+  while (operators.nonEmpty)
     output.push(operators.pop())
-  }
 
   // Build the expression tree from the output stack
   val expr = buildExpr(output, opContext, reporter)
@@ -310,9 +304,8 @@ def resolveOpSeq(
     node2 = node2Option.get
     // Check if no path exists between group1 and group2
     if node1.pathTo(node2).isEmpty && node2.pathTo(node1).isEmpty
-  } {
-    reporter.apply(UnconnectedPrecedenceGroups(group1, group2))
   }
+    reporter.apply(UnconnectedPrecedenceGroups(group1, group2))
 
   // Parse the expression from tokens
   parseExpression(tokens, opContext, reporter)

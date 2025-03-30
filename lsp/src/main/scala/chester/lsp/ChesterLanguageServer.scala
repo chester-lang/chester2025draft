@@ -206,7 +206,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             // Process warnings
             warnings.map { warning =>
               val range = warning.sourcePos
-                .map { rangeFromSourcePos }
+                .map(rangeFromSourcePos)
                 .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
               new Diagnostic(
@@ -221,7 +221,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             // Combine errors and warnings into diagnostics
             val errorDiagnostics = errors.map { error =>
               val range = error.sourcePos
-                .map { rangeFromSourcePos }
+                .map(rangeFromSourcePos)
                 .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
               new Diagnostic(
@@ -234,7 +234,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
             val warningDiagnostics = warnings.map { warning =>
               val range = warning.sourcePos
-                .map { rangeFromSourcePos }
+                .map(rangeFromSourcePos)
                 .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
               new Diagnostic(
@@ -266,10 +266,9 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   private def provideCompletions(
       _uri: String,
       _position: Position
-  ): List[CompletionItem] = {
+  ): List[CompletionItem] =
     // Implement logic to provide code completions based on the position
     List(new CompletionItem("exampleCompletion"))
-  }
 
   override def hover(params: HoverParams): CompletableFuture[Hover] = {
     val position = params.getPosition
@@ -294,10 +293,9 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     // Handle server exit logic here
   }
 
-  override def shutdown(): CompletableFuture[Object] = {
+  override def shutdown(): CompletableFuture[Object] =
     // Handle server shutdown logic here
     CompletableFuture.completedFuture(null)
-  }
 
   // TextDocumentService methods
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
@@ -386,7 +384,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       params: DefinitionParams
   ): CompletableFuture[
     Either[JList[? <: Location], JList[? <: LocationLink]]
-  ] = {
+  ] =
     CompletableFuture.supplyAsync { () =>
       val uri = params.getTextDocument.getUri
       val position = params.getPosition
@@ -447,25 +445,22 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           Either.forLeft(java.util.Collections.emptyList())
       }
     }
-  }
 
-  private def positionWithin(pos1: SourcePos, pos2: SourcePos): Boolean = {
+  private def positionWithin(pos1: SourcePos, pos2: SourcePos): Boolean =
     pos1.source.fileName == pos2.source.fileName &&
-    comparePositions(pos1.range.start, pos2.range.start) <= 0 &&
-    comparePositions(pos1.range.end, pos2.range.end) >= 0
-  }
+      comparePositions(pos1.range.start, pos2.range.start) <= 0 &&
+      comparePositions(pos1.range.end, pos2.range.end) >= 0
 
-  private def comparePositions(p1: Pos, p2: Pos): Int = {
+  private def comparePositions(p1: Pos, p2: Pos): Int =
     if (p1.line != p2.line) {
       p1.line.compareTo(p2.line)
     } else {
       p1.column.utf16.compareTo(p2.column.utf16)
     }
-  }
 
   override def references(
       params: ReferenceParams
-  ): CompletableFuture[JList[? <: Location]] = {
+  ): CompletableFuture[JList[? <: Location]] =
     CompletableFuture.supplyAsync { () =>
       val uri = params.getTextDocument.getUri
       val position = params.getPosition
@@ -503,30 +498,27 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           java.util.Collections.emptyList()
       }
     }
-  }
 
   override def documentSymbol(
       params: DocumentSymbolParams
-  ): CompletableFuture[JList[Either[SymbolInformation, DocumentSymbol]]] = {
-    CompletableFuture.supplyAsync(() => {
+  ): CompletableFuture[JList[Either[SymbolInformation, DocumentSymbol]]] =
+    CompletableFuture.supplyAsync(() =>
       // Implement document symbol lookup logic here
       new java.util.ArrayList[Either[SymbolInformation, DocumentSymbol]]()
-    })
-  }
+    )
 
   override def codeAction(
       params: CodeActionParams
-  ): CompletableFuture[JList[Either[Command, CodeAction]]] = {
-    CompletableFuture.supplyAsync(() => {
+  ): CompletableFuture[JList[Either[Command, CodeAction]]] =
+    CompletableFuture.supplyAsync(() =>
       // Implement code action logic here
       new java.util.ArrayList[Either[Command, CodeAction]]()
-    })
-  }
+    )
 
   override def symbol(
       params: WorkspaceSymbolParams
-  ): CompletableFuture[Either[JList[? <: SymbolInformation], JList[? <: WorkspaceSymbol]]] = {
-    CompletableFuture.supplyAsync(() => {
+  ): CompletableFuture[Either[JList[? <: SymbolInformation], JList[? <: WorkspaceSymbol]]] =
+    CompletableFuture.supplyAsync { () =>
       val query = params.getQuery.toLowerCase
       val allSymbols = documents.synchronized {
         documents.values.flatMap(_.symbols).toList
@@ -541,8 +533,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
       // Return the list of WorkspaceSymbol wrapped in an Either
       Either.forRight[JList[? <: SymbolInformation], JList[? <: WorkspaceSymbol]](matchingSymbols.asJava)
-    })
-  }
+    }
 
   private def tyckSymbolToLSP(symbol: CollectedSymbol): WorkspaceSymbol = {
     val sp = symbol.definedOn.sourcePos.get
@@ -558,9 +549,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     )
   }
 
-  override def setTrace(value: SetTraceParams): Unit = {
+  override def setTrace(value: SetTraceParams): Unit =
     logger.debug(s"(ignored) Required Trace level: ${value.getValue}")
-  }
 }
 
 case class DocumentInfo(

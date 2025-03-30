@@ -19,10 +19,9 @@ given DefaultTerminal: Terminal[Id] {
       block: InTerminal[Id] ?=> T
   ): T = {
     val terminal = new JLineTerminal(init)
-    try {
+    try
       block(using new InTerm(terminal))
-    } finally {
+    finally
       terminal.close()
-    }
   }
 }

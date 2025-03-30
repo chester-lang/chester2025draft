@@ -46,7 +46,7 @@ def REPLEngine[F[_]](using
 
   // add to the environment of evaluation
 
-  def startF: F[Unit] = {
+  def startF: F[Unit] =
     for {
       _ <- InTerminal.writeln("Welcome to the Chester REPL!")
       _ <- InTerminal.writeln(
@@ -57,9 +57,8 @@ def REPLEngine[F[_]](using
       )
       _ <- runREPL
     } yield ()
-  }
 
-  def runREPL: F[Unit] = {
+  def runREPL: F[Unit] =
     InTerminal.readline(terminalInfo).flatMap {
       case LineRead(line) =>
         processLine(line).flatMap {
@@ -80,9 +79,8 @@ def REPLEngine[F[_]](using
           _ <- runREPL
         } yield ()
     }
-  }
 
-  def processLine(line: String): F[Boolean] = {
+  def processLine(line: String): F[Boolean] =
     line match {
       case "exit" | ":q" =>
         for {
@@ -106,7 +104,6 @@ def REPLEngine[F[_]](using
           handleExpression(line).map(_ => true)
         }
     }
-  }
 
   def handleTypeCheck(exprStr: String): F[Unit] =
     InTerminal.getHistory.flatMap { history =>
@@ -139,9 +136,8 @@ def REPLEngine[F[_]](using
       )
   }
 
-  def typeCheck(expr: Expr): TyckResult[?, Judge] = {
+  def typeCheck(expr: Expr): TyckResult[?, Judge] =
     Tycker.check(expr)
-  }
 
   def printErrors(
       er: Vector[chester.error.TyckError],
@@ -150,16 +146,16 @@ def REPLEngine[F[_]](using
     given sourceReader: SourceReader = SourceReader.default
 
     for {
-      _ <- er.traverse(x => {
+      _ <- er.traverse(x =>
         InTerminal.writeln(
           FansiPrettyPrinter.render(x.renderDoc, maxWidth)
         )
-      })
-      _ <- wr.traverse(x => {
+      )
+      _ <- wr.traverse(x =>
         InTerminal.writeln(
           FansiPrettyPrinter.render(x.renderDoc, maxWidth)
         )
-      })
+      )
     } yield ()
   }
 

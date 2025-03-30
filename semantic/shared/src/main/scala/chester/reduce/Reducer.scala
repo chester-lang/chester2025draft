@@ -90,16 +90,15 @@ object NaiveReducer extends Reducer {
     case t: WHNF => t
 
     // Block terms - reduce statements and result
-    case BlockTerm(statements, result, meta) => {
+    case BlockTerm(statements, result, meta) =>
       val reducedStatements = statements.map { case stmt: StmtTerm =>
         r.reduce(stmt).asInstanceOf[StmtTerm]
       }
       val reducedResult = r.reduce(result)
       BlockTerm(reducedStatements, reducedResult, meta)
-    }
 
     // Function calls - reduce function and arguments
-    case FCallTerm(f, args, meta) => {
+    case FCallTerm(f, args, meta) =>
       val reducedF = r.reduce(f)
       val reducedArgs = args.map(calling =>
         Calling(
@@ -127,10 +126,9 @@ object NaiveReducer extends Reducer {
           }
         case _ => FCallTerm(reducedF, reducedArgs, meta)
       }
-    }
 
     // Annotations - reduce the term and type
-    case Annotation(term, ty, effects, meta) => {
+    case Annotation(term, ty, effects, meta) =>
       val reducedTerm = r.reduce(term)
       val reducedTy = ty.map(r.reduce)
       val reducedEffects = effects // Effects don't need reduction
@@ -138,7 +136,6 @@ object NaiveReducer extends Reducer {
         case t: WHNF => t // If the term is already in WHNF, return it
         case _       => Annotation(reducedTerm, reducedTy, reducedEffects, meta)
       }
-    }
 
     // Tuple terms - reduce all values
     case TupleTerm(values, meta) =>

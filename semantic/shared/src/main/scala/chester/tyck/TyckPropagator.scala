@@ -19,20 +19,17 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
-    def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]) = {
+    def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]) =
       state.addPropagator(Unify(lhsId, rhsId, cause))
-    }
 
     if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Unifying $lhs with $rhs")
 
     // Handle meta variables
     (toTerm(lhs), toTerm(rhs)) match {
-      case (Meta(cellId), rhs) => {
+      case (Meta(cellId), rhs) =>
         addUnificationPropagator(cellId, toId(rhs))
-      }
-      case (lhs, Meta(cellId)) => {
+      case (lhs, Meta(cellId)) =>
         addUnificationPropagator(toId(lhs), cellId)
-      }
       case (lhs, rhs) if lhs != rhs =>
         // Use TypeLevel reduction for type equality checking
         given ReduceContext = localCtx.toReduceContext
@@ -137,25 +134,22 @@ trait TyckPropagator extends ElaboraterCommon {
       localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): Unit = {
+  ): Unit =
     state.addPropagator(Unify(literal(t1), t2, cause))
-  }
 
   def unify(t1: CellId[Term], t2: Term, cause: Expr)(using
       localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): Unit = {
+  ): Unit =
     state.addPropagator(Unify(t1, literal(t2), cause))
-  }
 
   def unify(t1: CellId[Term], t2: CellId[Term], cause: Expr)(using
       localCtx: Context,
       ck: Tyck,
       state: StateAbility[Tyck]
-  ): Unit = {
+  ): Unit =
     state.addPropagator(Unify(t1, t2, cause))
-  }
 
   type Literals = Expr & (IntegerLiteral | RationalLiteral | StringLiteral | SymbolLiteral)
 
@@ -267,12 +261,11 @@ trait TyckPropagator extends ElaboraterCommon {
     private def ensureCellIsCovered(cell: CellId[Term])(using
         state: StateAbility[Tyck],
         more: Tyck
-    ): Unit = {
+    ): Unit =
       // Create a self-unify propagator for coverage to ensure the cell is covered
       // We can't easily check if it's already covered, so we add a self-unify propagator
       // which is a no-op if the cell is already covered
       state.addPropagator(Unify(cell, cell, EmptyExpr))
-    }
   }
 
   case class UnionOf(
@@ -640,7 +633,7 @@ trait TyckPropagator extends ElaboraterCommon {
   )(using
       StateAbility[Tyck],
       Context
-  ): Boolean = {
+  ): Boolean =
     // For alpha-equivalence, we need to check if terms are convertible
     // with respect to bound variable names (alpha conversion)
     (lhs, rhs) match {
@@ -696,7 +689,6 @@ trait TyckPropagator extends ElaboraterCommon {
       // For other cases, fall back to regular equality check
       case _ => lhs == rhs
     }
-  }
 
   /** Check if two collections of types are equivalent regardless of their ordering. For union and intersection types, the order doesn't matter.
     *
@@ -738,7 +730,7 @@ trait TyckPropagator extends ElaboraterCommon {
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
 
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean =
       if (state.noStableValue(tyLhs)) false
       else {
         val ty_ = state.readStable(this.tyLhs).get
@@ -757,7 +749,7 @@ trait TyckPropagator extends ElaboraterCommon {
                     // Check if any of the union types is compatible with this integer literal
                     if (Debug.isEnabled(UnionMatching))
                       Debug.debugPrint(UnionMatching, s"[LITERAL DEBUG] Checking integer literal $value with union type $ty_")
-                    val compatibleTypes = types.filter(unionType => {
+                    val compatibleTypes = types.filter(unionType =>
                       // Check for Integer type or its reduced form
                       unionType match {
                         case IntegerType(_) => true
@@ -769,7 +761,7 @@ trait TyckPropagator extends ElaboraterCommon {
                             case _              => false
                           }
                       }
-                    })
+                    )
 
                     if (compatibleTypes.nonEmpty) {
                       if (Debug.isEnabled(UnionMatching))
@@ -808,7 +800,6 @@ trait TyckPropagator extends ElaboraterCommon {
             }
         }
       }
-    }
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
@@ -891,30 +882,24 @@ trait TyckPropagator extends ElaboraterCommon {
       val t1 = state.readStable(this.tRhs)
       val listT1 = state.readStable(this.listTLhs)
       (t1, listT1) match {
-        case (_, Some(Meta(listTLhs))) => {
+        case (_, Some(Meta(listTLhs))) =>
           state.addPropagator(ListOf(tRhs, listTLhs, cause))
           true
-        }
-        case (_, Some(l)) if !l.isInstanceOf[ListType] => {
+        case (_, Some(l)) if !l.isInstanceOf[ListType] =>
           ck.reporter.apply(TypeMismatch(ListType(AnyType0, meta = None), l, cause))
           true
-        }
-        case (Some(t1), Some(ListType(t2, _))) => {
+        case (Some(t1), Some(ListType(t2, _))) =>
           unify(t2, t1, cause)
           true
-        }
-        case (_, Some(ListType(t2, _))) => {
+        case (_, Some(ListType(t2, _))) =>
           unify(t2, tRhs, cause)
           true
-        }
-        case (Some(t1), None) => {
+        case (Some(t1), None) =>
           unify(this.listTLhs, ListType(t1, meta = None): Term, cause)
           true
-        }
-        case (None, None) => {
+        case (None, None) =>
           unify(this.listTLhs, ListType(Meta(tRhs), meta = None): Term, cause)
           true
-        }
         case _ => ???
       }
     }
@@ -959,7 +944,7 @@ trait TyckPropagator extends ElaboraterCommon {
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(expectedTy)
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(recordTy, expectedTy)
 
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean =
       state.readStable(recordTy) match {
         case Some(Meta(id)) =>
           state.addPropagator(RecordFieldPropagator(id, fieldName, expectedTy, cause))
@@ -996,21 +981,19 @@ trait TyckPropagator extends ElaboraterCommon {
           }
         case None => false
       }
-    }
 
-    override def naiveZonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+    override def naiveZonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       state.readStable(recordTy) match {
         case None => ZonkResult.Require(Vector(recordTy))
         case _    => ZonkResult.Done
       }
-    }
   }
 
   /** Helper method to check if a source level is compatible with a target level */
   private def isLevelCompatible(source: Term, target: Term)(using
       StateAbility[Tyck],
       Context
-  ): Boolean = {
+  ): Boolean =
     (source, target) match {
       case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
       case (LevelUnrestricted(_), LevelFinite(_, _)) => false // Unrestricted is not compatible with finite
@@ -1024,7 +1007,6 @@ trait TyckPropagator extends ElaboraterCommon {
         }
       case _ => source == target // For other cases, keep the exact equality check
     }
-  }
 
   // Helper to extract numeric value from a term
   private def extractNumericValue(term: Term): Option[BigInt] = PartialFunction.condOpt(term) {
@@ -1130,10 +1112,9 @@ trait TyckPropagator extends ElaboraterCommon {
   private def unionUnionCompatible(types1: NonEmptyVector[Term], types2: NonEmptyVector[Term])(using
       StateAbility[Tyck],
       Context
-  ): Boolean = {
+  ): Boolean =
     // For each type in RHS union, at least one type in LHS union must accept it
     types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
-  }
 
   private def specificUnionCompatible(specificType: Term, unionTypes: NonEmptyVector[Term])(using
       StateAbility[Tyck],
@@ -1148,12 +1129,12 @@ trait TyckPropagator extends ElaboraterCommon {
         UnionMatching,
         s"[UNION DEBUG] Checking if $specificType is compatible with at least one of union components: ${unionTypes.mkString(", ")}"
       )
-    val result = unionTypes.exists(unionType => {
+    val result = unionTypes.exists { unionType =>
       val compatible = tryUnify(specificType, unionType)
       if (Debug.isEnabled(UnionMatching))
         Debug.debugPrint(UnionMatching, s"[UNION DEBUG]   Component check: $specificType compatible with $unionType? $compatible")
       compatible
-    })
+    }
     if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Final result: $result")
     result
   }
@@ -1168,12 +1149,12 @@ trait TyckPropagator extends ElaboraterCommon {
     // where y: SomeType must accept at least one of Integer or String
     if (Debug.isEnabled(UnionMatching))
       Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Checking if any union component ${unionTypes.mkString(", ")} is compatible with $specificType")
-    val result = unionTypes.exists(unionType => {
+    val result = unionTypes.exists { unionType =>
       val compatible = tryUnify(unionType, specificType)
       if (Debug.isEnabled(UnionMatching))
         Debug.debugPrint(UnionMatching, s"[UNION DEBUG]   Component check: $unionType compatible with $specificType? $compatible")
       compatible
-    })
+    }
     if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Final result: $result")
     result
   }
@@ -1187,18 +1168,16 @@ trait TyckPropagator extends ElaboraterCommon {
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
 
-    override def run(using StateAbility[Tyck], Tyck): Boolean = {
+    override def run(using StateAbility[Tyck], Tyck): Boolean =
       // This propagator simply ensures the cell has at least one propagator
       // It always succeeds immediately
       true
-    }
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using StateAbility[Tyck], Tyck): ZonkResult = {
+    )(using StateAbility[Tyck], Tyck): ZonkResult =
       // Nothing to zonk - just ensure the cell is included
       ZonkResult.Done
-    }
   }
 
   // Connect a union type to a specific type for compatibility checks
@@ -1261,12 +1240,12 @@ trait TyckPropagator extends ElaboraterCommon {
     if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Reduced union types: ${reducedUnionTypes.mkString(", ")}")
 
     // Normal processing for other types
-    val compatibleComponents = reducedUnionTypes.filter(unionType => {
+    val compatibleComponents = reducedUnionTypes.filter { unionType =>
       val isCompatible = tryUnify(reducedSpecificType, unionType)(using state, ctx)
       if (Debug.isEnabled(UnionMatching))
         Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Checking compatibility: $reducedSpecificType with $unionType - Result: $isCompatible")
       isCompatible
-    })
+    }
 
     if (compatibleComponents.nonEmpty) {
       if (Debug.isEnabled(UnionMatching))
@@ -1386,10 +1365,9 @@ trait TyckPropagator extends ElaboraterCommon {
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using StateAbility[Tyck], Tyck): ZonkResult = {
+    )(using StateAbility[Tyck], Tyck): ZonkResult =
       // Nothing to zonk - just ensure the propagator has run
       ZonkResult.Done
-    }
   }
 
 }

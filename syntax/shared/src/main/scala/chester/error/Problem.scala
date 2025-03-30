@@ -54,12 +54,11 @@ object ProblemUpickle {
 }
 
 extension (p: Problem) {
-  def renderDoc(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
+  def renderDoc(using options: PrettierOptions, sourceReader: SourceReader): Doc =
     p.fullDescription match {
       case Some(desc) => renderFullDescription(desc)(using options, sourceReader)
       case None       => renderToDocWithSource(p)(using options, sourceReader)
     }
-  }
 }
 
 private def renderFullDescription(desc: FullDescription)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
@@ -107,9 +106,9 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
 
       val sourceLines = sourceReader(pos)
         .map {
-          _.map({ case (lineNumber, line) =>
+          _.map { case (lineNumber, line) =>
             Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
-          })
+          }
         }
         .getOrElse(Vector.empty)
 
@@ -135,11 +134,10 @@ case class SourceReader(readSource: SourcePos => Option[Vector[(Int, String)]]) 
 }
 
 object SourceReader {
-  def fromFileContent(content: FileContent): SourceReader = {
-    SourceReader { _.getLinesInRange }
-  }
+  def fromFileContent(content: FileContent): SourceReader =
+    SourceReader(_.getLinesInRange)
 
-  def default: SourceReader = SourceReader { _.getLinesInRange }
+  def default: SourceReader = SourceReader(_.getLinesInRange)
 
   def empty: SourceReader = SourceReader(_ => None)
 }

@@ -332,12 +332,11 @@ case class ArrowFunctionExpression(
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = {
     val asyncDoc = if (async) Doc.text("async") <+> Doc.empty else Doc.empty
-    val paramsDoc = {
+    val paramsDoc =
       if (params.length == 1 && params.head.isSimple)
         params.head.toDoc
       else
         Doc.text("(") <> Doc.sep(Doc.text(","), params.map(_.toDoc)) <> Doc.text(")")
-    }
     val returnTypeDoc = returnType.map(rt => Doc.text(":") <+> rt.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.fold(expr => Doc.text(" => ") <> expr.toDoc, stmts => Doc.text(" => ") <> stmts.toDoc)
     Doc.group(asyncDoc <> paramsDoc <> returnTypeDoc <> bodyDoc)
@@ -881,13 +880,12 @@ case class ImportNamedSpecifier(
     imported: Identifier,
     meta: Option[Meta] = None
 ) extends ImportSpecifier {
-  def toDoc(using PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc =
     if (local.name == imported.name) {
       imported.toDoc
     } else {
       imported.toDoc <> Doc.text(" as ") <> local.toDoc
     }
-  }
 }
 
 sealed trait ExportDeclaration extends Statement derives ReadWriter
@@ -937,13 +935,12 @@ case class ExportSpecifier(
     exported: Identifier,
     meta: Option[Meta] = None
 ) extends ASTNode {
-  def toDoc(using PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc =
     if (local.name == exported.name) {
       local.toDoc
     } else {
       local.toDoc <> Doc.text(" as ") <> exported.toDoc
     }
-  }
 }
 
 // TypeScript-specific nodes
@@ -1159,9 +1156,8 @@ case class IndexSignature(
     typeAnnotation: TypeAnnotation,
     meta: Option[Meta] = None
 ) extends ASTNode {
-  def toDoc(using PrettierOptions): Doc = {
+  def toDoc(using PrettierOptions): Doc =
     Doc.text("[") <> parameter.toDoc <> Doc.text("]") <> Doc.text(":") <+> typeAnnotation.toDoc
-  }
 }
 
 case class MappedType(

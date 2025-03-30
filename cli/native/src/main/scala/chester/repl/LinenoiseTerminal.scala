@@ -13,21 +13,18 @@ class LinenoiseTerminal(init: TerminalInit) extends InTerminal[Id] {
     loadHistory()
   }
 
-  private def loadHistory(): Unit = {
+  private def loadHistory(): Unit =
     historyFile.foreach { filename =>
       facade.loadHistory(filename)
     }
-  }
 
-  private def saveHistory(): Unit = {
+  private def saveHistory(): Unit =
     historyFile.foreach { filename =>
       facade.saveHistory(filename)
     }
-  }
 
-  override def writeln(line: fansi.Str): Unit = {
+  override def writeln(line: fansi.Str): Unit =
     println(line.render)
-  }
 
   override def readline(info: TerminalInfo): ReadLineResult = {
     var prompt = info.defaultPrompt
@@ -74,9 +71,8 @@ class LinenoiseTerminal(init: TerminalInit) extends InTerminal[Id] {
     result
   }
 
-  def close(): Unit = {
+  def close(): Unit =
     saveHistory()
-  }
 
   override def getHistory: Seq[String] = history
 }
@@ -87,10 +83,9 @@ object LinenoiseTerminal extends Terminal[Id] {
       block: InTerminal[Id] ?=> T
   ): T = {
     val terminal = new LinenoiseTerminal(init)
-    try {
+    try
       block(using terminal)
-    } finally {
+    finally
       terminal.close()
-    }
   }
 }

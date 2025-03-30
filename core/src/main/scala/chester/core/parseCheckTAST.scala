@@ -12,7 +12,7 @@ def parseCheckTAST(
     ignoreLocation: Boolean = false,
     sementicCollector: SemanticCollector = NoopSemanticCollector,
     loadedModules: LoadedModules = LoadedModules.Empty
-)(using reporter: Reporter[Problem]): chester.syntax.TAST = {
+)(using reporter: Reporter[Problem]): chester.syntax.TAST =
   // Parse the source code into an Expr using parseTopLevel
   ChesterReader
     .parseTopLevel(source, ignoreLocation)
@@ -32,4 +32,3 @@ def parseCheckTAST(
       },
       expr => checkTop(source.fileName, expr, reporter, loadedModules = loadedModules)
     )
-}

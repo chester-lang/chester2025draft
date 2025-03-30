@@ -26,7 +26,7 @@ val platform$getOS: OS = {
   else if (os.contains("netbsd")) OS.NetBSD
   else throw new Exception(s"Unknown OS: $os")
 }
-val platform$getArch: Architecture = {
+val platform$getArch: Architecture =
   System.getProperty("os.arch").toLowerCase match {
     case "x86_64" | "amd64" | "x64" => Architecture.Amd64
     case "x86" | "i386"             => Architecture.X86
@@ -37,4 +37,3 @@ val platform$getArch: Architecture = {
         s"Unknown architecture: ${System.getProperty("os.arch")}"
       )
   }
-}

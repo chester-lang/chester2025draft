@@ -116,7 +116,7 @@ private object ObjectDesalt {
   def insertNested(
       fields: Vector[(Vector[String], Expr)],
       base: ObjectExpr
-  ): ObjectExpr = {
+  ): ObjectExpr =
     fields.foldLeft(base) {
       case (acc, (Vector(k), v)) =>
         acc.copy(clauses = acc.clauses :+ ObjectExprClause(Identifier(k, v.meta), v))
@@ -135,7 +135,6 @@ private object ObjectDesalt {
         acc.copy(clauses = updatedClauses)
       case (acc, _) => acc
     }
-  }
 
   def desugarObjectExpr(expr: ObjectExpr): ObjectExpr = {
     val (desugaredFields, otherClauses) = expr.clauses.foldLeft(
@@ -176,7 +175,7 @@ case object StmtDesalt {
 
   def defined(
       xs: Vector[Expr]
-  )(using Reporter[TyckProblem]): Option[Defined] = {
+  )(using Reporter[TyckProblem]): Option[Defined] =
     if (xs.isEmpty) None
     else if (xs.length == 1) xs.head match {
       // TODO: support multiple telescopes
@@ -195,7 +194,6 @@ case object StmtDesalt {
           }
         case _ => None
       }
-  }
 
   def letdef(
       decorations: Vector[Expr],
@@ -247,7 +245,7 @@ case object StmtDesalt {
     )
   }
 
-  def unrollFunction(stmt: LetDefStmt): LetDefStmt = {
+  def unrollFunction(stmt: LetDefStmt): LetDefStmt =
     stmt.defined match {
       case DefinedFunction(id, telescopes) =>
         require(stmt.decorations.isEmpty, "not supported yet")
@@ -267,7 +265,6 @@ case object StmtDesalt {
         )
       case _ => stmt
     }
-  }
 
   def unapply(x: Expr)(using Reporter[TyckProblem]): Option[Stmt] =
     x match {
@@ -484,7 +481,7 @@ case object SimpleDesalt {
           body = bodyExpr,
           meta = meta
         )
-      case expr @ OpSeq(Vector(Identifier(Const.Object, _), nameExpr, rest @ _*), meta) => {
+      case expr @ OpSeq(Vector(Identifier(Const.Object, _), nameExpr, rest @ _*), meta) =>
         // Parse the object name
         val name = nameExpr match {
           case id: Identifier => id
@@ -515,7 +512,6 @@ case object SimpleDesalt {
           body = bodyExpr,
           meta = meta
         )
-      }
       // Handling 'interface' keyword
       case expr @ OpSeq(Vector(Identifier(Const.Interface, _), nameExpr, rest @ _*), meta) =>
         // Parse the interface name and parameters if any
@@ -570,21 +566,20 @@ case object SimpleDesalt {
   // Helper method to parse super types separated by 'with'
   def parseSuperTypes(tokens: List[Expr]): (List[Expr], List[Expr]) = {
     @tailrec
-    def loop(accum: List[Expr], remaining: List[Expr]): (List[Expr], List[Expr]) = {
+    def loop(accum: List[Expr], remaining: List[Expr]): (List[Expr], List[Expr]) =
       remaining match {
         case Identifier(Const.`with`, _) :: next :: tail =>
           loop(next :: accum, tail)
         case _ =>
           (accum.reverse, remaining)
       }
-    }
     tokens match {
       case firstType :: tail => loop(List(firstType), tail)
       case Nil               => (Nil, Nil)
     }
   }
 
-  private def parseExtendsClause(tokens: List[Expr], meta: Option[ExprMeta]): (Option[ExtendsClause], List[Expr]) = {
+  private def parseExtendsClause(tokens: List[Expr], meta: Option[ExprMeta]): (Option[ExtendsClause], List[Expr]) =
     tokens match {
       case Identifier(Const.`<:`, _) :: rest =>
         val (superTypes, remainingTokens) = parseSuperTypes(rest)
@@ -592,7 +587,6 @@ case object SimpleDesalt {
       case _ =>
         (None, tokens)
     }
-  }
 }
 
 case object OpSeqDesalt {

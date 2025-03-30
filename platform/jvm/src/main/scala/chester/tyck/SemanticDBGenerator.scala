@@ -14,7 +14,7 @@ import scala.meta.internal.semanticdb.*
 class SemanticDBGenerator extends VectorSemanticCollector {
 
   // Process a file or directory
-  def processPath(path: Path): Unit = {
+  def processPath(path: Path): Unit =
     if (os.isDir(path)) {
       val files = os
         .walk(path)
@@ -23,7 +23,6 @@ class SemanticDBGenerator extends VectorSemanticCollector {
     } else {
       processFile(path)
     }
-  }
 
   // Process a single file
   def processFile(file: Path): Unit = {
@@ -52,7 +51,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
   }
 
   // Convert CollectedSymbol to SymbolInformation
-  private def symbolInformation(sym: CollectedSymbol): SymbolInformation = {
+  private def symbolInformation(sym: CollectedSymbol): SymbolInformation =
     SymbolInformation(
       symbol = sym.id.toString,
       language = Language.SCALA,
@@ -60,24 +59,22 @@ class SemanticDBGenerator extends VectorSemanticCollector {
       displayName = sym.call.name,
       signature = Signature.Empty
     )
-  }
 
   // Create SymbolOccurrence from Expr
   private def symbolOccurrence(
       expr: Expr,
       symbol: String,
       role: SymbolOccurrence.Role
-  ): SymbolOccurrence = {
+  ): SymbolOccurrence =
     SymbolOccurrence(
       range = exprRange(expr),
       symbol = symbol,
       role = role
     )
-  }
 
   // Convert Expr to Range
   // TODO: check if should use utf16 or codepoints
-  private def exprRange(expr: Expr): Option[Range] = {
+  private def exprRange(expr: Expr): Option[Range] =
     expr.sourcePos.map { pos =>
       Range(
         startLine = pos.range.start.line,
@@ -86,7 +83,6 @@ class SemanticDBGenerator extends VectorSemanticCollector {
         endCharacter = pos.range.end.column.utf16
       )
     }
-  }
 
   // Save the SemanticDB TextDocument to a file
   def saveSemanticDB(docUri: String, outputPath: String): Unit = {

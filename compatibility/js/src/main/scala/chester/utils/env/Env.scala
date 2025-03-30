@@ -14,7 +14,7 @@ val platform$getOS: OS = {
   else if (os == Platform.netbsd) OS.NetBSD
   else OS.Other
 }
-val platform$getArch: Architecture = {
+val platform$getArch: Architecture =
   osMod.arch().toLowerCase match {
     case "x86_64" | "amd64" | "x64" => Architecture.Amd64
     case "x86" | "i386"             => Architecture.X86
@@ -22,5 +22,4 @@ val platform$getArch: Architecture = {
     case "aarch64" | "arm64"        => Architecture.Arm64
     case _                          => Architecture.Other
   }
-}
 val platform$getRunningOn: RunningOn = RunningOn.Nodejs(processMod.^.version)

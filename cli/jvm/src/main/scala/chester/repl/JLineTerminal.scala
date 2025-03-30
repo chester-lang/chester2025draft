@@ -11,7 +11,7 @@ class JLineTerminal(init: TerminalInit) {
           line: String,
           cursor: Int,
           context: org.jline.reader.Parser.ParseContext
-      ): org.jline.reader.ParsedLine = {
+      ): org.jline.reader.ParsedLine =
         info.checkInputStatus(line) match {
           case InputStatus.Complete => super.parse(line, cursor, context)
           case InputStatus.Incomplete =>
@@ -22,7 +22,6 @@ class JLineTerminal(init: TerminalInit) {
             )
           case InputStatus.Error(_) => super.parse(line, cursor, context)
         }
-      }
     }
 
   def readLine(info: TerminalInfo): ReadLineResult = {
@@ -38,7 +37,7 @@ class JLineTerminal(init: TerminalInit) {
     var continue = true
     var result: ReadLineResult = EndOfFile
 
-    while (continue) {
+    while (continue)
       try {
         var line = reader.readLine(prompt.render)
         history.add(line)
@@ -70,7 +69,6 @@ class JLineTerminal(init: TerminalInit) {
           result = EndOfFile
           continue = false
       }
-    }
     result
   }
 

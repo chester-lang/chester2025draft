@@ -53,17 +53,14 @@ class Get[P, S](val reporter: Reporter[P], private val state: MutBox[S]) {
 
   def reportseq(problems: Seq[P]): Unit = problems.foreach(report)
 
-  def updateState(f: S => S): Unit = {
+  def updateState(f: S => S): Unit =
     state.update(f)
-  }
 
-  def uncheckedSetState(newState: S): Unit = {
+  def uncheckedSetState(newState: S): Unit =
     state.set(newState)
-  }
 
-  def updateAndMap[T](f: S => (S, T)): T = {
+  def updateAndMap[T](f: S => (S, T)): T =
     state.updateAndMap(f)
-  }
 }
 
 object Get {

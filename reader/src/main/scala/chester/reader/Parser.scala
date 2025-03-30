@@ -110,12 +110,11 @@ case class ReaderInternal(
   private def createMeta(
       pos: Option[SourcePos],
       comments: Option[CommentInfo]
-  ): Option[ExprMeta] = {
+  ): Option[ExprMeta] =
     (pos, comments) match {
       case (None, None) => None
       case _            => Some(ExprMeta(pos, comments))
     }
-  }
 
   /*
   TODO: difference bettween
@@ -372,17 +371,17 @@ case class ReaderInternal(
 
   def statement: P[ParsedExpr] = P(
     (parse(ctx = ParsingContext(newLineAfterBlockMeansEnds = true)) ~ Index)
-      .flatMap((expr, index) => {
+      .flatMap { (expr, index) =>
         val itWasBlockEnding = p.input(index - 1) == '}'
         Pass(expr) ~ (maybeSpace ~ ";" | lineEnding.on(itWasBlockEnding))
-      })
+      }
   )
 
   def opSeq(
       expr: ParsedExpr,
       p: Option[ExprMeta] => Option[ExprMeta],
       ctx: ParsingContext
-  ): P[OpSeq] = {
+  ): P[OpSeq] =
     PwithMeta(opSeqGettingExprs(ctx = ctx)).flatMap { case (exprs, meta) =>
       val xs = (expr +: exprs)
       lazy val exprCouldPrefix = expr match {
@@ -396,7 +395,6 @@ case class ReaderInternal(
         Pass(OpSeq(xs.toVector, p(meta)))
       }
     }
-  }
 
   def qualifiedNameOn(x: QualifiedName): P[QualifiedName] =
     PwithMeta("." ~ identifier).flatMap { (id, meta) =>
@@ -443,7 +441,7 @@ case class ReaderInternal(
   private def combineMeta(
       meta1: Option[ExprMeta],
       meta2: Option[ExprMeta]
-  ): Option[ExprMeta] = {
+  ): Option[ExprMeta] =
     (meta1, meta2) match {
       case (Some(ExprMeta(pos1, comments1)), Some(ExprMeta(pos2, comments2))) =>
         createMeta(pos1.orElse(pos2), comments1.orElse(comments2))
@@ -451,7 +449,6 @@ case class ReaderInternal(
       case (None, Some(meta)) => Some(meta)
       case (None, None)       => None
     }
-  }
 
   def tailExpr(
       expr: ParsedExpr,
@@ -462,16 +459,14 @@ case class ReaderInternal(
       expr.isInstanceOf[Identifier] || expr
         .isInstanceOf[FunctionCall] || !ctx.inOpSeq
     ) | opSeq(expr, getMeta, ctx = ctx).on(ctx.opSeq)).withMeta ~ Index
-  ).flatMap({ (expr, meta, index) =>
-    {
-      val itWasBlockEnding = p.input(index - 1) == '}'
-      val getMeta1 =
-        ((endMeta: Option[ExprMeta]) => getMeta(combineMeta(meta, endMeta)))
-      ((!lineEnding).checkOn(
-        itWasBlockEnding && ctx.newLineAfterBlockMeansEnds
-      ) ~ tailExpr(expr, getMeta1, ctx = ctx)) | Pass(expr)
-    }
-  })
+  ).flatMap { (expr, meta, index) =>
+    val itWasBlockEnding = p.input(index - 1) == '}'
+    val getMeta1 =
+      ((endMeta: Option[ExprMeta]) => getMeta(combineMeta(meta, endMeta)))
+    ((!lineEnding).checkOn(
+      itWasBlockEnding && ctx.newLineAfterBlockMeansEnds
+    ) ~ tailExpr(expr, getMeta1, ctx = ctx)) | Pass(expr)
+  }
 
   inline def parse0: P[ParsedExpr] =
     symbol | keyword | objectParse | block | annotated | list | tuple | literal | identifier

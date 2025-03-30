@@ -12,31 +12,27 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
   object Meta {
     def rec(x: CellId[Term], default: Term)(using
         state: StateAbility[Tyck]
-    ): Term = {
+    ): Term =
       state.readStable(x).getOrElse(default)
-    }
 
-    def apply[T <: Term](x: CellId[T])(using state: StateAbility[Tyck]): T | MetaTerm = {
+    def apply[T <: Term](x: CellId[T])(using state: StateAbility[Tyck]): T | MetaTerm =
       state.readUnstable(x) match {
         case Some(x @ Meta(id)) => rec(id, x).asInstanceOf[T | MetaTerm]
         case Some(x)            => x
         case None               => MetaTerm(HoldNotReadable(x), meta = None)
       }
-    }
 
     def unapply(
         x: Term
     )(using state: StateAbility[Tyck]): Option[CellId[Term]] = x match {
-      case m: MetaTerm => {
+      case m: MetaTerm =>
         var result: CellId[Term] = m.unsafeRead[CellId[Term]]
-        while (true) {
+        while (true)
           state.readUnstable(result) match {
             case Some(m: MetaTerm) => result = m.unsafeRead[CellId[Term]]
             case _                 => return Some(result)
           }
-        }
         throw new IllegalStateException("Unreachable")
-      }
       case _ => None
     }
   }

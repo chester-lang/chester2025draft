@@ -14,7 +14,7 @@ object ChesterReader {
       source: ParserSource,
       parserFunc: ReaderInternal => P[T],
       ignoreLocation: Boolean = false
-  ): Either[ParseError, T] = {
+  ): Either[ParseError, T] =
     source.readContent.fold(
       error => Left(error),
       { content =>
@@ -42,27 +42,23 @@ object ChesterReader {
         }
       }
     )
-  }
 
   def parseStatements(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, Vector[ParsedExpr]] = {
+  ): Either[ParseError, Vector[ParsedExpr]] =
     parseFromSource(source, _.statementsEntrance, ignoreLocation)
-  }
 
   def parseTopLevel(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, Block] = {
+  ): Either[ParseError, Block] =
     parseFromSource(source, _.toplevelEntrance, ignoreLocation)
-  }
 
   def parseExpr(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, ParsedExpr] = {
+  ): Either[ParseError, ParsedExpr] =
     parseFromSource(source, _.exprEntrance, ignoreLocation)
-  }
 
 }

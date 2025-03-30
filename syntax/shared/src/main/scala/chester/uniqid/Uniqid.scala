@@ -104,9 +104,8 @@ object Uniqid {
   def calculateRange[T <: ContainsUniqid](x: T): UniqIdRange = {
     val currentRangeCollect = new mutable.ArrayDeque[Uniqid]()
     val collecter: UCollector = new UCollector {
-      override def apply[T](id: UniqidOf[T]): Unit = {
+      override def apply[T](id: UniqidOf[T]): Unit =
         currentRangeCollect.append(id)
-      }
     }
     x.collectU(collecter)
     UniqIdRange(currentRangeCollect.map(_.id).min, (currentRangeCollect.map(_.id).max + 1).refineUnsafe)

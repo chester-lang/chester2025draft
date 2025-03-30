@@ -11,13 +11,11 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
   implicit class TyAndValOpsss(ignored: TyAndVal.type) {
     def create(ty: Term, value: Term)(using
         StateAbility[Tyck]
-    ): TyAndVal = {
+    ): TyAndVal =
       new TyAndVal(toTerm(literal(ty)), toTerm(literal(value)))
-    }
 
-    def create()(using state: StateAbility[Tyck]): TyAndVal = {
+    def create()(using state: StateAbility[Tyck]): TyAndVal =
       new TyAndVal(toTerm(state.addCell(OnceCell[Term]())), toTerm(state.addCell(OnceCell[Term]())))
-    }
   }
 
   extension (context: ContextItem) {
@@ -66,11 +64,10 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
   // Extension method for trait scope
   extension (context: Context) {
-    def withTraitScope(traitName: Name): Context = {
+    def withTraitScope(traitName: Name): Context =
       // Create a new context that is a child of the current context
       // This ensures field declarations in the trait body can be properly resolved
       context
-    }
   }
 
 }

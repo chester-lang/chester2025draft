@@ -11,9 +11,7 @@ class Parameter[T](default: => (T | Null) = null) {
     try {
       tl.set(value)
       block
-    } finally {
-      tl.set(previousValue)
-    }
+    } finally tl.set(previousValue)
   }
   def get: T = tl.get() match {
     case null  => throw new IllegalStateException("Value is null")

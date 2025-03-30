@@ -10,7 +10,7 @@ object GenProductTypes {
     def typeName(i: Int): String = (64 + i).toChar.toString
     val types = (1 to arity).map(typeName(_)).mkString(", ")
     val specTypes = if (arity == 2) {
-      (1 to arity).map { i => spec + typeName(i) }.mkString(",")
+      (1 to arity).map(i => spec + typeName(i)).mkString(",")
     } else {
       types
     }
@@ -173,13 +173,12 @@ object GenProductTypes {
                              |
                              |""".stripMargin
 
-  def unifiedTrait(defns: Seq[Definition], start: Int, end: Int): String = {
+  def unifiedTrait(defns: Seq[Definition], start: Int, end: Int): String =
     "trait ProductInstances extends " + (defns
       .map { defn =>
         defn.structure + "ProductInstances"
       }
       .mkString(" with "))
-  }
 
   def renderAll(
       pkg: String,

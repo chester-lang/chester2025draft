@@ -34,7 +34,7 @@ trait ProvideImmutable extends ProvideImpl {
 
     override def update[T <: Cell[?]](id: CIdOf[T], f: T => T)(using
         Ability
-    ): Unit = {
+    ): Unit =
       state.cells.get(id) match {
         case Some(cell) =>
           val newCell = f(cell.asInstanceOf[T])
@@ -47,7 +47,6 @@ trait ProvideImmutable extends ProvideImpl {
         case None =>
           throw new IllegalArgumentException(s"Cell with id $id not found")
       }
-    }
 
     override def addCell[T <: Cell[?]](cell: T): CIdOf[T] = {
       val id = Uniqid.generate[T]
@@ -83,12 +82,11 @@ trait ProvideImmutable extends ProvideImpl {
 
     override def readingZonkings(
         cells: Vector[CIdOf[Cell[?]]]
-    ): Vector[Propagator[Ability]] = {
+    ): Vector[Propagator[Ability]] =
       state.propagators
         .filter((_, propagator) => propagator.zonkingCells.exists(cells.contains))
         .values
         .toVector
-    }
 
     override def naiveZonk(
         cells: Vector[CIdOf[Cell[?]]]

@@ -8,10 +8,9 @@ import scala.annotation.experimental
 object Scala {
   case class ScalaContext()
   def compileExpr(term: Term)(implicit ctx: ScalaContext = null): meta.Term = term match {
-    case IntegerTerm(i, _) => {
+    case IntegerTerm(i, _) =>
       require(i.isValidInt)
       meta.Lit.Int(i.toInt)
-    }
     case IntTerm(i, _)     => meta.Lit.Int(i)
     case StringTerm(s, _)  => meta.Lit.String(s)
     case SymbolTerm(s, _)  => meta.Lit.Symbol(Symbol(s))

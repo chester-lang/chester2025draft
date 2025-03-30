@@ -15,14 +15,13 @@ class ReadlineTerminal(init: TerminalInit) extends InTerminal[Id] {
   }
 
   // Method for reading history
-  private def readHistory(): Unit = {
+  private def readHistory(): Unit =
     historyFile.foreach { file =>
       historyExists = facade.read_history(file)
     }
-  }
 
   // Method for writing history
-  private def writeHistory(): Unit = {
+  private def writeHistory(): Unit =
     historyFile.foreach { file =>
       if (historyExists == 0) {
         facade.append_history(1, file)
@@ -31,11 +30,9 @@ class ReadlineTerminal(init: TerminalInit) extends InTerminal[Id] {
         facade.write_history(file)
       }
     }
-  }
 
-  override def writeln(line: fansi.Str): Unit = {
+  override def writeln(line: fansi.Str): Unit =
     println(line.render)
-  }
 
   override def readline(info: TerminalInfo): ReadLineResult = {
     var prompt = info.defaultPrompt
@@ -89,9 +86,8 @@ class ReadlineTerminal(init: TerminalInit) extends InTerminal[Id] {
     result
   }
 
-  def close(): Unit = {
+  def close(): Unit =
     writeHistory()
-  }
 
   override def getHistory: Seq[String] = history
 }
@@ -102,10 +98,9 @@ object ReadlineTerminal extends Terminal[Id] {
       block: InTerminal[Id] ?=> T
   ): T = {
     val terminal = new ReadlineTerminal(init)
-    try {
+    try
       block(using terminal)
-    } finally {
+    finally
       terminal.close()
-    }
   }
 }

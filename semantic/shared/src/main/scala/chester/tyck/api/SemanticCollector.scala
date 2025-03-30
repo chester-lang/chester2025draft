@@ -42,9 +42,8 @@ case class CollectedSymbol(
 ) derives ReadWriter {
   def name: Name = call.name
 
-  def metaFinished(replace: MetaTerm => Term): CollectedSymbol = {
+  def metaFinished(replace: MetaTerm => Term): CollectedSymbol =
     this.copy(call = call.replaceMeta(replace).asInstanceOf[ReferenceCall])
-  }
 }
 
 class VectorSemanticCollector extends SemanticCollector {
@@ -68,9 +67,8 @@ class VectorSemanticCollector extends SemanticCollector {
   }
   def get: Vector[CollectedSymbol] = builder.toVector
 
-  override def metaFinished(replace: MetaTerm => Term): Unit = {
+  override def metaFinished(replace: MetaTerm => Term): Unit =
     builder = builder.map(_.metaFinished(replace))
-  }
 }
 
 object NoopSemanticCollector extends SemanticCollector {}

@@ -319,7 +319,7 @@ case class Arg(
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Arg =
     copy(meta = updater(meta))
 
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): Arg = {
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): Arg =
     Arg(
       decorations.map(g.use),
       g.use(name),
@@ -328,7 +328,6 @@ case class Arg(
       vararg,
       meta
     )
-  }
 
   override def toString: String = this match {
     case Arg(decorations, name, ty, exorOrDefault, false, _) =>
@@ -362,9 +361,8 @@ case class CallingArg(
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): CallingArg =
     copy(meta = updater(meta))
 
-  def descent(f: Expr => Expr, g: TreeMap[Expr]): CallingArg = {
+  def descent(f: Expr => Expr, g: TreeMap[Expr]): CallingArg =
     CallingArg(name.map(g.use), f(expr), vararg, meta)
-  }
 
   override def toDoc(using PrettierOptions): Doc = group {
     val nameDoc = name.map(n => n.toDoc <> Docs.`=` <+> Doc.empty).getOrElse(Doc.empty)

@@ -32,13 +32,12 @@ object ReaderREPL {
     )
   }
 
-  def checkInputStatus(currentInput: String): InputStatus = {
+  def checkInputStatus(currentInput: String): InputStatus =
     checkUnclosedPairs(currentInput)
-  }
 
   private def checkUnclosedPairs(input: String): InputStatus = {
     val stack = scala.collection.mutable.Stack[Char]()
-    for ((char, index) <- input.zipWithIndex) {
+    for ((char, index) <- input.zipWithIndex)
       char match {
         case '(' | '{' | '[' => stack.push(char)
         case ')' =>
@@ -58,7 +57,6 @@ object ReaderREPL {
             )
         case _ => // Ignore other characters
       }
-    }
     if (stack.nonEmpty) InputStatus.Incomplete else InputStatus.Complete
   }
 
@@ -66,7 +64,7 @@ object ReaderREPL {
       input: String,
       linesOffset: Int :| Positive0,
       posOffset: WithUTF16
-  ): Either[ParseError, ParsedExpr] = {
+  ): Either[ParseError, ParsedExpr] =
     parse(
       input,
       p =>
@@ -81,5 +79,4 @@ object ReaderREPL {
       case Parsed.Success(expr, _) => Right(expr)
       case f: Parsed.Failure       => Left(ParseError(f.msg, Pos.zero))
     }
-  }
 }

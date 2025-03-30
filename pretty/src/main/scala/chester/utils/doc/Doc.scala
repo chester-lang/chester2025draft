@@ -24,9 +24,8 @@ sealed trait Doc extends ToDoc derives ReadWriter {
 
   def styled(style: Style): Doc = descent(_.styled(style))
 
-  override def toString: String = {
+  override def toString: String =
     StringPrinter.render(this)(using PrettierOptions.Default)
-  }
 }
 
 implicit inline def textFrom(inline s: String): Doc = text(s)
@@ -90,12 +89,12 @@ def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
 }
 
 def concat(docs: ToDoc*)(using PrettierOptions): Doc = group {
-  docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
+  docs.foldLeft(Doc.empty)((acc, doc) => acc <> doc.toDoc)
 }
 
 @targetName("concatIterable")
 def concat(docs: Iterable[ToDoc])(using PrettierOptions): Doc = group {
-  docs.foldLeft(Doc.empty) { (acc, doc) => acc <> doc.toDoc }
+  docs.foldLeft(Doc.empty)((acc, doc) => acc <> doc.toDoc)
 }
 
 val empty = text("")

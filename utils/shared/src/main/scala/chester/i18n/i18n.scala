@@ -60,12 +60,12 @@ case class RegionTable(table: Map[RegionTag, Map[String, String]]) {
   def get(region: RegionTag, context: String): String = {
     table.get(region).flatMap(_.get(context)) match {
       case Some(value) => return value
-      case None        => {}
+      case None        =>
     }
     alternatives.foreach { map =>
       map.get(context) match {
         case Some(value) => return value
-        case None        => {}
+        case None        =>
       }
     }
     context
@@ -73,22 +73,20 @@ case class RegionTable(table: Map[RegionTag, Map[String, String]]) {
 }
 
 case class TranslationTable(table: Map[LanguageTag, RegionTable]) {
-  def get(lang: Language, context: String): String = {
+  def get(lang: Language, context: String): String =
     table.get(lang.tag).map(_.get(lang.region, context)).getOrElse(context)
-  }
 }
 
 object Template {
   def stringContextToString(sc: StringContext): String = {
 
     val stringbuilder = new StringBuilder()
-    for (part <- sc.parts) {
+    for (part <- sc.parts)
       if (part.isEmpty) {
         stringbuilder.append("s$$${count}")
       } else {
         stringbuilder.append(part.replace("$", "$$"))
       }
-    }
     stringbuilder.result()
   }
 
@@ -106,10 +104,9 @@ object Template {
       result = newResult
     }
     for (i <- 1 to 9) {
-      for (x <- xs) {
+      for (x <- xs)
         if (x.contains("s$$${i}"))
           throw new IllegalArgumentException(s"Unexpected $i in args $args")
-      }
       if (result.contains("s$$${i}"))
         throw new IllegalArgumentException(s"Missing argument $i in args $args")
     }

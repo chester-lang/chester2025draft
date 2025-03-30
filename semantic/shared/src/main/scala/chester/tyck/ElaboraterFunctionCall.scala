@@ -220,7 +220,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         functionEffects: Term,
         outerEffects: CIdOf[EffectsCell],
         cause: Expr
-    )(using state: StateAbility[Tyck], ck: Tyck): Unit = {
+    )(using state: StateAbility[Tyck], ck: Tyck): Unit =
       functionEffects match {
         case Effects(effects, _) =>
           // Add each effect from the function to the outer effects
@@ -233,7 +233,6 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
           state.addPropagator(PropagateEffects(id, outerEffects, cause))
         case _ => // do nothing for other cases
       }
-    }
 
     // Unify expected and actual telescopes, handling implicit parameters
     def unifyTelescopes(
@@ -310,9 +309,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     override def naiveZonk(
         needed: Vector[CellIdAny]
-    )(using StateAbility[Tyck], Tyck): ZonkResult = {
+    )(using StateAbility[Tyck], Tyck): ZonkResult =
       ZonkResult.Require(Vector(functionTy))
-    }
   }
 
   // Helper case class for effect propagation
@@ -325,7 +323,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     override def writingCells: Set[CIdOf[Cell[?]]] = Set(callerEffects)
     override def zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
 
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean =
       state.readStable(effectsCell) match {
         case Some(Effects(effects, _)) =>
           // Add each effect from the callee to the caller's effects
@@ -337,13 +335,11 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         case Some(Meta(_)) => false // Effects not yet resolved
         case _             => true // No effects to propagate
       }
-    }
 
     override def naiveZonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using StateAbility[Tyck], Tyck): ZonkResult = {
+    )(using StateAbility[Tyck], Tyck): ZonkResult =
       ZonkResult.Require(Vector(effectsCell))
-    }
   }
 
   // Placeholder for future implicit argument inference implementation
@@ -354,10 +350,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       Context,
       StateAbility[Tyck],
       Tyck
-  ): List[Calling] = {
+  ): List[Calling] =
 
     // TODO: Implement logic to infer implicit arguments based on the function type
     // For now, return an empty list as a stub
     List.empty
-  }
 }

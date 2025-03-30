@@ -17,10 +17,9 @@ import scala.scalajs.js.JSConverters.*
 
 given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
-  def toScalaArray(input: Uint8Array): Array[Byte] = {
+  def toScalaArray(input: Uint8Array): Array[Byte] =
     // Create a view as Int8 on the same underlying data.
     new Int8Array(input.buffer, input.byteOffset, input.length).toArray
-  }
 
   type Path = String
 
@@ -43,13 +42,12 @@ given DefaultIO: IO[Future] {
       path: String,
       content: String,
       append: Boolean = false
-  ): Future[Unit] = {
+  ): Future[Unit] =
     if (append) {
       fsPromisesMod.appendFile(path, content)
     } else {
       fsPromisesMod.writeFile(path, content)
     }
-  }
 
   // https://stackoverflow.com/questions/76455786/scala-js-how-to-convert-arraybyte-to-blob/76463887#76463887
   inline override def write(path: String, content: Array[Byte]): Future[Unit] =
@@ -99,13 +97,11 @@ given DefaultIO: IO[Future] {
     Future.successful(CommandOutput(status))
   }
 
-  override def listFiles(path: String): Future[Seq[String]] = {
+  override def listFiles(path: String): Future[Seq[String]] =
     fsPromisesMod
       .readdir(path)
       .map(_.toSeq.map(file => pathMod.join(path, file)))
-  }
 
-  override def isDirectory(path: String): Future[Boolean] = {
+  override def isDirectory(path: String): Future[Boolean] =
     fsPromisesMod.lstat(path).map(_.isDirectory())
-  }
 }

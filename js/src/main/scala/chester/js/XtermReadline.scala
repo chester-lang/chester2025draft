@@ -22,16 +22,14 @@ final class InXtermReadline(rl: Readline) extends InTerminalNoHistory[Future] {
     setTimeoutThen
   }
 
-  override inline def readALine(prompt: fansi.Str): Future[String] = {
+  override inline def readALine(prompt: fansi.Str): Future[String] =
     rl.read(prompt.render)
-  }
 }
 
 case class XtermReadline(rl: Readline) extends Terminal[Future] {
   def runTerminal[T](
       init: TerminalInit,
       block: InTerminal[Future] ?=> Future[T]
-  ): Future[T] = {
+  ): Future[T] =
     block(using InXtermReadline(rl))
-  }
 }

@@ -10,9 +10,7 @@ class Parameter[T](default: T | Null = null) {
     try {
       tl = value
       block
-    } finally {
-      tl = previousValue
-    }
+    } finally tl = previousValue
   }
   def get: T = tl match {
     case null  => throw new IllegalStateException("Value is null")

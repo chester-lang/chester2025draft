@@ -88,10 +88,9 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
       expr: Expr
   )(using localCtx: Context, reporter: Reporter[TyckProblem]): Expr = {
     val result = SimpleDesalt.desugarUnwrap(expr) match {
-      case opseq: OpSeq => {
+      case opseq: OpSeq =>
         val result = resolveOpSeq(reporter, localCtx.operators, opseq)
         result
-      }
       case default => default
     }
     reuse(expr, result)
@@ -107,9 +106,8 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     cell
   }
 
-  def newTypeTerm(using Tyck, StateAbility[Tyck]): Term = {
+  def newTypeTerm(using Tyck, StateAbility[Tyck]): Term =
     Meta(newType)
-  }
 
   def newEffects(using
       ck: Tyck,
@@ -119,16 +117,15 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     cell
   }
 
-  def newEffectsTerm(using Tyck, StateAbility[Tyck]): Effects | MetaTerm = {
+  def newEffectsTerm(using Tyck, StateAbility[Tyck]): Effects | MetaTerm =
     Meta(newEffects)
-  }
 
   def readVar(
       x: Term
-  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term = {
+  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term =
     boundary {
       var result = x
-      while (true) {
+      while (true)
         result match {
           case varCall: ReferenceCall =>
             localCtx.getKnown(varCall) match {
@@ -141,17 +138,15 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
             }
           case _ => break(result)
         }
-      }
       result
     }
-  }
 
   def readMetaVar(
       x: Term
-  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term = {
+  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term =
     boundary {
       var result = x
-      while (true) {
+      while (true)
         result match {
           case varCall: ReferenceCall =>
             localCtx.getKnown(varCall) match {
@@ -169,15 +164,12 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
             }
           case _ => break(result)
         }
-      }
       result
     }
-  }
 
   class MutableContext(var ctx: Context) {
-    def update(f: Context => Context): Unit = {
+    def update(f: Context => Context): Unit =
       ctx = f(ctx)
-    }
   }
 
   given mutL(using m: MutableContext): Context = m.ctx

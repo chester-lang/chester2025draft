@@ -30,7 +30,7 @@ case class StringIndex(val stringList: LazyList[String]) {
     var index = 0
     var unicodeIndex = 0
     val it = stringIterator
-    while (index < charIndex) {
+    while (index < charIndex)
       if (it.hasNext) {
         val char = it.next()
         if (index < charIndex && isHighSurrogate(char)) {
@@ -55,7 +55,6 @@ case class StringIndex(val stringList: LazyList[String]) {
           s"Index out of bounds (exceeds string length) $charIndex"
         )
       }
-    }
     unicodeIndex.refineUnsafe
   }
 
@@ -89,7 +88,7 @@ case class StringIndex(val stringList: LazyList[String]) {
     var index = 0
     val it = stringIterator
 
-    while (index < charIndex) {
+    while (index < charIndex)
       if (it.hasNext) {
         val char = it.next()
         if (char == '\n') {
@@ -104,7 +103,6 @@ case class StringIndex(val stringList: LazyList[String]) {
           s"Index out of bounds (exceeds string length) $charIndex"
         )
       }
-    }
 
     LineAndColumn(line.refineUnsafe, column.refineUnsafe)
   }
@@ -133,7 +131,7 @@ case class StringIndex(val stringList: LazyList[String]) {
     var index = 0
     val it = stringIterator
 
-    while (index < charIndex) {
+    while (index < charIndex)
       if (it.hasNext) {
         val char = it.next()
         if (char == '\n') {
@@ -160,7 +158,6 @@ case class StringIndex(val stringList: LazyList[String]) {
           s"Index out of bounds (exceeds string length) $charIndex"
         )
       }
-    }
 
     LineAndColumn(line.refineUnsafe, column.refineUnsafe)
   }
@@ -175,7 +172,6 @@ object StringIndex {
     StringIndex(lazyList)
   }
 
-  def apply(parserInput: ParserInput): StringIndex = {
+  def apply(parserInput: ParserInput): StringIndex =
     StringIndex(parserInputToLazyList(parserInput))
-  }
 }
