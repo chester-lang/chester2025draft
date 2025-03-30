@@ -153,13 +153,13 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     }
   }
 
-  def collectDeclarations(
+  private def collectDeclarations(
       heads: Seq[Expr],
       meta: Option[ExprMeta]
   )(using
       localCtx: Context,
       parameter: SemanticCollector,
-      ck: Tyck,
+      _ck: Tyck,
       state: StateAbility[Tyck]
   ): (Seq[DeclarationInfo], Seq[Name], Context) = {
     // Collect all declarations in a single pass
@@ -211,13 +211,13 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     (declarations, names, initialCtx)
   }
 
-  def checkForDuplicateNames(names: Seq[Name], expr: Expr)(using ck: Tyck): Unit =
+  private def checkForDuplicateNames(names: Seq[Name], expr: Expr)(using ck: Tyck): Unit =
     if (names.hasDuplication) {
       val problem = DuplicateDefinition(expr)
       ck.reporter.apply(problem)
     }
 
-  def processDefLetDefStmt(
+  private def processDefLetDefStmt(
       expr: LetDefStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
@@ -428,7 +428,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     (Seq(interfaceStmtTerm), newCtx)
   }
 
-  def processObjectStmt(
+  private def processObjectStmt(
       expr: ObjectStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],

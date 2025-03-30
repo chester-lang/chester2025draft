@@ -27,7 +27,7 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       debugCategory: Debug.DebugCategory = Debug.DebugCategory.Tyck
   )(using
       state: StateAbility[Tyck],
-      more: Tyck
+      _more: Tyck
   ): Unit = {
     // Check if the cell already has a value before attempting to fill it
     val existingValue = state.readUnstable(cell)
@@ -76,14 +76,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     resultTerm
   }
 
-  def defaultElabFunctionCall(
+  private def defaultElabFunctionCall(
       expr: DesaltFunctionCall,
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
       ctx: Context,
-      parameter: SemanticCollector,
-      ck: Tyck,
+      _parameter: SemanticCollector,
+      _ck: Tyck,
       state: StateAbility[Tyck]
   ): Term = {
     // Elaborate the function expression to get its term and type
@@ -113,7 +113,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     state.addPropagator(
       UnifyFunctionCall(
         functionTy,
-        callings.toVector,
+        callings,
         resultTy,
         expr,
         functionTerm,
@@ -129,7 +129,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     toTerm(functionCallTerm)
   }
 
-  case class UnifyFunctionCall(
+  private case class UnifyFunctionCall(
       functionTy: CellId[Term],
       callings: Vector[Calling],
       resultTy: CellId[Term],
@@ -218,7 +218,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         functionEffects: Term,
         outerEffects: CIdOf[EffectsCell],
         cause: Expr
-    )(using state: StateAbility[Tyck], ck: Tyck): Unit =
+    )(using state: StateAbility[Tyck], _ck: Tyck): Unit =
       functionEffects match {
         case Effects(effects, _) =>
           // Add each effect from the function to the outer effects
@@ -233,7 +233,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       }
 
     // Unify expected and actual telescopes, handling implicit parameters
-    def unifyTelescopes(
+    private def unifyTelescopes(
         expected: Vector[TelescopeTerm],
         actual: Vector[Calling],
         cause: Expr
@@ -279,7 +279,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     }
 
     // Unify the arguments of expected and actual telescopes
-    def unifyArgs(
+    private def unifyArgs(
         expectedArgs: Vector[ArgTerm],
         actualArgs: Seq[CallingArgTerm],
         cause: Expr
@@ -310,7 +310,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   }
 
   // Helper case class for effect propagation
-  case class PropagateEffects(
+  private case class PropagateEffects(
       effectsCell: CellId[Term],
       callerEffects: CIdOf[EffectsCell],
       expr: Expr
@@ -338,17 +338,4 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ZonkResult.Require(Vector(effectsCell))
   }
 
-  // Placeholder for future implicit argument inference implementation
-  def inferImplicitArguments(
-      functionTy: CellId[Term],
-      expr: DesaltFunctionCall
-  )(using
-      Context,
-      StateAbility[Tyck],
-      Tyck
-  ): List[Calling] =
-
-    // TODO: Implement logic to infer implicit arguments based on the function type
-    // For now, return an empty list as a stub
-    List.empty
 }

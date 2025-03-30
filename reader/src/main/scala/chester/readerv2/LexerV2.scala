@@ -636,7 +636,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] =
     current.current match {
-      case Left(err)         => Left(err)
+      case Left(err) => Left(err)
       case LBrace(_) =>
         // Check for empty object or block
         current.advance().current match {

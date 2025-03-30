@@ -11,6 +11,7 @@ import chester.utils.Debug.DebugCategory.*
 
 import scala.language.implicitConversions
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.tailrec
 
 trait TyckPropagator extends ElaboraterCommon {
 
@@ -19,7 +20,7 @@ trait TyckPropagator extends ElaboraterCommon {
       ck: Tyck,
       state: StateAbility[Tyck]
   ): Unit = {
-    def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]) =
+    def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]): Unit =
       state.addPropagator(Unify(lhsId, rhsId, cause))
 
     if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, s"[TRAIT DEBUG] Unifying $lhs with $rhs")
@@ -320,7 +321,7 @@ trait TyckPropagator extends ElaboraterCommon {
       // Check if we're waiting for rhs values
       val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
       if (unknownRhs.nonEmpty) {
-        return ZonkResult.Require(unknownRhs.toVector)
+        return ZonkResult.Require(unknownRhs)
       }
 
       val rhsValues = rhsValuesOpt.map(_.get)
@@ -399,7 +400,7 @@ trait TyckPropagator extends ElaboraterCommon {
       // Check if we're waiting for rhs values
       val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
       if (unknownRhs.nonEmpty) {
-        return ZonkResult.Require(unknownRhs.toVector)
+        return ZonkResult.Require(unknownRhs)
       }
 
       val rhsValues = rhsValuesOpt.map(_.get)
@@ -457,6 +458,7 @@ trait TyckPropagator extends ElaboraterCommon {
       if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG] Trying to unify: $lhs with $rhs")
 
       // Helper function to fully resolve references in terms
+      @tailrec
       def fullyResolveReference(term: Term): Term = {
         val resolved = term match {
           case varCall: ReferenceCall =>
@@ -496,14 +498,12 @@ trait TyckPropagator extends ElaboraterCommon {
           case (v: AbstractIntTerm, Union(types, _)) =>
             if (Debug.isEnabled(UnionMatching))
               Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm $v")
-            val hasIntegerType = types.exists(t =>
-              t match {
-                case IntegerType(_) => true
-                case _ =>
-                  val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
-                  reduced == IntegerType(None)
-              }
-            )
+            val hasIntegerType = types.exists {
+              case IntegerType(_) => true
+              case t =>
+                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
+                reduced == IntegerType(None)
+            }
             if (hasIntegerType) {
               if (Debug.isEnabled(UnionMatching))
                 Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Union contains Integer, AbstractIntTerm is compatible with union")
@@ -514,14 +514,12 @@ trait TyckPropagator extends ElaboraterCommon {
           case (Union(types, _), v: AbstractIntTerm) =>
             if (Debug.isEnabled(UnionMatching))
               Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm $v")
-            val hasIntegerType = types.exists(t =>
-              t match {
-                case IntegerType(_) => true
-                case _ =>
-                  val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
-                  reduced == IntegerType(None)
-              }
-            )
+            val hasIntegerType = types.exists {
+              case IntegerType(_) => true
+              case t =>
+                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
+                reduced == IntegerType(None)
+            }
             if (hasIntegerType) {
               if (Debug.isEnabled(UnionMatching))
                 Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Union contains Integer, union is compatible with AbstractIntTerm")
@@ -749,19 +747,16 @@ trait TyckPropagator extends ElaboraterCommon {
                     // Check if any of the union types is compatible with this integer literal
                     if (Debug.isEnabled(UnionMatching))
                       Debug.debugPrint(UnionMatching, s"[LITERAL DEBUG] Checking integer literal $value with union type $ty_")
-                    val compatibleTypes = types.filter(unionType =>
-                      // Check for Integer type or its reduced form
-                      unionType match {
-                        case IntegerType(_) => true
-                        case _ =>
-                          val reduced =
-                            NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)(using summon[Context].toReduceContext, summon[Context].given_Reducer)
-                          reduced match {
-                            case IntegerType(_) => true
-                            case _              => false
-                          }
-                      }
-                    )
+                    val compatibleTypes = types.filter {
+                      case IntegerType(_) => true
+                      case unionType =>
+                        val reduced =
+                          NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)(using summon[Context].toReduceContext, summon[Context].given_Reducer)
+                        reduced match {
+                          case IntegerType(_) => true
+                          case _              => false
+                        }
+                    }
 
                     if (compatibleTypes.nonEmpty) {
                       if (Debug.isEnabled(UnionMatching))
@@ -1252,7 +1247,7 @@ trait TyckPropagator extends ElaboraterCommon {
         Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Found compatible components: ${compatibleComponents.mkString(", ")}")
 
       // Get a vector of all component cell IDs first
-      val unionComponentCellIds = unionTypes.map(t => toId(t).asInstanceOf[CellId[Term]]).toVector
+      val unionComponentCellIds = unionTypes.map(t => toId(t)).toVector
 
       // Step 1: Connect the specific type to each compatible component
       compatibleComponents.foreach { compatibleType =>

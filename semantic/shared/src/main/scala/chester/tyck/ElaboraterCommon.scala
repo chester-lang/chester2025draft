@@ -96,7 +96,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     reuse(expr, result)
   }
 
-  def newMeta(using ck: Tyck, state: StateAbility[Tyck]): CellId[Term] = {
+  def newMeta(using _ck: Tyck, state: StateAbility[Tyck]): CellId[Term] = {
     val cell = state.addCell(OnceCell[Term]())
     cell
   }
@@ -110,7 +110,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     Meta(newType)
 
   def newEffects(using
-      ck: Tyck,
+      _ck: Tyck,
       state: StateAbility[Tyck]
   ): CIdOf[EffectsCell] = {
     val cell = state.addCell(DynamicEffectsCell())
@@ -122,7 +122,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def readVar(
       x: Term
-  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term =
+  )(using localCtx: Context, _ck: Tyck, state: StateAbility[Tyck]): Term =
     boundary {
       var result = x
       while (true)
@@ -143,7 +143,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def readMetaVar(
       x: Term
-  )(using localCtx: Context, ck: Tyck, state: StateAbility[Tyck]): Term =
+  )(using localCtx: Context, _ck: Tyck, state: StateAbility[Tyck]): Term =
     boundary {
       var result = x
       while (true)
@@ -174,22 +174,5 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   given mutL(using m: MutableContext): Context = m.ctx
   implicit def mutLc(m: MutableContext): Context = m.ctx
-
-  def generateImplicitArg(
-      paramTy: Term,
-      cause: Expr
-  )(using
-      ctx: Context,
-      state: StateAbility[Tyck],
-      ck: Tyck
-  ): Term = {
-    // TODO: Implement logic to generate an implicit argument based on the parameter type.
-    // This could involve looking up available implicit values in the context.
-    // For now, create a new meta-term as a placeholder.
-    val argTerm = newMeta
-    // Report a warning or note that an implicit argument is not provided explicitly.
-    ck.reporter(MissingImplicitArgumentWarning(paramTy, cause))
-    toTerm(argTerm)
-  }
 
 }

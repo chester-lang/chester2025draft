@@ -17,14 +17,6 @@ import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
 
-// Debug flags for various components
-val DEBUG_UNION_SUBTYPING = sys.env.get("ENV_DEBUG_UNION_SUBTYPING").isDefined || sys.env.get("ENV_DEBUG").isDefined
-val DEBUG_UNION_MATCHING = sys.env.get("ENV_DEBUG_UNION_MATCHING").isDefined || sys.env.get("ENV_DEBUG").isDefined
-val DEBUG_LITERALS = sys.env.get("ENV_DEBUG_LITERALS").isDefined || sys.env.get("ENV_DEBUG").isDefined
-val DEBUG_IDENTIFIERS = sys.env.get("ENV_DEBUG_IDENTIFIERS").isDefined || sys.env.get("ENV_DEBUG").isDefined
-val DEBUG_METHOD_CALLS = sys.env.get("ENV_DEBUG_METHOD_CALLS").isDefined || sys.env.get("ENV_DEBUG").isDefined
-val DEBUG_STRING_ARGS = sys.env.get("ENV_DEBUG_STRING_ARGS").isDefined || sys.env.get("ENV_DEBUG").isDefined
-
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
   // Helper method to ensure a cell is covered by a propagator
@@ -234,7 +226,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         // which handles all the necessary propagators and cell coverage
 
         // Get cell IDs for both types
-        val specificCellId = toId(specificType).asInstanceOf[CellId[Term]]
+        val specificCellId = toId(specificType)
         val unionCellId = toId(union).asInstanceOf[CellId[Term]]
 
         // Use the helper method to connect the specific type to the union
@@ -381,7 +373,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
   ): Term = toTerm {
     val ty = toId(readMetaVar(toTerm(ty0)))
     resolve(expr) match {
-      case expr @ Identifier(name, meta) =>
+      case expr @ Identifier(name, _) =>
         if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Processing identifier $name")
 
         // Get the expected type (if already specified)
@@ -576,7 +568,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         }
 
         // Collect the types of the elements
-        val elemTypes = termResults.map(_._2).toVector
+        val elemTypes = termResults.map(_._2)
 
         // Ensure that 't' is the union of the element types
         if (elemTypes.nonEmpty) state.addPropagator(UnionOf(t, elemTypes, expr))
@@ -623,7 +615,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             // Add a propagator to ensure this cell is covered
             state.addPropagator(EnsureCellCoverage(cellId, expr))
             cellId
-          }.toVector
+          }
 
           // Get the cell ID for the union term and ensure it's covered
           val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
@@ -667,7 +659,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               // Add a propagator that will check if argTy is StringType and report an error
               state.addPropagator(new Propagator[Tyck] {
                 override val readingCells: Set[CIdOf[Cell[?]]] = Set(toId(argTy).asInstanceOf[CIdOf[Cell[?]]])
-                override val writingCells = Set.empty
+                override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
                 override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(toId(argTy).asInstanceOf[CIdOf[Cell[?]]])
 
                 override def run(using state: StateAbility[Tyck], more: Tyck): Boolean =
@@ -812,7 +804,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
   }
 
   // TODO: untested
-  def elabObjectExpr(
+  private def elabObjectExpr(
       expr: ObjectExpr,
       fields: Vector[ObjectClause],
       ty: CellId[Term],
@@ -908,7 +900,7 @@ trait DefaultImpl
       ck: Tyck,
       able: StateAbility[Tyck],
       recording: SemanticCollector,
-      reporter: Reporter[TyckProblem]
+      _reporter: Reporter[TyckProblem]
   ): Judge = {
     if (Debug.isEnabled(UnionSubtyping)) {
       Debug.debugPrint(UnionSubtyping, "\n=== STARTING FINALIZE JUDGE ===")

@@ -87,7 +87,7 @@ case class Context(
     val uniqId = typeDefinitionNames.get(name)
     if (uniqId.isEmpty) return None
     val r = typeDefinitions.get(uniqId.get)
-    return r
+    r
   }
 
   def getTypeDefinitionById(id: UniqidOf[TypeDefinition]): Option[TypeDefinition] =

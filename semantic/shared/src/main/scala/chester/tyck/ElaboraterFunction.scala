@@ -21,9 +21,9 @@ trait ElaboraterFunction { this: ElaboraterBase & ElaboraterCommon =>
 
 trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & ElaboraterBase & ElaboraterCommon =>
   // Flag to enable or disable termination checking
-  val terminationCheckEnabled: Boolean = true // Set to false to disable termination checking
+  private val terminationCheckEnabled: Boolean = true // Set to false to disable termination checking
 
-  def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
+  private def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
       localCtx: MutableContext,
       parameter: SemanticCollector,
       ck: Tyck,
@@ -44,7 +44,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
     }
   }
 
-  def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
+  private def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
       MutableContext,
       SemanticCollector,
       Tyck,
@@ -122,7 +122,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
 
   // placeholder, broken code
   // Simple termination analysis by traversing the Term using inspectRecursive
-  def analyzeTermination(
+  private def analyzeTermination(
       term: Term,
       functionNameOpt: Option[String]
   )(using
@@ -136,7 +136,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
   }
 
   // Helper function to collect function call names from a Term using inspectRecursive
-  def collectFunctionCalls(term: Term): Set[String] = {
+  private def collectFunctionCalls(term: Term): Set[String] = {
     val calls = scala.collection.mutable.Set[String]()
 
     term.inspectRecursive {
