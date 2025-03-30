@@ -83,7 +83,7 @@ object LexerV2 {
     new LexerV2(sourceOffset, ignoreLocation)
 
   var DEBUG = false // Keep DEBUG flag for tests that use it
-  val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
+  private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
 class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
@@ -664,19 +664,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     }
   }
 
-  private def handleOperator(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
-    // Advance once and parse the next atom
-    parseAtomWithComments(state.advance()).flatMap { case (next, newState) =>
-      val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
-      newState.current match {
-        case Right(Token.Operator(nextOp, nextSourcePos)) => {
-          handleOperator(nextOp, nextSourcePos, newState, updatedTerms)
-        }
-        case _ => Right((next, newState))
-      }
-    }
-  }
-
   private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
     current.current match {
       case Left(err)         => Left(err)
@@ -736,8 +723,8 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             Right((createIdentifier(chars, sourcePos), afterId))
         }
 
-      case Int(value, sourcePos) => parseInt(current).asInstanceOf[Either[ParseError, (Expr, LexerState)]]
-      case Rat(value, sourcePos) => parseRational(current).asInstanceOf[Either[ParseError, (Expr, LexerState)]]
+      case Int(value, sourcePos) => parseInt(current)
+      case Rat(value, sourcePos) => parseRational(current)
       case Str(chars, sourcePos) => parseString(current)
       case Sym(value, sourcePos) => parseSymbol(current)
 
@@ -861,12 +848,11 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         (trailingComments, afterList) = collectComments(afterExprs)
         result <- afterList.current match {
           case RParen(_) =>
-            val meta = (leadingComments.nonEmpty || trailingComments.nonEmpty) match {
-              case true =>
+            val meta =
+              if (leadingComments.nonEmpty || trailingComments.nonEmpty) then
                 createMeta(Some(sourcePos), Some(afterList.sourcePos))
                   .map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments, trailingComments)))
-              case false => createMeta(Some(sourcePos), Some(afterList.sourcePos))
-            }
+              else createMeta(Some(sourcePos), Some(afterList.sourcePos))
             Right((Tuple(exprs, meta), afterList.advance()))
           case _ => Left(expectedError("right parenthesis", afterList.current))
         }
@@ -947,7 +933,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     }
   }
 
-  def parseObject(initialState: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
+  private def parseObject(initialState: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
     // Collect comments before the object
     val (leadingComments, current) = collectComments(initialState)
 
@@ -1111,53 +1097,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         }
       case _ => Left(expectedError("[", initialState.current))
     }
-  }
-
-  def collectIdentifier(state: LexerState): (Vector[StringChar], LexerState) = {
-    @scala.annotation.tailrec
-    def collectRec(current: LexerState, chars: Vector[StringChar]): (Vector[StringChar], LexerState) = {
-      if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Identifier])) {
-        current.current match {
-          case Right(id: Token.Identifier) =>
-            collectRec(current.advance(), chars ++ id.parts)
-          case _ =>
-            throw new RuntimeException("Unreachable: exists check guarantees we have an Identifier token")
-        }
-      } else {
-        (chars, current)
-      }
-    }
-
-    collectRec(state, Vector.empty)
-  }
-
-  def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
-    case Right(token) => { token.isInstanceOf[Token.Identifier] }
-    case _            => { false }
-  }
-
-  def expectIdentifier(expected: String, state: LexerState): Either[ParseError, LexerState] = {
-    state.current match {
-      case Right(Token.Identifier(chars, _)) if charsToString(chars) == expected => {
-        Right(state.advance())
-      }
-      case other => {
-        Left(ParseError(s"Expected identifier '$expected' but got $other", state.sourcePos.range.start))
-      }
-    }
-  }
-
-  def skipComments(state: LexerState): LexerState = {
-    @scala.annotation.tailrec
-    def skipRec(current: LexerState): LexerState = {
-      if (current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
-        skipRec(current.advance())
-      } else {
-        current
-      }
-    }
-
-    skipRec(state)
   }
 
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
