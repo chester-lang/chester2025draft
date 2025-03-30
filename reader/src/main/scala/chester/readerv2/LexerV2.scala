@@ -637,7 +637,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] =
     current.current match {
       case Left(err)         => Left(err)
-      case LBrace(sourcePos) =>
+      case LBrace(_) =>
         // Check for empty object or block
         current.advance().current match {
           case Left(err)                        => Left(err)
@@ -653,7 +653,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           case _ => parseBlockWithComments(current)
         }
 
-      case LParen(sourcePos) => parseTuple(current)
+      case LParen(_) => parseTuple(current)
 
       case Id(chars, sourcePos) =>
         val afterId = current.advance()
@@ -693,12 +693,12 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             Right((createIdentifier(chars, sourcePos), afterId))
         }
 
-      case Int(value, sourcePos) => parseInt(current)
-      case Rat(value, sourcePos) => parseRational(current)
-      case Str(chars, sourcePos) => parseString(current)
-      case Sym(value, sourcePos) => parseSymbol(current)
+      case Int(_, _) => parseInt(current)
+      case Rat(_, _) => parseRational(current)
+      case Str(_, _) => parseString(current)
+      case Sym(_, _) => parseSymbol(current)
 
-      case LBracket(sourcePos) => parseListWithComments(current)
+      case LBracket(_) => parseListWithComments(current)
 
       case Right(token) => Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
 
@@ -725,7 +725,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
     // Replace skipComments with collectComments to preserve comments
-    val (leadingListComments, initialState) = collectComments(state)
+    val (_leadingListComments, initialState) = collectComments(state)
 
     @scala.annotation.tailrec
     def parseElements(current: LexerState, exprs: Vector[Expr], maxExprs: Int): Either[ParseError, (Vector[Expr], LexerState)] =
@@ -836,9 +836,9 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
     // Skip the opening brace
     current.current match {
-      case Right(Token.LBrace(sourcePos)) =>
+      case Right(Token.LBrace(_)) =>
         // Use collectComments instead of skipComments
-        val (blockStartComments, afterBrace) = collectComments(current.advance())
+        val (_blockStartComments, afterBrace) = collectComments(current.advance())
 
         // Create a local state to track comments and expressions
         var blockCurrent = afterBrace
@@ -883,8 +883,8 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           }
         }
         Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
-      case Right(t)  => return Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
-      case Left(err) => return Left(err)
+      case Right(t)  => Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+      case Left(err) => Left(err)
     }
   }
 
@@ -1328,16 +1328,15 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       st =>
         parseLiteral(
           st,
-          token =>
-            token match {
-              case Token.RationalLiteral(value, sourcePos) =>
-                try
-                  Some((value, sourcePos))
-                catch {
-                  case _: NumberFormatException => None
-                }
-              case _ => None
-            },
+          {
+            case Token.RationalLiteral(value, sourcePos) =>
+              try
+                Some((value, sourcePos))
+              catch {
+                case _: NumberFormatException => None
+              }
+            case _ => None
+          },
           (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
           "Expected rational literal"
         ),
@@ -1362,19 +1361,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   // Helper to create identifier expressions
   private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos): ConcreteIdentifier =
     ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
-
-  // Parse a simple identifier (no function calls or type parameters)
-  private def parseIdentifier(state: LexerState): Either[ParseError, (ConcreteIdentifier, LexerState)] =
-    withCommentsAndErrorHandling(
-      st =>
-        st.current match {
-          case Right(Token.Identifier(chars, sourcePos)) =>
-            Right((createIdentifier(chars, sourcePos), st.advance()))
-          case _ =>
-            Left(ParseError("Expected identifier", st.sourcePos.range.start))
-        },
-      "Error parsing identifier"
-    )(state)
 
   // Helper for creating field access expressions
   private def createDotCall(

@@ -7,10 +7,6 @@ import chester.syntax.concrete.Expr
 object ChesterReaderV2 {
   // Helper method to set up tokenizer and lexer with common logic
   private def setupLexer(source: FileNameAndContent, ignoreLocation: Boolean = false): (LexerV2, LexerState) = {
-    given reporter: Reporter[ParseError] = new Reporter[ParseError] {
-      def apply(error: ParseError): Unit = {}
-      def const(e: ParseError): Reporter[ParseError] = this
-    }
     val sourceOffset = SourceOffset(source)
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()

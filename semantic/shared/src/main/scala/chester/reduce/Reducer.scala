@@ -97,36 +97,6 @@ object NaiveReducer extends Reducer {
       val reducedResult = r.reduce(result)
       BlockTerm(reducedStatements, reducedResult, meta)
 
-    // Function calls - reduce function and arguments
-    case FCallTerm(f, args, meta) =>
-      val reducedF = r.reduce(f)
-      val reducedArgs = args.map(calling =>
-        Calling(
-          calling.args.map(arg => CallingArgTerm(r.reduce(arg.value), r.reduce(arg.ty), arg.name, arg.vararg, arg.meta)),
-          calling.implicitly,
-          calling.meta
-        )
-      )
-      reducedF match {
-        case Function(FunctionType(telescopes, retTy, _, _), body, _) =>
-          // Substitute args into body
-          val substitutedBody = telescopes.zip(reducedArgs).foldLeft(body) { case (acc, (telescope, calling)) =>
-            telescope.args.zip(calling.args).foldLeft(acc) { case (acc, (param, arg)) =>
-              acc.substitute(param.bind, arg.value)
-            }
-          }
-          // Only reduce body for normal mode or type-level functions in type-level mode
-          mode match {
-            case ReduceMode.Normal => r.reduce(substitutedBody)
-            case ReduceMode.TypeLevel =>
-              retTy match {
-                case Type(_, _) => r.reduce(substitutedBody)
-                case _          => substitutedBody
-              }
-          }
-        case _ => FCallTerm(reducedF, reducedArgs, meta)
-      }
-
     // Annotations - reduce the term and type
     case Annotation(term, ty, effects, meta) =>
       val reducedTerm = r.reduce(term)
@@ -136,10 +106,6 @@ object NaiveReducer extends Reducer {
         case t: WHNF => t // If the term is already in WHNF, return it
         case _       => Annotation(reducedTerm, reducedTy, reducedEffects, meta)
       }
-
-    // Tuple terms - reduce all values
-    case TupleTerm(values, meta) =>
-      TupleTerm(values.map(r.reduce), meta)
 
     // For other cases, leave as is for now
     case other => other

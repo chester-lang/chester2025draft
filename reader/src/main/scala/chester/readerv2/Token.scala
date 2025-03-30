@@ -9,10 +9,6 @@ sealed trait Token extends Product with Serializable {
   def isWhitespace: Boolean = false
   def isComment: Boolean = false
   def containsNewline: Boolean = false
-  def isRecoveryPoint: Boolean = this match {
-    case Token.RParen(_) | Token.RBracket(_) | Token.RBrace(_) | Token.Semicolon(_) | Token.Comma(_) | Token.EOF(_) => true
-    case _                                                                                                          => false
-  }
 }
 
 object Token {
@@ -30,7 +26,7 @@ object Token {
   case class EOF(sourcePos: SourcePos) extends Token
   case class Whitespace(sourcePos: SourcePos, hasNewline: Boolean = false) extends Token {
     override def isWhitespace = true
-    override def containsNewline = hasNewline
+    override def containsNewline: Boolean = hasNewline
   }
   case class Comment(text: String, sourcePos: SourcePos) extends Token { override def isComment = true }
   case class IntegerLiteral(value: String, sourcePos: SourcePos) extends Token
