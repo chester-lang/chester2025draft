@@ -117,9 +117,7 @@ class CLI[F[_]](using
   } yield ()
 
   def compileFiles(inputs: Seq[String], targetDir: String, tastDirs: Seq[String]): F[Unit] =
-    inputs.foldLeft(Runner.pure(())) { (acc, inputFile) =>
-      acc.flatMap(_ => this.compileFile(inputFile, targetDir, tastDirs))
-    }
+    inputs.foldLeft(Runner.pure(()))((acc, inputFile) => acc.flatMap(_ => this.compileFile(inputFile, targetDir, tastDirs)))
 
   def loadTASTs(tastDirs: Seq[String]): F[LoadedModules] =
     tastDirs.foldLeft(Runner.pure(LoadedModules.Empty)) { (acc, dir) =>
@@ -252,7 +250,7 @@ class CLI[F[_]](using
   } yield ()
 
   def addPackages(packages: Seq[String]): F[Unit] = for {
-    _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => s"${p}.chester"))
+    _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => s"$p.chester"))
   } yield ()
 
   def selfUpdate(): F[Unit] = for {

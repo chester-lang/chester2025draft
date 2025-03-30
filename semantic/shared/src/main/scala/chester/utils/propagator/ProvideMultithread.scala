@@ -327,9 +327,7 @@ trait ProvideMultithread extends ProvideImpl {
 
         // If still not resolved, try default values
         if (cellsNeeded.nonEmpty && tryFallback > 1) {
-          val defaultTasks = cellsNeeded.flatMap { c =>
-            Option.when(c.noAnyValue && c.store.default.isDefined)(new DefaultValueTask(c, this))
-          }
+          val defaultTasks = cellsNeeded.flatMap(c => Option.when(c.noAnyValue && c.store.default.isDefined)(new DefaultValueTask(c, this)))
 
           if (defaultTasks.nonEmpty) {
             try {

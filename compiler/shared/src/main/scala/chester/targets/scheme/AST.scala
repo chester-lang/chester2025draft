@@ -152,9 +152,7 @@ def CaseExpression(
     val datumsExpr = ListExpression(datums.map(_.asInstanceOf[Expression]))
     ListExpression(datumsExpr +: exprs)
   }
-  val elseExpr = elseClause.map { exprs =>
-    ListExpression(Identifier("else") +: exprs)
-  }.toSeq
+  val elseExpr = elseClause.map(exprs => ListExpression(Identifier("else") +: exprs)).toSeq
   ListExpression(Vector(Identifier("case"), key) ++ clausesExpr ++ elseExpr, meta)
 }
 

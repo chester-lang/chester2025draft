@@ -5,10 +5,10 @@ import upickle.default.*
 
 import scala.language.implicitConversions
 
-inline implicit def elimNonEmptySeq[T](x: NonEmptySeq[T]): Seq[T] = x.toSeq
-inline implicit def elimNonEmptyVector[T](x: NonEmptyVector[T]): Vector[T] =
+implicit inline def elimNonEmptySeq[T](x: NonEmptySeq[T]): Seq[T] = x.toSeq
+implicit inline def elimNonEmptyVector[T](x: NonEmptyVector[T]): Vector[T] =
   x.toVector
-inline implicit def convertVec[T](x: NonEmptyVector[T]): NonEmptySeq[T] =
+implicit inline def convertVec[T](x: NonEmptyVector[T]): NonEmptySeq[T] =
   NonEmptySeq.fromSeqUnsafe(x.toVector)
 
 extension [T](xs: NonEmptySeq[T]) {

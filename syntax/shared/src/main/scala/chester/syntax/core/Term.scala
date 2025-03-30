@@ -86,12 +86,12 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
     }
   }
 
-  final override def collectU(collector: UCollector): Unit = inspectRecursive {
+  override final def collectU(collector: UCollector): Unit = inspectRecursive {
     case x: TermWithUniqid => collector(x.uniqId)
     case _                 =>
   }
 
-  final override def replaceU(reranger: UReplacer): Term = descentRecursive {
+  override final def replaceU(reranger: UReplacer): Term = descentRecursive {
     case x: TermWithUniqid => x.switchUniqId(reranger)
     case x                 => x
   }
@@ -726,7 +726,7 @@ case class BlockTerm(
   override type ThisTree = BlockTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ";")(
-      (statements.map(_.toDoc) :+ result.toDoc)
+      statements.map(_.toDoc) :+ result.toDoc
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(

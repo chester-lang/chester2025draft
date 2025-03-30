@@ -143,28 +143,20 @@ case class DefaultInfixDefinitions(
   override def resolveInfix(name: Name): Option[Infix] = {
     val firstCharOption = name.headOption
 
-    firstCharOption.flatMap { firstChar =>
-      operatorGroups.get(firstChar).map { group =>
-        Infix(name, group)
-      }
-    }
+    firstCharOption.flatMap(firstChar => operatorGroups.get(firstChar).map(group => Infix(name, group)))
   }.orElse(infixOperators.get(name))
 
   override def resolvePrefix(name: Name): Option[Prefix] = {
     val firstCharOption = name.headOption
     firstCharOption
-      .flatMap { firstChar =>
-        Option.when(prefixes.contains(firstChar))(Prefix(name))
-      }
+      .flatMap(firstChar => Option.when(prefixes.contains(firstChar))(Prefix(name)))
       .orElse(prefixOperators.get(name))
   }
 
   override def resolvePostfix(name: Name): Option[Postfix] = {
     val firstCharOption = name.headOption
     firstCharOption
-      .flatMap { firstChar =>
-        Option.when(postfixes.contains(firstChar))(Postfix(name))
-      }
+      .flatMap(firstChar => Option.when(postfixes.contains(firstChar))(Postfix(name)))
       .orElse(postfixOperators.get(name))
   }
 }

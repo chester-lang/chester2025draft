@@ -14,14 +14,10 @@ class LinenoiseTerminal(init: TerminalInit) extends InTerminal[Id] {
   }
 
   private def loadHistory(): Unit =
-    historyFile.foreach { filename =>
-      facade.loadHistory(filename)
-    }
+    historyFile.foreach(filename => facade.loadHistory(filename))
 
   private def saveHistory(): Unit =
-    historyFile.foreach { filename =>
-      facade.saveHistory(filename)
-    }
+    historyFile.foreach(filename => facade.saveHistory(filename))
 
   override def writeln(line: fansi.Str): Unit =
     println(line.render)

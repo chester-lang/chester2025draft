@@ -424,7 +424,7 @@ trait PrettyPrinterBase {
     * inserts a line break and continues to the end of the sequence.
     */
   def fillcat(ds: Seq[Doc]): Doc =
-    folddoc(ds, (l: Doc, r: Doc) => (l <> group(linebreak <> r)))
+    folddoc(ds, (l: Doc, r: Doc) => l <> group(linebreak <> r))
 
   /** Return a document that concatenates the documents in the given sequence and terminates each document with `term`.
     */

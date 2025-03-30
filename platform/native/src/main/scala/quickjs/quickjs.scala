@@ -1880,7 +1880,7 @@ object functions:
     */
   def JS_AtomToString(ctx: Ptr[JSContext], atom: JSAtom)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_AtomToString(ctx, atom, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_AtomToString(ctx, atom, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -1897,14 +1897,14 @@ object functions:
     */
   def JS_AtomToValue(ctx: Ptr[JSContext], atom: JSAtom)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_AtomToValue(ctx, atom, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_AtomToValue(ctx, atom, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_Call(ctx: Ptr[JSContext], func_obj: Ptr[JSValue], this_obj: Ptr[JSValue], argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_Call(ctx, func_obj, this_obj, argc, argv, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_Call(ctx, func_obj, this_obj, argc, argv, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -1918,7 +1918,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](3)
     !(__ptr_0 + 0) = func_obj
     !(__ptr_0 + 1) = this_obj
-    __sn_wrap_quickjs_JS_Call(ctx, (__ptr_0 + 0), (__ptr_0 + 1), argc, argv, (__ptr_0 + 2))
+    __sn_wrap_quickjs_JS_Call(ctx, __ptr_0 + 0, __ptr_0 + 1, argc, argv, __ptr_0 + 2)
     !(__ptr_0 + 2)
 
   /** [bindgen] header: quickjs.h
@@ -1926,7 +1926,7 @@ object functions:
   def JS_CallConstructor(ctx: Ptr[JSContext], func_obj: JSValue, argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = func_obj
-    __sn_wrap_quickjs_JS_CallConstructor(ctx, (__ptr_0 + 0), argc, argv, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_CallConstructor(ctx, __ptr_0 + 0, argc, argv, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -1938,7 +1938,7 @@ object functions:
     */
   def JS_CallConstructor(ctx: Ptr[JSContext], func_obj: Ptr[JSValue], argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_CallConstructor(ctx, func_obj, argc, argv, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_CallConstructor(ctx, func_obj, argc, argv, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -1947,7 +1947,7 @@ object functions:
       Zone
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_CallConstructor2(ctx, func_obj, new_target, argc, argv, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_CallConstructor2(ctx, func_obj, new_target, argc, argv, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -1963,7 +1963,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](3)
     !(__ptr_0 + 0) = func_obj
     !(__ptr_0 + 1) = new_target
-    __sn_wrap_quickjs_JS_CallConstructor2(ctx, (__ptr_0 + 0), (__ptr_0 + 1), argc, argv, (__ptr_0 + 2))
+    __sn_wrap_quickjs_JS_CallConstructor2(ctx, __ptr_0 + 0, __ptr_0 + 1, argc, argv, __ptr_0 + 2)
     !(__ptr_0 + 2)
 
   /** [bindgen] header: quickjs.h
@@ -1976,7 +1976,7 @@ object functions:
     !(__ptr_0 + 1) = `val`
     !(__ptr_0 + 2) = getter
     !(__ptr_0 + 3) = setter
-    __sn_wrap_quickjs_JS_DefineProperty(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1), (__ptr_0 + 2), (__ptr_0 + 3), flags)
+    __sn_wrap_quickjs_JS_DefineProperty(ctx, __ptr_0 + 0, prop, __ptr_0 + 1, __ptr_0 + 2, __ptr_0 + 3, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -1998,7 +1998,7 @@ object functions:
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = getter
     !(__ptr_0 + 2) = setter
-    __sn_wrap_quickjs_JS_DefinePropertyGetSet(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1), (__ptr_0 + 2), flags)
+    __sn_wrap_quickjs_JS_DefinePropertyGetSet(ctx, __ptr_0 + 0, prop, __ptr_0 + 1, __ptr_0 + 2, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2023,7 +2023,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_DefinePropertyValue(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1), flags)
+    __sn_wrap_quickjs_JS_DefinePropertyValue(ctx, __ptr_0 + 0, prop, __ptr_0 + 1, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2036,7 +2036,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_DefinePropertyValueStr(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1), flags)
+    __sn_wrap_quickjs_JS_DefinePropertyValueStr(ctx, __ptr_0 + 0, prop, __ptr_0 + 1, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2049,7 +2049,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_DefinePropertyValueUint32(ctx, (__ptr_0 + 0), idx, (__ptr_0 + 1), flags)
+    __sn_wrap_quickjs_JS_DefinePropertyValueUint32(ctx, __ptr_0 + 0, idx, __ptr_0 + 1, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2061,14 +2061,14 @@ object functions:
   def JS_DeleteProperty(ctx: Ptr[JSContext], obj: JSValue, prop: JSAtom, flags: CInt)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_DeleteProperty(ctx, (__ptr_0 + 0), prop, flags)
+    __sn_wrap_quickjs_JS_DeleteProperty(ctx, __ptr_0 + 0, prop, flags)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_DetachArrayBuffer(ctx: Ptr[JSContext], obj: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_DetachArrayBuffer(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_DetachArrayBuffer(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2080,7 +2080,7 @@ object functions:
   def JS_DupValue(ctx: Ptr[JSContext], v: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_DupValue(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_DupValue(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2092,7 +2092,7 @@ object functions:
     */
   def JS_DupValue(ctx: Ptr[JSContext], v: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_DupValue(ctx, v, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_DupValue(ctx, v, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2100,14 +2100,14 @@ object functions:
   def JS_DupValueRT(rt: Ptr[JSRuntime], v: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_DupValueRT(rt, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_DupValueRT(rt, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_DupValueRT(rt: Ptr[JSRuntime], v: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_DupValueRT(rt, v, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_DupValueRT(rt, v, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2119,7 +2119,7 @@ object functions:
     */
   def JS_Eval(ctx: Ptr[JSContext], input: CString, input_len: size_t, filename: CString, eval_flags: CInt)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_Eval(ctx, input, input_len, filename, eval_flags, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_Eval(ctx, input, input_len, filename, eval_flags, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2132,7 +2132,7 @@ object functions:
   def JS_EvalFunction(ctx: Ptr[JSContext], fun_obj: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = fun_obj
-    __sn_wrap_quickjs_JS_EvalFunction(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_EvalFunction(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2144,7 +2144,7 @@ object functions:
     */
   def JS_EvalFunction(ctx: Ptr[JSContext], fun_obj: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_EvalFunction(ctx, fun_obj, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_EvalFunction(ctx, fun_obj, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2160,7 +2160,7 @@ object functions:
       Zone
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_EvalThis(ctx, this_obj, input, input_len, filename, eval_flags, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_EvalThis(ctx, this_obj, input, input_len, filename, eval_flags, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2170,7 +2170,7 @@ object functions:
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
-    __sn_wrap_quickjs_JS_EvalThis(ctx, (__ptr_0 + 0), input, input_len, filename, eval_flags, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_EvalThis(ctx, __ptr_0 + 0, input, input_len, filename, eval_flags, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2183,7 +2183,7 @@ object functions:
   def JS_FreeValue(ctx: Ptr[JSContext], v: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_FreeValue(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_FreeValue(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2195,7 +2195,7 @@ object functions:
   def JS_FreeValueRT(rt: Ptr[JSRuntime], v: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_FreeValueRT(rt, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_FreeValueRT(rt, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2207,14 +2207,14 @@ object functions:
   def JS_GetArrayBuffer(ctx: Ptr[JSContext], psize: Ptr[size_t], obj: JSValue)(using Zone): Ptr[uint8_t] =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_GetArrayBuffer(ctx, psize, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetArrayBuffer(ctx, psize, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetClassID(v: JSValue)(using Zone): JSClassID =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_GetClassID((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetClassID(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2230,14 +2230,14 @@ object functions:
     */
   def JS_GetClassProto(ctx: Ptr[JSContext], class_id: JSClassID)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetClassProto(ctx, class_id, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetClassProto(ctx, class_id, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetException(ctx: Ptr[JSContext])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetException(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetException(ctx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2249,7 +2249,7 @@ object functions:
     */
   def JS_GetGlobalObject(ctx: Ptr[JSContext])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetGlobalObject(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetGlobalObject(ctx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2261,7 +2261,7 @@ object functions:
     */
   def JS_GetImportMeta(ctx: Ptr[JSContext], m: Ptr[JSModuleDef])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetImportMeta(ctx, m, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetImportMeta(ctx, m, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2273,7 +2273,7 @@ object functions:
     */
   def JS_GetModuleNamespace(ctx: Ptr[JSContext], m: Ptr[JSModuleDef])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetModuleNamespace(ctx, m, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetModuleNamespace(ctx, m, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2291,14 +2291,14 @@ object functions:
   def JS_GetOpaque(obj: JSValue, class_id: JSClassID)(using Zone): Ptr[Byte] =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_GetOpaque((__ptr_0 + 0), class_id)
+    __sn_wrap_quickjs_JS_GetOpaque(__ptr_0 + 0, class_id)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetOpaque2(ctx: Ptr[JSContext], obj: JSValue, class_id: JSClassID)(using Zone): Ptr[Byte] =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_GetOpaque2(ctx, (__ptr_0 + 0), class_id)
+    __sn_wrap_quickjs_JS_GetOpaque2(ctx, __ptr_0 + 0, class_id)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2310,7 +2310,7 @@ object functions:
   def JS_GetOwnProperty(ctx: Ptr[JSContext], desc: Ptr[JSPropertyDescriptor], obj: JSValue, prop: JSAtom)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_GetOwnProperty(ctx, desc, (__ptr_0 + 0), prop)
+    __sn_wrap_quickjs_JS_GetOwnProperty(ctx, desc, __ptr_0 + 0, prop)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2327,21 +2327,21 @@ object functions:
   def JS_GetOwnPropertyNames(ctx: Ptr[JSContext], ptab: Ptr[Ptr[JSPropertyEnum]], plen: Ptr[uint32_t], obj: JSValue, flags: CInt)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_GetOwnPropertyNames(ctx, ptab, plen, (__ptr_0 + 0), flags)
+    __sn_wrap_quickjs_JS_GetOwnPropertyNames(ctx, ptab, plen, __ptr_0 + 0, flags)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetProperty(ctx: Ptr[JSContext], this_obj: JSValue, prop: JSAtom)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
-    __sn_wrap_quickjs_JS_GetProperty(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_GetProperty(ctx, __ptr_0 + 0, prop, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetProperty(ctx: Ptr[JSContext], this_obj: Ptr[JSValue], prop: JSAtom)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetProperty(ctx, this_obj, prop, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetProperty(ctx, this_obj, prop, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2362,7 +2362,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](3)
     !(__ptr_0 + 0) = obj
     !(__ptr_0 + 1) = receiver
-    __sn_wrap_quickjs_JS_GetPropertyInternal(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1), throw_ref_error, (__ptr_0 + 2))
+    __sn_wrap_quickjs_JS_GetPropertyInternal(ctx, __ptr_0 + 0, prop, __ptr_0 + 1, throw_ref_error, __ptr_0 + 2)
     !(__ptr_0 + 2)
 
   /** [bindgen] header: quickjs.h
@@ -2371,14 +2371,14 @@ object functions:
       Zone
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetPropertyInternal(ctx, obj, prop, receiver, throw_ref_error, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetPropertyInternal(ctx, obj, prop, receiver, throw_ref_error, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetPropertyStr(ctx: Ptr[JSContext], this_obj: Ptr[JSValue], prop: CString)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetPropertyStr(ctx, this_obj, prop, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetPropertyStr(ctx, this_obj, prop, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2386,7 +2386,7 @@ object functions:
   def JS_GetPropertyStr(ctx: Ptr[JSContext], this_obj: JSValue, prop: CString)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
-    __sn_wrap_quickjs_JS_GetPropertyStr(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_GetPropertyStr(ctx, __ptr_0 + 0, prop, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2404,21 +2404,21 @@ object functions:
   def JS_GetPropertyUint32(ctx: Ptr[JSContext], this_obj: JSValue, idx: uint32_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
-    __sn_wrap_quickjs_JS_GetPropertyUint32(ctx, (__ptr_0 + 0), idx, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_GetPropertyUint32(ctx, __ptr_0 + 0, idx, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetPropertyUint32(ctx: Ptr[JSContext], this_obj: Ptr[JSValue], idx: uint32_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetPropertyUint32(ctx, this_obj, idx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetPropertyUint32(ctx, this_obj, idx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_GetPrototype(ctx: Ptr[JSContext], `val`: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetPrototype(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetPrototype(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2431,7 +2431,7 @@ object functions:
   def JS_GetPrototype(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_GetPrototype(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_GetPrototype(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2455,7 +2455,7 @@ object functions:
       pbytes_per_element: Ptr[size_t]
   )(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_GetTypedArrayBuffer(ctx, obj, pbyte_offset, pbyte_length, pbytes_per_element, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_GetTypedArrayBuffer(ctx, obj, pbyte_offset, pbyte_length, pbytes_per_element, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2469,7 +2469,7 @@ object functions:
   )(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_GetTypedArrayBuffer(ctx, (__ptr_0 + 0), pbyte_offset, pbyte_length, pbytes_per_element, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_GetTypedArrayBuffer(ctx, __ptr_0 + 0, pbyte_offset, pbyte_length, pbytes_per_element, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2482,7 +2482,7 @@ object functions:
   def JS_HasProperty(ctx: Ptr[JSContext], this_obj: JSValue, prop: JSAtom)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = this_obj
-    __sn_wrap_quickjs_JS_HasProperty(ctx, (__ptr_0 + 0), prop)
+    __sn_wrap_quickjs_JS_HasProperty(ctx, __ptr_0 + 0, prop)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2493,7 +2493,7 @@ object functions:
     */
   def JS_Invoke(ctx: Ptr[JSContext], this_val: Ptr[JSValue], atom: JSAtom, argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_Invoke(ctx, this_val, atom, argc, argv, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_Invoke(ctx, this_val, atom, argc, argv, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2501,7 +2501,7 @@ object functions:
   def JS_Invoke(ctx: Ptr[JSContext], this_val: JSValue, atom: JSAtom, argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_val
-    __sn_wrap_quickjs_JS_Invoke(ctx, (__ptr_0 + 0), atom, argc, argv, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_Invoke(ctx, __ptr_0 + 0, atom, argc, argv, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -2509,7 +2509,7 @@ object functions:
   def JS_IsArray(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_IsArray(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsArray(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2521,7 +2521,7 @@ object functions:
   def JS_IsBigDecimal(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsBigDecimal((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsBigDecimal(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2533,7 +2533,7 @@ object functions:
   def JS_IsBigFloat(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsBigFloat((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsBigFloat(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2550,7 +2550,7 @@ object functions:
   def JS_IsBigInt(ctx: Ptr[JSContext], v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsBigInt(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsBigInt(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2562,14 +2562,14 @@ object functions:
   def JS_IsBool(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsBool((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsBool(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_IsConstructor(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_IsConstructor(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsConstructor(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2581,7 +2581,7 @@ object functions:
   def JS_IsError(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_IsError(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsError(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2598,7 +2598,7 @@ object functions:
   def JS_IsException(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsException((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsException(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2610,14 +2610,14 @@ object functions:
   def JS_IsExtensible(ctx: Ptr[JSContext], obj: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_IsExtensible(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsExtensible(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_IsFunction(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_IsFunction(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsFunction(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2635,14 +2635,14 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = `val`
     !(__ptr_0 + 1) = obj
-    __sn_wrap_quickjs_JS_IsInstanceOf(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_IsInstanceOf(ctx, __ptr_0 + 0, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_IsLiveObject(rt: Ptr[JSRuntime], obj: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_IsLiveObject(rt, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsLiveObject(rt, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2654,7 +2654,7 @@ object functions:
   def JS_IsNull(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsNull((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsNull(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2666,7 +2666,7 @@ object functions:
   def JS_IsNumber(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsNumber((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsNumber(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2678,7 +2678,7 @@ object functions:
   def JS_IsObject(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsObject((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsObject(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2695,7 +2695,7 @@ object functions:
   def JS_IsString(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsString((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsString(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2707,7 +2707,7 @@ object functions:
   def JS_IsSymbol(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsSymbol((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsSymbol(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2719,14 +2719,14 @@ object functions:
   def JS_IsUndefined(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsUndefined((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsUndefined(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_IsUninitialized(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_IsUninitialized((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_IsUninitialized(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2740,7 +2740,7 @@ object functions:
     !(__ptr_0 + 0) = obj
     !(__ptr_0 + 1) = replacer
     !(__ptr_0 + 2) = space0
-    __sn_wrap_quickjs_JS_JSONStringify(ctx, (__ptr_0 + 0), (__ptr_0 + 1), (__ptr_0 + 2), (__ptr_0 + 3))
+    __sn_wrap_quickjs_JS_JSONStringify(ctx, __ptr_0 + 0, __ptr_0 + 1, __ptr_0 + 2, __ptr_0 + 3)
     !(__ptr_0 + 3)
 
   /** [bindgen] header: quickjs.h
@@ -2752,14 +2752,14 @@ object functions:
     */
   def JS_JSONStringify(ctx: Ptr[JSContext], obj: Ptr[JSValue], replacer: Ptr[JSValue], space0: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_JSONStringify(ctx, obj, replacer, space0, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_JSONStringify(ctx, obj, replacer, space0, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_LoadModule(ctx: Ptr[JSContext], basename: CString, filename: CString)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_LoadModule(ctx, basename, filename, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_LoadModule(ctx, basename, filename, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2772,7 +2772,7 @@ object functions:
   def JS_MarkValue(rt: Ptr[JSRuntime], `val`: JSValue, mark_func: Ptr[JS_MarkFunc])(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_MarkValue(rt, (__ptr_0 + 0), mark_func)
+    __sn_wrap_quickjs_JS_MarkValue(rt, __ptr_0 + 0, mark_func)
 
   /** [bindgen] header: quickjs.h
     */
@@ -2783,7 +2783,7 @@ object functions:
     */
   def JS_NewArray(ctx: Ptr[JSContext])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewArray(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewArray(ctx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2814,14 +2814,14 @@ object functions:
       is_shared: CInt
   )(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewArrayBuffer(ctx, buf, len, free_func, opaque, is_shared, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewArrayBuffer(ctx, buf, len, free_func, opaque, is_shared, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewArrayBufferCopy(ctx: Ptr[JSContext], buf: Ptr[uint8_t], len: size_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewArrayBufferCopy(ctx, buf, len, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewArrayBufferCopy(ctx, buf, len, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2838,7 +2838,7 @@ object functions:
     */
   def JS_NewAtomString(ctx: Ptr[JSContext], str: CString)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewAtomString(ctx, str, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewAtomString(ctx, str, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2850,14 +2850,14 @@ object functions:
     */
   def JS_NewBigInt64(ctx: Ptr[JSContext], v: int64_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewBigInt64(ctx, v, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewBigInt64(ctx, v, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewBigUint64(ctx: Ptr[JSContext], v: uint64_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewBigUint64(ctx, v, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewBigUint64(ctx, v, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2874,7 +2874,7 @@ object functions:
     */
   def JS_NewBool(ctx: Ptr[JSContext], `val`: CInt)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewBool(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewBool(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2886,7 +2886,7 @@ object functions:
     */
   def JS_NewCFunction(ctx: Ptr[JSContext], func: Ptr[JSCFunction], name: CString, length: CInt)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewCFunction(ctx, func, name, length, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewCFunction(ctx, func, name, length, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2895,7 +2895,7 @@ object functions:
       Zone
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewCFunction2(ctx, func, name, length, cproto, magic, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewCFunction2(ctx, func, name, length, cproto, magic, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2911,7 +2911,7 @@ object functions:
       Zone
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewCFunctionData(ctx, func, length, magic, data_len, data, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewCFunctionData(ctx, func, length, magic, data_len, data, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2927,7 +2927,7 @@ object functions:
       Zone
   ): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewCFunctionMagic(ctx, func, name, length, cproto, magic, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewCFunctionMagic(ctx, func, name, length, cproto, magic, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2946,14 +2946,14 @@ object functions:
     */
   def JS_NewCatchOffset(ctx: Ptr[JSContext], `val`: int32_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewCatchOffset(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewCatchOffset(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewDate(ctx: Ptr[JSContext], epoch_ms: Double)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewDate(ctx, epoch_ms, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewDate(ctx, epoch_ms, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2970,14 +2970,14 @@ object functions:
     */
   def JS_NewError(ctx: Ptr[JSContext])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewError(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewError(ctx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewFloat64(ctx: Ptr[JSContext], d: Double)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewFloat64(ctx, d, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewFloat64(ctx, d, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -2989,7 +2989,7 @@ object functions:
     */
   def JS_NewInt32(ctx: Ptr[JSContext], `val`: int32_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewInt32(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewInt32(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3006,7 +3006,7 @@ object functions:
     */
   def JS_NewInt64(ctx: Ptr[JSContext], `val`: int64_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewInt64(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewInt64(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3018,14 +3018,14 @@ object functions:
     */
   def JS_NewObject(ctx: Ptr[JSContext])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewObject(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewObject(ctx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewObjectClass(ctx: Ptr[JSContext], class_id: CInt)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewObjectClass(ctx, class_id, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewObjectClass(ctx, class_id, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3037,7 +3037,7 @@ object functions:
     */
   def JS_NewObjectProto(ctx: Ptr[JSContext], proto: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewObjectProto(ctx, proto, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewObjectProto(ctx, proto, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3050,14 +3050,14 @@ object functions:
   def JS_NewObjectProto(ctx: Ptr[JSContext], proto: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = proto
-    __sn_wrap_quickjs_JS_NewObjectProto(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_NewObjectProto(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewObjectProtoClass(ctx: Ptr[JSContext], proto: Ptr[JSValue], class_id: JSClassID)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewObjectProtoClass(ctx, proto, class_id, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewObjectProtoClass(ctx, proto, class_id, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3070,7 +3070,7 @@ object functions:
   def JS_NewObjectProtoClass(ctx: Ptr[JSContext], proto: JSValue, class_id: JSClassID)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = proto
-    __sn_wrap_quickjs_JS_NewObjectProtoClass(ctx, (__ptr_0 + 0), class_id, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_NewObjectProtoClass(ctx, __ptr_0 + 0, class_id, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -3082,7 +3082,7 @@ object functions:
     */
   def JS_NewPromiseCapability(ctx: Ptr[JSContext], resolving_funcs: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewPromiseCapability(ctx, resolving_funcs, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewPromiseCapability(ctx, resolving_funcs, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3094,7 +3094,7 @@ object functions:
     */
   def JS_NewString(ctx: Ptr[JSContext], str: CString)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewString(ctx, str, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewString(ctx, str, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3106,14 +3106,14 @@ object functions:
     */
   def JS_NewStringLen(ctx: Ptr[JSContext], str1: CString, len1: size_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewStringLen(ctx, str1, len1, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewStringLen(ctx, str1, len1, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_NewTypedArray(ctx: Ptr[JSContext], argc: CInt, argv: Ptr[JSValue], array_type: JSTypedArrayEnum)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewTypedArray(ctx, argc, argv, array_type, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewTypedArray(ctx, argc, argv, array_type, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3130,7 +3130,7 @@ object functions:
     */
   def JS_NewUint32(ctx: Ptr[JSContext], `val`: uint32_t)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_NewUint32(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_NewUint32(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3142,14 +3142,14 @@ object functions:
     */
   def JS_ParseJSON(ctx: Ptr[JSContext], buf: CString, buf_len: size_t, filename: CString)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_ParseJSON(ctx, buf, buf_len, filename, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ParseJSON(ctx, buf, buf_len, filename, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_ParseJSON2(ctx: Ptr[JSContext], buf: CString, buf_len: size_t, filename: CString, flags: CInt)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_ParseJSON2(ctx, buf, buf_len, filename, flags, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ParseJSON2(ctx, buf, buf_len, filename, flags, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3167,14 +3167,14 @@ object functions:
   def JS_PreventExtensions(ctx: Ptr[JSContext], obj: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_PreventExtensions(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_PreventExtensions(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_PromiseResult(ctx: Ptr[JSContext], promise: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = promise
-    __sn_wrap_quickjs_JS_PromiseResult(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_PromiseResult(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -3186,7 +3186,7 @@ object functions:
     */
   def JS_PromiseResult(ctx: Ptr[JSContext], promise: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_PromiseResult(ctx, promise, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_PromiseResult(ctx, promise, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3194,7 +3194,7 @@ object functions:
   def JS_PromiseState(ctx: Ptr[JSContext], promise: JSValue)(using Zone): JSPromiseStateEnum =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = promise
-    __sn_wrap_quickjs_JS_PromiseState(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_PromiseState(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3205,7 +3205,7 @@ object functions:
     */
   def JS_ReadObject(ctx: Ptr[JSContext], buf: Ptr[uint8_t], buf_len: size_t, flags: CInt)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_ReadObject(ctx, buf, buf_len, flags, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ReadObject(ctx, buf, buf_len, flags, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3218,7 +3218,7 @@ object functions:
   def JS_ResolveModule(ctx: Ptr[JSContext], obj: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_ResolveModule(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ResolveModule(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3236,7 +3236,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = op1
     !(__ptr_0 + 1) = op2
-    __sn_wrap_quickjs_JS_SameValue(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SameValue(ctx, __ptr_0 + 0, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3249,14 +3249,14 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = op1
     !(__ptr_0 + 1) = op2
-    __sn_wrap_quickjs_JS_SameValueZero(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SameValueZero(ctx, __ptr_0 + 0, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_SetClassProto(ctx: Ptr[JSContext], class_id: JSClassID, obj: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_SetClassProto(ctx, class_id, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_SetClassProto(ctx, class_id, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3269,7 +3269,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = func_obj
     !(__ptr_0 + 1) = proto
-    __sn_wrap_quickjs_JS_SetConstructor(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SetConstructor(ctx, __ptr_0 + 0, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3281,7 +3281,7 @@ object functions:
   def JS_SetConstructorBit(ctx: Ptr[JSContext], func_obj: JSValue, `val`: CInt)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = func_obj
-    __sn_wrap_quickjs_JS_SetConstructorBit(ctx, (__ptr_0 + 0), `val`)
+    __sn_wrap_quickjs_JS_SetConstructorBit(ctx, __ptr_0 + 0, `val`)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3298,14 +3298,14 @@ object functions:
   def JS_SetIsHTMLDDA(ctx: Ptr[JSContext], obj: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_SetIsHTMLDDA(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_SetIsHTMLDDA(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_SetModuleExport(ctx: Ptr[JSContext], m: Ptr[JSModuleDef], export_name: CString, `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_SetModuleExport(ctx, m, export_name, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_SetModuleExport(ctx, m, export_name, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3322,7 +3322,7 @@ object functions:
   def JS_SetOpaque(obj: JSValue, opaque: Ptr[Byte])(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_SetOpaque((__ptr_0 + 0), opaque)
+    __sn_wrap_quickjs_JS_SetOpaque(__ptr_0 + 0, opaque)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3330,7 +3330,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_SetProperty(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SetProperty(ctx, __ptr_0 + 0, prop, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3347,7 +3347,7 @@ object functions:
   def JS_SetPropertyFunctionList(ctx: Ptr[JSContext], obj: JSValue, tab: Ptr[JSCFunctionListEntry], len: CInt)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_SetPropertyFunctionList(ctx, (__ptr_0 + 0), tab, len)
+    __sn_wrap_quickjs_JS_SetPropertyFunctionList(ctx, __ptr_0 + 0, tab, len)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3360,7 +3360,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_SetPropertyInt64(ctx, (__ptr_0 + 0), idx, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SetPropertyInt64(ctx, __ptr_0 + 0, idx, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3369,7 +3369,7 @@ object functions:
     !(__ptr_0 + 0) = obj
     !(__ptr_0 + 1) = `val`
     !(__ptr_0 + 2) = this_obj
-    __sn_wrap_quickjs_JS_SetPropertyInternal(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1), (__ptr_0 + 2), flags)
+    __sn_wrap_quickjs_JS_SetPropertyInternal(ctx, __ptr_0 + 0, prop, __ptr_0 + 1, __ptr_0 + 2, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3382,7 +3382,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_SetPropertyStr(ctx, (__ptr_0 + 0), prop, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SetPropertyStr(ctx, __ptr_0 + 0, prop, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3400,7 +3400,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_obj
     !(__ptr_0 + 1) = `val`
-    __sn_wrap_quickjs_JS_SetPropertyUint32(ctx, (__ptr_0 + 0), idx, (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SetPropertyUint32(ctx, __ptr_0 + 0, idx, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3408,7 +3408,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = obj
     !(__ptr_0 + 1) = proto_val
-    __sn_wrap_quickjs_JS_SetPrototype(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_SetPrototype(ctx, __ptr_0 + 0, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3420,7 +3420,7 @@ object functions:
   def JS_SetUncatchableError(ctx: Ptr[JSContext], `val`: JSValue, flag: CInt)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_SetUncatchableError(ctx, (__ptr_0 + 0), flag)
+    __sn_wrap_quickjs_JS_SetUncatchableError(ctx, __ptr_0 + 0, flag)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3433,7 +3433,7 @@ object functions:
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = op1
     !(__ptr_0 + 1) = op2
-    __sn_wrap_quickjs_JS_StrictEq(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_StrictEq(ctx, __ptr_0 + 0, __ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3444,7 +3444,7 @@ object functions:
     */
   def JS_Throw(ctx: Ptr[JSContext], obj: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_Throw(ctx, obj, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_Throw(ctx, obj, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3452,7 +3452,7 @@ object functions:
   def JS_Throw(ctx: Ptr[JSContext], obj: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_Throw(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_Throw(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -3464,7 +3464,7 @@ object functions:
     */
   def JS_ThrowOutOfMemory(ctx: Ptr[JSContext])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_ThrowOutOfMemory(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ThrowOutOfMemory(ctx, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3477,7 +3477,7 @@ object functions:
   def JS_ToBigInt64(ctx: Ptr[JSContext], pres: Ptr[int64_t], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToBigInt64(ctx, pres, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToBigInt64(ctx, pres, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3489,7 +3489,7 @@ object functions:
   def JS_ToBool(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToBool(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToBool(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3506,7 +3506,7 @@ object functions:
   def JS_ToCString(ctx: Ptr[JSContext], val1: JSValue)(using Zone): CString =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = val1
-    __sn_wrap_quickjs_JS_ToCString(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToCString(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3518,14 +3518,14 @@ object functions:
   def JS_ToCStringLen(ctx: Ptr[JSContext], plen: Ptr[size_t], val1: JSValue)(using Zone): CString =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = val1
-    __sn_wrap_quickjs_JS_ToCStringLen(ctx, plen, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToCStringLen(ctx, plen, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_ToCStringLen2(ctx: Ptr[JSContext], plen: Ptr[size_t], val1: JSValue, cesu8: CInt)(using Zone): CString =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = val1
-    __sn_wrap_quickjs_JS_ToCStringLen2(ctx, plen, (__ptr_0 + 0), cesu8)
+    __sn_wrap_quickjs_JS_ToCStringLen2(ctx, plen, __ptr_0 + 0, cesu8)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3537,7 +3537,7 @@ object functions:
   def JS_ToFloat64(ctx: Ptr[JSContext], pres: Ptr[Double], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToFloat64(ctx, pres, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToFloat64(ctx, pres, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3549,7 +3549,7 @@ object functions:
   def JS_ToIndex(ctx: Ptr[JSContext], plen: Ptr[uint64_t], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToIndex(ctx, plen, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToIndex(ctx, plen, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3566,7 +3566,7 @@ object functions:
   def JS_ToInt32(ctx: Ptr[JSContext], pres: Ptr[int32_t], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToInt32(ctx, pres, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToInt32(ctx, pres, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3578,7 +3578,7 @@ object functions:
   def JS_ToInt64(ctx: Ptr[JSContext], pres: Ptr[int64_t], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToInt64(ctx, pres, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToInt64(ctx, pres, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3590,13 +3590,13 @@ object functions:
   def JS_ToInt64Ext(ctx: Ptr[JSContext], pres: Ptr[int64_t], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToInt64Ext(ctx, pres, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToInt64Ext(ctx, pres, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_ToPropertyKey(ctx: Ptr[JSContext], `val`: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_ToPropertyKey(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToPropertyKey(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3604,7 +3604,7 @@ object functions:
   def JS_ToPropertyKey(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToPropertyKey(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_ToPropertyKey(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -3616,7 +3616,7 @@ object functions:
     */
   def JS_ToString(ctx: Ptr[JSContext], `val`: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_JS_ToString(ctx, `val`, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToString(ctx, `val`, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3624,7 +3624,7 @@ object functions:
   def JS_ToString(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToString(ctx, (__ptr_0 + 0), (__ptr_0 + 1))
+    __sn_wrap_quickjs_JS_ToString(ctx, __ptr_0 + 0, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h
@@ -3642,14 +3642,14 @@ object functions:
   def JS_ToUint32(ctx: Ptr[JSContext], pres: Ptr[uint32_t], `val`: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ToUint32(ctx, pres, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ToUint32(ctx, pres, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def JS_VALUE_IS_NAN(v: JSValue)(using Zone): CInt =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs_JS_VALUE_IS_NAN((__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_VALUE_IS_NAN(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3661,7 +3661,7 @@ object functions:
   def JS_ValueToAtom(ctx: Ptr[JSContext], `val`: JSValue)(using Zone): JSAtom =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = `val`
-    __sn_wrap_quickjs_JS_ValueToAtom(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs_JS_ValueToAtom(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3678,7 +3678,7 @@ object functions:
   def JS_WriteObject(ctx: Ptr[JSContext], psize: Ptr[size_t], obj: JSValue, flags: CInt)(using Zone): Ptr[uint8_t] =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_WriteObject(ctx, psize, (__ptr_0 + 0), flags)
+    __sn_wrap_quickjs_JS_WriteObject(ctx, psize, __ptr_0 + 0, flags)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3704,14 +3704,14 @@ object functions:
   )(using Zone): Ptr[uint8_t] =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = obj
-    __sn_wrap_quickjs_JS_WriteObject2(ctx, psize, (__ptr_0 + 0), flags, psab_tab, psab_tab_len)
+    __sn_wrap_quickjs_JS_WriteObject2(ctx, psize, __ptr_0 + 0, flags, psab_tab, psab_tab_len)
 
   /** [bindgen] header: quickjs.h
     */
   def __JS_FreeValue(ctx: Ptr[JSContext], v: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs___JS_FreeValue(ctx, (__ptr_0 + 0))
+    __sn_wrap_quickjs___JS_FreeValue(ctx, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3723,7 +3723,7 @@ object functions:
   def __JS_FreeValueRT(rt: Ptr[JSRuntime], v: JSValue)(using Zone): Unit =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
     !(__ptr_0 + 0) = v
-    __sn_wrap_quickjs___JS_FreeValueRT(rt, (__ptr_0 + 0))
+    __sn_wrap_quickjs___JS_FreeValueRT(rt, __ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
@@ -3739,14 +3739,14 @@ object functions:
     */
   def __JS_NewFloat64(ctx: Ptr[JSContext], d: Double)(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs___JS_NewFloat64(ctx, d, (__ptr_0 + 0))
+    __sn_wrap_quickjs___JS_NewFloat64(ctx, d, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
     */
   def js_string_codePointRange(ctx: Ptr[JSContext], this_val: Ptr[JSValue], argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](1)
-    __sn_wrap_quickjs_js_string_codePointRange(ctx, this_val, argc, argv, (__ptr_0 + 0))
+    __sn_wrap_quickjs_js_string_codePointRange(ctx, this_val, argc, argv, __ptr_0 + 0)
     !(__ptr_0 + 0)
 
   /** [bindgen] header: quickjs.h
@@ -3754,7 +3754,7 @@ object functions:
   def js_string_codePointRange(ctx: Ptr[JSContext], this_val: JSValue, argc: CInt, argv: Ptr[JSValue])(using Zone): JSValue =
     val __ptr_0: Ptr[JSValue] = alloc[JSValue](2)
     !(__ptr_0 + 0) = this_val
-    __sn_wrap_quickjs_js_string_codePointRange(ctx, (__ptr_0 + 0), argc, argv, (__ptr_0 + 1))
+    __sn_wrap_quickjs_js_string_codePointRange(ctx, __ptr_0 + 0, argc, argv, __ptr_0 + 1)
     !(__ptr_0 + 1)
 
   /** [bindgen] header: quickjs.h

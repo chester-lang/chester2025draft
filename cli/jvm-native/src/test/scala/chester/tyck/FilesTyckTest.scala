@@ -47,7 +47,7 @@ class FilesTyckTest extends FunSuite {
                     )
                   )
                   assertEquals(
-                    StringPrinter.render((result.wellTyped))(using
+                    StringPrinter.render(result.wellTyped)(using
                       PrettierOptions.Default
                     ),
                     StringPrinter.render(result.wellTyped)(using

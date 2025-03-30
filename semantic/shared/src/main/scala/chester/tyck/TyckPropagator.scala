@@ -454,7 +454,7 @@ trait TyckPropagator extends ElaboraterCommon {
 
     def tryUnifyInternal(lhs: Term, rhs: Term, depth: Int): Boolean = {
       val indent = " " * depth
-      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG] Trying to unify: $lhs with $rhs")
+      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG] Trying to unify: $lhs with $rhs")
 
       // Helper function to fully resolve references in terms
       def fullyResolveReference(term: Term): Term = {
@@ -476,7 +476,7 @@ trait TyckPropagator extends ElaboraterCommon {
       }
 
       if (lhs == rhs) {
-        if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Terms are equal, returning true")
+        if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Terms are equal, returning true")
         true
       } else {
         // Use TypeLevel reduction for type equality checking
@@ -488,14 +488,14 @@ trait TyckPropagator extends ElaboraterCommon {
         val rhsResolved = fullyResolveReference(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
 
         if (Debug.isEnabled(UnionMatching))
-          Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   After reduction and resolution: $lhsResolved with $rhsResolved")
+          Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   After reduction and resolution: $lhsResolved with $rhsResolved")
 
         // Special cases for integer literals
         (lhsResolved, rhsResolved) match {
           // Direct matching for integer values (like 42) with Union types containing Integer
           case (v: AbstractIntTerm, Union(types, _)) =>
             if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm ${v}")
+              Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm $v")
             val hasIntegerType = types.exists(t =>
               t match {
                 case IntegerType(_) => true
@@ -506,14 +506,14 @@ trait TyckPropagator extends ElaboraterCommon {
             )
             if (hasIntegerType) {
               if (Debug.isEnabled(UnionMatching))
-                Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Union contains Integer, AbstractIntTerm is compatible with union")
+                Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Union contains Integer, AbstractIntTerm is compatible with union")
               return true
             }
 
           // The reverse - Union containing Integer is compatible with AbstractIntTerm
           case (Union(types, _), v: AbstractIntTerm) =>
             if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm ${v}")
+              Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm $v")
             val hasIntegerType = types.exists(t =>
               t match {
                 case IntegerType(_) => true
@@ -524,49 +524,49 @@ trait TyckPropagator extends ElaboraterCommon {
             )
             if (hasIntegerType) {
               if (Debug.isEnabled(UnionMatching))
-                Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Union contains Integer, union is compatible with AbstractIntTerm")
+                Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Union contains Integer, union is compatible with AbstractIntTerm")
               return true
             }
 
           // Handle the case where a numeric literal needs to match with an Integer type
           case (lit: IntTerm, IntegerType(_)) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Integer literal matches IntegerType: true")
+            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Integer literal matches IntegerType: true")
             return true
           case (lit: IntegerTerm, IntegerType(_)) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Integer literal matches IntegerType: true")
+            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Integer literal matches IntegerType: true")
             return true
           // The inverse
           case (IntegerType(_), lit: IntTerm) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   IntegerType matches integer literal: true")
+            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   IntegerType matches integer literal: true")
             return true
           case (IntegerType(_), lit: IntegerTerm) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   IntegerType matches integer literal: true")
+            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   IntegerType matches integer literal: true")
             return true
 
           case _ => // Continue with normal processing
         }
 
         if (lhsResolved == rhsResolved) {
-          if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Reduced terms are equal, returning true")
+          if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Reduced terms are equal, returning true")
           true
         } else {
           // If structural equality check fails, try alpha-equivalence
           // which is crucial for dependent type systems
           if (areAlphaEquivalent(lhsResolved, rhsResolved)) {
             if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Terms are alpha-equivalent, returning true")
+              Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Terms are alpha-equivalent, returning true")
             true
           } else {
             (lhsResolved, rhsResolved) match {
               case (Type(level1, _), Type(level2, _)) =>
                 val result = isLevelCompatible(level1, level2)(using state, localCtx)
                 if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Type level check: $level1 compatible with $level2? $result")
+                  Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Type level check: $level1 compatible with $level2? $result")
                 result
 
               case (ListType(elem1, _), ListType(elem2, _)) =>
                 val result = tryUnifyInternal(elem1, elem2, depth + 1)
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   List element check: $result")
+                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   List element check: $result")
                 result
 
               case (lhsType, Union(types2, _)) =>
@@ -575,10 +575,10 @@ trait TyckPropagator extends ElaboraterCommon {
                 if (Debug.isEnabled(UnionMatching))
                   Debug.debugPrint(
                     UnionMatching,
-                    s"${indent}[UNIFY DEBUG]   Checking specific type against union: $lhsType with ${types2.mkString(", ")}"
+                    s"$indent[UNIFY DEBUG]   Checking specific type against union: $lhsType with ${types2.mkString(", ")}"
                   )
                 val result = types2.exists(t2 => tryUnifyInternal(lhsType, t2, depth + 1))
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Specific-to-union check: $result")
+                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Specific-to-union check: $result")
                 result
 
               case (Union(types1, _), rhsType) =>
@@ -587,14 +587,14 @@ trait TyckPropagator extends ElaboraterCommon {
                 if (Debug.isEnabled(UnionMatching))
                   Debug.debugPrint(
                     UnionMatching,
-                    s"${indent}[UNIFY DEBUG]   Checking union type against specific: ${types1.mkString(", ")} with $rhsType"
+                    s"$indent[UNIFY DEBUG]   Checking union type against specific: ${types1.mkString(", ")} with $rhsType"
                   )
                 val result = types1.exists(t1 => tryUnifyInternal(t1, rhsType, depth + 1))
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   Union-to-specific check: $result")
+                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   Union-to-specific check: $result")
                 result
 
               case _ =>
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"${indent}[UNIFY DEBUG]   No match found, returning false")
+                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   No match found, returning false")
                 false
             }
           }

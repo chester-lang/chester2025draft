@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 given DefaultRunner: Runner[Future] {
-  inline override def doTry[T](IO: Future[T]): Future[Try[T]] =
+  override inline def doTry[T](IO: Future[T]): Future[Try[T]] =
     IO.transformWith(result => Future.successful(result))
 
   override inline def pure[A](x: A): Future[A] = Future.successful(x)

@@ -357,9 +357,7 @@ case class ClassExpression(
     val idDoc = id.map(id => Doc.text(" ") <> id.toDoc).getOrElse(Doc.empty)
     val superClassDoc = superClass.map(sc => Doc.text(" extends ") <> sc.toDoc).getOrElse(Doc.empty)
     val implementsDoc = implementsInterfaces
-      .map { interfaces =>
-        Doc.text(" implements ") <> Doc.sep(Doc.text(","), interfaces.map(_.toDoc))
-      }
+      .map(interfaces => Doc.text(" implements ") <> Doc.sep(Doc.text(","), interfaces.map(_.toDoc)))
       .getOrElse(Doc.empty)
     decoratorsDoc <> Doc.text("class") <> idDoc <> superClassDoc <> implementsDoc <+> body.toDoc
   }
@@ -561,9 +559,7 @@ case class FunctionDeclaration(
     val genDoc = if (generator) Doc.text("*") else Doc.empty
     val idDoc = id.map(_.toDoc).getOrElse(Doc.empty)
     val typeParamsDoc = typeParameters
-      .map { tps =>
-        Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">")
-      }
+      .map(tps => Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">"))
       .getOrElse(Doc.empty)
     val paramsDoc = Doc.text("(") <> Doc.sep(Doc.text(","), params.map(_.toDoc)) <> Doc.text(")")
     val returnTypeDoc = returnType.map(rt => Doc.text(":") <+> rt.toDoc).getOrElse(Doc.empty)
@@ -953,9 +949,7 @@ case class TypeReference(
 ) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = {
     val paramsDoc = typeParameters
-      .map { tps =>
-        Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">")
-      }
+      .map(tps => Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">"))
       .getOrElse(Doc.empty)
     Doc.text(name) <> paramsDoc
   }
@@ -1082,9 +1076,7 @@ case class TypeAliasDeclaration(
 ) extends Declaration {
   def toDoc(using PrettierOptions): Doc = {
     val typeParamsDoc = typeParameters
-      .map { tps =>
-        Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">")
-      }
+      .map(tps => Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">"))
       .getOrElse(Doc.empty)
     Doc.text("type ") <> id.toDoc <> typeParamsDoc <> Doc.text(" = ") <> typeAnnotation.toDoc <> Doc.text(";")
   }
@@ -1140,9 +1132,7 @@ case class AsyncGeneratorFunctionDeclaration(
   def toDoc(using PrettierOptions): Doc = {
     val idDoc = id.map(_.toDoc).getOrElse(Doc.empty)
     val typeParamsDoc = typeParameters
-      .map { tps =>
-        Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">")
-      }
+      .map(tps => Doc.text("<") <> Doc.sep(Doc.text(","), tps.map(_.toDoc)) <> Doc.text(">"))
       .getOrElse(Doc.empty)
     val paramsDoc = Doc.text("(") <> Doc.sep(Doc.text(","), params.map(_.toDoc)) <> Doc.text(")")
     val returnTypeDoc = returnType.map(rt => Doc.text(":") <+> rt.toDoc).getOrElse(Doc.empty)

@@ -25,20 +25,20 @@ given DefaultIO: IO[Future] {
 
   def pathOps = PathOpsString
 
-  inline override def println(x: String): Future[Unit] =
+  override inline def println(x: String): Future[Unit] =
     Future.successful(Predef.println(x))
 
   override inline def ask(x: String): Future[String] = ???
 
-  inline override def readString(path: String): Future[String] =
+  override inline def readString(path: String): Future[String] =
     fsPromisesMod.readFile(path, BufferEncoding.utf8)
 
   // TODO: maybe use https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte
-  inline override def read(path: String): Future[Array[Byte]] = for {
+  override inline def read(path: String): Future[Array[Byte]] = for {
     buffer <- fsPromisesMod.readFile(path)
   } yield toScalaArray(buffer.asInstanceOf[Uint8Array])
 
-  inline override def writeString(
+  override inline def writeString(
       path: String,
       content: String,
       append: Boolean = false
@@ -50,31 +50,31 @@ given DefaultIO: IO[Future] {
     }
 
   // https://stackoverflow.com/questions/76455786/scala-js-how-to-convert-arraybyte-to-blob/76463887#76463887
-  inline override def write(path: String, content: Array[Byte]): Future[Unit] =
+  override inline def write(path: String, content: Array[Byte]): Future[Unit] =
     fsPromisesMod.writeFile(path, content.toTypedArray)
 
-  inline override def removeWhenExists(path: String): Future[Boolean] =
+  override inline def removeWhenExists(path: String): Future[Boolean] =
     fsPromisesMod.unlink(path).map(_ => true).recover { case _: js.JavaScriptException =>
       false
     }
 
-  inline override def workingDir: Future[String] =
+  override inline def workingDir: Future[String] =
     Future.successful(processMod.^.cwd())
 
-  inline override def getHomeDir: Future[String] =
+  override inline def getHomeDir: Future[String] =
     Future.successful(osMod.homedir())
 
-  inline override def exists(path: String): Future[Boolean] =
+  override inline def exists(path: String): Future[Boolean] =
     Future.successful(fsMod.existsSync(path))
 
-  inline override def createDirRecursiveIfNotExists(
+  override inline def createDirRecursiveIfNotExists(
       path: String
   ): Future[Unit] =
     fsPromisesMod
       .mkdir(path, MakeDirectoryOptions().setRecursive(true))
       .map(_ => ())
 
-  inline override def downloadToFile(url: String, path: String): Future[Unit] =
+  override inline def downloadToFile(url: String, path: String): Future[Unit] =
     for {
       fetched <- fetch(url).toFuture
       read <-
@@ -83,12 +83,12 @@ given DefaultIO: IO[Future] {
       _ <- fsPromisesMod.writeFile(path, new Uint8Array(read))
     } yield ()
 
-  inline override def chmodExecutable(path: String): Future[Unit] =
+  override inline def chmodExecutable(path: String): Future[Unit] =
     fsPromisesMod.chmod(path, "755")
 
-  inline override def getAbsolutePath(path: String): Future[String] =
+  override inline def getAbsolutePath(path: String): Future[String] =
     Future.successful(pathMod.resolve(path))
-  inline override def call(command: Seq[String]): Future[CommandOutput] = {
+  override inline def call(command: Seq[String]): Future[CommandOutput] = {
     val result = childProcessMod.spawnSync(command.head, command.tail.toJSArray, SpawnSyncOptions().setStdio(IOType.inherit))
     val status = result.status match {
       case null      => None

@@ -207,7 +207,10 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         connectUnionToComponents(rhsCell, rhsTypeIds, cause)
 
         // Create direct connections between compatible component types
-        for (t1 <- types1; t2 <- types2)
+        for {
+          t1 <- types1
+          t2 <- types2
+        }
           if (tryUnify(t1, t2)) {
             val t1Cell = toId(t1)
             val t2Cell = toId(t2)

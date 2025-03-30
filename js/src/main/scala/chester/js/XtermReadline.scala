@@ -17,7 +17,7 @@ def setTimeoutThen: Future[Unit] = {
 }
 
 final class InXtermReadline(rl: Readline) extends InTerminalNoHistory[Future] {
-  inline override def writeln(line: fansi.Str): Future[Unit] = {
+  override inline def writeln(line: fansi.Str): Future[Unit] = {
     rl.println(line.render)
     setTimeoutThen
   }

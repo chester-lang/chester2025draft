@@ -48,9 +48,7 @@ trait Tree[A <: Tree[A]] extends Any {
 
   def mapFlatten[B](f: A => Seq[B]): Vector[B] = {
     var result = Vector.empty[B]
-    inspectRecursive { term =>
-      result ++= f(term)
-    }
+    inspectRecursive(term => result ++= f(term))
     result
   }
 

@@ -812,7 +812,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         result <- afterList.current match {
           case RParen(_) =>
             val meta =
-              if (leadingComments.nonEmpty || trailingComments.nonEmpty) then
+              if leadingComments.nonEmpty || trailingComments.nonEmpty then
                 createMeta(Some(sourcePos), Some(afterList.sourcePos))
                   .map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments, trailingComments)))
               else createMeta(Some(sourcePos), Some(afterList.sourcePos))
@@ -904,23 +904,17 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             case Right(Token.Identifier(chars, idSourcePos)) =>
               val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
               parseField(state.advance(), identifier, idSourcePos).flatMap { case (clause, nextState) =>
-                checkAfterField(nextState).flatMap { nextStateAfterComma =>
-                  parseFields(nextStateAfterComma, clauses :+ clause)
-                }
+                checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(Token.StringLiteral(chars, strSourcePos)) =>
               val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
               parseField(state.advance(), stringLiteral, strSourcePos).flatMap { case (clause, nextState) =>
-                checkAfterField(nextState).flatMap { nextStateAfterComma =>
-                  parseFields(nextStateAfterComma, clauses :+ clause)
-                }
+                checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(Token.SymbolLiteral(value, symSourcePos)) =>
               val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
               parseField(state.advance(), symbolLiteral, symSourcePos).flatMap { case (clause, nextState) =>
-                checkAfterField(nextState).flatMap { nextStateAfterComma =>
-                  parseFields(nextStateAfterComma, clauses :+ clause)
-                }
+                checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(t) =>
               Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))

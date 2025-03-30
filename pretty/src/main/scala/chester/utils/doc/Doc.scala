@@ -13,7 +13,7 @@ type DocPrinter = ParenPrettyPrinter & StylePrettyPrinter
 implicit object StringPrinter extends StringPrettyPrinter with ParenPrettyPrinter with StylePrettyPrinter {}
 
 sealed trait Doc extends ToDoc derives ReadWriter {
-  final inline implicit def getDoc(using printer: DocPrinter): printer.Doc =
+  implicit final inline def getDoc(using printer: DocPrinter): printer.Doc =
     printer.toParenDoc(printToExpr)
 
   def printToExpr(using printer: DocPrinter): printer.Expr
@@ -81,9 +81,7 @@ def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
     case head :: Nil =>
       begin.toDoc <> head.toDoc <> end.toDoc
     case head :: tail =>
-      val content = tail.foldLeft(head.toDoc) { (acc, doc) =>
-        acc <> sep.toDoc </> doc.toDoc
-      }
+      val content = tail.foldLeft(head.toDoc)((acc, doc) => acc <> sep.toDoc </> doc.toDoc)
       begin.toDoc <> content <> end.toDoc
   }
 }

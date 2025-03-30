@@ -171,7 +171,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
         result
       } catch {
         case e: Exception =>
-          logger.error(s"Compilation failed. ${e}")
+          logger.error(s"Compilation failed. $e")
           val result = new CompileResult(StatusCode.ERROR)
           result
       }

@@ -130,7 +130,7 @@ case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr d
 
   override def toString: String = meta.flatMap(_.sourcePos) match {
     case None      => s"Identifier(\"${encodeString(name)}\")"
-    case Some(pos) => s"Identifier(\"${encodeString(name)}\", ${pos})"
+    case Some(pos) => s"Identifier(\"${encodeString(name)}\", $pos)"
   }
 
   override def updateMeta(
@@ -176,7 +176,7 @@ case class ResolvedLocalVar(
   ): ResolvedLocalVar = copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc = group(
-    Doc.text(name.toString) <> Doc.text(s"(${varId})")
+    Doc.text(name.toString) <> Doc.text(s"($varId)")
   )
 }
 
@@ -577,7 +577,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
   override def toString: String = meta.flatMap(_.sourcePos) match {
     case None => s"StringLiteral(\"${encodeString(value)}\")"
     case Some(pos) =>
-      s"StringLiteral(\"${encodeString(value)}\", ${pos})"
+      s"StringLiteral(\"${encodeString(value)}\", $pos)"
   }
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =

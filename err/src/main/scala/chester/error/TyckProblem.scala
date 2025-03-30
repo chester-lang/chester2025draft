@@ -31,18 +31,18 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
 }
 
 sealed trait TyckError extends TyckProblem derives ReadWriter {
-  final override def severity: Problem.Severity = Problem.Severity.Error
+  override final def severity: Problem.Severity = Problem.Severity.Error
 }
 
 sealed trait TyckWarning extends TyckProblem derives ReadWriter {
-  final override def severity: Problem.Severity = Problem.Severity.Warning
+  override final def severity: Problem.Severity = Problem.Severity.Warning
 }
 
 case class UnusedVariableWarning(id: ReferenceCall, cause: Expr) extends TyckWarning {
   override def toDoc(using
       PrettierOptions
   ): Doc =
-    d"Unused variable: ${id}"
+    d"Unused variable: $id"
 }
 
 given rwThis: ReadWriter[QualifiedName | String] =
@@ -87,7 +87,7 @@ case class ExpectParameterList(cause: Expr) extends TyckError {
   override def toDoc(using
       PrettierOptions
   ): Doc =
-    t"Expected a parameter list, got ${cause}"
+    t"Expected a parameter list, got $cause"
 }
 
 case class UnsupportedTermError(cause: Term) extends TyckError {
@@ -240,19 +240,19 @@ case class UnsupportedExtendsType(cause: Expr) extends TyckError {
 }
 case class NotATrait(cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Expected a trait, but got ${cause}"
+    t"Expected a trait, but got $cause"
 }
 case class NotImplementingTrait(recordName: Name, traitName: Name, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Record '${recordName}' does not implement trait '${traitName}'"
+    t"Record '$recordName' does not implement trait '$traitName'"
 }
 case class RecordNotImplementingTrait(recordType: Term, traitType: Term, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Type '${recordType}' does not implement required trait '${traitType}'"
+    t"Type '$recordType' does not implement required trait '$traitType'"
 }
 case class MissingTraitField(fieldName: Name, recordName: Name, traitName: Name, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Record '${recordName}' is missing required field '${fieldName}' from trait '${traitName}'"
+    t"Record '$recordName' is missing required field '$fieldName' from trait '$traitName'"
 }
 case class ExpectTraitName(cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
@@ -271,7 +271,7 @@ case class MissingImplicitArgumentWarning(paramTy: Term, cause: Expr) extends Ty
   override def toDoc(using
       PrettierOptions
   ): Doc =
-    d"Implicit argument of type ${paramTy} is inferred for ${cause}"
+    d"Implicit argument of type $paramTy is inferred for $cause"
 }
 case class PotentialNonterminatingFunction(cause: Expr) extends TyckError {
   override def toDoc(using
@@ -282,12 +282,12 @@ case class PotentialNonterminatingFunction(cause: Expr) extends TyckError {
 
 case class FieldNotFound(fieldName: Name, recordName: Name, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Field '${fieldName}' not found in record '${recordName}'"
+    t"Field '$fieldName' not found in record '$recordName'"
 }
 
 case class NotARecordType(ty: Term, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Expected a record type, got ${ty}"
+    t"Expected a record type, got $ty"
 }
 
 case class InvalidFieldName(cause: Expr) extends TyckError {
@@ -297,7 +297,7 @@ case class InvalidFieldName(cause: Expr) extends TyckError {
 
 case class NotImplementedFeature(message: String, cause: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"${message}"
+    t"$message"
 }
 
 // Effect-related error types

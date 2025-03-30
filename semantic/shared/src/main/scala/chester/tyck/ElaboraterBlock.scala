@@ -298,9 +298,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       FieldTerm(field.name.name, fieldType, convertMeta(expr.meta))
     }
 
-    val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)
-    }
+    val elaboratedBody = expr.body.map(body => elabBlock(body, newTypeTerm, effects))
 
     // Create the record statement term and update the context
     val recordStmtTerm = RecordStmtTerm(
@@ -380,9 +378,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     }
 
     // Elaborate the body within a trait-specific context
-    val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx.withProcessingType("trait"), parameter, ck, state)
-    }
+    val elaboratedBody = expr.body.map(body => elabBlock(body, newTypeTerm, effects)(using ctx.withProcessingType("trait"), parameter, ck, state))
 
     // Create the TraitStmtTerm
     val traitStmtTerm = TraitStmtTerm(
@@ -414,9 +410,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     val elaboratedExtendsClause = expr.extendsClause.map(checkType)
 
     // Elaborate the optional body (if any)
-    val elaboratedBody = expr.body.map { body =>
-      elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state)
-    }
+    val elaboratedBody = expr.body.map(body => elabBlock(body, newTypeTerm, effects)(using ctx, parameter, ck, state))
 
     // Create the InterfaceStmtTerm
     val interfaceStmtTerm = InterfaceStmtTerm(

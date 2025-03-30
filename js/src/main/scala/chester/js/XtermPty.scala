@@ -11,7 +11,7 @@ import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 
 final class InXtermPty(pty: Slave) extends InTerminalNoHistory[Future] {
-  inline override def writeln(line: fansi.Str): Future[Unit] = {
+  override inline def writeln(line: fansi.Str): Future[Unit] = {
     pty.write(line.render + "\n")
     setTimeoutThen
   }

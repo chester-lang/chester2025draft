@@ -70,9 +70,7 @@ case class Context(
   def add(item: ContextItem): Context = add(Seq(item))
 
   def add(seq: Seq[ContextItem]): Context = {
-    val newMap = seq.foldLeft(map) { (acc, item) =>
-      acc + (item.name -> item.uniqId)
-    }
+    val newMap = seq.foldLeft(map)((acc, item) => acc + (item.name -> item.uniqId))
     val newContextItems = seq.foldLeft(contextItems) { (acc, item) =>
       require(!acc.contains(item.uniqId), s"Duplicate key ${item.uniqId}")
       acc + (item.uniqId -> item)

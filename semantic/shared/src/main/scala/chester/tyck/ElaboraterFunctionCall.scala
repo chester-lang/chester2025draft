@@ -59,9 +59,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         ctx.getTypeDefinition(name) match {
           case Some(recordDef: RecordStmtTerm) =>
             // Elaborate the arguments
-            val argTerms = expr.telescopes.flatMap(_.args.map { arg =>
-              elab(arg.expr, newTypeTerm, effects)
-            })
+            val argTerms = expr.telescopes.flatMap(_.args.map(arg => elab(arg.expr, newTypeTerm, effects)))
             val recordCallTerm = RecordConstructTerm(recordDef.name, argTerms, meta = None)
             // TODO: Unify the type with the expected type
             // unify(ty, recordDefType, expr)
@@ -302,9 +300,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       }
 
       // Unify each pair of expected and actual argument types
-      expectedArgs.lazyZip(actualArgs).foreach { (expectedArg, actualArg) =>
-        unify(expectedArg.ty, actualArg.ty, cause)
-      }
+      expectedArgs.lazyZip(actualArgs).foreach((expectedArg, actualArg) => unify(expectedArg.ty, actualArg.ty, cause))
     }
 
     override def naiveZonk(

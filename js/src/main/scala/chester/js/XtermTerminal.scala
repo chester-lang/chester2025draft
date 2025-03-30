@@ -10,7 +10,7 @@ import scala.concurrent.{Future, Promise}
 
 final class InXterm(terminal: mod.Terminal, init: TerminalInit) extends InTerminalNoHistory[Future] {
 
-  inline override def writeln(line: fansi.Str): Future[Unit] = {
+  override inline def writeln(line: fansi.Str): Future[Unit] = {
     val promise = Promise[Unit]()
     terminal.writeln(
       line.render,
@@ -46,7 +46,7 @@ final class InXterm(terminal: mod.Terminal, init: TerminalInit) extends InTermin
         command = command.slice(0, command.length - 1)
       }
     case "\n" =>
-      // ignore
+    // ignore
     case _ =>
       terminal.write(data)
       command += data

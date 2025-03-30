@@ -78,8 +78,8 @@ trait ProvideCellId {
       import chester.utils.Debug.DebugCategory
 
       Debug.debugPrint(DebugCategory.Cell, s"Attempting to fill OnceCell: ${this.hashCode()}")
-      Debug.debugPrint(DebugCategory.Cell, s"Current value: ${value}")
-      Debug.debugPrint(DebugCategory.Cell, s"New value: ${newValue}")
+      Debug.debugPrint(DebugCategory.Cell, s"Current value: $value")
+      Debug.debugPrint(DebugCategory.Cell, s"New value: $newValue")
       Debug.printCallStack(DebugCategory.Cell)
 
       require(value.isEmpty)

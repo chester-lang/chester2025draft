@@ -422,14 +422,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
                     logger.trace("Available symbols:")
                     document.symbols.foreach { sym =>
                       logger.trace(s"Symbol name: ${sym.name}")
-                      sym.definedOn.sourcePos.foreach { pos =>
-                        logger.trace(s"  Defined at: $pos")
-                      }
-                      sym.referencedOn.foreach { ref =>
-                        ref.sourcePos.foreach { pos =>
-                          logger.trace(s"  Referenced at: $pos")
-                        }
-                      }
+                      sym.definedOn.sourcePos.foreach(pos => logger.trace(s"  Defined at: $pos"))
+                      sym.referencedOn.foreach(ref => ref.sourcePos.foreach(pos => logger.trace(s"  Referenced at: $pos")))
                     }
                   }
                   Either.forLeft(java.util.Collections.emptyList())
@@ -483,9 +477,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
                 case Some(symbolInfo) =>
                   val locations = (symbolInfo.referencedOn.flatMap(
                     _.sourcePos
-                  ) ++ symbolInfo.definedOn.sourcePos).map { refPos =>
-                    new Location(refPos.fileName, rangeFromSourcePos(refPos))
-                  }
+                  ) ++ symbolInfo.definedOn.sourcePos).map(refPos => new Location(refPos.fileName, rangeFromSourcePos(refPos)))
                   new java.util.ArrayList(locations.toList.asJava)
                 case None =>
                   java.util.Collections.emptyList()

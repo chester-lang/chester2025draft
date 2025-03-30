@@ -51,9 +51,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       StateAbility[Tyck]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
-    val argTerms = telescope.args.map { arg =>
-      elabArg(arg, effects)
-    }
+    val argTerms = telescope.args.map(arg => elabArg(arg, effects))
 
     TelescopeTerm(argTerms, telescope.implicitly, meta = None)
   }

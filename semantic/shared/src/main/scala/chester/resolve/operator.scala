@@ -17,13 +17,9 @@ def constructPrecedenceGraph(
 
   // Create directed edges based on 'higherThan' and 'lowerThan' relationships
   val edges: Seq[DiEdge[PrecedenceGroup]] = groups.flatMap { group =>
-    val higherEdges = group.higherThan.map { higherGroup =>
-      DiEdge(group, higherGroup)
-    }
+    val higherEdges = group.higherThan.map(higherGroup => DiEdge(group, higherGroup))
 
-    val lowerEdges = group.lowerThan.map { lowerGroup =>
-      DiEdge(lowerGroup, group)
-    }
+    val lowerEdges = group.lowerThan.map(lowerGroup => DiEdge(lowerGroup, group))
 
     higherEdges ++ lowerEdges
   }
@@ -275,9 +271,7 @@ def resolveOpSeq(
       val layeredOrder = order.toLayered
       // Map each group to its precedence level
       layeredOrder.iterator.flatMap { case (index, nodes) =>
-        nodes.map { node =>
-          node.outer.name -> index
-        }
+        nodes.map(node => node.outer.name -> index)
       }.toMap
     }
   )

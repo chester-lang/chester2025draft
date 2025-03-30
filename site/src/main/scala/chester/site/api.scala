@@ -49,7 +49,7 @@ def startReplReadline(rl: Readline): js.Promise[Unit] =
     )
     .toJSPromise
 
-inline private def runFileFuture(
+private inline def runFileFuture(
     content: String,
     lightMode: Boolean
 ): Future[String] =

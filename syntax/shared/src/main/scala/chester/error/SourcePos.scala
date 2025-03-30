@@ -89,7 +89,7 @@ case class SourcePos(source: SourceOffset, range: RangeInFile) derives ReadWrite
   }
 
   override def toString: String =
-    s"SourcePos(\"${encodeString(fileName)}\",${range})"
+    s"SourcePos(\"${encodeString(fileName)}\",$range)"
 }
 
 extension (pos: Option[SourcePos]) {

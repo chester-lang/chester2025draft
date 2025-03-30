@@ -16,9 +16,7 @@ class ReadlineTerminal(init: TerminalInit) extends InTerminal[Id] {
 
   // Method for reading history
   private def readHistory(): Unit =
-    historyFile.foreach { file =>
-      historyExists = facade.read_history(file)
-    }
+    historyFile.foreach { file => historyExists = facade.read_history(file) }
 
   // Method for writing history
   private def writeHistory(): Unit =

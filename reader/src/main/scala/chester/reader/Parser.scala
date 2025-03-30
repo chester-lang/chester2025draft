@@ -56,7 +56,7 @@ case class ReaderInternal(
     commentOneLine.map(Vector(_)) | (CharsWhileIn(" \t\r").? ~ nEnd).map(x => Vector())
   )
 
-  def lineNonEndingSpace: P[Unit] = P((CharsWhileIn(" \t\r")))
+  def lineNonEndingSpace: P[Unit] = P(CharsWhileIn(" \t\r"))
 
   @deprecated("comment is lost")
   def maybeSpace: P[Unit] = P(delimiter.?)
@@ -259,9 +259,7 @@ case class ReaderInternal(
       }
     }
 
-    P("\"\"\"" ~ (!"\"\"\"".rep ~ AnyChar).rep.!.flatMap { str =>
-      validateIndentation(str).fold(Fail.opaque, validStr => Pass(validStr))
-    } ~ "\"\"\"")
+    P("\"\"\"" ~ (!"\"\"\"".rep ~ AnyChar).rep.!.flatMap(str => validateIndentation(str).fold(Fail.opaque, validStr => Pass(validStr))) ~ "\"\"\"")
   }
 
   def stringLiteralExpr: P[ParsedExpr] =
@@ -281,18 +279,14 @@ case class ReaderInternal(
   def comma1: P[Unit] = ","
 
   def list: P[ListExpr] = PwithMeta(
-    "[" ~ (parse().relax2)
+    "[" ~ parse().relax2
       .rep(sep = comma1) ~ maybeSpace ~ comma1.? ~ maybeSpace ~ "]"
-  ).map { (terms, meta) =>
-    ListExpr(terms.toVector, meta)
-  }
+  ).map((terms, meta) => ListExpr(terms.toVector, meta))
 
   def tuple: P[Tuple] = PwithMeta(
     "(" ~ parse().relax2
       .rep(sep = comma1) ~ maybeSpace ~ comma1.? ~ maybeSpace ~ ")"
-  ).map { (terms, meta) =>
-    Tuple(terms.toVector, meta)
-  }
+  ).map((terms, meta) => Tuple(terms.toVector, meta))
 
   def annotation: P[(Identifier, Vector[ParsedMaybeTelescope])] = P(
     "@" ~ identifier ~ callingZeroOrMore()
@@ -383,7 +377,7 @@ case class ReaderInternal(
       ctx: ParsingContext
   ): P[OpSeq] =
     PwithMeta(opSeqGettingExprs(ctx = ctx)).flatMap { case (exprs, meta) =>
-      val xs = (expr +: exprs)
+      val xs = expr +: exprs
       lazy val exprCouldPrefix = expr match {
         case Identifier(name, _) if strIsOperator(name) => true
         case _                                          => false
@@ -402,9 +396,7 @@ case class ReaderInternal(
       qualifiedNameOn(built) | Pass(built)
     }
 
-  def qualifiedName: P[QualifiedName] = P(identifier).flatMap { id =>
-    qualifiedNameOn(id) | Pass(id)
-  }
+  def qualifiedName: P[QualifiedName] = P(identifier).flatMap(id => qualifiedNameOn(id) | Pass(id))
 
   def symbol: P[SymbolLiteral] = P("'" ~ id).withMeta.map { case (name, meta) =>
     SymbolLiteral(name, meta)
@@ -420,9 +412,7 @@ case class ReaderInternal(
 
   def objectParse: P[ParsedExpr] = PwithMeta(
     "{" ~ (objectClause0 | objectClause1).rep(sep = comma) ~ comma.? ~ maybeSpace ~ "}"
-  ).map { (fields, meta) =>
-    ObjectExpr(fields.toVector, meta)
-  }
+  ).map((fields, meta) => ObjectExpr(fields.toVector, meta))
 
   def keyword: P[ParsedExpr] = PwithMeta(
     "#" ~ id ~ callingZeroOrMore(ParsingContext(dontAllowBlockApply = true))
@@ -462,7 +452,7 @@ case class ReaderInternal(
   ).flatMap { (expr, meta, index) =>
     val itWasBlockEnding = p.input(index - 1) == '}'
     val getMeta1 =
-      ((endMeta: Option[ExprMeta]) => getMeta(combineMeta(meta, endMeta)))
+      (endMeta: Option[ExprMeta]) => getMeta(combineMeta(meta, endMeta))
     ((!lineEnding).checkOn(
       itWasBlockEnding && ctx.newLineAfterBlockMeansEnds
     ) ~ tailExpr(expr, getMeta1, ctx = ctx)) | Pass(expr)
@@ -474,7 +464,7 @@ case class ReaderInternal(
   def parse(ctx: ParsingContext = ParsingContext()): P[ParsedExpr] =
     P(parse0.withMeta ~ Index).flatMap { (expr, meta, index) =>
       val itWasBlockEnding = p.input(index - 1) == '}'
-      val getMeta = ((endMeta: Option[ExprMeta]) => combineMeta(meta, endMeta))
+      val getMeta = (endMeta: Option[ExprMeta]) => combineMeta(meta, endMeta)
       ((!lineEnding).checkOn(
         itWasBlockEnding && ctx.newLineAfterBlockMeansEnds
       ) ~ tailExpr(expr, getMeta, ctx = ctx)) | Pass(expr)

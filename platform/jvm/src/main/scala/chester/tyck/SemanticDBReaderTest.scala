@@ -31,9 +31,7 @@ object SemanticDBReaderTest {
       println("\nOccurrences:")
       doc.occurrences.foreach { occurrence =>
         val range = occurrence.range
-          .map { r =>
-            s"${r.startLine}:${r.startCharacter} to ${r.endLine}:${r.endCharacter}"
-          }
+          .map(r => s"${r.startLine}:${r.startCharacter} to ${r.endLine}:${r.endCharacter}")
           .getOrElse("No range")
         println(s"Symbol: ${occurrence.symbol}")
         println(s"  Role: ${occurrence.role}")

@@ -8,7 +8,7 @@ type Character = Int
 inline def CharacterPred(
     inline p: Character => Boolean
 )(using P[?]): P[Unit] =
-  CharPred(c => (!Character.isSurrogate(c) && p(c.toInt))) |
+  CharPred(c => !Character.isSurrogate(c) && p(c.toInt)) |
     (CharPred(Character.isHighSurrogate) ~ CharPred(
       Character.isLowSurrogate
     )).!.flatMap { c =>

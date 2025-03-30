@@ -17,9 +17,7 @@ abstract class AbstractInTerminal[F[_]](using Runner[F]) extends InTerminal[F] {
   private def checkInit: F[Unit] =
     if (!inited) {
       inited = true
-      initHistory.map { h =>
-        history = h.toVector
-      }
+      initHistory.map { h => history = h.toVector }
     } else {
       Runner.pure(())
     }
