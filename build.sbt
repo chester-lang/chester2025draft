@@ -729,6 +729,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JSPlatform)
   .crossType(CrossType.Full)
   .in(file("js-for-jvm"))
+  .dependsOn(utils)
   .settings(
     commonSettings,
     name := "js-for-jvm"
