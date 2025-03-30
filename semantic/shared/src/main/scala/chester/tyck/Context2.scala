@@ -2,7 +2,7 @@ package chester.tyck
 
 import chester.syntax.*
 import chester.syntax.core.*
-import chester.tyck.BuiltIn.BuiltinItem
+import chester.tyck.PreludeBuiltin.BuiltinItem
 import chester.uniqid.*
 import chester.utils.propagator.*
 
@@ -51,7 +51,7 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
   implicit class LocalCtxOps(ignored: Context.type) {
     def default(using StateAbility[Tyck]): Context = {
-      val items = BuiltIn.builtinItems.map(ContextItem.builtin)
+      val items = PreludeBuiltin.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
       val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
       val knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = items

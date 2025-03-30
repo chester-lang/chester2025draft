@@ -3,7 +3,7 @@ package chester.tyck
 import chester.syntax.Name
 import chester.syntax.core.*
 
-object BuiltIn {
+object PreludeBuiltin {
   case class BuiltinItem(id: Name, value: Term, ty: Term) {}
 
   val builtinItems: Seq[BuiltinItem] = Vector(
