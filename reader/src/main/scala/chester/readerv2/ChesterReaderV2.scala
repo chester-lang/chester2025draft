@@ -14,7 +14,7 @@ object ChesterReaderV2 {
     val sourceOffset = SourceOffset(source)
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()
-    val lexer = new LexerV2(tokens, sourceOffset, ignoreLocation)
+    val lexer = new LexerV2(sourceOffset, ignoreLocation)
     val initialState = LexerState(tokens.toVector, 0)
     (lexer, initialState)
   }

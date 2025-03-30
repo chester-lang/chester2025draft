@@ -1141,7 +1141,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val allprojects = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("project/allprojects"))
-  .dependsOn(lsp, cli, platform, core, interpreter)
+  .dependsOn(utils, reader, compiler, compiler213, syntax, err, pretty, semantic, platform, lsp, cli, platform, core, interpreter)
   .settings(
     commonSettings
   )

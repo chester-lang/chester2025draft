@@ -45,8 +45,6 @@ import chester.syntax.*
 import chester.syntax.concrete.*
 import chester.readerv2.Token.*
 
-case class StmtExpr(expr: Expr)
-
 case class LexerState(
     tokens: Vector[Either[ParseError, Token]],
     index: Int,
@@ -65,13 +63,6 @@ case class LexerState(
   }
 
   // Helper methods for common state checks
-  def isAfterClosingBrace: Boolean = previousToken.exists(_.isInstanceOf[Token.RBrace])
-  def isAtNewline: Boolean = current.exists {
-    case Token.Whitespace(_, hasNewline) => hasNewline
-    case Token.EOF(_)                    => true
-    case _                               => false
-  }
-  def isAtClosingBraceNewlinePattern: Boolean = isAfterClosingBrace && isAtNewline
   def isAtTerminator: Boolean = current.exists(t =>
     t.isInstanceOf[Token.EOF] || t.isInstanceOf[Token.RParen] ||
       t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
@@ -88,14 +79,14 @@ case class LexerState(
 }
 
 object LexerV2 {
-  def apply(tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean = false): LexerV2 =
-    new LexerV2(tokens, sourceOffset, ignoreLocation)
+  def apply(sourceOffset: SourceOffset, ignoreLocation: Boolean = false) =
+    new LexerV2(sourceOffset, ignoreLocation)
 
   var DEBUG = false // Keep DEBUG flag for tests that use it
   val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
-class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: Boolean) {
+class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   import LexerV2.DEBUG
 
   private def debug(msg: => String): Unit = if (DEBUG) println(s"[DEBUG] $msg")
@@ -150,9 +141,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
 
   private def getStartPos(token: Either[ParseError, Token]): Pos =
     token.fold(_.pos, _.sourcePos.range.start)
-
-  // Type alias for clarity
-  type LexerError = ParseError
 
   private def mergeMeta(existing: Option[ExprMeta], newMeta: Option[ExprMeta]): Option[ExprMeta] =
     (existing, newMeta) match {
@@ -228,10 +216,8 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     object RBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
     object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
     object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
-    object Dot { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Dot])(t) }
+
     object Comma { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
-    object Colon { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Colon])(t) }
-    object Semi { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Semicolon])(t) }
 
     object Err {
       def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) { case Left(err) =>
@@ -269,7 +255,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         if (!state.newLineAfterBlockMeansEnds) return false
 
         expr match {
-          case block: Block =>
+          case _: Block =>
             state.current match {
               case Right(whitespaceToken: Token.Whitespace) => {
                 val startPos = whitespaceToken.sourcePos.range.start.index.utf16
@@ -293,7 +279,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
         return buildOpSeq(localTerms).map(result => (result, state))
       }
 
-      val (restComments, current) = collectComments(state)
+      val (_restComments, current) = collectComments(state)
 
       // Handle terminators
       if (isAtTerminator(current)) {
@@ -625,7 +611,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
   }
 
-  def handleDotCall(dotSourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
+  private def handleDotCall(dotSourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
     val afterDot = state.advance() // Skip the dot
     afterDot.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) => {
@@ -678,7 +664,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
   }
 
-  def handleOperator(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
+  private def handleOperator(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
     // Advance once and parse the next atom
     parseAtomWithComments(state.advance()).flatMap { case (next, newState) =>
       val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))) :+ next
@@ -691,7 +677,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
   }
 
-  def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
+  private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
     current.current match {
       case Left(err)         => Left(err)
       case LBrace(sourcePos) =>
@@ -760,15 +746,6 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       case Right(token) => Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
 
       case Err(error) => Left(error)
-    }
-  }
-
-  // Helper method to check for expected delimiter tokens and advance
-  private def expectDelimiter(state: LexerState, expectedType: Token => Boolean, errorMsg: String): Either[ParseError, LexerState] = {
-    state.current match {
-      case Right(token) if expectedType(token) => Right(state.advance())
-      case Right(token)                        => Left(ParseError(errorMsg, token.sourcePos.range.start))
-      case Left(err)                           => Left(err)
     }
   }
 
@@ -876,7 +853,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     parseElements(initialState, Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
   }
 
-  def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = state.current match {
+  private def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = state.current match {
     case LParen(sourcePos) =>
       val (leadingComments, afterLParen) = collectComments(state.advance())
       for {
@@ -897,7 +874,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     case _ => Left(expectedError("left parenthesis", state.current))
   }
 
-  def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+  private def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
     // IMPORTANT: Enable newLineAfterBlockMeansEnds for all blocks
     // This preserves uniform treatment without special-casing any operators
     val contextState = state.withNewLineTermination(true)
@@ -1083,7 +1060,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
   }
 
-  def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
+  private def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
     val (leadingComments, initialState) = collectComments(state)
 
     initialState.current match {
@@ -1185,7 +1162,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
 
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
     */
-  def collectComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
+  private def collectComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
     @scala.annotation.tailrec
     def collectRec(current: LexerState, comments: Vector[chester.syntax.concrete.Comment]): (Vector[chester.syntax.concrete.Comment], LexerState) = {
       if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
@@ -1220,7 +1197,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
 
   /** Collects trailing comments after an expression until a newline or non-comment token.
     */
-  def collectTrailingComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
+  private def collectTrailingComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
     // For trailing comments, we only collect comments that appear on the same line
     // (until we hit a newline in whitespace)
     @scala.annotation.tailrec
@@ -1264,7 +1241,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
 
   /** Creates ExprMeta with comments.
     */
-  def createMetaWithComments(
+  private def createMetaWithComments(
       sourcePos: Option[SourcePos],
       leadingComments: Vector[chester.syntax.concrete.Comment] = Vector.empty,
       trailingComments: Vector[chester.syntax.concrete.Comment] = Vector.empty
@@ -1302,7 +1279,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   }
 
   // Parse a function call with the given identifier
-  def parseFunctionCallWithId(
+  private def parseFunctionCallWithId(
       identifier: ConcreteIdentifier,
       state: LexerState
   ): Either[ParseError, (FunctionCall, LexerState)] = {
@@ -1351,13 +1328,13 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   }
 
   // Simplified versions using the withComments combinator
-  def parseAtomWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
+  private def parseAtomWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
     withComments(parseAtom)(state)
 
-  def parseBlockWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
+  private def parseBlockWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
     withComments(parseBlock)(state)
 
-  def parseListWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
+  private def parseListWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
     withComments(parseList)(state)
 
   private def createCommentInfo(
@@ -1411,7 +1388,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     }
   }
 
-  def parseString(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+  private def parseString(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     withCommentsAndErrorHandling(
       st =>
         parseLiteral(
@@ -1453,21 +1430,20 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
       st =>
         parseLiteral(
           st,
-          token =>
-            token match {
-              case Token.IntegerLiteral(value, sourcePos) =>
-                // Handle different bases
-                val (numStr, base) =
-                  if (value.startsWith("0x")) (value.drop(2), 16)
-                  else if (value.startsWith("0b")) (value.drop(2), 2)
-                  else (value, 10)
-                try {
-                  Some((BigInt(numStr, base).toString, sourcePos))
-                } catch {
-                  case _: NumberFormatException => None
-                }
-              case _ => None
-            },
+          {
+            case Token.IntegerLiteral(value, sourcePos) =>
+              // Handle different bases
+              val (numStr, base) =
+                if (value.startsWith("0x")) (value.drop(2), 16)
+                else if (value.startsWith("0b")) (value.drop(2), 2)
+                else (value, 10)
+              try {
+                Some((BigInt(numStr, base).toString, sourcePos))
+              } catch {
+                case _: NumberFormatException => None
+              }
+            case _ => None
+          },
           (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
           "Expected integer literal"
         ),
@@ -1475,7 +1451,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     )(state)
   }
 
-  def parseRational(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+  private def parseRational(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     withCommentsAndErrorHandling(
       st =>
         parseLiteral(
@@ -1497,7 +1473,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
     )(state)
   }
 
-  def parseSymbol(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
+  private def parseSymbol(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
     withCommentsAndErrorHandling(
       st =>
         parseLiteral(
@@ -1506,7 +1482,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
             PartialFunction.condOpt(token) { case Token.SymbolLiteral(value, sourcePos) =>
               (value, sourcePos)
             },
-          chester.syntax.concrete.SymbolLiteral,
+          chester.syntax.concrete.SymbolLiteral.apply,
           "Expected symbol literal"
         ),
       "Error parsing symbol"
@@ -1519,7 +1495,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
   }
 
   // Parse a simple identifier (no function calls or type parameters)
-  def parseIdentifier(state: LexerState): Either[ParseError, (ConcreteIdentifier, LexerState)] = {
+  private def parseIdentifier(state: LexerState): Either[ParseError, (ConcreteIdentifier, LexerState)] = {
     withCommentsAndErrorHandling(
       st =>
         st.current match {
@@ -1529,7 +1505,7 @@ class LexerV2(_tokens: TokenStream, sourceOffset: SourceOffset, ignoreLocation: 
             Left(ParseError("Expected identifier", st.sourcePos.range.start))
         },
       "Error parsing identifier"
-    )(state).asInstanceOf[Either[ParseError, (ConcreteIdentifier, LexerState)]]
+    )(state)
   }
 
   // Helper for creating field access expressions

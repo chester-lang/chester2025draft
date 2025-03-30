@@ -70,7 +70,7 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
   val oldDebug = LexerV2.DEBUG
   try {
     // LexerV2.DEBUG = true // uncomment when needed
-    val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
+    val lexer = LexerV2(sourceOffset, ignoreLocation = true)
 
     val result = lexer
       .parseExpr(LexerState(tokens.toVector, 0))
@@ -131,7 +131,7 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
   val oldDebug = LexerV2.DEBUG
   try {
     // LexerV2.DEBUG = true // uncomment when needed
-    val lexer = LexerV2(tokens, sourceOffset, ignoreLocation = true)
+    val lexer = LexerV2(sourceOffset, ignoreLocation = true)
 
     val result = lexer
       .parseExpr(LexerState(tokens.toVector, 0))
