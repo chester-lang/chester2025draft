@@ -1247,7 +1247,7 @@ trait TyckPropagator extends ElaboraterCommon {
         Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Found compatible components: ${compatibleComponents.mkString(", ")}")
 
       // Get a vector of all component cell IDs first
-      val unionComponentCellIds = unionTypes.map(t => toId(t)).toVector
+      val unionComponentCellIds = unionTypes.map(toId).toVector
 
       // Step 1: Connect the specific type to each compatible component
       compatibleComponents.foreach { compatibleType =>
