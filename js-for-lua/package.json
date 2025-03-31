@@ -8,7 +8,7 @@
     "js2lua": "node js2lua.js"
   },
   "dependencies": {
-    "castl": "^1.2.4"
+    "castl": "github:daurnimator/castl#no-debug-setmetatable"
   },
   "devDependencies": {
     "@babel/core": "^7.22.5",
