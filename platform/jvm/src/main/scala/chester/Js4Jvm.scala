@@ -38,4 +38,14 @@ object Js4Jvm {
     check()
     test.call(context, exports, exports, Array(x))
   }
+  
+  // Getter methods for TsMorph implementation
+  def getContext: Context = {
+    check()
+    context
+  }
+  
+  def getExports: Scriptable = exports
+  
+  def getScope: ScriptableObject = scope
 }

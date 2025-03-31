@@ -733,7 +733,7 @@ lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
     commonSettings,
     name := "js-for-jvm"
   )
-  .jsConfigure(_.dependsOn(utils.js))
+  .jsConfigure(_.dependsOn(utils.js, jsTypings.js))
   .jsSettings(
     scalaJSLinkerConfig ~= {
       // Enable ECMAScript module output.
@@ -785,8 +785,9 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         Process("pnpm run build", file("js-for-jvm")) ! log
         val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
 
+// opt -1 as https://github.com/smartrics/RestFixture/issues/74
         org.mozilla.javascript.tools.jsc.Main
-          .main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
+          .main(Array("-opt", "-1", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
         Seq(dest / "chester" / "ChesterJs.class")
       }
     }.taskValue,
