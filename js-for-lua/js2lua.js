@@ -26,7 +26,6 @@ async function convertJsToLua() {
     // Use CASTL to convert the bundle.js to Lua
     // The -o flag outputs the Lua code to a file with the same name but .lua extension
     // The --babel flag ensures ES6+ compatibility
-    // The --jit flag optimizes for LuaJIT if needed
     execSync(`npx castl ${bundlePath} -o ${outputPath} --babel`, {
       stdio: 'inherit'
     });
@@ -80,6 +79,19 @@ print("Testing Chester module...")
     
     await fs.writeFile(testScriptPath, testScriptContent);
     console.log(`Test script created: ${testScriptPath}`);
+    
+    // Create an init.lua file in the lua directory for proper module structure
+    const initLuaPath = path.join(luaDir, 'init.lua');
+    const initLuaContent = `
+-- This file ensures proper module structure for luabundler
+require('castl.runtime')
+
+-- Return the chester module
+return require('chester')
+`;
+    
+    await fs.writeFile(initLuaPath, initLuaContent);
+    console.log(`Init.lua created: ${initLuaPath}`);
     
   } catch (error) {
     console.error('Error during conversion:', error);

@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "rollup -c rollup.config.mjs",
-    "js2lua": "node js2lua.js"
+    "js2lua": "node js2lua.js",
+    "create-bundle": "node lua-bundler.js",
+    "build-lua": "npm run build && npm run js2lua && npm run create-bundle"
   },
   "dependencies": {
     "castl": "github:daurnimator/castl#no-debug-setmetatable"
@@ -16,7 +18,8 @@
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-commonjs": "^25.0.2",
     "@rollup/plugin-node-resolve": "^15.1.0",
+    "luabundler": "^1.2.3",
     "rollup": "^3.25.1"
   },
   "type": "module"
-} 
+}

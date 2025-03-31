@@ -131,4 +131,128 @@ npx castl dist/bundle.js -o lua/chester.lua --babel -v
 - Add support for more complex data structures
 - Improve error handling between Scala and Lua
 - Create a more comprehensive test suite
-- Add automated build pipeline 
+- Add automated build pipeline
+
+# js-for-lua
+
+Convert Scala.js to Lua using CASTL.
+
+## Overview
+
+This package converts Scala.js output to Lua through a multi-step process:
+
+1. Compile the Scala.js code
+2. Bundle the JS code using rollup
+3. Convert the JS bundle to Lua using CASTL
+4. Create a self-contained Lua bundle
+
+## Installation
+
+### Prerequisites
+
+- Node.js (v14+)
+- npm or pnpm
+- Scala.js project compiled to JavaScript
+
+### Install Dependencies
+
+```bash
+npm install
+# or 
+pnpm install
+```
+
+## Usage
+
+### Full Build Process
+
+To run the complete build process (JS bundling, conversion to Lua, and creating self-contained bundle):
+
+```bash
+npm run build-lua
+# or
+pnpm run build-lua
+```
+
+This will:
+1. Bundle the JavaScript using rollup
+2. Convert the JS bundle to Lua using CASTL
+3. Create a self-contained Lua bundle with all dependencies
+
+### Individual Steps
+
+You can also run each step individually:
+
+```bash
+# Step 1: Bundle JavaScript with rollup
+npm run build
+
+# Step 2: Convert the JS bundle to Lua
+npm run js2lua
+
+# Step 3: Create self-contained Lua bundle
+npm run create-bundle
+```
+
+## Output Files
+
+After running the build process, you'll find the following files in the `lua` directory:
+
+- `chester.lua` - The main Lua file converted from JavaScript
+- `castl/` - Directory containing CASTL runtime files
+- `chester.bundle.lua` - A self-contained Lua file with CASTL runtime
+- `chester_loader.lua` - A helper script to load the bundle in other projects
+- `test_chester.lua` - A test script for the non-bundled version
+- `test_bundle.lua` - A test script for the bundled version
+
+## Using the Bundled Lua Output
+
+### Option 1: Direct Use
+
+The bundled output (`chester.bundle.lua`) is a self-contained file that includes all dependencies:
+
+```lua
+-- In your Lua project
+local chester = require("chester.bundle")
+
+-- Use chester functions
+print(chester.test())
+```
+
+### Option 2: Using the Loader
+
+For simpler integration, you can use the provided loader script:
+
+```lua
+-- First, require the loader (adjust path as needed)
+require("path.to.chester_loader")
+
+-- Then use the chester global directly
+print(chester.test())
+```
+
+## Development
+
+### Project Structure
+
+- `index.js` - Entry point for the JavaScript module
+- `js2lua.js` - Script for converting JavaScript to Lua
+- `lua-bundler.js` - Script for creating self-contained Lua bundle
+- `rollup.config.mjs` - Rollup configuration for bundling JavaScript
+- `dist/` - Directory containing the bundled JavaScript
+- `lua/` - Directory containing the converted Lua files
+
+### How the Bundle Works
+
+The self-contained bundle (`chester.bundle.lua`):
+
+1. Includes the CASTL runtime in a local scope
+2. Initializes the runtime environment
+3. Loads the Chester module code
+4. Makes the Chester module available through Lua's module system
+
+This approach eliminates the need for external dependencies and complex module resolution.
+
+## License
+
+See the project repository for license information. 
