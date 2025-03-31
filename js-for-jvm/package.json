@@ -19,8 +19,5 @@
     "@rollup/plugin-terser": "^0.4.4",
     "rollup": "^4.38.0",
     "ts-morph": "^25.0.1"
-  },
-  "dependencies": {
-    "@types/node": "^22.13.14"
   }
 }
