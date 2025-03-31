@@ -63,3 +63,10 @@ node_modules
 sbt-launch.jar
 .aider*
 !.aiderignore
+
+# js-for-lua generated files
+js-for-lua/dist/
+js-for-lua/lua/*.lua
+js-for-lua/node_modules/
+js-for-lua/package-lock.json
+js-for-lua/pnpm-lock.yaml
