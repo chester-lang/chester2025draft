@@ -253,6 +253,38 @@ The self-contained bundle (`chester.bundle.lua`):
 
 This approach eliminates the need for external dependencies and complex module resolution.
 
+## Current Issues and Limitations
+
+### Runtime Dependencies
+
+1. **Bit Operations Library**
+   - The CASTL runtime requires bit operations support
+   - Currently trying to use Lua 5.4's bit32 library
+   - Need to install bit32 via LuaRocks
+   - Alternative: Consider using a pure Lua implementation of bit operations
+
+2. **Module Resolution**
+   - Some issues with module resolution in the bundled version
+   - Need to ensure proper loading order of runtime and module files
+   - May need to adjust package.path settings
+
+### Next Steps
+
+1. **Runtime Dependencies**
+   - [ ] Install and test bit32 library
+   - [ ] Consider alternative bit operation implementations
+   - [ ] Document all runtime dependencies clearly
+
+2. **Module System**
+   - [ ] Fix module resolution issues
+   - [ ] Improve error handling for missing dependencies
+   - [ ] Add better module loading diagnostics
+
+3. **Testing**
+   - [ ] Set up proper test environment
+   - [ ] Add more comprehensive test cases
+   - [ ] Add CI/CD pipeline for testing
+
 ## License
 
 See the project repository for license information. 
