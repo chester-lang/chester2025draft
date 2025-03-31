@@ -148,7 +148,8 @@ up := {
     file("site"),
     file("vscode"),
     file("js-for-jvm"),
-    file("js-for-python")
+    file("js-for-python"),
+    file("js-for-lua")
   )
 
   folders.foreach { dir =>
@@ -170,7 +171,8 @@ outdated := {
     file("site"),
     file("vscode"),
     file("js-for-jvm"),
-    file("js-for-python")
+    file("js-for-python"),
+    file("js-for-lua")
   )
 
   folders.foreach { dir =>
