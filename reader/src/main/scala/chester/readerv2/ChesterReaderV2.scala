@@ -1,6 +1,4 @@
 package chester.readerv2
-
-import chester.error.Reporter
 import chester.reader.{FileNameAndContent, ParseError, SourceOffset}
 import chester.syntax.concrete.Expr
 

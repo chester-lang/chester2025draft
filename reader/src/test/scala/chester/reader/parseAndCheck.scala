@@ -1,6 +1,4 @@
 package chester.reader
-
-import chester.error.Reporter
 import chester.readerv2.{LexerState, LexerV2}
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
