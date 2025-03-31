@@ -147,7 +147,6 @@ up := {
   val folders = Seq(
     file("site"),
     file("vscode"),
-    file("js-for-jvm"),
     file("js-for-python"),
     file("js-for-lua")
   )
@@ -170,7 +169,6 @@ outdated := {
   val folders = Seq(
     file("site"),
     file("vscode"),
-    file("js-for-jvm"),
     file("js-for-python"),
     file("js-for-lua")
   )
@@ -724,31 +722,6 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmLibSettings)
 
-// jvm holds stub for class interface.
-lazy val jsForJvm = crossProject(JSPlatform, JVMPlatform)
-  .withoutSuffixFor(JSPlatform)
-  .crossType(CrossType.Full)
-  .in(file("js-for-jvm"))
-  .settings(
-    commonSettings,
-    name := "js-for-jvm"
-  )
-  .jsConfigure(_.dependsOn(utils.js))
-  .jsSettings(
-    scalaJSLinkerConfig ~= {
-      // Enable ECMAScript module output.
-      _.withModuleKind(ModuleKind.ESModule)
-        // Use .mjs extension.
-        .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
-    }
-  )
-  .jvmSettings(
-    commonJvmLibSettings,
-    libraryDependencies ++= Seq(
-      "org.mozilla" % "rhino" % "1.7.15"
-    )
-  )
-
 val sootupVersion = "1.3.0"
 lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -759,37 +732,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "platform",
     commonSettings
   )
-  .jvmConfigure(_.dependsOn(jsForJvm.jvm % Provided))
   .jvmSettings(
-    // Ensure that tyckPlatform.jvm depends on jsForJvm's fastLinkJS task
-    Compile / compile := (Compile / compile)
-      .dependsOn(jsForJvm.js / Compile / fastLinkJS)
-      .value,
-    // note that won't run on compile only package and run  - https://github.com/sbt/sbt/issues/1832
-    Compile / resourceGenerators += Def.taskDyn {
-      // Step 1: Get dependencies before the mapping function
-      val linkTask = jsForJvm.js / Compile / fastLinkJS
-
-      Def.task {
-        val jsOutput = linkTask.value
-        val outputPath = (jsForJvm.js / Compile / fastLinkJSOutput).value
-        val log = streams.value.log
-
-        // Use values safely inside a task
-        val jsArtifact = outputPath / jsOutput.data.publicModules.head.jsFileName
-        val dest = (Compile / resourceManaged).value
-
-        // Copy to file("js-for-jvm") / "index.js"
-        IO.copyFile(jsArtifact, file("js-for-jvm") / "index.js")
-        Process("pnpm install", file("js-for-jvm")) ! log
-        Process("pnpm run build", file("js-for-jvm")) ! log
-        val jsFile = (file("js-for-jvm") / "dist" / "bundle.js").getAbsolutePath
-
-        org.mozilla.javascript.tools.jsc.Main
-          .main(Array("-opt", "9", "-version", "200", "-nosource", "-d", dest.getAbsolutePath, "-package", "chester", "-o", "ChesterJs", jsFile))
-        Seq(dest / "chester" / "ChesterJs.class")
-      }
-    }.taskValue,
     commonJvmLibSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
@@ -1162,7 +1105,6 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     pretty,
     semantic,
     platform,
-    jsForJvm,
     core,
     compatibility,
     cli,

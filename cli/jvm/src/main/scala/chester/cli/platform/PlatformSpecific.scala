@@ -35,7 +35,6 @@ def genSemanticDB(config: CliConfig): Unit = {
 
 def testFunctionalities(): Unit = {
   println("functionalities test start")
-  println(chester.Js4Jvm.test(chester.Js4Jvm.helloFromJs))
   chester.scala.Test.callit()
   println("functionalities test end")
 }

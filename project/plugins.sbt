@@ -19,11 +19,6 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 
 dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
 
-dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
-libraryDependencies ++= Seq(
-  "org.mozilla" % "rhino" % "1.7.15"
-)
-
 // cli tools
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 addDependencyTreePlugin
