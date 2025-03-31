@@ -431,7 +431,8 @@ bumpScala := {
       file("site/package.json"),
       file("cli/package.json"),
       file("packages/base/package.json"),
-      file("js-for-python/index.js")
+      file("js-for-python/index.js"),
+      file("js-for-lua/index.js")
     )
 
     filesToUpdate.foreach { f =>
@@ -1171,7 +1172,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     site,
     docs,
     optional,
-    jsForPython
+    jsForPython,
+    jsForLua
   )
   .settings(
     scalaVersion := scala3Version
@@ -1203,6 +1205,25 @@ lazy val jsForPython = crossProject(JSPlatform)
       // Enable ECMAScript module output.
       _.withModuleKind(ModuleKind.ESModule)
         // Use .mjs extension.
+        .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
+    }
+  )
+
+// Add the jsForLua project
+lazy val jsForLua = crossProject(JSPlatform)
+  .withoutSuffixFor(JSPlatform)
+  .crossType(CrossType.Full)
+  .in(file("js-for-lua"))
+  .settings(
+    commonSettings,
+    name := "js-for-lua"
+  )
+  .jsConfigure(_.dependsOn(utils.js))
+  .jsSettings(
+    scalaJSLinkerConfig ~= {
+      // Enable ECMAScript module output
+      _.withModuleKind(ModuleKind.ESModule)
+        // Use .mjs extension
         .withOutputPatterns(OutputPatterns.fromJSFile("%s.mjs"))
     }
   )
