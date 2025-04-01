@@ -3,7 +3,7 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 import chester.readerv2.LexerV2
-import pprint.{PPrinter, Tree}
+import pprint.Tree
 
 class SimpleBlockTerminationTest extends FunSuite {
 

@@ -1,6 +1,4 @@
 package chester.tsmorph
-
-import scala.scalajs.js
 import typings.tsMorph.mod
 
 /** Tests for interacting with ts-morph using ScalaJS with ScalablyTyped bindings

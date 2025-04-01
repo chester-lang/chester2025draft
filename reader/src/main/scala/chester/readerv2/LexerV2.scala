@@ -15,8 +15,27 @@ package chester.readerv2
  */
 import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
-import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, QualifiedName, Tuple}
-import chester.syntax.concrete.{Identifier as ConcreteIdentifier, IntegerLiteral as ConcreteIntegerLiteral, RationalLiteral as ConcreteRationalLiteral, StringLiteral as ConcreteStringLiteral}
+import chester.syntax.concrete.{
+  Block,
+  DotCall,
+  Expr,
+  ExprMeta,
+  FunctionCall,
+  ListExpr,
+  ObjectClause,
+  ObjectExpr,
+  ObjectExprClause,
+  ObjectExprClauseOnValue,
+  OpSeq,
+  QualifiedName,
+  Tuple
+}
+import chester.syntax.concrete.{
+  Identifier as ConcreteIdentifier,
+  IntegerLiteral as ConcreteIntegerLiteral,
+  RationalLiteral as ConcreteRationalLiteral,
+  StringLiteral as ConcreteStringLiteral
+}
 import chester.syntax.concrete.Literal.*
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
@@ -239,7 +258,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case Vector(expr) if leadingComments.nonEmpty =>
         Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), leadingComments))))
       case Vector(expr) => Right(expr)
-      case _ => Right(OpSeq(terms, Option.when(leadingComments.nonEmpty)(createMetaWithComments(None, leadingComments).get)))
+      case _            => Right(OpSeq(terms, Option.when(leadingComments.nonEmpty)(createMetaWithComments(None, leadingComments).get)))
     }
   }
 
@@ -331,7 +350,9 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   }
 
   // Handle block arguments
-  def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos)(leadingComments: Vector[Comment]): Either[ParseError, (Expr, LexerState)] =
+  def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos)(
+      leadingComments: Vector[Comment]
+  ): Either[ParseError, (Expr, LexerState)] =
     withComments(parseBlock)(state).flatMap { case (block, afterBlock) =>
       // Create appropriate expression based on context
       val newExpr = expr match {
@@ -382,7 +403,9 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     }
 
   // Colon handling
-  def handleColon(sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(leadingComments: Vector[Comment]): Either[ParseError, (Expr, LexerState)] = {
+  def handleColon(sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
+      leadingComments: Vector[Comment]
+  ): Either[ParseError, (Expr, LexerState)] = {
     val afterColon = state.advance()
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
     debug(s"parseRest: After adding colon, terms: $updatedTerms")
@@ -403,7 +426,9 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   }
 
   // Operator handling
-  def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(leadingComments: Vector[Comment]): Either[ParseError, (Expr, LexerState)] = {
+  def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
+      leadingComments: Vector[Comment]
+  ): Either[ParseError, (Expr, LexerState)] = {
     val afterOp = state.advance()
 
     // Add operator to terms
@@ -413,7 +438,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     if (
       afterOp.current match {
         case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-        case _ => false
+        case _                                              => false
       }
     ) {
       debug(s"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
@@ -439,7 +464,9 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   }
 
   // Identifier handling
-  def handleIdentifierInRest(text: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(leadingComments: Vector[Comment]): Either[ParseError, (Expr, LexerState)] = {
+  def handleIdentifierInRest(text: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
+      leadingComments: Vector[Comment]
+  ): Either[ParseError, (Expr, LexerState)] = {
     val afterId = state.advance()
 
     afterId.current match {
@@ -561,7 +588,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               }
             }
         }
-      
+
       // Keyword operator handling
       case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(charsToString(chars)) =>
         debug(s"parseExpr: Starting with keyword operator ${charsToString(chars)}")
@@ -578,7 +605,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             parseRest(expr, afterExpr)(leadingComments)
           }
         }
-      
+
       // Standard expression handling
       case _ =>
         debug("parseExpr: Starting with atom")
@@ -589,17 +616,15 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     }
   }
 
-  /** 
-   * Checks for the pattern of a right brace followed by a newline.
-   * This is used to detect block termination in certain contexts.
-   */
+  /** Checks for the pattern of a right brace followed by a newline. This is used to detect block termination in certain contexts.
+    */
   private def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
     // First check the preconditions - must be in context where newlines are significant,
     // and previous token must be a closing brace
     if (!state.newLineAfterBlockMeansEnds || !state.previousToken.exists(_.isInstanceOf[Token.RBrace])) {
       return false
     }
-    
+
     // Check if current token contains a newline or is EOF
     val hasNewline = state.current match {
       case Right(ws: Token.Whitespace) =>
@@ -609,7 +634,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           if range.start.index.utf16 < source.length && range.end.index.utf16 <= source.length
           content = source.substring(range.start.index.utf16, range.end.index.utf16)
         } yield content
-        
+
         wsContent.exists(_.contains('\n'))
       case Right(_: Token.EOF) => true
       case _                   => false
@@ -696,7 +721,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                 case LParen(_) =>
                   // Function call with generic type args
                   parseTuple(afterTypeParams).map { case (tuple, afterArgs) =>
-                    val typeParamsList: ListExpr  = typeParams 
+                    val typeParamsList: ListExpr = typeParams
                     val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
                     (createFunctionCall(typeCall, tuple, Some(sourcePos), Some(afterArgs.sourcePos)), afterArgs)
                   }
@@ -887,7 +912,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               blockCurrent = afterSemi
               debug(s"parseBlock: After semicolon, blockCurrent=$blockCurrent")
             case Right(Token.Whitespace(_, _)) =>
-              debug(s"parseBlock: Found whitespace, advancing")
+              debug("parseBlock: Found whitespace, advancing")
               // Collect comments instead of skipping
               val (_, afterWs) = collectComments(blockCurrent.advance())
               blockCurrent = afterWs
@@ -933,7 +958,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                       blockCurrent = afterStmt
                       debug(s"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
                     case Right(whitespaceTok @ Token.Whitespace(_, _)) =>
-                      debug(s"parseBlock: Expression followed by whitespace, checking for newline after block and next token")
+                      debug("parseBlock: Expression followed by whitespace, checking for newline after block and next token")
 
                       // Check if the next token is 'case' and this is a match block
                       val nextTokenIsCase = next.advance().current match {
@@ -1463,16 +1488,16 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def processMixedStatements(block: Block): Vector[Expr] = {
     // Only process single OpSeq statements, otherwise return as-is
     if (block.statements.size != 1) return block.statements
-    
+
     // Process the single statement case
     block.statements.head match {
-      case opSeq: OpSeq => 
+      case opSeq: OpSeq =>
         // Find potential statement end positions by detecting statement boundaries
         val statementEndIndices = opSeq.seq.zipWithIndex.collect {
-          case (term: Block, idx) if idx >= 2                              => idx // A block often terminates a statement
+          case (term: Block, idx) if idx >= 2                                 => idx // A block often terminates a statement
           case (term: chester.syntax.concrete.StringLiteral, idx) if idx >= 2 => idx // String literals can terminate statements
         }
-        
+
         if (statementEndIndices.isEmpty) {
           // No split points found, return as is
           block.statements

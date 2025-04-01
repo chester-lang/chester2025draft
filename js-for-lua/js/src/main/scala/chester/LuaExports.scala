@@ -1,7 +1,7 @@
 package chester
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation._
+import scala.scalajs.js.annotation.*
 
 /** Entry point for Scala code that will be compiled to Lua Exports functions using JSExportTopLevel which will be available in Lua
   */
