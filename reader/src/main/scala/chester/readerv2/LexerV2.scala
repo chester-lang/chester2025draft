@@ -258,32 +258,41 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           return false
         }
 
-        expr match {
-          case block: Block =>
-            debug(s"}\n check: expr is Block: $block")
-            state.current match {
-              case Right(whitespaceToken: Token.Whitespace) =>
-                val startPos = whitespaceToken.sourcePos.range.start.index.utf16
-                val endPos = whitespaceToken.sourcePos.range.end.index.utf16
-                val maybeSource = sourceOffset.readContent.toOption
-                debug(s"}\n check: whitespace token at $startPos-$endPos, source exists: ${maybeSource.isDefined}")
-                maybeSource.exists { source =>
-                  if (startPos < source.length && endPos <= source.length) {
-                    val whitespaceText = source.substring(startPos, endPos)
-                    val containsNewline = whitespaceText.contains('\n')
-                    debug(s"}\n check: whitespace='${whitespaceText.replace("\n", "\\n")}', contains newline: $containsNewline")
-                    containsNewline
-                  } else {
-                    debug("}\n check: whitespace positions out of bounds, returning false")
-                    false
-                  }
-                }
-              case other => 
-                debug(s"}\n check: current token is not whitespace: $other, returning false")
+        // Check if the previous token was a closing brace
+        val previousWasRBrace = state.previousToken match {
+          case Some(Token.RBrace(_)) => true
+          case _ => false
+        }
+
+        if (!previousWasRBrace) {
+          debug("}\n check: previous token was not RBrace, returning false")
+          return false
+        }
+
+        // Now check if current token contains a newline
+        state.current match {
+          case Right(whitespaceToken: Token.Whitespace) =>
+            val startPos = whitespaceToken.sourcePos.range.start.index.utf16
+            val endPos = whitespaceToken.sourcePos.range.end.index.utf16
+            val maybeSource = sourceOffset.readContent.toOption
+            debug(s"}\n check: whitespace token at $startPos-$endPos, source exists: ${maybeSource.isDefined}")
+            maybeSource.exists { source =>
+              if (startPos < source.length && endPos <= source.length) {
+                val whitespaceText = source.substring(startPos, endPos)
+                val containsNewline = whitespaceText.contains('\n')
+                debug(s"}\n check: whitespace='${whitespaceText.replace("\n", "\\n")}', contains newline: $containsNewline")
+                containsNewline
+              } else {
+                debug("}\n check: whitespace positions out of bounds, returning false")
                 false
+              }
             }
+          case Right(_: Token.EOF) =>
+            // EOF also acts like a newline for termination purposes
+            debug("}\n check: current token is EOF, returning true")
+            true
           case other => 
-            debug(s"}\n check: expr is not Block: ${other.getClass.getSimpleName}, returning false")
+            debug(s"}\n check: current token is not whitespace or EOF: $other, returning false")
             false
         }
       }
@@ -308,12 +317,12 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           val matchId = ConcreteIdentifier("match", createMeta(None, None))
           val afterMatch = current.advance()
           
-          // Parse the block normally, but tell it it's a match block so it treats case statements specially
+          // Parse the block normally
           parseBlockWithComments(afterMatch).map { case (rawBlock, afterBlock) =>
             val block = rawBlock.asInstanceOf[Block]
-            // Extract the individual case statements from the Block
-            val separatedStatements = separateCaseStatements(block)
-            val newBlock = Block(separatedStatements, None, None)
+            // Process the statements in the block with the generalized function
+            val processedStatements = processMixedStatements(block)
+            val newBlock = Block(processedStatements, None, None)
             // Construct the final expression: identifier match { cases }
             val matchExpr = OpSeq(Vector(expr, matchId, newBlock), None)
             (matchExpr, afterBlock)
@@ -1502,52 +1511,62 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       createMeta(startSourcePos, endSourcePos)
     )
 
-  // Helper function to separate case statements in a match block
-  private def separateCaseStatements(block: Block): Vector[Expr] = {
-    debug(s"Separating case statements in block")
-    // The statements in the block are already individually separated in the V1 parser
-    // No need to split them up - just return the existing statements
+  // Helper function for processing statements in a block, without special-casing by context
+  private def processMixedStatements(block: Block): Vector[Expr] = {
+    debug(s"Processing mixed statements in block, preserving structure")
     
-    // Special case: if there's only one statement and it's an OpSeq containing multiple case expressions,
-    // then we do need to split it
+    // If we already have multiple statements, just preserve them
+    if (block.statements.size > 1) {
+      debug(s"Block already has ${block.statements.size} separate statements, preserving them")
+      return block.statements
+    }
+    
+    // Special case: if there's only one statement and it's an OpSeq that needs splitting
     if (block.statements.size == 1) {
       block.statements.head match {
         case opSeq: OpSeq =>
-          debug(s"Found single OpSeq with ${opSeq.seq.size} terms")
+          debug(s"Found single OpSeq with ${opSeq.seq.size} terms, checking if it needs splitting")
+          
+          // Split statements at identifier boundaries that indicate statement start
           var result = Vector.empty[Expr]
-          var currentCaseTerms = Vector.empty[Expr]
-          var isFirstCase = true
+          var currentTerms = Vector.empty[Expr]
+          var expectingNewStatement = false
           
           for (term <- opSeq.seq) {
             term match {
-              case id: ConcreteIdentifier if id.name == "case" && !isFirstCase =>
-                // Start of a new case - add the previous one to results
-                debug(s"Found 'case' keyword, creating new statement")
-                if (currentCaseTerms.nonEmpty) {
-                  result = result :+ OpSeq(currentCaseTerms, None)
-                  currentCaseTerms = Vector(term)
+              case id: ConcreteIdentifier if id.name == "case" && currentTerms.nonEmpty =>
+                // Start of a new case statement - add previous terms to results
+                debug(s"Found natural statement boundary at 'case' identifier")
+                if (currentTerms.nonEmpty) {
+                  result = result :+ OpSeq(currentTerms, None)
+                  currentTerms = Vector(term)
+                  expectingNewStatement = false
                 }
               case _ =>
-                // Add to current case terms
-                currentCaseTerms = currentCaseTerms :+ term
-                isFirstCase = false
+                // Add to current terms
+                currentTerms = currentTerms :+ term
             }
           }
           
-          // Add the last case statement
-          if (currentCaseTerms.nonEmpty) {
-            result = result :+ OpSeq(currentCaseTerms, None)
+          // Add the last statement
+          if (currentTerms.nonEmpty) {
+            result = result :+ OpSeq(currentTerms, None)
           }
           
-          debug(s"Split single OpSeq into ${result.size} separate case statements")
-          result
+          if (result.size > 1) {
+            debug(s"Split single OpSeq into ${result.size} separate statements")
+            result
+          } else {
+            debug("No statement splitting needed")
+            block.statements
+          }
         
         case _ => 
           debug("Block has one statement but it's not an OpSeq, returning original statements")
           block.statements
       }
     } else {
-      debug(s"Block already has ${block.statements.size} separate statements, preserving them")
+      debug("Block is empty, returning original statements")
       block.statements
     }
   }

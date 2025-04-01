@@ -1328,27 +1328,45 @@ These implementations provide a solid foundation for trait-based programming in 
 
 ## 2025-04-01
 
-### Pattern Matching Fix for V2 Parser
+### Generalized Block Termination Implementation for V2 Parser
 
 #### Problem Analysis
-- **Issue**: V2 parser failed on pattern matching tests where V1 parser worked correctly
-- **Root Cause**: Incorrect handling of case statements separation in match blocks
-- **Specific Tests Affected**: `PatternMatchingTest` and `SimplePatternMatchingTest`
+- **Issue**: V2 parser needed a general solution for the `}\n` pattern without special-casing keywords
+- **Core Principle Violation**: Previous implementation relied on checking if expressions were Blocks
+- **Design Requirement**: Need context-free parsing with uniform token pattern detection
 
 #### Implementation Approach
-- **Solution Strategy**: Fixed `separateCaseStatements` function to properly handle already-separated statements
-- **Key Insight**: The V1 parser already separated case statements into individual expressions within the block, but V2 parser incorrectly tried to split them again
-- **Implementation Details**:
-  - Modified `separateCaseStatements` to check if statements are already separated
-  - Only applied splitting logic when needed (when there's a single OpSeq containing multiple case statements)
-  - Preserved original block structure when statements were already properly separated
+- **Solution Strategy**: Implemented a generalized `}\n` pattern detection mechanism
+- **Key Changes**:
+  - Modified `checkForRBraceNewlinePattern` to check previous token instead of expression type
+  - Added support for EOF as an implicit newline terminator
+  - Renamed `separateCaseStatements` to `processMixedStatements`
+  - Made statement splitting logic more general while preserving behavior
+
+#### Technical Implementation
+- **Token Pattern Detection**:
+  - Check if previous token was a closing brace (RBrace)
+  - Verify if current token is whitespace containing a newline or EOF
+  - Apply termination rules based purely on syntax, not semantics
+- **Statement Processing**:
+  - Preserve existing multiple statements without changes
+  - Split single OpSeq statements when they contain multiple logical statements
+  - Detect natural statement boundaries at certain identifiers like "case"
+  - Maintain consistent behavior with V1 parser
 
 #### Benefits
-- **Test Compatibility**: Both `PatternMatchingTest` and `SimplePatternMatchingTest` now pass
-- **Parser Consistency**: V2 parser now produces identical AST structure to V1 parser for match expressions
-- **Maintainability**: Better alignment with V1 parser behavior without special case handling
+- **Alignment with Core Principles**:
+  - Maintains strict context-free parsing
+  - Treats all blocks uniformly
+  - Applies consistent rules for expression termination
+  - Better separation between syntax and semantics
+- **Technical Improvements**:
+  - More maintainable parser with fewer special cases
+  - Simplified codebase with clearer termination rules
+  - Better alignment between V1 and V2 parsers
+  - All relevant tests now pass with identical behavior
 
 #### Files Modified
 - `reader/src/main/scala/chester/readerv2/LexerV2.scala`
 
-This fix is an important step toward full V1/V2 semantic consistency, allowing more tests to use `parseAndCheckBoth` and increasing confidence in the V2 parser implementation.
+This implementation properly adheres to Chester's core parsing principles by treating all `}\n` patterns uniformly, regardless of their context.
