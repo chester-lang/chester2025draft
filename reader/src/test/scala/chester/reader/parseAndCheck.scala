@@ -144,14 +144,13 @@ def getParsedV1(input: String): Expr = {
 }
 
 // New function to parse with V1 parser only and return the result
-def parseV1(input: String): Expr = {
+def parseV1(input: String): Expr =
   ChesterReader
     .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
       error => fail(s"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
       value => value
     )
-}
 
 // New function to parse with V2 parser only and return the result
 def parseV2(input: String): Expr = {

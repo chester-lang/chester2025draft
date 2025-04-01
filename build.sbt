@@ -890,7 +890,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       // "org.jline" % "jline-console-ui" % jlineVersion
     )
   )
-  .jsConfigure { project => project.enablePlugins(ScalaJSBundlerPlugin) }
+  .jsConfigure(project => project.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
     Compile / npmDependencies ++= Seq(
       "ts-morph" -> "25.0.1"
