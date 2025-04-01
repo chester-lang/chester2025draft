@@ -269,34 +269,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       var localTerms = Vector(expr)
       debug(s"parseRest called with expr: $expr, state: $state, current terms: $localTerms")
 
-      // Check for "}\n" pattern - simplified
-      def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
-        // First check the preconditions - must be in context where newlines are significant,
-        // and previous token must be a closing brace
-        if (!state.newLineAfterBlockMeansEnds || !state.previousToken.exists(_.isInstanceOf[Token.RBrace])) {
-          return false
-        }
-        
-        // Check if current token contains a newline or is EOF
-        val hasNewline = state.current match {
-          case Right(ws: Token.Whitespace) =>
-            lazy val wsContent = for {
-              source <- sourceOffset.readContent.toOption
-              range = ws.sourcePos.range
-              if range.start.index.utf16 < source.length && range.end.index.utf16 <= source.length
-              content = source.substring(range.start.index.utf16, range.end.index.utf16)
-            } yield content
-            
-            wsContent.exists(_.contains('\n'))
-          case Right(_: Token.EOF) => true
-          case _                   => false
-        }
-
-        // Log if pattern is detected and debug is enabled
-        if (DEBUG && hasNewline) debug("}\n check: pattern detected")
-        hasNewline
-      }
-
       if (checkForRBraceNewlinePattern(state)) {
         debug("parseRest: Terminating expression due to }\n pattern")
         return buildOpSeq(localTerms).map(result => (result, state))
@@ -628,6 +600,37 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           parseRest(first, afterFirst)
         }
     }
+  }
+
+  /** 
+   * Checks for the pattern of a right brace followed by a newline.
+   * This is used to detect block termination in certain contexts.
+   */
+  private def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+    // First check the preconditions - must be in context where newlines are significant,
+    // and previous token must be a closing brace
+    if (!state.newLineAfterBlockMeansEnds || !state.previousToken.exists(_.isInstanceOf[Token.RBrace])) {
+      return false
+    }
+    
+    // Check if current token contains a newline or is EOF
+    val hasNewline = state.current match {
+      case Right(ws: Token.Whitespace) =>
+        lazy val wsContent = for {
+          source <- sourceOffset.readContent.toOption
+          range = ws.sourcePos.range
+          if range.start.index.utf16 < source.length && range.end.index.utf16 <= source.length
+          content = source.substring(range.start.index.utf16, range.end.index.utf16)
+        } yield content
+        
+        wsContent.exists(_.contains('\n'))
+      case Right(_: Token.EOF) => true
+      case _                   => false
+    }
+
+    // Log if pattern is detected and debug is enabled
+    if (DEBUG && hasNewline) debug("}\n check: pattern detected")
+    hasNewline
   }
 
   private def handleDotCall(dotSourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
