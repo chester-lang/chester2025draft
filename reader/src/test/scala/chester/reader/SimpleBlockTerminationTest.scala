@@ -62,6 +62,23 @@ class SimpleBlockTerminationTest extends FunSuite {
       ),
       None
     )
+    
+    // Parse with V1 parser
+    val resultV1 = parseV1(input)
+    println("\n===== V1 PARSER RESULT =====")
+    println(resultV1)
+    
+    // Parse with V2 parser
+    val resultV2 = parseV2(input)
+    println("\n===== V2 PARSER RESULT =====")
+    println(resultV2)
+    
+    // Run the original check to see if it fails
+    println("\n===== COMPARING RESULTS =====")
     parseAndCheck(input, expected)
+    
+    // Simple equality check
+    println("\n===== V1 VS V2 EQUALITY CHECK =====")
+    println(s"V1 equals V2: ${resultV1 == resultV2}")
   }
 }

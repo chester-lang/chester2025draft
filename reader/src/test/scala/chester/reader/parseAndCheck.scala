@@ -142,3 +142,44 @@ def getParsedV1(input: String): Expr = {
       value => value
     )
 }
+
+// New function to parse with V1 parser only and return the result
+def parseV1(input: String): Expr = {
+  ChesterReader
+    .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
+    .fold(
+      error => fail(s"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
+      value => value
+    )
+}
+
+// New function to parse with V2 parser only and return the result
+def parseV2(input: String): Expr = {
+  val source = FileNameAndContent("testFile", input)
+  val sourceOffset = SourceOffset(source)
+  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
+  val tokens = tokenizer.tokenize()
+  val lexer = LexerV2(sourceOffset, ignoreLocation = true)
+
+  lexer
+    .parseExpr(LexerState(tokens.toVector, 0))
+    .fold(
+      error => {
+        val errorIndex = error.pos.index.utf16
+        val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+        val lineEnd = input.indexOf('\n', errorIndex) match {
+          case -1 => input.length
+          case n  => n
+        }
+        val line = input.substring(lineStart, lineEnd)
+        val pointer = " " * (errorIndex - lineStart) + "^"
+
+        fail(s"""V2 parsing failed for input: $input
+             |Error: ${error.message}
+             |At position ${error.pos}:
+             |$line
+             |$pointer""".stripMargin)
+      },
+      { case (expr, _) => expr }
+    )
+}
