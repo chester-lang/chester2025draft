@@ -293,7 +293,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           val matchId = ConcreteIdentifier("match", createMeta(None, None))
           val afterMatch = current.advance()
 
-          parseBlockWithComments(afterMatch).map { case (rawBlock, afterBlock) =>
+          withComments(parseBlock)(afterMatch).map { case (rawBlock, afterBlock) =>
             val block = rawBlock.asInstanceOf[Block]
             val processedStatements = processMixedStatements(block)
             val newBlock = Block(processedStatements, None, None)
@@ -334,7 +334,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         // Generic token handling
         case Right(_) =>
           debug("parseRest: Found other token, parsing as atom")
-          parseAtomWithComments(current).flatMap { case (next, afterNext) =>
+          withComments(parseAtom)(current).flatMap { case (next, afterNext) =>
             localTerms = localTerms :+ next
             debug(s"parseRest: After parsing other token as atom, terms: $localTerms")
             parseRest(next, afterNext).map { case (result, finalState) =>
@@ -356,7 +356,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
     // Handle block arguments
     def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, (Expr, LexerState)] =
-      parseBlockWithComments(state).flatMap { case (block, afterBlock) =>
+      withComments(parseBlock)(state).flatMap { case (block, afterBlock) =>
         // Create appropriate expression based on context
         val newExpr = expr match {
           case funcCall: FunctionCall =>
@@ -411,7 +411,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
       debug(s"parseRest: After adding colon, terms: $updatedTerms")
 
-      parseAtomWithComments(afterColon).flatMap { case (next, afterNext) =>
+      withComments(parseAtom)(afterColon).flatMap { case (next, afterNext) =>
         val newTerms = updatedTerms :+ next
         debug(s"parseRest: After parsing atom after colon, terms: $newTerms")
 
@@ -444,7 +444,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         buildOpSeq(updatedTerms).map(result => (result, afterOp))
       } else {
         // Continue parsing the rest of the expression
-        parseAtomWithComments(afterOp).flatMap { case (next, afterNext) =>
+        withComments(parseAtom)(afterOp).flatMap { case (next, afterNext) =>
           debug(s"parseRest: After parsing atom after operator, got: $next")
           val newTerms = updatedTerms :+ next
           debug(s"parseRest: Updated terms after operator: $newTerms")
@@ -489,7 +489,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           }
         case Right(Token.LBrace(_)) =>
           debug("parseRest: Found lbrace after identifier")
-          parseBlockWithComments(afterId).flatMap { case (block, afterBlock) =>
+          withComments(parseBlock)(afterId).flatMap { case (block, afterBlock) =>
             // In V1 parser, a block after an identifier in infix is treated as part of the OpSeq
             val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
             val updatedTerms = terms :+ id :+ block
@@ -512,7 +512,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           debug(s"parseRest: After adding id and op, terms: $updatedTerms")
 
           val afterOp = afterId.advance()
-          parseAtomWithComments(afterOp).flatMap { case (next, afterNext) =>
+          withComments(parseAtom)(afterOp).flatMap { case (next, afterNext) =>
             val newTerms = updatedTerms :+ next
             debug(s"parseRest: After parsing atom after operator, terms: $newTerms")
 
@@ -566,7 +566,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           case _ =>
             debug("parseExpr: Parsing atom after initial operator")
             terms = Vector(ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))))
-            parseAtomWithComments(afterOp).flatMap { case (expr, afterExpr) =>
+            withComments(parseAtom)(afterOp).flatMap { case (expr, afterExpr) =>
               terms = terms :+ expr
               debug(s"parseExpr: After initial operator and atom, terms: $terms")
 
@@ -584,7 +584,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         debug(s"parseExpr: Starting with keyword operator ${charsToString(chars)}")
         val afterOp = current.advance()
         terms = Vector(ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
-        parseAtomWithComments(afterOp).flatMap { case (expr, afterExpr) =>
+        withComments(parseAtom)(afterOp).flatMap { case (expr, afterExpr) =>
           terms = terms :+ expr
           debug(s"parseExpr: After initial keyword operator and atom, terms: $terms")
 
@@ -599,7 +599,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       // Standard expression handling
       case _ =>
         debug("parseExpr: Starting with atom")
-        parseAtomWithComments(current).flatMap { case (first, afterFirst) =>
+        withComments(parseAtom)(current).flatMap { case (first, afterFirst) =>
           debug(s"parseExpr: After initial atom, got: $first")
           parseRest(first, afterFirst)
         }
@@ -695,9 +695,9 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             afterId.current match {
               case Left(err)                            => Left(err)
               case Op(op, _) if op == "=" || op == "=>" => parseObject(current)
-              case _                                    => parseBlockWithComments(current)
+              case _                                    => withComments(parseBlock)(current)
             }
-          case _ => parseBlockWithComments(current)
+          case _ => withComments(parseBlock)(current)
         }
 
       case LParen(_) => parseTuple(current)
@@ -708,7 +708,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           case LBracket(_) =>
             // Generic type parameters
             val identifier = createIdentifier(chars, sourcePos)
-            parseListWithComments(afterId).flatMap { case (typeParams, afterTypeParams) =>
+            withComments(parseList)(afterId).flatMap { case (typeParams, afterTypeParams) =>
               afterTypeParams.current match {
                 case LParen(_) =>
                   // Function call with generic type args
@@ -745,7 +745,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case Str(_, _) => parseString(current)
       case Sym(_, _) => parseSymbol(current)
 
-      case LBracket(_) => parseListWithComments(current)
+      case LBracket(_) => withComments(parseList)(current)
 
       case Right(token) => Left(ParseError(s"Unexpected token: $token", token.sourcePos.range.start))
 
@@ -1335,16 +1335,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       Right((updatedExpr.asInstanceOf[T], finalState))
     }
   }
-
-  // Simplified versions using the withComments combinator
-  private def parseAtomWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withComments(parseAtom)(state)
-
-  private def parseBlockWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withComments(parseBlock)(state)
-
-  private def parseListWithComments(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withComments(parseList)(state)
 
   private def createCommentInfo(
       leadingComments: Vector[Comment],
