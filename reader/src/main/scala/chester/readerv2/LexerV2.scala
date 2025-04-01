@@ -1483,37 +1483,42 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       createMeta(startSourcePos, endSourcePos)
     )
 
-  // Helper function for processing statements in a block - extremely simplified
+  // Helper function for processing statements in a block - simplifies case statement handling
   private def processMixedStatements(block: Block): Vector[Expr] = {
-    // Only process single OpSeq statements, otherwise return as-is
-    if (block.statements.size != 1) return block.statements
+    // Process the AST in the same structure but without special knowledge of keywords
+    // Keep the same overall pattern of splitting multi-expression blocks but remove "case" dependency
     
-    block.statements.head match {
-      case opSeq: OpSeq =>
-        // Use fold to build the result vectors more functionally
-        val initAcc = (Vector.empty[Vector[Expr]], Vector.empty[Expr])
+    block.statements match {
+      case Vector(opSeq: OpSeq) =>
+        var result = Vector.empty[Vector[Expr]]
+        var current = Vector.empty[Expr]
         
-        val (statementGroups, lastGroup) = opSeq.seq.foldLeft(initAcc) { case ((groups, currentGroup), term) =>
-          val isCaseBoundary = term match {
-            case id: ConcreteIdentifier => id.name == "case" && currentGroup.nonEmpty
-            case _ => false
-          }
+        // Process each term in the sequence
+        for (term <- opSeq.seq) {
+          // Always add the term to the current group
+          current = current :+ term
           
-          if (isCaseBoundary) 
-            (groups :+ currentGroup, Vector(term)) // Start a new group
-          else
-            (groups, currentGroup :+ term) // Add to current group
+          // Check if we should start a new group after this term
+          // We do this if the expression is a complete statement (ends with block or literal)
+          // This helps maintain block structure without keyword dependencies
+          if (current.size >= 3 && (term.isInstanceOf[Block] || term.isInstanceOf[chester.syntax.concrete.StringLiteral])) {
+            result = result :+ current
+            current = Vector.empty
+          }
         }
         
-        // Create final set of statements, including last group if it has terms
-        val allGroups = if (lastGroup.nonEmpty) statementGroups :+ lastGroup else statementGroups
-        val result = allGroups.map(terms => OpSeq(terms, None))
+        // Add any remaining terms
+        if (current.nonEmpty) {
+          result = result :+ current
+        }
         
-        // Return original if we didn't actually split anything
+        // If we identified multiple statements, return them as separate OpSeq objects
         if (result.size > 1) {
-          if (DEBUG) debug(s"Split OpSeq into ${result.size} statements")
-          result
-        } else block.statements
+          result.map(terms => OpSeq(terms, None))
+        } else {
+          // No change needed
+          block.statements
+        }
         
       case _ => block.statements
     }
