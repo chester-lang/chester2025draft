@@ -43,7 +43,90 @@ import chester.error.*
 import chester.reader.*
 import chester.syntax.*
 import chester.syntax.concrete.*
-import chester.readerv2.Token.*
+
+// Token extractors for cleaner pattern matching
+private object TokenExtractors {
+  import chester.readerv2.Token.*
+  // Define extractors using pattern matching
+  object Id {
+    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
+      case Right(Token.Identifier(chars, pos)) => (chars, pos)
+    }
+  }
+
+  object Op {
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+      case Right(Token.Operator(op, pos)) => (op, pos)
+    }
+  }
+
+  object Str {
+    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
+      case Right(Token.StringLiteral(chars, pos)) => (chars, pos)
+    }
+  }
+
+  object Sym {
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+      case Right(Token.SymbolLiteral(value, pos)) => (value, pos)
+    }
+  }
+
+  object Int {
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+      case Right(Token.IntegerLiteral(value, pos)) => (value, pos)
+    }
+  }
+
+  object Rat {
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
+      case Right(Token.RationalLiteral(value, pos)) => (value, pos)
+    }
+  }
+
+  // Helper for source position extractors - consolidated into a single implementation
+  private def posExtract(tokenPredicate: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
+    case Right(token) if tokenPredicate(token) => Some(token.sourcePos)
+    case _ => None
+  }
+
+  // Define all delimiter token extractors using the posExtract helper
+  object LParen {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t)
+  }
+
+  object RParen {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t)
+  }
+
+  object LBrace {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t)
+  }
+
+  object RBrace {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t)
+  }
+
+  object LBracket {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t)
+  }
+
+  object RBracket {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t)
+  }
+
+  object Comma {
+    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t)
+  }
+
+  object Err {
+    def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) { case Left(err) =>
+      err
+    }
+  }
+}
+
+import TokenExtractors._
 
 case class LexerState(
     tokens: Vector[Either[ParseError, Token]],
@@ -86,8 +169,9 @@ object LexerV2 {
   private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
+import LexerV2.DEBUG
+
 class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
-  import LexerV2.DEBUG
 
   private def debug(msg: => String): Unit = if (DEBUG) println(s"[DEBUG] $msg")
 
@@ -163,70 +247,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case (None, meta) => meta
       case (meta, None) => meta
     }
-
-  // Token extractors for cleaner pattern matching
-  private object TokenExtractors {
-    // Define extractors using pattern matching
-    object Id {
-      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
-        case Right(Token.Identifier(chars, pos)) => (chars, pos)
-      }
-    }
-
-    object Op {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-        case Right(Token.Operator(op, pos)) => (op, pos)
-      }
-    }
-
-    object Str {
-      def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
-        case Right(Token.StringLiteral(chars, pos)) => (chars, pos)
-      }
-    }
-
-    object Sym {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-        case Right(Token.SymbolLiteral(value, pos)) => (value, pos)
-      }
-    }
-
-    object Int {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-        case Right(Token.IntegerLiteral(value, pos)) => (value, pos)
-      }
-    }
-
-    object Rat {
-      def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-        case Right(Token.RationalLiteral(value, pos)) => (value, pos)
-      }
-    }
-
-    // Helper for source position extractors - consolidated into a single implementation
-    private def posExtract(tokenPredicate: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
-      case Right(token) if tokenPredicate(token) => Some(token.sourcePos)
-      case _                                     => None
-    }
-
-    // Define all delimiter token extractors using the posExtract helper
-    object LParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t) }
-    object RParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
-    object LBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
-    object RBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
-    object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
-    object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
-
-    object Comma { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
-
-    object Err {
-      def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) { case Left(err) =>
-        err
-      }
-    }
-  }
-
-  import TokenExtractors._
 
   // Main parsing methods
   def parseExpr(state: LexerState): Either[ParseError, (Expr, LexerState)] = {
@@ -738,7 +758,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     case _                                                     => false
   }
 
-  def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
+   def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
     // Replace skipComments with collectComments to preserve comments
     val (_leadingListComments, initialState) = collectComments(state)
 
