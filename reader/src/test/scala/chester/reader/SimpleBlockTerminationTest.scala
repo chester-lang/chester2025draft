@@ -99,6 +99,7 @@ class SimpleBlockTerminationTest extends FunSuite {
       // Run the original check to see if it fails
       println("\n===== COMPARING RESULTS =====")
       parseAndCheck(input, expected)
+      parseAndCheckBoth(input, expected)
       
       // Simple equality check
       println("\n===== V1 VS V2 EQUALITY CHECK =====")

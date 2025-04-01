@@ -302,6 +302,23 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       }
 
       current.current match {
+        // Special handling for 'match' keyword to properly handle case statements
+        case Right(Token.Identifier(chars, _)) if charsToString(chars) == "match" && expr.isInstanceOf[ConcreteIdentifier] =>
+          debug("parseRest: Found match keyword after identifier, using special match handler")
+          val matchId = ConcreteIdentifier("match", createMeta(None, None))
+          val afterMatch = current.advance()
+          
+          // Parse the block normally, but tell it it's a match block so it treats case statements specially
+          parseBlockWithComments(afterMatch).map { case (rawBlock, afterBlock) =>
+            val block = rawBlock.asInstanceOf[Block]
+            // Extract the individual case statements from the Block
+            val separatedStatements = separateCaseStatements(block)
+            val newBlock = Block(separatedStatements, None, None)
+            // Construct the final expression: identifier match { cases }
+            val matchExpr = OpSeq(Vector(expr, matchId, newBlock), None)
+            (matchExpr, afterBlock)
+          }
+        
         // Handle block after expression
         case Right(Token.LBrace(braceSourcePos)) =>
           debug("parseRest: Found LBrace after expression, treating as block argument")
@@ -850,6 +867,12 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     var result: Option[Expr] = None
     var maxExpressions = 100 // Prevent infinite loops
 
+    // Helper function to detect case statements and properly separate them
+    def isCaseIdentifier(expr: Expr): Boolean = expr match {
+      case id: ConcreteIdentifier if id.name == "case" => true
+      case _ => false
+    }
+
     // Skip the opening brace
     current.current match {
       case Right(Token.LBrace(_)) =>
@@ -877,12 +900,27 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               val (_, afterSemi) = collectComments(blockCurrent.advance())
               blockCurrent = afterSemi
               debug(s"parseBlock: After semicolon, blockCurrent=$blockCurrent")
-            case Right(Token.Whitespace(text, _)) =>
+            case Right(Token.Whitespace(_, _)) =>
               debug(s"parseBlock: Found whitespace, advancing")
               // Collect comments instead of skipping
               val (_, afterWs) = collectComments(blockCurrent.advance())
               blockCurrent = afterWs
               debug(s"parseBlock: After whitespace, blockCurrent=$blockCurrent")
+            case Right(Token.Identifier(chars, _)) if charsToString(chars) == "case" && statements.nonEmpty =>
+              // Special handling for "case" keyword - create a new statement
+              debug("parseBlock: Found 'case' keyword after previous statement, creating new statement")
+              
+              // Parse the case statement as a separate expression
+              parseExpr(blockCurrent) match {
+                case Left(err) => 
+                  debug(s"parseBlock: Error parsing case expression: $err")
+                  return Left(err)
+                case Right((caseExpr, afterCase)) =>
+                  debug(s"parseBlock: Parsed case expression: $caseExpr")
+                  // Add this case expression as a separate statement
+                  statements = statements :+ caseExpr
+                  blockCurrent = afterCase
+              }
             case _ =>
               debug(s"parseBlock: Parsing expression at token ${blockCurrent.current}")
               parseExpr(blockCurrent) match {
@@ -908,10 +946,48 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                       val (_, afterStmt) = collectComments(next)
                       blockCurrent = afterStmt
                       debug(s"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
-                    case Right(Token.Whitespace(_, _)) =>
-                      debug("parseBlock: Expression followed by whitespace, adding to statements")
-                      // Add the expression to statements for all but the last one
-                      statements = statements :+ expr
+                    case Right(whitespaceTok @ Token.Whitespace(_, _)) =>
+                      debug(s"parseBlock: Expression followed by whitespace, checking for newline after block and next token")
+                      
+                      // Check if the next token is 'case' and this is a match block
+                      val nextTokenIsCase = next.advance().current match {
+                        case Right(Token.Identifier(chars, _)) if charsToString(chars) == "case" => 
+                          debug("parseBlock: Found 'case' after whitespace, will create new statement")
+                          true
+                        case _ => false
+                      }
+                      
+                      // Check for block-newline pattern
+                      val isBlockFollowedByNewline = expr match {
+                        case block: Block =>
+                          // Check for newlines in whitespace text
+                          val maybeSource = sourceOffset.readContent.toOption
+                          val containsNewline = maybeSource.exists { source =>
+                            val startPos = whitespaceTok.sourcePos.range.start.index.utf16
+                            val endPos = whitespaceTok.sourcePos.range.end.index.utf16
+                            if (startPos < source.length && endPos <= source.length) {
+                              val whitespaceText = source.substring(startPos, endPos)
+                              whitespaceText.contains('\n')
+                            } else {
+                              false
+                            }
+                          }
+                          containsNewline && blockCurrent.newLineAfterBlockMeansEnds
+                        case _ => false
+                      }
+                      
+                      // Add the expression to statements - if we have a block followed by newline 
+                      // or if next token is 'case', we'll stop here to create a proper AST structure
+                      if (nextTokenIsCase || isBlockFollowedByNewline) {
+                        debug("parseBlock: Creating new statement for block followed by newline or case")
+                        // Add the expression to statements and terminate this statement
+                        statements = statements :+ expr
+                      } else {
+                        debug("parseBlock: Expression followed by whitespace (no special conditions), continuing same statement")
+                        // Add the expression to statements
+                        statements = statements :+ expr
+                      }
+                      
                       // Collect comments after statement
                       val (_, afterStmt) = collectComments(next)
                       blockCurrent = afterStmt
@@ -1425,5 +1501,52 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       args,
       createMeta(startSourcePos, endSourcePos)
     )
+
+  // Helper function to separate case statements in a match block
+  private def separateCaseStatements(block: Block): Vector[Expr] = {
+    debug(s"Separating case statements in block")
+    // If there are no statements, return empty vector
+    if (block.statements.isEmpty) return Vector.empty
+    
+    // Get the first statement, which should contain all case expressions in a single OpSeq
+    val mainStatement = block.statements.head
+    
+    mainStatement match {
+      case opSeq: OpSeq =>
+        debug(s"Found OpSeq with ${opSeq.seq.size} terms")
+        // Now we need to split this into separate case statements
+        var result = Vector.empty[Expr]
+        var currentCaseTerms = Vector.empty[Expr]
+        var isFirstCase = true
+        
+        for (term <- opSeq.seq) {
+          term match {
+            case id: ConcreteIdentifier if id.name == "case" && !isFirstCase =>
+              // Start of a new case - add the previous one to results
+              debug(s"Found 'case' keyword, creating new statement")
+              if (currentCaseTerms.nonEmpty) {
+                result = result :+ OpSeq(currentCaseTerms, None)
+                currentCaseTerms = Vector(term)
+              }
+            case _ =>
+              // Add to current case terms
+              currentCaseTerms = currentCaseTerms :+ term
+              isFirstCase = false
+          }
+        }
+        
+        // Add the last case statement
+        if (currentCaseTerms.nonEmpty) {
+          result = result :+ OpSeq(currentCaseTerms, None)
+        }
+        
+        debug(s"Split into ${result.size} separate case statements")
+        result
+        
+      case _ => 
+        debug("Block doesn't contain an OpSeq as expected, returning original statements")
+        block.statements
+    }
+  }
 
 }
