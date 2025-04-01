@@ -251,25 +251,40 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
       // Check for "}\n" pattern
       def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+        debug(s"Checking for }\n pattern, state.newLineAfterBlockMeansEnds=${state.newLineAfterBlockMeansEnds}")
         // Only consider }\n as terminating if we're in the right context
-        if (!state.newLineAfterBlockMeansEnds) return false
+        if (!state.newLineAfterBlockMeansEnds) {
+          debug("}\n check: newLineAfterBlockMeansEnds is false, returning false")
+          return false
+        }
 
         expr match {
-          case _: Block =>
+          case block: Block =>
+            debug(s"}\n check: expr is Block: $block")
             state.current match {
               case Right(whitespaceToken: Token.Whitespace) =>
                 val startPos = whitespaceToken.sourcePos.range.start.index.utf16
                 val endPos = whitespaceToken.sourcePos.range.end.index.utf16
                 val maybeSource = sourceOffset.readContent.toOption
+                debug(s"}\n check: whitespace token at $startPos-$endPos, source exists: ${maybeSource.isDefined}")
                 maybeSource.exists { source =>
                   if (startPos < source.length && endPos <= source.length) {
                     val whitespaceText = source.substring(startPos, endPos)
-                    whitespaceText.contains('\n')
-                  } else false
+                    val containsNewline = whitespaceText.contains('\n')
+                    debug(s"}\n check: whitespace='${whitespaceText.replace("\n", "\\n")}', contains newline: $containsNewline")
+                    containsNewline
+                  } else {
+                    debug("}\n check: whitespace positions out of bounds, returning false")
+                    false
+                  }
                 }
-              case _ => false
+              case other => 
+                debug(s"}\n check: current token is not whitespace: $other, returning false")
+                false
             }
-          case _ => false
+          case other => 
+            debug(s"}\n check: expr is not Block: ${other.getClass.getSimpleName}, returning false")
+            false
         }
       }
 
@@ -738,7 +753,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             debug("Found right delimiter after expression")
             Right((exprs, current))
           case Right(_: Token.Comment | _: Token.Whitespace) =>
-            // Collect comments instead of skipping them
+            // Collect comments instead of skipping
             val (_, afterComments) = collectComments(current)
             parseElements(afterComments, exprs, maxExprs)
           case Right(_: Token.Comma | _: Token.Semicolon) =>
@@ -827,6 +842,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     // IMPORTANT: Enable newLineAfterBlockMeansEnds for all blocks
     // This preserves uniform treatment without special-casing any operators
     val contextState = state.withNewLineTermination(true)
+    debug(s"parseBlock: starting with state=$contextState")
 
     // Replace skipComments with collectComments
     val (_, current) = collectComments(contextState)
@@ -837,54 +853,87 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     // Skip the opening brace
     current.current match {
       case Right(Token.LBrace(_)) =>
+        debug("parseBlock: Found opening brace")
         // Use collectComments instead of skipComments
         val (_blockStartComments, afterBrace) = collectComments(current.advance())
 
         // Create a local state to track comments and expressions
         var blockCurrent = afterBrace
+        debug(s"parseBlock: After opening brace, blockCurrent=$blockCurrent")
 
         // Regular block parsing - no special case for "case"
         while (maxExpressions > 0) {
           maxExpressions -= 1
           blockCurrent.current match {
             case Right(Token.RBrace(_)) =>
+              debug(s"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
               val finalBlock = Block(statements, result, None)
               blockCurrent = blockCurrent.advance()
+              debug(s"parseBlock: Returning block with ${statements.size} statements, result=${result.isDefined}")
               return Right((finalBlock, blockCurrent))
             case Right(Token.Semicolon(_)) =>
+              debug("parseBlock: Found semicolon, advancing")
               // Collect any comments after semicolon
               val (_, afterSemi) = collectComments(blockCurrent.advance())
               blockCurrent = afterSemi
-            case Right(Token.Whitespace(_, _)) =>
+              debug(s"parseBlock: After semicolon, blockCurrent=$blockCurrent")
+            case Right(Token.Whitespace(text, _)) =>
+              debug(s"parseBlock: Found whitespace, advancing")
               // Collect comments instead of skipping
               val (_, afterWs) = collectComments(blockCurrent.advance())
               blockCurrent = afterWs
+              debug(s"parseBlock: After whitespace, blockCurrent=$blockCurrent")
             case _ =>
+              debug(s"parseBlock: Parsing expression at token ${blockCurrent.current}")
               parseExpr(blockCurrent) match {
-                case Left(err) => return Left(err)
+                case Left(err) => 
+                  debug(s"parseBlock: Error parsing expression: $err")
+                  return Left(err)
                 case Right((expr, next)) =>
+                  debug(s"parseBlock: Parsed expression: $expr, next token: ${next.current}")
                   next.current match {
                     case Right(Token.RBrace(_)) =>
+                      debug("parseBlock: Expression followed by closing brace, setting as result")
                       // This is the V1 style: put the last expression in the result field
                       // to match the V1 parser's behavior for blocks
                       result = Some(expr)
                       blockCurrent = next.advance()
+                      debug(s"parseBlock: Returning block with ${statements.size} statements and result=$expr")
                       return Right((Block(statements, result, None), blockCurrent))
-                    case Right(Token.Semicolon(_)) | Right(Token.Whitespace(_, _)) =>
+                    case Right(Token.Semicolon(_)) =>
+                      debug("parseBlock: Expression followed by semicolon, adding to statements")
                       // Add the expression to statements for all but the last one
                       statements = statements :+ expr
                       // Collect comments after statement
                       val (_, afterStmt) = collectComments(next)
                       blockCurrent = afterStmt
-                    case Right(t)  => return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
-                    case Left(err) => return Left(err)
+                      debug(s"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
+                    case Right(Token.Whitespace(_, _)) =>
+                      debug("parseBlock: Expression followed by whitespace, adding to statements")
+                      // Add the expression to statements for all but the last one
+                      statements = statements :+ expr
+                      // Collect comments after statement
+                      val (_, afterStmt) = collectComments(next)
+                      blockCurrent = afterStmt
+                      debug(s"parseBlock: After whitespace, statements=${statements.size}, blockCurrent=$blockCurrent")
+                    case Right(t)  => 
+                      debug(s"parseBlock: Unexpected token after expression: $t")
+                      return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
+                    case Left(err) => 
+                      debug(s"parseBlock: Error after expression: $err")
+                      return Left(err)
                   }
               }
           }
         }
+        debug("parseBlock: Too many expressions in block")
         Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
-      case Right(t)  => Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
-      case Left(err) => Left(err)
+      case Right(t)  => 
+        debug(s"parseBlock: Expected '{' but found $t")
+        Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+      case Left(err) => 
+        debug(s"parseBlock: Error at start of block: $err")
+        Left(err)
     }
   }
 
