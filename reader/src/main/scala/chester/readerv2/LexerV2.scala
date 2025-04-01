@@ -1483,42 +1483,43 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       createMeta(startSourcePos, endSourcePos)
     )
 
-  // Helper function for processing statements in a block - simplifies case statement handling
+  // Helper function for processing statements in a block - extremely simplified
   private def processMixedStatements(block: Block): Vector[Expr] = {
-    // Process the AST in the same structure but without special knowledge of keywords
-    // Keep the same overall pattern of splitting multi-expression blocks but remove "case" dependency
+    // Handle blocks uniformly with minimal special logic
     
-    block.statements match {
-      case Vector(opSeq: OpSeq) =>
-        var result = Vector.empty[Vector[Expr]]
-        var current = Vector.empty[Expr]
-        
-        // Process each term in the sequence
-        for (term <- opSeq.seq) {
-          // Always add the term to the current group
-          current = current :+ term
-          
-          // Check if we should start a new group after this term
-          // We do this if the expression is a complete statement (ends with block or literal)
-          // This helps maintain block structure without keyword dependencies
-          if (current.size >= 3 && (term.isInstanceOf[Block] || term.isInstanceOf[chester.syntax.concrete.StringLiteral])) {
-            result = result :+ current
-            current = Vector.empty
-          }
+    // Most blocks can just use their statements directly
+    if (block.statements.size != 1) return block.statements
+    
+    // Only process OpSeq blocks that might need statement separation
+    block.statements.head match {
+      case opSeq: OpSeq =>
+        // Split OpSeq at logical statement boundaries
+        // Look for patterns like "=> expr" where expr marks the end of a statement
+        val statementEndIndices = opSeq.seq.zipWithIndex.collect {
+          case (term: Block, idx) if idx >= 2 => idx
+          case (term: chester.syntax.concrete.StringLiteral, idx) if idx >= 2 => idx
         }
         
-        // Add any remaining terms
-        if (current.nonEmpty) {
-          result = result :+ current
+        // If no logical breaks found, return original
+        if (statementEndIndices.isEmpty) return block.statements
+        
+        // Build statements based on detected boundaries
+        var result = Vector.empty[Expr]
+        var startIdx = 0
+        
+        for (endIdx <- statementEndIndices) {
+          val segment = opSeq.seq.slice(startIdx, endIdx + 1)
+          result = result :+ OpSeq(segment, None)
+          startIdx = endIdx + 1
         }
         
-        // If we identified multiple statements, return them as separate OpSeq objects
-        if (result.size > 1) {
-          result.map(terms => OpSeq(terms, None))
-        } else {
-          // No change needed
-          block.statements
+        // Add final segment if needed
+        if (startIdx < opSeq.seq.length) {
+          val finalSegment = opSeq.seq.slice(startIdx, opSeq.seq.length)
+          result = result :+ OpSeq(finalSegment, None)
         }
+        
+        result
         
       case _ => block.statements
     }
