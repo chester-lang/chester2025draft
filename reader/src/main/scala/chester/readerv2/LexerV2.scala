@@ -15,27 +15,8 @@ package chester.readerv2
  */
 import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
-import chester.syntax.concrete.{
-  Block,
-  DotCall,
-  Expr,
-  ExprMeta,
-  FunctionCall,
-  ListExpr,
-  ObjectClause,
-  ObjectExpr,
-  ObjectExprClause,
-  ObjectExprClauseOnValue,
-  OpSeq,
-  QualifiedName,
-  Tuple
-}
-import chester.syntax.concrete.{
-  Identifier as ConcreteIdentifier,
-  IntegerLiteral as ConcreteIntegerLiteral,
-  RationalLiteral as ConcreteRationalLiteral,
-  StringLiteral as ConcreteStringLiteral
-}
+import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, QualifiedName, Tuple}
+import chester.syntax.concrete.{Identifier as ConcreteIdentifier, IntegerLiteral as ConcreteIntegerLiteral, RationalLiteral as ConcreteRationalLiteral, StringLiteral as ConcreteStringLiteral}
 import chester.syntax.concrete.Literal.*
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
@@ -43,6 +24,8 @@ import chester.error.*
 import chester.reader.*
 import chester.syntax.*
 import chester.syntax.concrete.*
+
+import scala.annotation.tailrec
 
 // Token extractors for cleaner pattern matching
 private object TokenExtractors {
@@ -294,7 +277,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           val afterMatch = current.advance()
 
           withComments(parseBlock)(afterMatch).map { case (rawBlock, afterBlock) =>
-            val block = rawBlock.asInstanceOf[Block]
+            val block = rawBlock
             val processedStatements = processMixedStatements(block)
             val newBlock = Block(processedStatements, None, None)
             val matchExpr = OpSeq(Vector(expr, matchId, newBlock), None)
@@ -713,19 +696,13 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                 case LParen(_) =>
                   // Function call with generic type args
                   parseTuple(afterTypeParams).map { case (tuple, afterArgs) =>
-                    val typeParamsList = typeParams match {
-                      case list: ListExpr => list
-                      case other          => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
-                    }
+                    val typeParamsList: ListExpr  = typeParams 
                     val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
                     (createFunctionCall(typeCall, tuple, Some(sourcePos), Some(afterArgs.sourcePos)), afterArgs)
                   }
                 case _ =>
                   // Just the generic type parameters
-                  val typeParamsList = typeParams match {
-                    case list: ListExpr => list
-                    case other          => throw new RuntimeException(s"Expected ListExpr but got ${other.getClass.getSimpleName}")
-                  }
+                  val typeParamsList: ListExpr = typeParams
                   Right(
                     (createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos)), afterTypeParams)
                   )
@@ -774,7 +751,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     // Replace skipComments with collectComments to preserve comments
     val (_leadingListComments, initialState) = collectComments(state)
 
-    @scala.annotation.tailrec
+    @tailrec
     def parseElements(current: LexerState, exprs: Vector[Expr], maxExprs: Int): Either[ParseError, (Vector[Expr], LexerState)] =
       if (exprs.length >= maxExprs) {
         Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", state.sourcePos.range.start))
@@ -1129,7 +1106,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case LBracket(sourcePos) =>
         val (afterBracketComments, afterBracket) = collectComments(initialState.advance())
 
-        @scala.annotation.tailrec
+        @tailrec
         def parseElements(current: LexerState, exprs: Vector[Expr]): Either[ParseError, (Vector[Expr], LexerState)] =
           if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
             Left(ParseError(s"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
@@ -1177,7 +1154,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
     */
   private def collectComments(state: LexerState): (Vector[Comment], LexerState) = {
-    @scala.annotation.tailrec
+    @tailrec
     def collectRec(current: LexerState, comments: Vector[Comment]): (Vector[Comment], LexerState) =
       if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
         current.current match {
@@ -1213,7 +1190,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def collectTrailingComments(state: LexerState): (Vector[Comment], LexerState) = {
     // For trailing comments, we only collect comments that appear on the same line
     // (until we hit a newline in whitespace)
-    @scala.annotation.tailrec
+    @tailrec
     def collectRec(
         current: LexerState,
         comments: Vector[Comment],
