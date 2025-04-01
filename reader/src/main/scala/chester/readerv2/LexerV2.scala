@@ -233,7 +233,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         val mergedCommentInfo = (existing.commentInfo, newCommentInfo) match {
           case (Some(existingInfo), Some(newInfo)) =>
             Some(
-              chester.syntax.concrete.CommentInfo(
+              CommentInfo(
                 commentBefore = existingInfo.commentBefore ++ newInfo.commentBefore,
                 commentInBegin = existingInfo.commentInBegin,
                 commentInEnd = existingInfo.commentInEnd,
@@ -1176,19 +1176,19 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
     */
-  private def collectComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
+  private def collectComments(state: LexerState): (Vector[Comment], LexerState) = {
     @scala.annotation.tailrec
-    def collectRec(current: LexerState, comments: Vector[chester.syntax.concrete.Comment]): (Vector[chester.syntax.concrete.Comment], LexerState) =
+    def collectRec(current: LexerState, comments: Vector[Comment]): (Vector[Comment], LexerState) =
       if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
         current.current match {
           case Right(Token.Comment(text, sourcePos)) =>
             val commentType = if (text.trim.startsWith("//")) {
-              chester.syntax.concrete.CommentType.OneLine
+              CommentType.OneLine
             } else {
-              chester.syntax.concrete.CommentType.MultiLine
+              CommentType.MultiLine
             }
 
-            val comment = chester.syntax.concrete.Comment(
+            val comment = Comment(
               content = text.trim,
               typ = commentType,
               sourcePos = Some(sourcePos)
@@ -1210,15 +1210,15 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   /** Collects trailing comments after an expression until a newline or non-comment token.
     */
-  private def collectTrailingComments(state: LexerState): (Vector[chester.syntax.concrete.Comment], LexerState) = {
+  private def collectTrailingComments(state: LexerState): (Vector[Comment], LexerState) = {
     // For trailing comments, we only collect comments that appear on the same line
     // (until we hit a newline in whitespace)
     @scala.annotation.tailrec
     def collectRec(
         current: LexerState,
-        comments: Vector[chester.syntax.concrete.Comment],
+        comments: Vector[Comment],
         hitNewline: Boolean
-    ): (Vector[chester.syntax.concrete.Comment], LexerState) =
+    ): (Vector[Comment], LexerState) =
       if (
         !current.isAtEnd && !hitNewline &&
         current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
@@ -1226,12 +1226,12 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         current.current match {
           case Right(Token.Comment(text, sourcePos)) =>
             val commentType = if (text.trim.startsWith("//")) {
-              chester.syntax.concrete.CommentType.OneLine
+              CommentType.OneLine
             } else {
-              chester.syntax.concrete.CommentType.MultiLine
+              CommentType.MultiLine
             }
 
-            val comment = chester.syntax.concrete.Comment(
+            val comment = Comment(
               content = text.trim,
               typ = commentType,
               sourcePos = Some(sourcePos)
@@ -1255,8 +1255,8 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     */
   private def createMetaWithComments(
       sourcePos: Option[SourcePos],
-      leadingComments: Vector[chester.syntax.concrete.Comment] = Vector.empty,
-      trailingComments: Vector[chester.syntax.concrete.Comment] = Vector.empty
+      leadingComments: Vector[Comment] = Vector.empty,
+      trailingComments: Vector[Comment] = Vector.empty
   ): Option[ExprMeta] =
     Option.when(sourcePos.nonEmpty || leadingComments.nonEmpty || trailingComments.nonEmpty) {
       ExprMeta(sourcePos, createCommentInfo(leadingComments, trailingComments))
@@ -1347,11 +1347,11 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     withComments(parseList)(state)
 
   private def createCommentInfo(
-      leadingComments: Vector[chester.syntax.concrete.Comment],
-      trailingComments: Vector[chester.syntax.concrete.Comment] = Vector.empty
-  ): Option[chester.syntax.concrete.CommentInfo] =
+      leadingComments: Vector[Comment],
+      trailingComments: Vector[Comment] = Vector.empty
+  ): Option[CommentInfo] =
     Option.when(leadingComments.nonEmpty || trailingComments.nonEmpty) {
-      chester.syntax.concrete.CommentInfo(
+      CommentInfo(
         commentBefore = leadingComments,
         commentInBegin = Vector.empty,
         commentInEnd = Vector.empty,
