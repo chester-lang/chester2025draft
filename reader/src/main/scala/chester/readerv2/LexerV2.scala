@@ -249,30 +249,27 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       var localTerms = Vector(expr)
       debug(s"parseRest called with expr: $expr, state: $state, current terms: $localTerms")
 
-      // Check for "}\n" pattern - extremely simplified
+      // Check for "}\n" pattern - simplified
       def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
-        // Quick rejection check for context and previous token
+        // Check context and previous token
         if (!state.newLineAfterBlockMeansEnds || !state.previousToken.exists(_.isInstanceOf[Token.RBrace])) {
-          if (DEBUG) debug("}\n check: context not right or previous token not RBrace")
           return false
         }
         
-        // Check if current token has a newline or is EOF
-        val result = state.current match {
+        // Check if current token contains a newline or is EOF
+        val hasNewline = state.current match {
           case Right(ws: Token.Whitespace) => 
-            val maybeSource = sourceOffset.readContent.toOption
-            maybeSource.exists { source =>
-              val startPos = ws.sourcePos.range.start.index.utf16
-              val endPos = ws.sourcePos.range.end.index.utf16
-              startPos < source.length && endPos <= source.length && 
-              source.substring(startPos, endPos).contains('\n')
+            sourceOffset.readContent.toOption.exists { source =>
+              val range = ws.sourcePos.range
+              val content = source.substring(range.start.index.utf16, range.end.index.utf16)
+              content.contains('\n')
             }
           case Right(_: Token.EOF) => true
           case _ => false
         }
         
-        if (DEBUG && result) debug("}\n check: pattern detected")
-        result
+        if (DEBUG && hasNewline) debug("}\n check: pattern detected")
+        hasNewline
       }
 
       if (checkForRBraceNewlinePattern(state)) {
