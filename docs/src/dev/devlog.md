@@ -1325,3 +1325,30 @@ The trait subtyping rules are now properly integrated into the type unification 
 ```
 
 These implementations provide a solid foundation for trait-based programming in Chester, with support for basic field requirements and type inheritance. Future work will focus on more advanced trait features like method implementations, default values, and multiple inheritance.
+
+## 2025-04-01
+
+### Pattern Matching Fix for V2 Parser
+
+#### Problem Analysis
+- **Issue**: V2 parser failed on pattern matching tests where V1 parser worked correctly
+- **Root Cause**: Incorrect handling of case statements separation in match blocks
+- **Specific Tests Affected**: `PatternMatchingTest` and `SimplePatternMatchingTest`
+
+#### Implementation Approach
+- **Solution Strategy**: Fixed `separateCaseStatements` function to properly handle already-separated statements
+- **Key Insight**: The V1 parser already separated case statements into individual expressions within the block, but V2 parser incorrectly tried to split them again
+- **Implementation Details**:
+  - Modified `separateCaseStatements` to check if statements are already separated
+  - Only applied splitting logic when needed (when there's a single OpSeq containing multiple case statements)
+  - Preserved original block structure when statements were already properly separated
+
+#### Benefits
+- **Test Compatibility**: Both `PatternMatchingTest` and `SimplePatternMatchingTest` now pass
+- **Parser Consistency**: V2 parser now produces identical AST structure to V1 parser for match expressions
+- **Maintainability**: Better alignment with V1 parser behavior without special case handling
+
+#### Files Modified
+- `reader/src/main/scala/chester/readerv2/LexerV2.scala`
+
+This fix is an important step toward full V1/V2 semantic consistency, allowing more tests to use `parseAndCheckBoth` and increasing confidence in the V2 parser implementation.
