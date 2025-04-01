@@ -1505,47 +1505,50 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   // Helper function to separate case statements in a match block
   private def separateCaseStatements(block: Block): Vector[Expr] = {
     debug(s"Separating case statements in block")
-    // If there are no statements, return empty vector
-    if (block.statements.isEmpty) return Vector.empty
+    // The statements in the block are already individually separated in the V1 parser
+    // No need to split them up - just return the existing statements
     
-    // Get the first statement, which should contain all case expressions in a single OpSeq
-    val mainStatement = block.statements.head
-    
-    mainStatement match {
-      case opSeq: OpSeq =>
-        debug(s"Found OpSeq with ${opSeq.seq.size} terms")
-        // Now we need to split this into separate case statements
-        var result = Vector.empty[Expr]
-        var currentCaseTerms = Vector.empty[Expr]
-        var isFirstCase = true
-        
-        for (term <- opSeq.seq) {
-          term match {
-            case id: ConcreteIdentifier if id.name == "case" && !isFirstCase =>
-              // Start of a new case - add the previous one to results
-              debug(s"Found 'case' keyword, creating new statement")
-              if (currentCaseTerms.nonEmpty) {
-                result = result :+ OpSeq(currentCaseTerms, None)
-                currentCaseTerms = Vector(term)
-              }
-            case _ =>
-              // Add to current case terms
-              currentCaseTerms = currentCaseTerms :+ term
-              isFirstCase = false
+    // Special case: if there's only one statement and it's an OpSeq containing multiple case expressions,
+    // then we do need to split it
+    if (block.statements.size == 1) {
+      block.statements.head match {
+        case opSeq: OpSeq =>
+          debug(s"Found single OpSeq with ${opSeq.seq.size} terms")
+          var result = Vector.empty[Expr]
+          var currentCaseTerms = Vector.empty[Expr]
+          var isFirstCase = true
+          
+          for (term <- opSeq.seq) {
+            term match {
+              case id: ConcreteIdentifier if id.name == "case" && !isFirstCase =>
+                // Start of a new case - add the previous one to results
+                debug(s"Found 'case' keyword, creating new statement")
+                if (currentCaseTerms.nonEmpty) {
+                  result = result :+ OpSeq(currentCaseTerms, None)
+                  currentCaseTerms = Vector(term)
+                }
+              case _ =>
+                // Add to current case terms
+                currentCaseTerms = currentCaseTerms :+ term
+                isFirstCase = false
+            }
           }
-        }
+          
+          // Add the last case statement
+          if (currentCaseTerms.nonEmpty) {
+            result = result :+ OpSeq(currentCaseTerms, None)
+          }
+          
+          debug(s"Split single OpSeq into ${result.size} separate case statements")
+          result
         
-        // Add the last case statement
-        if (currentCaseTerms.nonEmpty) {
-          result = result :+ OpSeq(currentCaseTerms, None)
-        }
-        
-        debug(s"Split into ${result.size} separate case statements")
-        result
-        
-      case _ => 
-        debug("Block doesn't contain an OpSeq as expected, returning original statements")
-        block.statements
+        case _ => 
+          debug("Block has one statement but it's not an OpSeq, returning original statements")
+          block.statements
+      }
+    } else {
+      debug(s"Block already has ${block.statements.size} separate statements, preserving them")
+      block.statements
     }
   }
 
