@@ -382,11 +382,10 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             block
         }
 
-        // For function calls with blocks, don't wrap in OpSeq
-        if (
-          (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[ConcreteIdentifier]) ||
-          (newExpr.isInstanceOf[FunctionCall] && expr.isInstanceOf[FunctionCall])
-        ) {
+        debug(s"handleBlockArgument: Created expression $newExpr")
+        
+        // For function calls with blocks, don't wrap in OpSeq - handle directly
+        if (newExpr.isInstanceOf[FunctionCall]) {
           debug("parseRest: Returning function call with block directly")
 
           if (afterBlock.isAtTerminator) {
@@ -397,7 +396,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             parseRest(newExpr, afterBlock)
           }
         } else {
-          // Replace the last term with the new expression that includes the block
+          // For blocks not part of a function call, replace the last term with the new expression
           val updatedTerms = terms.dropRight(1) :+ newExpr
           debug(s"parseRest: After handling block argument, terms: $updatedTerms")
 
