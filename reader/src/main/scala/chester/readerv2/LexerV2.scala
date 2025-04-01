@@ -1480,43 +1480,44 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       createMeta(startSourcePos, endSourcePos)
     )
 
-  // Helper function for processing statements in a block - extremely simplified
+  // Helper function for processing statements in a block - simplified
   private def processMixedStatements(block: Block): Vector[Expr] = {
-    // Handle blocks uniformly with minimal special logic
-    
-    // Most blocks can just use their statements directly
+    // Only process single OpSeq statements, otherwise return as-is
     if (block.statements.size != 1) return block.statements
     
-    // Only process OpSeq blocks that might need statement separation
     block.statements.head match {
       case opSeq: OpSeq =>
-        // Split OpSeq at logical statement boundaries
-        // Look for patterns like "=> expr" where expr marks the end of a statement
+        // Find potential statement end positions by detecting statement boundaries
         val statementEndIndices = opSeq.seq.zipWithIndex.collect {
-          case (term: Block, idx) if idx >= 2 => idx
-          case (term: chester.syntax.concrete.StringLiteral, idx) if idx >= 2 => idx
+          case (term: Block, idx) if idx >= 2 => idx  // A block often terminates a statement
+          case (term: chester.syntax.concrete.StringLiteral, idx) if idx >= 2 => idx  // String literals can terminate statements
         }
         
-        // If no logical breaks found, return original
-        if (statementEndIndices.isEmpty) return block.statements
-        
-        // Build statements based on detected boundaries
-        var result = Vector.empty[Expr]
-        var startIdx = 0
-        
-        for (endIdx <- statementEndIndices) {
-          val segment = opSeq.seq.slice(startIdx, endIdx + 1)
-          result = result :+ OpSeq(segment, None)
-          startIdx = endIdx + 1
+        if (statementEndIndices.isEmpty) {
+          // No split points found, return as is
+          block.statements
+        } else {
+          // Group statements based on detected boundaries
+          var result = Vector.empty[Expr]
+          var lastIndex = 0
+          
+          for (endIdx <- statementEndIndices) {
+            // Create a statement from last index to this end
+            if (endIdx >= lastIndex) {
+              val segment = opSeq.seq.slice(lastIndex, endIdx + 1)
+              result = result :+ OpSeq(segment, None)
+              lastIndex = endIdx + 1
+            }
+          }
+          
+          // Add any remaining terms as the final statement
+          if (lastIndex < opSeq.seq.length) {
+            result = result :+ OpSeq(opSeq.seq.slice(lastIndex, opSeq.seq.length), None)
+          }
+          
+          debug(s"Split OpSeq into ${result.size} statements")
+          result
         }
-        
-        // Add final segment if needed
-        if (startIdx < opSeq.seq.length) {
-          val finalSegment = opSeq.seq.slice(startIdx, opSeq.seq.length)
-          result = result :+ OpSeq(finalSegment, None)
-        }
-        
-        result
         
       case _ => block.statements
     }
