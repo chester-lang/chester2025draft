@@ -1488,25 +1488,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       "Error parsing symbol"
     )(state)
 
-  // Helper to create identifier expressions
-  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos): ConcreteIdentifier =
-    ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
-
-  // Helper for creating field access expressions
-  private def createDotCall(
-      target: Expr,
-      field: ConcreteIdentifier,
-      args: Vector[Tuple] = Vector.empty,
-      startSourcePos: Option[SourcePos],
-      endSourcePos: Option[SourcePos]
-  ): DotCall =
-    DotCall(
-      target,
-      field,
-      args,
-      createMeta(startSourcePos, endSourcePos)
-    )
-
   // Helper function for processing statements in a block - simplified
   private def processMixedStatements(block: Block): Vector[Expr] = {
     // Only process single OpSeq statements, otherwise return as-is
@@ -1543,5 +1524,24 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case _ => block.statements
     }
   }
+
+  // Helper to create identifier expressions
+  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos): ConcreteIdentifier =
+    ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
+
+  // Helper for creating field access expressions
+  private def createDotCall(
+      target: Expr,
+      field: ConcreteIdentifier,
+      args: Vector[Tuple] = Vector.empty,
+      startSourcePos: Option[SourcePos],
+      endSourcePos: Option[SourcePos]
+  ): DotCall =
+    DotCall(
+      target,
+      field,
+      args,
+      createMeta(startSourcePos, endSourcePos)
+    )
 
 }
