@@ -271,23 +271,28 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
       // Check for "}\n" pattern - simplified
       def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
-        // Check context and previous token
+        // First check the preconditions - must be in context where newlines are significant,
+        // and previous token must be a closing brace
         if (!state.newLineAfterBlockMeansEnds || !state.previousToken.exists(_.isInstanceOf[Token.RBrace])) {
           return false
         }
-
+        
         // Check if current token contains a newline or is EOF
         val hasNewline = state.current match {
           case Right(ws: Token.Whitespace) =>
-            sourceOffset.readContent.toOption.exists { source =>
-              val range = ws.sourcePos.range
-              val content = source.substring(range.start.index.utf16, range.end.index.utf16)
-              content.contains('\n')
-            }
+            lazy val wsContent = for {
+              source <- sourceOffset.readContent.toOption
+              range = ws.sourcePos.range
+              if range.start.index.utf16 < source.length && range.end.index.utf16 <= source.length
+              content = source.substring(range.start.index.utf16, range.end.index.utf16)
+            } yield content
+            
+            wsContent.exists(_.contains('\n'))
           case Right(_: Token.EOF) => true
           case _                   => false
         }
 
+        // Log if pattern is detected and debug is enabled
         if (DEBUG && hasNewline) debug("}\n check: pattern detected")
         hasNewline
       }
@@ -1503,40 +1508,35 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def processMixedStatements(block: Block): Vector[Expr] = {
     // Only process single OpSeq statements, otherwise return as-is
     if (block.statements.size != 1) return block.statements
-
+    
+    // Process the single statement case
     block.statements.head match {
-      case opSeq: OpSeq =>
+      case opSeq: OpSeq => 
         // Find potential statement end positions by detecting statement boundaries
         val statementEndIndices = opSeq.seq.zipWithIndex.collect {
-          case (term: Block, idx) if idx >= 2                                 => idx // A block often terminates a statement
+          case (term: Block, idx) if idx >= 2                              => idx // A block often terminates a statement
           case (term: chester.syntax.concrete.StringLiteral, idx) if idx >= 2 => idx // String literals can terminate statements
         }
-
+        
         if (statementEndIndices.isEmpty) {
           // No split points found, return as is
           block.statements
         } else {
           // Group statements based on detected boundaries
-          var result = Vector.empty[Expr]
-          var lastIndex = 0
-
-          for (endIdx <- statementEndIndices)
-            // Create a statement from last index to this end
+          statementEndIndices.foldLeft((Vector.empty[Expr], 0)) { case ((results, lastIndex), endIdx) =>
             if (endIdx >= lastIndex) {
               val segment = opSeq.seq.slice(lastIndex, endIdx + 1)
-              result = result :+ OpSeq(segment, None)
-              lastIndex = endIdx + 1
+              (results :+ OpSeq(segment, None), endIdx + 1)
+            } else {
+              (results, lastIndex)
             }
-
-          // Add any remaining terms as the final statement
-          if (lastIndex < opSeq.seq.length) {
-            result = result :+ OpSeq(opSeq.seq.slice(lastIndex, opSeq.seq.length), None)
+          } match {
+            case (results, lastIndex) if lastIndex < opSeq.seq.length =>
+              // Add any remaining terms as the final statement
+              results :+ OpSeq(opSeq.seq.slice(lastIndex, opSeq.seq.length), None)
+            case (results, _) => results
           }
-
-          debug(s"Split OpSeq into ${result.size} statements")
-          result
         }
-
       case _ => block.statements
     }
   }
