@@ -6,7 +6,7 @@ world = {
   execute = me: String -> me;
 };
 
-world.execute(me); // it type checks and does nothing? What's the point of having expressions at top level when they can't have effects? Checking something type checks? No we might allow module that init with specific effects.
+world.execute(me);
 
 data #abstract 舞 <: Show;
 
@@ -20,7 +20,7 @@ data InternetOverdose <: 舞;
 
 it: Type = InternetOverdose;
 i: InternetOverdose = new InternetOverdose;
-i2: InternetOverdose = InternetOverdose.new; // .new is defined by default if no user definition // .new it is a function with no telescope here
+i2: InternetOverdose = InternetOverdose.new;
 ia: Any = new InternetOverdose;
 
 trait #sealed Expr[T: Type]: Type {
@@ -56,7 +56,7 @@ proof1 = ?hole;
 
 tuple0: TupleN[Integer];
 tuple0 = (1, 1, 1);
-// Tuple: [t: Type *] -> Type
+
 tuple1: Tuple[Integer, Integer, Integer] = (1,1,1);
 tuple0ToLisst: List[Integer] = tuple0.toList;
 
