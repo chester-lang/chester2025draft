@@ -98,7 +98,6 @@ class SimpleBlockTerminationTest extends FunSuite {
 
       // Run the original check to see if it fails
       println("\n===== COMPARING RESULTS =====")
-      parseAndCheck(input, expected)
       parseAndCheckBoth(input, expected)
 
       // Simple equality check
@@ -259,7 +258,6 @@ class SimpleBlockTerminationTest extends FunSuite {
 
       // Run the original check to see if it fails
       println("\n===== COMPARING RESULTS =====")
-      parseAndCheck(input, expected)
 
       LexerV2.DEBUG = true
       parseAndCheckBoth(input, expected)
