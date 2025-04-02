@@ -79,28 +79,6 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
   parseAndCheckV2(input, expected)
 }
 
-@deprecated("Use getParsedBoth instead")
-def getParsed(input: String): Expr = getParsedV1(input)
-
-@deprecated("Use getParsedBoth instead")
-def getParsedV1(input: String): Expr = {
-  // Parse with location first to ensure it works
-  ChesterReader
-    .parseExpr(FileNameAndContent("testFile", input))
-    .fold(
-      error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
-      _ => ()
-    )
-
-  // Then parse without location for the actual result
-  ChesterReader
-    .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
-    .fold(
-      error => fail(s"Parsing failed for input: $input ${error.message} at index ${error.pos}"),
-      value => value
-    )
-}
-
 // New function to parse with V1 parser only and return the result
 def parseV1(input: String): Expr =
   ChesterReader
