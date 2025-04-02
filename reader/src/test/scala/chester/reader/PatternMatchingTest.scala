@@ -207,6 +207,6 @@ class PatternMatchingTest extends FunSuite {
       ),
       None
     )
-    parseAndCheck(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }
