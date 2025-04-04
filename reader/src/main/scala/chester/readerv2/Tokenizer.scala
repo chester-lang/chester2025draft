@@ -71,13 +71,7 @@ class Tokenizer(src: SourceOffset) {
   }
 
   private def nextToken: Either[ParseError, Token] = {
-    val wsStart = pos
-    val whitespaceText = consume(_.isWhitespace)
-    if (whitespaceText.nonEmpty) {
-      val hasNewline = whitespaceText.contains('\n')
-      return Right(Token.Whitespace(mkPos(wsStart, pos), hasNewline))
-    }
-    
+    val _ = consume(_.isWhitespace)
     if (pos >= text.length) return Right(Token.EOF(mkPos(0, 0)))
 
     val start = pos
