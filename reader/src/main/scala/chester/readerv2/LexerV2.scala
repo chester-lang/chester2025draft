@@ -638,7 +638,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case Right(_: Token.EOF)       => true
       case Right(_: Token.Semicolon) => true // Also treat semicolons as terminators
       // For match expressions, always treat a case keyword as a terminator
-      case Right(Token.Identifier(chars, _)) if charsToString(chars) == "case" => true
       case _                                                                   => false
     }
 
