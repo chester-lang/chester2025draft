@@ -2,6 +2,7 @@ package chester.reader
 
 import chester.reader.*
 import chester.syntax.concrete.*
+import chester.readerv2.LexerV2
 import munit.FunSuite
 
 class OpSeqParserTest extends FunSuite {
@@ -217,14 +218,20 @@ class OpSeqParserTest extends FunSuite {
         Identifier("so", meta = None),
         Identifier("getthen", meta = None),
         Block(
-          heads = Vector(),
-          tail = Identifier("doSomething", meta = None),
+          Vector(),
+          Some(Identifier("doSomething", meta = None)),
           meta = None
         )
       ),
       meta = None
     )
-    parseAndCheckBoth(input, expected)
+    val oldDebug = LexerV2.DEBUG
+    LexerV2.DEBUG = true
+    try {
+      parseAndCheckBoth(input, expected)
+    } finally {
+      LexerV2.DEBUG = oldDebug
+    }
   }
 
   test("parse function call with") {
