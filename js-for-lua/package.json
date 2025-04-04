@@ -13,13 +13,13 @@
     "castl": "github:daurnimator/castl#no-debug-setmetatable"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.5",
-    "@babel/preset-env": "^7.22.5",
-    "@rollup/plugin-babel": "^6.0.3",
-    "@rollup/plugin-commonjs": "^25.0.2",
-    "@rollup/plugin-node-resolve": "^15.1.0",
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "luabundler": "^1.2.3",
-    "rollup": "^3.25.1"
+    "rollup": "^4.39.0"
   },
   "type": "module"
 }
