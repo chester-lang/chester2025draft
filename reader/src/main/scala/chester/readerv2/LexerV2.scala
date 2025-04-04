@@ -1201,7 +1201,10 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def collectComments(state: LexerState): (Vector[Comment], LexerState) = {
     @tailrec
     def collectRec(current: LexerState, comments: Vector[Comment]): (Vector[Comment], LexerState) =
-      if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
+      if (!current.isAtEnd && current.current.exists {
+            case _: Token.Comment | _: Token.Whitespace => true
+            case _ => false
+          }) {
         current.current match {
           case Right(Token.Comment(text, sourcePos)) =>
             val commentType = if (text.trim.startsWith("//")) {
@@ -1216,7 +1219,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               sourcePos = Some(sourcePos)
             )
             collectRec(current.advance(), comments :+ comment)
-          case Right(Token.Whitespace(_, _)) =>
+          case Right(_: Token.Whitespace) =>
             // In Whitespace tokens, we don't have the actual text content
             // Just advance the token - we'll hit another token eventually
             collectRec(current.advance(), comments)
@@ -1243,7 +1246,10 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     ): (Vector[Comment], LexerState) =
       if (
         !current.isAtEnd && !hitNewline &&
-        current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
+        current.current.exists {
+          case _: Token.Comment | _: Token.Whitespace => true
+          case _ => false
+        }
       ) {
         current.current match {
           case Right(Token.Comment(text, sourcePos)) =>
@@ -1259,7 +1265,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               sourcePos = Some(sourcePos)
             )
             collectRec(current.advance(), comments :+ comment, hitNewline)
-          case Right(Token.Whitespace(_, _)) =>
+          case Right(_: Token.Whitespace) =>
             // In Whitespace tokens, we don't have the actual text content
             // Just assume any whitespace might contain a newline and stop collecting
             collectRec(current.advance(), comments, true)
