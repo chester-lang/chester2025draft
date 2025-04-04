@@ -635,11 +635,11 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         } yield content
 
         wsContent.exists(_.contains('\n'))
-      case Right(_: Token.EOF) => true
-      case Right(_: Token.Semicolon) => true  // Also treat semicolons as terminators
+      case Right(_: Token.EOF)       => true
+      case Right(_: Token.Semicolon) => true // Also treat semicolons as terminators
       // For match expressions, always treat a case keyword as a terminator
       case Right(Token.Identifier(chars, _)) if charsToString(chars) == "case" => true
-      case _ => false
+      case _                                                                   => false
     }
 
     // Log if pattern is detected and debug is enabled
@@ -877,7 +877,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   // Check if a token is a 'case' identifier
   private def isCaseIdentifier(token: Either[ParseError, Token]): Boolean = token match {
     case Right(Token.Identifier(chars, _)) => charsToString(chars) == "case"
-    case _ => false
+    case _                                 => false
   }
 
   private def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
@@ -902,10 +902,10 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         // Regular block parsing - all statements are treated the same
         while (maxExpressions > 0) {
           maxExpressions -= 1
-          
+
           val (blockComments, withoutComments) = collectComments(blockCurrent)
           blockCurrent = withoutComments
-          
+
           blockCurrent.current match {
             case Right(Token.RBrace(_)) =>
               debug(s"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
@@ -913,21 +913,21 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               blockCurrent = blockCurrent.advance()
               debug(s"parseBlock: Returning block with ${statements.size} statements, result=${result.isDefined}")
               return Right((finalBlock, blockCurrent))
-            
+
             case Right(Token.Semicolon(_)) =>
               debug("parseBlock: Found semicolon, advancing")
               val (_, afterSemi) = collectComments(blockCurrent.advance())
               blockCurrent = afterSemi
               debug(s"parseBlock: After semicolon, blockCurrent=$blockCurrent")
-            
+
             case Right(Token.Whitespace(_, _)) =>
               debug("parseBlock: Found whitespace, advancing")
               val (_, afterWs) = collectComments(blockCurrent.advance())
               blockCurrent = afterWs
               debug(s"parseBlock: After whitespace, blockCurrent=$blockCurrent")
-            
+
             case _ if isCaseIdentifier(blockCurrent.current) =>
-              // When we encounter 'case' at the beginning of an expression, we need to parse it 
+              // When we encounter 'case' at the beginning of an expression, we need to parse it
               // normally but ensure it's a separate statement
               debug("parseBlock: Found 'case' identifier, parsing statement")
               parseExpr(blockCurrent) match {
@@ -937,7 +937,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                 case Right((expr, next)) =>
                   debug(s"parseBlock: Parsed case statement: $expr")
                   statements = statements :+ expr
-                  
+
                   // Skip past semicolons
                   val afterExpr = next.current match {
                     case Right(Token.Semicolon(_)) =>
@@ -945,11 +945,11 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                       next.advance()
                     case _ => next
                   }
-                  
+
                   blockCurrent = afterExpr
                   debug(s"parseBlock: Updated block state after case statement")
               }
-            
+
             case _ =>
               debug(s"parseBlock: Parsing expression at token ${blockCurrent.current}")
               parseExpr(blockCurrent) match {
@@ -958,10 +958,10 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                   return Left(err)
                 case Right((expr, next)) =>
                   debug(s"parseBlock: Parsed expression: $expr, next token: ${next.current}")
-                  
+
                   // Check if the next token is a 'case' identifier
                   val nextTokenIsCase = isCaseIdentifier(next.current)
-                  
+
                   next.current match {
                     case Right(Token.RBrace(_)) =>
                       debug("parseBlock: Expression followed by closing brace, setting as result")
@@ -970,46 +970,46 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                       blockCurrent = next.advance()
                       debug(s"parseBlock: Returning block with ${statements.size} statements and result=$expr")
                       return Right((Block(statements, result, None), blockCurrent))
-                      
+
                     case Right(Token.Semicolon(_)) =>
                       debug("parseBlock: Expression followed by semicolon, adding to statements")
                       statements = statements :+ expr
-                      
+
                       // Check for case after semicolon
                       val (_, afterSemi) = collectComments(next.advance())
                       if (isCaseIdentifier(afterSemi.current)) {
                         debug("parseBlock: Found 'case' after semicolon, will create new statement")
                       }
-                      
+
                       blockCurrent = afterSemi
                       debug(s"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
-                      
+
                     case Right(whitespaceTok @ Token.Whitespace(_, _)) =>
                       debug("parseBlock: Expression followed by whitespace, checking for newlines and case")
-                      
+
                       // Get next token after whitespace
                       val (_, afterWs) = collectComments(next)
-                      
+
                       // Check if next token is 'case'
                       val hasNextCase = isCaseIdentifier(afterWs.current)
-                      
+
                       // Check if whitespace contains a newline
                       val containsNewline = isNewlineWhitespace(whitespaceTok)
-                      
+
                       // Add statement and advance
                       statements = statements :+ expr
                       blockCurrent = afterWs
                       debug(s"parseBlock: After whitespace, statements=${statements.size}, blockCurrent=$blockCurrent")
-                      
+
                     case Right(t) if isCaseIdentifier(next.current) =>
                       debug("parseBlock: Found 'case' after expression, adding to statements")
                       statements = statements :+ expr
                       blockCurrent = next
-                      
+
                     case Right(t) =>
                       debug(s"parseBlock: Unexpected token after expression: $t")
                       return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
-                      
+
                     case Left(err) =>
                       debug(s"parseBlock: Error after expression: $err")
                       return Left(err)
@@ -1017,7 +1017,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               }
           }
         }
-        
+
         debug("parseBlock: Too many expressions in block")
         Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
       case Right(t) =>
@@ -1028,7 +1028,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         Left(err)
     }
   }
-  
+
   // Helper method to check if whitespace contains a newline
   private def isNewlineWhitespace(token: Token.Whitespace): Boolean = {
     val maybeSource = sourceOffset.readContent.toOption
