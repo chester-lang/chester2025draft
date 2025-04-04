@@ -702,15 +702,14 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         current.advance().current match {
           case Left(err)                        => Left(err)
           case RBrace(_)                        => parseObject(current) // Empty object
-          case Id(_, _) | Sym(_, _) | Str(_, _) =>
-            // Look ahead for = or => to determine if it's an object
-            val afterId = current.advance().advance()
-            afterId.current match {
-              case Left(err)                            => Left(err)
-              case Op(op, _) if op == "=" || op == "=>" => parseObject(current)
-              case _                                    => withComments(parseBlock)(current)
-            }
-          case _ => withComments(parseBlock)(current)
+          case _ if shouldParseAsObject(current) => 
+            // If it matches object patterns, parse as object
+            debug("parseAtom: Parsing as object based on pattern detection")
+            parseObject(current)
+          case _ => 
+            // Otherwise, parse as a regular block
+            debug("parseAtom: Parsing as block")
+            withComments(parseBlock)(current)
         }
 
       case LParen(_) => parseTuple(current)
@@ -758,23 +757,51 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
       case Err(error) => Left(error)
     }
-
-  // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
-  private def isTerminator(token: Token): Boolean = token match {
-    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon | _: Token.EOF => true
-    case _                                                                                                          => false
-  }
-
-  // Helper to check if current state has a terminator
-  private def isAtTerminator(state: LexerState): Boolean = state.current match {
-    case Right(token) => isTerminator(token)
-    case _            => false
-  }
-
-  // Helper method to check if a token is specifically a right delimiter
-  private def isRightDelimiter(token: Token): Boolean = token match {
-    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket => true
-    case _                                                     => false
+    
+  // Helper method to check if a curly brace should be parsed as an object
+  private def shouldParseAsObject(state: LexerState): Boolean = {
+    debug(s"shouldParseAsObject: checking ${state.current}")
+    
+    // Function to peek ahead for = or => after identifiers
+    def peekForObjectOperator(curState: LexerState, steps: Int): Boolean = {
+      if (steps <= 0) return false
+      
+      // Get token at current position
+      curState.current match {
+        case Right(Token.Identifier(_, _)) | Right(Token.StringLiteral(_, _)) | Right(Token.SymbolLiteral(_, _)) =>
+          // Found a potential key, check next token for = or =>
+          if (curState.index + 1 < curState.tokens.length) {
+            val nextToken = curState.tokens(curState.index + 1)
+            nextToken match {
+              case Right(Token.Operator(op, _)) if op == "=" || op == "=>" => true
+              case Right(Token.Whitespace(_, _)) =>
+                // Skip whitespace and check next token
+                if (curState.index + 2 < curState.tokens.length) {
+                  val afterWsToken = curState.tokens(curState.index + 2)
+                  afterWsToken match {
+                    case Right(Token.Operator(op, _)) if op == "=" || op == "=>" => true
+                    case _ => peekForObjectOperator(LexerState(curState.tokens, curState.index + 2), steps - 1)
+                  }
+                } else false
+              case _ => peekForObjectOperator(LexerState(curState.tokens, curState.index + 1), steps - 1)
+            }
+          } else false
+          
+        case Right(Token.Whitespace(_, _)) | Right(Token.Comment(_, _)) =>
+          // Skip whitespace and comments
+          if (curState.index + 1 < curState.tokens.length) {
+            peekForObjectOperator(LexerState(curState.tokens, curState.index + 1), steps)
+          } else false
+          
+        case _ => 
+          // Unexpected token, unlikely to be an object
+          false
+      }
+    }
+    
+    // Check first token after open brace for object patterns
+    val afterBrace = LexerState(state.tokens, state.index + 1)
+    peekForObjectOperator(afterBrace, 5) // Look up to 5 tokens ahead to find object operator
   }
 
   def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
@@ -1009,45 +1036,66 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def parseObject(initialState: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
     // Collect comments before the object
     val (leadingComments, current) = collectComments(initialState)
+    debug(s"parseObject: Starting parse with state: $current")
 
     current.current match {
       case Right(Token.LBrace(sourcePos)) =>
         // Collect comments after the opening brace
         val (afterBraceComments, afterBrace) = collectComments(current.advance())
+        debug(s"parseObject: After opening brace: $afterBrace")
 
-        def parseFields(state: LexerState, clauses: Vector[ObjectClause]): Either[ParseError, (Vector[ObjectClause], LexerState)] =
+        def parseFields(state: LexerState, clauses: Vector[ObjectClause]): Either[ParseError, (Vector[ObjectClause], LexerState)] = {
+          debug(s"parseFields: Current state: $state, clauses so far: ${clauses.size}")
           state.current match {
             case Right(Token.RBrace(_)) =>
+              debug("parseFields: Found closing brace, completed object")
               Right((clauses, state))
             case Right(Token.Identifier(chars, idSourcePos)) =>
+              debug(s"parseFields: Found identifier: ${charsToString(chars)}")
               val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
-              parseField(state.advance(), identifier, idSourcePos).flatMap { case (clause, nextState) =>
+              val afterId = collectComments(state.advance())._2
+              parseFieldValue(afterId, identifier, idSourcePos).flatMap { case (clause, nextState) =>
                 checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(Token.StringLiteral(chars, strSourcePos)) =>
+              debug(s"parseFields: Found string literal: ${charsToString(chars)}")
               val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
-              parseField(state.advance(), stringLiteral, strSourcePos).flatMap { case (clause, nextState) =>
+              val afterStr = collectComments(state.advance())._2
+              parseFieldValue(afterStr, stringLiteral, strSourcePos).flatMap { case (clause, nextState) =>
                 checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(Token.SymbolLiteral(value, symSourcePos)) =>
+              debug(s"parseFields: Found symbol literal: $value")
               val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
-              parseField(state.advance(), symbolLiteral, symSourcePos).flatMap { case (clause, nextState) =>
+              val afterSym = collectComments(state.advance())._2
+              parseFieldValue(afterSym, symbolLiteral, symSourcePos).flatMap { case (clause, nextState) =>
                 checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
+            case Right(Token.Whitespace(_, _)) | Right(Token.Comment(_, _)) =>
+              debug("parseFields: Skipping whitespace/comment")
+              val (_, afterWs) = collectComments(state)
+              parseFields(afterWs, clauses)
             case Right(t) =>
+              debug(s"parseFields: Unexpected token: $t")
               Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
             case Left(err) =>
+              debug(s"parseFields: Error: $err")
               Left(err)
           }
+        }
 
-        def parseField(state: LexerState, key: Expr, keySourcePos: SourcePos): Either[ParseError, (ObjectClause, LexerState)] =
+        def parseFieldValue(state: LexerState, key: Expr, keySourcePos: SourcePos): Either[ParseError, (ObjectClause, LexerState)] = {
+          debug(s"parseFieldValue: State = $state, key = $key")
           state.current match {
-            case Right(Token.Operator(op, _)) =>
-              val afterOp = state.advance()
+            case Right(Token.Operator(op, opSourcePos)) =>
+              debug(s"parseFieldValue: Found operator: $op")
+              val afterOp = collectComments(state.advance())._2
+              debug(s"parseFieldValue: After operator: $afterOp")
               parseExpr(afterOp).flatMap { case (value, afterValue) =>
+                debug(s"parseFieldValue: Parsed value: $value")
                 if (op == "=>") {
                   Right((ObjectExprClauseOnValue(key, value), afterValue))
-                } else { // op == "="
+                } else if (op == "=") {
                   // For string literals with "=", convert to identifier
                   key match {
                     case stringLit: ConcreteStringLiteral =>
@@ -1055,35 +1103,52 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                       Right((ObjectExprClause(idKey, value), afterValue))
                     case qualifiedName: QualifiedName =>
                       Right((ObjectExprClause(qualifiedName, value), afterValue))
+                    case id: ConcreteIdentifier =>
+                      Right((ObjectExprClause(id, value), afterValue))
                     case other =>
-                      // This case should never happen due to validation in caller
                       Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
                   }
+                } else {
+                  Left(ParseError(s"Expected '=' or '=>' in object field but got: $op", opSourcePos.range.start))
                 }
               }
             case Right(t) =>
-              Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+              debug(s"parseFieldValue: Expected operator, found: $t")
+              Left(ParseError("Expected '=' or '=>' after field name in object", t.sourcePos.range.start))
             case Left(err) =>
+              debug(s"parseFieldValue: Error: $err")
               Left(err)
           }
+        }
 
-        def checkAfterField(state: LexerState): Either[ParseError, LexerState] =
+        def checkAfterField(state: LexerState): Either[ParseError, LexerState] = {
+          debug(s"checkAfterField: State = $state")
           state.current match {
             case Right(Token.Comma(_)) =>
+              debug("checkAfterField: Found comma, advancing")
               // Collect comments after comma
               val (_, afterComma) = collectComments(state.advance())
               Right(afterComma)
             case Right(Token.RBrace(_)) =>
+              debug("checkAfterField: Found closing brace")
               Right(state)
+            case Right(Token.Whitespace(_, _)) | Right(Token.Comment(_, _)) =>
+              debug("checkAfterField: Skipping whitespace/comment")
+              val (_, afterWs) = collectComments(state)
+              checkAfterField(afterWs)
             case Right(t) =>
+              debug(s"checkAfterField: Unexpected token: $t")
               Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
             case Left(err) =>
+              debug(s"checkAfterField: Error: $err")
               Left(err)
           }
+        }
 
         parseFields(afterBrace, Vector.empty).flatMap { case (clauses, finalState) =>
           finalState.current match {
             case Right(Token.RBrace(endPos)) =>
+              debug("parseObject: Completing object with closing brace")
               // Create meta with comments
               val objectMeta = if (leadingComments.nonEmpty || afterBraceComments.nonEmpty) {
                 val meta = createMeta(Some(sourcePos), Some(endPos))
@@ -1094,14 +1159,18 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
               Right((ObjectExpr(clauses, objectMeta), finalState.advance()))
             case Right(t) =>
+              debug(s"parseObject: Expected closing brace, found: $t")
               Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
             case Left(err) =>
+              debug(s"parseObject: Error at end of object: $err")
               Left(err)
           }
         }
       case Right(t) =>
+        debug(s"parseObject: Expected opening brace, found: $t")
         Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
       case Left(err) =>
+        debug(s"parseObject: Error at start of object: $err")
         Left(err)
     }
   }
@@ -1494,9 +1563,11 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       stmt match {
         case opSeq: OpSeq =>
           val terms = opSeq.seq
-          // Check if this is a chain of case statements
-          if (terms.size >= 2 && terms.exists(t => t.isInstanceOf[ConcreteIdentifier] && t.asInstanceOf[ConcreteIdentifier].name == "case")) {
-            debug(s"processMatchBlock: Found potential case chain with ${terms.size} terms")
+          // Check if this is a chain of case statements - must start with "case"
+          if (terms.nonEmpty && 
+              terms.head.isInstanceOf[ConcreteIdentifier] && 
+              terms.head.asInstanceOf[ConcreteIdentifier].name == "case") {
+            debug(s"processMatchBlock: Found potential case chain with ${terms.size} terms starting with 'case'")
             
             // Split into separate case statements
             val caseStatements = extractCaseStatements(terms)
@@ -1523,8 +1594,12 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     while (i < terms.size) {
       val term = terms(i)
       
-      // Check if we've reached a new case statement
-      if (i > 0 && term.isInstanceOf[ConcreteIdentifier] && term.asInstanceOf[ConcreteIdentifier].name == "case") {
+      // Check if we've reached a new case statement, only consider it at the start of a statement
+      if (i > 0 && 
+          term.isInstanceOf[ConcreteIdentifier] && 
+          term.asInstanceOf[ConcreteIdentifier].name == "case" && 
+          // Make sure the previous token doesn't form a meaningful expression with "case"
+          !(i > 0 && isPartOfExpression(terms(i-1), term))) {
         // Complete the current case statement
         if (currentTerms.nonEmpty) {
           debug(s"extractCaseStatements: Adding case statement with ${currentTerms.size} terms")
@@ -1545,6 +1620,36 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     }
     
     result
+  }
+  
+  // Check if two terms are part of the same expression
+  private def isPartOfExpression(term1: Expr, term2: Expr): Boolean = {
+    // If term1 is an operator or identifier like "=" or "=>" 
+    // then "case" in term2 is likely part of an object expression
+    term1 match {
+      case id: ConcreteIdentifier => 
+        val name = id.name
+        name == "=" || name == "=>" || name == ":" || name == "." || name == "->"
+      case _ => false
+    }
+  }
+
+  // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
+  private def isTerminator(token: Token): Boolean = token match {
+    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon | _: Token.EOF => true
+    case _                                                                                                          => false
+  }
+
+  // Helper to check if current state has a terminator
+  private def isAtTerminator(state: LexerState): Boolean = state.current match {
+    case Right(token) => isTerminator(token)
+    case _            => false
+  }
+
+  // Helper method to check if a token is specifically a right delimiter
+  private def isRightDelimiter(token: Token): Boolean = token match {
+    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket => true
+    case _                                                     => false
   }
 
 }
