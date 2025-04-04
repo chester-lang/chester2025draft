@@ -647,7 +647,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
     // Main parsing logic - handle different token types
     current.current match {
-      // Special case for 'val' declarations
+      // Special case for 'val' declarations - keep this as it's not strictly an operator case
       case Right(Token.Identifier(parts, sourcePos)) if charsToString(parts) == "val" =>
         debug("parseExpr: Starting with 'val' keyword")
         terms = Vector(ConcreteIdentifier("val", createMeta(Some(sourcePos), Some(sourcePos))))
@@ -670,7 +670,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           }
         }
         
-      // Special case for 'case' patterns
+      // Special case for 'case' patterns to keep their behavior consistent
       case Right(Token.Identifier(parts, sourcePos)) if charsToString(parts) == "case" =>
         debug("parseExpr: Starting with 'case' keyword")
         terms = Vector(ConcreteIdentifier("case", createMeta(Some(sourcePos), Some(sourcePos))))
@@ -680,8 +680,8 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
           terms = terms :+ patternExpr
           
           afterPattern.current match {
-            case Right(Token.Operator(op, opSourcePos)) if op == "=>" =>
-              debug("parseExpr: Found => in case pattern")
+            case Right(Token.Operator(op, opSourcePos)) =>
+              debug(s"parseExpr: Found $op in case pattern")
               terms = terms :+ ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
               val afterArrow = afterPattern.advance()
               
@@ -728,21 +728,13 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             }
         }
 
-      // Keyword operator handling
-      case Right(Token.Identifier(parts, sourcePos)) if strIsOperator(charsToString(parts)) =>
-        debug(s"parseExpr: Starting with keyword operator ${charsToString(parts)}")
-        val afterOp = current.advance()
-        terms = Vector(ConcreteIdentifier(charsToString(parts), createMeta(Some(sourcePos), Some(sourcePos))))
-        withComments(parseAtom)(afterOp).flatMap { case (expr, afterExpr) =>
-          terms = terms :+ expr
-          debug(s"parseExpr: After initial keyword operator and atom, terms: $terms")
-
-          if (afterExpr.isAtTerminator) {
-            debug("parseExpr: Found terminator after prefix operator, returning OpSeq directly")
-            Right((OpSeq(terms, None), afterExpr))
-          } else {
-            parseRest(expr, afterExpr)(leadingComments)
-          }
+      // Handle all other identifiers uniformly - no special cases for keyword operators
+      case Right(Token.Identifier(parts, sourcePos)) =>
+        debug(s"parseExpr: Starting with identifier ${charsToString(parts)}")
+        // Try to parse as a normal expression
+        withComments(parseAtom)(current).flatMap { case (first, afterFirst) =>
+          debug(s"parseExpr: After initial atom, got: $first")
+          parseRest(first, afterFirst)(leadingComments)
         }
 
       // Standard expression handling
@@ -1225,19 +1217,22 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             case Right(Token.Operator(op, _)) =>
               val afterOp = state.advance()
               parseExpr(afterOp).flatMap { case (value, afterValue) =>
+                // All operators are handled uniformly - => creates a different type of clause
                 if (op == "=>") {
                   Right((ObjectExprClauseOnValue(key, value), afterValue))
-                } else { // op == "="
-                  // For string literals with "=", convert to identifier
+                } else {
+                  // For operators like =, handle string literals and identifiers
+                  debug(s"parseField: Handling operator '$op'")
                   key match {
                     case stringLit: ConcreteStringLiteral =>
                       val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                       Right((ObjectExprClause(idKey, value), afterValue))
                     case qualifiedName: QualifiedName =>
                       Right((ObjectExprClause(qualifiedName, value), afterValue))
+                    case id: ConcreteIdentifier =>
+                      Right((ObjectExprClause(id, value), afterValue))
                     case other =>
-                      // This case should never happen due to validation in caller
-                      Left(ParseError(s"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
+                      Left(ParseError(s"Expected identifier or string for object field key but got: $other", keySourcePos.range.start))
                   }
                 }
               }
