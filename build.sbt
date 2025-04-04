@@ -3,7 +3,7 @@
 val scala3Version = "3.6.4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
-val scala3Nightly = "3.7.1-RC1-bin-20250328-d519790-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250402-a8cf11d-NIGHTLY"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.0"
@@ -570,7 +570,7 @@ lazy val utils = useSpire(
         "io.getkyo" %%% "kyo-direct" % "0.17.0",
         "io.getkyo" %%% "kyo-data" % "0.17.0",
         "org.scala-graph" %%% "graph-core" % "2.0.3",
-        "com.outr" %%% "scribe" % "3.16.0"
+        "com.outr" %%% "scribe" % "3.16.1"
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
         "org.wvlet.airframe" %%% "airframe-codec" % AIRFRAME_VERSION, // MessagePack-based schema-on-read codec
