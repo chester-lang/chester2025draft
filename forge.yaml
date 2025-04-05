@@ -100,7 +100,7 @@ agents:
       - tool_forge_fs_undo
     subscribe:
       - fix_issue
-    max_walker_depth: 4
+    max_walker_depth: 64
 
   - tool_supported: true
     id: github-pr-updater
@@ -123,7 +123,7 @@ agents:
       - tool_forge_fs_undo
     subscribe:
       - update_pr
-    max_walker_depth: 4
+    max_walker_depth: 64
 
   - tool_supported: true
     id: github-review-handler
@@ -146,7 +146,7 @@ agents:
       - tool_forge_fs_undo
     subscribe:
       - fix-review-comment
-    max_walker_depth: 4
+    max_walker_depth: 64
 
   - tool_supported: true
     id: git-commit
@@ -181,7 +181,7 @@ agents:
       - tool_forge_fs_undo
     subscribe:
       - revise_plan
-    max_walker_depth: 4
+    max_walker_depth: 64
 
   - tool_supported: true
     id: github-pull-request-create
