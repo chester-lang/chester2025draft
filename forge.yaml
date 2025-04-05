@@ -19,7 +19,7 @@ retry:
 # Define model anchors with simpler, purpose-based names
 models:
   # Role-based model definitions - easy to swap implementation
-  - &advanced_model anthropic/claude-3.7-sonnet
+  - &advanced_model anthropic/claude-3.7-sonnet:thinking
   - &standard_model anthropic/claude-3.5-haiku
 
 agents:
