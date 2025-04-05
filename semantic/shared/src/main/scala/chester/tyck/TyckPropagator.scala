@@ -15,6 +15,34 @@ import scala.annotation.tailrec
 
 trait TyckPropagator extends ElaboraterCommon {
 
+  // Helper method to handle common zonk setup for cells with left-hand side and right-hand side values
+  private def setupZonk[T](
+      lhs: CellId[T],
+      rhs: Vector[CellId[T]],
+      needed: Vector[CellIdAny]
+  )(using state: StateAbility[Tyck]): Either[ZonkResult, (Option[T], Vector[T])] = {
+    val lhsValueOpt = state.readStable(lhs)
+    val rhsValuesOpt = rhs.map(state.readStable)
+
+    // First check if any of our cells are in the needed list
+    val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
+    if (ourNeededCells.isEmpty) {
+      return Left(ZonkResult.Done) // None of our cells are needed
+    }
+
+    // Check if we're waiting for rhs values
+    val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
+    if (unknownRhs.nonEmpty) {
+      return Left(ZonkResult.Require(unknownRhs))
+    }
+
+    // Get all rhs values - we know they're all defined at this point
+    val rhsValues = rhsValuesOpt.collect { case Some(value) => value }
+
+    // Return values - include lhsValueOpt which might be None
+    Right((lhsValueOpt, rhsValues))
+  }
+
   def unify(lhs: Term, rhs: Term, cause: Expr)(using
       localCtx: Context,
       ck: Tyck,
@@ -309,41 +337,28 @@ trait TyckPropagator extends ElaboraterCommon {
     override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
-      val lhsValueOpt = state.readStable(lhs)
-      val rhsValuesOpt = rhs.map(state.readStable)
-
-      // First check if any of our cells are in the needed list
-      val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
-      if (ourNeededCells.isEmpty) {
-        return ZonkResult.Done // None of our cells are needed
-      }
-
-      // Check if we're waiting for rhs values
-      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
-      if (unknownRhs.nonEmpty) {
-        return ZonkResult.Require(unknownRhs)
-      }
-
-      val rhsValues = rhsValuesOpt.map(_.get)
-
-      lhsValueOpt match {
-        case Some(Meta(lhsId)) =>
-          // Create union type and unify with meta variable
-          val unionType = Union(rhsValues.assumeNonEmpty, None)
-          unify(lhsId, unionType, cause)
-          ZonkResult.Done
-        case Some(lhsValue) =>
-          // LHS is known, check if it's compatible with all RHS values
-          if (rhsValues.forall(rhsValue => tryUnify(lhsValue, rhsValue))) {
-            ZonkResult.Done
-          } else {
-            ZonkResult.NotYet
+      setupZonk(lhs, rhs, needed) match {
+        case Left(result) => result
+        case Right((lhsValueOpt, rhsValues)) => 
+          lhsValueOpt match {
+            case Some(Meta(lhsId)) =>
+              // Create union type and unify with meta variable
+              val unionType = Union(rhsValues.assumeNonEmpty, None)
+              unify(lhsId, unionType, cause)
+              ZonkResult.Done
+            case Some(lhsValue) =>
+              // LHS is known, check if it's compatible with all RHS values
+              if (rhsValues.forall(rhsValue => tryUnify(lhsValue, rhsValue))) {
+                ZonkResult.Done
+              } else {
+                ZonkResult.NotYet
+              }
+            case None =>
+              // LHS is unknown, create UnionType from RHS values
+              val unionType = Union(rhsValues.assumeNonEmpty, None)
+              state.fill(lhs, unionType)
+              ZonkResult.Done
           }
-        case None =>
-          // LHS is unknown, create UnionType from RHS values
-          val unionType = Union(rhsValues.assumeNonEmpty, None)
-          state.fill(lhs, unionType)
-          ZonkResult.Done
       }
     }
   }
@@ -388,41 +403,28 @@ trait TyckPropagator extends ElaboraterCommon {
     override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
-      val lhsValueOpt = state.readStable(lhs)
-      val rhsValuesOpt = rhs.map(state.readStable)
-
-      // First check if any of our cells are in the needed list
-      val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
-      if (ourNeededCells.isEmpty) {
-        return ZonkResult.Done // None of our cells are needed
-      }
-
-      // Check if we're waiting for rhs values
-      val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
-      if (unknownRhs.nonEmpty) {
-        return ZonkResult.Require(unknownRhs)
-      }
-
-      val rhsValues = rhsValuesOpt.map(_.get)
-
-      lhsValueOpt match {
-        case Some(Meta(lhsId)) =>
-          // Create intersection type and unify with meta variable
-          val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
-          unify(lhsId, intersectionType, cause)
-          ZonkResult.Done
-        case Some(lhsValue) =>
-          // LHS is known, check if it's compatible with all RHS values
-          if (rhsValues.forall(rhsValue => tryUnify(rhsValue, lhsValue))) {
-            ZonkResult.Done
-          } else {
-            ZonkResult.NotYet
+      setupZonk(lhs, rhs, needed) match {
+        case Left(result) => result
+        case Right((lhsValueOpt, rhsValues)) => 
+          lhsValueOpt match {
+            case Some(Meta(lhsId)) =>
+              // Create intersection type and unify with meta variable
+              val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+              unify(lhsId, intersectionType, cause)
+              ZonkResult.Done
+            case Some(lhsValue) =>
+              // LHS is known, check if it's compatible with all RHS values
+              if (rhsValues.forall(rhsValue => tryUnify(rhsValue, lhsValue))) {
+                ZonkResult.Done
+              } else {
+                ZonkResult.NotYet
+              }
+            case None =>
+              // LHS is unknown, create IntersectionType from RHS values
+              val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
+              state.fill(lhs, intersectionType)
+              ZonkResult.Done
           }
-        case None =>
-          // LHS is unknown, create IntersectionType from RHS values
-          val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
-          state.fill(lhs, intersectionType)
-          ZonkResult.Done
       }
     }
   }
