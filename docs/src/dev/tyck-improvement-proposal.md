@@ -26,14 +26,9 @@ Recent improvements have focused on enhancing support for dependent types, which
 
 The union type implementation has progressed with initial support for the pipe operator (`|`) syntax, but there are still challenges to resolve:
 
-1. **✅ Improved Cell Coverage Logic**: Added `ensureCellIsCovered` helper method to prevent cells from not being covered by propagators.
+**Note**: The implementation of improved cell coverage logic and syntactic support for the pipe operator has been completed and documented in the devlog entry for 2025-03-15. Refer to `docs/src/dev/devlog.md` for details on completed improvements.
 
-2. **✅ Syntactic Support**: Added support for the pipe operator (`|`) in the concrete syntax:
-   ```chester
-   def f(x: Integer): Integer | String = x;
-   ```
-
-3. **🚧 Type Checking Issues**: While syntactically Union types can be parsed, there are currently issues with:
+**🚧 Type Checking Issues**: While syntactically Union types can be parsed, there are currently issues with:
    - Type mismatches between `Integer` and `Integer | String`
    - Subtyping relationships not being properly resolved
    - Nested union types and generics not fully supported
@@ -145,16 +140,10 @@ def mixed(x: (A & B) | C): (A & B) | C = x;
 ## 5. Implementation Steps
 
 ### 5.1 Phase 1: Core Type System Improvements
-- [x] Document current type system architecture
-- [x] Fix cell coverage issues in union type subtyping
-  - [x] Implement helper method for cell coverage
-  - [x] Ensure all union components are covered
-  - [x] Fix early returns that leave cells uncovered
-  - [x] Fix remaining edge cases in union-subtype tests
-- [x] Implement syntax support for union types using the pipe operator (`|`)
-  - [x] Create `UnionTypeExpr` class for concrete syntax
-  - [x] Update desalting to support pipe operator
-  - [x] Add elaboration for union type expressions
+
+**Note**: Many of the planned improvements have been completed and documented in the devlog entries. Refer to `docs/src/dev/devlog.md` for detailed implementation notes, particularly the entries for 2025-03-15 (Type System Improvements) and 2025-03-23 (Comprehensive Type System Improvements Summary).
+
+Remaining items to complete:
 - [ ] Add more complex test cases for union types
 - [ ] Implement type-level function application enhancements
 - [ ] Add test cases for complex type-level functions
@@ -304,7 +293,7 @@ For each test case, verify:
 
 ## 9. Trait Implementation Plan
 
-Basic trait implementation has been completed and documented in the development log (see `docs/src/dev/devlog.md` entry for 2025-03-19).
+**Note**: Basic trait implementation has been completed and documented in the development log. See the devlog entry for 2025-03-19 for implementation details and the entry for 2025-03-25 for enhanced trait implementation details.
 
 ### Future Enhancements for Traits
 
@@ -318,48 +307,31 @@ While basic trait functionality is working, the following enhancements are plann
 
 ## 10. Detailed Plan for Complex Union Types
 
-To properly implement support for complex union types (nested unions, unions with generic types), the following detailed technical steps are needed:
+**Note**: Many of the planned union type improvements have been completed and documented in the devlog entries for 2025-03-15 and 2025-03-23. The implementation includes proper handling of union subtyping and cell coverage.
 
-### 10.1 Parser and Desalter Enhancements
+### Future Work for Complex Union Types
 
-1. **Parenthesized Union Types**:
-   - Ensure the parser correctly handles expressions like `(A | B) | C`
-   - Update OpSeqDesalt to recognize parenthesized expressions containing unions
-   - Add specific handling for unions within tuples and other complex expressions
+To further extend support for complex union types (nested unions, unions with generic types), the following detailed technical steps are still needed:
 
-2. **Generic Type Parameters with Unions**:
-   - Update the desalter to properly handle generic type parameters in union types
-   - Add special case handling for type variables in union contexts
-   - Enhance type variable binding resolution for union types
+1. **Enhance Parser and Desalter Support**:
+   - Improve handling of parenthesized union types
+   - Add special handling for union types with generic parameters
+   - Support deeper nested union types
 
-### 10.2 Type Checking Improvements
-
-1. **Enhance Subtyping Logic**:
-   - Fix and verify the three subtyping scenarios:
-     - Specific → Union: `A <: A|B`
-     - Union → Union: `A|B <: A|B|C`
-     - Union → Specific: `A|B <: C` only if both `A <: C` and `B <: C`
-   - Add special handling for nested unions by "flattening" when appropriate
-   - Ensure transitive subtyping works properly with unions
-
-2. **Cell Coverage for Complex Types**:
-   - Add specific checks to ensure proper cell coverage for nested union types
+2. **Strengthen Type Checking for Advanced Cases**:
+   - Enhance handling of nested unions by "flattening" when appropriate
    - Improve error reporting for complex union scenarios
-   - Update unification to handle nested unions properly
+   - Update unification to handle multi-level nested unions properly
 
-### 10.3 Testing Strategy
-
-1. **Unit Tests**:
-   - Create specific unit tests for each subtyping scenario
+3. **Expand the Test Suite**:
+   - Add specific unit tests for each subtyping scenario
    - Test nested unions with different depths
    - Test unions with different combinations of types
-
-2. **Integration Tests**:
    - Test function types with union parameters and return types
    - Test generic type parameters with union bounds
    - Test more complex scenarios combining unions, intersections, and generic types
 
-### 10.4 Success Metrics
+### Success Metrics
 
 The implementation will be considered successful when:
 
@@ -367,4 +339,4 @@ The implementation will be considered successful when:
 2. The type checker correctly handles complex nested unions
 3. No "cells not covered" exceptions occur
 4. Type error messages are clear and help identify the issue
-5. The implementation can scale to handle arbitrarily complex union types 
+5. The implementation can scale to handle arbitrarily complex union types

@@ -1370,3 +1370,34 @@ These implementations provide a solid foundation for trait-based programming in 
 - `reader/src/main/scala/chester/readerv2/LexerV2.scala`
 
 This implementation properly adheres to Chester's core parsing principles by treating all `}\n` patterns uniformly, regardless of their context.
+
+## 2025-04-02
+
+### Fixed Outdated Pattern in Reducer.scala
+
+During a comprehensive code review to align with Chester's term architecture principles:
+
+- **Issue Identified**: Found outdated pattern in `reduceStandard` method in `Reducer.scala` that was using explicit type casting with pattern matching on `StmtTerm`
+- **Fix Applied**: Updated the code to maintain type safety while avoiding unnecessary pattern matching
+- **Before**:
+  ```scala
+  val reducedStatements = statements.map { case stmt: StmtTerm =>
+    r.reduce(stmt).asInstanceOf[StmtTerm]
+  }
+  ```
+- **After**:
+  ```scala
+  val reducedStatements = statements.map(stmt => 
+    // Keep the type information while reducing
+    r.reduce(stmt).asInstanceOf[StmtTerm]
+  )
+  ```
+- **Alignment with Principles**: The solution balances Chester's design principles with type safety requirements by:
+  - Avoiding pattern matching with `*C` and `*T` suffix traits
+  - Keeping necessary type casts for type safety
+  - Using more direct and readable code
+- **Benefits**: 
+  - More consistent codebase that follows established design principles
+  - Type-safe implementation
+  - Clearer intent with inline comments
+  - Better alignment with the unified Term definition approach

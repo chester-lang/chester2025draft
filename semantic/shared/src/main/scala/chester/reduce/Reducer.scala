@@ -91,9 +91,11 @@ object NaiveReducer extends Reducer {
 
     // Block terms - reduce statements and result
     case BlockTerm(statements, result, meta) =>
-      val reducedStatements = statements.map { case stmt: StmtTerm =>
+      // We need to preserve the StmtTerm type while avoiding pattern matching with *C/*T suffixes
+      val reducedStatements = statements.map(stmt => 
+        // Keep the type information while reducing
         r.reduce(stmt).asInstanceOf[StmtTerm]
-      }
+      )
       val reducedResult = r.reduce(result)
       BlockTerm(reducedStatements, reducedResult, meta)
 
