@@ -22,7 +22,7 @@ object Reducer {
   def reduce(term: Term)(using ctx: ReduceContext, r: Reducer): Term = r.reduce(term)
 }
 
-object NaiveReducer extends Reducer {
+object DefaultReducer extends Reducer {
 
   /** Check if a term is a type-level computation that should be reduced */
   private def isTypeLevel(term: Term): Boolean = term match {

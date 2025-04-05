@@ -88,7 +88,7 @@ trait ProvideImmutable extends ProvideImpl {
         .values
         .toVector
 
-    override def naiveZonk(
+    override def zonk(
         cells: Vector[CIdOf[Cell[?]]]
     )(using more: Ability): Unit = {
       var cellsNeeded = Vector.empty[CIdOf[Cell[?]]]
@@ -111,7 +111,7 @@ trait ProvideImmutable extends ProvideImpl {
         xs.foreach { case (pid, propagator) =>
           tickAll
           if (state.propagators.contains(pid)) {
-            val result = propagator.naiveZonk(cells)(using this, more)
+            val result = propagator.zonk(cells)(using this, more)
             result match {
               case ZonkResult.Done =>
                 state = state.copy(propagators = state.propagators.removed(pid))

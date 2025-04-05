@@ -6,7 +6,7 @@ import chester.syntax.core.*
 import chester.tyck.api.SymbolCollector
 import chester.uniqid.UniqidOf
 import chester.reduce.ReduceContext
-import chester.reduce.{NaiveReducer, Reducer}
+import chester.reduce.{DefaultReducer, Reducer}
 
 import scala.collection.immutable.HashMap
 
@@ -95,5 +95,5 @@ case class Context(
 
   def toReduceContext: ReduceContext = ReduceContext() // TODO: Implement proper state handling
 
-  given Reducer = NaiveReducer
+  given Reducer = DefaultReducer
 }

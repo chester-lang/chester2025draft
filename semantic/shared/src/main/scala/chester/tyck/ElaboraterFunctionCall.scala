@@ -303,7 +303,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       expectedArgs.lazyZip(actualArgs).foreach((expectedArg, actualArg) => unify(expectedArg.ty, actualArg.ty, cause))
     }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using StateAbility[Tyck], Tyck): ZonkResult =
       ZonkResult.Require(Vector(functionTy))
@@ -332,7 +332,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         case _             => true // No effects to propagate
       }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CIdOf[Cell[?]]]
     )(using StateAbility[Tyck], Tyck): ZonkResult =
       ZonkResult.Require(Vector(effectsCell))

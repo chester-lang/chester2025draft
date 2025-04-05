@@ -142,14 +142,14 @@ trait ProvideCellId {
     def run(using state: StateAbility[Ability], more: Ability): Boolean
 
     /** make a best guess for zonkingCells */
-    def naiveZonk(
+    def zonk(
         needed: Vector[CIdOf[Cell[?]]]
     )(using state: StateAbility[Ability], more: Ability): ZonkResult
 
     def naiveFallbackZonk(
         needed: Vector[CIdOf[Cell[?]]]
     )(using StateAbility[Ability], Ability): ZonkResult =
-      naiveZonk(needed)
+      zonk(needed)
   }
 
   trait StateAbility[Ability] {
@@ -214,7 +214,7 @@ trait ProvideCellId {
     ): Vector[Propagator[Ability]] = ???
 
     /** make a best guess for those cells */
-    def naiveZonk(cells: Vector[CIdOf[Cell[?]]])(using more: Ability): Unit
+    def zonk(cells: Vector[CIdOf[Cell[?]]])(using more: Ability): Unit
 
     def toId[T](x: CellIdOr[T]): CIdOf[Cell[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[Cell[T]]]

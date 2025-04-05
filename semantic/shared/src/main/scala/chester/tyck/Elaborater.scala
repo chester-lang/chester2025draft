@@ -3,7 +3,7 @@ package chester.tyck
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
+import chester.reduce.{DefaultReducer, ReduceContext, ReduceMode, Reducer}
 import chester.tyck.*
 import chester.utils.*
 import chester.utils.propagator.*
@@ -152,8 +152,8 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     // Use TypeLevel reduction for type equality checking
     given ReduceContext = localCtx.toReduceContext
     given Reducer = localCtx.given_Reducer
-    val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-    val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+    val lhsResolved = readVar(DefaultReducer.reduce(lhs, ReduceMode.TypeLevel))
+    val rhsResolved = readVar(DefaultReducer.reduce(rhs, ReduceMode.TypeLevel))
     if (lhsResolved == rhsResolved) return
     (lhsResolved, rhsResolved) match {
       case (Meta(lhs), rhs)                                            => unify(lhs, rhs, cause)
@@ -402,11 +402,11 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                     given ReduceContext = localCtx.toReduceContext
                     given Reducer = localCtx.given_Reducer
 
-                    val reducedSourceType = NaiveReducer.reduce(sourceType, ReduceMode.TypeLevel)
+                    val reducedSourceType = DefaultReducer.reduce(sourceType, ReduceMode.TypeLevel)
 
                     // Check if source is compatible with any union component
                     val compatibleComponent = unionTypes.find { unionType =>
-                      val reducedUnionType = NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)
+                      val reducedUnionType = DefaultReducer.reduce(unionType, ReduceMode.TypeLevel)
                       if (Debug.isEnabled(Identifiers))
                         Debug.debugPrint(Identifiers, s"[IDENTIFIER DEBUG] Checking union component: $unionType (reduced: $reducedUnionType)")
 
@@ -509,7 +509,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
               given ReduceContext = localCtx.toReduceContext
               given Reducer = localCtx.given_Reducer
-              val reduced = NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)
+              val reduced = DefaultReducer.reduce(unionType, ReduceMode.TypeLevel)
               if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[LITERAL DEBUG] Reduced union component: $reduced")
 
               reduced match {
@@ -633,7 +633,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
         given ReduceContext = localCtx.toReduceContext
         given Reducer = localCtx.given_Reducer
-        val reducedRecordTy = NaiveReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
+        val reducedRecordTy = DefaultReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
 
         if (Debug.isEnabled(MethodCalls)) {
           Debug.debugPrint(MethodCalls, s"[METHOD CALL DEBUG] Processing method call: ${field.name}")
@@ -671,7 +671,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       true
                     case Some(argTypeValue) =>
                       // Check if the arg type is StringType
-                      val reducedArgType = NaiveReducer.reduce(argTypeValue, ReduceMode.TypeLevel)
+                      val reducedArgType = DefaultReducer.reduce(argTypeValue, ReduceMode.TypeLevel)
                       if (Debug.isEnabled(MethodCalls)) {
                         Debug.debugPrint(MethodCalls, s"[METHOD CALL DEBUG] Checking arg type: $reducedArgType")
                       }
@@ -697,7 +697,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       false
                   }
 
-                override def naiveZonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult =
+                override def zonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult =
                   ZonkResult.Done
               })
           }
@@ -723,7 +723,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                   // Check if the argument type is compatible with Integer
                   given ReduceContext = localCtx.toReduceContext
                   given Reducer = localCtx.given_Reducer
-                  val reducedArgType = NaiveReducer.reduce(toTerm(argTy), ReduceMode.TypeLevel)
+                  val reducedArgType = DefaultReducer.reduce(toTerm(argTy), ReduceMode.TypeLevel)
 
                   Debug.debugPrint(MethodCalls, s"[CRITICAL DEBUG] Integer.+ argument type: $reducedArgType")
                   Debug.debugPrint(MethodCalls, s"[CRITICAL DEBUG] Argument expression: $arg")
@@ -882,7 +882,7 @@ trait DefaultImpl
     }
     implicit val ctx: Context = Context.default
     val wellTyped = elabId(expr, ty1, effects1)
-    able.naiveZonk(Vector(ty1, effects1, wellTyped))
+    able.zonk(Vector(ty1, effects1, wellTyped))
     val judge = Judge(
       able.readStable(wellTyped).get,
       able.readStable(ty1).get,
@@ -922,7 +922,7 @@ trait DefaultImpl
           }
 
           try
-            able.naiveZonk(metas.map(x => x.unsafeRead[CellId[Term]]))
+            able.zonk(metas.map(x => x.unsafeRead[CellId[Term]]))
           catch {
             case e: IllegalStateException if e.getMessage.contains("not covered by any propagator") =>
               if (Debug.isEnabled(UnionSubtyping)) {
@@ -983,7 +983,7 @@ trait DefaultImpl
     val ty = newType
     val effects = newEffects
     val wellTyped = elabBlock(block, ty, effects)
-    able.naiveZonk(Vector(ty, effects))
+    able.zonk(Vector(ty, effects))
     val judge =
       Judge(wellTyped, able.readStable(ty).get, able.readUnstable(effects).get)
     val finalJudge = finalizeJudge(judge)

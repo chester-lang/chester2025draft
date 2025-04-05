@@ -125,7 +125,7 @@ trait ProvideMutable extends ProvideImpl {
 
     var didSomething = false
 
-    override def naiveZonk(
+    override def zonk(
         cells: Vector[CIdOf[Cell[?]]]
     )(using more: Ability): Unit = {
       var cellsNeeded = cells
@@ -157,7 +157,7 @@ trait ProvideMutable extends ProvideImpl {
                   p.alive = false
                   didSomething = true
                 } else {
-                  val on = store.naiveZonk(cellsNeeded)(using this, more)
+                  val on = store.zonk(cellsNeeded)(using this, more)
                   on match {
                     case ZonkResult.Done =>
                       p.alive = false

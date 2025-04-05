@@ -5,7 +5,7 @@ import chester.syntax.Name
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
-import chester.reduce.{NaiveReducer, ReduceContext, ReduceMode, Reducer}
+import chester.reduce.{DefaultReducer, ReduceContext, ReduceMode, Reducer}
 import cats.data.NonEmptyVector
 import chester.utils.Debug.DebugCategory.*
 
@@ -36,8 +36,8 @@ trait TyckPropagator extends ElaboraterCommon {
         given ReduceContext = localCtx.toReduceContext
         given Reducer = localCtx.given_Reducer
 
-        val lhsResolved = NaiveReducer.reduce(lhs, ReduceMode.TypeLevel)
-        val rhsResolved = NaiveReducer.reduce(rhs, ReduceMode.TypeLevel)
+        val lhsResolved = DefaultReducer.reduce(lhs, ReduceMode.TypeLevel)
+        val rhsResolved = DefaultReducer.reduce(rhs, ReduceMode.TypeLevel)
         if (lhsResolved == rhsResolved) return
 
         (lhsResolved, rhsResolved) match {
@@ -179,7 +179,7 @@ trait TyckPropagator extends ElaboraterCommon {
       }
     }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val lhs = state.readStable(this.lhs)
@@ -306,7 +306,7 @@ trait TyckPropagator extends ElaboraterCommon {
       }
     }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val lhsValueOpt = state.readStable(lhs)
@@ -385,7 +385,7 @@ trait TyckPropagator extends ElaboraterCommon {
       }
     }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val lhsValueOpt = state.readStable(lhs)
@@ -486,8 +486,8 @@ trait TyckPropagator extends ElaboraterCommon {
         given Reducer = localCtx.given_Reducer
 
         // Fully resolve references for deeper resolution
-        val lhsResolved = fullyResolveReference(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-        val rhsResolved = fullyResolveReference(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
+        val lhsResolved = fullyResolveReference(DefaultReducer.reduce(lhs, ReduceMode.TypeLevel))
+        val rhsResolved = fullyResolveReference(DefaultReducer.reduce(rhs, ReduceMode.TypeLevel))
 
         if (Debug.isEnabled(UnionMatching))
           Debug.debugPrint(UnionMatching, s"$indent[UNIFY DEBUG]   After reduction and resolution: $lhsResolved with $rhsResolved")
@@ -501,7 +501,7 @@ trait TyckPropagator extends ElaboraterCommon {
             val hasIntegerType = types.exists {
               case IntegerType(_) => true
               case t =>
-                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
+                val reduced = DefaultReducer.reduce(t, ReduceMode.TypeLevel)
                 reduced == IntegerType(None)
             }
             if (hasIntegerType) {
@@ -517,7 +517,7 @@ trait TyckPropagator extends ElaboraterCommon {
             val hasIntegerType = types.exists {
               case IntegerType(_) => true
               case t =>
-                val reduced = NaiveReducer.reduce(t, ReduceMode.TypeLevel)
+                val reduced = DefaultReducer.reduce(t, ReduceMode.TypeLevel)
                 reduced == IntegerType(None)
             }
             if (hasIntegerType) {
@@ -751,7 +751,7 @@ trait TyckPropagator extends ElaboraterCommon {
                       case IntegerType(_) => true
                       case unionType =>
                         val reduced =
-                          NaiveReducer.reduce(unionType, ReduceMode.TypeLevel)(using summon[Context].toReduceContext, summon[Context].given_Reducer)
+                          DefaultReducer.reduce(unionType, ReduceMode.TypeLevel)(using summon[Context].toReduceContext, summon[Context].given_Reducer)
                         reduced match {
                           case IntegerType(_) => true
                           case _              => false
@@ -796,7 +796,7 @@ trait TyckPropagator extends ElaboraterCommon {
         }
       }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       // First, check if we already have a value for this cell
@@ -899,7 +899,7 @@ trait TyckPropagator extends ElaboraterCommon {
       }
     }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       val t1 = state.readStable(this.tRhs)
@@ -949,7 +949,7 @@ trait TyckPropagator extends ElaboraterCommon {
           given ctx: Context = summon[Context]
           given ReduceContext = ctx.toReduceContext
           given Reducer = ctx.given_Reducer
-          val reducedRecord = NaiveReducer.reduce(recordType, ReduceMode.TypeLevel)
+          val reducedRecord = DefaultReducer.reduce(recordType, ReduceMode.TypeLevel)
 
           reducedRecord match {
             case IntegerType(_) | IntType(_) if fieldName == "+" =>
@@ -961,7 +961,7 @@ trait TyckPropagator extends ElaboraterCommon {
               recordDef.fields.find(_.name == fieldName) match {
                 case Some(fieldTerm) =>
                   // For dependent fields, we may need to further reduce the field type
-                  val fieldType = NaiveReducer.reduce(fieldTerm.ty, ReduceMode.TypeLevel)
+                  val fieldType = DefaultReducer.reduce(fieldTerm.ty, ReduceMode.TypeLevel)
                   unify(expectedTy, fieldType, cause)
                   true
                 case None =>
@@ -977,7 +977,7 @@ trait TyckPropagator extends ElaboraterCommon {
         case None => false
       }
 
-    override def naiveZonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
+    override def zonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       state.readStable(recordTy) match {
         case None => ZonkResult.Require(Vector(recordTy))
         case _    => ZonkResult.Done
@@ -1168,7 +1168,7 @@ trait TyckPropagator extends ElaboraterCommon {
       // It always succeeds immediately
       true
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using StateAbility[Tyck], Tyck): ZonkResult =
       // Nothing to zonk - just ensure the cell is included
@@ -1228,8 +1228,8 @@ trait TyckPropagator extends ElaboraterCommon {
     given ReduceContext = ctx.toReduceContext
     given Reducer = ctx.given_Reducer
 
-    val reducedSpecificType = NaiveReducer.reduce(specificType, ReduceMode.TypeLevel)
-    val reducedUnionTypes = unionTypes.map(unionType => NaiveReducer.reduce(unionType, ReduceMode.TypeLevel))
+    val reducedSpecificType = DefaultReducer.reduce(specificType, ReduceMode.TypeLevel)
+    val reducedUnionTypes = unionTypes.map(unionType => DefaultReducer.reduce(unionType, ReduceMode.TypeLevel))
 
     if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Reduced specific type: $reducedSpecificType")
     if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, s"[UNION DEBUG] Reduced union types: ${reducedUnionTypes.mkString(", ")}")
@@ -1358,7 +1358,7 @@ trait TyckPropagator extends ElaboraterCommon {
       }
     }
 
-    override def naiveZonk(
+    override def zonk(
         needed: Vector[CellIdAny]
     )(using StateAbility[Tyck], Tyck): ZonkResult =
       // Nothing to zonk - just ensure the propagator has run

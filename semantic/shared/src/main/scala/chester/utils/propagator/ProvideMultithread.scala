@@ -224,7 +224,7 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def naiveZonk(
+    override def zonk(
         cells: Vector[CIdOf[Cell[?]]]
     )(using Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
@@ -433,7 +433,7 @@ trait ProvideMultithread extends ProvideImpl {
           val zonkResult =
             try
               if (firstFallback) {
-                propagator.naiveZonk(Vector(c))(using state, more)
+                propagator.zonk(Vector(c))(using state, more)
               } else {
                 propagator.naiveFallbackZonk(Vector(c))(using state, more)
               }
@@ -460,7 +460,7 @@ trait ProvideMultithread extends ProvideImpl {
                 newNeeded.foreach(n => processedCellIds.add(n.toString))
                 // Process the newly needed cells
                 try {
-                  state.naiveZonk(newNeeded)
+                  state.zonk(newNeeded)
                   setDidSomething(true)
                 } catch {
                   case e: Exception =>
