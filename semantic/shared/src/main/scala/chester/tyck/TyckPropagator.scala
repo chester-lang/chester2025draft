@@ -339,7 +339,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       setupZonk(lhs, rhs, needed) match {
         case Left(result) => result
-        case Right((lhsValueOpt, rhsValues)) => 
+        case Right((lhsValueOpt, rhsValues)) =>
           lhsValueOpt match {
             case Some(Meta(lhsId)) =>
               // Create union type and unify with meta variable
@@ -405,7 +405,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
       setupZonk(lhs, rhs, needed) match {
         case Left(result) => result
-        case Right((lhsValueOpt, rhsValues)) => 
+        case Right((lhsValueOpt, rhsValues)) =>
           lhsValueOpt match {
             case Some(Meta(lhsId)) =>
               // Create intersection type and unify with meta variable
@@ -608,6 +608,14 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     result
   }
 
+  // Helper method to get the appropriate type for a literal expression
+  private def getLiteralType(x: Literals): Term = x match {
+    case IntegerLiteral(_, _)  => IntegerType(None)
+    case RationalLiteral(_, _) => RationalType(None)
+    case StringLiteral(_, _)   => StringType(None)
+    case SymbolLiteral(_, _)   => SymbolType(None)
+  }
+
   case class LiteralType(x: Literals, tyLhs: CellId[Term])(using
       Context
   ) extends Propagator[Tyck] {
@@ -694,12 +702,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             // If we have a union type, we need to make sure the literal is compatible with at least one component
             if (Debug.isEnabled(UnionMatching))
               Debug.debugPrint(UnionMatching, s"[LITERAL ZONK DEBUG] Handling union type during zonk: $existingValue")
-            val literalType = x match {
-              case IntegerLiteral(_, _)  => IntegerType(None)
-              case RationalLiteral(_, _) => RationalType(None)
-              case StringLiteral(_, _)   => StringType(None)
-              case SymbolLiteral(_, _)   => SymbolType(None)
-            }
+            val literalType = getLiteralType(x)
 
             // Find compatible types
             val compatibleTypes = types.filter(unionType => tryUnify(literalType, unionType)(using state, summon[Context]))
@@ -713,12 +716,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
                 Debug.debugPrint(UnionMatching, s"[LITERAL ZONK DEBUG] No compatible union components found for literal type $literalType")
               state.fill(
                 tyLhs,
-                x match {
-                  case IntegerLiteral(_, _)  => IntegerType(None)
-                  case RationalLiteral(_, _) => RationalType(None)
-                  case StringLiteral(_, _)   => StringType(None)
-                  case SymbolLiteral(_, _)   => SymbolType(None)
-                }
+                getLiteralType(x)
               )
               ZonkResult.Done
             }
@@ -726,12 +724,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             // Not a union type, fill with default literal type
             state.fill(
               tyLhs,
-              x match {
-                case IntegerLiteral(_, _)  => IntegerType(None)
-                case RationalLiteral(_, _) => RationalType(None)
-                case StringLiteral(_, _)   => StringType(None)
-                case SymbolLiteral(_, _)   => SymbolType(None)
-              }
+              getLiteralType(x)
             )
             ZonkResult.Done
         }
@@ -739,12 +732,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         // No existing value, fill with default literal type
         state.fill(
           tyLhs,
-          x match {
-            case IntegerLiteral(_, _)  => IntegerType(None)
-            case RationalLiteral(_, _) => RationalType(None)
-            case StringLiteral(_, _)   => StringType(None)
-            case SymbolLiteral(_, _)   => SymbolType(None)
-          }
+          getLiteralType(x)
         )
         ZonkResult.Done
       }
