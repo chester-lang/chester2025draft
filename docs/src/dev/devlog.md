@@ -44,7 +44,7 @@
      - **Issue**: Special case handling for "=>" operator
      - **Improvement**: Removed special cases, unified operator parsing
      - **Benefits**: More consistent operator handling
-     - **Implementation**: 
+     - **Implementation**:
        - Removed special case in `parseOperator()`
        - Now using StringBuilder for all operators
        - All tests passing
@@ -336,7 +336,7 @@ The Chester parser treats the `}\n` pattern (closing brace followed by newline) 
      if n <= 1 then 1
      else n * factorial(n - 1)
    }  // <- newline here ends the function definition
-   
+
    val result = factorial(5); // Next statement
    ```
 
@@ -345,11 +345,11 @@ The Chester parser treats the `}\n` pattern (closing brace followed by newline) 
    val result = notification match {
      case Email(sender, _) => {
        println(sender);
-       "Email received" 
+       "Email received"
      }  // <- block for this case
      case SMS(number, _) => "SMS received";
    }  // <- newline here ends the match expression
-   
+
    println(result); // Next statement
    ```
 
@@ -410,7 +410,7 @@ This solution preserves the uniform symbol treatment principle while ensuring th
 
 ### Type System Improvements Completed
 - **Implemented Improvements**:
-  1. **Enhanced Type Structure Reduction in NaiveReducer**
+  1. **Enhanced Type Structure Reduction in DefaultReducer**
      - Improved `reduceTypeStructure` method to properly handle:
      - Union types by recursively reducing their component types
      - Intersection types with proper reduction
@@ -442,7 +442,7 @@ This solution preserves the uniform symbol treatment principle while ensuring th
 - **Files Modified**:
   - `semantic/shared/src/main/scala/chester/tyck/TyckPropagator.scala`
   - `semantic/shared/src/main/scala/chester/tyck/Elaborater.scala`
-  - `semantic/shared/src/main/scala/chester/reduce/NaiveReducer.scala`
+  - `semantic/shared/src/main/scala/chester/reduce/Reducer.scala`
   - `syntax/shared/src/main/scala/chester/syntax/core/Term.scala`
 
 - **Next Steps**:
@@ -459,12 +459,12 @@ This solution preserves the uniform symbol treatment principle while ensuring th
      - Consolidated all Term definitions into a single Term.scala file
      - Eliminated the separate spec/simple/truffle files
      - Simplified the codebase by removing the need for converters
-     
+
   2. **Updated Documentation**
      - Updated development.md with new Term implementation approach
      - Updated tyck-improvement-proposal.md to reflect Term changes
      - Updated type-checking-system.md with current Term usage examples
-     
+
   3. **Simplified Type System**
      - Removed the need for trait interfaces with *C and *F suffixes
      - Streamlined the inheritance hierarchy
@@ -553,7 +553,7 @@ The V2 parser was failing to correctly parse pattern matching expressions with b
 
 #### Root Cause
 
-1. **Missing Context Tracking**: 
+1. **Missing Context Tracking**:
    - V1 parser used `ParsingContext(newLineAfterBlockMeansEnds = true)` for contextual parsing
    - V2 parser lacked this contextual awareness for block termination after newlines
 
@@ -579,7 +579,7 @@ We implemented a 3-step fix that maintains uniform symbol treatment:
        // Existing fields...
        newLineAfterBlockMeansEnds: Boolean = false
    ) {
-     def withNewLineTermination(enabled: Boolean): LexerState = 
+     def withNewLineTermination(enabled: Boolean): LexerState =
        if (this.newLineAfterBlockMeansEnds == enabled) this
        else copy(newLineAfterBlockMeansEnds = enabled)
    }
@@ -592,7 +592,7 @@ We implemented a 3-step fix that maintains uniform symbol treatment:
    def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
      // Only consider }\n as terminating if we're in the right context
      if (!state.newLineAfterBlockMeansEnds) return false
-     
+
      // Rest of existing implementation
      // ...
    }
@@ -779,7 +779,7 @@ While significant progress has been made, some areas still need work:
 **Files Modified**:
 - `semantic/shared/src/main/scala/chester/tyck/TyckPropagator.scala`
 - `semantic/shared/src/main/scala/chester/tyck/Elaborater.scala`
-- `semantic/shared/src/main/scala/chester/reduce/NaiveReducer.scala`
+- `semantic/shared/src/main/scala/chester/reduce/Reducer.scala`
 - `syntax/shared/src/main/scala/chester/syntax/core/Term.scala`
 - `semantic/shared/src/main/scala/chester/tyck/ElaboraterBlock.scala`
 
@@ -789,16 +789,16 @@ While significant progress has been made, some areas still need work:
 
 #### Uniform Operator Handling ✅
 - **Issue**: Special case handling for the "=>" and "=" operators in `parseOperator()` method
-- **Improvement**: 
+- **Improvement**:
   - Removed special case handling for the "=>" operator
   - Ensured operators are treated uniformly in the tokenizer
   - Treated "=>" like any other operator in the tokenizing process
-- **Benefits**: 
+- **Benefits**:
   - More consistent operator handling
   - Simplified code in the `parseOperator()` method
   - Reduced special cases, making the code more maintainable
   - Better alignment with Chester's design principles of uniform symbol treatment
-- **Implementation**: 
+- **Implementation**:
   - Removed special case code for the "=>" operator in the `parseOperator()` method
   - Modified the method to uniformly parse all operators using a `StringBuilder`
   - Verified all tests pass with the change, including operator tests
@@ -806,17 +806,17 @@ While significant progress has been made, some areas still need work:
 
 #### LexerV2 Optimization and Refactoring ✅
 - **Issue**: `LexerV2.scala` had redundant code and a missing state.advance() method reference
-- **Improvement**: 
+- **Improvement**:
   - Optimized and refactored the code structure for better maintainability
   - Fixed compilation errors by replacing advance() with state.advance()
   - Improved modularity by extracting repeated logic into helper methods
   - Enhanced state management for better consistency across the codebase
-- **Benefits**: 
+- **Benefits**:
   - Improved maintainability and readability of the lexer code
   - Fixed compilation errors resulting in more stable code
   - Better organization of related functionality
   - Reduced duplication for easier future updates
-- **Implementation**: 
+- **Implementation**:
   - Replaced direct advance() calls with state.advance() where appropriate
   - Restructured code for better organization and clarity
   - Maintained functionality while improving code quality
@@ -824,7 +824,7 @@ While significant progress has been made, some areas still need work:
 
 #### Comment Preservation Implementation ✅
 - **Issue**: V2 parser didn't preserve comments in the AST, unlike V1
-- **Improvement**: 
+- **Improvement**:
   - Added comment collection and attachment similar to V1 parser
   - Implemented support for both leading and trailing comments
   - Created mechanism for handling comments in blocks and at block boundaries
@@ -911,7 +911,7 @@ While significant progress has been made, some areas still need work:
   - Streamlined number parsing logic
   - Improved string processing with boundary control
   - Consolidated position tracking logic
-  
+
 #### Functional Style Enhancement ✅
 - **Issue**: Imperative style code was harder to maintain
 - **Improvement**:
@@ -980,7 +980,7 @@ The V2 parser now has complete implementations for:
 
 ### Next Steps
 Focus is now shifting to:
-1. Object expressions implementation 
+1. Object expressions implementation
 2. Source maps support
 3. Error recovery mechanisms
 4. Migrating remaining V1-only tests
@@ -1038,10 +1038,10 @@ To solve the "cells not covered by any propagator" error, several key mechanisms
      override val readingCells = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
      override val writingCells = Set.empty
      override val zonkingCells = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
-     
+
      // Always succeeds - just ensures the cell is covered
      override def run(using StateAbility[Tyck], Tyck): Boolean = true
-     
+
      override def naiveZonk(needed: Vector[CellIdAny])
          (using StateAbility[Tyck], Tyck): ZonkResult = ZonkResult.Done
    }
@@ -1081,7 +1081,7 @@ To solve the "cells not covered by any propagator" error, several key mechanisms
        StateAbility[Tyck], Context, Tyck): Unit = {
      val cellId = toId(term)
      ensureCellCoverage(cellId, cause)
-     
+
      term match {
        case fcall: FCallTerm => {
          processFunctionCall(fcall.f, cause)
@@ -1099,31 +1099,14 @@ To solve the "cells not covered by any propagator" error, several key mechanisms
 The implementation now includes enhanced compatibility checks for working with union types:
 
 1. **Union Compatibility Methods**:
-   ```scala
-   // Check if a specific type is compatible with a union type
-   private def specificUnionCompatible(specificType: Term, unionTypes: NonEmptyVector[Term])
-       (using StateAbility[Tyck], Context): Boolean = {
-     unionTypes.exists(unionType => tryUnify(specificType, unionType))
-   }
-   
-   // Check if a union type is compatible with a specific type
-   private def unionSpecificCompatible(unionTypes: NonEmptyVector[Term], specificType: Term)
-       (using StateAbility[Tyck], Context): Boolean = {
-     unionTypes.exists(unionType => tryUnify(unionType, specificType))
-   }
-   ```
+   - Added specialized methods for checking compatibility between union and non-union types
+   - Implemented bidirectional compatibility checking for union types
+   - Enhanced subtyping relationships with proper union type handling
 
 2. **Special Handling for Literal Types with Unions**:
-   ```scala
-   // Special case for integer literals with union types
-   case (v: AbstractIntTerm, Union(types, _)) => {
-     val hasIntegerType = types.exists {
-       case IntegerType(_) => true
-       case t => NaiveReducer.reduce(t, ReduceMode.TypeLevel) == IntegerType(None)
-     }
-     if (hasIntegerType) return true
-   }
-   ```
+   - Added special case handling for integer literals with union types
+   - Implemented type compatibility checking for literals against union types
+   - Added support for both direct and indirect type matching
 
 These improvements ensure that union types work seamlessly with the rest of the type system, including with literals, function types, and in both widening and narrowing contexts.
 
@@ -1132,33 +1115,14 @@ These improvements ensure that union types work seamlessly with the rest of the 
 The implementation includes improvements to how type-level function applications are handled:
 
 1. **Reduction for Type Checking**:
-   ```scala
-   // Use TypeLevel reduction for type equality checking
-   given ReduceContext = localCtx.toReduceContext
-   given Reducer = localCtx.given_Reducer
-   val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-   val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
-   ```
+   - Added specialized reduction mode for type-level expressions
+   - Implemented proper context handling for type equality checking
+   - Enhanced type comparison with reduction-based equality
 
 2. **Term Reference Resolution**:
-   ```scala
-   // Helper function to fully resolve references in terms
-   def fullyResolveReference(term: Term): Term = {
-     val resolved = term match {
-       case varCall: ReferenceCall =>
-         localCtx.getKnown(varCall)
-           .flatMap(tyAndVal => state.readStable(tyAndVal.valueId))
-           .getOrElse(term)
-       case _ => term
-     }
-     
-     if (resolved != term && resolved.isInstanceOf[ReferenceCall]) {
-       fullyResolveReference(resolved)
-     } else {
-       resolved
-     }
-   }
-   ```
+   - Added recursive reference resolution for deeper type analysis
+   - Implemented proper handling of nested references in types
+   - Enhanced type comparison with fully resolved references
 
 All these implementations follow the design principles outlined in the type improvement proposal, ensuring that:
 - Original terms are preserved in elaborated results
@@ -1183,7 +1147,7 @@ case class Context(
 ) {
     // Helper method to create a new context with a specific processing type
     def withProcessingType(typeStr: String): Context = copy(currentProcessingType = typeStr)
-    
+
     // Rest of the implementation
 }
 ```
@@ -1319,7 +1283,7 @@ The trait subtyping rules are now properly integrated into the type unification 
     // Trait extending trait (structural subtyping)
     case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
         checkTraitExtends(childTraitDef, parentTraitDef, cause); ()
-        
+
     // Other cases
 }
 ```
@@ -1387,7 +1351,7 @@ During a comprehensive code review to align with Chester's term architecture pri
   ```
 - **After**:
   ```scala
-  val reducedStatements = statements.map(stmt => 
+  val reducedStatements = statements.map(stmt =>
     // Keep the type information while reducing
     r.reduce(stmt).asInstanceOf[StmtTerm]
   )
@@ -1396,7 +1360,7 @@ During a comprehensive code review to align with Chester's term architecture pri
   - Avoiding pattern matching with `*C` and `*T` suffix traits
   - Keeping necessary type casts for type safety
   - Using more direct and readable code
-- **Benefits**: 
+- **Benefits**:
   - More consistent codebase that follows established design principles
   - Type-safe implementation
   - Clearer intent with inline comments

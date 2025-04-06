@@ -33,7 +33,7 @@
      ```bash
      # Run all tests
      sbt rootJVM/test
-     
+
      # Run a specific test class
      sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
      ```
@@ -44,7 +44,7 @@
      - This option is broken and produces unreliable results
      - Tests may appear to pass when they actually fail
      - This can lead to false confidence in your changes
-   - ⚠️ **CRITICAL: NEVER use `--` to pass arguments to tests** ⚠️ 
+   - ⚠️ **CRITICAL: NEVER use `--` to pass arguments to tests** ⚠️
      - Example of what NOT to do: `sbt "rootJVM/testOnly -- -t MyTest"`
      - This is not supported and will cause tests to run incorrectly
    - ALWAYS run `sbt rootJVM/test` before committing changes
@@ -182,10 +182,10 @@
      ```bash
      # Discard changes to a specific file
      git checkout -- path/to/file | cat
-     
+
      # Discard all changes in the working directory
      git checkout -- . | cat
-     
+
      # Revert to a specific commit
      git checkout [commit-hash] -- path/to/file | cat
      ```
@@ -205,13 +205,13 @@
      - Ask the user to run the tests manually
      - Request that the user provide the test results
      - This indicates a problem with the terminal connection, not with the code itself
-   
+
 2. **Test Running Best Practices for AI Agents**
    - **ALWAYS use these exact commands for running tests:**
      ```bash
      # Run all tests
      sbt rootJVM/test | cat
-     
+
      # Run a specific test class (include quotation marks)
      sbt "rootJVM/testOnly chester.tyck.FilesTyckTest" | cat
      ```
@@ -291,7 +291,7 @@ The codebase provides implicit convert functions for these cases, so explicit ty
 - Using concrete types ensures cross-platform compatibility
 - The convert functions handle type conversions safely and efficiently
 - Avoiding trait suffixes makes the code more maintainable
-- This approach leverages the type system to catch potential platform-specific issues at compile time 
+- This approach leverages the type system to catch potential platform-specific issues at compile time
 
 ## Core Term Architecture and Cross-Platform Implementation
 
@@ -330,9 +330,9 @@ case class TraitType(
   @const meta: OptionTermMeta
 ) extends TypeTerm {
   override type ThisTree = TraitType
-  override def toDoc(using PrettierOptions): Doc = 
+  override def toDoc(using PrettierOptions): Doc =
     Doc.text("TraitType(") <> traitDef.toDoc <> Doc.text(")")
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = 
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term =
     thisOr(copy(traitDef = g(traitDef)))
 }
 ```
@@ -382,10 +382,9 @@ LetStmtTerm(localv, idType(A), ty, meta)
 
 // RIGHT - internal reduction only for field checking:
 def checkFieldAccess(recordTy: Term, field: Name): Term = {
-  given ReduceContext = localCtx.toReduceContext
-  val reducedTy = NaiveReducer.reduce(recordTy, ReduceMode.TypeLevel)
-  // Check field exists, but keep original term in result
-  ...
+  // Use type-level reduction only for checking field existence
+  // Keep original term in result
+  // ...
 }
 ```
 
@@ -480,7 +479,7 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
    }
 
    // Bad
-   def process(input: String): Result = 
+   def process(input: String): Result =
      // implementation
    ```
 
@@ -544,7 +543,7 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
      case Tyck
      case Reducer
    }
-   
+
    // Bad
    val category = "CELL" // Using string literals as enum values
    ```
@@ -561,9 +560,9 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
    ```scala
    // Good usage
    import DebugCategory.*
-   
+
    val category = Cell
-   
+
    category match {
      case Cell => handleCell()
      case Tyck => handleTyck()
@@ -627,19 +626,19 @@ Chester uses a centralized debug system that categorizes debug output by compone
      ```bash
      # First, source the script to load functions
      source ./debug-flags.sh
-     
+
      # Enable specific debug categories
      enable_debug ENV_DEBUG_UNION_MATCHING
-     
+
      # Enable all debug categories
      enable_all_debug
-     
+
      # Disable all debug categories
      disable_all_debug
-     
+
      # Show current debug flag status
      show_debug_status
-     
+
      # List available debug flags
      list_debug_flags
      ```

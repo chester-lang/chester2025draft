@@ -29,18 +29,18 @@ Based on our testing and analysis, the following changes are needed in the codeb
         val pipeIndices = seq.zipWithIndex.collect { case (Identifier("|", _), idx) =>
           idx
         }
-        
+
         if (pipeIndices.isEmpty) {
           // No pipe operators found, return the original expression
           // with its components desugared
           OpSeq(seq.map(SimpleDesalt.desugar), meta)
         } else {
           // Found pipe operators, construct a union type
-          
+
           // Extract the types separated by pipe operators
           val types = scala.collection.mutable.ArrayBuffer[Expr]()
           var currentStart = 0
-          
+
           for (pipeIdx <- pipeIndices) {
             if (pipeIdx > currentStart) {
               // Add the segment before the pipe
@@ -59,7 +59,7 @@ Based on our testing and analysis, the following changes are needed in the codeb
             // Move past the pipe
             currentStart = pipeIdx + 1
           }
-          
+
           // Handle the last segment after the final pipe
           if (currentStart < seq.length) {
             if (seq.length - currentStart == 1) {
@@ -72,10 +72,10 @@ Based on our testing and analysis, the following changes are needed in the codeb
             reporter(NotImplemented(opseq))
             return opseq
           }
-          
+
           // Process each type expression to handle nested unions
           val processedTypes = types.map(t => SimpleDesalt.desugar(t)).toVector
-          
+
           // Create a UnionTypeExpr with the extracted types
           if (processedTypes.nonEmpty) {
             UnionTypeExpr(processedTypes, meta)
@@ -98,22 +98,22 @@ Based on our testing and analysis, the following changes are needed in the codeb
     def isIntegerType(t: Term): Boolean = {
       t match {
         case IntegerType(_) => true
-        case _ => 
+        case _ =>
           val s = t.toString.toLowerCase
           s.contains("integer") || (s.contains("int") && !s.contains("interface"))
       }
     }
-    
+
     // Helper to check if a term is a String type in any form
     def isStringType(t: Term): Boolean = {
       t match {
         case StringType(_) => true
-        case _ => 
+        case _ =>
           val s = t.toString.toLowerCase
           s.contains("string") && !s.contains("stringbuilder")
       }
     }
-    
+
     // Check based on the matched types
     (type1, type2) match {
       case (t1, t2) if isIntegerType(t1) && isIntegerType(t2) => true
@@ -129,13 +129,13 @@ Based on our testing and analysis, the following changes are needed in the codeb
   override def unify(lhs: Term, rhs: Term, cause: Expr) {
     // Check for structural compatibility first
     if (isTypeStructurallyCompatible(lhs, rhs)) return
-    
+
     // Proceed with type-level reduction if needed
-    val lhsResolved = readVar(NaiveReducer.reduce(lhs, ReduceMode.TypeLevel))
-    val rhsResolved = readVar(NaiveReducer.reduce(rhs, ReduceMode.TypeLevel))
-    
+    val lhsResolved = readVar(DefaultReducer.reduce(lhs, ReduceMode.TypeLevel))
+    val rhsResolved = readVar(DefaultReducer.reduce(rhs, ReduceMode.TypeLevel))
+
     if (isTypeStructurallyCompatible(lhsResolved, rhsResolved)) return
-    
+
     // Continue with existing logic for other cases
     // ...
   }
@@ -146,22 +146,22 @@ Based on our testing and analysis, the following changes are needed in the codeb
   case expr @ UnionTypeExpr(types, meta) =>
     // Elaborate each component type
     val componentTypes = types.map(checkType)
-    
+
     // Create the union type
     val unionTypes = NonEmptyVector.fromVectorUnsafe(componentTypes)
     val unionType = Union(unionTypes, convertMeta(meta))
-    
+
     // Set up propagators for unification
     val unionId = toId(unionType).asInstanceOf[CellId[Term]]
     val unionTypeIds = componentTypes.map(toId).toVector.map(_.asInstanceOf[CellId[Term]])
-    
+
     // Connect union to components
     state.addPropagator(UnionOf(unionId, unionTypeIds, expr))
-    
+
     // Ensure cell coverage
     state.addPropagator(EnsureCellCoverage(unionId, expr))
     unionTypeIds.foreach(id => state.addPropagator(EnsureCellCoverage(id, expr)))
-    
+
     // Return the union type
     unionType
   ```
@@ -176,16 +176,16 @@ Based on our testing and analysis, the following changes are needed in the codeb
     cause: Expr
   )(using Context) extends Propagator[Tyck] {
     // Existing code...
-    
+
     override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
       // When component types are all defined, create a union type
       val rhsValues = rhsValuesOpt.map(_.get)
       val unionType = Union(rhsValues.assumeNonEmpty, None)
-      
+
       // Handle various cases for LHS
       // ...
     }
-    
+
     // Enhance zonking to ensure all cells are properly filled
   }
   ```
@@ -196,12 +196,12 @@ Based on our testing and analysis, the following changes are needed in the codeb
   case (Union(types1, _), Union(types2, _)) =>
     // Check if both unions have compatible types
     types1.forall(t1 => types2.exists(t2 => tryUnifyInternal(t1, t2, depth + 1)))
-    
+
   // Add specific handling for term to union type compatibility
   case (term, Union(types, _)) =>
     // Check if term is compatible with any type in the union
     types.exists(unionType => tryUnifyInternal(term, unionType, depth + 1))
-    
+
   case (Union(types, _), term) =>
     // Check if any type in the union is compatible with the term
     types.exists(unionType => tryUnifyInternal(unionType, term, depth + 1))
@@ -246,4 +246,4 @@ Based on our testing and analysis, the following changes are needed in the codeb
   - `Desalt.scala` (parser changes)
   - `Elaborater.scala` (type checking)
   - `TyckPropagator.scala` (propagators)
-  - `FilesTyckTest.scala` (test framework) 
+  - `FilesTyckTest.scala` (test framework)

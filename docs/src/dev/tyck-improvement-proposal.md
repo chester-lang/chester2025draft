@@ -70,7 +70,7 @@ The current type checker supports basic type-level function applications, but ha
 
 The implementation requires focused changes to:
 
-1. **NaiveReducer Enhancement**:
+1. **DefaultReducer Enhancement**:
    - Improve handling of nested type-level function applications
    - Implement recursive handling of type-level function results
    - Ensure consistent reduction behavior for composed functions
@@ -182,7 +182,7 @@ Remaining items to complete:
    - Union type subtyping
    - Type-level function applications
 3. Documentation clearly explains dependent type concepts and usage patterns
-4. Meta variables in complex types resolve correctly 
+4. Meta variables in complex types resolve correctly
 
 ## 8. Running Tests
 
@@ -303,7 +303,7 @@ While basic trait functionality is working, the following enhancements are plann
 - Multiple trait inheritance support
 - Trait method and default implementations
 - More comprehensive trait test cases
-- Advanced trait composition patterns 
+- Advanced trait composition patterns
 
 ## 10. Detailed Plan for Complex Union Types
 
