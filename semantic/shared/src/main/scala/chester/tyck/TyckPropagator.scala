@@ -336,7 +336,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
     override def zonk(
         needed: Vector[CellIdAny]
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       setupZonk(lhs, rhs, needed) match {
         case Left(result) => result
         case Right((lhsValueOpt, rhsValues)) =>
@@ -360,7 +360,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               ZonkResult.Done
           }
       }
-    }
   }
 
   case class IntersectionOf(
@@ -402,7 +401,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
     override def zonk(
         needed: Vector[CellIdAny]
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       setupZonk(lhs, rhs, needed) match {
         case Left(result) => result
         case Right((lhsValueOpt, rhsValues)) =>
@@ -426,7 +425,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               ZonkResult.Done
           }
       }
-    }
   }
 
   /** Attempts to unify two terms without producing error messages.

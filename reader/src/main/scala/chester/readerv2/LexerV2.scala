@@ -947,7 +947,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                   }
 
                   blockCurrent = afterExpr
-                  debug(s"parseBlock: Updated block state after case statement")
+                  debug("parseBlock: Updated block state after case statement")
               }
 
             case _ =>
@@ -958,9 +958,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                   return Left(err)
                 case Right((expr, next)) =>
                   debug(s"parseBlock: Parsed expression: $expr, next token: ${next.current}")
-
-                  // Check if the next token is a 'case' identifier
-                  val nextTokenIsCase = isCaseIdentifier(next.current)
 
                   next.current match {
                     case Right(Token.RBrace(_)) =>
@@ -977,9 +974,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
                       // Check for case after semicolon
                       val (_, afterSemi) = collectComments(next.advance())
-                      if (isCaseIdentifier(afterSemi.current)) {
-                        debug("parseBlock: Found 'case' after semicolon, will create new statement")
-                      }
 
                       blockCurrent = afterSemi
                       debug(s"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
@@ -989,12 +983,6 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
                       // Get next token after whitespace
                       val (_, afterWs) = collectComments(next)
-
-                      // Check if next token is 'case'
-                      val hasNextCase = isCaseIdentifier(afterWs.current)
-
-                      // Check if whitespace contains a newline
-                      val containsNewline = isNewlineWhitespace(whitespaceTok)
 
                       // Add statement and advance
                       statements = statements :+ expr

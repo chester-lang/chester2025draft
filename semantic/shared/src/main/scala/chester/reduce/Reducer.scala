@@ -92,7 +92,7 @@ object DefaultReducer extends Reducer {
     // Block terms - reduce statements and result
     case BlockTerm(statements, result, meta) =>
       // We need to preserve the StmtTerm type while avoiding pattern matching with *C/*T suffixes
-      val reducedStatements = statements.map(stmt => 
+      val reducedStatements = statements.map(stmt =>
         // Keep the type information while reducing
         r.reduce(stmt).asInstanceOf[StmtTerm]
       )

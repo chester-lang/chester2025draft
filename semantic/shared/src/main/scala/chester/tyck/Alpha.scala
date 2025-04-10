@@ -1,46 +1,37 @@
 package chester.tyck
-
-import chester.error.*
-import chester.syntax.Name
-import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.*
-import chester.reduce.{DefaultReducer, ReduceContext, ReduceMode, Reducer}
-import cats.data.NonEmptyVector
-import chester.utils.Debug.DebugCategory.*
 
 import scala.language.implicitConversions
-import java.util.concurrent.atomic.AtomicInteger
-import scala.annotation.tailrec
 
 trait Alpha extends ElaboraterCommon {
 
   /** Checks if two terms are alpha-equivalent.
-   *
-   * Alpha-equivalence is a concept from lambda calculus that considers terms equivalent if they are identical up to consistent renaming of bound
-   * variables. This is crucial for dependent type systems where types can contain terms and binding structure matters.
-   *
-   * Examples:
-   *   - (x: Type) -> x and (y: Type) -> y are alpha-equivalent
-   *   - (x: Type) -> (y: x) -> y and (a: Type) -> (b: a) -> b are alpha-equivalent
-   *
-   * @param lhs
-   *   First term to compare
-   * @param rhs
-   *   Second term to compare
-   * @param boundVars
-   *   Mapping between bound variables in lhs and rhs
-   * @return
-   *   true if terms are alpha-equivalent, false otherwise
-   */
+    *
+    * Alpha-equivalence is a concept from lambda calculus that considers terms equivalent if they are identical up to consistent renaming of bound
+    * variables. This is crucial for dependent type systems where types can contain terms and binding structure matters.
+    *
+    * Examples:
+    *   - (x: Type) -> x and (y: Type) -> y are alpha-equivalent
+    *   - (x: Type) -> (y: x) -> y and (a: Type) -> (b: a) -> b are alpha-equivalent
+    *
+    * @param lhs
+    *   First term to compare
+    * @param rhs
+    *   Second term to compare
+    * @param boundVars
+    *   Mapping between bound variables in lhs and rhs
+    * @return
+    *   true if terms are alpha-equivalent, false otherwise
+    */
   protected def areAlphaEquivalent(
-                                  lhs: Term,
-                                  rhs: Term,
-                                  boundVars: Map[LocalV, LocalV] = Map.empty
-                                )(using
-                                  StateAbility[Tyck],
-                                  Context
-                                ): Boolean =
+      lhs: Term,
+      rhs: Term,
+      boundVars: Map[LocalV, LocalV] = Map.empty
+  )(using
+      StateAbility[Tyck],
+      Context
+  ): Boolean =
     // For alpha-equivalence, we need to check if terms are convertible
     // with respect to bound variable names (alpha conversion)
     (lhs, rhs) match {
@@ -98,36 +89,36 @@ trait Alpha extends ElaboraterCommon {
     }
 
   /** Check if two collections of types are equivalent regardless of their ordering. For union and intersection types, the order doesn't matter.
-   *
-   * This is important for union and intersection types where:
-   *   - A | B is equivalent to B | A
-   *   - A & B is equivalent to B & A
-   *
-   * @param types1
-   *   First collection of types
-   * @param types2
-   *   Second collection of types
-   * @param boundVars
-   *   Mapping between bound variables
-   * @return
-   *   true if collections are equivalent modulo ordering, false otherwise
-   */
+    *
+    * This is important for union and intersection types where:
+    *   - A | B is equivalent to B | A
+    *   - A & B is equivalent to B & A
+    *
+    * @param types1
+    *   First collection of types
+    * @param types2
+    *   Second collection of types
+    * @param boundVars
+    *   Mapping between bound variables
+    * @return
+    *   true if collections are equivalent modulo ordering, false otherwise
+    */
   private def typesEquivalentModuloOrdering(
-                                             types1: Vector[Term],
-                                             types2: Vector[Term],
-                                             boundVars: Map[LocalV, LocalV] = Map.empty
-                                           )(using
-                                             StateAbility[Tyck],
-                                             Context
-                                           ): Boolean = {
+      types1: Vector[Term],
+      types2: Vector[Term],
+      boundVars: Map[LocalV, LocalV] = Map.empty
+  )(using
+      StateAbility[Tyck],
+      Context
+  ): Boolean = {
     // For union/intersection types, each type in one collection
     // must have an equivalent in the other collection
     if (types1.length != types2.length) return false
 
     // Check that each type in types1 has a match in types2
     types1.forall(t1 => types2.exists(t2 => areAlphaEquivalent(t1, t2, boundVars))) &&
-      // Check that each type in types2 has a match in types1
-      types2.forall(t2 => types1.exists(t1 => areAlphaEquivalent(t1, t2, boundVars)))
+    // Check that each type in types2 has a match in types1
+    types2.forall(t2 => types1.exists(t1 => areAlphaEquivalent(t1, t2, boundVars)))
   }
 
 }

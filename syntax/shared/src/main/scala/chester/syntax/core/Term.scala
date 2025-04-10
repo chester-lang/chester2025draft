@@ -121,10 +121,10 @@ case class CallingArgTerm(
 implicit val SeqCallingArgTermRW: ReadWriter[Seq[CallingArgTerm]] =
   readwriter[Seq[Term]].asInstanceOf[ReadWriter[Seq[CallingArgTerm]]]
 
-implicit inline def makeArray[T : scala.reflect.ClassTag](xs: Seq[T]):Array[T] = xs.toArray
+implicit inline def makeArray[T: scala.reflect.ClassTag](xs: Seq[T]): Array[T] = xs.toArray
 
 case class Calling(
-    @children val args0 : Array[CallingArgTerm],
+    @children val args0: Array[CallingArgTerm],
     @const val implicitly: Boolean = false,
     @const val meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
@@ -149,7 +149,7 @@ case class FCallTerm(
     @children args0: Array[Calling],
     @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
-  val args = ArraySeq.unsafeWrapArray(args0)
+  val args: ArraySeq[Calling] = ArraySeq.unsafeWrapArray(args0)
   override type ThisTree = FCallTerm
 
   override def descent(a: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -782,7 +782,7 @@ case class RecordStmtTerm(
     @const extendsClause: Option[Term] = None,
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
-  override def names = NonEmptyVector.of(name)
+  override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = RecordStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -826,7 +826,7 @@ case class TraitStmtTerm(
     @const body: Option[BlockTerm] = None,
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
-  override def names = NonEmptyVector.of(name)
+  override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = TraitStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -849,7 +849,7 @@ case class InterfaceStmtTerm(
     @const body: Option[BlockTerm] = None,
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
-  override def names = NonEmptyVector.of(name)
+  override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = InterfaceStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -921,7 +921,7 @@ case class ObjectStmtTerm(
     @const body: Option[BlockTerm],
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
-  override def names=NonEmptyVector.of(name)
+  override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = ObjectStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 

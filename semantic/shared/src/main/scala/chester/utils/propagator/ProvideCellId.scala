@@ -186,7 +186,6 @@ trait ProvideCellId {
       readCell(id).exists((x: T) => x.hasSomeValue)
 
     def noAnyValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
-    
 
     def addPropagatorGetPid[T <: Propagator[Ability]](propagator: T)(using
         more: Ability
