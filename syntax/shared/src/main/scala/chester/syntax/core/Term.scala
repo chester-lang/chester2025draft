@@ -603,7 +603,6 @@ case class ExceptionEffect(@const meta: OptionTermMeta) extends Effect derives R
 // todo:  whatever IO: console, file, network, ...
 sealed abstract class ReferenceCall extends Uneval with TermWithUniqid derives ReadWriter {
   override type ThisTree <: ReferenceCall
-  @deprecated("dont use")
   def name: Name
 
   def ty: Term
@@ -778,6 +777,7 @@ case class RecordStmtTerm(
     @const extendsClause: Option[Term] = None,
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
+  override def names = NonEmptyVector.of(name)
   override type ThisTree = RecordStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -821,6 +821,7 @@ case class TraitStmtTerm(
     @const body: Option[BlockTerm] = None,
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
+  override def names = NonEmptyVector.of(name)
   override type ThisTree = TraitStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -843,6 +844,7 @@ case class InterfaceStmtTerm(
     @const body: Option[BlockTerm] = None,
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
+  override def names = NonEmptyVector.of(name)
   override type ThisTree = InterfaceStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -914,6 +916,7 @@ case class ObjectStmtTerm(
     @const body: Option[BlockTerm],
     @const meta: OptionTermMeta
 ) extends TypeDefinition derives ReadWriter {
+  override def names=NonEmptyVector.of(name)
   override type ThisTree = ObjectStmtTerm
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
@@ -928,8 +931,7 @@ case class ObjectStmtTerm(
 }
 sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid derives ReadWriter {
   override type ThisTree <: TypeDefinition
-  @deprecated("dont use")
-  def name: Name
+  def names: NonEmptyVector[Name]
 
   def uniqId: UniqidOf[TypeDefinition]
 

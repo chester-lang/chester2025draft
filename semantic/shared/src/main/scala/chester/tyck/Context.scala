@@ -79,7 +79,7 @@ case class Context(
   }
   def addTypeDefinition(typeDef: TypeDefinition): Context =
     copy(
-      typeDefinitionNames = typeDefinitionNames + (typeDef.name -> typeDef.uniqId),
+      typeDefinitionNames = typeDefinitionNames ++ typeDef.names.map(_ -> typeDef.uniqId).iterator,
       typeDefinitions = typeDefinitions + (typeDef.uniqId -> typeDef)
     )
 
