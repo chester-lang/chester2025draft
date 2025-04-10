@@ -19,6 +19,7 @@ import spire.math.*
 
 import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
+import scala.collection.immutable.ArraySeq
 
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
@@ -120,11 +121,15 @@ case class CallingArgTerm(
 implicit val SeqCallingArgTermRW: ReadWriter[Seq[CallingArgTerm]] =
   readwriter[Seq[Term]].asInstanceOf[ReadWriter[Seq[CallingArgTerm]]]
 
+implicit inline def makeArray[T : scala.reflect.ClassTag](xs: Seq[T]):Array[T] = xs.toArray
+
 case class Calling(
-    args: Seq[CallingArgTerm],
+    @children val args0 : Array[CallingArgTerm],
     @const val implicitly: Boolean = false,
     @const val meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
+
+  val args: Seq[CallingArgTerm] = ArraySeq.unsafeWrapArray(args0)
 
   override def toDoc(using PrettierOptions): Doc = {
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
@@ -132,23 +137,23 @@ case class Calling(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(args = args.map(g))
+    copy(args0 = args.map(g))
   )
 
-  @children private val argsArray = args.toArray
   override type ThisTree = Calling
 
 }
 
 case class FCallTerm(
     @child var f: Term,
-    @const args: Vector[Calling],
+    @children args0: Array[Calling],
     @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
+  val args = ArraySeq.unsafeWrapArray(args0)
   override type ThisTree = FCallTerm
 
   override def descent(a: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(f = a(f), args = args.map(g))
+    copy(f = a(f), args0 = args.map(g))
   )
   override def toDoc(using PrettierOptions): Doc = {
     val fDoc = f.toDoc
