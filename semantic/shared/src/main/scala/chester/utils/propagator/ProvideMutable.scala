@@ -99,30 +99,6 @@ trait ProvideMutable extends ProvideImpl {
         }
       }
 
-    @deprecated("impure")
-    override def readingZonkings(
-        cells: Vector[CIdOf[Cell[?]]]
-    ): Vector[Propagator[Ability]] =
-      cells
-        .flatMap(_.zonkingPropagators)
-        .map(_.store.asInstanceOf[Propagator[Ability]])
-
-    @deprecated("impure")
-    override def requireRemovePropagatorZonking(
-        identify: Any,
-        cell: CellIdAny
-    ): Unit = {
-      val cell1 = cell.asInstanceOf[CIdOf[Cell[?]]]
-      for (
-        p <- cell1.zonkingPropagators
-          .filter(x => x.store.identify == Some(identify))
-      )
-        if (p.alive) {
-          didSomething = true
-          p.alive = false
-        }
-    }
-
     var didSomething = false
 
     override def zonk(
@@ -134,7 +110,7 @@ trait ProvideMutable extends ProvideImpl {
         didSomething = false
         tickAll
         cellsNeeded = cellsNeeded
-          .filter(this.noAnyValue(_))
+          .filter(this.noAnyValue)
           .sortBy(x => -x.zonkingPropagators.map(_.store.score).sum)
         if (cellsNeeded.isEmpty) {
           return
@@ -164,7 +140,7 @@ trait ProvideMutable extends ProvideImpl {
                       didSomething = true
                     case ZonkResult.Require(needed) =>
                       val needed1 = needed
-                        .filter(this.noStableValue(_))
+                        .filter(this.noStableValue)
                         .filterNot(cellsNeeded.contains)
                       if (needed1.nonEmpty) {
                         cellsNeeded = cellsNeeded ++ needed1
@@ -193,7 +169,7 @@ trait ProvideMutable extends ProvideImpl {
                         didSomething = true
                       case ZonkResult.Require(needed) =>
                         val needed1 = needed
-                          .filter(this.noStableValue(_))
+                          .filter(this.noStableValue)
                           .filterNot(cellsNeeded.contains)
                         if (needed1.nonEmpty) {
                           cellsNeeded = cellsNeeded ++ needed1

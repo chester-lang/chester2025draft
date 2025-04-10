@@ -186,9 +186,7 @@ trait ProvideCellId {
       readCell(id).exists((x: T) => x.hasSomeValue)
 
     def noAnyValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
-    @deprecated("impure")
-    def requireRemovePropagatorZonking(identify: Any, cell: CellIdAny): Unit =
-      ???
+    
 
     def addPropagatorGetPid[T <: Propagator[Ability]](propagator: T)(using
         more: Ability
@@ -208,11 +206,6 @@ trait ProvideCellId {
       while (!stable)
         tick(using more)
 
-    @deprecated("impure")
-    def readingZonkings(
-        cells: Vector[CIdOf[Cell[?]]]
-    ): Vector[Propagator[Ability]] = ???
-
     /** make a best guess for those cells */
     def zonk(cells: Vector[CIdOf[Cell[?]]])(using more: Ability): Unit
 
@@ -229,10 +222,5 @@ trait ProvideCellId {
     case Done extends ZonkResult
     case Require(needed: Seq[CIdOf[Cell[?]]]) extends ZonkResult
     case NotYet extends ZonkResult
-  }
-
-  object ProvideCellId {
-    // Debug flag to control debug output
-    var DEBUG_CELL_FILLING = false
   }
 }

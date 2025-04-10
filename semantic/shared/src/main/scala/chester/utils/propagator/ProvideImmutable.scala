@@ -80,14 +80,6 @@ trait ProvideImmutable extends ProvideImpl {
         }
     }
 
-    override def readingZonkings(
-        cells: Vector[CIdOf[Cell[?]]]
-    ): Vector[Propagator[Ability]] =
-      state.propagators
-        .filter((_, propagator) => propagator.zonkingCells.exists(cells.contains))
-        .values
-        .toVector
-
     override def zonk(
         cells: Vector[CIdOf[Cell[?]]]
     )(using more: Ability): Unit = {
