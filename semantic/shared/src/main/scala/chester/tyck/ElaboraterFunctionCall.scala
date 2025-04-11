@@ -165,7 +165,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Read function type: $readFunctionTy")
 
       readFunctionTy match {
-        case Some(ft@FunctionType(telescopes, retTy, functionEffects, _)) =>
+        case Some(ft @ FunctionType(telescopes, retTy, functionEffects, _)) =>
           if (debugTyck)
             Debug.debugPrint(DebugCategory.Tyck, s"Matched FunctionType with telescopes: $telescopes, retTy: $retTy, effects: $functionEffects")
 
