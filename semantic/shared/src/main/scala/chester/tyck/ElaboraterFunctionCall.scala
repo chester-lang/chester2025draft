@@ -165,12 +165,12 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Read function type: $readFunctionTy")
 
       readFunctionTy match {
-        case Some(FunctionType(telescopes, retTy, functionEffects, _)) =>
+        case Some(ft@FunctionType(telescopes, retTy, functionEffects, _)) =>
           if (debugTyck)
             Debug.debugPrint(DebugCategory.Tyck, s"Matched FunctionType with telescopes: $telescopes, retTy: $retTy, effects: $functionEffects")
 
           // Unify the telescopes, handling implicit parameters
-          val adjustedCallings = unifyTelescopes(telescopes, callings, cause)
+          val adjustedCallings = unifyTelescopes(ft.telescopes, callings, cause)
           if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Adjusted callings: $adjustedCallings")
 
           // Unify the result type
@@ -234,7 +234,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     // Unify expected and actual telescopes, handling implicit parameters
     private def unifyTelescopes(
-        expected: Vector[TelescopeTerm],
+        expected: Seq[TelescopeTerm],
         actual: Vector[Calling],
         cause: Expr
     )(using
@@ -280,7 +280,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     // Unify the arguments of expected and actual telescopes
     private def unifyArgs(
-        expectedArgs: Vector[ArgTerm],
+        expectedArgs: Seq[ArgTerm],
         actualArgs: Seq[CallingArgTerm],
         cause: Expr
     )(using

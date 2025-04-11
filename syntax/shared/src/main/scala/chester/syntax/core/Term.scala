@@ -214,10 +214,11 @@ case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class ListTerm(@const terms: Vector[Term], @const meta: OptionTermMeta) extends WHNF derives ReadWriter {
+case class ListTerm(@children terms0: Array[Term], @const meta: OptionTermMeta) extends WHNF derives ReadWriter {
+  val terms = ArraySeq.unsafeWrapArray(terms0)
   override final type ThisTree = ListTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(terms = terms.map(f))
+    copy(terms0 = terms.map(f))
   )
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, ",")(terms)
@@ -429,10 +430,11 @@ case class ArgTerm(
   def name = bind.name
 }
 case class TelescopeTerm(
-    @const args: Vector[ArgTerm],
+    @children args0: Array[ArgTerm],
     @const implicitly: Boolean = false,
     @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
+  val args = ArraySeq.unsafeWrapArray(args0)
   override type ThisTree = TelescopeTerm
   override def toDoc(using PrettierOptions): Doc = {
     val argsDoc =
@@ -445,7 +447,7 @@ case class TelescopeTerm(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(args = args.map(g))
+    copy(args0 = args.map(g))
   )
 }
 case class Function(
@@ -455,7 +457,7 @@ case class Function(
 ) extends WHNF derives ReadWriter {
   override type ThisTree = Function
   override def toDoc(using PrettierOptions): Doc = {
-    val paramsDoc = ty.telescope.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
+    val paramsDoc = ty.telescopes.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
     val returnTypeDoc = Docs.`:` <+> ty.resultTy.toDoc
     val effectsDoc = if (ty.effects.nonEmpty) {
       Docs.`/` <+> ty.effects.toDoc
@@ -468,15 +470,16 @@ case class Function(
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(ty = g(ty), body = f(body)))
 }
 case class FunctionType(
-    @const telescope: Vector[TelescopeTerm],
-    @child var resultTy: Term,
-    @const effects: EffectsM = Effects.Empty,
-    @const meta: OptionTermMeta
+                         @children telescopes0: Array[TelescopeTerm],
+                         @child var resultTy: Term,
+                         @const effects: EffectsM = Effects.Empty,
+                         @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
+  val telescopes = ArraySeq.unsafeWrapArray(telescopes0)
   override type ThisTree = FunctionType
   override def toDoc(using PrettierOptions): Doc = {
     val telescopeDoc =
-      telescope.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
+      telescopes.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
     val effectsDoc = if (effects.nonEmpty) {
       Docs.`/` <+> effects.toDoc
     } else {
@@ -486,7 +489,7 @@ case class FunctionType(
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(
-      telescope = telescope.map(g),
+      telescopes0 = telescopes.map(g),
       resultTy = f(resultTy),
       effects = g(effects)
     )
@@ -507,30 +510,32 @@ case class ObjectClauseValueTerm(
   )
 }
 case class ObjectTerm(
-    @const clauses: Vector[ObjectClauseValueTerm],
+    @children clauses0: Array[ObjectClauseValueTerm],
     @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
+  val clauses = ArraySeq.unsafeWrapArray(clauses0)
   override type ThisTree = ObjectTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ",")(clauses.map(_.toDoc))
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(clauses = clauses.map(g))
+    copy(clauses0 = clauses.map(g))
   )
 }
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
 case class ObjectType(
-    @const fieldTypes: Vector[ObjectClauseValueTerm],
+    @children fieldTypes0: Array[ObjectClauseValueTerm],
     @const exactFields: Boolean = false,
     @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
+  val fieldTypes = ArraySeq.unsafeWrapArray(fieldTypes0)
   override type ThisTree = ObjectType
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist("Object" </> Docs.`{`, Docs.`}`, ",")(
       fieldTypes.map(_.toDoc)
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(fieldTypes = fieldTypes.map(g))
+    copy(fieldTypes0 = fieldTypes.map(g))
   )
 }
 case class ListF(@const meta: OptionTermMeta) extends Builtin derives ReadWriter {
@@ -723,10 +728,11 @@ case class TupleTerm(@const values: Vector[Term], @const meta: OptionTermMeta) e
   )
 }
 case class BlockTerm(
-    @const statements: Vector[StmtTerm],
+    @children statements0: Array[StmtTerm],
     @child var result: Term,
     @const meta: OptionTermMeta
 ) extends Uneval derives ReadWriter {
+  val statements = ArraySeq.unsafeWrapArray(statements0)
   override type ThisTree = BlockTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ";")(
@@ -734,7 +740,7 @@ case class BlockTerm(
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(
-      statements = statements.map(g),
+      statements0 = statements.map(g),
       result = f(result)
     )
   )
