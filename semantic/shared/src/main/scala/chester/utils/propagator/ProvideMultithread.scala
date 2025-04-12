@@ -5,6 +5,7 @@ import chester.uniqid.{Uniqid, UniqidOf}
 import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
+import chester.i18n.*
 
 trait ProvideMultithread extends ProvideImpl {
 
@@ -344,7 +345,7 @@ trait ProvideMultithread extends ProvideImpl {
           // Throw exception for cells that couldn't be resolved
           if (cellsNeeded.nonEmpty) {
             throw new IllegalStateException(
-              s"Cells $cellsNeeded are not covered by any propagator"
+              t"Cells $cellsNeeded are not covered by any propagator"
             )
           }
         }

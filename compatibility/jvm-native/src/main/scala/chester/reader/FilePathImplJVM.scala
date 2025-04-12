@@ -5,6 +5,7 @@ import chester.utils.*
 
 import java.nio.file.Paths
 import scala.util.*
+import chester.i18n.*
 
 object FilePathImplJVM extends FilePathImpl {
   override def readContent(fileName: String): Either[ParseError, String] =
@@ -13,7 +14,7 @@ object FilePathImplJVM extends FilePathImpl {
         Right(content)
       case Failure(exception) =>
         Left(
-          ParseError(s"Failed to read file: ${exception.getMessage}", Pos.zero)
+          ParseError(t"Failed to read file: ${exception.getMessage}", Pos.zero)
         )
     }
 

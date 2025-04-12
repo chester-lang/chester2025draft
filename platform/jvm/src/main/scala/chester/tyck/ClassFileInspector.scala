@@ -4,6 +4,7 @@ import scala.tools.asm.*
 import scala.tools.asm.tree.*
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Paths}
+import chester.i18n.*
 
 object ClassFileInspector {
   def inspectClassFile(classFilePath: String): Unit = {
@@ -20,7 +21,7 @@ object ClassFileInspector {
     classReader.accept(classNode, 0)
 
     // Print class information
-    println(s"Class: ${classNode.name.replace('/', '.')}")
+    println(t"Class: ${classNode.name.replace('/', '.')}")
 
     // Fields
     println("Fields:")
@@ -28,7 +29,7 @@ object ClassFileInspector {
       val access = field.access
       val isPublic = (access & Opcodes.ACC_PUBLIC) != 0
       if (isPublic) {
-        println(s"  ${field.name}: ${field.desc}")
+        println(t"  ${field.name}: ${field.desc}")
       }
     }
 
@@ -38,7 +39,7 @@ object ClassFileInspector {
       val access = method.access
       val isPublic = (access & Opcodes.ACC_PUBLIC) != 0
       if (isPublic) {
-        println(s"  ${method.name}${method.desc}")
+        println(t"  ${method.name}${method.desc}")
       }
     }
   }

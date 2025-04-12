@@ -10,6 +10,7 @@ import java.util.Collections
 import scala.jdk.CollectionConverters.*
 import java.nio.file.Paths
 import java.nio.file.Files
+import chester.i18n.*
 
 class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
 
@@ -29,7 +30,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildInitialize(
       params: InitializeBuildParams
   ): CompletableFuture[InitializeBuildResult] = {
-    logger.info(s"Received buildInitialize request with params: $params")
+    logger.info(t"Received buildInitialize request with params: $params")
 
     val capabilities = new BuildServerCapabilities()
     capabilities.setCompileProvider(
@@ -50,7 +51,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       capabilities
     )
 
-    logger.debug(s"Build initialized with capabilities: $capabilities")
+    logger.debug(t"Build initialized with capabilities: $capabilities")
 
     // After initialization, read the package.chester file
     val packageFile = Paths.get("package.chester")
@@ -115,7 +116,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildTargetSources(
       params: SourcesParams
   ): CompletableFuture[SourcesResult] = {
-    logger.info(s"Received buildTargetSources request with params: $params")
+    logger.info(t"Received buildTargetSources request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("buildTargetSources is not implemented yet")
     )
@@ -125,7 +126,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       params: InverseSourcesParams
   ): CompletableFuture[InverseSourcesResult] = {
     logger.info(
-      s"Received buildTargetInverseSources request with params: $params"
+      t"Received buildTargetInverseSources request with params: $params"
     )
     CompletableFuture.failedFuture(
       new NotImplementedError(
@@ -138,7 +139,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       params: DependencySourcesParams
   ): CompletableFuture[DependencySourcesResult] = {
     logger.info(
-      s"Received buildTargetDependencySources request with params: $params"
+      t"Received buildTargetDependencySources request with params: $params"
     )
     CompletableFuture.failedFuture(
       new NotImplementedError(
@@ -150,7 +151,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildTargetResources(
       params: ResourcesParams
   ): CompletableFuture[ResourcesResult] = {
-    logger.info(s"Received buildTargetResources request with params: $params")
+    logger.info(t"Received buildTargetResources request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("buildTargetResources is not implemented yet")
     )
@@ -160,7 +161,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       params: CompileParams
   ): CompletableFuture[CompileResult] =
     CompletableFuture.supplyAsync { () =>
-      logger.info(s"Received buildTargetCompile request with params: $params")
+      logger.info(t"Received buildTargetCompile request with params: $params")
       try {
         // Call the type checking and object generation methods
         typeCheckSources()
@@ -171,7 +172,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
         result
       } catch {
         case e: Exception =>
-          logger.error(s"Compilation failed. $e")
+          logger.error(t"Compilation failed. $e")
           val result = new CompileResult(StatusCode.ERROR)
           result
       }
@@ -180,7 +181,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildTargetTest(
       params: TestParams
   ): CompletableFuture[TestResult] = {
-    logger.info(s"Received buildTargetTest request with params: $params")
+    logger.info(t"Received buildTargetTest request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("buildTargetTest is not implemented yet")
     )
@@ -189,7 +190,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildTargetRun(
       params: RunParams
   ): CompletableFuture[RunResult] = {
-    logger.info(s"Received buildTargetRun request with params: $params")
+    logger.info(t"Received buildTargetRun request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("buildTargetRun is not implemented yet")
     )
@@ -198,7 +199,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildTargetCleanCache(
       params: CleanCacheParams
   ): CompletableFuture[CleanCacheResult] = {
-    logger.info(s"Received buildTargetCleanCache request with params: $params")
+    logger.info(t"Received buildTargetCleanCache request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("buildTargetCleanCache is not implemented yet")
     )
@@ -210,7 +211,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       params: DependencyModulesParams
   ): CompletableFuture[DependencyModulesResult] = {
     logger.info(
-      s"Received buildTargetDependencyModules request with params: $params"
+      t"Received buildTargetDependencyModules request with params: $params"
     )
     CompletableFuture.failedFuture(
       new NotImplementedError(
@@ -222,7 +223,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def buildTargetOutputPaths(
       params: OutputPathsParams
   ): CompletableFuture[OutputPathsResult] = {
-    logger.info(s"Received buildTargetOutputPaths request with params: $params")
+    logger.info(t"Received buildTargetOutputPaths request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("buildTargetOutputPaths is not implemented yet")
     )
@@ -231,14 +232,14 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   override def debugSessionStart(
       params: DebugSessionParams
   ): CompletableFuture[DebugSessionAddress] = {
-    logger.info(s"Received debugSessionStart request with params: $params")
+    logger.info(t"Received debugSessionStart request with params: $params")
     CompletableFuture.failedFuture(
       new NotImplementedError("debugSessionStart is not implemented yet")
     )
   }
 
   override def onRunReadStdin(params: ReadParams): Unit = {
-    logger.info(s"Received onRunReadStdin notification with params: $params")
+    logger.info(t"Received onRunReadStdin notification with params: $params")
     throw new NotImplementedError("onRunReadStdin is not implemented yet")
   }
 
@@ -256,7 +257,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
   ): CompletableFuture[ChesterOptionsResult] =
     CompletableFuture.supplyAsync { () =>
       logger.info(
-        s"Received buildTargetChesterOptions request with params: $params"
+        t"Received buildTargetChesterOptions request with params: $params"
       )
 
       val items = params.targets.asScala.map { targetId =>
@@ -292,21 +293,21 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
               .fold(
                 error =>
                   logger
-                    .error(s"Parsing failed for file: $path with error: $error"),
+                    .error(t"Parsing failed for file: $path with error: $error"),
                 parsedBlock =>
                   Tycker.check(parsedBlock) match {
                     case TyckResult.Success(_, _, _) =>
-                      logger.info(s"Type checking succeeded for file: $path")
+                      logger.info(t"Type checking succeeded for file: $path")
                     case TyckResult.Failure(errors, _, _, _) =>
                       logger.error(
-                        s"Type checking failed for file: $path with errors: $errors"
+                        t"Type checking failed for file: $path with errors: $errors"
                       )
                   }
               )
           }
         }
       } else {
-        logger.warn(s"Source directory not found or is not a directory: $dir")
+        logger.warn(t"Source directory not found or is not a directory: $dir")
       }
     }
   }

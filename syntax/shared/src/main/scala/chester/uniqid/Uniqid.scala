@@ -7,6 +7,7 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
+import chester.i18n.*
 
 private val uniqIdCounter = AtomicInteger(0)
 
@@ -31,7 +32,7 @@ extension (id: UniqidOffset) {
 
 /** start <= x < end */
 case class UniqIdRange(start: UniqidOffset, end: UniqidOffset) derives ReadWriter {
-  require(start <= end, s"Invalid range: $start > $end")
+  require(start <= end, t"Invalid range: $start > $end")
 
   def size: Int :| Positive0 = (end - start).refineUnsafe
 }
@@ -45,7 +46,7 @@ extension [T](x: UniqidOf[T]) {
   def rerange(current: UniqIdRange, target: UniqIdRange): UniqidOf[T] = {
     require(
       current.start <= x.id && x.id < current.end,
-      s"Invalid range: $current, $x"
+      t"Invalid range: $current, $x"
     )
     val offset = x.id - current.start
     UniqidOf((target.start + offset).refineUnsafe)

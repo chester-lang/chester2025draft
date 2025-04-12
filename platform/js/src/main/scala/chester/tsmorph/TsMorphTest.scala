@@ -40,23 +40,23 @@ object TsMorphTest {
       val sourceFile = project.createSourceFile("test.ts", sourceFileText)
 
       // Print basic information about the source file
-      println(s"Source file created: ${sourceFile.getFilePath()}")
-      println(s"Syntax kind: ${sourceFile.getKind()}")
+      println(t"Source file created: ${sourceFile.getFilePath()}")
+      println(t"Syntax kind: ${sourceFile.getKind()}")
 
       // Get the text of the source file
-      println(s"File text: ${sourceFile.getText().take(50)}...")
+      println(t"File text: ${sourceFile.getText().take(50)}...")
 
       // Try to format the source file
       println("\nFormatting source file...")
       sourceFile.formatText()
 
       // See if the file is in memory or saved
-      println(s"Is file saved: ${sourceFile.isSaved()}")
+      println(t"Is file saved: ${sourceFile.isSaved()}")
 
       println("\nts-morph test completed successfully!")
     } catch {
       case e: Throwable =>
-        println(s"Error testing ts-morph: ${e.getMessage}")
+        println(t"Error testing ts-morph: ${e.getMessage}")
         e.printStackTrace()
     }
   }

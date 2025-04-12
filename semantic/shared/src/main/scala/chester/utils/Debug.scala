@@ -1,4 +1,5 @@
 package chester.utils
+import chester.i18n.*
 
 /** Global debug utilities and flags for Chester.
   */
@@ -69,20 +70,20 @@ object Debug {
   // Debug print method that respects debug flags
   def debugPrint(category: DebugCategory, message: => String): Unit =
     if (isEnabled(category)) {
-      println(s"[DEBUG:$category] $message")
+      println(t"[DEBUG:$category] $message")
     }
 
   // Print a call stack trace for debugging
   def printCallStack(category: DebugCategory, depth: Int = 15): Unit =
     if (isEnabled(category)) {
-      println(s"[DEBUG:$category] Call stack:")
+      println(t"[DEBUG:$category] Call stack:")
       Thread
         .currentThread()
         .getStackTrace()
         .drop(2)
         .take(depth)
         .foreach(element =>
-          println(s"[DEBUG:$category]   at ${element.getClassName}.${element.getMethodName}(${element.getFileName}:${element.getLineNumber})")
+          println(t"[DEBUG:$category]   at ${element.getClassName}.${element.getMethodName}(${element.getFileName}:${element.getLineNumber})")
         )
     }
 }

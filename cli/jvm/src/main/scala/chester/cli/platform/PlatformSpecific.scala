@@ -3,20 +3,21 @@ package chester.cli.platform
 import chester.cli.Main.CliConfig
 import chester.tyck.SemanticDBGenerator
 import chester.utils.*
+import chester.i18n.*
 
 def genSemanticDB(config: CliConfig): Unit = {
   val inputPath = config.input.getOrElse {
-    println("Error: Input path is required.")
+    println(t"Error: Input path is required.")
     return
   }
 
   val path = os2.path(inputPath)
   if (!os.exists(path)) {
-    println(s"Error: Input path does not exist: $inputPath")
+    println(t"Error: Input path does not exist: $inputPath")
     return
   }
   if (path.ext != "chester") {
-    println(s"Error: Input path must be a .chester file: $inputPath")
+    println(t"Error: Input path must be a .chester file: $inputPath")
     return
   }
 
@@ -30,7 +31,7 @@ def genSemanticDB(config: CliConfig): Unit = {
   val outputPath = path / os.up / (path.baseName + ".semanticdb")
   generator.saveSemanticDB(path.toString, outputPath.toString)
 
-  println(s"SemanticDB generated at: $outputPath")
+  println(t"SemanticDB generated at: $outputPath")
 }
 
 def testFunctionalities(): Unit = {

@@ -14,6 +14,7 @@ import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.*
 import fansi.*
+import chester.i18n.*
 
 // could be inline
 def REPLEngine[F[_]](using
@@ -53,7 +54,7 @@ def REPLEngine[F[_]](using
         "Type your expressions below. Type 'exit' or ':q' to quit, ':?' for help."
       )
       _ <- InTerminal.writeln(
-        s"OS: ${env.getOS} Arch: ${env.getArch} Environment: ${env.getRunningOn}"
+        t"OS: ${env.getOS} Arch: ${env.getArch} Environment: ${env.getRunningOn}"
       )
       _ <- runREPL
     } yield ()
@@ -110,7 +111,7 @@ def REPLEngine[F[_]](using
       ReaderREPL
         .parseInput(history, exprStr)
         .fold(
-          error => InTerminal.writeln(s"Parse Error: ${error.message}"),
+          error => InTerminal.writeln(t"Parse Error: ${error.message}"),
           parsedExpr =>
             typeCheck(parsedExpr) match {
               case TyckResult.Success(judge, _, _) =>
@@ -125,7 +126,7 @@ def REPLEngine[F[_]](using
     ReaderREPL
       .parseInput(history, line)
       .fold(
-        error => InTerminal.writeln(s"Parse Error: ${error.message}"),
+        error => InTerminal.writeln(t"Parse Error: ${error.message}"),
         parsedExpr =>
           typeCheck(parsedExpr) match {
             case TyckResult.Success(judge, _, _) =>

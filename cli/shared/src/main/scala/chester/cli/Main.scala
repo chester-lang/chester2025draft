@@ -8,6 +8,7 @@ import chester.utils.env.DefaultEnv
 import chester.utils.io.given
 import chester.utils.io.impl.given
 import chester.cli.Config.*
+import chester.i18n.*
 
 object Main {
 
@@ -46,7 +47,7 @@ object Main {
                 case path if fileExists(path) => success
                 case path =>
                   failure(
-                    s"Invalid input. Provide '-' for stdin, or a valid file/directory. Provided: $path"
+                    t"Invalid input. Provide '-' for stdin, or a valid file/directory. Provided: $path"
                   )
               }
               .action((x, c) => c.copy(input = Some(x)))
@@ -66,7 +67,7 @@ object Main {
                 case path if fileExists(path) => success
                 case path =>
                   failure(
-                    s"Invalid input. Provide a valid file. Provided: $path"
+                    t"Invalid input. Provide a valid file. Provided: $path"
                   )
               }
               .action((x, c) => c.copy(inputs = c.inputs :+ x))
@@ -95,7 +96,7 @@ object Main {
                 case path if fileExists(path) => success
                 case path =>
                   failure(
-                    s"Invalid input. Provide a valid .tast file. Provided: $path"
+                    t"Invalid input. Provide a valid .tast file. Provided: $path"
                   )
               }
               .action((x, c) => c.copy(input = Some(x)))
@@ -113,7 +114,7 @@ object Main {
                 case path if fileExists(path) => success
                 case path =>
                   failure(
-                    s"Invalid input. Provide a valid source file or directory. Provided: $path"
+                    t"Invalid input. Provide a valid source file or directory. Provided: $path"
                   )
               }
               .action((x, c) => c.copy(input = Some(x)))
@@ -149,7 +150,7 @@ object Main {
               .validate {
                 case path if fileExists(path) => success
                 case path =>
-                  failure(s"Invalid input. Provide valid file(s). Provided: $path")
+                  failure(t"Invalid input. Provide valid file(s). Provided: $path")
               }
               .action((x, c) => c.copy(filesToFormat = c.filesToFormat :+ x))
               .text("Source files to format.")
@@ -163,7 +164,7 @@ object Main {
             case path if fileExists(path) => success
             case path =>
               failure(
-                s"Invalid input. Provide '-' for stdin, or a valid file/directory. Provided: $path"
+                t"Invalid input. Provide '-' for stdin, or a valid file/directory. Provided: $path"
               )
           }
           .action((x, c) => c.copy(input = Some(x)))
@@ -175,7 +176,7 @@ object Main {
     OParser.parse(parser, platform.argsPlatform(args), CliConfig()) match {
       case Some(cliConfig) if cliConfig.version =>
         // Handle version flag
-        println(s"Chester version ${BuildInfo.version}")
+        println(t"Chester version ${BuildInfo.version}")
       case Some(cliConfig) =>
         val config: Config = cliConfig.command match {
           case "run" =>

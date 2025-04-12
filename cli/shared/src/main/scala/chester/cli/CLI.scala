@@ -17,6 +17,7 @@ import chester.cli.Config.*
 import chester.syntax.concrete.Expr
 import upickle.default.{read, readBinary, write, writeBinary}
 import cats.implicits.*
+import chester.i18n.*
 
 import scala.language.experimental.betterFors
 
@@ -82,7 +83,7 @@ class CLI[F[_]](using
     }
 
   def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
-    _ <- IO.println(s"Expect one file for type checking (more support will be added later) $fileOrDir...")
+    _ <- IO.println(t"Expect one file for type checking (more support will be added later) $fileOrDir...")
     _ <- ChesterReader
       .parseTopLevel(FilePath(fileOrDir))
       .fold(
@@ -150,7 +151,7 @@ class CLI[F[_]](using
 
     if (!inputFile.endsWith(expectedExtension)) {
       IO.println(
-        s"Error: Input file '$inputFile' does not have the expected '$expectedExtension' extension."
+        t"Error: Input file '$inputFile' does not have the expected '$expectedExtension' extension."
       )
     } else {
       // Generate output file name by replacing the extension
@@ -188,12 +189,12 @@ class CLI[F[_]](using
 
         _ <-
           if (reporter.hasErrors) {
-            IO.println(s"Compilation failed for $inputFile with errors.")
+            IO.println(t"Compilation failed for $inputFile with errors.")
           } else {
             for {
               _ <- IO.createDirRecursiveIfNotExists(io.pathOps.of(targetDir))
               _ <- IO.write(outputPath, upickle.default.writeBinary(tast))
-              _ <- IO.println(s"Compiled $inputFile to $outputPath")
+              _ <- IO.println(t"Compiled $inputFile to $outputPath")
             } yield ()
           }
       } yield ()
@@ -215,12 +216,12 @@ class CLI[F[_]](using
             _ <- IO.println(rendered)
           } yield ()
         } else {
-          IO.println(s"Error: File $inputFile does not exist.")
+          IO.println(t"Error: File $inputFile does not exist.")
         }
     } yield ()
 
   private def content(name: String): String =
-    s"""{
+    t"""{
        |  "name": "$name.chester",
        |  "version": "0.1.0",
        |  "description": "A Chester library",
@@ -250,7 +251,7 @@ class CLI[F[_]](using
   } yield ()
 
   def addPackages(packages: Seq[String]): F[Unit] = for {
-    _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => s"$p.chester"))
+    _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => t"$p.chester"))
   } yield ()
 
   def selfUpdate(): F[Unit] = for {
@@ -259,7 +260,7 @@ class CLI[F[_]](using
 
   def formatFiles(files: Seq[String]): F[Unit] =
     for {
-      _ <- IO.println(s"Formatting files: ${files.mkString(", ")}")
+      _ <- IO.println(t"Formatting files: ${files.mkString(", ")}")
       _ <- IO.println("WIP")
       _ <- Runner.pure(())
     } yield ()

@@ -424,6 +424,45 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
 
 ## Style Guide
 
+### String Formatting and Internationalization
+
+1. **Use Template Strings for User-Facing Text**
+   - ALWAYS use template strings (`t""`) for user-facing messages, not string interpolation (`s""`)
+   - ALWAYS use template strings (`t""`) for plain user-facing text, even without variables
+   - Always import the internationalization package: `import chester.i18n.*`
+   - This ensures proper internationalization and localization support
+   ```scala
+   // CORRECT - using template strings for user-facing text
+   import chester.i18n.*
+   
+   val username = "Alice"
+   val message = t"Hello $username, welcome to Chester!"
+   
+   // CORRECT - using template strings for plain text without variables
+   val errorMessage = t"Operation failed. Please try again."
+   
+   // INCORRECT - using string interpolation for user-facing text
+   val message = s"Hello $username, welcome to Chester!"
+   
+   // INCORRECT - using regular string literals for user-facing text
+   val errorMessage = "Operation failed. Please try again."
+   ```
+
+2. **String Interpolation for Internal Use Only**
+   - Only use string interpolation (`s""`) for internal, non-user-facing strings
+   - Examples include debug logging, internal identifiers, and non-displayed text
+   ```scala
+   // CORRECT - using string interpolation for internal/technical content
+   val logMessage = s"DEBUG: Processing request from $username with params $params"
+   val technicalId = s"${prefix}_${uuid}"
+   ```
+
+3. **Why This Matters**
+   - Template strings enable automatic translation and localization
+   - They maintain consistent messaging across the application
+   - They allow for future language additions without code changes
+   - They ensure a better experience for non-English users
+
 ### Core Principles
 
 1. **Use C-style Braces**

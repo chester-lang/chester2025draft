@@ -2,6 +2,7 @@ package chester.reader
 
 import chester.syntax.concrete.*
 import munit.FunSuite
+import chester.i18n.*
 
 class ParserTest extends FunSuite {
   test("parse valid identifier") {
@@ -107,7 +108,7 @@ class ParserTest extends FunSuite {
     result match {
       case Right(StringLiteral(value, meta)) =>
         assertEquals(value, "Hello, world!")
-      case _ => fail(s"Expected StringLiteral but got $result")
+      case _ => fail(t"Expected StringLiteral but got $result")
     }
   }
 
@@ -117,7 +118,7 @@ class ParserTest extends FunSuite {
     result match {
       case Right(StringLiteral(value, meta)) =>
         assertEquals(value, "Hello, \"world\"!\n")
-      case _ => fail(s"Expected StringLiteral but got $result")
+      case _ => fail(t"Expected StringLiteral but got $result")
     }
   }
   if (false) { // heredoc broken
@@ -128,7 +129,7 @@ class ParserTest extends FunSuite {
       result match {
         case Right(StringLiteral(value, meta)) =>
           assertEquals(value, "Hello,\nworld!")
-        case _ => fail(s"Expected StringLiteral but got $result")
+        case _ => fail(t"Expected StringLiteral but got $result")
       }
     }
 
@@ -144,7 +145,7 @@ class ParserTest extends FunSuite {
           )
         case _ =>
           fail(
-            s"Expected parsing failure due to inconsistent indentation but got $result"
+            t"Expected parsing failure due to inconsistent indentation but got $result"
           )
       }
     }

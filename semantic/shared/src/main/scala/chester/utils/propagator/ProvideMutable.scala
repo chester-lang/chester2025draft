@@ -3,6 +3,7 @@ package chester.utils.propagator
 import chester.uniqid.{Uniqid, UniqidOf}
 
 import scala.collection.mutable
+import chester.i18n.*
 
 trait ProvideMutable extends ProvideImpl {
   class HoldCell[+T <: Cell[?]](val uniqId: UniqidOf[Impl[?]], value: T) {
@@ -193,7 +194,7 @@ trait ProvideMutable extends ProvideImpl {
         if (!didSomething) {
           if (tryFallback > 1) {
             throw new IllegalStateException(
-              s"Cells $cellsNeeded are not covered by any propagator"
+              t"Cells $cellsNeeded are not covered by any propagator"
             )
           } else {
             tryFallback = tryFallback + 1

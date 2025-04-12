@@ -10,6 +10,7 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 import _root_.io.github.iltotore.iron.upickle.given
 
 import scala.annotation.tailrec
+import chester.i18n.*
 
 case class Pos(index: WithUTF16, line: Int :| Positive0, column: WithUTF16) derives ReadWriter
 
@@ -65,7 +66,7 @@ case class SourcePos(source: SourceOffset, range: RangeInFile) derives ReadWrite
     // Assert that the start and end lines are within valid bounds
     assert(
       startLine >= 0 && endLine < lines.length,
-      s"Invalid line range: startLine=$startLine, endLine=$endLine, totalLines=${lines.length}"
+      t"Invalid line range: startLine=$startLine, endLine=$endLine, totalLines=${lines.length}"
     )
 
     // Slice the lines and keep their line numbers
@@ -89,7 +90,7 @@ case class SourcePos(source: SourceOffset, range: RangeInFile) derives ReadWrite
   }
 
   override def toString: String =
-    s"SourcePos(\"${encodeString(fileName)}\",$range)"
+    t"SourcePos(\"${encodeString(fileName)}\",$range)"
 }
 
 extension (pos: Option[SourcePos]) {

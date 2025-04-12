@@ -6,6 +6,7 @@ import org.slf4j.simple.SimpleLogger
 
 import java.io.{InputStream, OutputStream}
 import java.net.ServerSocket
+import chester.i18n.*
 
 def enableDebug(): Unit = {
   val _ = System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "Trace")
@@ -16,7 +17,7 @@ object Main {
   private val logger = getLogger
   def main(args: Array[String]): Unit = {
     val port = if (args.nonEmpty) args(0).toInt else 1044
-    logger.info(s"Starting Chester Language Server on port $port")
+    logger.info(t"Starting Chester Language Server on port $port")
     logger.debug("Debugging enabled")
     logger.trace("Trace enabled")
 
@@ -24,7 +25,7 @@ object Main {
     logger.info("Server socket created, waiting for client connection...")
 
     val clientSocket = serverSocket.accept()
-    logger.info(s"Client connected from ${clientSocket.getInetAddress}")
+    logger.info(t"Client connected from ${clientSocket.getInetAddress}")
 
     val in: InputStream = clientSocket.getInputStream
     val out: OutputStream = clientSocket.getOutputStream

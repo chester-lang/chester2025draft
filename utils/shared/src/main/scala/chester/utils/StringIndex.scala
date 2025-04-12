@@ -4,6 +4,7 @@ import fastparse.ParserInput
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
+import chester.i18n.*
 
 case class LineAndColumn(
     val line: Int :| Positive0,
@@ -52,7 +53,7 @@ case class StringIndex(val stringList: LazyList[String]) {
         }
       } else {
         throw new IllegalArgumentException(
-          s"Index out of bounds (exceeds string length) $charIndex"
+          t"Index out of bounds (exceeds string length) $charIndex"
         )
       }
     unicodeIndex.refineUnsafe
@@ -100,7 +101,7 @@ case class StringIndex(val stringList: LazyList[String]) {
         index += 1
       } else {
         throw new IllegalArgumentException(
-          s"Index out of bounds (exceeds string length) $charIndex"
+          t"Index out of bounds (exceeds string length) $charIndex"
         )
       }
 
@@ -123,7 +124,7 @@ case class StringIndex(val stringList: LazyList[String]) {
   def charIndexToUnicodeLineAndColumn(charIndex: Int): LineAndColumn = {
     if (charIndex < 0)
       throw new IllegalArgumentException(
-        s"Index out of bounds (negative) $charIndex"
+        t"Index out of bounds (negative) $charIndex"
       )
 
     var line = 0
@@ -155,7 +156,7 @@ case class StringIndex(val stringList: LazyList[String]) {
         index += 1
       } else {
         throw new IllegalArgumentException(
-          s"Index out of bounds (exceeds string length) $charIndex"
+          t"Index out of bounds (exceeds string length) $charIndex"
         )
       }
 

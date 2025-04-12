@@ -9,6 +9,7 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 import scala.util.*
+import chester.i18n.*
 
 object ReaderREPL {
 
@@ -43,17 +44,17 @@ object ReaderREPL {
         case ')' =>
           if (stack.isEmpty || stack.pop() != '(')
             return InputStatus.Error(
-              s"Unmatched closing parenthesis at position $index"
+              t"Unmatched closing parenthesis at position $index"
             )
         case ']' =>
           if (stack.isEmpty || stack.pop() != '[')
             return InputStatus.Error(
-              s"Unmatched closing bracket at position $index"
+              t"Unmatched closing bracket at position $index"
             )
         case '}' =>
           if (stack.isEmpty || stack.pop() != '{')
             return InputStatus.Error(
-              s"Unmatched closing brace at position $index"
+              t"Unmatched closing brace at position $index"
             )
         case _ => // Ignore other characters
       }

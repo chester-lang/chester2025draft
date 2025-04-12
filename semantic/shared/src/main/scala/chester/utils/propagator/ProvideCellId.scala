@@ -1,4 +1,5 @@
 package chester.utils.propagator
+import chester.i18n.*
 
 // TODO: maybe distinguish between read and fill to have more sound Scala types and functions. One is +T and one is -T
 trait ProvideCellId {
@@ -45,23 +46,23 @@ trait ProvideCellId {
   trait UnstableCell[T] extends Cell[T] {
     override def readStable: Option[T] =
       throw new UnsupportedOperationException(
-        s"${getClass.getName} is not stable"
+        t"${getClass.getName} is not stable"
       )
 
     override def hasStableValue: Boolean =
       throw new UnsupportedOperationException(
-        s"${getClass.getName} is not stable"
+        t"${getClass.getName} is not stable"
       )
 
     override def noStableValue: Boolean =
       throw new UnsupportedOperationException(
-        s"${getClass.getName} is not stable"
+        t"${getClass.getName} is not stable"
       )
   }
   trait NoFill[T] extends Cell[T] {
     override def fill(newValue: T): Cell[T] =
       throw new UnsupportedOperationException(
-        s"${getClass.getName} cannot be filled"
+        t"${getClass.getName} cannot be filled"
       )
   }
 
@@ -77,9 +78,9 @@ trait ProvideCellId {
       import chester.utils.Debug
       import chester.utils.Debug.DebugCategory
 
-      Debug.debugPrint(DebugCategory.Cell, s"Attempting to fill OnceCell: ${this.hashCode()}")
-      Debug.debugPrint(DebugCategory.Cell, s"Current value: $value")
-      Debug.debugPrint(DebugCategory.Cell, s"New value: $newValue")
+      Debug.debugPrint(DebugCategory.Cell, t"Attempting to fill OnceCell: ${this.hashCode()}")
+      Debug.debugPrint(DebugCategory.Cell, t"Current value: $value")
+      Debug.debugPrint(DebugCategory.Cell, t"New value: $newValue")
       Debug.printCallStack(DebugCategory.Cell)
 
       require(value.isEmpty)

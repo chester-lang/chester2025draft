@@ -79,7 +79,7 @@ given DefaultIO: IO[Future] {
       fetched <- fetch(url).toFuture
       read <-
         if fetched.ok then fetched.arrayBuffer().toFuture
-        else Future.failed(new IOException(s"Failed to fetch $url"))
+        else Future.failed(new IOException(t"Failed to fetch $url"))
       _ <- fsPromisesMod.writeFile(path, new Uint8Array(read))
     } yield ()
 

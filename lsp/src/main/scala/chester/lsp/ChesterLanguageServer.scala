@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
+import chester.i18n.*
 
 class ChesterLanguageServer extends LanguageServer with TextDocumentService with WorkspaceService {
   enableDebug()
@@ -35,7 +36,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   override def initialize(
       params: InitializeParams
   ): CompletableFuture[InitializeResult] = {
-    logger.info(s"Initializing with params: $params")
+    logger.info(t"Initializing with params: $params")
     val capabilities = new ServerCapabilities()
     capabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental)
     capabilities.setCompletionProvider(
@@ -56,7 +57,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val uri = params.getTextDocument.getUri
-    logger.info(s"Document opened: $uri")
+    logger.info(t"Document opened: $uri")
     val text = params.getTextDocument.getText
 
     // Process the document and get TyckResult and diagnostics
@@ -79,7 +80,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
     val uri = params.getTextDocument.getUri
-    logger.info(s"Document changed: $uri")
+    logger.info(t"Document changed: $uri")
     val changes = params.getContentChanges.asScala.toSeq
 
     // Update the document content
@@ -320,7 +321,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       position: Position
   ): Option[SourcePos] = {
     logger.debug(
-      s"Converting LSP position to source position for URI: $uri at position: $position"
+      t"Converting LSP position to source position for URI: $uri at position: $position"
     )
     documents.synchronized {
       documents.get(uri)
@@ -334,14 +335,14 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         val utf16Column = position.getCharacter
 
         logger.debug(
-          s"Calculating offsets for line: $line, UTF-16 column: $utf16Column"
+          t"Calculating offsets for line: $line, UTF-16 column: $utf16Column"
         )
 
         val lineStartOffset = getLineStartOffset(text, line)
         val charIndexUtf16 = lineStartOffset + utf16Column
 
         logger.debug(
-          s"Line start offset: $lineStartOffset, char index UTF-16: $charIndexUtf16"
+          t"Line start offset: $lineStartOffset, char index UTF-16: $charIndexUtf16"
         )
 
         val codepointIndex =
@@ -360,11 +361,11 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         val source = SourceOffset(FileNameAndContent(uri, text))
         val sourcePos = SourcePos(source, range)
 
-        logger.debug(s"Generated SourcePos: $sourcePos")
+        logger.debug(t"Generated SourcePos: $sourcePos")
 
         Some(sourcePos)
       case None =>
-        logger.warn(s"No document content found for URI: $uri")
+        logger.warn(t"No document content found for URI: $uri")
         None
     }
   }
@@ -389,7 +390,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       val uri = params.getTextDocument.getUri
       val position = params.getPosition
 
-      logger.debug(s"Definition requested for URI: $uri at position: $position")
+      logger.debug(t"Definition requested for URI: $uri at position: $position")
 
       val documentOpt = documents.synchronized {
         documents.get(uri)
@@ -397,17 +398,17 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
       documentOpt match {
         case Some(document) =>
-          logger.debug(s"Document found for URI: $uri")
+          logger.debug(t"Document found for URI: $uri")
           sourcePosFromLSP(uri, position) match {
             case Some(sourcePos) =>
-              logger.debug(s"Source position obtained: $sourcePos")
+              logger.debug(t"Source position obtained: $sourcePos")
               val symbolOpt = document.symbols.find { sym =>
                 positionWithin(sym.definedOn.sourcePos.get, sourcePos) ||
                 sym.referencedOn.exists(ref => positionWithin(ref.sourcePos.get, sourcePos))
               }
               symbolOpt match {
                 case Some(symbolInfo) =>
-                  logger.debug(s"Symbol found: ${symbolInfo.name}")
+                  logger.debug(t"Symbol found: ${symbolInfo.name}")
                   val location = new Location(
                     symbolInfo.definedOn.sourcePos.get.fileName,
                     rangeFromSourcePos(symbolInfo.definedOn.sourcePos.get)
@@ -416,26 +417,26 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
                   Either.forLeft(locations)
                 case None =>
                   logger.warn(
-                    s"No symbol found at position: $sourcePos in document: $uri"
+                    t"No symbol found at position: $sourcePos in document: $uri"
                   )
                   if (logger.isTraceEnabled) {
                     logger.trace("Available symbols:")
                     document.symbols.foreach { sym =>
-                      logger.trace(s"Symbol name: ${sym.name}")
-                      sym.definedOn.sourcePos.foreach(pos => logger.trace(s"  Defined at: $pos"))
-                      sym.referencedOn.foreach(ref => ref.sourcePos.foreach(pos => logger.trace(s"  Referenced at: $pos")))
+                      logger.trace(t"Symbol name: ${sym.name}")
+                      sym.definedOn.sourcePos.foreach(pos => logger.trace(t"  Defined at: $pos"))
+                      sym.referencedOn.foreach(ref => ref.sourcePos.foreach(pos => logger.trace(t"  Referenced at: $pos")))
                     }
                   }
                   Either.forLeft(java.util.Collections.emptyList())
               }
             case None =>
               logger.warn(
-                s"Could not obtain source position for URI: $uri at position: $position"
+                t"Could not obtain source position for URI: $uri at position: $position"
               )
               Either.forLeft(java.util.Collections.emptyList())
           }
         case None =>
-          logger.warn(s"No document found for URI: $uri")
+          logger.warn(t"No document found for URI: $uri")
           Either.forLeft(java.util.Collections.emptyList())
       }
     }
@@ -542,7 +543,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   }
 
   override def setTrace(value: SetTraceParams): Unit =
-    logger.debug(s"(ignored) Required Trace level: ${value.getValue}")
+    logger.debug(t"(ignored) Required Trace level: ${value.getValue}")
 }
 
 case class DocumentInfo(

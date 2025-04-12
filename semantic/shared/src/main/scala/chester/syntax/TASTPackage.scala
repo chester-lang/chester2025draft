@@ -8,6 +8,7 @@ import upickle.default.*
 import upickle.default as upickle
 
 import scala.collection.immutable.HashMap
+import chester.i18n.*
 
 object TASTPackage {
   onNativeImageBuildTime {
@@ -56,7 +57,7 @@ object TASTPackage {
           .exists(_.fileName == tast.fileName)
       ) {
         throw new IllegalArgumentException(
-          s"Module ${tast.module} already loaded from file ${tast.fileName}"
+          t"Module ${tast.module} already loaded from file ${tast.fileName}"
         )
       } else {
         val newTASTs = map.getOrElse(tast.module, Vector()) :+ tast

@@ -2,6 +2,7 @@ package chester.integrity
 
 import chester.reader.{ChesterReader, FileNameAndContent}
 import chester.syntax.concrete.*
+import chester.i18n.*
 
 // Test that the binary is still performing well when compiled differently.
 object IntegrityCheck {
@@ -9,7 +10,7 @@ object IntegrityCheck {
 
   private def test(name: String)(f: => Unit): Unit =
     tests += (() => {
-      println(s"Running test: $name")
+      println(t"Running test: $name")
       f
     })
 
@@ -20,7 +21,7 @@ object IntegrityCheck {
   ): Unit =
     if (actual != expected) {
       throw new AssertionError(
-        s"$message. Expected: $expected, Actual: $actual"
+        t"$message. Expected: $expected, Actual: $actual"
       )
     }
 
@@ -39,9 +40,9 @@ object IntegrityCheck {
       .fold(
         error =>
           fail(
-            s"Parsing failed for input: $input ${error.message} at index ${error.pos}"
+            t"Parsing failed for input: $input ${error.message} at index ${error.pos}"
           ),
-        value => assertEquals(value, expected, s"Failed for input: $input")
+        value => assertEquals(value, expected, t"Failed for input: $input")
       )
   }
 

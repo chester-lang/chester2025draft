@@ -8,6 +8,7 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 
 import scala.util.{Try, boundary}
+import chester.i18n.*
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 
@@ -82,7 +83,7 @@ class Tokenizer(src: SourceOffset) {
 
     if (Character.isSupplementaryCodePoint(c)) {
       if (isIdentifierFirst(c)) parseIdent(String.valueOf(Character.toChars(c)), start)
-      else err(s"Unexpected character: ${String.valueOf(Character.toChars(c))}", start)
+      else err(t"Unexpected character: ${String.valueOf(Character.toChars(c))}", start)
     } else
       c.toChar match {
         case c if tokens.contains(c)        => tok(tokens(c), start)
@@ -91,7 +92,7 @@ class Tokenizer(src: SourceOffset) {
         case d if d.isDigit                 => parseNum(start)
         case a if a.isLetter || a == '_'    => parseIdent(a.toString, start)
         case o if isOperatorSymbol(o.toInt) => parseOp(o.toString, start)
-        case x                              => err(s"Unexpected character: $x", start)
+        case x                              => err(t"Unexpected character: $x", start)
       }
   }
 
@@ -106,14 +107,14 @@ class Tokenizer(src: SourceOffset) {
             .map(cp => (new String(Character.toChars(cp)), start + 5))
             .toEither
             .left
-            .map(_ => ParseError(s"Invalid Unicode escape \\u$hex", mkPos(start - 1, start + 5).range.start))
+            .map(_ => ParseError(t"Invalid Unicode escape \\u$hex", mkPos(start - 1, start + 5).range.start))
         case 'x' if start + 2 < text.length =>
           val hex = text.substring(start + 1, start + 3)
           Try(Integer.parseInt(hex, 16))
             .map(v => (v.toChar.toString, start + 3))
             .toEither
             .left
-            .map(_ => ParseError(s"Invalid hex escape \\x$hex", mkPos(start - 1, start + 3).range.start))
+            .map(_ => ParseError(t"Invalid hex escape \\x$hex", mkPos(start - 1, start + 3).range.start))
         case c if c >= '0' && c <= '7' =>
           val end = (start + 1 to Math.min(start + 3, text.length))
             .takeWhile(i => i < text.length && text(i) >= '0' && text(i) <= '7')
@@ -124,7 +125,7 @@ class Tokenizer(src: SourceOffset) {
             .map(v => (v.toChar.toString, end))
             .toEither
             .left
-            .map(_ => ParseError(s"Invalid octal escape \\${text.substring(start, end)}", mkPos(start - 1, end).range.start))
+            .map(_ => ParseError(t"Invalid octal escape \\${text.substring(start, end)}", mkPos(start - 1, end).range.start))
         case c => Right((c.toString, start + 1))
       }
 
@@ -166,12 +167,12 @@ class Tokenizer(src: SourceOffset) {
           pos = start + 2
           val hex = consume(c => c.isDigit || ('a' <= c.toLower && c.toLower <= 'f'))
           if (hex.isEmpty) return err("Expected hex digits after '0x'", start + 2)
-          return tok(Token.IntegerLiteral(s"0x$hex", _), start)
+          return tok(Token.IntegerLiteral(t"0x$hex", _), start)
         case 'b' =>
           pos = start + 2
           val bin = consume(c => c == '0' || c == '1')
           if (bin.isEmpty) return err("Expected binary digits after '0b'", start + 2)
-          return tok(Token.IntegerLiteral(s"0b$bin", _), start)
+          return tok(Token.IntegerLiteral(t"0b$bin", _), start)
         case _ => // Continue to decimal
       }
     }

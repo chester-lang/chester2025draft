@@ -4,6 +4,7 @@ import chester.syntax.concrete.*
 import munit.FunSuite
 import chester.readerv2.LexerV2
 import pprint.Tree
+import chester.i18n.*
 
 class SimpleBlockTerminationTest extends FunSuite {
 
@@ -102,7 +103,7 @@ class SimpleBlockTerminationTest extends FunSuite {
 
       // Simple equality check
       println("\n===== V1 VS V2 EQUALITY CHECK =====")
-      println(s"V1 equals V2: ${resultV1 == resultV2}")
+      println(t"V1 equals V2: ${resultV1 == resultV2}")
     } finally
       // Restore original debug setting
       LexerV2.DEBUG = oldDebug
@@ -264,7 +265,7 @@ class SimpleBlockTerminationTest extends FunSuite {
 
       // Simple equality check
       println("\n===== V1 VS V2 EQUALITY CHECK =====")
-      println(s"V1 equals V2: ${resultV1 == resultV2}")
+      println(t"V1 equals V2: ${resultV1 == resultV2}")
     } finally
       // Restore original debug setting
       LexerV2.DEBUG = oldDebug

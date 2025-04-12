@@ -1,4 +1,5 @@
 package chester.utils.env
+import chester.i18n.*
 
 def isTermux: Boolean = {
   // Define the string to check for
@@ -24,7 +25,7 @@ val platform$getOS: OS = {
   else if (os.contains("freebsd")) OS.FreeBSD
   else if (os.contains("openbsd")) OS.OpenBSD
   else if (os.contains("netbsd")) OS.NetBSD
-  else throw new Exception(s"Unknown OS: $os")
+  else throw new Exception(t"Unknown OS: $os")
 }
 val platform$getArch: Architecture =
   System.getProperty("os.arch").toLowerCase match {
@@ -34,6 +35,6 @@ val platform$getArch: Architecture =
     case "aarch64" | "arm64"        => Architecture.Arm64
     case _ =>
       throw new Exception(
-        s"Unknown architecture: ${System.getProperty("os.arch")}"
+        t"Unknown architecture: ${System.getProperty("os.arch")}"
       )
   }

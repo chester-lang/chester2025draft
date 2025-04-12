@@ -17,7 +17,7 @@ def runFileTopLevel(content: String, lightMode: Boolean): String = {
         case TyckResult.Success(result, _, _) =>
           colorfulToHtml(ColorfulPrettyPrinter.render(result.wellTyped))
         case TyckResult.Failure(errors, _, _, _) =>
-          s"Failed to type check file: $errors"
+          t"Failed to type check file: $errors"
       }
     case Left(error) =>
       error.message

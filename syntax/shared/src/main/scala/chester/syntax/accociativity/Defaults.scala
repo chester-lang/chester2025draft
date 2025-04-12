@@ -2,6 +2,7 @@ package chester.syntax.accociativity
 
 import chester.syntax.*
 import upickle.default.*
+import chester.i18n.*
 
 case class OperatorsContext(
     opinfos: InfixDefitions,
@@ -47,7 +48,7 @@ object InfixDefitions {
     }
     if (other3.nonEmpty) {
       throw new IllegalArgumentException(
-        s"Unknown operator type: ${other3.head}"
+        t"Unknown operator type: ${other3.head}"
       )
     }
     DefaultInfixDefinitions(
@@ -104,36 +105,36 @@ case class DefaultInfixDefinitions(
     case infix: Infix =>
       if (infixOperators.contains(infix.name)) {
         throw new IllegalArgumentException(
-          s"Operator ${infix.name} already defined"
+          t"Operator ${infix.name} already defined"
         )
       }
       if (operatorGroups.contains(infix.name.head)) {
         throw new IllegalArgumentException(
-          s"Operator ${infix.name} is a default operator"
+          t"Operator ${infix.name} is a default operator"
         )
       }
       copy(infixOperators = infixOperators + (infix.name -> infix))
     case prefix: Prefix =>
       if (prefixOperators.contains(prefix.name)) {
         throw new IllegalArgumentException(
-          s"Operator ${prefix.name} already defined"
+          t"Operator ${prefix.name} already defined"
         )
       }
       if (prefixes.contains(prefix.name.head)) {
         throw new IllegalArgumentException(
-          s"Operator ${prefix.name} is a default operator"
+          t"Operator ${prefix.name} is a default operator"
         )
       }
       copy(prefixOperators = prefixOperators + (prefix.name -> prefix))
     case postfix: Postfix =>
       if (postfixOperators.contains(postfix.name)) {
         throw new IllegalArgumentException(
-          s"Operator ${postfix.name} already defined"
+          t"Operator ${postfix.name} already defined"
         )
       }
       if (postfixes.contains(postfix.name.head)) {
         throw new IllegalArgumentException(
-          s"Operator ${postfix.name} is a default operator"
+          t"Operator ${postfix.name} is a default operator"
         )
       }
       copy(postfixOperators = postfixOperators + (postfix.name -> postfix))

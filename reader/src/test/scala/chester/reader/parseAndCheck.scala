@@ -3,6 +3,7 @@ import chester.readerv2.{LexerState, LexerV2}
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
+import chester.i18n.*
 
 // Only runs against V1 (original reader)
 def parseAndCheckV1(input: String, expected: Expr): Unit = {
@@ -17,7 +18,7 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
     .fold(
       error =>
         fail(
-          s"Parsing failed for input: $input ${error.message} at index ${error.pos}"
+          t"Parsing failed for input: $input ${error.message} at index ${error.pos}"
         ),
       { value =>
         assertEquals(read[Expr](write[Expr](value)), value)
@@ -30,7 +31,7 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
           readBinary[Expr](writeBinary[Expr](resultignored.toOption.get)),
           resultignored.toOption.get
         )
-        assertEquals(value, expected, s"Failed for input: $input")
+        assertEquals(value, expected, t"Failed for input: $input")
       }
     )
 }
@@ -60,7 +61,7 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
           val line = input.substring(lineStart, lineEnd)
           val pointer = " " * (errorIndex - lineStart) + "^"
 
-          fail(s"""V2 Parsing failed for input: $input
+          fail(t"""V2 Parsing failed for input: $input
                |Error: ${error.message}
                |At position ${error.pos}:
                |$line
@@ -69,7 +70,7 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
         { case (expr, _) => expr }
       )
 
-    assertEquals(result, expected, s"Failed for input: $input")
+    assertEquals(result, expected, t"Failed for input: $input")
   } finally LexerV2.DEBUG = oldDebug
 }
 
@@ -84,7 +85,7 @@ def parseV1(input: String): Expr =
   ChesterReader
     .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
-      error => fail(s"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
+      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
       value => value
     )
 
@@ -109,7 +110,7 @@ def parseV2(input: String): Expr = {
         val line = input.substring(lineStart, lineEnd)
         val pointer = " " * (errorIndex - lineStart) + "^"
 
-        fail(s"""V2 parsing failed for input: $input
+        fail(t"""V2 parsing failed for input: $input
              |Error: ${error.message}
              |At position ${error.pos}:
              |$line

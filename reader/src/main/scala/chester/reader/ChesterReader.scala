@@ -8,6 +8,7 @@ import _root_.io.github.iltotore.iron.*
 
 import scala.collection.immutable
 import scala.util.*
+import chester.i18n.*
 object ChesterReader {
 
   private def parseFromSource[T](
@@ -38,7 +39,7 @@ object ChesterReader {
               pos.line,
               pos.column
             )
-            Left(ParseError(s"Parsing failed: ${extra.trace().longMsg}", p))
+            Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", p))
         }
       }
     )

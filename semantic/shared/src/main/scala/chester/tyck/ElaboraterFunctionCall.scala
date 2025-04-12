@@ -5,6 +5,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 import chester.utils.Debug
+import chester.i18n.*
 
 trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunctionCall(
@@ -35,7 +36,7 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       state.fill(cell, value)
     } else if (existingValue.get != value && Debug.isEnabled(debugCategory)) {
       // Only log a warning when debug is enabled and values differ
-      Debug.debugPrint(debugCategory, s"WARNING: Cell already has different value: ${existingValue.get} vs new: $value")
+      Debug.debugPrint(debugCategory, t"WARNING: Cell already has different value: ${existingValue.get} vs new: $value")
     }
   }
 }
@@ -152,7 +153,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       if (debugTyck) {
         Debug.debugPrint(
           DebugCategory.Tyck,
-          s"""UnifyFunctionCall.run: 
+          t"""UnifyFunctionCall.run: 
              |  Function term: $functionTerm
              |  Function type cell: $functionTy
              |  Result type cell: $resultTy
@@ -162,16 +163,16 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       }
 
       val readFunctionTy = state.readStable(functionTy)
-      if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Read function type: $readFunctionTy")
+      if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, t"Read function type: $readFunctionTy")
 
       readFunctionTy match {
         case Some(ft @ FunctionType(telescopes, retTy, functionEffects, _)) =>
           if (debugTyck)
-            Debug.debugPrint(DebugCategory.Tyck, s"Matched FunctionType with telescopes: $telescopes, retTy: $retTy, effects: $functionEffects")
+            Debug.debugPrint(DebugCategory.Tyck, t"Matched FunctionType with telescopes: ${telescopes.mkString("Array(", ", ", ")")}, retTy: $retTy, effects: $functionEffects")
 
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(ft.telescopes, callings, cause)
-          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Adjusted callings: $adjustedCallings")
+          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, t"Adjusted callings: $adjustedCallings")
 
           // Unify the result type
           unify(resultTy, retTy, cause)
@@ -181,7 +182,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
-          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, s"Created function call term: $fCallTerm")
+          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, t"Created function call term: $fCallTerm")
 
           // Use the helper method to safely fill the cell
           safelyFillCell(functionCallTerm, fCallTerm, DebugCategory.Tyck)
@@ -262,7 +263,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
             // Expected implicit telescope not provided; infer arguments
             val callingArgs = expectedTele.args.map { argTerm =>
               // For now, throw an exception
-              throw new NotImplementedError(s"Implicit parameter with identifier '$argTerm' is not implemented yet.")
+              throw new NotImplementedError(t"Implicit parameter with identifier '$argTerm' is not implemented yet.")
             }
             val calling = Calling(callingArgs, implicitly = true, meta = None)
             adjustedCallings = adjustedCallings :+ calling

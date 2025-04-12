@@ -1,6 +1,7 @@
 package chester.utils.propagator
 
 import chester.uniqid.*
+import chester.i18n.*
 
 trait ProvideImmutable extends ProvideImpl {
   type CIdOf[+T <: Cell[?]] = UniqidOf[T]
@@ -45,7 +46,7 @@ trait ProvideImmutable extends ProvideImpl {
             )
           }
         case None =>
-          throw new IllegalArgumentException(s"Cell with id $id not found")
+          throw new IllegalArgumentException(t"Cell with id $id not found")
       }
 
     override def addCell[T <: Cell[?]](cell: T): CIdOf[T] = {
@@ -97,7 +98,7 @@ trait ProvideImmutable extends ProvideImpl {
         val uncorvedCells = cellsToZonk.filterNot(id => xs.values.exists(_.zonkingCells.contains(id)))
         if (uncorvedCells.nonEmpty) {
           throw new IllegalStateException(
-            s"Cells $uncorvedCells are not covered by any propagator"
+            t"Cells $uncorvedCells are not covered by any propagator"
           )
         }
         xs.foreach { case (pid, propagator) =>

@@ -8,6 +8,7 @@ import chester.syntax.concrete.*
 import chester.utils.*
 
 import scala.annotation.tailrec
+import chester.i18n.*
 
 case class DesugarInfo()
 
@@ -210,7 +211,7 @@ case object StmtDesalt {
     val kind = kw.name match {
       case Const.Let => LetDefType.Let
       case Const.Def => LetDefType.Def
-      case name      => unreachable(s"Unknown keyword $name")
+      case name      => unreachable(t"Unknown keyword $name")
     }
 
     val (onExprs, typeExprs, valueExprs) = (typeIdx, valueIdx) match {
@@ -283,7 +284,7 @@ case object StmtDesalt {
               kwId.name match {
                 case Const.Let | Const.Def =>
                   Some(letdef(beforeKw, kwId, afterKw, opseq))
-                case other => unreachable(s"Unknown keyword $other")
+                case other => unreachable(t"Unknown keyword $other")
               }
         }
       case _ => None

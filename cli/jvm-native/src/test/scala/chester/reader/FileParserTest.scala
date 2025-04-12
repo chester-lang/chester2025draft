@@ -3,6 +3,7 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 import upickle.default.*
+import chester.i18n.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -23,7 +24,7 @@ class FileParserTest extends FunSuite {
           ignoreLocation = true
         )
         .fold(
-          error => fail(s"Failed to parse file: $inputFile, error: $error"),
+          error => fail(t"Failed to parse file: $inputFile, error: $error"),
           { parsedBlock =>
             assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
             assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
@@ -34,7 +35,7 @@ class FileParserTest extends FunSuite {
 
             if (!expectedExists) {
               Files.write(expectedFile, actual.getBytes)
-              println(s"Created expected file: $expectedFile")
+              println(t"Created expected file: $expectedFile")
             } else {
               val expected = Files
                 .readString(expectedFile, StandardCharsets.UTF_8)

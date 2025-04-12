@@ -9,6 +9,7 @@ import chester.reduce.ReduceContext
 import chester.reduce.{DefaultReducer, Reducer}
 
 import scala.collection.immutable.HashMap
+import chester.i18n.*
 
 case class TyAndVal(
     ty: Term,
@@ -61,7 +62,7 @@ case class Context(
       seq: Seq[(UniqidOf[ReferenceCall], TyAndVal)]
   ): Context = {
     val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
-      assert(!acc.contains(item._1), s"Duplicate key ${item._1}")
+      assert(!acc.contains(item._1), t"Duplicate key ${item._1}")
       acc + item
     }
     copy(knownMap = newKnownMap)
@@ -72,7 +73,7 @@ case class Context(
   def add(seq: Seq[ContextItem]): Context = {
     val newMap = seq.foldLeft(map)((acc, item) => acc + (item.name -> item.uniqId))
     val newContextItems = seq.foldLeft(contextItems) { (acc, item) =>
-      require(!acc.contains(item.uniqId), s"Duplicate key ${item.uniqId}")
+      require(!acc.contains(item.uniqId), t"Duplicate key ${item.uniqId}")
       acc + (item.uniqId -> item)
     }
     copy(map = newMap, contextItems = newContextItems)
