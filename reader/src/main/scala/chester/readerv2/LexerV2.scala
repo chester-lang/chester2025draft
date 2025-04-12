@@ -123,6 +123,7 @@ case class LexerState(
     previousToken: Option[Token] = None,
     previousNonCommentToken: Option[Token] = None,
     newLineAfterBlockMeansEnds: Boolean = false
+    // TODO: the plan is to hold comments whitespaces  that need to be handled temporarily in LexerState instead of passing around in local variables and on a whitespace/comments handle point clear them handle them
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
