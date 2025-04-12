@@ -39,11 +39,28 @@ case class CommentInfo(
   }
 }
 
+object CommentInfo {
+  def maybe(
+             commentBefore: Vector[Comment],
+             commentInBegin: Vector[Comment] = Vector.empty,
+             commentInEnd: Vector[Comment] = Vector.empty,
+             commentEndInThisLine: Vector[Comment] = Vector.empty): Option[CommentInfo] =
+    if(commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty) {
+      None
+    } else  {Some(CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine))}
+}
+
 case class ExprMeta(
     sourcePos: Option[SourcePos],
     commentInfo: Option[CommentInfo]
 ) derives ReadWriter {
   require(sourcePos.isDefined || commentInfo.isDefined)
+}
+
+object ExprMeta {
+  def maybe(sourcePos: Option[SourcePos] = None, commentInfo: Option[CommentInfo] = None): Option[ExprMeta] =
+    if (sourcePos.isEmpty && commentInfo.isEmpty) None
+    else Some(ExprMeta(sourcePos, commentInfo))
 }
 
 object MetaFactory {

@@ -121,13 +121,16 @@ case class LexerState(
     tokens: Vector[Either[ParseError, Token]],
     index: Int,
     previousToken: Option[Token] = None,
+    previousNonCommentToken: Option[Token] = None,
     newLineAfterBlockMeansEnds: Boolean = false
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
   def advance(): LexerState = current match {
-    case Right(token) => LexerState(tokens, index + 1, Some(token), newLineAfterBlockMeansEnds)
-    case Left(_)      => LexerState(tokens, index + 1, previousToken, newLineAfterBlockMeansEnds)
+    case Right(token: Token.Comment) => LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds)
+    case Right(token: Token.Whitespace) => LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds)
+    case Right(token) => LexerState(tokens, index + 1, Some(token), Some(token), newLineAfterBlockMeansEnds)
+    case Left(_)      => LexerState(tokens, index + 1, previousToken, previousNonCommentToken, newLineAfterBlockMeansEnds)
   }
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
@@ -238,7 +241,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     }
 
   // Helper for building operator sequences
-  def buildOpSeq(terms: Vector[Expr])(state: LexerState, leadingComments: Vector[Comment]): Either[ParseError, Expr] = {
+  def buildOpSeq(terms: Vector[Expr])(state: LexerState, leadingComments: Vector[CommOrWhite]): Either[ParseError, Expr] = {
     debug(t"Building OpSeq with terms: $terms")
     terms match {
       case Vector() => Left(ParseError("Empty operator sequence", getStartPos(state.current)))
@@ -250,7 +253,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   }
 
   // Main expression continuation parser
-  def parseRest(expr: Expr, state: LexerState)(leadingComments: Vector[Comment]): Either[ParseError, (Expr, LexerState)] = {
+  def parseRest(expr: Expr, state: LexerState)(leadingComments: Vector[CommOrWhite]): Either[ParseError, (Expr, LexerState)] = {
     var localTerms = Vector(expr)
     debug(t"parseRest called with expr: $expr, state: $state, current terms: $localTerms")
 
@@ -337,7 +340,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   // Handle block arguments
   def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos)(
-      leadingComments: Vector[Comment]
+      leadingComments: Vector[CommOrWhite]
   ): Either[ParseError, (Expr, LexerState)] =
     withComments(parseBlock)(state).flatMap { case (block, afterBlock) =>
       // Create appropriate expression based on context
@@ -390,7 +393,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   // Colon handling
   def handleColon(sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
-      leadingComments: Vector[Comment]
+      leadingComments: Vector[CommOrWhite]
   ): Either[ParseError, (Expr, LexerState)] = {
     val afterColon = state.advance()
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
@@ -413,7 +416,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   // Operator handling
   def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
-      leadingComments: Vector[Comment]
+      leadingComments: Vector[CommOrWhite]
   ): Either[ParseError, (Expr, LexerState)] = {
     val afterOp = state.advance()
 
@@ -451,7 +454,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   // Identifier handling
   def handleIdentifierInRest(text: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
-      leadingComments: Vector[Comment]
+      leadingComments: Vector[CommOrWhite]
   ): Either[ParseError, (Expr, LexerState)] = {
     val afterId = state.advance()
 
@@ -607,12 +610,13 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   private def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
     // First check the preconditions - must be in context where newlines are significant,
     // and previous token must be a closing brace
-    if (!state.newLineAfterBlockMeansEnds || !state.previousToken.exists(_.isInstanceOf[Token.RBrace])) {
+    val state1 = state.skipComments
+    if (!state1.newLineAfterBlockMeansEnds || !state1.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])) {
       return false
     }
 
     // Check if current token contains a newline or is EOF
-    val hasNewline = state.current match {
+    val hasNewline = state1.current match {
       case Right(ws: Token.Whitespace) =>
         lazy val wsContent = for {
           source <- sourceOffset.readContent.toOption
@@ -683,12 +687,13 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case Left(err) => Left(err)
       case LBrace(_) =>
         // Check for empty object or block
-        current.advance().current match {
+        val advance1 = current.advance().skipComments
+        advance1.current match {
           case Left(err)                        => Left(err)
           case RBrace(_)                        => parseObject(current) // Empty object
           case Id(_, _) | Sym(_, _) | Str(_, _) =>
             // Look ahead for = or => to determine if it's an object
-            val afterId = current.advance().advance()
+            val afterId = advance1.advance().skipComments
             afterId.current match {
               case Left(err)                            => Left(err)
               case Op(op, _) if op == "=" || op == "=>" => parseObject(current)
@@ -801,7 +806,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                         val newMeta = createMetaWithComments(
                           meta.flatMap(_.sourcePos),
                           Vector.empty,
-                          trailingComments
+                          trailingComments.collect { case c: Comment => c }
                         )
                         // Merge with existing meta
                         mergeMeta(meta, newMeta)
@@ -819,7 +824,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
                         val newMeta = createMetaWithComments(
                           meta.flatMap(_.sourcePos),
                           Vector.empty,
-                          trailingComments
+                          trailingComments.collect { case c: Comment => c }
                         )
                         // Merge with existing meta
                         mergeMeta(meta, newMeta)
@@ -852,7 +857,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
             val meta =
               if leadingComments.nonEmpty || trailingComments.nonEmpty then
                 createMeta(Some(sourcePos), Some(afterList.sourcePos))
-                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments, trailingComments)))
+                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(leadingComments.collect { case c: Comment => c }, trailingComments.collect { case c: Comment => c })))
               else createMeta(Some(sourcePos), Some(afterList.sourcePos))
             Right((Tuple(exprs, meta), afterList.advance()))
           case _ => Left(expectedError("right parenthesis", afterList.current))
@@ -1034,17 +1039,17 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               Right((clauses, state))
             case Right(Token.Identifier(chars, idSourcePos)) =>
               val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
-              parseField(state.advance(), identifier, idSourcePos).flatMap { case (clause, nextState) =>
+              parseField(state.advance().skipComments, identifier, idSourcePos).flatMap { case (clause, nextState) =>
                 checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(Token.StringLiteral(chars, strSourcePos)) =>
               val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
-              parseField(state.advance(), stringLiteral, strSourcePos).flatMap { case (clause, nextState) =>
+              parseField(state.advance().skipComments, stringLiteral, strSourcePos).flatMap { case (clause, nextState) =>
                 checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(Token.SymbolLiteral(value, symSourcePos)) =>
               val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
-              parseField(state.advance(), symbolLiteral, symSourcePos).flatMap { case (clause, nextState) =>
+              parseField(state.advance().skipComments, symbolLiteral, symSourcePos).flatMap { case (clause, nextState) =>
                 checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
               }
             case Right(t) =>
@@ -1170,12 +1175,19 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case _ => Left(expectedError("[", initialState.current))
     }
   }
+  
+  type CommOrWhite = Comment | Token.Whitespace
+
+  extension (s: LexerState) {
+    @deprecated("please handle it correctly")
+    def skipComments: LexerState = collectComments(s)._2
+  }
 
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
     */
-  private def collectComments(state: LexerState): (Vector[Comment], LexerState) = {
+  private def collectComments(state: LexerState): (Vector[CommOrWhite], LexerState) = {
     @tailrec
-    def collectRec(current: LexerState, comments: Vector[Comment]): (Vector[Comment], LexerState) =
+    def collectRec(current: LexerState, comments: Vector[CommOrWhite]): (Vector[CommOrWhite], LexerState) =
       if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
         current.current match {
           case Right(Token.Comment(text, sourcePos)) =>
@@ -1191,10 +1203,8 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
               sourcePos = Some(sourcePos)
             )
             collectRec(current.advance(), comments :+ comment)
-          case Right(Token.Whitespace(_, _)) =>
-            // In Whitespace tokens, we don't have the actual text content
-            // Just advance the token - we'll hit another token eventually
-            collectRec(current.advance(), comments)
+          case Right(wt@Token.Whitespace(_, _)) =>
+            collectRec(current.advance(), comments :+ wt)
           case _ =>
             throw new RuntimeException("Unreachable: exists check guarantees we have a Comment or Whitespace token")
         }
@@ -1252,11 +1262,11 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     */
   private def createMetaWithComments(
       sourcePos: Option[SourcePos],
-      leadingComments: Vector[Comment] = Vector.empty,
+      leadingComments: Vector[CommOrWhite] = Vector.empty,
       trailingComments: Vector[Comment] = Vector.empty
   ): Option[ExprMeta] =
-    Option.when(sourcePos.nonEmpty || leadingComments.nonEmpty || trailingComments.nonEmpty) {
-      ExprMeta(sourcePos, createCommentInfo(leadingComments, trailingComments))
+     {
+      ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments, trailingComments))
     }
 
   // Helper for creating function calls
@@ -1334,12 +1344,12 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   }
 
   private def createCommentInfo(
-      leadingComments: Vector[Comment],
+      leadingComments: Vector[CommOrWhite],
       trailingComments: Vector[Comment] = Vector.empty
   ): Option[CommentInfo] =
-    Option.when(leadingComments.nonEmpty || trailingComments.nonEmpty) {
-      CommentInfo(
-        commentBefore = leadingComments,
+    {
+      CommentInfo.maybe(
+        commentBefore = leadingComments.collect { case c: Comment => c },
         commentInBegin = Vector.empty,
         commentInEnd = Vector.empty,
         commentEndInThisLine = trailingComments
