@@ -11,12 +11,12 @@ import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
 import cats.data.NonEmptyVector
 import chester.utils.Debug.DebugCategory.*
+import chester.i18n.*
 
 import scala.collection.immutable.Vector as _
 import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
-import chester.i18n.*
 
 trait Elaborater extends ProvideCtx with TyckPropagator {
 

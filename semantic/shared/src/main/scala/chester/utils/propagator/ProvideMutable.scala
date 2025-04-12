@@ -1,9 +1,9 @@
 package chester.utils.propagator
 
 import chester.uniqid.{Uniqid, UniqidOf}
+import chester.i18n.*
 
 import scala.collection.mutable
-import chester.i18n.*
 
 trait ProvideMutable extends ProvideImpl {
   class HoldCell[+T <: Cell[?]](val uniqId: UniqidOf[Impl[?]], value: T) {

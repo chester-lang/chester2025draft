@@ -6,9 +6,9 @@ import chester.utils.WithUTF16
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
+import chester.i18n.*
 
 import scala.util.{Try, boundary}
-import chester.i18n.*
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 

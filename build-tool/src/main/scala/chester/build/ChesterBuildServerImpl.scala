@@ -4,13 +4,13 @@ import ch.epfl.scala.bsp4j.*
 import org.log4s.*
 import chester.reader.{ChesterReader, FileNameAndContent}
 import chester.tyck.{TyckResult, Tycker}
+import chester.i18n.*
 
 import java.util.concurrent.CompletableFuture
 import java.util.Collections
 import scala.jdk.CollectionConverters.*
 import java.nio.file.Paths
 import java.nio.file.Files
-import chester.i18n.*
 
 class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
 

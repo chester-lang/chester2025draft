@@ -7,9 +7,9 @@ import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
 import fastparse.*
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
+import chester.i18n.*
 
 import scala.util.*
-import chester.i18n.*
 
 object ReaderREPL {
 

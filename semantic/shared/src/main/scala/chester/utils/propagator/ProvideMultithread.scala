@@ -1,11 +1,11 @@
 package chester.utils.propagator
 
 import chester.uniqid.{Uniqid, UniqidOf}
+import chester.i18n.*
 
 import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
-import chester.i18n.*
 
 trait ProvideMultithread extends ProvideImpl {
 

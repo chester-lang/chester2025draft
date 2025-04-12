@@ -11,13 +11,13 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.log4s.*
+import chester.i18n.*
 
 import java.util.List as JList
 import java.util.concurrent.CompletableFuture
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 import scala.jdk.CollectionConverters.*
-import chester.i18n.*
 
 class ChesterLanguageServer extends LanguageServer with TextDocumentService with WorkspaceService {
   enableDebug()

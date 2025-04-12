@@ -5,6 +5,7 @@ import chester.reader.{ChesterReader, FileNameAndContent}
 import chester.tyck.*
 import chester.utils.doc.ColorfulToHtml.colorfulToHtml
 import chester.utils.doc.*
+import chester.i18n.*
 
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
   given options: PrettierOptions =

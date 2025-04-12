@@ -3,10 +3,10 @@ package chester.lsp
 import org.eclipse.lsp4j.launch.LSPLauncher
 import org.log4s.*
 import org.slf4j.simple.SimpleLogger
+import chester.i18n.*
 
 import java.io.{InputStream, OutputStream}
 import java.net.ServerSocket
-import chester.i18n.*
 
 def enableDebug(): Unit = {
   val _ = System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "Trace")

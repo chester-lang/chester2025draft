@@ -1,19 +1,5 @@
 package chester.readerv2
 import chester.i18n.*
-
-/*
- * ReaderV2 implements Chester's token-based parser with unified symbol treatment.
- *
- * For detailed documentation on the parser design principles, syntax decisions,
- * and implementation approach, see:
- *   docs/src/dev/parser-migration.md
- *
- * Key principles:
- * - Uniform symbol treatment (no special keywords)
- * - Space and newline significance in specific contexts
- * - Block return value semantics
- * - Operator sequences with later precedence resolution
- */
 import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, SourceOffset}
 import chester.syntax.concrete.{

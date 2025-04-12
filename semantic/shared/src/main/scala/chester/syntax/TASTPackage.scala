@@ -6,9 +6,9 @@ import chester.uniqid.*
 import chester.utils.*
 import upickle.default.*
 import upickle.default as upickle
+import chester.i18n.*
 
 import scala.collection.immutable.HashMap
-import chester.i18n.*
 
 object TASTPackage {
   onNativeImageBuildTime {

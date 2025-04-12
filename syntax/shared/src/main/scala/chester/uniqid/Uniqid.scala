@@ -4,10 +4,10 @@ import upickle.default.*
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
+import chester.i18n.*
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
-import chester.i18n.*
 
 private val uniqIdCounter = AtomicInteger(0)
 

@@ -2,10 +2,10 @@ package chester.reader
 
 import chester.error.*
 import chester.utils.*
+import chester.i18n.*
 
 import java.nio.file.Paths
 import scala.util.*
-import chester.i18n.*
 
 object FilePathImplJVM extends FilePathImpl {
   override def readContent(fileName: String): Either[ParseError, String] =

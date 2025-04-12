@@ -6,9 +6,9 @@ import chester.error.*
 import chester.syntax.{Const, ModuleRef}
 import chester.syntax.concrete.*
 import chester.utils.*
+import chester.i18n.*
 
 import scala.annotation.tailrec
-import chester.i18n.*
 
 case class DesugarInfo()
 

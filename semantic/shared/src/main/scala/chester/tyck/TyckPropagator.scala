@@ -8,11 +8,11 @@ import chester.utils.*
 import chester.reduce.{DefaultReducer, ReduceContext, ReduceMode, Reducer}
 import cats.data.NonEmptyVector
 import chester.utils.Debug.DebugCategory.*
+import chester.i18n.*
 
 import scala.language.implicitConversions
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
-import chester.i18n.*
 
 trait TyckPropagator extends ElaboraterCommon with Alpha {
 

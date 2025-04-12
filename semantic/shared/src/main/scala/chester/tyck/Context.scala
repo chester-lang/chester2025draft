@@ -7,9 +7,9 @@ import chester.tyck.api.SymbolCollector
 import chester.uniqid.UniqidOf
 import chester.reduce.ReduceContext
 import chester.reduce.{DefaultReducer, Reducer}
+import chester.i18n.*
 
 import scala.collection.immutable.HashMap
-import chester.i18n.*
 
 case class TyAndVal(
     ty: Term,

@@ -1,10 +1,11 @@
 package chester.tyck
 
+import chester.i18n.*
+
 import scala.tools.asm.*
 import scala.tools.asm.tree.*
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Paths}
-import chester.i18n.*
 
 object ClassFileInspector {
   def inspectClassFile(classFilePath: String): Unit = {

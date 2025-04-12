@@ -5,10 +5,10 @@ import chester.utils.StringIndex
 import fastparse.*
 import chester.error.*
 import _root_.io.github.iltotore.iron.*
+import chester.i18n.*
 
 import scala.collection.immutable
 import scala.util.*
-import chester.i18n.*
 object ChesterReader {
 
   private def parseFromSource[T](

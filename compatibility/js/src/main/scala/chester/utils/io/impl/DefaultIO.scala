@@ -6,6 +6,7 @@ import typings.node.fsMod.MakeDirectoryOptions
 import typings.node.{childProcessMod, fsMod, fsPromisesMod, osMod, pathMod, processMod}
 import typings.node.childProcessMod.{IOType, SpawnSyncOptions}
 import typings.std.global.fetch
+import chester.i18n.*
 
 import scala.scalajs.js.Thenable.Implicits.*
 import java.io.IOException

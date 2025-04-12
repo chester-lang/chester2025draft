@@ -1,7 +1,8 @@
 package chester.tyck
 
-import scala.meta.internal.semanticdb.TextDocuments
 import chester.i18n.*
+
+import scala.meta.internal.semanticdb.TextDocuments
 
 object SemanticDBReaderTest {
 

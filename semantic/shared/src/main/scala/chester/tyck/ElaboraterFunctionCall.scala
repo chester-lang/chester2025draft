@@ -168,7 +168,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       readFunctionTy match {
         case Some(ft @ FunctionType(telescopes, retTy, functionEffects, _)) =>
           if (debugTyck)
-            Debug.debugPrint(DebugCategory.Tyck, t"Matched FunctionType with telescopes: ${telescopes.mkString("Array(", ", ", ")")}, retTy: $retTy, effects: $functionEffects")
+            Debug.debugPrint(
+              DebugCategory.Tyck,
+              t"Matched FunctionType with telescopes: ${telescopes.mkString("Array(", ", ", ")")}, retTy: $retTy, effects: $functionEffects"
+            )
 
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(ft.telescopes, callings, cause)

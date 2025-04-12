@@ -8,9 +8,9 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import _root_.io.github.iltotore.iron.upickle.given
+import chester.i18n.*
 
 import scala.annotation.tailrec
-import chester.i18n.*
 
 case class Pos(index: WithUTF16, line: Int :| Positive0, column: WithUTF16) derives ReadWriter
 
