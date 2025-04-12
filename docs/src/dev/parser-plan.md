@@ -1,117 +1,77 @@
 # Chester Parser Architecture and Improvement Plan
 
 ## Overview
+Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
 
-Chester is migrating from the original `reader` implementation (V1) to a new `readerv2` (V2). This document outlines the migration plan and pending improvements.
-
-## Parser Development Guidelines
-
-### Core Principles
-
-1. **Maintain Context-Free Parsing**
-   - Prefer context-free over context-dependent parsing
-   - Avoid parser decisions based on semantic meaning
-   - Use uniform rules for terminating expressions
-   - Treat all identifiers uniformly
-
-2. **Separation of Concerns**
-   - Separate parsing (syntax) from semantic analysis
-   - Handle operator precedence, fixity, and associativity in later passes
-   - Produce flat OpSeq nodes without interpreting operator semantics
-
-3. **Verification Practices**
-   - Test both parsers using `parseAndCheckBoth` where possible
-   - Ensure no special handling for specific identifiers
+## Core Principles
+1. **Context-Free Parsing**: Uniform rules for expressions; identifiers treated uniformly
+2. **Separation of Concerns**: Parse syntax without imposing semantics
+3. **Verification**: Test both parsers with `parseAndCheckBoth`
 
 ## Parser Architecture
 
-### Syntax Design Principles
+### Syntax Design
+- **Uniform Symbol Treatment**: No special keywords - just identifiers
+- **Operator Rules**: Operators start with symbols, identifiers with letters/emoji/underscore
+- **Newline Significance**: `}\n` terminates expressions in blocks
+- **Block Return Values**: Last expression is return value; trailing semicolon returns unit
 
-1. **Uniform Symbol Treatment**
-   - All identifiers and operators treated uniformly during parsing
-   - No special cases for keywords - they're just identifiers
+### Implementations
+- **V1**: FastParse combinators
+- **V2**: Token-based state machine approach
 
-2. **Operator and Identifier Rules**
-   - Operators start with operator symbols (.:=-+\|<>/?`~!@$%^&*)
-   - Identifiers start with letters/emoji/underscore
-   - Both can contain operator symbols and word symbols
+## Feature Status
 
-3. **Space and Newline Handling**
-   - Spaces significant in specific contexts (function calls, operator sequences)
-   - Newlines significant after blocks (i.e., `}\n` terminates expressions)
-
-4. **Block Return Value Semantics**
-   - Last expression in block is the return value
-   - Trailing semicolon returns unit
-
-### Parser Implementations
-
-- **V1**: FastParse combinators for declarative style
-- **V2**: Token-based parsing with state machine approach
-
-## Migration Status
-
-### Feature Comparison
-
-| Feature | Reader (V1) | ReaderV2 (V2) | Notes |
+| Feature | V1 | V2 | Notes |
 |---------|-------------|---------------|-------|
-| Basic Literals | ✅ | ✅ | Integers, floating-point numbers, binary, hex support |
-| Function Calls | ✅ | ✅ | Full support in V2 |
-| Pattern Matching | ✅ | ✅ | Now supports uniform treatment |
-| Object Syntax | ✅ | 🟡 | Basic support in V2 |
-| Operator Sequence | ✅ | ✅ | Parser produces flat OpSeq nodes |
-| Error Recovery | ✅ | 🟡 | Comment preservation implemented |
-| Generic Type Parameters | ✅ | ✅ | Full support |
+| Basic Literals | ✅ | ✅ | Integers, floats, binary, hex |
+| Function Calls | ✅ | ✅ | Complete support |
+| Pattern Matching | ✅ | ✅ | Uniform symbol treatment |
+| Object Syntax | ✅ | ✅ | Basic support with multiple key types |
+| Operator Sequence | ✅ | ✅ | Flat OpSeq nodes |
+| Token Extractors | ✅ | ✅ | Simplified with common helpers |
+| Error Recovery | ✅ | 🟡 | Comment preservation done; recovery pending |
+| Generic Types | ✅ | ✅ | Complete support |
 | Block Arguments | ✅ | ✅ | Properly supported |
-| Comment Preservation | ✅ | ✅ | Fully supported |
-| Unicode & Emoji Support | ✅ | ✅ | Robust UTF-16 handling |
+| Comment Preservation | ✅ | ✅ | Leading and trailing comments |
+| Block Termination | ✅ | ✅ | Context-aware `}\n` handling |
+| Unicode & Emoji | ✅ | ✅ | Robust UTF-16 handling |
 
-Legend:
-- ✅ Fully Implemented
-- 🟡 Partially Implemented
-- 🔴 Not Yet Implemented
-
-## Implementation Plan
+## Implementation Phases
 
 ### Phase 1: Core Functionality (✅ Complete)
-- Basic literals, function calls, operators, blocks
-- Lists with mixed types
-- Generic type parameters
-- Comment preservation
-- Unicode and emoji support
-- Optimized tokenizer implementation
+- Basic literals, functions, operators, blocks, lists
+- Generic type parameters, comments, Unicode support
 
-### Phase 2: Advanced Features (🟡 Current)
-- 🟡 Object expressions with string literal and symbol keys
-- 🔴 Complex object syntax
+### Phase 2: Advanced Features (✅ Current)
+- ✅ Basic object expressions
+- 🟡 Complex object syntax
 - 🔴 Source maps
 
 ### Phase 3: Error Handling (🔴 Planned)
 - 🔴 Error recovery
 - 🔴 Improved error messages
-- 🔴 Source position tracking
+- 🟡 Source position tracking
 - 🔴 Debug information
 
 ## Current Priorities
 
-### 1. V1/V2 Semantic Consistency
-- ✅ Ensure both parsers produce the same AST for identical inputs
-- ✅ Address pattern matching semantic differences
-- 🟡 Focus on remaining differences in complex operator sequences
-- 🔴 Resolve pattern matching blocks with nested expressions difference between V1 and V2 parsers
-  - The `match2` test case in `PatternMatchingTest.scala` shows differences in AST structure
-  - Need to align V2 parser's block handling in pattern matching context with V1 behavior
+1. **V1/V2 Semantic Consistency** (✅ Complete)
+   - Both parsers produce same AST
+   - Pattern matching differences resolved
+   - Block termination handling aligned
 
-### 2. Object Expressions
-- 🟡 Complete object expressions implementation with complex syntax support
+2. **Object Expressions** (🟡 In Progress)
+   - ✅ Basic object expressions
+   - 🟡 Complex object syntax with nested expressions
 
-### 3. Block Termination and Newline Handling
-- ✅ Address the `}\n` pattern handling for expression termination
+3. **Block Termination** (✅ Complete)
+   - Block termination with `}\n` pattern
+   - Context tracking implementation
 
 ## Next Steps
-
-1. Complete object expressions implementation
+1. Complete complex object expressions
 2. Add source maps support
-3. Implement error recovery mechanisms
-4. Continue migration of all remaining V1-only tests to V2
-5. Add more comprehensive test coverage for edge cases
+3. Implement error recovery
+4. Migrate remaining V1-only tests
+5. Expand test coverage

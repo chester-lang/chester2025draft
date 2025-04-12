@@ -1,5 +1,34 @@
 # Development Log
 
+## 2025-04-05
+
+### LexerV2 Parser Enhancements
+
+- **Block Termination**: Implemented context tracking for `}\n` pattern detection, ensuring consistent handling between V1/V2 parsers while preserving uniform symbol treatment
+  
+- **Object Expressions**: Added support for identifier, string, and symbol keys with both `=` and `=>` operators
+
+- **Token Optimization**: 
+  - Simplified token extractors using common helper methods
+  - Enhanced comment collection and attachment
+  - Improved handling of leading/trailing comments
+
+- **Implementation Strategy**:
+  1. Added context tracking for block termination
+  2. Maintained uniform symbol treatment for all operators
+  3. Enhanced object expression parsing
+  4. Optimized token handling for better maintainability
+
+- **Migration Status**:
+  - ✅ Pattern matching with proper block handling
+  - ✅ Block termination with context tracking
+  - ✅ Basic object expressions
+  - ✅ Comment preservation
+  - 🟡 Complex object expressions (in progress)
+  - 🔴 Source maps and error recovery (planned)
+
+- **Modified**: `LexerV2.scala`, documentation files
+
 ## 2025-03-14
 
 ### Parser Improvements and Refactoring
