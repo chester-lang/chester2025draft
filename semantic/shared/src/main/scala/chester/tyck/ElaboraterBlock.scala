@@ -1,6 +1,5 @@
 package chester.tyck
 
-import cats.implicits.*
 import chester.utils.*
 import chester.syntax.*
 import chester.error.*

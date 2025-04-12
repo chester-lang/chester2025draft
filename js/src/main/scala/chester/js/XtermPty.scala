@@ -8,7 +8,6 @@ import typings.xtermPty.mod.Slave
 import java.nio.charset.StandardCharsets
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.Thenable.Implicits.*
 
 final class InXtermPty(pty: Slave) extends InTerminalNoHistory[Future] {
   override inline def writeln(line: fansi.Str): Future[Unit] = {

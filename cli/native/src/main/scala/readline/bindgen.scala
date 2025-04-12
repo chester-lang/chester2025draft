@@ -1923,7 +1923,6 @@ private[readline] object extern_functions:
 object functions:
   import _root_.readline.aliases.*
   import _root_.readline.enumerations.*
-  import _root_.readline.structs.*
   export extern_functions.*
 
 object types:

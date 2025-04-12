@@ -153,8 +153,6 @@ private[linenoise] object extern_functions:
   def linenoiseSetMultiLine(enableml: CInt): Unit = extern
 
 object functions:
-  import _root_.linenoise.aliases.*
-  import _root_.linenoise.structs.*
   export extern_functions.*
 
 object types:

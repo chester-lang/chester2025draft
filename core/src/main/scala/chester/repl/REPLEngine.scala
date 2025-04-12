@@ -1,7 +1,6 @@
 package chester.repl
 
 import cats.implicits.*
-import chester.doc.*
 import chester.doc.consts.{Colors, ReplaceBracketsWithWord}
 import chester.error.*
 import chester.reader.ReaderREPL
@@ -9,7 +8,6 @@ import chester.syntax.concrete.Expr
 import chester.syntax.core.*
 import chester.tyck.*
 import chester.utils.doc.*
-import chester.utils.env
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.*
