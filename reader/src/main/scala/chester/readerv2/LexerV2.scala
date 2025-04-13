@@ -278,7 +278,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
       case Vector(expr) if leadingComments.nonEmpty =>
         Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), leadingComments))))
       case Vector(expr) => Right(expr)
-      case _            => Right(OpSeq(terms, Option.when(leadingComments.nonEmpty)(createMetaWithComments(None, leadingComments).get)))
+      case _            => Right(OpSeq(terms, createMetaWithComments(None, leadingComments)))
     }
   }
 
