@@ -1216,6 +1216,10 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
   /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
     */
   private def collectComments(state: LexerState): (Vector[CommOrWhite], LexerState) = {
+    // First check if we have any pending tokens from the state
+    val pendingTokens = state.pendingTokens
+    val startState = if (pendingTokens.nonEmpty) state.clearPendingTokens() else state
+    
     @tailrec
     def collectRec(current: LexerState, comments: Vector[CommOrWhite]): (Vector[CommOrWhite], LexerState) =
       if (!current.isAtEnd && current.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
@@ -1242,7 +1246,25 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
         (comments, current)
       }
 
-    collectRec(state, Vector.empty)
+    // Combine any pending tokens with collected tokens
+    val (collectedComments, finalState) = collectRec(startState, Vector.empty)
+    val allComments = pendingTokens.map {
+      case c: Token.Comment => 
+        val commentType = if (c.text.trim.startsWith("//")) {
+          CommentType.OneLine
+        } else {
+          CommentType.MultiLine
+        }
+        
+        Comment(
+          content = c.text.trim,
+          typ = commentType,
+          sourcePos = Some(c.sourcePos)
+        ): CommOrWhite
+      case w: Token.Whitespace => w: CommOrWhite
+    } ++ collectedComments
+    
+    (allComments, finalState)
   }
 
   /** Collects trailing comments after an expression until a newline or non-comment token.
