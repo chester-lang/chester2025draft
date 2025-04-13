@@ -122,16 +122,24 @@ case class LexerState(
     index: Int,
     previousToken: Option[Token] = None,
     previousNonCommentToken: Option[Token] = None,
-    newLineAfterBlockMeansEnds: Boolean = false
-    // TODO: the plan is to hold comments whitespaces  that need to be handled temporarily in LexerState instead of passing around in local variables and on a whitespace/comments handle point clear them handle them
+    newLineAfterBlockMeansEnds: Boolean = false,
+    pendingTokens: Vector[Token.Comment | Token.Whitespace] = Vector.empty
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
   def advance(): LexerState = current match {
-    case Right(token: Token.Comment) => LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds)
-    case Right(token: Token.Whitespace) => LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds)
-    case Right(token) => LexerState(tokens, index + 1, Some(token), Some(token), newLineAfterBlockMeansEnds)
-    case Left(_)      => LexerState(tokens, index + 1, previousToken, previousNonCommentToken, newLineAfterBlockMeansEnds)
+    case Right(token: Token.Comment) => 
+      LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, 
+                pendingTokens :+ token)
+    case Right(token: Token.Whitespace) => 
+      LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, 
+                pendingTokens :+ token)
+    case Right(token) => 
+      LexerState(tokens, index + 1, Some(token), Some(token), newLineAfterBlockMeansEnds, 
+                pendingTokens)
+    case Left(_) => 
+      LexerState(tokens, index + 1, previousToken, previousNonCommentToken, newLineAfterBlockMeansEnds,
+                pendingTokens)
   }
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
@@ -144,6 +152,27 @@ case class LexerState(
       t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
       t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
+  
+  // Methods for handling pending tokens
+  def collectPendingComments(): Vector[Token.Comment] = 
+    pendingTokens.collect { case c: Token.Comment => c }
+  
+  def collectPendingWhitespaces(): Vector[Token.Whitespace] = 
+    pendingTokens.collect { case w: Token.Whitespace => w }
+    
+  def collectPendingTokens(): Vector[Token.Comment | Token.Whitespace] = 
+    pendingTokens
+    
+  def clearPendingTokens(): LexerState = 
+    copy(pendingTokens = Vector.empty)
+    
+  def hasPendingTokens: Boolean = pendingTokens.nonEmpty
+  
+  def hasPendingComments: Boolean = 
+    pendingTokens.exists(_.isInstanceOf[Token.Comment])
+  
+  def hasPendingWhitespaces: Boolean = 
+    pendingTokens.exists(_.isInstanceOf[Token.Whitespace])
 
   // Helper method to create a state with modified context
   def withNewLineTermination(enabled: Boolean): LexerState =
