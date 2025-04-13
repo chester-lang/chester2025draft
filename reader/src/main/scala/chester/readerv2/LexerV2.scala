@@ -316,26 +316,26 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
         d(_.advance().skip())
 
         // For match blocks, parse using the regular block parser with no special case handling
-        withComments(parseBlock)(afterMatch).map { case (block, afterBlock) =>
+        withComments(parseBlock()).map { block =>
           // Create the match expression with the block as-is
           val matchExpr = OpSeq(Vector(expr, matchId, block), None)
-          (matchExpr, afterBlock)
+          matchExpr
         }
 
       // Block argument handling
       case Right(Token.LBrace(braceSourcePos)) =>
         debug("parseRest: Found LBrace after expression, treating as block argument")
-        handleBlockArgument(expr, state, localTerms, braceSourcePos)
+        handleBlockArgument(expr, localTerms, braceSourcePos)
 
       // Colon handling (type annotations, etc)
       case Right(Token.Colon(sourcePos)) =>
         debug("parseRest: Found colon")
-        handleColon(sourcePos, state, localTerms)
+        handleColon(sourcePos,  localTerms)
 
       // Dot call handling
       case Right(Token.Dot(dotSourcePos)) =>
         debug("parseRest: Found dot")
-        handleDotCall(dotSourcePos, current, localTerms).flatMap { case (dotCall, newState) =>
+        handleDotCall(dotSourcePos,  localTerms).flatMap { dotCall =>
           localTerms = Vector(dotCall)
           debug(t"parseRest: After dot call, terms: $localTerms")
           parseRest(dotCall)
@@ -344,26 +344,26 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
       // Operator handling
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseRest: Found operator $op")
-        handleOperatorInRest(op, sourcePos, current, localTerms)
+        handleOperatorInRest(op, sourcePos, localTerms)
 
       // Identifier handling
       case Right(Token.Identifier(chars, sourcePos)) =>
         val text = charsToString(chars)
         debug(t"parseRest: Found identifier $text")
-        handleIdentifierInRest(text, sourcePos, current, localTerms)
+        handleIdentifierInRest(text, sourcePos, localTerms)
 
       // Generic token handling
       case Right(_) =>
         debug("parseRest: Found other token, parsing as atom")
-        withComments(parseAtom)(current).flatMap { case (next, afterNext) =>
+        withComments(parseAtom()).flatMap { next =>
           localTerms = localTerms :+ next
           debug(t"parseRest: After parsing other token as atom, terms: $localTerms")
-          parseRest(next, afterNext).map { case (result, finalState) =>
+          parseRest(next).map { result =>
             result match {
               case opSeq: OpSeq =>
-                (OpSeq(localTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+                OpSeq(localTerms.dropRight(1) ++ opSeq.seq, None)
               case _ =>
-                (OpSeq(localTerms, None), finalState)
+                OpSeq(localTerms, None)
             }
           }
         }
@@ -376,10 +376,8 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
   }
 
   // Handle block arguments
-  def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos)(
-      leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, Expr] =
-    withComments(parseBlock)(state).flatMap { case (block, afterBlock) =>
+  def handleBlockArgument(expr: Expr,  terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, Expr] =
+    withComments(parseBlock()).flatMap { block =>
       // Create appropriate expression based on context
       val newExpr = expr match {
         case funcCall: FunctionCall =>
@@ -387,14 +385,14 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
           FunctionCall(
             funcCall,
             Tuple(Vector(block), createMeta(None, None)),
-            createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(afterBlock.sourcePos))
+            createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(state.sourcePos))
           )
         case id: ConcreteIdentifier =>
           debug("parseRest: Creating function call with block argument from identifier")
           FunctionCall(
             id,
             Tuple(Vector(block), createMeta(None, None)),
-            createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(afterBlock.sourcePos))
+            createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(state.sourcePos))
           )
         case _ =>
           debug("parseRest: Default handling for block after expression")
@@ -407,98 +405,86 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
       if (newExpr.isInstanceOf[FunctionCall]) {
         debug("parseRest: Returning function call with block directly")
 
-        if (afterBlock.isAtTerminator) {
-          Right((newExpr, afterBlock))
+        if (state.isAtTerminator) {
+          Right(newExpr)
         } else {
-          parseRest(newExpr, afterBlock)
+          parseRest(newExpr)
         }
       } else {
         // Handle other expressions via OpSeq
         val updatedTerms = terms.dropRight(1) :+ newExpr
         debug(t"parseRest: After handling block argument, terms: $updatedTerms")
 
-        parseRest(newExpr, afterBlock).map { case (result, finalState) =>
-          result match {
-            case opSeq: OpSeq =>
-              (OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None), finalState)
-            case _ =>
-              (OpSeq(updatedTerms, None), finalState)
-          }
+        parseRest(newExpr).map {
+          case opSeq: OpSeq =>
+            OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
+          case _ =>
+            OpSeq(updatedTerms, None)
         }
       }
     }
 
   // Colon handling
-  def handleColon(sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
-      leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, Expr] = {
-    val afterColon = state.advance()
+  def handleColon(sourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
+    d(_.advance())
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
     debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
-    withComments(parseAtom)(afterColon).flatMap { case (next, afterNext) =>
+    withComments(parseAtom()).flatMap { next =>
       val newTerms = updatedTerms :+ next
       debug(t"parseRest: After parsing atom after colon, terms: $newTerms")
 
-      parseRest(next, afterNext).map { case (result, finalState) =>
-        result match {
-          case opSeq: OpSeq =>
-            (OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None), finalState)
-          case _ =>
-            (OpSeq(newTerms, None), finalState)
-        }
+      parseRest(next).map {
+        case opSeq: OpSeq =>
+          OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
+        case _ =>
+          OpSeq(newTerms, None)
       }
     }
   }
 
   // Operator handling
-  def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
-      leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, Expr] = {
-    val afterOp = state.advance()
+  def handleOperatorInRest(op: String, sourcePos: SourcePos,terms: Vector[Expr]): Either[ParseError, Expr] = {
+    d(_.advance())
 
     // Add operator to terms
     val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
 
     // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
     if (
-      afterOp.current match {
+      state.current match {
         case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
         case _                                              => false
       }
     ) {
       debug(t"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
-      buildOpSeq(updatedTerms)(state, leadingComments).map(result => (result, afterOp))
+      buildOpSeq(updatedTerms)
     } else {
       // Continue parsing the rest of the expression
-      withComments(parseAtom)(afterOp).flatMap { case (next, afterNext) =>
+      withComments(parseAtom()).flatMap { next =>
         debug(t"parseRest: After parsing atom after operator, got: $next")
         val newTerms = updatedTerms :+ next
         debug(t"parseRest: Updated terms after operator: $newTerms")
 
         // Continue parsing the rest
-        parseRest(next, afterNext).map { case (result, finalState) =>
-          result match {
-            case opSeq: OpSeq =>
-              (OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None), finalState)
-            case _ =>
-              (OpSeq(newTerms, None), finalState)
-          }
+        parseRest(next, state).map {
+          case opSeq: OpSeq =>
+            OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
+          case _ =>
+            OpSeq(newTerms, None)
         }
       }
     }
   }
 
   // Identifier handling
-  def handleIdentifierInRest(text: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
-      leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, Expr] = {
-    val afterId = state.advance()
+  def handleIdentifierInRest(text: String, sourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
+    d(_.advance())
 
-    afterId.current match {
+    state.current match {
       case Right(Token.LParen(_)) =>
         debug("parseRest: Found lparen after identifier")
-        parseTuple(afterId).flatMap { case (tuple, afterTuple) =>
+        parseTuple().flatMap { tuple =>
           val functionCall = FunctionCall(
             ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
             tuple,
@@ -718,15 +704,15 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
     }
   }
 
-  private def parseAtom(current: LexerState): Either[ParseError, Expr] =
-    current.current match {
+  private def parseAtom(): Either[ParseError, Expr] =
+    state.current match {
       case Left(err) => Left(err)
       case LBrace(_) =>
         // Check for empty object or block
-        val advance1 = current.advance().skipComments
-        advance1.current match {
+        d(_.advance().skip())
+        state.current match {
           case Left(err)                        => Left(err)
-          case RBrace(_)                        => parseObject(current) // Empty object
+          case RBrace(_)                        => parseObject() // Empty object
           case Id(_, _) | Sym(_, _) | Str(_, _) =>
             // Look ahead for = or => to determine if it's an object
             val afterId = advance1.advance().skipComments
@@ -870,14 +856,14 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
         }
       }
 
-    parseElements(initialState, Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
+    parseElements(Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
   }
 
-  private def parseTuple(state: LexerState): Either[ParseError, Tuple] = state.current match {
+  private def parseTuple(): Either[ParseError, Tuple] = state.current match {
     case LParen(sourcePos) =>
       d(_.advance().skip())
       for {
-        exprs <- parseExprList(afterLParen)
+        exprs <- parseExprList()
         () = d(_.skip())
         result <- state.current match {
           case RParen(_) =>
@@ -1266,11 +1252,11 @@ class LexerV2(initState: LexerState, ignoreLocation: Boolean ) {
     */
   private def createMetaWithComments(
       sourcePos: Option[SourcePos],
-      leadingComments: Vector[CommOrWhite] = Vector.empty,
-      trailingComments: Vector[CommOrWhite] = Vector.empty
+      leadingComments: Vector[Token.Comment | Token.Whitespace] = Vector.empty,
+      trailingComments: Vector[Token.Comment | Token.Whitespace] = Vector.empty
   ): Option[ExprMeta] =
      {
-      ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments, trailingComments))
+      ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments.map(tokenCommentToExpr), trailingComments.map(tokenCommentToExpr)))
     }
 
   // Helper for creating function calls
