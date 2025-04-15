@@ -38,28 +38,28 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
 
 // Only runs against V2 parser
 def parseAndCheckV2(input: String, expected: Expr): Unit = {
+  val source = FileNameAndContent("testFile", input)
+
+  val sourceOffset = SourceOffset(source)
+  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
+  val tokens = tokenizer.tokenize()
   val oldDebug = LexerV2.DEBUG
-  LexerV2.DEBUG = true
   try {
-    val source = FileNameAndContent("testFile", input)
-    val sourceOffset = SourceOffset(source)
+    // LexerV2.DEBUG = true // uncomment when needed
     val lexer = LexerV2(sourceOffset, ignoreLocation = true)
-    
-    val result = lexer.parseString(input)
+
+    val result = lexer
+      .parseExpr(LexerState(tokens.toVector, 0))
       .fold(
         error => {
-          // Safer error display with bounds checking
           val errorIndex = error.pos.index.utf16
-          val lineStart = math.max(0, input.lastIndexOf('\n', errorIndex) + 1)
+          val lineStart = input.lastIndexOf('\n', errorIndex) + 1
           val lineEnd = input.indexOf('\n', errorIndex) match {
             case -1 => input.length
             case n  => n
           }
-          val line = if (lineStart < lineEnd && lineStart < input.length) 
-                       input.substring(lineStart, lineEnd) 
-                     else 
-                       ""
-          val pointer = " " * math.max(0, errorIndex - lineStart) + "^"
+          val line = input.substring(lineStart, lineEnd)
+          val pointer = " " * (errorIndex - lineStart) + "^"
 
           fail(t"""V2 Parsing failed for input: $input
                |Error: ${error.message}
@@ -67,8 +67,8 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
                |$line
                |$pointer""".stripMargin)
         },
-        expr => expr.descentRecursive(_.updateMeta(_ => None))
-      )
+        { case (expr, _) => expr }
+      ).descentRecursive(_.updateMeta(_ =>None))
 
     assertEquals(result, expected, t"Failed for input: $input")
   } finally LexerV2.DEBUG = oldDebug
@@ -91,29 +91,31 @@ def parseV1(input: String): Expr =
 
 // New function to parse with V2 parser only and return the result
 def parseV2(input: String): Expr = {
-  val lexer = LexerV2(SourceOffset(FileNameAndContent("testFile", input)), ignoreLocation = true)
-  
-  lexer.parseString(input).fold(
-    error => {
-      // Safer error display with bounds checking
-      val errorIndex = error.pos.index.utf16
-      val lineStart = math.max(0, input.lastIndexOf('\n', errorIndex) + 1)
-      val lineEnd = input.indexOf('\n', errorIndex) match {
-        case -1 => input.length
-        case n  => n
-      }
-      val line = if (lineStart < lineEnd && lineStart < input.length) 
-                   input.substring(lineStart, lineEnd) 
-                 else 
-                   ""
-      val pointer = " " * math.max(0, errorIndex - lineStart) + "^"
+  val source = FileNameAndContent("testFile", input)
+  val sourceOffset = SourceOffset(source)
+  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
+  val tokens = tokenizer.tokenize()
+  val lexer = LexerV2(sourceOffset, ignoreLocation = true)
 
-      fail(t"""V2 parsing failed for input: $input
-           |Error: ${error.message}
-           |At position ${error.pos}:
-           |$line
-           |$pointer""".stripMargin)
-    },
-    expr => expr
-  )
+  lexer
+    .parseExpr(LexerState(tokens.toVector, 0))
+    .fold(
+      error => {
+        val errorIndex = error.pos.index.utf16
+        val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+        val lineEnd = input.indexOf('\n', errorIndex) match {
+          case -1 => input.length
+          case n  => n
+        }
+        val line = input.substring(lineStart, lineEnd)
+        val pointer = " " * (errorIndex - lineStart) + "^"
+
+        fail(t"""V2 parsing failed for input: $input
+             |Error: ${error.message}
+             |At position ${error.pos}:
+             |$line
+             |$pointer""".stripMargin)
+      },
+      { case (expr, _) => expr }
+    )
 }
