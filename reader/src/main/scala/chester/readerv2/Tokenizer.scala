@@ -1,7 +1,7 @@
 package chester.readerv2
 
 import chester.error.{Pos, RangeInFile, SourcePos}
-import chester.reader.{ParseError, SourceOffset}
+import chester.reader.{ParseError, Source}
 import chester.utils.WithUTF16
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import _root_.io.github.iltotore.iron.*
@@ -13,7 +13,7 @@ import scala.util.{Try, boundary}
 type TokenStream = LazyList[Either[ParseError, Token]]
 
 object Tokenizer {
-  def apply(sourceOffset: SourceOffset): Tokenizer = new Tokenizer(sourceOffset)
+  def apply(sourceOffset: Source): Tokenizer = new Tokenizer(sourceOffset)
   private val escapes = Map('n' -> "\n", 't' -> "\t", 'r' -> "\r", '"' -> "\"", '\\' -> "\\", 'b' -> "\b", 'f' -> "\f")
   private val tokens: Map[Char, SourcePos => Token] = Map(
     '(' -> Token.LParen.apply,
@@ -30,7 +30,7 @@ object Tokenizer {
   )
 }
 
-class Tokenizer(src: SourceOffset) {
+class Tokenizer(src: Source) {
   import Tokenizer.*, boundary.break
 
   private val text = src.readContent.getOrElse("")

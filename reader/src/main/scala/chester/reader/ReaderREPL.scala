@@ -70,7 +70,7 @@ object ReaderREPL {
       input,
       p =>
         new ReaderInternal(
-          SourceOffset(
+          Source(
             FileNameAndContent("repl", input),
             linesOffset = linesOffset,
             posOffset = posOffset

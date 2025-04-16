@@ -15,9 +15,9 @@ import scala.collection.immutable
 import scala.util.*
 
 case class ReaderInternal(
-    sourceOffset: SourceOffset,
-    ignoreLocation: Boolean = false,
-    defaultIndexer: Option[StringIndex] = None
+                           sourceOffset: Source,
+                           ignoreLocation: Boolean = false,
+                           defaultIndexer: Option[StringIndex] = None
 )(using p: P[?]) {
   val fileName = sourceOffset.fileName
   val linesOffset = sourceOffset.linesOffset

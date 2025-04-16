@@ -358,7 +358,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           column = lineAndColumn.column
         )
         val range = RangeInFile(start = pos, end = pos)
-        val source = SourceOffset(FileNameAndContent(uri, text))
+        val source = Source(FileNameAndContent(uri, text))
         val sourcePos = SourcePos(source, range)
 
         logger.debug(t"Generated SourcePos: $sourcePos")

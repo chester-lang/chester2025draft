@@ -1,6 +1,6 @@
 package chester.error
 
-import chester.reader.SourceOffset
+import chester.reader.Source
 import chester.utils.{WithUTF16, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
 import upickle.default.*
@@ -43,7 +43,7 @@ object FileContent {
   )
 }
 
-case class SourcePos(source: SourceOffset, range: RangeInFile) derives ReadWriter {
+case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
   lazy val fileContent: Option[FileContent] = source.readContent.toOption.map(
     FileContent(_, source.linesOffset, source.posOffset)
   )

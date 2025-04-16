@@ -1,7 +1,7 @@
 package chester.readerv2
 import chester.i18n.*
 import chester.error.{Pos, RangeInFile, SourcePos}
-import chester.reader.{ParseError, SourceOffset}
+import chester.reader.{ParseError, Source}
 import chester.syntax.concrete.{
   Block,
   DotCall,
@@ -142,7 +142,7 @@ case class LexerState(
                 pendingTokens)
   }
   def sourcePos: SourcePos = current match {
-    case Left(err) => err.sourcePos.getOrElse(SourcePos(SourceOffset(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
+    case Left(err) => err.sourcePos.getOrElse(SourcePos(Source(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
     case Right(t)  => t.sourcePos
   }
 
@@ -184,7 +184,7 @@ case class LexerState(
 }
 
 object LexerV2 {
-  def apply(sourceOffset: SourceOffset, ignoreLocation: Boolean = false) =
+  def apply(sourceOffset: Source, ignoreLocation: Boolean = false) =
     new LexerV2(sourceOffset, ignoreLocation)
 
   var DEBUG = false // Keep DEBUG flag for tests that use it
@@ -193,7 +193,7 @@ object LexerV2 {
 
 import LexerV2.DEBUG
 
-class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
+class LexerV2(source: Source, ignoreLocation: Boolean) {
 
   private def debug(msg: => String): Unit = if (DEBUG) println(t"[DEBUG] $msg")
 
@@ -238,7 +238,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     else
       PartialFunction.condOpt((startPos, endPos)) {
         case (Some(start), Some(end)) =>
-          ExprMeta(Some(SourcePos(sourceOffset, RangeInFile(start.range.start, end.range.end))), None)
+          ExprMeta(Some(SourcePos(source, RangeInFile(start.range.start, end.range.end))), None)
         case (Some(pos), None) =>
           ExprMeta(Some(pos), None)
         case (None, Some(pos)) =>
@@ -649,7 +649,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
     val hasNewline = state1.current match {
       case Right(ws: Token.Whitespace) =>
         lazy val wsContent = for {
-          source <- sourceOffset.readContent.toOption
+          source <- source.readContent.toOption
           range = ws.sourcePos.range
           if range.start.index.utf16 < source.length && range.end.index.utf16 <= source.length
           content = source.substring(range.start.index.utf16, range.end.index.utf16)
@@ -1041,7 +1041,7 @@ class LexerV2(sourceOffset: SourceOffset, ignoreLocation: Boolean) {
 
   // Helper method to check if whitespace contains a newline
   private def isNewlineWhitespace(token: Token.Whitespace): Boolean = {
-    val maybeSource = sourceOffset.readContent.toOption
+    val maybeSource = source.readContent.toOption
     maybeSource.exists { source =>
       val startPos = token.sourcePos.range.start.index.utf16
       val endPos = token.sourcePos.range.end.index.utf16

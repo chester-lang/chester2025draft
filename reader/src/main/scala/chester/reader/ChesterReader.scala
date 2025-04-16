@@ -25,7 +25,7 @@ object ChesterReader {
           x =>
             parserFunc(
               ReaderInternal(
-                SourceOffset(source),
+                Source(source),
                 ignoreLocation = ignoreLocation,
                 defaultIndexer = Some(indexer)
               )(using x)

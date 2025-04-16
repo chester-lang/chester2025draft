@@ -40,7 +40,7 @@ def parseAndCheckV1(input: String, expected: Expr): Unit = {
 def parseAndCheckV2(input: String, expected: Expr): Unit = {
   val source = FileNameAndContent("testFile", input)
 
-  val sourceOffset = SourceOffset(source)
+  val sourceOffset = Source(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
   val oldDebug = LexerV2.DEBUG
@@ -92,7 +92,7 @@ def parseV1(input: String): Expr =
 // New function to parse with V2 parser only and return the result
 def parseV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
-  val sourceOffset = SourceOffset(source)
+  val sourceOffset = Source(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
   val lexer = LexerV2(sourceOffset, ignoreLocation = true)

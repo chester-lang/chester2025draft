@@ -1,11 +1,11 @@
 package chester.readerv2
-import chester.reader.{FileNameAndContent, ParseError, SourceOffset}
+import chester.reader.{FileNameAndContent, ParseError, Source}
 import chester.syntax.concrete.Expr
 
 object ChesterReaderV2 {
   // Helper method to set up tokenizer and lexer with common logic
   private def setupLexer(source: FileNameAndContent, ignoreLocation: Boolean = false): (LexerV2, LexerState) = {
-    val sourceOffset = SourceOffset(source)
+    val sourceOffset = Source(source)
     val tokenizer = new Tokenizer(sourceOffset)
     val tokens = tokenizer.tokenize()
     val lexer = new LexerV2(sourceOffset, ignoreLocation)

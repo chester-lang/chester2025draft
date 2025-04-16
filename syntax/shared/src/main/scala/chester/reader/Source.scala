@@ -49,7 +49,7 @@ case class FilePath private (fileName: String) extends ParserSource {
 }
 
 // TODO: maybe column offset for the first line also
-case class SourceOffset(
+case class Source(
     source: ParserSource,
     linesOffset: Int :| Positive0 = 0,
     posOffset: WithUTF16 = WithUTF16.Zero
