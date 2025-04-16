@@ -647,7 +647,7 @@ lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("reader"))
   .dependsOn(utils, syntax)
   .settings(
-    commonLibSettings
+    commonSettings
   )
   .jvmSettings(commonJvmLibSettings)
 
@@ -698,7 +698,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler213"))
-  .dependsOn(semantic)
+  .dependsOn(utils, syntax, err)
   .settings(
     scala2Common,
     libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.4")
