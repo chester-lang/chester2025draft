@@ -46,9 +46,7 @@ object CommentInfo {
       commentInEnd: Vector[Comment] = Vector.empty,
       commentEndInThisLine: Vector[Comment] = Vector.empty
   ): Option[CommentInfo] =
-    if (commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty) {
-      None
-    } else { Some(CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine)) }
+    Option.unless(commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty)(CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine))
 }
 
 case class ExprMeta(
@@ -60,8 +58,7 @@ case class ExprMeta(
 
 object ExprMeta {
   def maybe(sourcePos: Option[SourcePos] = None, commentInfo: Option[CommentInfo] = None): Option[ExprMeta] =
-    if (sourcePos.isEmpty && commentInfo.isEmpty) None
-    else Some(ExprMeta(sourcePos, commentInfo))
+    Option.unless(sourcePos.isEmpty && commentInfo.isEmpty)(ExprMeta(sourcePos, commentInfo))
 }
 
 object MetaFactory {
