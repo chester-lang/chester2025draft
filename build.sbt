@@ -743,7 +743,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "org.jline",
         "jline"
       ),
-      "org.scala-lang.modules" % "scala-asm" % "9.8.0-scala-1",
+      "org.scala-lang.modules" % "scala-asm" % "9.7.1-scala-1",
       // "ch.epfl.scala" %% "tasty-query" % "1.4.0",
       // "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
       // "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-9",
