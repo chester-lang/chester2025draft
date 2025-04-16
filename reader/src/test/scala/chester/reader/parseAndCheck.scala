@@ -68,7 +68,8 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
                |$pointer""".stripMargin)
         },
         { case (expr, _) => expr }
-      ).descentRecursive(_.updateMeta(_ =>None))
+      )
+      .descentRecursive(_.updateMeta(_ => None))
 
     assertEquals(result, expected, t"Failed for input: $input")
   } finally LexerV2.DEBUG = oldDebug

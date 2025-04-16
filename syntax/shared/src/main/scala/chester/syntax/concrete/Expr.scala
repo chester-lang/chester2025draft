@@ -41,13 +41,14 @@ case class CommentInfo(
 
 object CommentInfo {
   def maybe(
-             commentBefore: Vector[Comment],
-             commentInBegin: Vector[Comment] = Vector.empty,
-             commentInEnd: Vector[Comment] = Vector.empty,
-             commentEndInThisLine: Vector[Comment] = Vector.empty): Option[CommentInfo] =
-    if(commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty) {
+      commentBefore: Vector[Comment],
+      commentInBegin: Vector[Comment] = Vector.empty,
+      commentInEnd: Vector[Comment] = Vector.empty,
+      commentEndInThisLine: Vector[Comment] = Vector.empty
+  ): Option[CommentInfo] =
+    if (commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty) {
       None
-    } else  {Some(CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine))}
+    } else { Some(CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine)) }
 }
 
 case class ExprMeta(

@@ -78,7 +78,7 @@ class Tokenizer(src: Source) {
       val hasNewline = whitespaceText.contains('\n')
       return Right(Token.Whitespace(mkPos(wsStart, pos), hasNewline))
     }
-    
+
     if (pos >= text.length) return Right(Token.EOF(mkPos(0, 0)))
 
     val start = pos
