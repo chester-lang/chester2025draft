@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "copy-js": "cp js/target/scala-3.7.0-RC2/cli-opt/main.js ./ && cp js/target/scala-3.7.0-RC2/cli-opt/main.js.map ./"
+    "copy-js": "cp js/target/scala-3.7.0-RC3/cli-opt/main.js ./ && cp js/target/scala-3.7.0-RC3/cli-opt/main.js.map ./"
   },
   "repository": {
     "type": "git",

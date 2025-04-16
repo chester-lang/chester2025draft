@@ -1,12 +1,12 @@
 // reads env: NATIVE_IMAGE_OPTIONS, VERSION
 
-val scala3Nightly = "3.7.1-RC1-bin-20250409-7976598-NIGHTLY"
-val scala3Version = "3.7.0-RC2"
+val scala3Nightly = "3.7.1-RC1-bin-20250414-952c334-NIGHTLY"
+val scala3Version = "3.7.0-RC3"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
 
 val graalVm = "graalvm-java24"
-val graalJdkVersion = "24.0.0"
+val graalJdkVersion = "24.0.1"
 val graalvmVersion = "24.2.1"
 
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.31")
@@ -233,7 +233,6 @@ def commonSettings0 = Seq(
       "-experimental",
       "--preview"
     ),
-  // scalafix - won't work on scala 3.7.0-RC1 as for https://github.com/scala/scala3/issues/22812
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.7"),
   libraryDependencies ++= Seq(
