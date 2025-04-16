@@ -20,7 +20,7 @@ object Utils {
               val t: Term = result.wellTyped
               val root = new ChesterRootNode(lang, t)
               root.getCallTarget
-            case TyckResult.Failure(errors, _, _, _) => ???
+            case TyckResult.Failure(_, _, _, _) => ???
             case _                                   => unreachable()
           }
       )

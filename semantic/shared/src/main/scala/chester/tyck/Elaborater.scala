@@ -454,7 +454,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                     val traitCallTerm = TraitTypeTerm(traitDef, convertMeta(expr.meta))
                     unify(ty, Type0, expr)
                     traitCallTerm
-                  case Some(todo) => ???
+                  case Some(_) => ???
                   case None =>
                     val problem = UnboundVariable(name, expr)
                     ck.reporter.apply(problem)
@@ -484,7 +484,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                     val traitCallTerm = TraitTypeTerm(traitDef, convertMeta(expr.meta))
                     unify(ty, Type0, expr)
                     traitCallTerm
-                  case Some(todo) => ???
+                  case Some(_) => ???
                   case None =>
                     val problem = UnboundVariable(name, expr)
                     ck.reporter.apply(problem)
@@ -666,7 +666,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 override def run(using state: StateAbility[Tyck], more: Tyck): Boolean =
                   // Read the argument type
                   state.readStable(toId(argTy)) match {
-                    case Some(Meta(id)) =>
+                    case Some(Meta(_)) =>
                       // Add another propagator for the meta variable
                       state.addPropagator(this)
                       true
@@ -784,7 +784,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               ErrorTerm(problem, convertMeta(meta))
           }
         }
-      case expr @ InfixExpr(left, op, right, associativity, meta) =>
+      case _ @ InfixExpr(left, op, right, associativity, meta) =>
         if (Debug.isEnabled(MethodCalls)) {
           Debug.debugPrint(MethodCalls, t"[INFIX DEBUG] Processing infix expression: ${op.name}")
           Debug.debugPrint(MethodCalls, t"[INFIX DEBUG] Left: $left, Right: $right")

@@ -528,17 +528,17 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             }
 
           // Handle the case where a numeric literal needs to match with an Integer type
-          case (lit: IntTerm, IntegerType(_)) =>
+          case (_: IntTerm, IntegerType(_)) =>
             if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Integer literal matches IntegerType: true")
             return true
-          case (lit: IntegerTerm, IntegerType(_)) =>
+          case (_: IntegerTerm, IntegerType(_)) =>
             if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Integer literal matches IntegerType: true")
             return true
           // The inverse
-          case (IntegerType(_), lit: IntTerm) =>
+          case (IntegerType(_), _: IntTerm) =>
             if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   IntegerType matches integer literal: true")
             return true
-          case (IntegerType(_), lit: IntegerTerm) =>
+          case (IntegerType(_), _: IntegerTerm) =>
             if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   IntegerType matches integer literal: true")
             return true
 

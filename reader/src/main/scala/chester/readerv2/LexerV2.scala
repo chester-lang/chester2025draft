@@ -998,7 +998,7 @@ class LexerV2(source: Source, ignoreLocation: Boolean) {
                       blockCurrent = afterSemi
                       debug(t"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
 
-                    case Right(whitespaceTok @ Token.Whitespace(_, _)) =>
+                    case Right(_ @ Token.Whitespace(_, _)) =>
                       debug("parseBlock: Expression followed by whitespace, checking for newlines and case")
 
                       // Get next token after whitespace
@@ -1009,7 +1009,7 @@ class LexerV2(source: Source, ignoreLocation: Boolean) {
                       blockCurrent = afterWs
                       debug(t"parseBlock: After whitespace, statements=${statements.size}, blockCurrent=$blockCurrent")
 
-                    case Right(t) if isCaseIdentifier(next.current) =>
+                    case Right(_) if isCaseIdentifier(next.current) =>
                       debug("parseBlock: Found 'case' after expression, adding to statements")
                       statements = statements :+ expr
                       blockCurrent = next

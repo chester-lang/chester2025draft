@@ -305,7 +305,7 @@ trait ProvideMultithread extends ProvideImpl {
                 val _ = ForkJoinTask.invokeAll(tasks.asJava)
                 tick
               } catch {
-                case e: Exception =>
+                case _: Exception =>
                   // Log exception but continue processing
                   setDidSomething(true)
               }
@@ -336,7 +336,7 @@ trait ProvideMultithread extends ProvideImpl {
               // Final check for unresolved cells
               cellsNeeded = cellsNeeded.filter(_.noAnyValue)
             } catch {
-              case e: Exception =>
+              case _: Exception =>
                 // Continue even if there's an exception
                 setDidSomething(true)
             }
@@ -353,7 +353,7 @@ trait ProvideMultithread extends ProvideImpl {
         case e: IllegalStateException =>
           // Rethrow illegal state exceptions
           throw e
-        case e: Exception =>
+        case _: Exception =>
           // Log other exceptions but allow processing to continue
           setDidSomething(true)
       } finally decrementRecursionDepth(): Unit
@@ -379,7 +379,7 @@ trait ProvideMultithread extends ProvideImpl {
             }
           }
         catch {
-          case ex: Exception =>
+          case _: Exception =>
             // Just mark as doing something and continue
             setDidSomething(true)
         }
@@ -405,7 +405,7 @@ trait ProvideMultithread extends ProvideImpl {
             }
           }
         catch {
-          case ex: Exception =>
+          case _: Exception =>
             // Just mark as doing something and continue
             setDidSomething(true)
         }
@@ -439,7 +439,7 @@ trait ProvideMultithread extends ProvideImpl {
                 propagator.naiveFallbackZonk(Vector(c))(using state, more)
               }
             catch {
-              case e: Exception =>
+              case _: Exception =>
                 // Continue with NotYet result on exception
                 ZonkResult.NotYet
             }
@@ -464,7 +464,7 @@ trait ProvideMultithread extends ProvideImpl {
                   state.zonk(newNeeded)
                   setDidSomething(true)
                 } catch {
-                  case e: Exception =>
+                  case _: Exception =>
                     // Just mark as doing something and continue
                     setDidSomething(true)
                 }

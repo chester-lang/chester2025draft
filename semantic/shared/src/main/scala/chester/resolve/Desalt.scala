@@ -362,7 +362,7 @@ case object SimpleDesalt {
         val desugaredLhs = desugar(lhs)
         val desugaredRhs = desugar(rhs)
         TypeAnotationNoEffects(desugaredLhs, desugaredRhs, meta)
-      case opseq @ OpSeq(Vector(Identifier(Const.Import, _), some), meta) =>
+      case _ @ OpSeq(Vector(Identifier(Const.Import, _), some), meta) =>
         Some(some) match {
           case Some(qualifiedName) =>
             val modulePath = ModuleRef(
@@ -372,7 +372,7 @@ case object SimpleDesalt {
             )
             ImportStmt(modulePath, meta)
         }
-      case opseq @ OpSeq(Vector(Identifier(Const.Module, _), some), meta) =>
+      case _ @ OpSeq(Vector(Identifier(Const.Module, _), some), meta) =>
         Some(some) match {
           case Some(qualifiedName) =>
             val modulePath = ModuleRef(
