@@ -9,9 +9,7 @@ import fastparse.*
 import fastparse.NoWhitespace.*
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
 
-import scala.collection.immutable
 import scala.util.*
 
 case class ReaderInternal(

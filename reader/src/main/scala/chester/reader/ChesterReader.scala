@@ -7,7 +7,6 @@ import chester.error.*
 import _root_.io.github.iltotore.iron.*
 import chester.i18n.*
 
-import scala.collection.immutable
 import scala.util.*
 object ChesterReader {
 

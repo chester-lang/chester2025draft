@@ -23,11 +23,8 @@ import chester.syntax.concrete.{
   RationalLiteral as ConcreteRationalLiteral,
   StringLiteral as ConcreteStringLiteral
 }
-import chester.syntax.concrete.Literal.*
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
-import chester.error.*
-import chester.reader.*
 import chester.syntax.*
 import chester.syntax.concrete.*
 
