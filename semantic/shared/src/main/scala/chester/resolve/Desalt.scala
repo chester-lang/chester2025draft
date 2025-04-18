@@ -629,7 +629,8 @@ case object OpSeqDesalt {
           return opseq
         }
 
-        val types = typeIndices.map(seq(_)).toVector
+        // Process each individual type expression through SimpleDesalt
+        val types = typeIndices.map(idx => SimpleDesalt.desugar(seq(idx))).toVector
 
         // Create a UnionTypeExpr with the extracted types
         UnionTypeExpr(types, meta)

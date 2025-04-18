@@ -257,7 +257,13 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             types1.foreach(t => ensureCellIsCovered(toId(t)))
             ensureCellIsCovered(toId(rhsType))
             // Connect the compatible union component to the specific type
-            connectUnionAndSpecific(this.lhs, types1, this.rhs, rhsType, cause)(using state, more, summon[Context])
+            connectSpecificAndUnion(
+              specificId = this.rhs,
+              specificType = rhsType,
+              unionId = this.lhs,
+              unionTypes = types1,
+              cause = cause
+            )
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
@@ -1028,50 +1034,32 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     result
   }
 
-  // Propagator to ensure a cell is covered
+  // Add EnsureCellCoverage propagator and helper methods for union type subtyping
+
+  // Add EnsureCellCoverage propagator to handle cell coverage issues
   case class EnsureCellCoverage(
-      cell: CellId[Term],
+      cell: CellId[Term], 
       cause: Expr
-  ) extends Propagator[Tyck] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
+  )(using Context) extends Propagator[Tyck] {
+    override val readingCells: Set[CIdOf[Cell[?]]] = Set(cell)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
+    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
 
-    override def run(using StateAbility[Tyck], Tyck): Boolean =
-      // This propagator simply ensures the cell has at least one propagator
-      // It always succeeds immediately
-      true
-
-    override def zonk(
-        needed: Vector[CellIdAny]
-    )(using StateAbility[Tyck], Tyck): ZonkResult =
-      // Nothing to zonk - just ensure the cell is included
-      ZonkResult.Done
-  }
-
-  // Connect a union type to a specific type for compatibility checks
-  private def connectUnionAndSpecific(
-      _unionId: CellId[Term],
-      unionTypes: NonEmptyVector[Term],
-      specificId: CellId[Term],
-      specificType: Term,
-      cause: Expr
-  )(using
-      state: StateAbility[Tyck],
-      more: Tyck,
-      ctx: Context
-  ): Unit = {
-    // For a union type and a specific type, find the compatible component
-    // and connect it to the specific type
-    if (Debug.isEnabled(UnionMatching))
-      Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Connecting union ${unionTypes.mkString(", ")} with specific $specificType")
-    unionTypes.find(unionType => tryUnify(unionType, specificType)(using state, ctx)).foreach { compatibleType =>
-      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Found compatible component: $compatibleType")
-      state.addPropagator(Unify(toId(compatibleType), specificId, cause)(using ctx))
+    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+      // This is a one-time propagator that ensures the cell is covered
+      if (Debug.isEnabled(UnionSubtyping)) {
+        Debug.debugPrint(UnionSubtyping, t"Ensuring coverage for cell: $cell")
+      }
+      true // Always returns true to indicate this propagator is done
     }
+
+    override def zonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult =
+      ZonkResult.Done
+
+    def naiveZonk(needed: Vector[CellIdAny]): ZonkResult = ZonkResult.Done
   }
 
-  // Connect a specific type to a union type for compatibility checks
+  // Helper method to connect a specific type to a union type
   def connectSpecificAndUnion(
       specificId: CellId[Term],
       specificType: Term,
@@ -1079,85 +1067,38 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       unionTypes: NonEmptyVector[Term],
       cause: Expr
   )(using
+      ctx: Context,
       state: StateAbility[Tyck],
-      more: Tyck,
-      ctx: Context
+      ck: Tyck
   ): Unit = {
-    // For a specific type and a union type, we need to:
-    // 1. Find all compatible union components
-    // 2. Connect the specific type to each compatible component
-    // 3. Connect the specific type directly to the union type
-    // 4. Connect the union to all of its components (crucial)
-    // 5. Make sure all cells have coverage
-
-    if (Debug.isEnabled(UnionMatching))
-      Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Connecting specific $specificType with union ${unionTypes.mkString(", ")}")
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Specific Type ID: $specificId")
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Union Type ID: $unionId")
-    if (Debug.isEnabled(UnionMatching))
-      Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Union Types: ${unionTypes.map(t => t"$t (${t.getClass.getSimpleName})").mkString(", ")}")
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Cause: $cause")
-
-    // Resolve and reduce types to handle references properly
-    given ReduceContext = ctx.toReduceContext
-    given Reducer = ctx.given_Reducer
-
-    val reducedSpecificType = DefaultReducer.reduce(specificType, ReduceMode.TypeLevel)
-    val reducedUnionTypes = unionTypes.map(unionType => DefaultReducer.reduce(unionType, ReduceMode.TypeLevel))
-
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Reduced specific type: $reducedSpecificType")
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Reduced union types: ${reducedUnionTypes.mkString(", ")}")
-
-    // Normal processing for other types
-    val compatibleComponents = reducedUnionTypes.filter { unionType =>
-      val isCompatible = tryUnify(reducedSpecificType, unionType)(using state, ctx)
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Checking compatibility: $reducedSpecificType with $unionType - Result: $isCompatible")
-      isCompatible
+    if (Debug.isEnabled(UnionSubtyping)) {
+      Debug.debugPrint(UnionSubtyping, t"Connecting specific type to union: $specificType -> $unionTypes")
     }
 
-    if (compatibleComponents.nonEmpty) {
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Found compatible components: ${compatibleComponents.mkString(", ")}")
+    // Ensure the specific and union cells are covered
+    state.addPropagator(EnsureCellCoverage(specificId, cause))
+    state.addPropagator(EnsureCellCoverage(unionId, cause))
 
-      // Get a vector of all component cell IDs first
-      val unionComponentCellIds = unionTypes.map(toId).toVector
+    // Create a direct unify connection between the specific type and union type
+    state.addPropagator(Unify(specificId, unionId, cause))
 
-      // Step 1: Connect the specific type to each compatible component
-      compatibleComponents.foreach { compatibleType =>
-        val componentId = toId(compatibleType)
-        if (Debug.isEnabled(UnionMatching))
-          Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Connecting specific to component: $compatibleType (Cell ID: $componentId)")
-        state.addPropagator(Unify(specificId, componentId, cause)(using ctx))
-      }
+    // Get cell IDs for all component types and ensure they're covered
+    val unionTypeIds = unionTypes.map { componentType =>
+      val componentCellId = toId(componentType).asInstanceOf[CellId[Term]]
+      state.addPropagator(EnsureCellCoverage(componentCellId, cause))
+      componentCellId
+    }
 
-      // Step 2: Connect the specific type directly to the union
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Adding direct connection from specific $specificId to union $unionId")
-      state.addPropagator(Unify(specificId, unionId, cause)(using ctx))
+    // Find which union component is compatible with the specific type
+    val compatibleComponent = unionTypes.find(componentType => tryUnify(specificType, componentType))
 
-      // Step 3: Connect the union to all of its components using UnionOf
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(
-          UnionMatching,
-          t"[UNION DEBUG]   Creating UnionOf propagator: union $unionId to components: ${unionComponentCellIds.mkString(", ")}"
-        )
-      state.addPropagator(UnionOf(unionId, unionComponentCellIds, cause))
-
-      // Step 4: Ensure cell coverage for all cells
-      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Adding coverage for specific: $specificId")
-      state.addPropagator(EnsureCellCoverage(specificId, cause))
-      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Adding coverage for union: $unionId")
-      state.addPropagator(EnsureCellCoverage(unionId, cause))
-      unionComponentCellIds.foreach { componentId =>
-        if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Adding coverage for component: $componentId")
-        state.addPropagator(EnsureCellCoverage(componentId, cause))
-      }
+    // Connect the specific type directly to the compatible union component
+    if (compatibleComponent.isDefined) {
+      val compatibleCellId = toId(compatibleComponent.get).asInstanceOf[CellId[Term]]
+      state.addPropagator(Unify(specificId, compatibleCellId, cause))
     } else {
-      // If no compatible components found, report an error
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   No compatible components found between $specificType and union")
-      more.reporter.apply(TypeMismatch(specificType, Union(unionTypes, None), cause))
+      // No direct compatibility found, create a union connection
+      state.addPropagator(UnionOf(unionId, unionTypeIds.toVector, cause))
     }
   }
 

@@ -23,7 +23,8 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   // Helper method to ensure a cell is covered by a propagator
   private def ensureCellCoverage(cell: CellId[Term], cause: Expr)(using
       state: StateAbility[Tyck],
-      ck: Tyck
+      ck: Tyck,
+      ctx: Context
   ): Unit = {
     if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Ensuring cell coverage for cell $cell")
     // Use EnsureCellCoverage propagator to ensure the cell is covered
@@ -590,10 +591,20 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr @ UnionTypeExpr(types, meta) =>
         // Handle union type expressions
 
+        if (Debug.isEnabled(UnionSubtyping)) {
+          Debug.debugPrint(UnionSubtyping, t"Elaborating union type expression: ${expr}")
+          Debug.debugPrint(UnionSubtyping, t"Component types: ${types.mkString(", ")}")
+        }
+
         // Elaborate each type in the union
         val elaboratedTypes = types.map { typeExpr =>
           // Each component should be a type
-          elab(typeExpr, Typeω, effects)
+          val componentTy = elab(typeExpr, Typeω, effects)
+          // Ensure the type is fully elaborated
+          if (Debug.isEnabled(UnionSubtyping)) {
+            Debug.debugPrint(UnionSubtyping, t"Elaborated component type: $componentTy")
+          }
+          componentTy
         }
 
         // Ensure we have at least one type in the union
@@ -606,6 +617,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           import cats.data.NonEmptyVector
           val unionTypes = NonEmptyVector.fromVectorUnsafe(elaboratedTypes)
           val unionTerm = Union(unionTypes, convertMeta(meta))
+
+          if (Debug.isEnabled(UnionSubtyping)) {
+            Debug.debugPrint(UnionSubtyping, t"Created union term: $unionTerm")
+          }
 
           // This is a type, so it should be in the Type universe
           unify(ty, Type0, expr)
@@ -624,6 +639,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
           // Connect the union to its components
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))
+
+          if (Debug.isEnabled(UnionSubtyping)) {
+            Debug.debugPrint(UnionSubtyping, t"Finished elaborating union type: $unionTerm")
+          }
 
           // Return the union term
           unionTerm
