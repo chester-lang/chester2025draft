@@ -45,8 +45,11 @@
      - Tests may appear to pass when they actually fail
      - This can lead to false confidence in your changes
    - ⚠️ **CRITICAL: NEVER use `--` to pass arguments to tests** ⚠️
-     - Example of what NOT to do: `sbt "rootJVM/testOnly -- -t MyTest"`
-     - This is not supported and will cause tests to run incorrectly
+     - ⚠️ **ABSOLUTELY PROHIBITED**: `sbt "rootJVM/testOnly -- -t MyTest"`
+     - ⚠️ **ABSOLUTELY PROHIBITED**: `sbt "rootJVM/testOnly -- -only file.chester"`
+     - ⚠️ **DANGEROUS**: Using `--` with ANY arguments will cause tests to run incorrectly
+     - ⚠️ **DO NOT ATTEMPT**: This is strictly forbidden and will produce incorrect results
+     - There is NO VALID USE CASE for passing arguments after `--` to any test
    - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
    - Add new tests for new functionality
