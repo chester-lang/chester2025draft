@@ -41,3 +41,7 @@ agents:
       - user_task_init
       - user_task_update
     max_walker_depth: 1
+
+custom_rules: |
+  1. Always THINK CAREFULLY before you act.
+  2. read docs/src/dev for development guidelines and documents first
