@@ -20,41 +20,7 @@ import scala.util.boundary.break
 
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
-  // Helper method to ensure a cell is covered by a propagator
-  private def ensureCellCoverage(cell: CellId[Term], cause: Expr)(using
-      state: StateAbility[Tyck],
-      ck: Tyck,
-      ctx: Context
-  ): Unit = {
-    if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Ensuring cell coverage for cell $cell")
-    // Use ensureCellConnections from TyckPropagator to establish proper connections
-    val cellTerm = state.readStable(cell) match {
-      case Some(term) => term
-      case None => Meta(cell) // If cell has no value yet, wrap it in a Meta
-    }
-    ensureCellConnections(cellTerm, cause)
-  }
-
-  // Helper method to ensure cell coverage for all union components
-  private def ensureUnionComponentsCoverage(
-      unionTypes: NonEmptyVector[Term],
-      cause: Expr
-  )(using
-      StateAbility[Tyck],
-      Context,
-      Tyck
-  ): Vector[CellId[Term]] = {
-    // Get cell IDs for all union component types and ensure they're covered
-    val unionTypeIds = unionTypes.map { typ =>
-      val cellId = toId(typ)
-      ensureCellCoverage(cellId, cause)
-      cellId
-    }.toVector
-
-    unionTypeIds
-  }
-
-  // Helper method for connecting union types to their components
+  // Function to directly connect union cell to its components 
   private def connectUnionToComponents(
       unionCell: CellId[Term],
       componentIds: Vector[CellId[Term]],
@@ -68,37 +34,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       Debug.debugPrint(UnionSubtyping, t"Creating UnionOf propagator: union cell $unionCell connected to components: ${componentIds.mkString(", ")}")
     }
     state.addPropagator(UnionOf(unionCell, componentIds, cause))
-  }
-
-  // Process all terms in a function application to ensure proper cell coverage
-  private def processFunctionCall(term: Term, cause: Expr)(using
-      StateAbility[Tyck],
-      Context,
-      Tyck
-  ): Unit = {
-    // Get cell ID
-    val cellId = toId(term)
-
-    // Ensure this cell is covered
-    ensureCellCoverage(cellId, cause)
-
-    // For composite terms like function calls, also ensure sub-term coverage
-    term match {
-      case fcall: FCallTerm =>
-        if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing function call: $fcall")
-        // Process function and arguments recursively
-        processFunctionCall(fcall.f, cause)
-        fcall.args.foreach(arg => processFunctionCall(arg, cause))
-      case Union(types, _) =>
-        if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing union: $term")
-        // Process all union types
-        types.foreach(t => processFunctionCall(t, cause))
-      case Intersection(types, _) =>
-        if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing intersection: $term")
-        // Process all intersection types
-        types.foreach(t => processFunctionCall(t, cause))
-      case _ => // No further processing needed for simple terms
-    }
   }
 
   def checkType(expr: Expr)(using
@@ -188,17 +123,13 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         val lhsCell = toId(lhs)
         val rhsCell = toId(rhs)
 
-        // Ensure all cells are covered by propagators
-        ensureCellCoverage(lhsCell, cause)
-        ensureCellCoverage(rhsCell, cause)
-
         // Create a direct unify connection between the two union types
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Creating Unify propagator between $lhsCell and $rhsCell")
         state.addPropagator(Unify(lhsCell, rhsCell, cause))
 
-        // Get cell IDs for all component types and ensure they're covered
-        val lhsTypeIds = ensureUnionComponentsCoverage(types1, cause)
-        val rhsTypeIds = ensureUnionComponentsCoverage(types2, cause)
+        // Get component cells and create necessary structural relationships
+        val lhsTypeIds = types1.map(toId).toVector
+        val rhsTypeIds = types2.map(toId).toVector
 
         // Connect unions to their components
         connectUnionToComponents(lhsCell, lhsTypeIds, cause)
@@ -228,21 +159,35 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           Debug.debugPrint(UnionSubtyping, t"Union Component Types: ${unionTypes.mkString(", ")}")
         }
 
-        // For specific-to-union subtyping, delegate to the connectSpecificAndUnion method
-        // which handles all the necessary propagators and cell coverage
-
         // Get cell IDs for both types
         val specificCellId = toId(specificType)
         val unionCellId = toId(union).asInstanceOf[CellId[Term]]
 
-        // Use the helper method to connect the specific type to the union
-        connectSpecificAndUnion(
-          specificId = specificCellId,
-          specificType = specificType,
-          unionId = unionCellId,
-          unionTypes = unionTypes,
-          cause = cause
-        )
+        // Create a direct unify connection
+        state.addPropagator(Unify(specificCellId, unionCellId, cause))
+
+        // Check compatibility with any union component
+        val compatibleComponent = unionTypes.find(unionType => tryUnify(specificType, unionType))
+
+        if (compatibleComponent.isDefined) {
+          if (Debug.isEnabled(UnionSubtyping)) {
+            Debug.debugPrint(UnionSubtyping, t"Found compatible component: ${compatibleComponent.get}")
+          }
+          
+          // Connect to the component directly
+          val componentId = toId(compatibleComponent.get)
+          state.addPropagator(Unify(specificCellId, componentId, cause))
+          
+          // Connect the union to all its components
+          val componentIds = unionTypes.map(toId).toVector
+          connectUnionToComponents(unionCellId, componentIds, cause)
+        } else {
+          // If no compatible component is found, report a type mismatch
+          if (Debug.isEnabled(UnionSubtyping)) {
+            Debug.debugPrint(UnionSubtyping, t"No compatible union component found for $specificType")
+          }
+          ck.reporter.apply(TypeMismatch(specificType, Union(unionTypes, None), cause))
+        }
 
       // Union-to-Specific subtyping (function return case in test)
       case (union @ Union(unionTypes, _), specificType) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
@@ -267,20 +212,53 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       // Add cases for function calls after the specific union cases
       case (fcall: FCallTerm, _) =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing function call in unify: $fcall")
-        // Ensure all cells in the function call have proper coverage
-        processFunctionCall(fcall, cause)
+        // Connect function call components directly
+        connectFunctionCallComponents(fcall, cause)
 
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       case (_, fcall: FCallTerm) =>
         if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing function call in unify (RHS): $fcall")
-        // Ensure all cells in the function call have proper coverage
-        processFunctionCall(fcall, cause)
+        // Connect function call components directly
+        connectFunctionCallComponents(fcall, cause)
 
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
 
       case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+    }
+  }
+
+  // Helper function to directly connect function call components
+  private def connectFunctionCallComponents(fcall: FCallTerm, cause: Expr)(using
+      state: StateAbility[Tyck],
+      ctx: Context,
+      ck: Tyck
+  ): Unit = {
+    // Connect the function
+    val fCell = toId(fcall.f)
+    
+    // Connect all arguments
+    for (calling <- fcall.args) {
+      for (arg <- calling.args) {
+        arg match {
+          case CallingArgTerm(term, _, _, _, _) =>
+            // Create direct connections for any nested union/intersection types in args
+            term match {
+              case Union(types, _) =>
+                val unionCell = toId(term)
+                val componentCells = types.map(toId).toVector
+                connectUnionToComponents(unionCell, componentCells, cause)
+              case Intersection(types, _) => 
+                val intersectionCell = toId(term)
+                val componentCells = types.map(toId).toVector
+                state.addPropagator(IntersectionOf(intersectionCell, componentCells, cause))
+              case nestedFCall: FCallTerm =>
+                connectFunctionCallComponents(nestedFCall, cause)
+              case _ => // No special handling needed
+            }
+        }
+      }
     }
   }
 
@@ -320,53 +298,13 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
     if (!allCompatible) {
       ck.reporter.apply(TypeMismatch(union, specificType, cause))
     } else {
-      // Ensure the cell for the union and specific type are covered
-      ensureCellCoverage(toId(union), cause)
-      ensureCellCoverage(toId(specificType), cause)
-    }
-  }
-
-  // Helper method for connecting a specific type to a union type
-  private def connectSpecificAndUnion(
-      specificId: CellId[Term],
-      specificType: Term,
-      unionId: CellId[Term],
-      unionTypes: NonEmptyVector[Term],
-      cause: Expr
-  )(using
-      state: StateAbility[Tyck],
-      ctx: Context,
-      ck: Tyck
-  ): Unit = {
-    if (Debug.isEnabled(UnionSubtyping)) {
-      Debug.debugPrint(UnionSubtyping, t"Connecting specific type $specificType to union components ${unionTypes.mkString(", ")}")
-      Debug.debugPrint(UnionSubtyping, t"  Cell IDs: $specificId -> $unionId")
-    }
-
-    // First, ensure both cells are covered
-    ensureCellCoverage(specificId, cause)
-    ensureCellCoverage(unionId, cause)
-
-    // Create a direct unify connection
-    state.addPropagator(Unify(specificId, unionId, cause))
-
-    // Check compatibility with any union component
-    val compatibleComponent = unionTypes.find(unionType => tryUnify(specificType, unionType))
-
-    if (compatibleComponent.isDefined) {
-      if (Debug.isEnabled(UnionSubtyping)) {
-        Debug.debugPrint(UnionSubtyping, t"Found compatible component: ${compatibleComponent.get}")
-      }
-
-      // Connect to the specific compatible component
-      val componentId = toId(compatibleComponent.get)
-      state.addPropagator(Unify(specificId, componentId, cause))
-    } else {
-      // If no compatible component is found, report a type mismatch
-      if (Debug.isEnabled(UnionSubtyping)) {
-        Debug.debugPrint(UnionSubtyping, t"No compatible union component found for $specificType")
-      }
-      ck.reporter.apply(TypeMismatch(specificType, Union(unionTypes, None), cause))
+      // Connect the union to its components
+      val unionCell = toId(union)
+      val componentCells = unionTypes.map(toId).toVector
+      connectUnionToComponents(unionCell, componentCells, cause)
+      
+      // Create direct connection from union to specific
+      state.addPropagator(Unify(unionCell, toId(specificType), cause))
     }
   }
 }
@@ -630,7 +568,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         val elaboratedTypes = types.map { typeExpr =>
           // Each component should be a type
           val componentTy = elab(typeExpr, Typeω, effects)
-          // Ensure the type is fully elaborated
           if (Debug.isEnabled(UnionSubtyping)) {
             Debug.debugPrint(UnionSubtyping, t"Elaborated component type: $componentTy")
           }
@@ -655,19 +592,11 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           // This is a type, so it should be in the Type universe
           unify(ty, Type0, expr)
 
-          // Ensure each component type has a propagator for cell coverage
-          val componentCellIds = elaboratedTypes.map { componentType =>
-            val cellId = toId(componentType)
-            // Use ensureCellConnections directly
-            ensureCellConnections(componentType, expr)
-            cellId
-          }
-
-          // Get the cell ID for the union term and ensure it's covered
+          // Create direct connections between union and its components
           val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
-          ensureCellConnections(unionTerm, expr)
-
-          // Connect the union to its components
+          val componentCellIds = elaboratedTypes.map(toId).toVector
+          
+          // Connect the union to its components directly
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))
 
           if (Debug.isEnabled(UnionSubtyping)) {
