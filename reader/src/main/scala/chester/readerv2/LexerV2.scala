@@ -301,7 +301,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val afterMatch = current.advance()
 
         // For match blocks, parse using the regular block parser with no special case handling
-        withComments(parseBlock)(afterMatch).map { case (block, afterBlock) =>
+        this.state = afterMatch
+        parseBlock().map { block =>
+          val afterBlock = this.state
           // Create the match expression with the block as-is
           val matchExpr = OpSeq(Vector(expr, matchId, block), None)
           (matchExpr, afterBlock)
@@ -364,7 +366,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   private def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos)(
       leadingComments: Vector[CommOrWhite]
   ): Either[ParseError, (Expr, LexerState)] =
-    withComments(parseBlock)(state).flatMap { case (block, afterBlock) =>
+    this.state = state
+    parseBlock().flatMap { block =>
+      val afterBlock = this.state
       // Create appropriate expression based on context
       val newExpr = expr match {
         case funcCall: FunctionCall =>
@@ -503,7 +507,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         }
       case Right(Token.LBrace(_)) =>
         debug("parseRest: Found lbrace after identifier")
-        withComments(parseBlock)(afterId).flatMap { case (block, afterBlock) =>
+        this.state = afterId
+        parseBlock().flatMap { block =>
+          val afterBlock = this.state
           // In V1 parser, a block after an identifier in infix is treated as part of the OpSeq
           val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
           val updatedTerms = terms :+ id :+ block
@@ -678,7 +684,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                 parseNextTelescope(afterArgs)
               }
             case Right(Token.LBrace(_)) =>
-              parseBlock(state).flatMap { case (block, afterBlock) =>
+              this.state = state
+              parseBlock().flatMap { block =>
+                val afterBlock = this.state
                 telescope = telescope :+ Tuple(Vector(block), None)
                 parseNextTelescope(afterBlock)
               }
@@ -721,9 +729,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             afterId.current match {
               case Left(err)                            => Left(err)
               case Op(op, _) if op == "=" || op == "=>" => parseObject(current)
-              case _                                    => withComments(parseBlock)(current)
+              case _                                    => 
+                this.state = current
+                parseBlock().map(block => (block, this.state))
             }
-          case _ => withComments(parseBlock)(current)
+          case _ => 
+            this.state = current
+            parseBlock().map(block => (block, this.state))
         }
 
       case LParen(_) => parseTuple(current)
@@ -903,12 +915,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     case _                                 => false
   }
 
-  private def parseBlock(state: LexerState): Either[ParseError, (Block, LexerState)] = {
+  private def parseBlock(): Either[ParseError, Block] = {
     // Enable newLineAfterBlockMeansEnds for all blocks
-    val contextState = state.withNewLineTermination(true)
-    debug(t"parseBlock: starting with state=$contextState")
+    this.state = this.state.withNewLineTermination(true)
+    debug(t"parseBlock: starting with state=${this.state}")
 
-    val (_, current) = collectComments(contextState)
+    val (_, current) = collectComments(this.state)
     var statements = Vector[Expr]()
     var result: Option[Expr] = None
     var maxExpressions = 100 // Prevent infinite loops
@@ -933,9 +945,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             case Right(Token.RBrace(_)) =>
               debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
               val finalBlock = Block(statements, result, None)
-              blockCurrent = blockCurrent.advance()
+              this.state = blockCurrent.advance()
               debug(t"parseBlock: Returning block with ${statements.size} statements, result=${result.isDefined}")
-              return Right((finalBlock, blockCurrent))
+              return Right(finalBlock)
 
             case Right(Token.Semicolon(_)) =>
               debug("parseBlock: Found semicolon, advancing")
@@ -993,7 +1005,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                       result = Some(expr)
                       blockCurrent = next.advance()
                       debug(t"parseBlock: Returning block with ${statements.size} statements and result=$expr")
-                      return Right((Block(statements, result, None), blockCurrent))
+                      this.state = blockCurrent
+                      return Right(Block(statements, result, None))
 
                     case Right(Token.Semicolon(_)) =>
                       debug("parseBlock: Expression followed by semicolon, adding to statements")
@@ -1373,6 +1386,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   private def withComments[T <: Expr](
       parseMethod: LexerState => Either[ParseError, (T, LexerState)]
   )(state: LexerState): Either[ParseError, (T, LexerState)] = {
+    // Implementation for methods that return state in tuple format
     // Collect leading comments
     val (leadingComments, afterLeadingComments) = collectComments(state)
 
