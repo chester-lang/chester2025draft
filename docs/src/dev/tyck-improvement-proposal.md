@@ -18,94 +18,37 @@ Recent improvements have focused on enhancing support for dependent types, which
 
 ## 2. Current Status and Progress
 
-**Note**: The key improvements implemented so far have been moved to the devlog entry for 2025-03-15. Refer to `docs/src/dev/devlog.md` for details on completed improvements.
+**Note**: Many key improvements have been completed and documented in the devlog entries. Refer to `docs/src/dev/devlog.md` for details on completed improvements, particularly those related to type system enhancements, trait implementation, and the new AutoConnect propagator.
 
 ## 3. Remaining Issues and Implementation Plan
 
-### 3.1 Union Type Subtyping Implementation
+### 3.1 ✅ Union Type Subtyping Implementation
 
-The union type implementation has progressed with initial support for the pipe operator (`|`) syntax, but there are still challenges to resolve:
+**Status: COMPLETED**
 
-**Note**: The implementation of improved cell coverage logic and syntactic support for the pipe operator has been completed and documented in the devlog entry for 2025-03-15. Refer to `docs/src/dev/devlog.md` for details on completed improvements.
+The union type implementation has been completed with full support for the pipe operator (`|`) syntax and proper subtyping relationships. All components have been implemented as documented in the devlog.
 
-**🚧 Type Checking Issues**: While syntactically Union types can be parsed, there are currently issues with:
-   - Type mismatches between `Integer` and `Integer | String`
-   - Subtyping relationships not being properly resolved
-   - Nested union types and generics not fully supported
+Completed implementations include:
+- Union-to-Union subtyping (`A|B <: C|D`)
+- Specific-to-Union subtyping (`A <: B|C`)
+- Union-to-Specific subtyping (`A|B <: C`)
+- Cell coverage mechanisms for union types
+- Proper type checking for union types in all contexts
 
-**Next Steps**:
-1. Fix the core subtyping mechanism to ensure consistent behavior:
-   - Implement proper subtyping for `A <: A|B` relationships
-   - Ensure consistent behavior in all contexts (function returns, assignments)
-   - Fix cell coverage for all union type scenarios
+### 3.2 ✅ Removal of the EnsureCellCoverage Hack
 
-2. Enhance parser and desalter support:
-   - Improve handling of parenthesized union types
-   - Add special handling for union types with generic parameters
-   - Support deeper nested union types
+**Status: COMPLETED**
 
-3. Create a comprehensive test suite:
-   - Simple union type assignments
-   - Function return types with unions
-   - Nested union types
-   - Unions with generic type parameters
+The `EnsureCellCoverage` hack has been replaced with a proper `AutoConnect` propagator that establishes meaningful type relationships. See the devlog for implementation details.
 
-**Success Criteria**:
-- All existing tests pass without errors
-- New complex union type test cases pass
-- No cell coverage errors occur
-- Union types can be used seamlessly with other type constructs
+Key improvements include:
+- Analysis of term structure to create proper type connections
+- Smart handling of union and intersection types
+- Specialized support for function calls and their arguments
+- Default value support for truly unconstrained type variables
+- Complete removal of all `EnsureCellCoverage` instances
 
-### 3.2 Removal of the EnsureCellCoverage Hack
-
-#### Issue Description
-
-The current implementation uses a `EnsureCellCoverage` propagator that acts as a "hack" to prevent "cells not covered by any propagator" errors. This propagator doesn't perform any actual computation or transformation - it simply marks cells as being covered to satisfy the constraint checking system:
-
-```scala
-case class EnsureCellCoverage(
-    cell: CellId[Term],
-    cause: Expr
-) extends Propagator[Tyck] {
-  override val readingCells = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
-  override val writingCells = Set.empty
-  override val zonkingCells = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
-
-  // Always succeeds - just ensures the cell is covered
-  override def run(using StateAbility[Tyck], Tyck): Boolean = true
-
-  override def naiveZonk(needed: Vector[CellIdAny])
-      (using StateAbility[Tyck], Tyck): ZonkResult = ZonkResult.Done
-}
-```
-
-This approach leads to:
-1. Artificial coverage of cells without meaningful constraints
-2. Potential missed type errors due to lack of proper constraint checking
-3. Conceptual complexity in understanding the propagator network
-4. Maintenance challenges as the type system evolves
-
-#### Implementation Plan
-
-Replace the `EnsureCellCoverage` hack with proper propagators that handle type relationships meaningfully:
-
-1. **For Union Types**:
-   - Use specialized propagators that connect union types to their components 
-   - Implement proper constraint relationships between union components
-   - Ensure all cells involved in union types have meaningful propagators
-
-2. **For General Type System**:
-   - Refine cell coverage detection to distinguish between truly "uncovered" cells and cells that have appropriate defaults
-   - Introduce specialized identity propagators for type variables when necessary
-   - Refactor propagator network to ensure natural coverage through constraints
-
-3. **Implementation Steps**:
-   - Remove all instances of `EnsureCellCoverage` and replace with appropriate type-specific propagators
-   - Enhance `UnionOf` and other existing propagators to handle all needed cell relationships
-   - Add new propagators as needed for specific type relationships
-   - Introduce better debugging tools for tracing cell coverage issues
-
-**Success Criteria**:
+All success criteria have been met:
 - All cells are covered by meaningful propagators with actual logic
 - No explicit `EnsureCellCoverage` instances in the codebase
 - Union types and other complex types work correctly
@@ -133,8 +76,8 @@ The implementation requires focused changes to:
    - Ensure consistent reduction behavior for composed functions
 
 2. **Type Checking Integration**:
-   - Enhance the `tryUnify` method to handle function call terms
-   - Ensure proper cell coverage for function applications
+   - Further enhance the `tryUnify` method to handle complex function call terms
+   - Ensure proper cell coverage for nested function applications
    - Add guards to prevent pattern matching conflicts
 
 #### Testable Example
@@ -198,11 +141,19 @@ def mixed(x: (A & B) | C): (A & B) | C = x;
 
 ### 5.1 Phase 1: Core Type System Improvements
 
-**Note**: Many of the planned improvements have been completed and documented in the devlog entries. Refer to `docs/src/dev/devlog.md` for detailed implementation notes, particularly the entries for 2025-03-15 (Type System Improvements) and 2025-03-23 (Comprehensive Type System Improvements Summary).
+**Status**: Most core improvements have been completed.
+
+Completed improvements (see devlog for details):
+- ✅ Enhanced Type Structure Reduction in DefaultReducer
+- ✅ Alpha-Equivalence Checking in TyckPropagator
+- ✅ Enhanced Type Level Comparison
+- ✅ Cell Coverage Mechanisms with AutoConnect propagator
+- ✅ Union Type Subtyping Implementation
+- ✅ Basic Trait Implementation
 
 Remaining items to complete:
-- [ ] Add more complex test cases for union types
-- [ ] Implement type-level function application enhancements
+- [ ] Add more complex test cases for nested union types
+- [ ] Complete enhanced type-level function application for complex nested cases
 - [ ] Add test cases for complex type-level functions
 
 ### 5.2 Phase 2: Advanced Type Features
@@ -348,9 +299,11 @@ For each test case, verify:
 3. ✅ No "cells not covered by any propagator" errors
 4. ✅ Error messages are clear and helpful when intentional errors are introduced
 
-## 9. Trait Implementation Plan
+## 9. ✅ Trait Implementation Plan
 
-**Note**: Basic trait implementation has been completed and documented in the development log. See the devlog entry for 2025-03-19 for implementation details and the entry for 2025-03-25 for enhanced trait implementation details.
+**Status: BASIC IMPLEMENTATION COMPLETED**
+
+Basic trait implementation has been completed and documented in the development log. See the devlog for implementation details.
 
 ### Future Enhancements for Traits
 
@@ -362,9 +315,11 @@ While basic trait functionality is working, the following enhancements are plann
 - More comprehensive trait test cases
 - Advanced trait composition patterns
 
-## 10. Detailed Plan for Complex Union Types
+## 10. ✅ Detailed Plan for Complex Union Types
 
-**Note**: Many of the planned union type improvements have been completed and documented in the devlog entries for 2025-03-15 and 2025-03-23. The implementation includes proper handling of union subtyping and cell coverage.
+**Status: BASIC IMPLEMENTATION COMPLETED**
+
+Many of the planned union type improvements have been completed and documented in the devlog. The implementation includes proper handling of union subtyping and cell coverage through the new AutoConnect propagator.
 
 ### Future Work for Complex Union Types
 

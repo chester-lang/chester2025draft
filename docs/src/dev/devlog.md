@@ -1,5 +1,43 @@
 # Development Log
 
+## 2025-04-21
+
+### Replaced EnsureCellCoverage Hack with AutoConnect Propagator
+
+- **Implemented Improvements**:
+  1. **Replaced EnsureCellCoverage with AutoConnect**
+     - Removed the old placeholder EnsureCellCoverage propagator that only marked cells as covered
+     - Implemented new AutoConnect propagator that establishes proper type connections based on term structure
+     - Added logic to analyze different term types (unions, intersections, function calls) and create appropriate connections
+
+  2. **Enhanced Cell Coverage Mechanisms**
+     - Added support for creating proper connections between terms and their components
+     - Implemented smart term structure analysis to establish meaningful type relationships
+     - Added default value support for unconstrained type variables using Any type
+
+  3. **Improved Function Call Handling**
+     - Added recursive connection for function calls and their arguments
+     - Special handling for complex argument terms including nested function calls
+     - Improved handling of CallingArgTerm to ensure all components are properly connected
+
+  4. **Implementation Approach**:
+     - Replaced all EnsureCellCoverage instances with AutoConnect calls
+     - Updated Elaborater and TyckPropagator to use the new approach
+     - Added cell management helper methods and proper zonking support
+     - Added support for default values in unconstrained cells
+
+- **Files Modified**:
+  - `semantic/shared/src/main/scala/chester/tyck/TyckPropagator.scala`
+  - `semantic/shared/src/main/scala/chester/tyck/Elaborater.scala`
+  - `semantic/shared/src/main/scala/chester/utils/propagator/ProvideCellId.scala`
+
+- **Benefits**:
+  - Eliminated artificial cell coverage without meaningful constraints
+  - Improved type error detection through proper constraint checking
+  - Reduced conceptual complexity in the propagator network
+  - Enhanced maintainability as the type system evolves
+  - Fixed cell coverage issues for union types and other complex types
+
 ## 2025-04-05
 
 ### LexerV2 Parser Enhancements
