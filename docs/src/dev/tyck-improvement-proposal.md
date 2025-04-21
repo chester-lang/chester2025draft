@@ -56,7 +56,64 @@ The union type implementation has progressed with initial support for the pipe o
 - No cell coverage errors occur
 - Union types can be used seamlessly with other type constructs
 
-### 3.2 Enhanced Type-Level Function Application Reduction
+### 3.2 Removal of the EnsureCellCoverage Hack
+
+#### Issue Description
+
+The current implementation uses a `EnsureCellCoverage` propagator that acts as a "hack" to prevent "cells not covered by any propagator" errors. This propagator doesn't perform any actual computation or transformation - it simply marks cells as being covered to satisfy the constraint checking system:
+
+```scala
+case class EnsureCellCoverage(
+    cell: CellId[Term],
+    cause: Expr
+) extends Propagator[Tyck] {
+  override val readingCells = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
+  override val writingCells = Set.empty
+  override val zonkingCells = Set(cell.asInstanceOf[CIdOf[Cell[?]]])
+
+  // Always succeeds - just ensures the cell is covered
+  override def run(using StateAbility[Tyck], Tyck): Boolean = true
+
+  override def naiveZonk(needed: Vector[CellIdAny])
+      (using StateAbility[Tyck], Tyck): ZonkResult = ZonkResult.Done
+}
+```
+
+This approach leads to:
+1. Artificial coverage of cells without meaningful constraints
+2. Potential missed type errors due to lack of proper constraint checking
+3. Conceptual complexity in understanding the propagator network
+4. Maintenance challenges as the type system evolves
+
+#### Implementation Plan
+
+Replace the `EnsureCellCoverage` hack with proper propagators that handle type relationships meaningfully:
+
+1. **For Union Types**:
+   - Use specialized propagators that connect union types to their components 
+   - Implement proper constraint relationships between union components
+   - Ensure all cells involved in union types have meaningful propagators
+
+2. **For General Type System**:
+   - Refine cell coverage detection to distinguish between truly "uncovered" cells and cells that have appropriate defaults
+   - Introduce specialized identity propagators for type variables when necessary
+   - Refactor propagator network to ensure natural coverage through constraints
+
+3. **Implementation Steps**:
+   - Remove all instances of `EnsureCellCoverage` and replace with appropriate type-specific propagators
+   - Enhance `UnionOf` and other existing propagators to handle all needed cell relationships
+   - Add new propagators as needed for specific type relationships
+   - Introduce better debugging tools for tracing cell coverage issues
+
+**Success Criteria**:
+- All cells are covered by meaningful propagators with actual logic
+- No explicit `EnsureCellCoverage` instances in the codebase
+- Union types and other complex types work correctly
+- Type errors are detected and reported accurately
+- Tests pass with proper constraint checking
+- Improved code clarity and maintainability
+
+### 3.3 Enhanced Type-Level Function Application Reduction
 
 #### Current Limitation
 
