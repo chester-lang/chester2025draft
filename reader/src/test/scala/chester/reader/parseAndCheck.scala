@@ -46,10 +46,10 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
   val oldDebug = LexerV2.DEBUG
   try {
     // LexerV2.DEBUG = true // uncomment when needed
-    val lexer = LexerV2(sourceOffset, ignoreLocation = true)
+    val lexer = LexerV2(LexerState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
 
     val result = lexer
-      .parseExpr(LexerState(tokens.toVector, 0))
+      .parseExpr()
       .fold(
         error => {
           val errorIndex = error.pos.index.utf16
@@ -67,7 +67,7 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
                |$line
                |$pointer""".stripMargin)
         },
-        { case (expr, _) => expr }
+        { expr => expr }
       )
       .descentRecursive(_.updateMeta(_ => None))
 
@@ -96,10 +96,10 @@ def parseV2(input: String): Expr = {
   val sourceOffset = Source(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
-  val lexer = LexerV2(sourceOffset, ignoreLocation = true)
+  val lexer = LexerV2(LexerState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
 
   lexer
-    .parseExpr(LexerState(tokens.toVector, 0))
+    .parseExpr()
     .fold(
       error => {
         val errorIndex = error.pos.index.utf16
@@ -117,6 +117,6 @@ def parseV2(input: String): Expr = {
              |$line
              |$pointer""".stripMargin)
       },
-      { case (expr, _) => expr }
+      { expr => expr }
     )
 }
