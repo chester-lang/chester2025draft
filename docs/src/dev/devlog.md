@@ -2,6 +2,50 @@
 
 ## 2025-04-21
 
+### Simplified Type Constraint System by Removing Hacky Approach
+
+- **Problem**: The previous approach for handling type constraints used a complicated "cell coverage" system that felt like a hack. The `AutoConnect` propagator and `createTermStructureConstraints` method added unnecessary complexity and indirection to the type system.
+
+- **Solution**: Completely redesigned the approach to directly handle type relationships without intermediate propagators.
+
+- **Implementation Details**:
+  1. **Removed Hacky Components**:
+     - Eliminated the `AutoConnect` propagator entirely
+     - Removed `establishTypeConstraints` and all related "cell coverage" methods
+     - Simplified the code by removing several layers of indirection
+
+  2. **Direct Type Relationship Handling**:
+     - Added direct connections between types directly during unification
+     - Created explicit relationships between union types and their components
+     - Connected function call components immediately when encountered
+     - Simplified codebase by handling type constraints at the point where types are created or unified
+
+  3. **Improved Union Type Management**:
+     - Enhanced handling of union-to-union subtyping with direct component connections
+     - Improved union-to-specific and specific-to-union handling
+     - Created clearer, more maintainable code for union type relationships
+
+  4. **Function Call Processing**:
+     - Implemented direct processing of function call components
+     - Added recursive handling for nested function calls
+     - Eliminated redundant constraint establishment code
+
+- **Benefits**:
+  - **Cleaner Code**: Removed a complicated system that was difficult to reason about
+  - **More Direct**: Handles type constraints at the point where types are created or unified
+  - **Better Maintainability**: Simpler, more understandable code with fewer moving parts
+  - **Less Indirection**: Eliminated multiple layers of function calls for basic operations
+  - **Same Functionality**: Maintains the same type checking capabilities with cleaner implementation
+
+- **Files Modified**:
+  - `semantic/shared/src/main/scala/chester/tyck/TyckPropagator.scala`
+  - `semantic/shared/src/main/scala/chester/tyck/Elaborater.scala`
+
+- **Verification**:
+  - All existing tests continue to pass
+  - Compiler successfully builds the project
+  - Type error reporting works as expected
+
 ### Replaced EnsureCellCoverage Hack with AutoConnect Propagator
 
 - **Implemented Improvements**:
