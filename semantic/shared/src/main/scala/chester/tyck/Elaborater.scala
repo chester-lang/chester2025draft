@@ -27,8 +27,12 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ctx: Context
   ): Unit = {
     if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Ensuring cell coverage for cell $cell")
-    // Use EnsureCellCoverage propagator to ensure the cell is covered
-    state.addPropagator(EnsureCellCoverage(cell, cause))
+    // Use ensureCellConnections from TyckPropagator to establish proper connections
+    val cellTerm = state.readStable(cell) match {
+      case Some(term) => term
+      case None => Meta(cell) // If cell has no value yet, wrap it in a Meta
+    }
+    ensureCellConnections(cellTerm, cause)
   }
 
   // Helper method to ensure cell coverage for all union components
@@ -317,27 +321,53 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ck.reporter.apply(TypeMismatch(union, specificType, cause))
     } else {
       // Ensure the cell for the union and specific type are covered
-      ensureCellIsCovered(toId(union), cause)
-      ensureCellIsCovered(toId(specificType), cause)
+      ensureCellCoverage(toId(union), cause)
+      ensureCellCoverage(toId(specificType), cause)
     }
   }
 
-  // Ensure a cell has coverage by checking or adding a propagator if needed
-  private def ensureCellIsCovered(
-      cellId: CellId[Term],
+  // Helper method for connecting a specific type to a union type
+  private def connectSpecificAndUnion(
+      specificId: CellId[Term],
+      specificType: Term,
+      unionId: CellId[Term],
+      unionTypes: NonEmptyVector[Term],
       cause: Expr
   )(using
-      _localCtx: Context,
       state: StateAbility[Tyck],
+      ctx: Context,
       ck: Tyck
   ): Unit = {
     if (Debug.isEnabled(UnionSubtyping)) {
-      Debug.debugPrint(UnionSubtyping, t"Ensuring cell coverage for cell ID: $cellId")
+      Debug.debugPrint(UnionSubtyping, t"Connecting specific type $specificType to union components ${unionTypes.mkString(", ")}")
+      Debug.debugPrint(UnionSubtyping, t"  Cell IDs: $specificId -> $unionId")
     }
 
-    // Add a special propagator that ensures the cell is covered
-    // This is especially important for cells that might not be directly involved in other constraints
-    state.addPropagator(EnsureCellCoverage(cellId, cause))
+    // First, ensure both cells are covered
+    ensureCellCoverage(specificId, cause)
+    ensureCellCoverage(unionId, cause)
+
+    // Create a direct unify connection
+    state.addPropagator(Unify(specificId, unionId, cause))
+
+    // Check compatibility with any union component
+    val compatibleComponent = unionTypes.find(unionType => tryUnify(specificType, unionType))
+
+    if (compatibleComponent.isDefined) {
+      if (Debug.isEnabled(UnionSubtyping)) {
+        Debug.debugPrint(UnionSubtyping, t"Found compatible component: ${compatibleComponent.get}")
+      }
+
+      // Connect to the specific compatible component
+      val componentId = toId(compatibleComponent.get)
+      state.addPropagator(Unify(specificId, componentId, cause))
+    } else {
+      // If no compatible component is found, report a type mismatch
+      if (Debug.isEnabled(UnionSubtyping)) {
+        Debug.debugPrint(UnionSubtyping, t"No compatible union component found for $specificType")
+      }
+      ck.reporter.apply(TypeMismatch(specificType, Union(unionTypes, None), cause))
+    }
   }
 }
 
@@ -628,14 +658,14 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           // Ensure each component type has a propagator for cell coverage
           val componentCellIds = elaboratedTypes.map { componentType =>
             val cellId = toId(componentType)
-            // Add a propagator to ensure this cell is covered
-            state.addPropagator(EnsureCellCoverage(cellId, expr))
+            // Use ensureCellConnections directly
+            ensureCellConnections(componentType, expr)
             cellId
           }
 
           // Get the cell ID for the union term and ensure it's covered
           val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
-          state.addPropagator(EnsureCellCoverage(unionCellId, expr))
+          ensureCellConnections(unionTerm, expr)
 
           // Connect the union to its components
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))

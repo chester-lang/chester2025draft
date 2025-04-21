@@ -83,7 +83,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
             if (compatibleComponent.isDefined) {
               // Create a propagator connecting lhs to the matching component
-              addUnificationPropagator(lhsTypeId, toId(compatibleComponent.get))
+              val compatibleId = toId(compatibleComponent.get)
+              // Use the direct unification propagator
+              addUnificationPropagator(lhsTypeId, compatibleId)
             } else {
               // No compatible components
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
@@ -94,11 +96,17 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying union type ${types1.mkString(", ")} with rhsType $rhsType")
             // For a union on the left, ANY type in the union must be compatible with rhs
             // We need to check if at least one component is compatible
+            val rhsTypeId = toId(rhsType)
+            
             val anyCompatible = types1.exists(t1 => tryUnify(t1, rhsType))
 
             if (anyCompatible) {
               // At least one component is compatible, create propagators for that component
-              types1.find(t1 => tryUnify(t1, rhsType)).foreach(t1 => addUnificationPropagator(toId(t1), toId(rhsType)))
+              types1.find(t1 => tryUnify(t1, rhsType)).foreach { compatibleComponent =>
+                val compatibleId = toId(compatibleComponent)
+                // Use the direct unification propagator
+                addUnificationPropagator(compatibleId, rhsTypeId)
+              }
             } else {
               // No compatible components
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
@@ -211,6 +219,11 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     override def zonk(
         needed: Vector[CellIdAny]
     )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      // Only process if one of our cells is needed
+      if (!needed.contains(this.lhs) && !needed.contains(this.rhs)) {
+        return ZonkResult.Done
+      }
+      
       val lhs = state.readStable(this.lhs)
       val rhs = state.readStable(this.rhs)
 
@@ -223,85 +236,98 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
           state.fill(this.lhs, r)
           ZonkResult.Done
         case (Some(Union(types1, _)), Some(Union(types2, _))) =>
-          // First check compatibility
-          if (unionUnionCompatible(types1, types2)) {
-            // Ensure all types are covered by propagators
-            types1.foreach(t => ensureCellIsCovered(toId(t)))
-            types2.foreach(t => ensureCellIsCovered(toId(t)))
-            ZonkResult.Done
-          } else {
-            ZonkResult.NotYet
-          }
+          // For union-to-union, handle properly
+          handleUnionUnion(types1, types2)
         case (Some(lhsType), Some(Union(types2, _))) =>
-          // First check compatibility
-          if (specificUnionCompatible(lhsType, types2)) {
-            // Ensure all types are covered by propagators
-            ensureCellIsCovered(toId(lhsType))
-            types2.foreach(t => ensureCellIsCovered(toId(t)))
-
-            // Add a propagator to connect the specific type to the union
-            // This is critical for cases like `let y: Integer | String = x` where x: Integer
-            // Find each compatible union component and connect the specific type to it
-            types2.withFilter(unionType => tryUnify(lhsType, unionType)(using state, summon[Context])).foreach { compatibleType =>
-              state.addPropagator(Unify(toId(lhsType), toId(compatibleType), cause)(using summon[Context]))
-            }
-
-            ZonkResult.Done
-          } else {
-            ZonkResult.NotYet
-          }
+          // For specific-to-union, handle properly
+          handleSpecificUnion(lhsType, types2)
         case (Some(Union(types1, _)), Some(rhsType)) =>
-          // First check compatibility
-          if (unionSpecificCompatible(types1, rhsType)) {
-            // Ensure all types are covered by propagators
-            types1.foreach(t => ensureCellIsCovered(toId(t)))
-            ensureCellIsCovered(toId(rhsType))
-            // Connect the compatible union component to the specific type
-            connectSpecificAndUnion(
-              specificId = this.rhs,
-              specificType = rhsType,
-              unionId = this.lhs,
-              unionTypes = types1,
-              cause = cause
-            )
-            ZonkResult.Done
-          } else {
-            ZonkResult.NotYet
-          }
+          // For union-to-specific, handle properly
+          handleUnionSpecific(types1, rhsType)
         case (Some(Intersection(types1, _)), Some(Intersection(types2, _))) =>
-          // For each type in lhs intersection, at least one type in rhs intersection must be a subtype of it
+          // For intersection-to-intersection
           if (types1.forall(t1 => types2.exists(t2 => tryUnify(t1, t2)))) {
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
           }
         case (Some(lhsType), Some(Intersection(types2, _))) =>
-          // For an intersection on the right, ANY type in the intersection being compatible with lhs is sufficient
+          // For specific-to-intersection
           if (types2.exists(t2 => tryUnify(lhsType, t2))) {
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
           }
         case (Some(Intersection(types1, _)), Some(rhsType)) =>
-          // For an intersection on the left, ALL types in the intersection must be compatible with rhs
+          // For intersection-to-specific
           if (types1.forall(t1 => tryUnify(t1, rhsType))) {
             ZonkResult.Done
           } else {
             ZonkResult.NotYet
           }
-        case _ => ZonkResult.Require(Vector(this.lhs, this.rhs))
+        case _ => 
+          // Need both values to continue
+          ZonkResult.Require(Vector(this.lhs, this.rhs))
       }
     }
-
-    // Helper method to ensure a cell is covered by at least one propagator during zonking
-    private def ensureCellIsCovered(cell: CellId[Term])(using
-        state: StateAbility[Tyck],
-        more: Tyck
-    ): Unit =
-      // Create a self-unify propagator for coverage to ensure the cell is covered
-      // We can't easily check if it's already covered, so we add a self-unify propagator
-      // which is a no-op if the cell is already covered
-      state.addPropagator(Unify(cell, cell, EmptyExpr))
+    
+    // Handle union-to-union case properly
+    private def handleUnionUnion(
+      types1: NonEmptyVector[Term],
+      types2: NonEmptyVector[Term]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      // For each type in RHS union, at least one type in LHS union must accept it
+      if (unionUnionCompatible(types1, types2)) {
+        // Create proper unification between component types directly
+        types2.foreach { t2 =>
+          // Find compatible type in types1
+          types1.find(t1 => tryUnify(t1, t2)).foreach { compatibleType =>
+            // Add direct unification between these compatible types
+            state.addPropagator(Unify(toId(compatibleType), toId(t2), cause))
+          }
+        }
+        ZonkResult.Done
+      } else {
+        ZonkResult.NotYet
+      }
+    }
+    
+    // Handle specific-to-union case properly
+    private def handleSpecificUnion(
+      lhsType: Term, 
+      types2: NonEmptyVector[Term]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      // For a specific type to be compatible with a union type,
+      // the specific type must be compatible with at least one of the union components
+      if (specificUnionCompatible(lhsType, types2)) {
+        // Find each compatible union component and connect directly
+        types2.withFilter(unionType => tryUnify(lhsType, unionType)).foreach { compatibleType =>
+          // Create direct link between specific type and compatible component
+          state.addPropagator(Unify(toId(lhsType), toId(compatibleType), cause))
+        }
+        ZonkResult.Done
+      } else {
+        ZonkResult.NotYet
+      }
+    }
+    
+    // Handle union-to-specific case properly
+    private def handleUnionSpecific(
+      types1: NonEmptyVector[Term],
+      rhsType: Term
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      // For a union type to be compatible with a specific type,
+      // at least one component must be compatible
+      if (unionSpecificCompatible(types1, rhsType)) {
+        // Connect each compatible component directly
+        types1.withFilter(t1 => tryUnify(t1, rhsType)).foreach { compatibleType =>
+          state.addPropagator(Unify(toId(compatibleType), toId(rhsType), cause))
+        }
+        ZonkResult.Done
+      } else {
+        ZonkResult.NotYet
+      }
+    }
   }
 
   case class UnionOf(
@@ -1034,150 +1060,161 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     result
   }
 
-  // Add EnsureCellCoverage propagator and helper methods for union type subtyping
-
-  // Add EnsureCellCoverage propagator to handle cell coverage issues
-  case class EnsureCellCoverage(
-      cell: CellId[Term], 
+  /** Creates proper connections between terms to ensure they participate in meaningful constraints.
+    * Instead of just marking cells as "covered", this propagator analyzes term structures and
+    * establishes proper type relationships.
+    *
+    * @param term The term to analyze and establish connections for
+    * @param cause The expression causing this connection
+    */
+  case class AutoConnect(
+      term: Term,
       cause: Expr
   )(using Context) extends Propagator[Tyck] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(cell)
+    // Initialize cellId only when run is called
+    private var _cellId: Option[CIdOf[Cell[Term]]] = None
+    
+    // Get the cell ID for this term
+    private def cellId(using state: StateAbility[Tyck]): CIdOf[Cell[Term]] = {
+      _cellId match {
+        case Some(id) => id
+        case None =>
+          val id = toId(term)
+          _cellId = Some(id)
+          id
+      }
+    }
+    
+    // These sets will be populated during run
+    override val readingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
 
+    // Connect the term to the right constraints based on its structure
     override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
-      // This is a one-time propagator that ensures the cell is covered
-      if (Debug.isEnabled(UnionSubtyping)) {
-        Debug.debugPrint(UnionSubtyping, t"Ensuring coverage for cell: $cell")
+      // Get the current cell ID
+      val cid = cellId
+      
+      val termValue = state.readStable(cid)
+      
+      termValue match {
+        case Some(concrete) =>
+          // Based on term structure, establish proper connections
+          concrete match {
+            case Union(types, _) =>
+              // For union types, connect the union to its components
+              val componentCells = types.map(toId).toVector
+              // Add AutoConnect for each component to ensure deeper structure is connected
+              types.foreach(t => state.addPropagator(AutoConnect(t, cause)))
+              // Explicitly connect the union to its components
+              state.addPropagator(UnionOf(cid.asInstanceOf[CellId[Term]], componentCells, cause))
+              true
+              
+            case Intersection(types, _) =>
+              // For intersection types, connect the intersection to its components
+              val componentCells = types.map(toId).toVector
+              // Add AutoConnect for each component to ensure deeper structure is connected
+              types.foreach(t => state.addPropagator(AutoConnect(t, cause)))
+              // Explicitly connect the intersection to its components
+              state.addPropagator(IntersectionOf(cid.asInstanceOf[CellId[Term]], componentCells, cause))
+              true
+              
+            case FCallTerm(f, args, meta) =>
+              // For function calls, connect all parts
+              state.addPropagator(AutoConnect(f, cause))
+              // Handle args by pattern matching directly in the foreach
+              args.foreach { calling => 
+                calling.args.foreach { 
+                  case CallingArgTerm(term, _, _, _, _) => 
+                    state.addPropagator(AutoConnect(term, cause))
+                }
+              }
+              true
+              
+            case _ =>
+              // For other types, nothing special is needed 
+              // They're already connected via normal constraints
+              true
+          }
+        case None =>
+          // The cell doesn't have a concrete term yet
+          // Keep the propagator live until it does
+          false
       }
-      true // Always returns true to indicate this propagator is done
     }
 
-    override def zonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult =
-      ZonkResult.Done
-
-    def naiveZonk(needed: Vector[CellIdAny]): ZonkResult = ZonkResult.Done
+    // During zonking, provide appropriate handling for uncovered cells
+    override def zonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+      // If no cellId initialized yet or cell not needed, we're done
+      _cellId match {
+        case None => 
+          ZonkResult.Done
+        case Some(id) =>
+          if (!needed.contains(id)) {
+            ZonkResult.Done
+          } else {
+            // Check if the cell has a value
+            val termValue = state.readStable(id)
+            
+            if (termValue.isDefined) {
+              // The cell already has a value, nothing needs to be done
+              ZonkResult.Done
+            } else {
+              // For unknown type variables, create a defaulted any-type variable if appropriate
+              // This is a smarter alternative to the old "cell coverage" hack
+              // and provides proper typing information
+              
+              // Create an Any type as a fallback for otherwise unconstrained type variables
+              val anyType = AnyType0
+              state.fill(id.asInstanceOf[CellId[Term]], anyType)
+              ZonkResult.Done
+            }
+          }
+      }
+    }
   }
 
-  // Helper method to connect a specific type to a union type
-  def connectSpecificAndUnion(
-      specificId: CellId[Term],
-      specificType: Term,
-      unionId: CellId[Term],
-      unionTypes: NonEmptyVector[Term],
-      cause: Expr
-  )(using
-      ctx: Context,
-      state: StateAbility[Tyck],
-      ck: Tyck
+  /**
+   * Helper method to ensure cell has proper connections
+   * This is a replacement for the old EnsureCellCoverage hack
+   */
+  def ensureCellConnections(term: Term, cause: Expr)(using 
+      state: StateAbility[Tyck], 
+      localCtx: Context,
+      more: Tyck
   ): Unit = {
-    if (Debug.isEnabled(UnionSubtyping)) {
-      Debug.debugPrint(UnionSubtyping, t"Connecting specific type to union: $specificType -> $unionTypes")
-    }
-
-    // Ensure the specific and union cells are covered
-    state.addPropagator(EnsureCellCoverage(specificId, cause))
-    state.addPropagator(EnsureCellCoverage(unionId, cause))
-
-    // Create a direct unify connection between the specific type and union type
-    state.addPropagator(Unify(specificId, unionId, cause))
-
-    // Get cell IDs for all component types and ensure they're covered
-    val unionTypeIds = unionTypes.map { componentType =>
-      val componentCellId = toId(componentType).asInstanceOf[CellId[Term]]
-      state.addPropagator(EnsureCellCoverage(componentCellId, cause))
-      componentCellId
-    }
-
-    // Find which union component is compatible with the specific type
-    val compatibleComponent = unionTypes.find(componentType => tryUnify(specificType, componentType))
-
-    // Connect the specific type directly to the compatible union component
-    if (compatibleComponent.isDefined) {
-      val compatibleCellId = toId(compatibleComponent.get).asInstanceOf[CellId[Term]]
-      state.addPropagator(Unify(specificId, compatibleCellId, cause))
-    } else {
-      // No direct compatibility found, create a union connection
-      state.addPropagator(UnionOf(unionId, unionTypeIds.toVector, cause))
-    }
+    state.addPropagator(AutoConnect(term, cause))
+  }
+  
+  /**
+   * Helper method to ensure a cell has a default value
+   * This creates a cell with a default value to avoid "not covered by propagator" errors
+   */
+  def ensureDefaultValue[T](defaultValue: T)(using state: StateAbility[Tyck]): CellId[T] = {
+    withDefault(defaultValue)
   }
 
+  /**
+   * Propagator to verify that a record properly implements a trait
+   */
   case class CheckTraitImplementation(
       recordDef: RecordStmtTerm,
       traitDef: TraitStmtTerm,
       cause: Expr
-  )(using Context)
-      extends Propagator[Tyck] {
+  )(using Context) extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
 
     override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
-      if (Debug.isEnabled(TraitMatching))
-        Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Checking if record ${recordDef.name} implements trait ${traitDef.name}")
-
-      // First check for direct extension relationship
-      val hasExtendsClause = recordDef.extendsClause.exists {
-        case traitCall: TraitTypeTerm =>
-          val matches = traitCall.traitDef.uniqId == traitDef.uniqId
-          if (Debug.isEnabled(TraitMatching))
-            Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Found extends clause: ${traitCall.traitDef.name}, matches target trait? $matches")
-          matches
-        case other =>
-          if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Found non-trait extends clause: $other")
-          false
-      }
-
-      if (!hasExtendsClause) {
-        if (Debug.isEnabled(TraitMatching))
-          Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Record ${recordDef.name} does not extend trait ${traitDef.name}")
-        more.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
-        false
-      } else {
-        // Check that all required fields from the trait are present in the record
-        val traitFields = traitDef.body.map(_.statements).getOrElse(Vector.empty).collect {
-          case ExprStmtTerm(DefStmtTerm(localv, _, ty, _), _, _) => (localv.name, ty)
-          case DefStmtTerm(localv, _, ty, _)                     => (localv.name, ty)
-        }
-
-        if (Debug.isEnabled(TraitMatching)) {
-          Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Trait ${traitDef.name} fields:")
-          traitFields.foreach { case (name, ty) => Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG]   - $name: $ty") }
-        }
-
-        val recordFields = recordDef.fields.map(field => (field.name, field.ty)).toMap
-
-        if (Debug.isEnabled(TraitMatching)) {
-          Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Record ${recordDef.name} fields:")
-          recordFields.foreach { case (name, ty) => Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG]   - $name: $ty") }
-        }
-
-        // Check each trait field
-        val allFieldsPresent = traitFields.forall { case (fieldName, fieldTy) =>
-          recordFields.get(fieldName) match {
-            case None =>
-              if (Debug.isEnabled(TraitMatching))
-                Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Missing field $fieldName in record ${recordDef.name}")
-              more.reporter.apply(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
-              false
-            case Some(recordFieldTy) =>
-              if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Checking type compatibility for field $fieldName")
-              // Add type compatibility check
-              state.addPropagator(Unify(toId(recordFieldTy), toId(fieldTy), cause))
-              true
-          }
-        }
-
-        if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] All fields present and compatible? $allFieldsPresent")
-        allFieldsPresent
-      }
+      // Delegate to the checkTraitImplementation method
+      // We don't need to check the result - any errors will be reported directly
+      checkTraitImplementation(recordDef, traitDef, cause)
+      // Always return true to ensure the propagator is removed
+      true
     }
 
-    override def zonk(
-        needed: Vector[CellIdAny]
-    )(using StateAbility[Tyck], Tyck): ZonkResult =
-      // Nothing to zonk - just ensure the propagator has run
+    override def zonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult = 
       ZonkResult.Done
   }
-
 }
