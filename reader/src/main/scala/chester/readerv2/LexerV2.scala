@@ -788,7 +788,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case LParen(_) =>
             // Regular function call
             val identifier = createIdentifier(chars, sourcePos)
-            parseFunctionCallWithId(identifier, afterId)
+            this.state = afterId
+            parseFunctionCallWithId(identifier).map { funcCall =>
+              (funcCall, this.state)
+            }
           case _ =>
             // Plain identifier
             Right((createIdentifier(chars, sourcePos), afterId))
@@ -1450,19 +1453,16 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Parse a function call with the given identifier
   private def parseFunctionCallWithId(
-      identifier: ConcreteIdentifier,
-      state: LexerState
-  ): Either[ParseError, (FunctionCall, LexerState)] =
-    state.current match {
+      identifier: ConcreteIdentifier
+  ): Either[ParseError, FunctionCall] =
+    this.state.current match {
       case LParen(_) =>
-        this.state = state
         parseTuple().map { args =>
-          val afterArgs = this.state
           val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
-          (createFunctionCall(identifier, args, funcSourcePos, Some(afterArgs.sourcePos)), afterArgs)
+          createFunctionCall(identifier, args, funcSourcePos, Some(this.state.sourcePos))
         }
       case _ =>
-        Left(ParseError("Expected left parenthesis for function call", state.sourcePos.range.start))
+        Left(ParseError("Expected left parenthesis for function call", this.state.sourcePos.range.start))
     }
 
   /** Generic parser combinator that adds comment handling to any parse method */
