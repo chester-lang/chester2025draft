@@ -1,9 +1,9 @@
 // reads env: NATIVE_IMAGE_OPTIONS, VERSION
 
-val scala3Nightly = "3.7.1-RC1-bin-20250415-06886b0-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250417-05b102a-NIGHTLY"
 val scala3Version = "3.7.0-RC3"
 val scala3Lib = "3.6.4"
-val scala2Version = "2.13.16"
+val scala2Version = "2.13.17-M1"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
@@ -264,6 +264,7 @@ def commonLibSettings = commonSettings0 ++ Seq(
   scalaVersion := scala3Lib
 )
 def scala2Common = Seq(
+  semanticdbEnabled := false, // temporary workaround as it has not been updated to 2.13.17-M1
   scalaVersion := scala2Version,
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
@@ -739,7 +740,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         "org.jline",
         "jline"
       ),
-      "org.scala-lang.modules" % "scala-asm" % "9.7.1-scala-1",
+      "org.scala-lang.modules" % "scala-asm" % "9.8.0-scala-1",
       // "ch.epfl.scala" %% "tasty-query" % "1.4.0",
       // "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
       // "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-9",
