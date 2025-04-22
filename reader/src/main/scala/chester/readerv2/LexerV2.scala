@@ -263,10 +263,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
 
   // Helper for building operator sequences
-  private def buildOpSeq(terms: Vector[Expr])(state: LexerState, leadingComments: Vector[CommOrWhite]): Either[ParseError, Expr] = {
+  private def buildOpSeq(terms: Vector[Expr])(leadingComments: Vector[CommOrWhite]): Either[ParseError, Expr] = {
     debug(t"Building OpSeq with terms: $terms")
     terms match {
-      case Vector() => Left(ParseError("Empty operator sequence", getStartPos(state.current)))
+      case Vector() => Left(ParseError("Empty operator sequence", getStartPos(this.state.current)))
       case Vector(expr) if leadingComments.nonEmpty =>
         Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), leadingComments))))
       case Vector(expr) => Right(expr)
@@ -282,14 +282,18 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Handle special closing brace + newline pattern
     if (checkForRBraceNewlinePattern(state)) {
       debug("parseRest: Terminating expression due to }\n pattern")
-      return buildOpSeq(localTerms)(state, leadingComments).map(result => (result, state))
+      // Set state before calling buildOpSeq to ensure correct error position
+      this.state = state
+      return buildOpSeq(localTerms)(leadingComments).map(result => (result, state))
     }
 
     // Handle comments and check for terminators
     val (_restComments, current) = collectComments(state)
     if (isAtTerminator(current)) {
       debug("parseRest: Hit terminator token")
-      return buildOpSeq(localTerms)(state, leadingComments).map(result => (result, current))
+      // Set state to current before calling buildOpSeq to ensure correct error position
+      this.state = current
+      return buildOpSeq(localTerms)(leadingComments).map(result => (result, current))
     }
 
     // Main token dispatch
@@ -457,7 +461,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       }
     ) {
       debug(t"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
-      buildOpSeq(updatedTerms)(state, leadingComments).map(result => (result, afterOp))
+      // Set state before calling buildOpSeq to ensure correct error position
+      this.state = state
+      buildOpSeq(updatedTerms)(leadingComments).map(result => (result, afterOp))
     } else {
       // Continue parsing the rest of the expression
       withComments(parseAtom)(afterOp).flatMap { case (next, afterNext) =>
