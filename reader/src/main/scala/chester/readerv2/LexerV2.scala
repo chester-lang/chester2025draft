@@ -487,7 +487,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     afterId.current match {
       case Right(Token.LParen(_)) =>
         debug("parseRest: Found lparen after identifier")
-        parseTuple(afterId).flatMap { case (tuple, afterTuple) =>
+        this.state = afterId
+        parseTuple().flatMap { tuple =>
+          val afterTuple = this.state
           val functionCall = FunctionCall(
             ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
             tuple,
@@ -579,7 +581,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           // Function call form: op(args)
           case Right(Token.LParen(_)) =>
             debug("parseExpr: Found lparen after initial operator")
-            parseTuple(afterOp).map { case (tuple, afterTuple) =>
+            this.state = afterOp
+            parseTuple().map { tuple =>
+              val afterTuple = this.state
               state=afterTuple
               (
                 FunctionCall(
@@ -676,34 +680,36 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val field = createIdentifier(chars1, idSourcePos1)
         var telescope = Vector.empty[Tuple]
 
-        def parseNextTelescope(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-          state.current match {
+        def parseNextTelescope(): Either[ParseError, (Expr, LexerState)] =
+          this.state.current match {
             case Right(Token.LParen(_)) =>
-              parseTuple(state).flatMap { case (args, afterArgs) =>
+              parseTuple().flatMap { args =>
                 telescope = telescope :+ args
-                parseNextTelescope(afterArgs)
+                parseNextTelescope()
               }
             case Right(Token.LBrace(_)) =>
-              this.state = state
               parseBlock().flatMap { block =>
-                val afterBlock = this.state
                 telescope = telescope :+ Tuple(Vector(block), None)
-                parseNextTelescope(afterBlock)
+                parseNextTelescope()
               }
             case Right(Token.Dot(nextDotSourcePos)) =>
-              val dotCall = createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(state.sourcePos))
-              handleDotCall(nextDotSourcePos, state, Vector(dotCall))
+              val dotCall = createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(this.state.sourcePos))
+              handleDotCall(nextDotSourcePos, this.state, Vector(dotCall))
             case _ =>
-              Right((createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(state.sourcePos)), state))
+              val result = createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(this.state.sourcePos))
+              Right((result, this.state))
           }
 
-        parseNextTelescope(afterId)
+        this.state = afterId
+        parseNextTelescope()
       case Right(Token.Operator(op, idSourcePos)) =>
         val afterOp = afterDot.advance()
         val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
         afterOp.current match {
           case Right(Token.LParen(_)) =>
-            parseTuple(afterOp).map { case (args, afterArgs) =>
+            this.state = afterOp
+            parseTuple().map { args =>
+              val afterArgs = this.state
               (createDotCall(terms.last, field, Vector(args), Some(dotSourcePos), Some(afterArgs.sourcePos)), afterArgs)
             }
           case _ =>
@@ -738,7 +744,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             parseBlock().map(block => (block, this.state))
         }
 
-      case LParen(_) => parseTuple(current)
+      case LParen(_) => 
+        this.state = current
+        parseTuple().map { tuple =>
+          (tuple, this.state)
+        }
 
       case Id(chars, sourcePos) =>
         val afterId = current.advance()
@@ -750,7 +760,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               afterTypeParams.current match {
                 case LParen(_) =>
                   // Function call with generic type args
-                  parseTuple(afterTypeParams).map { case (tuple, afterArgs) =>
+                  this.state = afterTypeParams
+                  parseTuple().map { tuple =>
+                    val afterArgs = this.state
                     val typeParamsList: ListExpr = typeParams
                     val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
                     (createFunctionCall(typeCall, tuple, Some(sourcePos), Some(afterArgs.sourcePos)), afterArgs)
@@ -818,41 +830,43 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     case _                                                     => false
   }
 
-  def parseExprList(state: LexerState): Either[ParseError, (Vector[Expr], LexerState)] = {
-    // Replace skipComments with collectComments to preserve comments
-    val (_leadingListComments, initialState) = collectComments(state)
+  def parseExprList(): Either[ParseError, Vector[Expr]] = {
+    // Start with current state and collect any comments
+    val (_leadingListComments, initialState) = collectComments(this.state)
+    this.state = initialState
 
     @tailrec
-    def parseElements(current: LexerState, exprs: Vector[Expr], maxExprs: Int): Either[ParseError, (Vector[Expr], LexerState)] =
+    def parseElements(exprs: Vector[Expr], maxExprs: Int): Either[ParseError, Vector[Expr]] =
       if (exprs.length >= maxExprs) {
-        Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", state.sourcePos.range.start))
+        Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", this.state.sourcePos.range.start))
       } else {
-        debug(t"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${current.current}")
-        current.current match {
+        debug(t"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${this.state.current}")
+        this.state.current match {
           case Right(token) if isRightDelimiter(token) =>
             debug("Found right delimiter after expression")
-            Right((exprs, current))
+            Right(exprs)
           case Right(_: Token.Comment | _: Token.Whitespace) =>
             // Collect comments instead of skipping
-            val (_, afterComments) = collectComments(current)
-            parseElements(afterComments, exprs, maxExprs)
+            val (_, afterComments) = collectComments(this.state)
+            this.state = afterComments
+            parseElements(exprs, maxExprs)
           case Right(_: Token.Comma | _: Token.Semicolon) =>
             debug("Found comma or semicolon, skipping")
             // Collect any comments after comma/semicolon
-            val (_, afterDelimiter) = collectComments(current.advance())
-            parseElements(afterDelimiter, exprs, maxExprs)
+            val (_, afterDelimiter) = collectComments(this.state.advance())
+            this.state = afterDelimiter
+            parseElements(exprs, maxExprs)
           case _ =>
             debug("Parsing expression")
-            this.state=current
             parseExpr() match {
-              case Left(err)                => Left(err)
-              case Right((expr)) =>
-              val afterExpr=this.state
+              case Left(err) => Left(err)
+              case Right(expr) =>
                 // Collect comments after the expression
-                val (trailingComments, afterComments) = collectComments(afterExpr)
+                val (trailingComments, afterComments) = collectComments(this.state)
+                this.state = afterComments
 
                 // Check if we've reached a terminator
-                afterComments.current match {
+                this.state.current match {
                   case Right(token) if isRightDelimiter(token) =>
                     // Attach trailing comments to the expression if any
                     val updatedExpr = if (trailingComments.nonEmpty) {
@@ -868,7 +882,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                     } else {
                       expr
                     }
-                    Right((exprs :+ updatedExpr, afterComments))
+                    Right(exprs :+ updatedExpr)
 
                   case Right(_: Token.Comma | _: Token.Semicolon) =>
                     debug("Found comma or semicolon after expression")
@@ -886,43 +900,55 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                     } else {
                       expr
                     }
-                    val (_, afterDelimiter) = collectComments(afterComments.advance())
-                    parseElements(afterDelimiter, exprs :+ updatedExpr, maxExprs)
+                    val (_, afterDelimiter) = collectComments(this.state.advance())
+                    this.state = afterDelimiter
+                    parseElements(exprs :+ updatedExpr, maxExprs)
 
                   case _ =>
                     // We haven't reached a terminator, treat this as a parsing error
-                    Left(ParseError("Expected delimiter after expression", afterComments.sourcePos.range.start))
+                    Left(ParseError("Expected delimiter after expression", this.state.sourcePos.range.start))
                 }
             }
         }
       }
 
-    parseElements(initialState, Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
+    parseElements(Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
   }
 
-  private def parseTuple(state: LexerState): Either[ParseError, (Tuple, LexerState)] = state.current match {
+  private def parseTuple(): Either[ParseError, Tuple] = this.state.current match {
     case LParen(sourcePos) =>
-      val (leadingComments, afterLParen) = collectComments(state.advance())
-      for {
-        (exprs, afterExprs) <- parseExprList(afterLParen)
-        (trailingComments, afterList) = collectComments(afterExprs)
-        result <- afterList.current match {
+      // Advance past the left parenthesis and collect comments
+      val (leadingComments, afterLParen) = collectComments(this.state.advance())
+      this.state = afterLParen
+      
+      // Parse the expression list
+      parseExprList().flatMap { exprs =>
+        // Collect comments after the expressions
+        val (trailingComments, afterList) = collectComments(this.state)
+        this.state = afterList
+        
+        // Check for the closing parenthesis
+        this.state.current match {
           case RParen(_) =>
             val meta =
               if leadingComments.nonEmpty || trailingComments.nonEmpty then
-                createMeta(Some(sourcePos), Some(afterList.sourcePos))
+                createMeta(Some(sourcePos), Some(this.state.sourcePos))
                   .map(m =>
                     ExprMeta(
                       m.sourcePos,
                       createCommentInfo(leadingComments.collect { case c: Comment => c }, trailingComments.collect { case c: Comment => c })
                     )
                   )
-              else createMeta(Some(sourcePos), Some(afterList.sourcePos))
-            Right((Tuple(exprs, meta), afterList.advance()))
-          case _ => Left(expectedError("right parenthesis", afterList.current))
+              else createMeta(Some(sourcePos), Some(this.state.sourcePos))
+            
+            // Advance past the right parenthesis
+            this.state = this.state.advance()
+            Right(Tuple(exprs, meta))
+            
+          case _ => Left(expectedError("right parenthesis", this.state.current))
         }
-      } yield result
-    case _ => Left(expectedError("left parenthesis", state.current))
+      }
+    case _ => Left(expectedError("left parenthesis", this.state.current))
   }
 
   // Check if a token is a 'case' identifier
@@ -1390,7 +1416,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   ): Either[ParseError, (FunctionCall, LexerState)] =
     state.current match {
       case LParen(_) =>
-        parseTuple(state).map { case (args, afterArgs) =>
+        this.state = state
+        parseTuple().map { args =>
+          val afterArgs = this.state
           val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
           (createFunctionCall(identifier, args, funcSourcePos, Some(afterArgs.sourcePos)), afterArgs)
         }

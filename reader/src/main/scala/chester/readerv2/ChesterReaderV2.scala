@@ -19,7 +19,7 @@ object ChesterReaderV2 {
 
   def parseExprList(source: FileNameAndContent): Either[ParseError, Vector[Expr]] = {
     val (lexer) = setupLexer(source)
-    lexer.parseExprList(lexer.state).map(_._1)
+    lexer.parseExprList()
   }
 
   // Add other parsing methods here with the same pattern
