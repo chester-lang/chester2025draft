@@ -10,7 +10,7 @@
     "directory": "vscode"
   },
   "engines": {
-    "vscode": "^1.94.0"
+    "vscode": "^1.99.1"
   },
   "categories": [
     "Programming Languages"
@@ -60,7 +60,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.14.1",
-    "@types/vscode": "1.94.0",
+    "@types/vscode": "1.99.1",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
     "@vscode/test-electron": "^2.5.2",
