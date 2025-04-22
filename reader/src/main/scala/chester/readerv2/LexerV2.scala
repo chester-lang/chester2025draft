@@ -774,7 +774,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
       case Int(_, _) => parseInt(current)
       case Rat(_, _) => parseRational(current)
-      case Str(_, _) => parseString(current)
+      case Str(_, _) => 
+        this.state = current
+        parseString().map { expr =>
+          (expr, this.state)
+        }
       case Sym(_, _) => parseSymbol(current)
 
       case LBracket(_) => withComments(parseList)(current)
@@ -1465,8 +1469,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseString(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withCommentsAndErrorHandling(
+  private def parseString(): Either[ParseError, Expr] = {
+    val oldState = this.state
+    val result = withCommentsAndErrorHandling(
       st =>
         parseLiteral(
           st,
@@ -1478,7 +1483,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           "Expected string literal"
         ),
       "Error parsing string"
-    )(state)
+    )(oldState)
+    
+    result.map { case (expr, newState) =>
+      this.state = newState
+      expr
+    }
+  }
 
   // Create a helper method for parsing literals with common pattern
   private def parseLiteral[T <: Expr](
