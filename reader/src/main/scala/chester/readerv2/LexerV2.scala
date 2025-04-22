@@ -726,15 +726,21 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] =
-    current.current match {
+  private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
+    // Save original state
+    val originalState = this.state
+    // Temporarily set state to the passed-in state for internal processing
+    this.state = current
+    
+    this.state.current match {
       case Left(err) => Left(err)
       case LBrace(_) =>
         // Check for empty object or block
-        val advance1 = current.advance().skipComments
+        val advance1 = this.state.advance().skipComments
         advance1.current match {
           case Left(err)                        => Left(err)
           case RBrace(_) => 
+            // Reset state to before the brace
             this.state = current
             parseObject().map { obj =>
               (obj, this.state)
@@ -745,27 +751,30 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             afterId.current match {
               case Left(err)                            => Left(err)
               case Op(op, _) if op == "=" || op == "=>" => 
+                // Reset state to before the brace
                 this.state = current
                 parseObject().map { obj =>
                   (obj, this.state)
                 }
               case _                                    => 
+                // Reset state to before the brace
                 this.state = current
                 parseBlock().map(block => (block, this.state))
             }
           case _ => 
+            // Reset state to before the brace
             this.state = current
             parseBlock().map(block => (block, this.state))
         }
 
       case LParen(_) => 
-        this.state = current
+        // this.state is already set to current
         parseTuple().map { tuple =>
           (tuple, this.state)
         }
 
       case Id(chars, sourcePos) =>
-        val afterId = current.advance()
+        val afterId = this.state.advance()
         afterId.current match {
           case LBracket(_) =>
             // Generic type parameters
@@ -804,36 +813,43 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         }
 
       case Int(_, _) => 
-        this.state = current
+        // this.state is already set to current
         parseInt().map { expr =>
           (expr, this.state)
         }
       case Rat(_, _) => 
-        this.state = current
+        // this.state is already set to current
         parseRational().map { expr =>
           (expr, this.state)
         }
       case Str(_, _) => 
-        this.state = current
+        // this.state is already set to current
         parseString().map { expr =>
           (expr, this.state)
         }
       case Sym(_, _) => 
-        this.state = current
+        // this.state is already set to current
         parseSymbol().map { expr =>
           (expr, this.state)
         }
 
       case LBracket(_) => 
-        this.state = current
+        // this.state is already set to current
         parseList().map { listExpr =>
           (listExpr, this.state)
         }
 
-      case Right(token) => Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
+      case Right(token) =>
+        // Restore original state on error
+        this.state = originalState
+        Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
 
-      case Err(error) => Left(error)
+      case Err(error) => 
+        // Restore original state on error
+        this.state = originalState
+        Left(error)
     }
+  }
 
   // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
   private def isTerminator(token: Token): Boolean = token match {
