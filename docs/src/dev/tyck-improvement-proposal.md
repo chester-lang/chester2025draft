@@ -352,3 +352,71 @@ The implementation will be considered successful when:
 3. No "cells not covered" exceptions occur
 4. Type error messages are clear and help identify the issue
 5. The implementation can scale to handle arbitrarily complex union types
+
+## 11. Experimental Implementation Notes: Union Type Improvements
+
+During an experimental implementation attempt to fix union type handling, the following specific changes were made to improve union type subtyping and prevent cell coverage errors:
+
+### 11.1 Union-to-Specific Type Relationship Changes
+
+The key issue identified was in how union types were converted to specific types (e.g., `Integer | String` to `Integer`):
+
+**Original Implementation Issues:**
+- In `TyckPropagator.scala`, the `unionSpecificCompatible` method only checked if ANY component of the union was compatible with the specific type
+- This allowed unsound expressions like `def f(x: Integer | String): Integer = x` to type-check
+
+**Specific Changes Made:**
+- Modified `unionSpecificCompatible` method to check if ALL union components are compatible with the specific type
+- Changed the implementation logic from `unionTypes.exists(compatible)` to `!unionTypes.exists(!compatible)`
+- Added explicit error reporting in `handleUnionSpecific` method within the `Unify` case class
+- Enhanced debug output to include step-by-step component compatibility checks
+- Modified `Elaborater.unify` method's union case to properly handle specific-to-union compatibility
+
+### 11.2 DefaultValuePropagator Implementation
+
+To solve the "cells not covered by any propagator" errors:
+
+**Specific Implementation Changes:**
+- Rewritten `ensureDefaultValue[T]` method (line ~1087 in `TyckPropagator.scala`):
+  - Added explicit `state.addPropagator` call to add a dedicated propagator
+  - Added explicit `state.fill` call to ensure cells have values
+  - Added diagnostic logging to track cell state
+
+- Created a new `DefaultValuePropagator[T]` case class with:
+  - Set `score = 100` to give it high priority
+  - Implemented `run`, `zonk`, and `naiveFallbackZonk` methods
+  - Added proper cell tracking with `readingCells`, `writingCells`, and `zonkingCells`
+  - Added custom `identify` method returning `Some(id)` to prevent propagator removal
+
+### 11.3 Infinite Recursion Prevention
+
+Specific changes to break cyclic dependencies:
+
+- In `UnionOf` propagator:
+  - Removed recursive calls to `unify` that could cause infinite loops
+  - Used early returns and simplified value checking logic
+  - Added guard conditions before recursive propagator creation
+
+- In the `handleUnionSpecific` method:
+  - Used `ensureDefaultValue` for each union component instead of creating linked propagators
+  - Added filtered component selection before creating propagator connections
+  - Used explicit value discarding with statements like `val _ = ensureDefaultValue(unionType)`
+
+### 11.4 Test File Updates
+
+Specific file changes:
+- Moved `tests/tyck-fails/union-subtype-fail.chester.todo` to active status by removing `.todo` extension
+- Updated the expected behavior of `def f(x: Integer | String): Integer = x` to correctly fail
+- Modified `tests/tyck/simple-union.chester.todo` to ensure it properly tests union widening
+
+### 11.5 Key Identifier Changes for Future Reference
+
+The most significant method and identifier changes were:
+- `unionSpecificCompatible`: Changed compatibility check logic
+- `handleUnionSpecific`: Rewrote to handle ALL union components
+- `ensureDefaultValue`: Enhanced with propagator creation
+- Added new `DefaultValuePropagator` class
+- Modified `Unify.zonk` case for union handling
+- Updated union component debug logging using `Debug.debugPrint`
+
+These changes collectively represent an approach to fixing union type subtyping that ensures sound type checking while preventing "cells not covered" errors through improved propagator management.
