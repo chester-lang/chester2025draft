@@ -787,7 +787,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseString().map { expr =>
           (expr, this.state)
         }
-      case Sym(_, _) => parseSymbol(current)
+      case Sym(_, _) => 
+        this.state = current
+        parseSymbol().map { expr =>
+          (expr, this.state)
+        }
 
       case LBracket(_) => withComments(parseList)(current)
 
@@ -1578,8 +1582,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseSymbol(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withCommentsAndErrorHandling(
+  private def parseSymbol(): Either[ParseError, Expr] = {
+    val oldState = this.state
+    val result = withCommentsAndErrorHandling(
       st =>
         parseLiteral(
           st,
@@ -1591,7 +1596,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           "Expected symbol literal"
         ),
       "Error parsing symbol"
-    )(state)
+    )(oldState)
+    
+    result.map { case (expr, newState) =>
+      this.state = newState
+      expr
+    }
+  }
 
   // Helper to create identifier expressions
   private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos): ConcreteIdentifier =
