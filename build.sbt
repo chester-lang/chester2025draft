@@ -3,7 +3,7 @@
 val scala3Nightly = "3.7.1-RC1-bin-20250417-05b102a-NIGHTLY"
 val scala3Version = "3.7.0-RC3"
 val scala3Lib = "3.6.4"
-val scala2Version = "2.13.17-M1"
+val scala2Version = "2.13.16"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
@@ -264,7 +264,6 @@ def commonLibSettings = commonSettings0 ++ Seq(
   scalaVersion := scala3Lib
 )
 def scala2Common = Seq(
-  semanticdbEnabled := false, // temporary workaround as it has not been updated to 2.13.17-M1
   scalaVersion := scala2Version,
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
