@@ -198,13 +198,8 @@ val defaultNativeImageOptions = Seq(
   "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
 )
 
-val classVersion =
-  java.lang.Float.parseFloat(System.getProperty("java.class.version"))
-val jdk17ClassVersion = 61.0f
-val jdk17: Boolean = false /* because of -java-output-version 11 */
-// classVersion >= jdk17ClassVersion
-
-dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla")
+val jdk17: Boolean = true
+val jdk21: Boolean = true
 
 def commonSettings0 = Seq(
   dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla"),
@@ -318,9 +313,10 @@ def cpsSettings = Seq(
     "com.github.rssh" %% "dotty-cps-async-compiler-plugin" % "0.9.23"
   )
 )
-def commonJvmLibSettings = Seq(
-  // scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
-  scalacOptions ++= Seq("-java-output-version", "11")
+def commonJvmSettings = Seq(
+  scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
+  scalacOptions ++= (if (jdk21) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk21") else Seq()),
+  scalacOptions ++= Seq("-java-output-version", "21"),
 )
 def jvmScala3Settings = Seq(
   scalaVersion := scala3Nightly
@@ -507,7 +503,7 @@ lazy val kiamaCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonVendorSettings
   )
   .disablePlugins(ScalafixPlugin)
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 // commit 52b3692bdfe01ef6c645380b02595a9c60a9725b, core & util & platform & macros, main only, no tests
 // rewrite by scalac with 3.4-migration
@@ -541,7 +537,7 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .nativeSettings(
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 val AIRFRAME_VERSION = "2025.1.8"
 
@@ -588,7 +584,7 @@ lazy val utils = useSpire(
       libraryDependencies ++= Seq(
         "com.lihaoyi" %%% "os-lib" % "0.11.4"
       ),
-      commonJvmLibSettings,
+      commonJvmSettings,
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
       ),
@@ -639,7 +635,7 @@ lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     commonLibSettings
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -649,7 +645,7 @@ lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     commonSettings
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 val dependOnGraal = Seq(
   libraryDependencies ++= Seq(
@@ -669,7 +665,7 @@ lazy val syntax = useSpire(
     .settings(
       commonLibSettings
     )
-    .jvmSettings(commonJvmLibSettings)
+    .jvmSettings(commonJvmSettings)
     .jvmSettings(dependOnGraal)
 )
 
@@ -681,7 +677,7 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     commonLibSettings
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 lazy val semantic = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -691,7 +687,7 @@ lazy val semantic = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     commonSettings
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 // compiles with scala native. XmlParser broken on nativeLink step. will wait for scalameta scala3 migration
 lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
@@ -707,7 +703,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
     // scalap is a dependency of scalameta
     libraryDependencies += ("org.scala-lang" % "scalap" % scala2Version).exclude("org.jline", "jline")
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
@@ -719,7 +715,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "compiler",
     commonSettings
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 val sootupVersion = "1.3.0"
 lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
@@ -735,7 +731,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonSettings
   )
   .jvmSettings(
-    commonJvmLibSettings,
+    commonJvmSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
       "org.scalameta" %% "semanticdb-shared" % "4.13.4" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
@@ -773,7 +769,7 @@ lazy val optional = crossProject(JVMPlatform)
       "org.bytedeco" % "llvm-platform" % "19.1.3-1.5.11"
     )
   )
-  .jvmSettings(jvmScala3Settings, commonJvmLibSettings)
+  .jvmSettings(jvmScala3Settings, commonJvmSettings)
 
 lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -786,7 +782,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonSettings
     // cpsSettings,
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 lazy val jsTypings = crossProject(JSPlatform)
   .withoutSuffixFor(JSPlatform)
@@ -826,7 +822,7 @@ lazy val compatibility = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonSettings
   )
   .jvmSettings(
-    commonJvmLibSettings
+    commonJvmSettings
   )
   .nativeSettings(
     scalacOptions ++= (if (supportNativeBuildForTermux)
@@ -1015,7 +1011,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
       "ch.epfl.scala" % "bsp4j" % "2.2.0-M4.TEST"
     )
   )
-  .jvmSettings(commonJvmLibSettings)
+  .jvmSettings(commonJvmSettings)
 
 val jgitVersion = "7.2.0.202503040940-r"
 lazy val buildTool = crossProject(JVMPlatform)

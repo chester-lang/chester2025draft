@@ -1,6 +1,5 @@
 package chester.utils
 
-// TODO: Support Scala Native multithreading
 class Parameter[T](default: T | Null = null) {
   var tl: T | Null = default
 
