@@ -728,13 +728,21 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val advance1 = current.advance().skipComments
         advance1.current match {
           case Left(err)                        => Left(err)
-          case RBrace(_)                        => parseObject(current) // Empty object
+          case RBrace(_) => 
+            this.state = current
+            parseObject().map { obj =>
+              (obj, this.state)
+            } // Empty object
           case Id(_, _) | Sym(_, _) | Str(_, _) =>
             // Look ahead for = or => to determine if it's an object
             val afterId = advance1.advance().skipComments
             afterId.current match {
               case Left(err)                            => Left(err)
-              case Op(op, _) if op == "=" || op == "=>" => parseObject(current)
+              case Op(op, _) if op == "=" || op == "=>" => 
+                this.state = current
+                parseObject().map { obj =>
+                  (obj, this.state)
+                }
               case _                                    => 
                 this.state = current
                 parseBlock().map(block => (block, this.state))
@@ -1114,33 +1122,42 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseObject(initialState: LexerState): Either[ParseError, (ObjectExpr, LexerState)] = {
-    // Collect comments before the object
-    val (leadingComments, current) = collectComments(initialState)
+  private def parseObject(): Either[ParseError, ObjectExpr] = {
+    // Save the initial state and collect comments before the object
+    val oldState = this.state
+    val (leadingComments, current) = collectComments(oldState)
+    this.state = current
 
-    current.current match {
+    this.state.current match {
       case Right(Token.LBrace(sourcePos)) =>
         // Collect comments after the opening brace
-        val (afterBraceComments, afterBrace) = collectComments(current.advance())
+        val (afterBraceComments, afterBrace) = collectComments(this.state.advance())
+        this.state = afterBrace
 
-        def parseFields(state: LexerState, clauses: Vector[ObjectClause]): Either[ParseError, (Vector[ObjectClause], LexerState)] =
-          state.current match {
+        def parseFields(clauses: Vector[ObjectClause]): Either[ParseError, Vector[ObjectClause]] =
+          this.state.current match {
             case Right(Token.RBrace(_)) =>
-              Right((clauses, state))
+              Right(clauses)
             case Right(Token.Identifier(chars, idSourcePos)) =>
               val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
-              parseField(state.advance().skipComments, identifier, idSourcePos).flatMap { case (clause, nextState) =>
-                checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
+              // Advance past the identifier and skip comments
+              this.state = this.state.advance().skipComments
+              parseField(identifier, idSourcePos).flatMap { clause =>
+                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
               }
             case Right(Token.StringLiteral(chars, strSourcePos)) =>
               val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
-              parseField(state.advance().skipComments, stringLiteral, strSourcePos).flatMap { case (clause, nextState) =>
-                checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
+              // Advance past the string literal and skip comments
+              this.state = this.state.advance().skipComments
+              parseField(stringLiteral, strSourcePos).flatMap { clause =>
+                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
               }
             case Right(Token.SymbolLiteral(value, symSourcePos)) =>
               val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
-              parseField(state.advance().skipComments, symbolLiteral, symSourcePos).flatMap { case (clause, nextState) =>
-                checkAfterField(nextState).flatMap(nextStateAfterComma => parseFields(nextStateAfterComma, clauses :+ clause))
+              // Advance past the symbol literal and skip comments
+              this.state = this.state.advance().skipComments
+              parseField(symbolLiteral, symSourcePos).flatMap { clause =>
+                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
               }
             case Right(t) =>
               Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
@@ -1148,23 +1165,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               Left(err)
           }
 
-        def parseField(state: LexerState, key: Expr, keySourcePos: SourcePos): Either[ParseError, (ObjectClause, LexerState)] =
-          state.current match {
+        def parseField(key: Expr, keySourcePos: SourcePos): Either[ParseError, ObjectClause] =
+          this.state.current match {
             case Right(Token.Operator(op, _)) =>
-              val afterOp = state.advance()
-              this.state=afterOp
-              parseExpr().flatMap { case (value) =>
-              val afterValue=this.state
+              // Advance past the operator
+              this.state = this.state.advance()
+              parseExpr().flatMap { value =>
                 if (op == "=>") {
-                  Right((ObjectExprClauseOnValue(key, value), afterValue))
+                  Right(ObjectExprClauseOnValue(key, value))
                 } else { // op == "="
                   // For string literals with "=", convert to identifier
                   key match {
                     case stringLit: ConcreteStringLiteral =>
                       val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
-                      Right((ObjectExprClause(idKey, value), afterValue))
+                      Right(ObjectExprClause(idKey, value))
                     case qualifiedName: QualifiedName =>
-                      Right((ObjectExprClause(qualifiedName, value), afterValue))
+                      Right(ObjectExprClause(qualifiedName, value))
                     case other =>
                       // This case should never happen due to validation in caller
                       Left(ParseError(t"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
@@ -1177,22 +1193,24 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               Left(err)
           }
 
-        def checkAfterField(state: LexerState): Either[ParseError, LexerState] =
-          state.current match {
+        def checkAfterField(): Either[ParseError, Unit] =
+          this.state.current match {
             case Right(Token.Comma(_)) =>
               // Collect comments after comma
-              val (_, afterComma) = collectComments(state.advance())
-              Right(afterComma)
+              val (_, afterComma) = collectComments(this.state.advance())
+              this.state = afterComma
+              Right(())
             case Right(Token.RBrace(_)) =>
-              Right(state)
+              // Keep the state as is for the closing brace
+              Right(())
             case Right(t) =>
               Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
             case Left(err) =>
               Left(err)
           }
 
-        parseFields(afterBrace, Vector.empty).flatMap { case (clauses, finalState) =>
-          finalState.current match {
+        parseFields(Vector.empty).flatMap { clauses =>
+          this.state.current match {
             case Right(Token.RBrace(endPos)) =>
               // Create meta with comments
               val objectMeta = if (leadingComments.nonEmpty || afterBraceComments.nonEmpty) {
@@ -1201,8 +1219,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               } else {
                 createMeta(Some(sourcePos), Some(endPos))
               }
-
-              Right((ObjectExpr(clauses, objectMeta), finalState.advance()))
+              
+              // Advance past the closing brace
+              this.state = this.state.advance()
+              Right(ObjectExpr(clauses, objectMeta))
             case Right(t) =>
               Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
             case Left(err) =>
