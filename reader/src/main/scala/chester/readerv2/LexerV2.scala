@@ -764,7 +764,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case LBracket(_) =>
             // Generic type parameters
             val identifier = createIdentifier(chars, sourcePos)
-            withComments(parseList)(afterId).flatMap { case (typeParams, afterTypeParams) =>
+            this.state = afterId
+            parseList().flatMap { typeParams =>
+              val afterTypeParams = this.state
               afterTypeParams.current match {
                 case LParen(_) =>
                   // Function call with generic type args
@@ -813,7 +815,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           (expr, this.state)
         }
 
-      case LBracket(_) => withComments(parseList)(current)
+      case LBracket(_) => 
+        this.state = current
+        parseList().map { listExpr =>
+          (listExpr, this.state)
+        }
 
       case Right(token) => Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
 
@@ -1236,45 +1242,55 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseList(state: LexerState): Either[ParseError, (ListExpr, LexerState)] = {
-    val (leadingComments, initialState) = collectComments(state)
+  private def parseList(): Either[ParseError, ListExpr] = {
+    // Save the initial state and collect comments
+    val oldState = this.state
+    val (leadingComments, initialState) = collectComments(oldState)
+    this.state = initialState
 
-    initialState.current match {
+    this.state.current match {
       case LBracket(sourcePos) =>
-        val (afterBracketComments, afterBracket) = collectComments(initialState.advance())
+        val (afterBracketComments, afterBracket) = collectComments(this.state.advance())
+        this.state = afterBracket
 
         @tailrec
-        def parseElements(current: LexerState, exprs: Vector[Expr]): Either[ParseError, (Vector[Expr], LexerState)] =
+        def parseElements(exprs: Vector[Expr]): Either[ParseError, Vector[Expr]] =
           if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
             Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
           } else
-            current.current match {
-              case RBracket(_) => Right((exprs, current))
+            this.state.current match {
+              case RBracket(_) => Right(exprs)
               case Comma(_) =>
-                val (_, afterComma) = collectComments(current.advance())
-                parseElements(afterComma, exprs)
+                val (_, afterComma) = collectComments(this.state.advance())
+                this.state = afterComma
+                parseElements(exprs)
               case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
-                val (_, afterComments) = collectComments(current)
-                parseElements(afterComments, exprs)
+                val (_, afterComments) = collectComments(this.state)
+                this.state = afterComments
+                parseElements(exprs)
               case _ =>
-              this.state=current
+                // We're already in the right state (this.state), so parse the expression
                 parseExpr() match {
                   case Left(err) => Left(err)
-                  case Right((expr)) =>
-                    val afterExpr=this.state
-                    val (_, afterComments) = collectComments(afterExpr)
-                    afterComments.current match {
-                      case RBracket(_) => Right((exprs :+ expr, afterComments))
+                  case Right(expr) =>
+                    // Collect comments after the expression
+                    val (_, afterComments) = collectComments(this.state)
+                    this.state = afterComments
+                    
+                    // Check what follows the expression
+                    this.state.current match {
+                      case RBracket(_) => Right(exprs :+ expr)
                       case Comma(_) =>
-                        val (_, afterComma) = collectComments(afterComments.advance())
-                        parseElements(afterComma, exprs :+ expr)
-                      case _ => Left(expectedError("',' or ']' in list", afterComments.current))
+                        val (_, afterComma) = collectComments(this.state.advance())
+                        this.state = afterComma
+                        parseElements(exprs :+ expr)
+                      case _ => Left(expectedError("',' or ']' in list", this.state.current))
                     }
                 }
             }
 
-        parseElements(afterBracket, Vector.empty).flatMap { case (exprs, finalState) =>
-          finalState.current match {
+        parseElements(Vector.empty).flatMap { exprs =>
+          this.state.current match {
             case RBracket(endPos) =>
               val listMeta = if (leadingComments.nonEmpty || afterBracketComments.nonEmpty) {
                 createMeta(Some(sourcePos), Some(endPos))
@@ -1282,11 +1298,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               } else {
                 createMeta(Some(sourcePos), Some(endPos))
               }
-              Right((ListExpr(exprs, listMeta), finalState.advance()))
-            case _ => Left(expectedError("']' at end of list", finalState.current))
+              
+              // Advance past the closing bracket
+              this.state = this.state.advance()
+              Right(ListExpr(exprs, listMeta))
+            case _ => Left(expectedError("']' at end of list", this.state.current))
           }
         }
-      case _ => Left(expectedError("[", initialState.current))
+      case _ => Left(expectedError("[", this.state.current))
     }
   }
 
