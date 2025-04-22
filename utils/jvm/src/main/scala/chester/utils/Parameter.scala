@@ -5,9 +5,16 @@ import java.util.concurrent.Callable
 
 import com.eed3si9n.ifdef.*
 
+import java.util.Objects
+
 @ifndef("jdk21")
-class Parameter[T](default: (T | Null) = null) {
-  val tl: ThreadLocal[T | Null] = ThreadLocal.withInitial(() => default)
+class Parameter[T](default: Option[T] = None) {
+  val tl: InheritableThreadLocal[T] = default match {
+    case Some(value) => new InheritableThreadLocal[T] {
+      override def initialValue(): T = value
+    }
+    case None      => new InheritableThreadLocal[T]()
+  }
 
   def withValue[U](value: T)(block: => U): U = {
     require(value != null)
@@ -17,14 +24,16 @@ class Parameter[T](default: (T | Null) = null) {
       block
     } finally tl.set(previousValue)
   }
-  def get: T = tl.get() match {
-    case null  => throw new IllegalStateException("Value is null")
-    case value => value.asInstanceOf[T]
+  def get: T = {
+    val result = tl.get()
+    Objects.requireNonNull(result)
+    result
   }
 }
 
+
 @ifdef("jdk21")
-class Parameter[T](default: (T | Null) = null) {
+class Parameter[T](default: Option[T] = None) {
   val tl: ScopedValue[T] = ScopedValue.newInstance()
 
   def withValue[U](value: T)(block: => U): U = {
@@ -33,8 +42,5 @@ class Parameter[T](default: (T | Null) = null) {
       override def call(): U = block
     })
   }
-  def get: T = tl.orElse(default.asInstanceOf[T]) match {
-    case null  => throw new IllegalStateException("Value is null")
-    case value => value.asInstanceOf[T]
-  }
+  def get: T = if(tl.isBound()) tl.get() else default.getOrElse(throw new IllegalStateException("No default value"))
 }

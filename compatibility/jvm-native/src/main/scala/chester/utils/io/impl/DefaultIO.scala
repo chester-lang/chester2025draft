@@ -106,14 +106,14 @@ implicit object DefaultIO extends IO[Id] {
 
   override inline def getAbsolutePath(path: Path): Path = path.resolveFrom(workingDir)
 
-  @ifndef("scalaNativeForTermux")
+  @ifndef("scalaNativeNoMultithread")
   override inline def call(command: Seq[String]): CommandOutput = {
     os2.init()
     val result = os.call(command, stdin = os.Inherit, stdout = os.Inherit, stderr = os.Inherit)
     CommandOutput(exitCode = Some(result.exitCode))
   }
 
-  @ifdef("scalaNativeForTermux")
+  @ifdef("scalaNativeNoMultithread")
   override inline def call(command: Seq[String]): CommandOutput =
     throw new NotImplementedError("Not implemented for Termux")
 

@@ -198,8 +198,9 @@ val defaultNativeImageOptions = Seq(
   "-H:+AddAllCharsets" // https://stackoverflow.com/questions/74525670/graalvm-native-with-kotlin-unsupportedcharsetexception-cp1252/74528833#74528833
 )
 
-val jdk17: Boolean = true
-val jdk21: Boolean = true
+val jdk17: Boolean = false
+val jdk21: Boolean = false
+val javaOutputVersion: String = "11"
 
 def commonSettings0 = Seq(
   dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla"),
@@ -316,7 +317,7 @@ def cpsSettings = Seq(
 def commonJvmSettings = Seq(
   scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
   scalacOptions ++= (if (jdk21) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk21") else Seq()),
-  scalacOptions ++= Seq("-java-output-version", "21"),
+  scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
 )
 def jvmScala3Settings = Seq(
   scalaVersion := scala3Nightly
@@ -827,7 +828,7 @@ lazy val compatibility = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .nativeSettings(
     scalacOptions ++= (if (supportNativeBuildForTermux)
                          Seq(
-                           "-Xmacro-settings:com.eed3si9n.ifdef.declare:scalaNativeForTermux"
+                           "-Xmacro-settings:com.eed3si9n.ifdef.declare:scalaNativeNoMultithread"
                          )
                        else Seq())
   )

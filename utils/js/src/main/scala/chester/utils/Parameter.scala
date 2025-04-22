@@ -1,18 +1,17 @@
 package chester.utils
 
-class Parameter[T](default: T | Null = null) {
-  var tl: T | Null = default
+import java.util.Objects
+
+class Parameter[T](default: Option[T] = None) {
+  var tl: Option[T] = default
 
   def withValue[U](value: T)(block: => U): U = {
-    require(value != null)
+    Objects.requireNonNull(value)
     val previousValue = tl
     try {
-      tl = value
+      tl = Some(value)
       block
     } finally tl = previousValue
   }
-  def get: T = tl match {
-    case null  => throw new IllegalStateException("Value is null")
-    case value => value.asInstanceOf[T]
-  }
+  def get: T = tl.getOrElse(throw new IllegalStateException("No default value"))
 }
