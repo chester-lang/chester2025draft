@@ -1,8 +1,37 @@
-// Test that Int -> Int|String is valid subtyping
-def f(x: Integer): Integer | String = x;
-f(42);
+// Test for union type compatibility
+// Tests that a specific type can be assigned to a union type
 
-// Test that we can pass Int to a function expecting Int|String
-def g(x: Integer | String): Integer | String = x;
+// Integer to Integer | String (should succeed)
 let x: Integer = 42;
-let y: Integer | String = g(x);  // Add explicit type annotation and store result 
+let y: Integer | String = x;
+
+// String to Integer | String (should succeed)
+let s: String = "hello";
+let t: Integer | String = s;
+
+// Function accepting a union type
+def acceptUnion(value: Integer | String): String = {
+  match value {
+    case i: Integer => i.toString()
+    case s: String => s
+  }
+};
+
+// Testing function calls with specific types
+let result1 = acceptUnion(123);
+let result2 = acceptUnion("test");
+
+// Testing with variables
+let intVar: Integer = 456;
+let strVar: String = "world";
+let result3 = acceptUnion(intVar);
+let result4 = acceptUnion(strVar);
+
+// Return type compatibility test
+def returnIntOrString(flag: Boolean): Integer | String = {
+  if flag {
+    return 42
+  } else {
+    return "hello"
+  }
+}; 
