@@ -1,1 +1,14 @@
-def f(x: Integer | String): Integer = x; 
+// Test for union type incompatibility
+// This should fail to typecheck since we're trying to use a union type
+// in a context where a specific non-union type is expected
+
+// Trying to return a union type from a function that expects a specific type
+def f(x: Integer | String): Integer = x; // Error: Integer | String is not compatible with Integer
+
+// Creating a union type explicitly
+let u: Integer | String = 42; // Valid: Integer is compatible with Integer | String
+let v: Integer = u; // Error: Cannot assign Integer | String to Integer
+
+// Function returning a union being used where a specific type is expected
+def returnUnion(): Integer | String = 42; // Valid: Integer is compatible with Integer | String return type
+let z: Integer = returnUnion(); // Error: Cannot assign Integer | String to Integer 

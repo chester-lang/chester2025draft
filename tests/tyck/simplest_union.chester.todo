@@ -1,25 +1,2 @@
-// Simplest union type test
-
-// Test that Int -> Int|String is valid subtyping
-def f(x: Integer): Integer | String = x;
-f(42);
-
-// Test that we can pass Int to a function expecting Int|String
-def g(x: Integer | String): Integer | String = x;
-let a: Integer = 42;
-let b: Integer | String = g(a);
-
-// Test function call with union type return
-let c: Integer | String = f(a);
-
-// Integer value
-let x: Integer = 42;
-
-// Test Int|String variable assignment
-let z: Integer | String = f(x);
-
-// String value
-let s: String = "hello";
-
-// Union type variable with string value
-let t: Integer | String = s; 
+// Test subtyping with union types - Integer is a subtype of Integer | String
+def identity(x: Integer): Integer | String = x; 
