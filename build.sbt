@@ -466,7 +466,7 @@ ThisBuild / assemblyMergeStrategy := {
     oldStrategy(x)
 }
 
-val supportNativeBuildForTermux = System.getProperty("java.vm.vendor") == "Termux"
+val supportNativeBuildForTermux = System.getProperty("java.vm.vendor") == "Termux" || System.getProperty("sun.boot.library.path", "").startsWith("/data/data/com.termux")
 
 ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.getProperty("os.arch").toLowerCase) match {
   case (mac, _) if mac.contains("mac") => // mac has some bugs with optimizations
