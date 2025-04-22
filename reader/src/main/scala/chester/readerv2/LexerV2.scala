@@ -772,7 +772,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             Right((createIdentifier(chars, sourcePos), afterId))
         }
 
-      case Int(_, _) => parseInt(current)
+      case Int(_, _) => 
+        this.state = current
+        parseInt().map { expr =>
+          (expr, this.state)
+        }
       case Rat(_, _) => parseRational(current)
       case Str(_, _) => 
         this.state = current
@@ -1511,8 +1515,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
 
   // Helper functions for other literal types
-  private def parseInt(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withCommentsAndErrorHandling(
+  private def parseInt(): Either[ParseError, Expr] = {
+    val oldState = this.state
+    val result = withCommentsAndErrorHandling(
       st =>
         parseLiteral(
           st,
@@ -1534,7 +1539,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           "Expected integer literal"
         ),
       "Error parsing integer"
-    )(state)
+    )(oldState)
+    
+    result.map { case (expr, newState) =>
+      this.state = newState
+      expr
+    }
+  }
 
   private def parseRational(state: LexerState): Either[ParseError, (Expr, LexerState)] =
     withCommentsAndErrorHandling(
