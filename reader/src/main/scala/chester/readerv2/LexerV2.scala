@@ -777,7 +777,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseInt().map { expr =>
           (expr, this.state)
         }
-      case Rat(_, _) => parseRational(current)
+      case Rat(_, _) => 
+        this.state = current
+        parseRational().map { expr =>
+          (expr, this.state)
+        }
       case Str(_, _) => 
         this.state = current
         parseString().map { expr =>
@@ -1547,8 +1551,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseRational(state: LexerState): Either[ParseError, (Expr, LexerState)] =
-    withCommentsAndErrorHandling(
+  private def parseRational(): Either[ParseError, Expr] = {
+    val oldState = this.state
+    val result = withCommentsAndErrorHandling(
       st =>
         parseLiteral(
           st,
@@ -1565,7 +1570,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           "Expected rational literal"
         ),
       "Error parsing rational number"
-    )(state)
+    )(oldState)
+    
+    result.map { case (expr, newState) =>
+      this.state = newState
+      expr
+    }
+  }
 
   private def parseSymbol(state: LexerState): Either[ParseError, (Expr, LexerState)] =
     withCommentsAndErrorHandling(
