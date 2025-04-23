@@ -194,24 +194,24 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
     def getTokenType(t: Token): String = t match {
-      case _: Token.Identifier      => "identifier"
-      case _: Token.IntegerLiteral  => "integer literal"
-      case _: Token.RationalLiteral => "rational literal"
-      case _: Token.StringLiteral   => "string literal"
-      case _: Token.Operator        => "operator"
-      case _: Token.LParen          => "left parenthesis '('"
-      case _: Token.RParen          => "right parenthesis ')'"
-      case _: Token.LBrace          => "left brace '{'"
-      case _: Token.RBrace          => "right brace '}'"
-      case _: Token.LBracket        => "left bracket '['"
-      case _: Token.RBracket        => "right bracket ']'"
-      case _: Token.Colon           => "colon ':'"
-      case _: Token.Comma           => "comma ','"
-      case _: Token.Dot             => "dot '.'"
-      case _: Token.Semicolon       => "semicolon ';'"
-      case _: Token.EOF             => "end of file"
-      case _: Token.Whitespace      => "whitespace"
-      case _                        => "unknown token"
+      case _: Token.Identifier      => t"identifier"
+      case _: Token.IntegerLiteral  => t"integer literal"
+      case _: Token.RationalLiteral => t"rational literal"
+      case _: Token.StringLiteral   => t"string literal"
+      case _: Token.Operator        => t"operator"
+      case _: Token.LParen          => t"left parenthesis '('"
+      case _: Token.RParen          => t"right parenthesis ')'"
+      case _: Token.LBrace          => t"left brace '{'"
+      case _: Token.RBrace          => t"right brace '}'"
+      case _: Token.LBracket        => t"left bracket '['"
+      case _: Token.RBracket        => t"right bracket ']'"
+      case _: Token.Colon           => t"colon ':'"
+      case _: Token.Comma           => t"comma ','"
+      case _: Token.Dot             => t"dot '.'"
+      case _: Token.Semicolon       => t"semicolon ';'"
+      case _: Token.EOF             => t"end of file"
+      case _: Token.Whitespace      => t"whitespace"
+      case _                        => t"unknown token"
     }
 
     token.fold(
@@ -307,7 +307,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug("parseRest: Found match keyword after identifier")
         val matchId = ConcreteIdentifier("match", createMeta(None, None))
         // Advance past the match keyword
-        this.state = this.state.advance()
+        advance()
 
         // For match blocks, parse using the regular block parser with no special case handling
         // this.state is already updated
@@ -431,7 +431,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     */
   private def handleColon(sourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
     // Advance past the colon
-    this.state = this.state.advance()
+    advance()
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
     debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
@@ -453,7 +453,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     */
   private def handleOperatorInRest(op: String, sourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
     // Advance past the operator
-    this.state = this.state.advance()
+    advance()
 
     // Add operator to terms
     val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
@@ -491,7 +491,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     */
   private def handleIdentifierInRest(text: String, sourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
     // Advance past the identifier
-    this.state = this.state.advance()
+    advance()
 
     this.state.current match {
       case Right(Token.LParen(_)) =>
@@ -539,7 +539,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug(t"parseRest: After adding id and op, terms: $updatedTerms")
 
         // Advance past the operator
-        this.state = this.state.advance()
+        advance()
         withComments(() => parseAtom()).flatMap { next =>
           val newTerms = updatedTerms :+ next
           debug(t"parseRest: After parsing atom after operator, terms: $newTerms")
@@ -581,7 +581,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseExpr: Starting with operator $op")
         // Advance past the operator
-        this.state = this.state.advance()
+        advance()
 
         this.state.current match {
           // Function call form: op(args)
@@ -619,7 +619,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(charsToString(chars)) =>
         debug(t"parseExpr: Starting with keyword operator ${charsToString(chars)}")
         // Advance past the keyword operator
-        this.state = this.state.advance()
+        advance()
         terms = Vector(ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
         withComments(() => parseAtom()).flatMap { expr =>
           terms = terms :+ expr
@@ -687,13 +687,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
     // Skip the dot
-    this.state = this.state.advance()
+    advance()
 
     this.state.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) =>
         // Save identifier and advance
         val field = createIdentifier(chars1, idSourcePos1)
-        this.state = this.state.advance()
+        advance()
         var telescope = Vector.empty[Tuple]
 
         def parseNextTelescope(): Either[ParseError, Expr] =
@@ -720,7 +720,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Operator(op, idSourcePos)) =>
         // Save operator, advance, and process
         val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
-        this.state = this.state.advance()
+        advance()
 
         this.state.current match {
           case Right(Token.LParen(_)) =>
@@ -746,7 +746,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case LBrace(_) =>
         // Check for empty object or block
         this.state
-        this.state = this.state.advance()
+        advance()
         skipComments()
         val advance1 = this.state
         advance1.current match {
@@ -888,7 +888,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case Right(_: Token.Comma | _: Token.Semicolon) =>
             debug("Found comma or semicolon, skipping")
             // Skip any comments after comma/semicolon
-            this.state = this.state.advance()
+            advance()
             skipComments()
             parseElements(exprs, maxExprs)
           case _ =>
@@ -939,7 +939,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                     } else {
                       expr
                     }
-                    this.state = this.state.advance()
+                    advance()
                     skipComments()
                     parseElements(exprs :+ updatedExpr, maxExprs)
 
@@ -957,7 +957,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   private def parseTuple(): Either[ParseError, Tuple] = this.state.current match {
     case LParen(sourcePos) =>
       // Advance past the left parenthesis and skip comments
-      this.state = this.state.advance()
+      advance()
       skipComments()
       // Comments will be retrieved via pullComments() later
 
@@ -984,7 +984,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               else createMeta(Some(sourcePos), Some(this.state.sourcePos))
 
             // Advance past the right parenthesis
-            this.state = this.state.advance()
+            advance()
             Right(Tuple(exprs, meta))
 
           case _ => Left(expectedError("right parenthesis", this.state.current))
@@ -1016,7 +1016,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.LBrace(_)) =>
         debug("parseBlock: Found opening brace")
         // Advance past opening brace and skip comments
-        this.state = this.state.advance()
+        advance()
         skipComments()
 
         // State is already updated by skipComments()
@@ -1033,19 +1033,19 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             case Right(Token.RBrace(_)) =>
               debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
               val finalBlock = Block(statements, result, None)
-              this.state = this.state.advance()
+              advance()
               debug(t"parseBlock: Returning block with ${statements.size} statements, result=${result.isDefined}")
               return Right(finalBlock)
 
             case Right(Token.Semicolon(_)) =>
               debug("parseBlock: Found semicolon, advancing")
-              this.state = this.state.advance()
+              advance()
               skipComments()
               debug(t"parseBlock: After semicolon, state=${this.state}")
 
             case Right(Token.Whitespace(_, _)) =>
               debug("parseBlock: Found whitespace, advancing")
-              this.state = this.state.advance()
+              advance()
               skipComments()
               debug(t"parseBlock: After whitespace, state=${this.state}")
 
@@ -1067,7 +1067,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                   this.state.current match {
                     case Right(Token.Semicolon(_)) =>
                       debug("parseBlock: Skipping semicolon after case statement")
-                      this.state = this.state.advance()
+                      advance()
                     case _ =>
                     // Keep current state
                   }
@@ -1091,7 +1091,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                       debug("parseBlock: Expression followed by closing brace, setting as result")
                       // This is the V1 style: put the last expression in the result field
                       result = Some(expr)
-                      this.state = this.state.advance()
+                      advance()
                       debug(t"parseBlock: Returning block with ${statements.size} statements and result=$expr")
                       return Right(Block(statements, result, None))
 
@@ -1100,7 +1100,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                       statements = statements :+ expr
 
                       // Check for case after semicolon
-                      this.state = this.state.advance()
+                      advance()
                       skipComments()
                       debug(t"parseBlock: After semicolon, statements=${statements.size}, state=${this.state}")
 
@@ -1164,7 +1164,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state.current match {
       case Right(Token.LBrace(sourcePos)) =>
         // Advance past the opening brace and skip comments
-        this.state = this.state.advance()
+        advance()
         skipComments()
 
         def parseFields(clauses: Vector[ObjectClause]): Either[ParseError, Vector[ObjectClause]] =
@@ -1174,19 +1174,19 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             case Right(Token.Identifier(chars, idSourcePos)) =>
               val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
               // Advance past the identifier and skip comments
-              this.state = this.state.advance()
+              advance()
               skipComments()
               parseField(identifier, idSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
             case Right(Token.StringLiteral(chars, strSourcePos)) =>
               val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
               // Advance past the string literal and skip comments
-              this.state = this.state.advance()
+              advance()
               skipComments()
               parseField(stringLiteral, strSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
             case Right(Token.SymbolLiteral(value, symSourcePos)) =>
               val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
               // Advance past the symbol literal and skip comments
-              this.state = this.state.advance()
+              advance()
               skipComments()
               parseField(symbolLiteral, symSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
             case Right(t) =>
@@ -1199,7 +1199,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           this.state.current match {
             case Right(Token.Operator(op, _)) =>
               // Advance past the operator
-              this.state = this.state.advance()
+              advance()
               parseExpr().flatMap { value =>
                 if (op == "=>") {
                   Right(ObjectExprClauseOnValue(key, value))
@@ -1227,7 +1227,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           this.state.current match {
             case Right(Token.Comma(_)) =>
               // Collect comments after comma
-              this.state = this.state.advance()
+              advance()
               skipComments()
               Right(())
             case Right(Token.RBrace(_)) =>
@@ -1252,7 +1252,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               }
 
               // Advance past the closing brace
-              this.state = this.state.advance()
+              advance()
               Right(ObjectExpr(clauses, objectMeta))
             case Right(t) =>
               Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
@@ -1275,7 +1275,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state.current match {
       case LBracket(sourcePos) =>
         // Advance past the opening bracket and skip comments
-        this.state = this.state.advance()
+        advance()
         skipComments()
 
         @tailrec
@@ -1286,7 +1286,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             this.state.current match {
               case RBracket(_) => Right(exprs)
               case Comma(_) =>
-                this.state = this.state.advance()
+                advance()
                 skipComments()
                 parseElements(exprs)
               case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
@@ -1304,7 +1304,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                     this.state.current match {
                       case RBracket(_) => Right(exprs :+ expr)
                       case Comma(_) =>
-                        this.state = this.state.advance()
+                        advance()
                         skipComments()
                         parseElements(exprs :+ expr)
                       case _ => Left(expectedError("',' or ']' in list", this.state.current))
@@ -1325,7 +1325,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               }
 
               // Advance past the closing bracket
-              this.state = this.state.advance()
+              advance()
               Right(ListExpr(exprs, listMeta))
             case _ => Left(expectedError("']' at end of list", this.state.current))
           }
@@ -1348,12 +1348,30 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
+  /** Helper method to advance the lexer state by one token
+    * @return the previous state before advancing
+    */
+  private def advance(): LexerState = {
+    val prevState = this.state
+    this.state = this.state.advance()
+    prevState
+  }
+  
+  /** Helper method to clear pending tokens from the lexer state
+    * @return the previous state before clearing
+    */
+  private def clearPendingTokens(): LexerState = {
+    val prevState = this.state
+    this.state = this.state.clearPendingTokens()
+    prevState
+  }
+  
   /** Skips all comments and whitespace tokens, updating this.state directly. All skipped tokens are automatically added to the state's pendingTokens
     * for later retrieval.
     */
   private def skipComments(): Unit =
     while (!this.state.isAtEnd && this.state.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace]))
-      this.state = this.state.advance() // This automatically adds comments/whitespace to pendingTokens
+      advance() // This automatically adds comments/whitespace to pendingTokens
 
   /** Retrieves all pending tokens (comments and whitespace) and converts them to CommOrWhite format, then clears the pendingTokens collection. This
     * also has the side effect of updating this.state.
@@ -1365,7 +1383,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     val pendingTokens = this.state.pendingTokens
 
     // Clear the pending tokens in the state
-    this.state = this.state.clearPendingTokens()
+    clearPendingTokens()
 
     // Convert and return the tokens
     pendingTokens.map {
@@ -1639,7 +1657,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case Some((value, sourcePos)) =>
             val meta = createMeta(Some(sourcePos), Some(sourcePos))
             // Advance the state after extracting the token
-            this.state = this.state.advance()
+            advance()
             Right(create(value, meta))
           case None =>
             Left(ParseError(errorMsg, this.state.sourcePos.range.start))
