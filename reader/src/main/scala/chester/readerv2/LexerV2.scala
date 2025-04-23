@@ -1014,92 +1014,96 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state = this.state.withNewLineTermination(true)
     debug(t"parseBlock: starting with state=${this.state}")
 
-    val (_, current) = collectComments(this.state)
+    // Collect comments and set the state
+    val (_, afterComments) = collectComments(this.state)
+    this.state = afterComments
+    
     var statements = Vector[Expr]()
     var result: Option[Expr] = None
     var maxExpressions = 100 // Prevent infinite loops
 
     // Skip the opening brace
-    current.current match {
+    this.state.current match {
       case Right(Token.LBrace(_)) =>
         debug("parseBlock: Found opening brace")
-        val (_blockStartComments, afterBrace) = collectComments(current.advance())
-
-        var blockCurrent = afterBrace
-        debug(t"parseBlock: After opening brace, blockCurrent=$blockCurrent")
+        // Advance past opening brace and collect comments
+        val (_blockStartComments, afterBrace) = collectComments(this.state.advance())
+        
+        // Update state to point after the brace and comments
+        this.state = afterBrace
+        debug(t"parseBlock: After opening brace, state=${this.state}")
 
         // Regular block parsing - all statements are treated the same
         while (maxExpressions > 0) {
           maxExpressions -= 1
 
-          val (blockComments, withoutComments) = collectComments(blockCurrent)
-          blockCurrent = withoutComments
+          val (blockComments, withoutComments) = collectComments(this.state)
+          this.state = withoutComments
 
-          blockCurrent.current match {
+          this.state.current match {
             case Right(Token.RBrace(_)) =>
               debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
               val finalBlock = Block(statements, result, None)
-              this.state = blockCurrent.advance()
+              this.state = this.state.advance()
               debug(t"parseBlock: Returning block with ${statements.size} statements, result=${result.isDefined}")
               return Right(finalBlock)
 
             case Right(Token.Semicolon(_)) =>
               debug("parseBlock: Found semicolon, advancing")
-              val (_, afterSemi) = collectComments(blockCurrent.advance())
-              blockCurrent = afterSemi
-              debug(t"parseBlock: After semicolon, blockCurrent=$blockCurrent")
+              val (_, afterSemi) = collectComments(this.state.advance())
+              this.state = afterSemi
+              debug(t"parseBlock: After semicolon, state=${this.state}")
 
             case Right(Token.Whitespace(_, _)) =>
               debug("parseBlock: Found whitespace, advancing")
-              val (_, afterWs) = collectComments(blockCurrent.advance())
-              blockCurrent = afterWs
-              debug(t"parseBlock: After whitespace, blockCurrent=$blockCurrent")
+              val (_, afterWs) = collectComments(this.state.advance())
+              this.state = afterWs
+              debug(t"parseBlock: After whitespace, state=${this.state}")
 
-            case _ if isCaseIdentifier(blockCurrent.current) =>
+            case _ if isCaseIdentifier(this.state.current) =>
               // When we encounter 'case' at the beginning of an expression, we need to parse it
               // normally but ensure it's a separate statement
               debug("parseBlock: Found 'case' identifier, parsing statement")
-              this.state=blockCurrent
+              // this.state is already correctly set
               parseExpr() match {
                 case Left(err) =>
                   debug(t"parseBlock: Error parsing case expression: $err")
                   return Left(err)
-                case Right((expr)) =>
-                val next=this.state
+                case Right(expr) =>
+                  // this.state has been updated by parseExpr
                   debug(t"parseBlock: Parsed case statement: $expr")
                   statements = statements :+ expr
 
                   // Skip past semicolons
-                  val afterExpr = next.current match {
+                  this.state.current match {
                     case Right(Token.Semicolon(_)) =>
                       debug("parseBlock: Skipping semicolon after case statement")
-                      next.advance()
-                    case _ => next
+                      this.state = this.state.advance()
+                    case _ => 
+                      // Keep current state
                   }
 
-                  blockCurrent = afterExpr
                   debug("parseBlock: Updated block state after case statement")
               }
 
             case _ =>
-              debug(t"parseBlock: Parsing expression at token ${blockCurrent.current}")
-              this.state=blockCurrent
+              debug(t"parseBlock: Parsing expression at token ${this.state.current}")
+              // this.state is already correctly set
               parseExpr() match {
                 case Left(err) =>
                   debug(t"parseBlock: Error parsing expression: $err")
                   return Left(err)
-                case Right((expr)) =>
-                val next=this.state
-                  debug(t"parseBlock: Parsed expression: $expr, next token: ${next.current}")
+                case Right(expr) =>
+                  // this.state has been updated by parseExpr
+                  debug(t"parseBlock: Parsed expression: $expr, next token: ${this.state.current}")
 
-                  next.current match {
+                  this.state.current match {
                     case Right(Token.RBrace(_)) =>
                       debug("parseBlock: Expression followed by closing brace, setting as result")
                       // This is the V1 style: put the last expression in the result field
                       result = Some(expr)
-                      blockCurrent = next.advance()
+                      this.state = this.state.advance()
                       debug(t"parseBlock: Returning block with ${statements.size} statements and result=$expr")
-                      this.state = blockCurrent
                       return Right(Block(statements, result, None))
 
                     case Right(Token.Semicolon(_)) =>
@@ -1107,26 +1111,26 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                       statements = statements :+ expr
 
                       // Check for case after semicolon
-                      val (_, afterSemi) = collectComments(next.advance())
+                      val (_, afterSemi) = collectComments(this.state.advance())
 
-                      blockCurrent = afterSemi
-                      debug(t"parseBlock: After semicolon, statements=${statements.size}, blockCurrent=$blockCurrent")
+                      this.state = afterSemi
+                      debug(t"parseBlock: After semicolon, statements=${statements.size}, state=${this.state}")
 
                     case Right(_ @ Token.Whitespace(_, _)) =>
                       debug("parseBlock: Expression followed by whitespace, checking for newlines and case")
 
                       // Get next token after whitespace
-                      val (_, afterWs) = collectComments(next)
+                      val (_, afterWs) = collectComments(this.state)
 
                       // Add statement and advance
                       statements = statements :+ expr
-                      blockCurrent = afterWs
-                      debug(t"parseBlock: After whitespace, statements=${statements.size}, blockCurrent=$blockCurrent")
+                      this.state = afterWs
+                      debug(t"parseBlock: After whitespace, statements=${statements.size}, state=${this.state}")
 
-                    case Right(_) if isCaseIdentifier(next.current) =>
+                    case Right(_) if isCaseIdentifier(this.state.current) =>
                       debug("parseBlock: Found 'case' after expression, adding to statements")
                       statements = statements :+ expr
-                      blockCurrent = next
+                      // this.state is already correctly set
 
                     case Right(t) =>
                       debug(t"parseBlock: Unexpected token after expression: $t")
@@ -1141,7 +1145,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         }
 
         debug("parseBlock: Too many expressions in block")
-        Left(ParseError("Too many expressions in block", current.sourcePos.range.start))
+        Left(ParseError("Too many expressions in block", this.state.sourcePos.range.start))
       case Right(t) =>
         debug(t"parseBlock: Expected '{' but found $t")
         Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
