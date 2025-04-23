@@ -280,7 +280,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     debug(t"parseRest called with expr: $expr, state: ${this.state}, current terms: $localTerms")
 
     // Handle special closing brace + newline pattern
-    if (checkForRBraceNewlinePattern(this.state)) {
+    if (checkForRBraceNewlinePattern()) {
       debug("parseRest: Terminating expression due to }\n pattern")
       // State is already set correctly
       return buildOpSeq(localTerms)(leadingComments)
@@ -666,16 +666,17 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   /** Checks for the pattern of a right brace followed by a newline. This is used to detect block termination in certain contexts.
     */
-  private def checkForRBraceNewlinePattern(state: LexerState): Boolean = {
+  private def checkForRBraceNewlinePattern(): Boolean = {
     // First check the preconditions - must be in context where newlines are significant,
     // and previous token must be a closing brace
-    val state1 = state.skipComments
-    if (!state1.newLineAfterBlockMeansEnds || !state1.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])) {
+    val originalState = this.state
+    val stateWithoutComments = this.state.skipComments
+    if (!stateWithoutComments.newLineAfterBlockMeansEnds || !stateWithoutComments.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])) {
       return false
     }
 
     // Check if current token contains a newline or is EOF
-    val hasNewline = state1.current match {
+    val hasNewline = stateWithoutComments.current match {
       case Right(ws: Token.Whitespace) =>
         lazy val wsContent = for {
           source <- source.readContent.toOption
