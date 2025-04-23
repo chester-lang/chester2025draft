@@ -14,7 +14,7 @@ class Parameter[T](default: Option[T] = None) {
   }
 
   def withValue[U](value: T)(block: => U): U = {
-    require(value != null)
+    Objects.requireNonNull(value)
     val previousValue = tl.get()
     try {
       tl.set(value)
