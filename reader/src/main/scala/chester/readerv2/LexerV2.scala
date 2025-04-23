@@ -1605,23 +1605,34 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Helper for handling common error patterns
   private def withErrorHandling[T](
-      parser: LexerState => Either[ParseError, (T, LexerState)],
+      parser: => Either[ParseError, T],
       errorMsg: String
-  ): LexerState => Either[ParseError, (T, LexerState)] = state =>
-    parser(state) match {
+  ): Either[ParseError, T] =
+    parser match {
       case Left(err) => Left(ParseError(t"$errorMsg: ${err.message}", err.pos))
       case right     => right
     }
 
   // Helper that combines collecting comments and parsing with error handling
   private def withCommentsAndErrorHandling[T <: Expr](
-      parser: LexerState => Either[ParseError, (T, LexerState)],
+      parser: => Either[ParseError, T],
       errorMsg: String
-  ): LexerState => Either[ParseError, (T, LexerState)] = state => {
-    val (leadingComments, afterLeadingComments) = collectComments(state)
+  ): Either[ParseError, T] = {
+    // Save original state
+    val originalState = this.state
+    
+    // Collect leading comments
+    val (leadingComments, afterLeadingComments) = collectComments(this.state)
+    
+    // Update state to after leading comments
+    this.state = afterLeadingComments
 
-    withErrorHandling(parser, errorMsg)(afterLeadingComments).flatMap { case (expr, afterExpr) =>
-      val (trailingComments, finalState) = collectTrailingComments(afterExpr)
+    val result = withErrorHandling(parser, errorMsg).flatMap { expr =>
+      // Collect trailing comments
+      val (trailingComments, finalState) = collectTrailingComments(this.state)
+      
+      // Update state to final state after trailing comments
+      this.state = finalState
 
       // Update expression with comments if needed
       val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
@@ -1637,131 +1648,108 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         expr
       }
 
-      Right((updatedExpr.asInstanceOf[T], finalState))
+      Right(updatedExpr.asInstanceOf[T])
+    }
+    
+    // Restore original state in case of error
+    result match {
+      case Left(err) => 
+        this.state = originalState
+        Left(err)
+      case right => right
     }
   }
 
   private def parseString(): Either[ParseError, Expr] = {
-    val oldState = this.state
-    val result = withCommentsAndErrorHandling(
-      st =>
-        parseLiteral(
-          st,
-          token =>
-            PartialFunction.condOpt(token) { case Token.StringLiteral(chars, sourcePos) =>
-              (charsToString(chars), sourcePos)
-            },
-          (value, meta) => ConcreteStringLiteral(value, meta),
-          "Expected string literal"
-        ),
+    withCommentsAndErrorHandling(
+      parseLiteral(
+        token =>
+          PartialFunction.condOpt(token) { case Token.StringLiteral(chars, sourcePos) =>
+            (charsToString(chars), sourcePos)
+          },
+        (value, meta) => ConcreteStringLiteral(value, meta),
+        "Expected string literal"
+      ),
       "Error parsing string"
-    )(oldState)
-    
-    result.map { case (expr, newState) =>
-      this.state = newState
-      expr
-    }
+    )
   }
 
   // Create a helper method for parsing literals with common pattern
   private def parseLiteral[T <: Expr](
-      state: LexerState,
       extract: Token => Option[(String, SourcePos)],
       create: (String, Option[ExprMeta]) => T,
       errorMsg: String
-  ): Either[ParseError, (T, LexerState)] =
-    state.current match {
+  ): Either[ParseError, T] =
+    this.state.current match {
       case Right(token) =>
         extract(token) match {
           case Some((value, sourcePos)) =>
             val meta = createMeta(Some(sourcePos), Some(sourcePos))
-            Right((create(value, meta), state.advance()))
+            // Advance the state after extracting the token
+            this.state = this.state.advance()
+            Right(create(value, meta))
           case None =>
-            Left(ParseError(errorMsg, state.sourcePos.range.start))
+            Left(ParseError(errorMsg, this.state.sourcePos.range.start))
         }
       case Left(err) => Left(err)
     }
 
   // Helper functions for other literal types
   private def parseInt(): Either[ParseError, Expr] = {
-    val oldState = this.state
-    val result = withCommentsAndErrorHandling(
-      st =>
-        parseLiteral(
-          st,
-          {
-            case Token.IntegerLiteral(value, sourcePos) =>
-              // Handle different bases
-              val (numStr, base) =
-                if (value.startsWith("0x")) (value.drop(2), 16)
-                else if (value.startsWith("0b")) (value.drop(2), 2)
-                else (value, 10)
-              try
-                Some((BigInt(numStr, base).toString, sourcePos))
-              catch {
-                case _: NumberFormatException => None
-              }
-            case _ => None
-          },
-          (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
-          "Expected integer literal"
-        ),
+    withCommentsAndErrorHandling(
+      parseLiteral(
+        {
+          case Token.IntegerLiteral(value, sourcePos) =>
+            // Handle different bases
+            val (numStr, base) =
+              if (value.startsWith("0x")) (value.drop(2), 16)
+              else if (value.startsWith("0b")) (value.drop(2), 2)
+              else (value, 10)
+            try
+              Some((BigInt(numStr, base).toString, sourcePos))
+            catch {
+              case _: NumberFormatException => None
+            }
+          case _ => None
+        },
+        (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
+        "Expected integer literal"
+      ),
       "Error parsing integer"
-    )(oldState)
-    
-    result.map { case (expr, newState) =>
-      this.state = newState
-      expr
-    }
+    )
   }
 
   private def parseRational(): Either[ParseError, Expr] = {
-    val oldState = this.state
-    val result = withCommentsAndErrorHandling(
-      st =>
-        parseLiteral(
-          st,
-          {
-            case Token.RationalLiteral(value, sourcePos) =>
-              try
-                Some((value, sourcePos))
-              catch {
-                case _: NumberFormatException => None
-              }
-            case _ => None
-          },
-          (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
-          "Expected rational literal"
-        ),
+    withCommentsAndErrorHandling(
+      parseLiteral(
+        {
+          case Token.RationalLiteral(value, sourcePos) =>
+            try
+              Some((value, sourcePos))
+            catch {
+              case _: NumberFormatException => None
+            }
+          case _ => None
+        },
+        (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
+        "Expected rational literal"
+      ),
       "Error parsing rational number"
-    )(oldState)
-    
-    result.map { case (expr, newState) =>
-      this.state = newState
-      expr
-    }
+    )
   }
 
   private def parseSymbol(): Either[ParseError, Expr] = {
-    val oldState = this.state
-    val result = withCommentsAndErrorHandling(
-      st =>
-        parseLiteral(
-          st,
-          token =>
-            PartialFunction.condOpt(token) { case Token.SymbolLiteral(value, sourcePos) =>
-              (value, sourcePos)
-            },
-          chester.syntax.concrete.SymbolLiteral.apply,
-          "Expected symbol literal"
-        ),
+    withCommentsAndErrorHandling(
+      parseLiteral(
+        token =>
+          PartialFunction.condOpt(token) { case Token.SymbolLiteral(value, sourcePos) =>
+            (value, sourcePos)
+          },
+        chester.syntax.concrete.SymbolLiteral.apply,
+        "Expected symbol literal"
+      ),
       "Error parsing symbol"
-    )(oldState)
-    
-    result.map { case (expr, newState) =>
-      this.state = newState
-      expr
-    }
+    )
   }
 
   // Helper to create identifier expressions
