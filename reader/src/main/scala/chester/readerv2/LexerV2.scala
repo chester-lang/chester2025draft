@@ -357,7 +357,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val text = charsToString(chars)
         debug(t"parseRest: Found identifier $text")
         // this.state is already set to the current state
-        handleIdentifierInRest(text, sourcePos, this.state, localTerms)(leadingComments)
+        handleIdentifierInRest(text, sourcePos, localTerms)(leadingComments).flatMap { result =>
+          // handleIdentifierInRest has updated this.state already
+          Right((result, this.state))
+        }
 
       // Generic token handling
       case Right(_) =>
@@ -503,17 +506,18 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   // Identifier handling
-  private def handleIdentifierInRest(text: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
+  private def handleIdentifierInRest(text: String, sourcePos: SourcePos, terms: Vector[Expr])(
       leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, (Expr, LexerState)] = {
-    val afterId = state.advance()
+  ): Either[ParseError, Expr] = {
+    // Advance past the identifier
+    this.state = this.state.advance()
 
-    afterId.current match {
+    this.state.current match {
       case Right(Token.LParen(_)) =>
         debug("parseRest: Found lparen after identifier")
-        this.state = afterId
+        // this.state is already set to the position after the identifier
         parseTuple().flatMap { tuple =>
-          val afterTuple = this.state
+          // parseTuple has updated this.state
           val functionCall = FunctionCall(
             ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
             tuple,
@@ -522,31 +526,31 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           val updatedTerms = terms :+ functionCall
           debug(t"parseRest: After function call, terms: $updatedTerms")
 
-          parseRest(functionCall, afterTuple)(leadingComments).map { case (result, finalState) =>
+          parseRest(functionCall, this.state)(leadingComments).map { case (result, _) =>
             result match {
               case opSeq: OpSeq =>
-                (OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+                OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
               case _ =>
-                (OpSeq(updatedTerms, None), finalState)
+                OpSeq(updatedTerms, None)
             }
           }
         }
       case Right(Token.LBrace(_)) =>
         debug("parseRest: Found lbrace after identifier")
-        this.state = afterId
+        // this.state is already set to the position after the identifier
         parseBlock().flatMap { block =>
-          val afterBlock = this.state
+          // parseBlock has updated this.state
           // In V1 parser, a block after an identifier in infix is treated as part of the OpSeq
           val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
           val updatedTerms = terms :+ id :+ block
           debug(t"parseRest: After block in infix, terms: $updatedTerms")
 
-          parseRest(block, afterBlock)(leadingComments).map { case (result, finalState) =>
+          parseRest(block, this.state)(leadingComments).map { case (result, _) =>
             result match {
               case opSeq: OpSeq =>
-                (OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+                OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
               case _ =>
-                (OpSeq(updatedTerms, None), finalState)
+                OpSeq(updatedTerms, None)
             }
           }
         }
@@ -557,17 +561,18 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val updatedTerms = terms :+ id :+ opId
         debug(t"parseRest: After adding id and op, terms: $updatedTerms")
 
-        val afterOp = afterId.advance()
-        withComments(parseAtom)(afterOp).flatMap { case (next, afterNext) =>
+        // Advance past the operator
+        this.state = this.state.advance()
+        withComments(parseAtom)(this.state).flatMap { case (next, afterNext) =>
           val newTerms = updatedTerms :+ next
           debug(t"parseRest: After parsing atom after operator, terms: $newTerms")
 
-          parseRest(next, afterNext)(leadingComments).map { case (result, finalState) =>
+          parseRest(next, afterNext)(leadingComments).map { case (result, _) =>
             result match {
               case opSeq: OpSeq =>
-                (OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+                OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
               case _ =>
-                (OpSeq(newTerms, None), finalState)
+                OpSeq(newTerms, None)
             }
           }
         }
@@ -577,12 +582,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val updatedTerms = terms :+ id
         debug(t"parseRest: After adding bare id, terms: $updatedTerms")
 
-        parseRest(id, afterId)(leadingComments).map { case (result, finalState) =>
+        parseRest(id, this.state)(leadingComments).map { case (result, _) =>
           result match {
             case opSeq: OpSeq =>
-              (OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+              OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              (OpSeq(updatedTerms, None), finalState)
+              OpSeq(updatedTerms, None)
           }
         }
     }
