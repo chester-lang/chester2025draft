@@ -263,10 +263,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
 
   /**
-   * Helper for building operator sequences with optional comments
+   * Helper for building operator sequences
+   * Gets comments directly from pendingTokens via pullComments()
    */
-  private def buildOpSeq(terms: Vector[Expr])(comments: Vector[CommOrWhite] = Vector.empty): Either[ParseError, Expr] = {
+  private def buildOpSeq(terms: Vector[Expr]): Either[ParseError, Expr] = {
     debug(t"Building OpSeq with terms: $terms")
+    // Get any collected comments from pendingTokens
+    val comments = pullComments()
+    
     terms match {
       case Vector() => Left(ParseError("Empty operator sequence", getStartPos(this.state.current)))
       case Vector(expr) if comments.nonEmpty =>
@@ -288,18 +292,16 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     if (checkForRBraceNewlinePattern()) {
       debug("parseRest: Terminating expression due to }\n pattern")
       // State is already set correctly
-      // Get any comments we've collected
-      val comments = pullComments()
-      return buildOpSeq(localTerms)(comments)
+      // buildOpSeq will pull comments internally
+      return buildOpSeq(localTerms)
     }
 
     // Skip comments and check for terminators
     skipComments()
     if (isAtTerminator()) {
       debug("parseRest: Hit terminator token")
-      // Get any comments we've collected
-      val comments = pullComments()
-      return buildOpSeq(localTerms)(comments)
+      // buildOpSeq will pull comments internally
+      return buildOpSeq(localTerms)
     }
 
     // Main token dispatch
@@ -478,9 +480,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     ) {
       debug(t"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
       // We already have set state correctly
-      // Get any comments we've collected
-      val comments = pullComments()
-      buildOpSeq(updatedTerms)(comments)
+      // buildOpSeq will pull comments internally
+      buildOpSeq(updatedTerms)
     } else {
       // Continue parsing the rest of the expression
       withComments(() => parseAtom()).flatMap { next =>
