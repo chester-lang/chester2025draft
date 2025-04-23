@@ -21,7 +21,7 @@ object Utils {
               val root = new ChesterRootNode(lang, t)
               root.getCallTarget
             case TyckResult.Failure(_, _, _, _) => ???
-            case _                                   => unreachable()
+            case _                              => unreachable()
           }
       )
 }

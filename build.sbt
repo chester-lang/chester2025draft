@@ -317,7 +317,7 @@ def cpsSettings = Seq(
 def commonJvmSettings = Seq(
   scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
   scalacOptions ++= (if (jdk21) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk21") else Seq()),
-  scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
+  scalacOptions ++= Seq("-java-output-version", javaOutputVersion)
 )
 def jvmScala3Settings = Seq(
   scalaVersion := scala3Nightly
@@ -466,7 +466,8 @@ ThisBuild / assemblyMergeStrategy := {
     oldStrategy(x)
 }
 
-val supportNativeBuildForTermux = System.getProperty("java.vm.vendor") == "Termux" || System.getProperty("sun.boot.library.path", "").startsWith("/data/data/com.termux")
+val supportNativeBuildForTermux =
+  System.getProperty("java.vm.vendor") == "Termux" || System.getProperty("sun.boot.library.path", "").startsWith("/data/data/com.termux")
 
 ThisBuild / nativeConfig ~= ((System.getProperty("os.name").toLowerCase, System.getProperty("os.arch").toLowerCase) match {
   case (mac, _) if mac.contains("mac") => // mac has some bugs with optimizations

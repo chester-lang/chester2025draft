@@ -20,7 +20,7 @@ import scala.util.boundary.break
 
 trait Elaborater extends ProvideCtx with TyckPropagator {
 
-  // Function to directly connect union cell to its components 
+  // Function to directly connect union cell to its components
   private def connectUnionToComponents(
       unionCell: CellId[Term],
       componentIds: Vector[CellId[Term]],
@@ -173,11 +173,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           if (Debug.isEnabled(UnionSubtyping)) {
             Debug.debugPrint(UnionSubtyping, t"Found compatible component: ${compatibleComponent.get}")
           }
-          
+
           // Connect to the component directly
           val componentId = toId(compatibleComponent.get)
           state.addPropagator(Unify(specificCellId, componentId, cause))
-          
+
           // Connect the union to all its components
           val componentIds = unionTypes.map(toId).toVector
           connectUnionToComponents(unionCellId, componentIds, cause)
@@ -236,11 +236,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ck: Tyck
   ): Unit = {
     // Connect the function
-    val fCell = toId(fcall.f)
-    
+    toId(fcall.f)
+
     // Connect all arguments
-    for (calling <- fcall.args) {
-      for (arg <- calling.args) {
+    for (calling <- fcall.args)
+      for (arg <- calling.args)
         arg match {
           case CallingArgTerm(term, _, _, _, _) =>
             // Create direct connections for any nested union/intersection types in args
@@ -249,7 +249,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
                 val unionCell = toId(term)
                 val componentCells = types.map(toId).toVector
                 connectUnionToComponents(unionCell, componentCells, cause)
-              case Intersection(types, _) => 
+              case Intersection(types, _) =>
                 val intersectionCell = toId(term)
                 val componentCells = types.map(toId).toVector
                 state.addPropagator(IntersectionOf(intersectionCell, componentCells, cause))
@@ -258,8 +258,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
               case _ => // No special handling needed
             }
         }
-      }
-    }
   }
 
   // Helper method to handle union-to-specific subtyping
@@ -302,7 +300,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       val unionCell = toId(union)
       val componentCells = unionTypes.map(toId).toVector
       connectUnionToComponents(unionCell, componentCells, cause)
-      
+
       // Create direct connection from union to specific
       state.addPropagator(Unify(unionCell, toId(specificType), cause))
     }
@@ -560,7 +558,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         // Handle union type expressions
 
         if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, t"Elaborating union type expression: ${expr}")
+          Debug.debugPrint(UnionSubtyping, t"Elaborating union type expression: $expr")
           Debug.debugPrint(UnionSubtyping, t"Component types: ${types.mkString(", ")}")
         }
 
@@ -595,7 +593,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           // Create direct connections between union and its components
           val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
           val componentCellIds = elaboratedTypes.map(toId).toVector
-          
+
           // Connect the union to its components directly
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))
 
@@ -762,7 +760,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               ErrorTerm(problem, convertMeta(meta))
           }
         }
-      case _ @ InfixExpr(left, op, right, associativity, meta) =>
+      case _ @InfixExpr(left, op, right, associativity, meta) =>
         if (Debug.isEnabled(MethodCalls)) {
           Debug.debugPrint(MethodCalls, t"[INFIX DEBUG] Processing infix expression: ${op.name}")
           Debug.debugPrint(MethodCalls, t"[INFIX DEBUG] Left: $left, Right: $right")

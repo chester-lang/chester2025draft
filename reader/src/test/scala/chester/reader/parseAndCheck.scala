@@ -67,7 +67,7 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
                |$line
                |$pointer""".stripMargin)
         },
-        { expr => expr }
+        expr => expr
       )
       .descentRecursive(_.updateMeta(_ => None))
 
@@ -117,6 +117,6 @@ def parseV2(input: String): Expr = {
              |$line
              |$pointer""".stripMargin)
       },
-      { expr => expr }
+      expr => expr
     )
 }

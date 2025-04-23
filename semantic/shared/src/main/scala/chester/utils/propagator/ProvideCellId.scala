@@ -118,18 +118,20 @@ trait ProvideCellId {
       throw new UnsupportedOperationException("LiteralCell cannot be filled")
   }
 
-  /** A cell that automatically provides a default value during zonking if no other propagator fills it.
-    * This is used to avoid "not covered by any propagator" errors for cells that are allowed to have default values.
+  /** A cell that automatically provides a default value during zonking if no other propagator fills it. This is used to avoid "not covered by any
+    * propagator" errors for cells that are allowed to have default values.
     *
-    * @param defaultValue The default value to use if no other propagator fills this cell
-    * @param value The current value (if any)
+    * @param defaultValue
+    *   The default value to use if no other propagator fills this cell
+    * @param value
+    *   The current value (if any)
     */
   case class DefaultValueCell[T](
       defaultValue: T,
       value: Option[T] = None
   ) extends Cell[T] {
     override def readStable: Option[T] = value
-    
+
     override val default: Option[T] = Some(defaultValue)
 
     override def fill(newValue: T): DefaultValueCell[T] =
@@ -140,9 +142,9 @@ trait ProvideCellId {
     val cell = state.addCell(LiteralCell[T](t))
     cell
   }
-  
-  /** Create a cell with a default value that will be used if no other propagator fills it.
-    * This is particularly useful for type variables that might not be otherwise constrained.
+
+  /** Create a cell with a default value that will be used if no other propagator fills it. This is particularly useful for type variables that might
+    * not be otherwise constrained.
     */
   def withDefault[T](defaultValue: T)(using state: StateAbility[?]): CellId[T] = {
     val cell = state.addCell(DefaultValueCell[T](defaultValue))

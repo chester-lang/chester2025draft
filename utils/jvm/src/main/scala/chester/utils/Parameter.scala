@@ -1,8 +1,4 @@
 package chester.utils
-
-import java.util.function.Supplier
-import java.util.concurrent.Callable
-
 import com.eed3si9n.ifdef.*
 
 import java.util.Objects
@@ -10,10 +6,11 @@ import java.util.Objects
 @ifndef("jdk21")
 class Parameter[T](default: Option[T] = None) {
   val tl: InheritableThreadLocal[T] = default match {
-    case Some(value) => new InheritableThreadLocal[T] {
-      override def initialValue(): T = value
-    }
-    case None      => new InheritableThreadLocal[T]()
+    case Some(value) =>
+      new InheritableThreadLocal[T] {
+        override def initialValue(): T = value
+      }
+    case None => new InheritableThreadLocal[T]()
   }
 
   def withValue[U](value: T)(block: => U): U = {
@@ -31,16 +28,19 @@ class Parameter[T](default: Option[T] = None) {
   }
 }
 
-
 @ifdef("jdk21")
 class Parameter[T](default: Option[T] = None) {
   val tl: ScopedValue[T] = ScopedValue.newInstance()
 
   def withValue[U](value: T)(block: => U): U = {
     require(value != null)
-    ScopedValue.callWhere(tl, value, new Callable[U] {
-      override def call(): U = block
-    })
+    ScopedValue.callWhere(
+      tl,
+      value,
+      new java.util.concurrent.Callable[U] {
+        override def call(): U = block
+      }
+    )
   }
-  def get: T = if(tl.isBound()) tl.get() else default.getOrElse(throw new IllegalStateException("No default value"))
+  def get: T = if (tl.isBound()) tl.get() else default.getOrElse(throw new IllegalStateException("No default value"))
 }

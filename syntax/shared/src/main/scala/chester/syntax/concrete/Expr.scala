@@ -46,7 +46,9 @@ object CommentInfo {
       commentInEnd: Vector[Comment] = Vector.empty,
       commentEndInThisLine: Vector[Comment] = Vector.empty
   ): Option[CommentInfo] =
-    Option.unless(commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty)(CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine))
+    Option.unless(commentBefore.isEmpty && commentInBegin.isEmpty && commentInEnd.isEmpty && commentEndInThisLine.isEmpty)(
+      CommentInfo(commentBefore, commentInBegin, commentInEnd, commentEndInThisLine)
+    )
 }
 
 case class ExprMeta(

@@ -1,16 +1,15 @@
 package chester.utils
-
-import java.util.function.Supplier
-import java.util.Objects
-
 import com.eed3si9n.ifdef.*
+
+import java.util.Objects
 @ifndef("scalaNativeNoMultithread")
 class Parameter[T](default: Option[T] = None) {
   val tl: InheritableThreadLocal[T] = default match {
-    case Some(value) => new InheritableThreadLocal[T] {
-      override def initialValue(): T = value
-    }
-    case None      => new InheritableThreadLocal[T]()
+    case Some(value) =>
+      new InheritableThreadLocal[T] {
+        override def initialValue(): T = value
+      }
+    case None => new InheritableThreadLocal[T]()
   }
 
   def withValue[U](value: T)(block: => U): U = {

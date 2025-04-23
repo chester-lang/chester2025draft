@@ -97,7 +97,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             // For a union on the left, ANY type in the union must be compatible with rhs
             // We need to check if at least one component is compatible
             val rhsTypeId = toId(rhsType)
-            
+
             val anyCompatible = types1.exists(t1 => tryUnify(t1, rhsType))
 
             if (anyCompatible) {
@@ -223,7 +223,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       if (!needed.contains(this.lhs) && !needed.contains(this.rhs)) {
         return ZonkResult.Done
       }
-      
+
       val lhs = state.readStable(this.lhs)
       val rhs = state.readStable(this.rhs)
 
@@ -265,17 +265,17 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
           } else {
             ZonkResult.NotYet
           }
-        case _ => 
+        case _ =>
           // Need both values to continue
           ZonkResult.Require(Vector(this.lhs, this.rhs))
       }
     }
-    
+
     // Handle union-to-union case properly
     private def handleUnionUnion(
-      types1: NonEmptyVector[Term],
-      types2: NonEmptyVector[Term]
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+        types1: NonEmptyVector[Term],
+        types2: NonEmptyVector[Term]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       // For each type in RHS union, at least one type in LHS union must accept it
       if (unionUnionCompatible(types1, types2)) {
         // Create proper unification between component types directly
@@ -290,13 +290,12 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       } else {
         ZonkResult.NotYet
       }
-    }
-    
+
     // Handle specific-to-union case properly
     private def handleSpecificUnion(
-      lhsType: Term, 
-      types2: NonEmptyVector[Term]
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+        lhsType: Term,
+        types2: NonEmptyVector[Term]
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       // For a specific type to be compatible with a union type,
       // the specific type must be compatible with at least one of the union components
       if (specificUnionCompatible(lhsType, types2)) {
@@ -309,13 +308,12 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       } else {
         ZonkResult.NotYet
       }
-    }
-    
+
     // Handle union-to-specific case properly
     private def handleUnionSpecific(
-      types1: NonEmptyVector[Term],
-      rhsType: Term
-    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult = {
+        types1: NonEmptyVector[Term],
+        rhsType: Term
+    )(using state: StateAbility[Tyck], more: Tyck): ZonkResult =
       // For a union type to be compatible with a specific type,
       // at least one component must be compatible
       if (unionSpecificCompatible(types1, rhsType)) {
@@ -327,7 +325,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       } else {
         ZonkResult.NotYet
       }
-    }
   }
 
   case class UnionOf(
@@ -1060,27 +1057,24 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     result
   }
 
-  /**
-   * Helper method to ensure a cell has a default value
-   * This creates a cell with a default value to avoid "not covered by propagator" errors
-   */
-  def ensureDefaultValue[T](defaultValue: T)(using state: StateAbility[Tyck]): CellId[T] = {
+  /** Helper method to ensure a cell has a default value This creates a cell with a default value to avoid "not covered by propagator" errors
+    */
+  def ensureDefaultValue[T](defaultValue: T)(using StateAbility[Tyck]): CellId[T] =
     withDefault(defaultValue)
-  }
 
-  /**
-   * Propagator to verify that a record properly implements a trait
-   */
+  /** Propagator to verify that a record properly implements a trait
+    */
   case class CheckTraitImplementation(
       recordDef: RecordStmtTerm,
       traitDef: TraitStmtTerm,
       cause: Expr
-  )(using Context) extends Propagator[Tyck] {
+  )(using Context)
+      extends Propagator[Tyck] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
 
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
+    override def run(using StateAbility[Tyck], Tyck): Boolean = {
       // Delegate to the checkTraitImplementation method
       // We don't need to check the result - any errors will be reported directly
       checkTraitImplementation(recordDef, traitDef, cause)
@@ -1088,7 +1082,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       true
     }
 
-    override def zonk(needed: Vector[CellIdAny])(using state: StateAbility[Tyck], more: Tyck): ZonkResult = 
+    override def zonk(needed: Vector[CellIdAny])(using StateAbility[Tyck], Tyck): ZonkResult =
       ZonkResult.Done
   }
 }
