@@ -1167,13 +1167,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   private def parseObject(): Either[ParseError, ObjectExpr] = {
-    // Save the initial state and collect comments before the object
-    val oldState = this.state
-    // Save original state
+    // Save original state for error handling if needed
     val originalState = this.state
-    this.state = oldState
-    val (leadingComments, current) = collectComments()
-    this.state = current
+    
+    // Collect comments before the object
+    val (leadingComments, afterComments) = collectComments()
+    this.state = afterComments
 
     this.state.current match {
       case Right(Token.LBrace(sourcePos)) =>
@@ -1286,13 +1285,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   private def parseList(): Either[ParseError, ListExpr] = {
-    // Save the initial state and collect comments
-    val oldState = this.state
-    // Save original state
+    // Save original state for error handling if needed
     val originalState = this.state
-    this.state = oldState
-    val (leadingComments, initialState) = collectComments()
-    this.state = initialState
+    
+    // Collect comments before the list
+    val (leadingComments, afterComments) = collectComments()
+    this.state = afterComments
 
     this.state.current match {
       case LBracket(sourcePos) =>
