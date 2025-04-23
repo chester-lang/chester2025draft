@@ -1423,56 +1423,15 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   // Method collectComments has been removed and replaced with skipComments() and pullComments()
 
   /** Collects trailing comments after an expression until a newline or non-comment token.
+    * Modifies this.state directly (via skipComments).
+    * @return Vector of comments collected
     */
-  private def collectTrailingComments(): (Vector[Comment], LexerState) = {
-    // Save original state
-    val originalState = this.state
+  private def collectTrailingComments(): Vector[Comment] = {
+    // Skip all comments and whitespace, storing them in pendingTokens
+    skipComments()
     
-    // For trailing comments, we only collect comments that appear on the same line
-    // (until we hit a newline in whitespace)
-    @tailrec
-    def collectRec(
-        comments: Vector[Comment],
-        hitNewline: Boolean
-    ): (Vector[Comment], LexerState) =
-      if (
-        !this.state.isAtEnd && !hitNewline &&
-        this.state.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
-      ) {
-        this.state.current match {
-          case Right(Token.Comment(text, sourcePos)) =>
-            val commentType = if (text.trim.startsWith("//")) {
-              CommentType.OneLine
-            } else {
-              CommentType.MultiLine
-            }
-
-            val comment = Comment(
-              content = text.trim,
-              typ = commentType,
-              sourcePos = Some(sourcePos)
-            )
-            // Advance state before recursive call
-            this.state = this.state.advance()
-            collectRec(comments :+ comment, hitNewline)
-          case Right(Token.Whitespace(_, _)) =>
-            // In Whitespace tokens, we don't have the actual text content
-            // Just assume any whitespace might contain a newline and stop collecting
-            // Advance state before recursive call
-            this.state = this.state.advance()
-            collectRec(comments, true)
-          case _ =>
-            throw new RuntimeException("Unreachable: exists check guarantees we have a Comment or Whitespace token")
-        }
-      } else {
-        // Return the comments and current state without updating this.state
-        (comments, this.state)
-      }
-
-    // We're returning the result but not updating this.state here
-    // because this method is called from other methods that need to use
-    // the return value directly for further processing
-    collectRec(Vector.empty, false)
+    // Pull the comments and filter to only return Comments (not Whitespace)
+    pullComments().collect { case c: Comment => c }
   }
 
   /** Creates ExprMeta with comments.
@@ -1540,11 +1499,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     // Parse the expression using the provided method
     val result = parseMethod().flatMap { expr =>
-      // Collect trailing comments (state is already updated by parseMethod)
-      val (trailingComments, finalState) = collectTrailingComments()
-      
-      // Update state to final state after trailing comments
-      this.state = finalState
+      // Collect trailing comments (state is modified by collectTrailingComments)
+      val trailingComments = collectTrailingComments()
+      // State is already updated
 
       // Update expression with comments
       val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
@@ -1595,10 +1552,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       this.state = afterExpr
       
       // Collect trailing comments
-      val (trailingComments, finalState) = collectTrailingComments()
-      
-      // Update state to final state after trailing comments
-      this.state = finalState
+      // Collect trailing comments (state is updated directly by the method)
+      val trailingComments = collectTrailingComments()
 
       // Update expression with comments
       val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
@@ -1666,10 +1621,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     val result = withErrorHandling(parser, errorMsg).flatMap { expr =>
       // Collect trailing comments
-      val (trailingComments, finalState) = collectTrailingComments()
-      
-      // Update state to final state after trailing comments
-      this.state = finalState
+      // Collect trailing comments (state is updated directly by the method)
+      val trailingComments = collectTrailingComments()
 
       // Update expression with comments if needed
       val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
