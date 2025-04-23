@@ -894,9 +894,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   def parseExprList(): Either[ParseError, Vector[Expr]] = {
-    // Start with current state and collect any comments
-    val (_, initialState) = collectComments()
-    this.state = initialState
+    // Skip any comments at the start
+    skipComments()
 
     @tailrec
     def parseElements(exprs: Vector[Expr], maxExprs: Int): Either[ParseError, Vector[Expr]] =
@@ -909,36 +908,36 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             debug("Found right delimiter after expression")
             Right(exprs)
           case Right(_: Token.Comment | _: Token.Whitespace) =>
-            // Collect comments instead of skipping
-            val (_, afterComments) = collectComments()
-            this.state = afterComments
+            // Skip comments and whitespace
+            skipComments()
             parseElements(exprs, maxExprs)
           case Right(_: Token.Comma | _: Token.Semicolon) =>
             debug("Found comma or semicolon, skipping")
-            // Collect any comments after comma/semicolon
+            // Skip any comments after comma/semicolon
             this.state = this.state.advance()
-            val (_, afterDelimiter) = collectComments()
-            this.state = afterDelimiter
+            skipComments()
             parseElements(exprs, maxExprs)
           case _ =>
             debug("Parsing expression")
             parseExpr() match {
               case Left(err) => Left(err)
               case Right(expr) =>
-                // Collect comments after the expression
-                val (trailingComments, afterComments) = collectComments()
-                this.state = afterComments
+                // Skip comments after the expression
+                skipComments()
+                // Comments will be pulled later if needed
 
                 // Check if we've reached a terminator
                 this.state.current match {
                   case Right(token) if isRightDelimiter(token) =>
-                    // Attach trailing comments to the expression if any
-                    val updatedExpr = if (trailingComments.nonEmpty) {
+                    // Get any collected comments
+                    val comments = pullComments()
+                    // Attach comments to the expression if any
+                    val updatedExpr = if (comments.nonEmpty) {
                       expr.updateMeta { meta =>
                         val newMeta = createMetaWithComments(
                           meta.flatMap(_.sourcePos),
                           Vector.empty,
-                          trailingComments.collect { case c: Comment => c }
+                          comments.collect { case c: Comment => c }
                         )
                         // Merge with existing meta
                         mergeMeta(meta, newMeta)
@@ -950,13 +949,15 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
                   case Right(_: Token.Comma | _: Token.Semicolon) =>
                     debug("Found comma or semicolon after expression")
-                    // Attach trailing comments to the expression if any
-                    val updatedExpr = if (trailingComments.nonEmpty) {
+                    // Get any collected comments
+                    val comments = pullComments()
+                    // Attach comments to the expression if any
+                    val updatedExpr = if (comments.nonEmpty) {
                       expr.updateMeta { meta =>
                         val newMeta = createMetaWithComments(
                           meta.flatMap(_.sourcePos),
                           Vector.empty,
-                          trailingComments.collect { case c: Comment => c }
+                          comments.collect { case c: Comment => c }
                         )
                         // Merge with existing meta
                         mergeMeta(meta, newMeta)
@@ -965,8 +966,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                       expr
                     }
                     this.state = this.state.advance()
-                    val (_, afterDelimiter) = collectComments()
-                    this.state = afterDelimiter
+                    skipComments()
                     parseElements(exprs :+ updatedExpr, maxExprs)
 
                   case _ =>
@@ -1030,9 +1030,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state = this.state.withNewLineTermination(true)
     debug(t"parseBlock: starting with state=${this.state}")
 
-    // Collect comments and set the state
-    val (_, afterComments) = collectComments()
-    this.state = afterComments
+    // Skip comments at the start
+    skipComments()
     
     var statements = Vector[Expr]()
     var result: Option[Expr] = None
@@ -1042,20 +1041,19 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state.current match {
       case Right(Token.LBrace(_)) =>
         debug("parseBlock: Found opening brace")
-        // Advance past opening brace and collect comments
+        // Advance past opening brace and skip comments
         this.state = this.state.advance()
-        val (_, afterBrace) = collectComments()
+        skipComments()
         
-        // Update state to point after the brace and comments
-        this.state = afterBrace
+        // State is already updated by skipComments()
         debug(t"parseBlock: After opening brace, state=${this.state}")
 
         // Regular block parsing - all statements are treated the same
         while (maxExpressions > 0) {
           maxExpressions -= 1
 
-          val (_, withoutComments) = collectComments()
-          this.state = withoutComments
+          // Skip comments before parsing next statement
+          skipComments()
 
           this.state.current match {
             case Right(Token.RBrace(_)) =>
@@ -1068,15 +1066,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             case Right(Token.Semicolon(_)) =>
               debug("parseBlock: Found semicolon, advancing")
               this.state = this.state.advance()
-              val (_, afterSemi) = collectComments()
-              this.state = afterSemi
+              skipComments()
               debug(t"parseBlock: After semicolon, state=${this.state}")
 
             case Right(Token.Whitespace(_, _)) =>
               debug("parseBlock: Found whitespace, advancing")
               this.state = this.state.advance()
-              val (_, afterWs) = collectComments()
-              this.state = afterWs
+              skipComments()
               debug(t"parseBlock: After whitespace, state=${this.state}")
 
             case _ if isCaseIdentifier(this.state.current) =>
@@ -1131,20 +1127,17 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
                       // Check for case after semicolon
                       this.state = this.state.advance()
-                      val (_, afterSemi) = collectComments()
-
-                      this.state = afterSemi
+                      skipComments()
                       debug(t"parseBlock: After semicolon, statements=${statements.size}, state=${this.state}")
 
                     case Right(_ @ Token.Whitespace(_, _)) =>
                       debug("parseBlock: Expression followed by whitespace, checking for newlines and case")
 
-                      // Get next token after whitespace
-                      val (_, afterWs) = collectComments()
+                      // Skip whitespace and comments
+                      skipComments()
 
                       // Add statement and advance
                       statements = statements :+ expr
-                      this.state = afterWs
                       debug(t"parseBlock: After whitespace, statements=${statements.size}, state=${this.state}")
 
                     case Right(_) if isCaseIdentifier(this.state.current) =>
@@ -1267,8 +1260,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             case Right(Token.Comma(_)) =>
               // Collect comments after comma
               this.state = this.state.advance()
-              val (_, afterComma) = collectComments()
-              this.state = afterComma
+              skipComments()
               Right(())
             case Right(Token.RBrace(_)) =>
               // Keep the state as is for the closing brace
@@ -1327,29 +1319,25 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               case RBracket(_) => Right(exprs)
               case Comma(_) =>
                 this.state = this.state.advance()
-                val (_, afterComma) = collectComments()
-                this.state = afterComma
+                skipComments()
                 parseElements(exprs)
               case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
-                val (_, afterComments) = collectComments()
-                this.state = afterComments
+                skipComments()
                 parseElements(exprs)
               case _ =>
                 // We're already in the right state (this.state), so parse the expression
                 parseExpr() match {
                   case Left(err) => Left(err)
                   case Right(expr) =>
-                    // Collect comments after the expression
-                    val (_, afterComments) = collectComments()
-                    this.state = afterComments
+                    // Skip comments after the expression
+                    skipComments()
                     
                     // Check what follows the expression
                     this.state.current match {
                       case RBracket(_) => Right(exprs :+ expr)
                       case Comma(_) =>
                         this.state = this.state.advance()
-                        val (_, afterComma) = collectComments()
-                        this.state = afterComma
+                        skipComments()
                         parseElements(exprs :+ expr)
                       case _ => Left(expectedError("',' or ']' in list", this.state.current))
                     }
@@ -1385,7 +1373,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     def skipComments: LexerState = {
       val savedState = LexerV2.this.state
       LexerV2.this.state = s
-      val result = collectComments()._2
+      LexerV2.this.skipComments()
+      val result = LexerV2.this.state
       LexerV2.this.state = savedState
       result
     }
@@ -1431,71 +1420,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
   
-  /** Collects comments from the current state. Returns a tuple of (collected comments, updated state).
-    */
-  private def collectComments(): (Vector[CommOrWhite], LexerState) = {
-    // Save original state
-    val originalState = this.state
-    
-    // First check if we have any pending tokens from the state
-    val pendingTokens = this.state.pendingTokens
-    // Update state to clear pending tokens if needed
-    this.state = if (pendingTokens.nonEmpty) this.state.clearPendingTokens() else this.state
-
-    @tailrec
-    def collectRec(comments: Vector[CommOrWhite]): (Vector[CommOrWhite], LexerState) =
-      if (!this.state.isAtEnd && this.state.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
-        this.state.current match {
-          case Right(Token.Comment(text, sourcePos)) =>
-            val commentType = if (text.trim.startsWith("//")) {
-              CommentType.OneLine
-            } else {
-              CommentType.MultiLine
-            }
-
-            val comment = Comment(
-              content = text.trim,
-              typ = commentType,
-              sourcePos = Some(sourcePos)
-            )
-            // Advance state before recursive call
-            this.state = this.state.advance()
-            collectRec(comments :+ comment)
-          case Right(wt @ Token.Whitespace(_, _)) =>
-            // Advance state before recursive call
-            this.state = this.state.advance()
-            collectRec(comments :+ wt)
-          case _ =>
-            throw new RuntimeException("Unreachable: exists check guarantees we have a Comment or Whitespace token")
-        }
-      } else {
-        // Return the comments and current state without updating this.state
-        (comments, this.state)
-      }
-
-    // Combine any pending tokens with collected tokens
-    val (collectedComments, finalState) = collectRec(Vector.empty)
-    val allComments = pendingTokens.map {
-      case c: Token.Comment =>
-        val commentType = if (c.text.trim.startsWith("//")) {
-          CommentType.OneLine
-        } else {
-          CommentType.MultiLine
-        }
-
-        Comment(
-          content = c.text.trim,
-          typ = commentType,
-          sourcePos = Some(c.sourcePos)
-        ): CommOrWhite
-      case w: Token.Whitespace => w: CommOrWhite
-    } ++ collectedComments
-
-    // We're returning finalState but not updating this.state here
-    // because this method is called from other methods that need to use
-    // the return value directly for further processing
-    (allComments, finalState)
-  }
+  // Method collectComments has been removed and replaced with skipComments() and pullComments()
 
   /** Collects trailing comments after an expression until a newline or non-comment token.
     */
@@ -1607,11 +1532,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Save original state
     val originalState = this.state
     
-    // Collect leading comments
-    val (leadingComments, afterLeadingComments) = collectComments()
+    // Skip comments at the start
+    skipComments()
     
-    // Update state to after leading comments
-    this.state = afterLeadingComments
+    // Get any collected comments
+    val leadingComments = pullComments()
 
     // Parse the expression using the provided method
     val result = parseMethod().flatMap { expr =>
@@ -1658,11 +1583,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Save original state
     val originalState = this.state
     
-    // Collect leading comments
-    val (leadingComments, afterLeadingComments) = collectComments()
+    // Skip comments at the start
+    skipComments()
     
-    // Update state to after leading comments
-    this.state = afterLeadingComments
+    // Get any collected comments
+    val leadingComments = pullComments()
 
     // Parse the expression using the provided method
     val result = parseMethod(this.state).flatMap { case (expr, afterExpr) =>
@@ -1733,11 +1658,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Save original state
     val originalState = this.state
     
-    // Collect leading comments
-    val (leadingComments, afterLeadingComments) = collectComments()
+    // Skip comments at the start
+    skipComments()
     
-    // Update state to after leading comments
-    this.state = afterLeadingComments
+    // Get any collected comments
+    val leadingComments = pullComments()
 
     val result = withErrorHandling(parser, errorMsg).flatMap { expr =>
       // Collect trailing comments
