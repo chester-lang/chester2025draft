@@ -573,24 +573,27 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   // Main parsing methods
   def parseExpr(): Either[ParseError, Expr] = {
     // Collect leading comments and initialize terms vector
-    val (leadingComments, current) = collectComments(state)
+    val (leadingComments, afterComments) = collectComments(this.state)
     var terms = Vector.empty[Expr]
-    debug(t"Starting parseExpr with state: $current")
+    // Update the state to point after comments
+    this.state = afterComments
+    debug(t"Starting parseExpr with state: ${this.state}")
 
     // Main parsing logic - handle different token types
-    current.current match {
+    this.state.current match {
       // Prefix operator
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseExpr: Starting with operator $op")
-        val afterOp = current.advance()
-        afterOp.current match {
+        // Advance past the operator
+        this.state = this.state.advance()
+        
+        this.state.current match {
           // Function call form: op(args)
           case Right(Token.LParen(_)) =>
             debug("parseExpr: Found lparen after initial operator")
-            this.state = afterOp
+            // this.state is already pointing to the open paren
             parseTuple().map { tuple =>
-              val afterTuple = this.state
-              state=afterTuple
+              // parseTuple has already updated this.state
               (
                 FunctionCall(
                   ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
@@ -603,16 +606,19 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case _ =>
             debug("parseExpr: Parsing atom after initial operator")
             terms = Vector(ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))))
-            withComments(parseAtom)(afterOp).flatMap { case (expr, afterExpr) =>
+            withComments(parseAtom)(this.state).flatMap { case (expr, afterExpr) =>
               terms = terms :+ expr
               debug(t"parseExpr: After initial operator and atom, terms: $terms")
 
               if (afterExpr.isAtTerminator) {
                 debug("parseExpr: Found terminator after prefix operator, returning OpSeq directly")
-                state=afterExpr
+                this.state = afterExpr
                 Right((OpSeq(terms, None)))
               } else {
-                parseRest(expr, afterExpr)(leadingComments).map {case (v, s1)=>state=s1;v}
+                parseRest(expr, afterExpr)(leadingComments).map { case (result, newState) =>
+                  this.state = newState
+                  result
+                }
               }
             }
         }
@@ -620,27 +626,34 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       // Keyword operator handling
       case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(charsToString(chars)) =>
         debug(t"parseExpr: Starting with keyword operator ${charsToString(chars)}")
-        val afterOp = current.advance()
+        // Advance past the keyword operator
+        this.state = this.state.advance()
         terms = Vector(ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
-        withComments(parseAtom)(afterOp).flatMap { case (expr, afterExpr) =>
+        withComments(parseAtom)(this.state).flatMap { case (expr, afterExpr) =>
           terms = terms :+ expr
           debug(t"parseExpr: After initial keyword operator and atom, terms: $terms")
 
           if (afterExpr.isAtTerminator) {
             debug("parseExpr: Found terminator after prefix operator, returning OpSeq directly")
-            state=afterExpr
+            this.state = afterExpr
             Right((OpSeq(terms, None)))
           } else {
-            parseRest(expr, afterExpr)(leadingComments).map {case (v, s1)=>state=s1;v}
+            parseRest(expr, afterExpr)(leadingComments).map { case (result, newState) =>
+              this.state = newState
+              result
+            }
           }
         }
 
       // Standard expression handling
       case _ =>
         debug("parseExpr: Starting with atom")
-        withComments(parseAtom)(current).flatMap { case (first, afterFirst) =>
+        withComments(parseAtom)(this.state).flatMap { case (first, afterFirst) =>
           debug(t"parseExpr: After initial atom, got: $first")
-          parseRest(first, afterFirst)(leadingComments).map {case (v, s1)=>state=s1;v}
+          parseRest(first, afterFirst)(leadingComments).map { case (result, newState) =>
+            this.state = newState
+            result
+          }
         }
     }
   }
