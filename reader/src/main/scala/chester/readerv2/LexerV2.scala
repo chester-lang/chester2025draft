@@ -873,7 +873,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   def parseExprList(): Either[ParseError, Vector[Expr]] = {
     // Start with current state and collect any comments
-    val (_leadingListComments, initialState) = collectComments()
+    val (_, initialState) = collectComments()
     this.state = initialState
 
     @tailrec
@@ -1020,7 +1020,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug("parseBlock: Found opening brace")
         // Advance past opening brace and collect comments
         this.state = this.state.advance()
-        val (_blockStartComments, afterBrace) = collectComments()
+        val (_, afterBrace) = collectComments()
         
         // Update state to point after the brace and comments
         this.state = afterBrace
@@ -1030,7 +1030,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         while (maxExpressions > 0) {
           maxExpressions -= 1
 
-          val (blockComments, withoutComments) = collectComments()
+          val (_, withoutComments) = collectComments()
           this.state = withoutComments
 
           this.state.current match {
@@ -1167,9 +1167,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   private def parseObject(): Either[ParseError, ObjectExpr] = {
-    // Save original state for error handling if needed
-    val originalState = this.state
-    
     // Collect comments before the object
     val (leadingComments, afterComments) = collectComments()
     this.state = afterComments
@@ -1285,9 +1282,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   private def parseList(): Either[ParseError, ListExpr] = {
-    // Save original state for error handling if needed
-    val originalState = this.state
-    
+
     // Collect comments before the list
     val (leadingComments, afterComments) = collectComments()
     this.state = afterComments
