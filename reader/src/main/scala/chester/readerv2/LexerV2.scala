@@ -289,23 +289,25 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     // Handle comments and check for terminators
     val (_restComments, current) = collectComments(state)
-    if (isAtTerminator(current)) {
+    // Set state to current to check for terminators using this.state
+    this.state = current
+    if (isAtTerminator()) {
       debug("parseRest: Hit terminator token")
-      // Set state to current before calling buildOpSeq to ensure correct error position
-      this.state = current
+      // this.state is already set to current
       return buildOpSeq(localTerms)(leadingComments).map(result => (result, current))
     }
 
     // Main token dispatch
-    current.current match {
+    this.state.current match {
       // Match expression handling - treat like any other expression
       case Right(Token.Identifier(chars, _)) if charsToString(chars) == "match" && expr.isInstanceOf[ConcreteIdentifier] =>
         debug("parseRest: Found match keyword after identifier")
         val matchId = ConcreteIdentifier("match", createMeta(None, None))
-        val afterMatch = current.advance()
+        // Advance past the match keyword
+        this.state = this.state.advance()
 
         // For match blocks, parse using the regular block parser with no special case handling
-        this.state = afterMatch
+        // this.state is already updated
         parseBlock().map { block =>
           val afterBlock = this.state
           // Create the match expression with the block as-is
@@ -316,17 +318,20 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       // Block argument handling
       case Right(Token.LBrace(braceSourcePos)) =>
         debug("parseRest: Found LBrace after expression, treating as block argument")
-        handleBlockArgument(expr, state, localTerms, braceSourcePos)(leadingComments)
+        // this.state is already set to the current state
+        handleBlockArgument(expr, this.state, localTerms, braceSourcePos)(leadingComments)
 
       // Colon handling (type annotations, etc)
       case Right(Token.Colon(sourcePos)) =>
         debug("parseRest: Found colon")
-        handleColon(sourcePos, state, localTerms)(leadingComments)
+        // this.state is already set to the current state
+        handleColon(sourcePos, this.state, localTerms)(leadingComments)
 
       // Dot call handling
       case Right(Token.Dot(dotSourcePos)) =>
         debug("parseRest: Found dot")
-        handleDotCall(dotSourcePos, current, localTerms).flatMap { case (dotCall, newState) =>
+        // this.state is already set to the current state
+        handleDotCall(dotSourcePos, this.state, localTerms).flatMap { case (dotCall, newState) =>
           localTerms = Vector(dotCall)
           debug(t"parseRest: After dot call, terms: $localTerms")
           parseRest(dotCall, newState)(leadingComments)
@@ -335,18 +340,21 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       // Operator handling
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseRest: Found operator $op")
-        handleOperatorInRest(op, sourcePos, current, localTerms)(leadingComments)
+        // this.state is already set to the current state
+        handleOperatorInRest(op, sourcePos, this.state, localTerms)(leadingComments)
 
       // Identifier handling
       case Right(Token.Identifier(chars, sourcePos)) =>
         val text = charsToString(chars)
         debug(t"parseRest: Found identifier $text")
-        handleIdentifierInRest(text, sourcePos, current, localTerms)(leadingComments)
+        // this.state is already set to the current state
+        handleIdentifierInRest(text, sourcePos, this.state, localTerms)(leadingComments)
 
       // Generic token handling
       case Right(_) =>
         debug("parseRest: Found other token, parsing as atom")
-        withComments(parseAtom)(current).flatMap { case (next, afterNext) =>
+        // this.state is already set to the current state
+        withComments(parseAtom)(this.state).flatMap { case (next, afterNext) =>
           localTerms = localTerms :+ next
           debug(t"parseRest: After parsing other token as atom, terms: $localTerms")
           parseRest(next, afterNext)(leadingComments).map { case (result, finalState) =>
@@ -871,7 +879,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   // Helper to check if current state has a terminator
-  private def isAtTerminator(state: LexerState): Boolean = state.current match {
+  private def isAtTerminator(): Boolean = this.state.current match {
     case Right(token) => isTerminator(token)
     case _            => false
   }
