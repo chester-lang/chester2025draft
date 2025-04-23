@@ -337,10 +337,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Dot(dotSourcePos)) =>
         debug("parseRest: Found dot")
         // this.state is already set to the current state
-        handleDotCall(dotSourcePos, this.state, localTerms).flatMap { case (dotCall, newState) =>
+        handleDotCall(dotSourcePos, localTerms).flatMap { dotCall =>
           localTerms = Vector(dotCall)
           debug(t"parseRest: After dot call, terms: $localTerms")
-          parseRest(dotCall, newState)(leadingComments)
+          // handleDotCall has updated this.state already
+          parseRest(dotCall, this.state)(leadingComments)
         }
 
       // Operator handling
@@ -714,15 +715,18 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     hasNewline
   }
 
-  private def handleDotCall(dotSourcePos: SourcePos, state: LexerState, terms: Vector[Expr]): Either[ParseError, (Expr, LexerState)] = {
-    val afterDot = state.advance() // Skip the dot
-    afterDot.current match {
+  private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[Expr]): Either[ParseError, Expr] = {
+    // Skip the dot
+    this.state = this.state.advance()
+    
+    this.state.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) =>
-        val afterId = afterDot.advance()
+        // Save identifier and advance
         val field = createIdentifier(chars1, idSourcePos1)
+        this.state = this.state.advance()
         var telescope = Vector.empty[Tuple]
 
-        def parseNextTelescope(): Either[ParseError, (Expr, LexerState)] =
+        def parseNextTelescope(): Either[ParseError, Expr] =
           this.state.current match {
             case Right(Token.LParen(_)) =>
               parseTuple().flatMap { args =>
@@ -736,26 +740,27 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               }
             case Right(Token.Dot(nextDotSourcePos)) =>
               val dotCall = createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(this.state.sourcePos))
-              handleDotCall(nextDotSourcePos, this.state, Vector(dotCall))
+              handleDotCall(nextDotSourcePos, Vector(dotCall))
             case _ =>
               val result = createDotCall(terms.last, field, telescope, Some(dotSourcePos), Some(this.state.sourcePos))
-              Right((result, this.state))
+              Right(result)
           }
 
-        this.state = afterId
         parseNextTelescope()
       case Right(Token.Operator(op, idSourcePos)) =>
-        val afterOp = afterDot.advance()
+        // Save operator, advance, and process
         val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
-        afterOp.current match {
+        this.state = this.state.advance()
+        
+        this.state.current match {
           case Right(Token.LParen(_)) =>
-            this.state = afterOp
+            // this.state is already at the correct position
             parseTuple().map { args =>
-              val afterArgs = this.state
-              (createDotCall(terms.last, field, Vector(args), Some(dotSourcePos), Some(afterArgs.sourcePos)), afterArgs)
+              // parseTuple has updated this.state
+              createDotCall(terms.last, field, Vector(args), Some(dotSourcePos), Some(this.state.sourcePos))
             }
           case _ =>
-            Right((createDotCall(terms.last, field, Vector.empty, Some(dotSourcePos), Some(idSourcePos)), afterOp))
+            Right(createDotCall(terms.last, field, Vector.empty, Some(dotSourcePos), Some(idSourcePos)))
         }
       case Right(t)  => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
       case Left(err) => Left(err)
