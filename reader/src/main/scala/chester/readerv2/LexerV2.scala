@@ -319,7 +319,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.LBrace(braceSourcePos)) =>
         debug("parseRest: Found LBrace after expression, treating as block argument")
         // this.state is already set to the current state
-        handleBlockArgument(expr, this.state, localTerms, braceSourcePos)(leadingComments)
+        handleBlockArgument(expr, localTerms, braceSourcePos)(leadingComments).flatMap { result =>
+          // handleBlockArgument has updated this.state already
+          Right((result, this.state))
+        }
 
       // Colon handling (type annotations, etc)
       case Right(Token.Colon(sourcePos)) =>
@@ -375,12 +378,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   // Handle block arguments
-  private def handleBlockArgument(expr: Expr, state: LexerState, terms: Vector[Expr], braceSourcePos: SourcePos)(
+  private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos)(
       leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, (Expr, LexerState)] =
-    this.state = state
+  ): Either[ParseError, Expr] =
+    // this.state is already set correctly
     parseBlock().flatMap { block =>
-      val afterBlock = this.state
+      // parseBlock has already updated this.state
       // Create appropriate expression based on context
       val newExpr = expr match {
         case funcCall: FunctionCall =>
@@ -388,14 +391,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           FunctionCall(
             funcCall,
             Tuple(Vector(block), createMeta(None, None)),
-            createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(afterBlock.sourcePos))
+            createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
           )
         case id: ConcreteIdentifier =>
           debug("parseRest: Creating function call with block argument from identifier")
           FunctionCall(
             id,
             Tuple(Vector(block), createMeta(None, None)),
-            createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(afterBlock.sourcePos))
+            createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
           )
         case _ =>
           debug("parseRest: Default handling for block after expression")
@@ -408,22 +411,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       if (newExpr.isInstanceOf[FunctionCall]) {
         debug("parseRest: Returning function call with block directly")
 
-        if (afterBlock.isAtTerminator) {
-          Right((newExpr, afterBlock))
+        if (this.state.isAtTerminator) {
+          Right(newExpr)
         } else {
-          parseRest(newExpr, afterBlock)(leadingComments)
+          parseRest(newExpr, this.state)(leadingComments).map(_._1)
         }
       } else {
         // Handle other expressions via OpSeq
         val updatedTerms = terms.dropRight(1) :+ newExpr
         debug(t"parseRest: After handling block argument, terms: $updatedTerms")
 
-        parseRest(newExpr, afterBlock)(leadingComments).map { case (result, finalState) =>
+        parseRest(newExpr, this.state)(leadingComments).map { case (result, _) =>
           result match {
             case opSeq: OpSeq =>
-              (OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+              OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              (OpSeq(updatedTerms, None), finalState)
+              OpSeq(updatedTerms, None)
           }
         }
       }
