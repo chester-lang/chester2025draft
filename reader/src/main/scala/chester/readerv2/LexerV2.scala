@@ -328,7 +328,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Colon(sourcePos)) =>
         debug("parseRest: Found colon")
         // this.state is already set to the current state
-        handleColon(sourcePos, this.state, localTerms)(leadingComments)
+        handleColon(sourcePos, localTerms)(leadingComments).flatMap { result =>
+          // handleColon has updated this.state already
+          Right((result, this.state))
+        }
 
       // Dot call handling
       case Right(Token.Dot(dotSourcePos)) =>
@@ -344,7 +347,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseRest: Found operator $op")
         // this.state is already set to the current state
-        handleOperatorInRest(op, sourcePos, this.state, localTerms)(leadingComments)
+        handleOperatorInRest(op, sourcePos, localTerms)(leadingComments).flatMap { result =>
+          // handleOperatorInRest has updated this.state already
+          Right((result, this.state))
+        }
 
       // Identifier handling
       case Right(Token.Identifier(chars, sourcePos)) =>
@@ -433,62 +439,63 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
 
   // Colon handling
-  private def handleColon(sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
+  private def handleColon(sourcePos: SourcePos, terms: Vector[Expr])(
       leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, (Expr, LexerState)] = {
-    val afterColon = state.advance()
+  ): Either[ParseError, Expr] = {
+    // Advance past the colon
+    this.state = this.state.advance()
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
     debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
-    withComments(parseAtom)(afterColon).flatMap { case (next, afterNext) =>
+    withComments(parseAtom)(this.state).flatMap { case (next, afterNext) =>
       val newTerms = updatedTerms :+ next
       debug(t"parseRest: After parsing atom after colon, terms: $newTerms")
 
-      parseRest(next, afterNext)(leadingComments).map { case (result, finalState) =>
+      parseRest(next, afterNext)(leadingComments).map { case (result, _) =>
         result match {
           case opSeq: OpSeq =>
-            (OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+            OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
           case _ =>
-            (OpSeq(newTerms, None), finalState)
+            OpSeq(newTerms, None)
         }
       }
     }
   }
 
   // Operator handling
-  private def handleOperatorInRest(op: String, sourcePos: SourcePos, state: LexerState, terms: Vector[Expr])(
+  private def handleOperatorInRest(op: String, sourcePos: SourcePos, terms: Vector[Expr])(
       leadingComments: Vector[CommOrWhite]
-  ): Either[ParseError, (Expr, LexerState)] = {
-    val afterOp = state.advance()
+  ): Either[ParseError, Expr] = {
+    // Advance past the operator
+    this.state = this.state.advance()
 
     // Add operator to terms
     val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
 
     // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
     if (
-      afterOp.current match {
+      this.state.current match {
         case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-        case _                                              => false
+        case _                                            => false
       }
     ) {
       debug(t"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
-      // Set state before calling buildOpSeq to ensure correct error position
-      this.state = state
-      buildOpSeq(updatedTerms)(leadingComments).map(result => (result, afterOp))
+      // We already have set state correctly
+      buildOpSeq(updatedTerms)(leadingComments)
     } else {
       // Continue parsing the rest of the expression
-      withComments(parseAtom)(afterOp).flatMap { case (next, afterNext) =>
+      withComments(parseAtom)(this.state).flatMap { case (next, afterNext) =>
         debug(t"parseRest: After parsing atom after operator, got: $next")
         val newTerms = updatedTerms :+ next
         debug(t"parseRest: Updated terms after operator: $newTerms")
 
         // Continue parsing the rest
-        parseRest(next, afterNext)(leadingComments).map { case (result, finalState) =>
+        parseRest(next, afterNext)(leadingComments).map { case (result, _) =>
           result match {
             case opSeq: OpSeq =>
-              (OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None), finalState)
+              OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              (OpSeq(newTerms, None), finalState)
+              OpSeq(newTerms, None)
           }
         }
       }
