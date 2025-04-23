@@ -352,7 +352,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(_) =>
         debug("parseRest: Found other token, parsing as atom")
         // this.state is already set to the current state
-        withComments(parseAtom).flatMap { next =>
+        withComments(() => parseAtom()).flatMap { next =>
           localTerms = localTerms :+ next
           debug(t"parseRest: After parsing other token as atom, terms: $localTerms")
           // withComments has updated this.state already
@@ -437,7 +437,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
     debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
-    withComments(parseAtom).flatMap { next =>
+    withComments(() => parseAtom()).flatMap { next =>
       val newTerms = updatedTerms :+ next
       debug(t"parseRest: After parsing atom after colon, terms: $newTerms")
 
@@ -475,7 +475,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       buildOpSeq(updatedTerms)(leadingComments)
     } else {
       // Continue parsing the rest of the expression
-      withComments(parseAtom).flatMap { next =>
+      withComments(() => parseAtom()).flatMap { next =>
         debug(t"parseRest: After parsing atom after operator, got: $next")
         val newTerms = updatedTerms :+ next
         debug(t"parseRest: Updated terms after operator: $newTerms")
@@ -551,7 +551,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
         // Advance past the operator
         this.state = this.state.advance()
-        withComments(parseAtom).flatMap { next =>
+        withComments(() => parseAtom()).flatMap { next =>
           val newTerms = updatedTerms :+ next
           debug(t"parseRest: After parsing atom after operator, terms: $newTerms")
 
@@ -618,7 +618,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case _ =>
             debug("parseExpr: Parsing atom after initial operator")
             terms = Vector(ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))))
-            withComments(parseAtom).flatMap { expr =>
+            withComments(() => parseAtom()).flatMap { expr =>
               terms = terms :+ expr
               debug(t"parseExpr: After initial operator and atom, terms: $terms")
 
@@ -639,7 +639,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         // Advance past the keyword operator
         this.state = this.state.advance()
         terms = Vector(ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
-        withComments(parseAtom).flatMap { expr =>
+        withComments(() => parseAtom()).flatMap { expr =>
           terms = terms :+ expr
           debug(t"parseExpr: After initial keyword operator and atom, terms: $terms")
 
@@ -656,7 +656,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       // Standard expression handling
       case _ =>
         debug("parseExpr: Starting with atom")
-        withComments(parseAtom).flatMap { first =>
+        withComments(() => parseAtom()).flatMap { first =>
           debug(t"parseExpr: After initial atom, got: $first")
           // withComments has updated this.state already
           parseRest(first)(leadingComments)
@@ -750,11 +750,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  private def parseAtom(current: LexerState): Either[ParseError, (Expr, LexerState)] = {
-    // Save original state
+  private def parseAtom(): Either[ParseError, Expr] = {
+    // Save original state for error handling
     val originalState = this.state
-    // Temporarily set state to the passed-in state for internal processing
-    this.state = current
     
     this.state.current match {
       case Left(err) => Left(err)
@@ -764,38 +762,30 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         advance1.current match {
           case Left(err)                        => Left(err)
           case RBrace(_) => 
-            // Reset state to before the brace
-            this.state = current
-            parseObject().map { obj =>
-              (obj, this.state)
-            } // Empty object
+            // Use the original state
+            parseObject() // Empty object
           case Id(_, _) | Sym(_, _) | Str(_, _) =>
             // Look ahead for = or => to determine if it's an object
             val afterId = advance1.advance().skipComments
             afterId.current match {
               case Left(err)                            => Left(err)
               case Op(op, _) if op == "=" || op == "=>" => 
-                // Reset state to before the brace
-                this.state = current
-                parseObject().map { obj =>
-                  (obj, this.state)
-                }
+                // Reset state to original
+                this.state = originalState
+                parseObject()
               case _                                    => 
-                // Reset state to before the brace
-                this.state = current
-                parseBlock().map(block => (block, this.state))
+                // Reset state to original
+                this.state = originalState
+                parseBlock()
             }
           case _ => 
-            // Reset state to before the brace
-            this.state = current
-            parseBlock().map(block => (block, this.state))
+            // Use the original state
+            parseBlock()
         }
 
       case LParen(_) => 
         // this.state is already set to current
-        parseTuple().map { tuple =>
-          (tuple, this.state)
-        }
+        parseTuple()
 
       case Id(chars, sourcePos) =>
         val afterId = this.state.advance()
@@ -811,16 +801,15 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                   // Function call with generic type args
                   this.state = afterTypeParams
                   parseTuple().map { tuple =>
-                    val afterArgs = this.state
                     val typeParamsList: ListExpr = typeParams
                     val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
-                    (createFunctionCall(typeCall, tuple, Some(sourcePos), Some(afterArgs.sourcePos)), afterArgs)
+                    createFunctionCall(typeCall, tuple, Some(sourcePos), Some(this.state.sourcePos))
                   }
                 case _ =>
                   // Just the generic type parameters
                   val typeParamsList: ListExpr = typeParams
                   Right(
-                    (createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos)), afterTypeParams)
+                    createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
                   )
               }
             }
@@ -828,40 +817,29 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             // Regular function call
             val identifier = createIdentifier(chars, sourcePos)
             this.state = afterId
-            parseFunctionCallWithId(identifier).map { funcCall =>
-              (funcCall, this.state)
-            }
+            parseFunctionCallWithId(identifier)
           case _ =>
             // Plain identifier
-            Right((createIdentifier(chars, sourcePos), afterId))
+            this.state = afterId
+            Right(createIdentifier(chars, sourcePos))
         }
 
       case Int(_, _) => 
         // this.state is already set to current
-        parseInt().map { expr =>
-          (expr, this.state)
-        }
+        parseInt()
       case Rat(_, _) => 
         // this.state is already set to current
-        parseRational().map { expr =>
-          (expr, this.state)
-        }
+        parseRational()
       case Str(_, _) => 
         // this.state is already set to current
-        parseString().map { expr =>
-          (expr, this.state)
-        }
+        parseString()
       case Sym(_, _) => 
         // this.state is already set to current
-        parseSymbol().map { expr =>
-          (expr, this.state)
-        }
+        parseSymbol()
 
       case LBracket(_) => 
         // this.state is already set to current
-        parseList().map { listExpr =>
-          (listExpr, this.state)
-        }
+        parseList()
 
       case Right(token) =>
         // Restore original state on error
@@ -1562,6 +1540,57 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
 
   /** Generic parser combinator that adds comment handling to any parse method */
+  // New overload for methods that return just an expression using mutable state
+  private def withComments[T <: Expr](
+      parseMethod: () => Either[ParseError, T]
+  ): Either[ParseError, T] = {
+    // Save original state
+    val originalState = this.state
+    
+    // Collect leading comments
+    val (leadingComments, afterLeadingComments) = collectComments()
+    
+    // Update state to after leading comments
+    this.state = afterLeadingComments
+
+    // Parse the expression using the provided method
+    val result = parseMethod().flatMap { expr =>
+      // Collect trailing comments (state is already updated by parseMethod)
+      val (trailingComments, finalState) = collectTrailingComments()
+      
+      // Update state to final state after trailing comments
+      this.state = finalState
+
+      // Update expression with comments
+      val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
+        expr.updateMeta { existingMeta =>
+          val newMeta = createMetaWithComments(
+            existingMeta.flatMap(_.sourcePos),
+            leadingComments,
+            trailingComments
+          )
+
+          // Merge the existing meta with new comment information
+          mergeMeta(existingMeta, newMeta)
+        }
+      } else {
+        expr
+      }
+
+      // Cast is safe because we're only modifying metadata
+      Right(updatedExpr.asInstanceOf[T])
+    }
+    
+    // Restore original state in case of error
+    result match {
+      case Left(err) => 
+        this.state = originalState
+        Left(err)
+      case right => right
+    }
+  }
+
+  // Original implementation for methods that return state in tuple format
   private def withComments[T <: Expr](
       parseMethod: LexerState => Either[ParseError, (T, LexerState)]
   ): Either[ParseError, T] = {
