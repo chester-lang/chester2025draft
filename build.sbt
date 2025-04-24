@@ -641,9 +641,9 @@ lazy val pretty = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 
 lazy val reader = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .in(file("reader"))
-  .dependsOn(utils, syntax)
+  .dependsOn(utils, syntax, compatibility % Test, testCommon % Test)
   .settings(
     commonSettings
   )
@@ -681,11 +681,21 @@ lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmSettings)
 
+lazy val testCommon = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("test-common"))
+  .dependsOn(compatibility)
+  .settings(
+    commonSettings
+  )
+  .jvmSettings(commonJvmSettings)
+
 lazy val semantic = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("semantic"))
-  .dependsOn(utils, syntax, err)
+  .dependsOn(utils, syntax, err, compatibility % Test, testCommon % Test, reader % Test)
   .settings(
     commonSettings
   )
@@ -1121,7 +1131,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     docs,
     optional,
     jsForPython,
-    jsForLua
+    jsForLua,testCommon
   )
   .settings(
     scalaVersion := scala3Version
