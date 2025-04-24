@@ -649,22 +649,16 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
 
     // Check if current token contains a newline or is EOF
-    val hasNewline = stateWithoutComments.current match {
-      case Right(ws: Token.Whitespace) =>
-        lazy val wsContent = for {
-          source <- source.readContent.toOption
-          range = ws.sourcePos.range
-          if range.start.index.utf16 < source.length && range.end.index.utf16 <= source.length
-          content = source.substring(range.start.index.utf16, range.end.index.utf16)
-        } yield content
-
-        wsContent.exists(_.contains('\n'))
+    val hasNewline = (stateWithoutComments.current match {
+      case Right(ws: Token.Whitespace) => isNewlineWhitespace(ws)
       case Right(_: Token.EOF)       => true
       case Right(_: Token.Semicolon) => true // Also treat semicolons as terminators
       // For match expressions, always treat a case keyword as a terminator
-      case Right(Token.Identifier(chars, _)) if charsToString(chars) == "case" => true
       case _                                                                   => false
-    }
+    }) || (stateWithoutComments.previousToken match {
+      case Some(ws: Token.Whitespace) => isNewlineWhitespace(ws)
+      case _ => false
+    })
 
     // Log if pattern is detected and debug is enabled
     if (DEBUG && hasNewline) debug("}\n check: pattern detected")
