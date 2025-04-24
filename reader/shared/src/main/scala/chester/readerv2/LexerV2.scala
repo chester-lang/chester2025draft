@@ -546,7 +546,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseRest(id).map {
           case opSeq: OpSeq =>
             OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-          case fc@FunctionCall(f,Tuple(Vector(b:Block),_),_) => OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
+          case _ @ FunctionCall(f, Tuple(Vector(b: Block), _), _) => OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
           case _ =>
             OpSeq(updatedTerms, None)
         }
@@ -651,13 +651,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Check if current token contains a newline or is EOF
     val hasNewline = (stateWithoutComments.current match {
       case Right(ws: Token.Whitespace) => isNewlineWhitespace(ws)
-      case Right(_: Token.EOF)       => true
-      case Right(_: Token.Semicolon) => true // Also treat semicolons as terminators
+      case Right(_: Token.EOF)         => true
+      case Right(_: Token.Semicolon)   => true // Also treat semicolons as terminators
       // For match expressions, always treat a case keyword as a terminator
-      case _                                                                   => false
+      case _ => false
     }) || (stateWithoutComments.previousToken match {
       case Some(ws: Token.Whitespace) => isNewlineWhitespace(ws)
-      case _ => false
+      case _                          => false
     })
 
     // Log if pattern is detected and debug is enabled
@@ -975,7 +975,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Check if a token is a identifier
   private def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
-    case Right(Token.Identifier(chars, _)) =>true
+    case Right(Token.Identifier(_, _)) => true
     case _                                 => false
   }
 
@@ -1303,21 +1303,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   /** Helper method to advance the lexer state by one token
-    * @return the previous state before advancing
+    * @return
+    *   the previous state before advancing
     */
-  private def advance(): Unit = {
+  private def advance(): Unit =
     this.state = this.state.advance()
-  }
-  
+
   /** Helper method to clear pending tokens from the lexer state
-    * @return the previous state before clearing
+    * @return
+    *   the previous state before clearing
     */
   private def clearPendingTokens(): LexerState = {
     val prevState = this.state
     this.state = this.state.clearPendingTokens()
     prevState
   }
-  
+
   /** Skips all comments and whitespace tokens, updating this.state directly. All skipped tokens are automatically added to the state's pendingTokens
     * for later retrieval.
     */

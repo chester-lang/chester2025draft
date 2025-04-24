@@ -1131,7 +1131,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     docs,
     optional,
     jsForPython,
-    jsForLua,testCommon
+    jsForLua,
+    testCommon
   )
   .settings(
     scalaVersion := scala3Version
