@@ -203,7 +203,6 @@ val jdk21: Boolean = false
 val javaOutputVersion: String = "11"
 
 def commonSettings0 = Seq(
-  dependencyUpdatesFilter -= moduleFilter(organization = "org.mozilla"),
   // Workaround for Metals: disable BSP for native/js targets to prevent compilation issues
   // See: https://github.com/scalameta/metals-feature-requests/issues/13
   bspEnabled := {
@@ -762,7 +761,6 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       // "org.soot-oss" % "sootup.jimple.parser" % sootupVersion,
       // "org.soot-oss" % "sootup.callgraph" % sootupVersion,
       // "org.soot-oss" % "sootup.analysis" % sootupVersion,
-      "org.mozilla" % "rhino" % "1.7.15",
       // suppose to support normal jvm https://github.com/oracle/graaljs/blob/master/docs/user/RunOnJDK.md
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
