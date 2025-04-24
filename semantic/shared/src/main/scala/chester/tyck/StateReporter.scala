@@ -44,7 +44,7 @@ class ReporterTrackError[T <: Problem](x: Reporter[T]) extends Reporter[T] {
   )
 }
 
-class Get[P, S](val reporter: Reporter[P], private val state: MutBox[S]) {
+class StateReporter[P, S](val reporter: Reporter[P], private val state: MutBox[S]) {
   def getState: S = state.get
 
   implicit inline def toReporter: Reporter[P] = reporter
@@ -63,13 +63,13 @@ class Get[P, S](val reporter: Reporter[P], private val state: MutBox[S]) {
     state.updateAndMap(f)
 }
 
-object Get {
+object StateReporter {
   def run[P <: WithServerity, S, A](
-      program: Get[P, S] => A
+      program: StateReporter[P, S] => A
   )(state: S): TyckResult0[P, S, A] = {
     val reporter = new VectorReporter[P]
     val stateBox = MutBox(state)
-    val get = Get(reporter, stateBox)
+    val get = StateReporter(reporter, stateBox)
     val result = program(get)
     TyckResult0(stateBox.get, result, reporter.getReports)
   }

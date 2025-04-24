@@ -840,7 +840,7 @@ trait DefaultImpl
     implicit val collecter: UnusedVariableWarningWrapper =
       new UnusedVariableWarningWrapper(sementicCollector)
     val reporter = new VectorReporter[TyckProblem]
-    implicit val get: Tyck = new Get(reporter, new MutBox(()))
+    implicit val get: Tyck = new StateReporter(reporter, new MutBox(()))
     implicit val able: StateAbility[Tyck] = stateAbilityImpl
     val ty1: CellId[Term] = ty match {
       case Some(ty) =>
@@ -945,7 +945,7 @@ trait DefaultImpl
     implicit val reporter: ReporterTrackError[Problem] = new ReporterTrackError(
       reporter0
     )
-    implicit val get: Tyck = new Get(reporter, new MutBox(()))
+    implicit val get: Tyck = new StateReporter(reporter, new MutBox(()))
     implicit val able: StateAbility[Tyck] = stateAbilityImpl
     implicit var ctx: Context = Context.default.copy(loadedModules = loadedModules)
     val (module, block): (ModuleRef, Block) = resolve(expr) match {
