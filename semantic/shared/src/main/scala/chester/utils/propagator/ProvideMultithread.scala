@@ -477,7 +477,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class DefaultValueTask(c: CIdOf[Cell[?]], state: Impl[Ability])(using
-                                                                            Ability
+        Ability
     ) extends RecursiveAction {
       override def compute(): Unit =
         if (c.noAnyValue && c.store.default.isDefined) {

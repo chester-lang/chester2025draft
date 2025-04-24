@@ -471,7 +471,7 @@ case class FunctionCall(
   override type ThisTree = FunctionCall
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): FunctionCall = thisOr {
-    new FunctionCall(f(function), telescope.descent(f, g), meta)
+    FunctionCall(f(function), telescope.descent(f, g), meta)
   }
 
   override def updateMeta(
@@ -530,7 +530,7 @@ case class DotCall(
 
   def isField: Boolean = telescope.isEmpty
 
-  def isQualifiedName: Boolean = {
+  private def isQualifiedName: Boolean = {
     if (telescope.nonEmpty) return false
     if (!field.isInstanceOf[Identifier]) return false
     expr match {

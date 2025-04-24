@@ -18,7 +18,7 @@ object Scala {
     case UnitTerm_(_)      => meta.Lit.Unit()
     case _                 => throw new NotImplementedError(s"not implemented ${term.getClass.getName} $term")
   }
-  def compileTy(ty: Term)(implicit ctx: ScalaContext = null): meta.Type = ty match {
+  private def compileTy(ty: Term)(implicit ctx: ScalaContext = null): meta.Type = ty match {
     case IntegerType(_) => meta.Type.Name("Int")
     case IntType(_)     => meta.Type.Name("Int")
     case StringType(_)  => meta.Type.Name("String")

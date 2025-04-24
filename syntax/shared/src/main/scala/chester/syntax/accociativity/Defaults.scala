@@ -17,7 +17,7 @@ case class OperatorsContext(
 
 object OperatorsContext {
   val Default: OperatorsContext = OperatorsContext(
-    new DefaultInfixDefinitions(),
+    DefaultInfixDefinitions(),
     defaultPrecedenceGroup
   )
 }

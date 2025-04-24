@@ -44,10 +44,10 @@ object FileContent {
 }
 
 case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
-  lazy val fileContent: Option[FileContent] = source.readContent.toOption.map(
+  private lazy val fileContent: Option[FileContent] = source.readContent.toOption.map(
     FileContent(_, source.linesOffset, source.posOffset)
   )
-  val fileName = source.fileName
+  val fileName: String = source.fileName
 
   /** Extracts all lines within the range with their line numbers.
     *

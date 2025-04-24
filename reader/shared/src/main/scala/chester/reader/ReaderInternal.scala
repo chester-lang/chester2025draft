@@ -17,31 +17,31 @@ case class ReaderInternal(
     ignoreLocation: Boolean = false,
     defaultIndexer: Option[StringIndex] = None
 )(using p: P[?]) {
-  val fileName = sourceOffset.fileName
-  val linesOffset = sourceOffset.linesOffset
-  val posOffset = sourceOffset.posOffset
+  val fileName: String = sourceOffset.fileName
+  val linesOffset: Character :| Positive0 = sourceOffset.linesOffset
+  val posOffset: WithUTF16 = sourceOffset.posOffset
   // TODO: column offset for :t command in repl
   if (linesOffset != 0) require(posOffset.nonZero)
   if (posOffset.nonZero) require(linesOffset != 0)
 
-  def nEnd: P[Unit] = P("\n" | End)
+  private def nEnd: P[Unit] = P("\n" | End)
 
   @deprecated("comment is lost")
   def comment: P[Unit] = P("//" ~ CharPred(_ != '\n').rep ~ nEnd)
 
-  def commentOneLine: P[Comment] =
+  private def commentOneLine: P[Comment] =
     PwithMeta("//" ~ CharPred(_ != '\n').rep.! ~ ("\n" | End)).map { case (content, meta) =>
       Comment(content, CommentType.OneLine, meta.flatMap(_.sourcePos))
     }
 
-  def allComment: P[Comment] = P(commentOneLine)
+  private def allComment: P[Comment] = P(commentOneLine)
 
-  def simpleDelimiter: P[Unit] = P(CharsWhileIn(" \t\r\n"))
+  private def simpleDelimiter: P[Unit] = P(CharsWhileIn(" \t\r\n"))
 
   @deprecated("comment is lost")
   def delimiter: P[Unit] = P((simpleDelimiter | comment).rep)
 
-  def delimiter1: P[Vector[Comment]] = P(
+  private def delimiter1: P[Vector[Comment]] = P(
     (simpleDelimiter.map(x => Vector()) | allComment.map(Vector(_))).rep
   ).map(_.flatten.toVector)
 
@@ -54,14 +54,14 @@ case class ReaderInternal(
     commentOneLine.map(Vector(_)) | (CharsWhileIn(" \t\r").? ~ nEnd).map(x => Vector())
   )
 
-  def lineNonEndingSpace: P[Unit] = P(CharsWhileIn(" \t\r"))
+  private def lineNonEndingSpace: P[Unit] = P(CharsWhileIn(" \t\r"))
 
   @deprecated("comment is lost")
   def maybeSpace: P[Unit] = P(delimiter.?)
 
-  def maybeSpace1: P[Vector[Comment]] = P(delimiter1.?.map(_.toVector.flatten))
+  private def maybeSpace1: P[Vector[Comment]] = P(delimiter1.?.map(_.toVector.flatten))
 
-  def simpleId: P[String] = P(
+  private def simpleId: P[String] = P(
     (CharacterPred(isIdentifierFirst).rep(1) ~ CharacterPred(
       isIdentifierPart
     ).rep.? ~ CharacterPred(isIdentifierEnd).?).!
@@ -69,17 +69,17 @@ case class ReaderInternal(
 
   def id: P[String] = operatorId | simpleId
 
-  def operatorId: P[String] = P(
+  private def operatorId: P[String] = P(
     (CharacterPred(isOperatorIdentifierFirst).rep(1) ~ CharacterPred(
       isOperatorIdentifierRest
     ).rep).!
   )
 
   def begin: P[Int :| Positive0] =
-    Index.map(_.refineUnsafe[Positive0]).asInstanceOf[P[Int :| Positive0]]
+    Index.map(_.refineUnsafe[Positive0])
 
   def end: P[Int :| Positive0] =
-    Index.map(_.refineUnsafe[Positive0]).asInstanceOf[P[Int :| Positive0]]
+    Index.map(_.refineUnsafe[Positive0])
 
   val indexer: StringIndex = defaultIndexer.getOrElse(StringIndex(p.input))
 
@@ -124,7 +124,7 @@ case class ReaderInternal(
   y
    */
   extension [T <: Expr](inline parse0: P[T]) {
-    inline def relax(
+    private inline def relax(
         inline start: Boolean = true,
         inline onEnd: Boolean = false
     ): P[T] = (start, onEnd) match {
@@ -151,8 +151,8 @@ case class ReaderInternal(
         }
       case (false, false) => parse0
     }
-    inline def relax1: P[T] = relax(true, false)
-    inline def relax2: P[T] = relax(true, true)
+    inline def relax1: P[T] = relax(true)
+    private inline def relax2: P[T] = relax(true, true)
   }
 
   extension [T](inline parse0: P[T]) {
@@ -170,7 +170,7 @@ case class ReaderInternal(
       s(x, comments)
     }
 
-    inline def must(inline message: String = "Expected something"): P[T] =
+    private inline def must(inline message: String = "Expected something"): P[T] =
       parse0.? flatMap {
         case Some(x) => Pass(x)
         case None    => Fail.opaque(message)./
@@ -179,7 +179,7 @@ case class ReaderInternal(
     inline def on(inline condition: Boolean): P[T] =
       if condition then parse0 else Fail("")
 
-    inline def checkOn(inline condition: Boolean): P[Unit] =
+    private inline def checkOn(inline condition: Boolean): P[Unit] =
       if condition then parse0 else Pass(())
 
     inline def thenTry(inline parse1: P[T]): P[T] = parse0.?.flatMap {
@@ -188,7 +188,7 @@ case class ReaderInternal(
     }
   }
 
-  inline def PwithMeta[T, R](inline parse0: P[T])(using
+  private inline def PwithMeta[T, R](inline parse0: P[T])(using
       fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
   ): P[R] = P(parse0.withMeta)
 
@@ -200,21 +200,21 @@ case class ReaderInternal(
     Identifier(name, meta)
   }
 
-  def signed: P[String] = P("".!) // P(CharIn("+\\-").?.!)
+  private def signed: P[String] = P("".!) // P(CharIn("+\\-").?.!)
 
-  def hexLiteral: P[String] = P("0x" ~ CharsWhileIn("0-9a-fA-F").must()).!
+  private def hexLiteral: P[String] = P("0x" ~ CharsWhileIn("0-9a-fA-F").must()).!
 
-  def binLiteral: P[String] = P("0b" ~ CharsWhileIn("01").must()).!
+  private def binLiteral: P[String] = P("0b" ~ CharsWhileIn("01").must()).!
 
-  def decLiteral: P[String] = P(CharsWhileIn("0-9")).!
+  private def decLiteral: P[String] = P(CharsWhileIn("0-9")).!
 
-  def expLiteral: P[String] = P(
+  private def expLiteral: P[String] = P(
     CharsWhileIn("0-9") ~ "." ~ CharsWhileIn("0-9") ~ (CharIn(
       "eE"
     ) ~ signed ~ CharsWhileIn("0-9")).?
   ).!
 
-  def integerLiteral: P[ParsedExpr] =
+  private def integerLiteral: P[ParsedExpr] =
     P(signed ~ (hexLiteral | binLiteral | decLiteral).!).withMeta.map { case (sign, value, meta) =>
       val actualValue =
         if (value.startsWith("0x")) BigInt(sign + value.drop(2), 16)
@@ -223,11 +223,11 @@ case class ReaderInternal(
       IntegerLiteral(actualValue, meta)
     }
 
-  def doubleLiteral: P[ParsedExpr] = P(signed ~ expLiteral.withMeta).map { case (sign, (value, meta)) =>
+  private def doubleLiteral: P[ParsedExpr] = P(signed ~ expLiteral.withMeta).map { case (sign, (value, meta)) =>
     RationalLiteral(BigDecimal(sign + value), meta)
   }
 
-  def escapeSequence: P[String] = P("\\" ~ CharIn("rnt\\\"").!).map {
+  private def escapeSequence: P[String] = P("\\" ~ CharIn("rnt\\\"").!).map {
     case "r"  => "\r"
     case "n"  => "\n"
     case "t"  => "\t"
@@ -235,13 +235,13 @@ case class ReaderInternal(
     case "\"" => "\""
   }
 
-  def normalChar: P[String] = P(CharPred(c => c != '\\' && c != '"')).!
+  private def normalChar: P[String] = P(CharPred(c => c != '\\' && c != '"')).!
 
   def stringLiteral: P[String] = P(
     "\"" ~ (normalChar | escapeSequence).rep.map(_.mkString) ~ "\""
   )
 
-  def heredocLiteral: P[String] = {
+  private def heredocLiteral: P[String] = {
     def validateIndentation(str: String): Either[String, String] = {
       val lines = str.split("\n")
       val indentStrings =
@@ -260,7 +260,7 @@ case class ReaderInternal(
     P("\"\"\"" ~ (!"\"\"\"".rep ~ AnyChar).rep.!.flatMap(str => validateIndentation(str).fold(Fail.opaque, validStr => Pass(validStr))) ~ "\"\"\"")
   }
 
-  def stringLiteralExpr: P[ParsedExpr] =
+  private def stringLiteralExpr: P[ParsedExpr] =
     P((stringLiteral | heredocLiteral).withMeta).map { case (value, meta) =>
       StringLiteral(value, meta)
     }
@@ -274,9 +274,9 @@ case class ReaderInternal(
   @deprecated
   def comma: P[Unit] = P(maybeSpace ~ "," ~ maybeSpace)
 
-  def comma1: P[Unit] = ","
+  private def comma1: P[Unit] = ","
 
-  def list: P[ListExpr] = PwithMeta(
+  private def list: P[ListExpr] = PwithMeta(
     "[" ~ parse().relax2
       .rep(sep = comma1) ~ maybeSpace ~ comma1.? ~ maybeSpace ~ "]"
   ).map((terms, meta) => ListExpr(terms.toVector, meta))
@@ -290,7 +290,7 @@ case class ReaderInternal(
     "@" ~ identifier ~ callingZeroOrMore()
   )
 
-  def annotated: P[AnnotatedExpr] = PwithMeta(annotation ~ parse()).map { case (annotation, telescope, expr, meta) =>
+  private def annotated: P[AnnotatedExpr] = PwithMeta(annotation ~ parse()).map { case (annotation, telescope, expr, meta) =>
     AnnotatedExpr(annotation, telescope, expr, meta)
   }
 
@@ -305,7 +305,7 @@ case class ReaderInternal(
     def blockCall: Boolean = !inOpSeq && !dontAllowBlockApply
   }
 
-  def callingOnce(
+  private def callingOnce(
       ctx: ParsingContext = ParsingContext()
   ): P[ParsedMaybeTelescope] = P(
     (list | tuple) | (lineNonEndingSpace.? ~ anonymousBlockLikeFunction.on(
@@ -321,7 +321,7 @@ case class ReaderInternal(
     callingOnce(ctx = ctx).rep(min = 1).map(_.toVector)
   )
 
-  def callingZeroOrMore(
+  private def callingZeroOrMore(
       ctx: ParsingContext = ParsingContext()
   ): P[Vector[ParsedMaybeTelescope]] = P(
     callingOnce(ctx = ctx).rep.map(_.toVector)
@@ -345,7 +345,7 @@ case class ReaderInternal(
     DotCall(expr, field, telescope, p(meta))
   }
 
-  def insideBlock: P[Block] = PwithMeta(
+  private def insideBlock: P[Block] = PwithMeta(
     (maybeSpace ~ statement).rep ~ maybeSpace ~ parse().? ~ maybeSpace
   ).flatMap { case (heads, tail, meta) =>
     if (heads.isEmpty && tail.isEmpty) Fail("expect something")
@@ -359,9 +359,9 @@ case class ReaderInternal(
     else Pass(Block(Vector.from(heads), tail, meta))
   }
 
-  inline def anonymousBlockLikeFunction: P[ParsedExpr] = block | objectParse
+  private inline def anonymousBlockLikeFunction: P[ParsedExpr] = block | objectParse
 
-  def statement: P[ParsedExpr] = P(
+  private def statement: P[ParsedExpr] = P(
     (parse(ctx = ParsingContext(newLineAfterBlockMeansEnds = true)) ~ Index)
       .flatMap { (expr, index) =>
         val itWasBlockEnding = p.input(index - 1) == '}'
@@ -384,11 +384,11 @@ case class ReaderInternal(
       if (!(exprCouldPrefix || xs.exists(_.isInstanceOf[Identifier]))) {
         Fail("Expected identifier")
       } else {
-        Pass(OpSeq(xs.toVector, p(meta)))
+        Pass(OpSeq(xs, p(meta)))
       }
     }
 
-  def qualifiedNameOn(x: QualifiedName): P[QualifiedName] =
+  private def qualifiedNameOn(x: QualifiedName): P[QualifiedName] =
     PwithMeta("." ~ identifier).flatMap { (id, meta) =>
       val built = QualifiedName.build(x, id, meta)
       qualifiedNameOn(built) | Pass(built)
@@ -400,25 +400,25 @@ case class ReaderInternal(
     SymbolLiteral(name, meta)
   }
 
-  def objectClause0: P[ObjectClause] =
+  private def objectClause0: P[ObjectClause] =
     (maybeSpace ~ qualifiedName ~ maybeSpace ~ "=" ~ maybeSpace ~ parse() ~ maybeSpace)
       .map(ObjectExprClause.apply)
 
-  def objectClause1: P[ObjectClause] =
+  private def objectClause1: P[ObjectClause] =
     (maybeSpace ~ parse(ctx = ParsingContext(dontallowOpSeq = true)) ~ maybeSpace ~ "=>" ~ maybeSpace ~ parse() ~ maybeSpace)
       .map(ObjectExprClauseOnValue.apply)
 
-  def objectParse: P[ParsedExpr] = PwithMeta(
+  private def objectParse: P[ParsedExpr] = PwithMeta(
     "{" ~ (objectClause0 | objectClause1).rep(sep = comma) ~ comma.? ~ maybeSpace ~ "}"
   ).map((fields, meta) => ObjectExpr(fields.toVector, meta))
 
-  def keyword: P[ParsedExpr] = PwithMeta(
+  private def keyword: P[ParsedExpr] = PwithMeta(
     "#" ~ id ~ callingZeroOrMore(ParsingContext(dontAllowBlockApply = true))
   ).map { case (id, telescope, meta) =>
     Keyword(id, telescope, meta)
   }
 
-  def opSeqGettingExprs(ctx: ParsingContext): P[Vector[ParsedExpr]] =
+  private def opSeqGettingExprs(ctx: ParsingContext): P[Vector[ParsedExpr]] =
     P(maybeSpace ~ parse(ctx = ctx.copy(inOpSeq = true)) ~ Index).flatMap { (expr, index) =>
       val itWasBlockEnding = p.input(index - 1) == '}'
       ((!lineEnding).checkOn(
@@ -456,7 +456,7 @@ case class ReaderInternal(
     ) ~ tailExpr(expr, getMeta1, ctx = ctx)) | Pass(expr)
   }
 
-  inline def parse0: P[ParsedExpr] =
+  private inline def parse0: P[ParsedExpr] =
     symbol | keyword | objectParse | block | annotated | list | tuple | literal | identifier
 
   def parse(ctx: ParsingContext = ParsingContext()): P[ParsedExpr] =

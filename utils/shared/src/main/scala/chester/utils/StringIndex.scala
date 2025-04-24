@@ -7,12 +7,12 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
 
 case class LineAndColumn(
-    val line: Int :| Positive0,
-    val column: Int :| Positive0
+    line: Int :| Positive0,
+    column: Int :| Positive0
 )
 case class LineAndColumnWithUTF16(line: Int :| Positive0, column: WithUTF16)
 
-case class StringIndex(val stringList: LazyList[String]) {
+case class StringIndex(stringList: LazyList[String]) {
 
   import java.lang.Character.{isHighSurrogate, isLowSurrogate}
 

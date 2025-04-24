@@ -29,7 +29,7 @@ class LinenoiseTerminal(init: TerminalInit) extends InTerminal[Id] {
     var currentInputs: String = ""
 
     while (continue) {
-      val line = facade.prompt(prompt.render).getOrElse(null)
+      val line = facade.prompt(prompt.render).orNull
 
       if (line == null) {
         continue = false

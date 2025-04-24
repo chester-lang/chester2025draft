@@ -173,7 +173,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     )
   }
 
-  def processDocument(
+  private def processDocument(
       uri: String,
       text: String
   ): (TyckResult[Unit, Judge], Vector[CollectedSymbol], List[Diagnostic]) = {

@@ -411,23 +411,21 @@ case object SimpleDesalt {
         val fieldExprs = parameterExprs ++ fieldExprs0
 
         // Desugar fields into Field instances
-        val desugaredFields = fieldExprs
-          .flatMap {
-            case Tuple(terms, _) =>
-              terms.map {
-                case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
-                  Some(RecordField(name = id, ty = Some(ty), meta = id.meta))
-                case id: Identifier =>
-                  Some(RecordField(name = id, meta = id.meta))
-                case other =>
-                  reporter(ExpectFieldDeclaration(other))
-                  None
-              }
-            case other =>
-              reporter(ExpectFieldDeclaration(other))
-              None
-          }
-          .flatten
+        val desugaredFields = fieldExprs.flatMap {
+          case Tuple(terms, _) =>
+            terms.map {
+              case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
+                Some(RecordField(name = id, ty = Some(ty), meta = id.meta))
+              case id: Identifier =>
+                Some(RecordField(name = id, meta = id.meta))
+              case other =>
+                reporter(ExpectFieldDeclaration(other))
+                None
+            }
+          case other =>
+            reporter(ExpectFieldDeclaration(other))
+            None
+        }.flatten
 
         // Desugar body if present
         val desugaredBody = if (bodyExprs.nonEmpty) {

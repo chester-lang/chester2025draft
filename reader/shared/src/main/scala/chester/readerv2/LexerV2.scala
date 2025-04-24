@@ -546,7 +546,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseRest(id).map {
           case opSeq: OpSeq =>
             OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-          case _ @ FunctionCall(f, Tuple(Vector(b: Block), _), _) => OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
+          case _ @FunctionCall(f, Tuple(Vector(b: Block), _), _) => OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
           case _ =>
             OpSeq(updatedTerms, None)
         }
@@ -976,7 +976,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   // Check if a token is a identifier
   private def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
     case Right(Token.Identifier(_, _)) => true
-    case _                                 => false
+    case _                             => false
   }
 
   private def parseBlock(): Either[ParseError, Block] = {

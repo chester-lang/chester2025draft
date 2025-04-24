@@ -18,13 +18,13 @@ import scala.scalajs.js.JSConverters.*
 
 given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
-  def toScalaArray(input: Uint8Array): Array[Byte] =
+  private def toScalaArray(input: Uint8Array): Array[Byte] =
     // Create a view as Int8 on the same underlying data.
     new Int8Array(input.buffer, input.byteOffset, input.length).toArray
 
   type Path = String
 
-  def pathOps = PathOpsString
+  def pathOps: PathOps[String] = PathOpsString
 
   override inline def println(x: String): Future[Unit] =
     Future.successful(Predef.println(x))

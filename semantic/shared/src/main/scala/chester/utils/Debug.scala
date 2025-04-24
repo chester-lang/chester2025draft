@@ -79,7 +79,8 @@ object Debug {
       println(t"[DEBUG:$category] Call stack:")
       Thread
         .currentThread()
-        .getStackTrace.slice(2, depth + 2)
+        .getStackTrace
+        .slice(2, depth + 2)
         .foreach(element =>
           println(t"[DEBUG:$category]   at ${element.getClassName}.${element.getMethodName}(${element.getFileName}:${element.getLineNumber})")
         )

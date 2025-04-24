@@ -40,7 +40,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
 
   def sourcePos: Option[SourcePos] = meta.map(_.sourcePos)
 
-  def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
+  private def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
 
   final def elevate(level: IntegerTerm): Term = {
     require(level.value >= 0)
@@ -528,7 +528,7 @@ case class ObjectType(
     @const exactFields: Boolean = false,
     @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
-  val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
+  private val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
   override type ThisTree = ObjectType
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist("Object" </> Docs.`{`, Docs.`}`, ",")(
@@ -763,7 +763,7 @@ case class Annotation(
     copy(
       term = f(term),
       ty = ty.map(f),
-      effects = effects.map(x => g(x).asInstanceOf[EffectsM])
+      effects = effects.map(g)
     )
   )
 }
@@ -863,7 +863,7 @@ case class InterfaceStmtTerm(
     val extendsDoc = extendsClause.map(c => Doc.text(" extends ") <> c.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
     group(
-      Doc.text("interface ") <> Doc.text(name.toString) <> extendsDoc <> bodyDoc
+      Doc.text("interface ") <> Doc.text(name) <> extendsDoc <> bodyDoc
     )
   }
 

@@ -12,7 +12,7 @@ object Language {
   private val languages = LanguageTag.values
   private val regions = RegionTag.values
 
-  def fromOption(x: String): Option[Language] = {
+  private def fromOption(x: String): Option[Language] = {
     // split by _ or -
     val parts = x.split("[_\\-]")
     if (parts.length == 1) {
