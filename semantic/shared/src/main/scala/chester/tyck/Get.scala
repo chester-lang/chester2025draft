@@ -49,7 +49,7 @@ class Get[P, S](val reporter: Reporter[P], private val state: MutBox[S]) {
 
   implicit inline def toReporter: Reporter[P] = reporter
 
-  def report(problem: P): Unit = reporter.apply(problem)
+  private def report(problem: P): Unit = reporter.apply(problem)
 
   def reportseq(problems: Seq[P]): Unit = problems.foreach(report)
 

@@ -26,7 +26,7 @@ object ClassFileInspector {
 
     // Fields
     println("Fields:")
-    for (field <- classNode.fields.asInstanceOf[java.util.List[FieldNode]].asScala) {
+    for (field <- classNode.fields.asScala) {
       val access = field.access
       val isPublic = (access & Opcodes.ACC_PUBLIC) != 0
       if (isPublic) {
@@ -36,7 +36,7 @@ object ClassFileInspector {
 
     // Methods
     println("Methods:")
-    for (method <- classNode.methods.asInstanceOf[java.util.List[MethodNode]].asScala) {
+    for (method <- classNode.methods.asScala) {
       val access = method.access
       val isPublic = (access & Opcodes.ACC_PUBLIC) != 0
       if (isPublic) {

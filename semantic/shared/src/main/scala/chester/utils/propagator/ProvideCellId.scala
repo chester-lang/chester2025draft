@@ -151,7 +151,7 @@ trait ProvideCellId {
     cell
   }
 
-  val NormalScore: Int = 8
+  private val NormalScore: Int = 8
   val NoScore: Int = 0
 
   trait Propagator[Ability] {
@@ -211,7 +211,7 @@ trait ProvideCellId {
 
     def noStableValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasStableValue(id)
 
-    def hasSomeValue[T <: Cell[?]](id: CIdOf[T]): Boolean =
+    private def hasSomeValue[T <: Cell[?]](id: CIdOf[T]): Boolean =
       readCell(id).exists((x: T) => x.hasSomeValue)
 
     def noAnyValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)

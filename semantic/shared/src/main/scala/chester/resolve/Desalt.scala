@@ -69,7 +69,7 @@ def opSeq(xs: Seq[Expr])(using Reporter[TyckProblem]): Expr =
   SimpleDesalt.desugar(OpSeq(xs.toVector, xs.head.meta))
 
 private object DesaltSimpleFunction {
-  def predicate(x: Expr): Boolean = x match {
+  private def predicate(x: Expr): Boolean = x match {
     case Identifier(Const.Arrow2, _) => true
     case _                           => false
   }
@@ -115,7 +115,7 @@ private object ObjectDesalt {
       throw new IllegalArgumentException("Invalid QualifiedName structure")
   }
 
-  def insertNested(
+  private def insertNested(
       fields: Vector[(Vector[String], Expr)],
       base: ObjectExpr
   ): ObjectExpr =
@@ -197,7 +197,7 @@ case object StmtDesalt {
         case _ => None
       }
 
-  def letdef(
+  private def letdef(
       decorations: Vector[Expr],
       kw: Identifier,
       xs: Vector[Expr],
@@ -247,7 +247,7 @@ case object StmtDesalt {
     )
   }
 
-  def unrollFunction(stmt: LetDefStmt): LetDefStmt =
+  private def unrollFunction(stmt: LetDefStmt): LetDefStmt =
     stmt.defined match {
       case DefinedFunction(id, telescopes) =>
         require(stmt.decorations.isEmpty, "not supported yet")
@@ -565,7 +565,7 @@ case object SimpleDesalt {
     unwrap(desugar(expr))
 
   // Helper method to parse super types separated by 'with'
-  def parseSuperTypes(tokens: List[Expr]): (List[Expr], List[Expr]) = {
+  private def parseSuperTypes(tokens: List[Expr]): (List[Expr], List[Expr]) = {
     @tailrec
     def loop(accum: List[Expr], remaining: List[Expr]): (List[Expr], List[Expr]) =
       remaining match {

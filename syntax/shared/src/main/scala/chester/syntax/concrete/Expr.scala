@@ -174,7 +174,7 @@ case class ResolvedIdentifier(
   ): ResolvedIdentifier = copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc = group(
-    Doc.text(module.toString) <> Docs.`.` <> Doc.text(name.toString)
+    Doc.text(module.toString) <> Docs.`.` <> Doc.text(name)
   )
 }
 
@@ -193,7 +193,7 @@ case class ResolvedLocalVar(
   ): ResolvedLocalVar = copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc = group(
-    Doc.text(name.toString) <> Doc.text(s"($varId)")
+    Doc.text(name) <> Doc.text(s"($varId)")
   )
 }
 

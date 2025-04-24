@@ -244,7 +244,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     )
   }
 
-  def processRecordStmt(
+  private def processRecordStmt(
       expr: RecordStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
@@ -312,7 +312,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     (Seq(recordStmtTerm), ctx.addTypeDefinition(recordStmtTerm))
   }
 
-  def processLetLetDefStmt(
+  private def processLetLetDefStmt(
       expr: LetDefStmt,
       ctx: Context,
       effects: CIdOf[EffectsCell],
@@ -345,7 +345,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     )
   }
 
-  def processTraitStmt(
+  private def processTraitStmt(
       expr: TraitStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
@@ -391,7 +391,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
     (Seq(traitStmtTerm), ctx.addTypeDefinition(traitStmtTerm))
   }
 
-  def processInterfaceStmt(
+  private def processInterfaceStmt(
       expr: InterfaceStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],

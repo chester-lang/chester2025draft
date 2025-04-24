@@ -80,7 +80,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     override def readUnstable: Option[Effects] = Some(Effects(effects, None))
   }
 
-  case class FixedEffectsCell(effects: Effects) extends EffectsCell with NoFill[Effects] {
+  private case class FixedEffectsCell(effects: Effects) extends EffectsCell with NoFill[Effects] {
     override def readStable: Option[Effects] = Some(effects)
   }
 

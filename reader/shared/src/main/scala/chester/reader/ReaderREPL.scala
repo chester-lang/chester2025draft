@@ -69,7 +69,7 @@ object ReaderREPL {
     parse(
       input,
       p =>
-        new ReaderInternal(
+        ReaderInternal(
           Source(
             FileNameAndContent("repl", input),
             linesOffset = linesOffset,

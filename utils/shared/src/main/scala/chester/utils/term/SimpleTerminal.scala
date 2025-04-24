@@ -5,7 +5,7 @@ import chester.utils.io.*
 import fansi.Str
 
 class SimpleTerminal(_init: TerminalInit)(using Runner[Id]) extends AbstractInTerminal[Id] {
-  override inline def initHistory = Vector()
+  override inline def initHistory: Id[Seq[String]] = Vector()
 
   override inline def readALine(prompt: Str): String = {
     print(prompt.render)

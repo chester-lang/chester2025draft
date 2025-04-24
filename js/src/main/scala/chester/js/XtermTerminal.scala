@@ -26,16 +26,16 @@ final class InXterm(terminal: mod.Terminal, init: TerminalInit) extends InTermin
 
   private var reading: Promise[String] = null
 
-  def handleLine(data: String): Unit =
+  private def handleLine(data: String): Unit =
     if (reading != null) {
       val r = reading
       reading = null
       r.success(data)
     }
 
-  var command = ""
+  private var command = ""
 
-  def handler(data: String, unit: Unit): Unit = data match {
+  private def handler(data: String, unit: Unit): Unit = data match {
     case "\r" =>
       handleLine(command)
       terminal.writeln("")

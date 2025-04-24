@@ -23,7 +23,7 @@ object ColorfulToHtml {
       s"<span style='$style'>${escapeHtml(piece.text)}</span>"
     }.mkString
 
-  def styleToCss(style: Style): String = {
+  private def styleToCss(style: Style): String = {
     val fgColor = style.foreground
       .map(fg => s"color: ${foregroundToCss(fg)};")
       .getOrElse("")
@@ -34,7 +34,7 @@ object ColorfulToHtml {
     s"$fgColor $bgColor $textStyles"
   }
 
-  def foregroundToCss(fg: Foreground): String = fg match {
+  private def foregroundToCss(fg: Foreground): String = fg match {
     case Foreground.Black        => "black"
     case Foreground.Red          => "red"
     case Foreground.Green        => "green"
@@ -53,7 +53,7 @@ object ColorfulToHtml {
     case Foreground.White        => "white"
   }
 
-  def backgroundToCss(bg: Background): String = bg match {
+  private def backgroundToCss(bg: Background): String = bg match {
     case Background.Black        => "black"
     case Background.Red          => "red"
     case Background.Green        => "green"
@@ -72,7 +72,7 @@ object ColorfulToHtml {
     case Background.White        => "white"
   }
 
-  def stylingToCss(stylings: Stylings): String = {
+  private def stylingToCss(stylings: Stylings): String = {
     val boldStyle = stylings.bold match {
       case Trilean.True    => "font-weight: bold;"
       case Trilean.False   => "font-weight: normal;"
@@ -82,7 +82,7 @@ object ColorfulToHtml {
     boldStyle
   }
 
-  def escapeHtml(text: String): String =
+  private def escapeHtml(text: String): String =
     text
       .replace("&", "&amp;")
       .replace("<", "&lt;")

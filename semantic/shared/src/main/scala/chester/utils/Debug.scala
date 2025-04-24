@@ -23,11 +23,11 @@ object Debug {
   import DebugCategory._
 
   // Debug flags
-  var enabledCategories: Set[DebugCategory] = Set.empty
+  private var enabledCategories: Set[DebugCategory] = Set.empty
 
   // Environment variable based flags - initialized at startup
   // These respect the existing environment variables for backwards compatibility
-  val ENV_DEBUG_ENABLED: Boolean = sys.env.contains("ENV_DEBUG")
+  private val ENV_DEBUG_ENABLED: Boolean = sys.env.contains("ENV_DEBUG")
   private val envDebugMap = Map(
     "ENV_DEBUG_UNION_SUBTYPING" -> UnionSubtyping,
     "ENV_DEBUG_UNION_MATCHING" -> UnionMatching,

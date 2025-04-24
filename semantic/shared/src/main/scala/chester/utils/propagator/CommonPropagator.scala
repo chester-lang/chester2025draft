@@ -51,7 +51,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
     }
   }
 
-  case class FlatMaping[T, U](
+  private case class FlatMaping[T, U](
       xs: Seq[CellId[T]],
       f: Seq[T] => U,
       result: CellId[U]
@@ -77,7 +77,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
     }
   }
 
-  def FlatMap[T, U](
+  private def FlatMap[T, U](
       xs: Seq[CellId[T]]
   )(f: Seq[T] => U)(using ck: Ck, state: StateAbility[Ck]): CellId[U] = {
     val cell = state.addCell(OnceCell[U]())

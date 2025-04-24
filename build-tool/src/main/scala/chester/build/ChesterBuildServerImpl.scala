@@ -277,7 +277,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
       new ChesterOptionsResult(items)
     }
 
-  def typeCheckSources(): Unit = {
+  private def typeCheckSources(): Unit = {
     val sourceDirs = Seq(
       Paths.get("src/main/chester"),
       Paths.get("src/test/chester")
@@ -312,5 +312,5 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
     }
   }
 
-  def generateObjects(): Unit = ()
+  private def generateObjects(): Unit = ()
 }

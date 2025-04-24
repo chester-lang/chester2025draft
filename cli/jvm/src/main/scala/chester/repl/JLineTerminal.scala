@@ -75,5 +75,5 @@ class JLineTerminal(init: TerminalInit) {
   def close(): Unit = terminal.close()
 
   def getHistory: Seq[String] =
-    (0 until history.size()).map(history.get(_).toString)
+    (0 until history.size()).map(history.get(_))
 }

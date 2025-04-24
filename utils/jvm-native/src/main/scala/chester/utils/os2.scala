@@ -4,7 +4,7 @@ import os.Path
 
 object os2 {
   // https://github.com/com-lihaoyi/os-lib/issues/318
-  lazy val pwdGraalVM: Path = {
+  private lazy val pwdGraalVM: Path = {
     val result = os.Path(java.nio.file.Paths.get(".").toAbsolutePath)
     os.dynamicPwd.value = result
     result

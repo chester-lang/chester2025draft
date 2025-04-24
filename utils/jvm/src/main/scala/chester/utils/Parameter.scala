@@ -5,7 +5,7 @@ import java.util.Objects
 
 @ifndef("jdk21")
 class Parameter[T](default: Option[T] = None) {
-  val tl: InheritableThreadLocal[T] = default match {
+  private val tl: InheritableThreadLocal[T] = default match {
     case Some(value) =>
       new InheritableThreadLocal[T] {
         override def initialValue(): T = value
@@ -30,7 +30,7 @@ class Parameter[T](default: Option[T] = None) {
 
 @ifdef("jdk21")
 class Parameter[T](default: Option[T] = None) {
-  val tl: ScopedValue[T] = ScopedValue.newInstance()
+  private val tl: ScopedValue[T] = ScopedValue.newInstance()
 
   def withValue[U](value: T)(block: => U): U = {
     require(value != null)

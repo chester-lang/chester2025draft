@@ -871,7 +871,7 @@ trait DefaultImpl
 
   }
 
-  def finalizeJudge(
+  private def finalizeJudge(
       judge0: Judge
   )(using
       ck: Tyck,

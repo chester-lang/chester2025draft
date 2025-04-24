@@ -2,6 +2,7 @@ package chester.utils.io
 
 import cats.Monad
 
+import scala.language.implicitConversions
 import scala.util.Try
 
 trait Spawn[F[_]] {

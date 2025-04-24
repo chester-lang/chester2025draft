@@ -6,21 +6,21 @@ import chester.utils.parse.Character
 import java.lang.Character.{isDigit, isLetter}
 
 object IdentifierRules {
-  val AllowedOperatorSymbols: Set[Int] = ".:=-+\\|<>/?`~!@$%^&*".toSet.map(_.toInt)
-  val AllowedWordingSymbols: Set[Int] = "_".toSet.map(_.toInt)
-  val AllowedMiddleWordingSymbols: Set[Int] = "-".toSet.map(_.toInt)
+  private val AllowedOperatorSymbols: Set[Int] = ".:=-+\\|<>/?`~!@$%^&*".toSet.map(_.toInt)
+  private val AllowedWordingSymbols: Set[Int] = "_".toSet.map(_.toInt)
+  private val AllowedMiddleWordingSymbols: Set[Int] = "-".toSet.map(_.toInt)
   val ReservedSymbols = ";,#()[]{}'\""
 
-  def isEmoji(codePoint: Int): Boolean =
+  private def isEmoji(codePoint: Int): Boolean =
     codePointIsEmoji(codePoint)
 
-  def isWording(x: Character): Boolean = isLetter(x) || isEmoji(x)
+  private def isWording(x: Character): Boolean = isLetter(x) || isEmoji(x)
 
   def isOperatorSymbol(x: Character): Boolean = AllowedOperatorSymbols.contains(x)
 
-  def isWordingSymbol(x: Character): Boolean = AllowedWordingSymbols.contains(x)
+  private def isWordingSymbol(x: Character): Boolean = AllowedWordingSymbols.contains(x)
 
-  def isMiddleWordingSymbol(x: Character): Boolean =
+  private def isMiddleWordingSymbol(x: Character): Boolean =
     AllowedMiddleWordingSymbols.contains(x)
 
   def isIdentifierFirst(x: Character): Boolean = isWording(x) || isWordingSymbol(x)

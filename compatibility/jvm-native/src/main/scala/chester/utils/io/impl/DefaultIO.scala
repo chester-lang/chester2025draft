@@ -50,7 +50,7 @@ object DefaultPathOps extends PathOps[_root_.os.FilePath] {
 implicit object DefaultIO extends IO[Id] {
   type Path = os.FilePath
 
-  override inline def pathOps = DefaultPathOps
+  override inline def pathOps: PathOps[FilePath] = DefaultPathOps
 
   override inline def println(x: String): Unit = Predef.println(x)
   override inline def ask(x: String): String = {

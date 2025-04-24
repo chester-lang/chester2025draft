@@ -1,6 +1,6 @@
 package chester.error
 
-trait Reporter[-T] extends Function1[T, Unit] {
+trait Reporter[-T] extends ((T) => Unit) {
   def apply(value: T): Unit
   final inline def report(value: T): Unit = apply(value)
 }

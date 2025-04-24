@@ -1,5 +1,6 @@
 package chester.utils.doc
 
+import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 trait PrettierOptionsKey[T] {

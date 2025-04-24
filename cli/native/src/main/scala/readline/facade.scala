@@ -39,7 +39,7 @@ object facade {
   }
 
   @extern
-  object externs {
+  private object externs {
     var history_base: CInt = extern
     var history_length: CInt = extern
     var history_max_entries: CInt = extern

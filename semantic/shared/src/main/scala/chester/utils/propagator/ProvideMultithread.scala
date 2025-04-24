@@ -91,7 +91,7 @@ trait ProvideMultithread extends ProvideImpl {
     private val didSomethingRef = new AtomicBoolean(false)
 
     def didSomething: Boolean = didSomethingRef.get()
-    def setDidSomething(value: Boolean): Unit =
+    private def setDidSomething(value: Boolean): Unit =
       didSomethingRef.set(value)
 
     // Thread-local for recursion depth tracking
@@ -99,7 +99,7 @@ trait ProvideMultithread extends ProvideImpl {
       override def initialValue(): Integer = 0
     }
 
-    private def getRecursionDepth: Int = {
+    private def getRecursionDepth(): Int = {
       val depth = recursionDepthThreadLocal.get()
       if (depth == null) 0 else depth.intValue()
     }
@@ -359,7 +359,7 @@ trait ProvideMultithread extends ProvideImpl {
       } finally decrementRecursionDepth(): Unit
     }
 
-    class BatchPropagatorTask(
+    private class BatchPropagatorTask(
         propagators: Vector[PIdOf[Propagator[Ability]]],
         state: Impl[Ability]
     )(using more: Ability)
@@ -385,7 +385,7 @@ trait ProvideMultithread extends ProvideImpl {
         }
     }
 
-    class PropagatorTask(
+    private class PropagatorTask(
         propagators: Vector[PIdOf[Propagator[Ability]]],
         state: Impl[Ability]
     )(using more: Ability)
@@ -411,7 +411,7 @@ trait ProvideMultithread extends ProvideImpl {
         }
     }
 
-    class ZonkTask(
+    private class ZonkTask(
         c: CIdOf[Cell[?]],
         p: PIdOf[Propagator[Ability]],
         firstFallback: Boolean,
@@ -476,8 +476,8 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    class DefaultValueTask(c: CIdOf[Cell[?]], state: Impl[Ability])(using
-        Ability
+    private class DefaultValueTask(c: CIdOf[Cell[?]], state: Impl[Ability])(using
+                                                                            Ability
     ) extends RecursiveAction {
       override def compute(): Unit =
         if (c.noAnyValue && c.store.default.isDefined) {

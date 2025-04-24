@@ -536,7 +536,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     )
 
     new WorkspaceSymbol(
-      symbol.name.toString,
+      symbol.name,
       SymbolKind.Variable,
       Either.forLeft(location)
     )

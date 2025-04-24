@@ -25,7 +25,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
     }
 
   // Process a single file
-  def processFile(file: Path): Unit = {
+  private def processFile(file: Path): Unit = {
     val parserSource = reader.FilePath(file.toString)
     given reporter: Reporter[Problem] = StdErrReporter
     // Parse and type-check the source code using parseCheckTAST
@@ -33,7 +33,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
   }
 
   // Convert CollectedSymbols to SemanticDB TextDocument
-  def toSemanticDB(docUri: String): TextDocument = {
+  private def toSemanticDB(docUri: String): TextDocument = {
     val symbols = get.map(symbolInformation)
     val occurrences = get.flatMap { sym =>
       val defOccurrence = symbolOccurrence(sym.definedOn, sym.id.toString, SymbolOccurrence.Role.DEFINITION)

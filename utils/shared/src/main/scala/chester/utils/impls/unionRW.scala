@@ -18,10 +18,10 @@ def union2RW[A: ClassTag, B: ClassTag](implicit
     }
   }
   case class Union2A(a: A) extends Union2 {
-    def toUnionType = a
+    def toUnionType: A | B = a
   }
   case class Union2B(b: B) extends Union2 {
-    def toUnionType = b
+    def toUnionType: A | B = b
   }
   readwriter[Union2].bimap(_.toUnion2, _.toUnionType)
 }
@@ -45,16 +45,16 @@ def union4RW[A: ClassTag, B: ClassTag, C: ClassTag, D: ClassTag](implicit
     }
   }
   case class Union4A(a: A) extends Union4 {
-    def toUnionType = a
+    def toUnionType: A | B | C | D = a
   }
   case class Union4B(b: B) extends Union4 {
-    def toUnionType = b
+    def toUnionType: A | B | C | D = b
   }
   case class Union4C(c: C) extends Union4 {
-    def toUnionType = c
+    def toUnionType: A | B | C | D = c
   }
   case class Union4D(d: D) extends Union4 {
-    def toUnionType = d
+    def toUnionType: A | B | C | D = d
   }
   readwriter[Union4].bimap(_.toUnion4, _.toUnionType)
 }
