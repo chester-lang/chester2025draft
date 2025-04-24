@@ -561,6 +561,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseRest(id).map {
           case opSeq: OpSeq =>
             OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
+          case fc@FunctionCall(f,Tuple(Vector(b:Block),_),_) => OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
           case _ =>
             OpSeq(updatedTerms, None)
         }
