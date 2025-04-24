@@ -13,12 +13,12 @@ import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
 
-trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[Tyck] {
+trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[TyckSession] {
 
   trait EffectsCell extends Cell[Effects] {
     def requireEffect(
         effect: Term
-    )(using ck: Tyck, state: StateAbility[Tyck]): LocalV = {
+    )(using ck: TyckSession, state: StateAbility[TyckSession]): LocalV = {
       // Check if this effect already exists in the cell
       val currentEffects = this.readUnstable.map(_.effects).getOrElse(Map.empty)
 
@@ -53,7 +53,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def toEffectsM(
       x: CellIdOr[Effects]
-  )(using StateAbility[Tyck]): EffectsM = x match {
+  )(using StateAbility[TyckSession]): EffectsM = x match {
     case x: Effects     => x
     case x: EffectsCell => Meta(x.asInstanceOf[CellId[Effects]])
     case _              => unreachable()
@@ -61,7 +61,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def toEffectsCell(
       x: EffectsM
-  )(using state: StateAbility[Tyck]): CIdOf[EffectsCell] = x match {
+  )(using state: StateAbility[TyckSession]): CIdOf[EffectsCell] = x match {
     case x: Effects => state.addCell(FixedEffectsCell(x))
     case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCell]]
     case _          => unreachable()
@@ -96,33 +96,33 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     reuse(expr, result)
   }
 
-  def newMeta(using _ck: Tyck, state: StateAbility[Tyck]): CellId[Term] = {
+  def newMeta(using _ck: TyckSession, state: StateAbility[TyckSession]): CellId[Term] = {
     val cell = state.addCell(OnceCell[Term]())
     cell
   }
 
-  def newType(using ck: Tyck, state: StateAbility[Tyck]): CellId[Term] = {
+  def newType(using ck: TyckSession, state: StateAbility[TyckSession]): CellId[Term] = {
     val cell = state.addCell(OnceCell[Term](default = Some(AnyType0)))
     cell
   }
 
-  def newTypeTerm(using Tyck, StateAbility[Tyck]): Term =
+  def newTypeTerm(using TyckSession, StateAbility[TyckSession]): Term =
     Meta(newType)
 
   def newEffects(using
-      _ck: Tyck,
-      state: StateAbility[Tyck]
+                 _ck: TyckSession,
+                 state: StateAbility[TyckSession]
   ): CIdOf[EffectsCell] = {
     val cell = state.addCell(DynamicEffectsCell())
     cell
   }
 
-  def newEffectsTerm(using Tyck, StateAbility[Tyck]): Effects | MetaTerm =
+  def newEffectsTerm(using TyckSession, StateAbility[TyckSession]): Effects | MetaTerm =
     Meta(newEffects)
 
   def readVar(
       x: Term
-  )(using localCtx: Context, _ck: Tyck, state: StateAbility[Tyck]): Term =
+  )(using localCtx: Context, _ck: TyckSession, state: StateAbility[TyckSession]): Term =
     boundary {
       var result = x
       while (true)
@@ -143,7 +143,7 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
 
   def readMetaVar(
       x: Term
-  )(using localCtx: Context, _ck: Tyck, state: StateAbility[Tyck]): Term =
+  )(using localCtx: Context, _ck: TyckSession, state: StateAbility[TyckSession]): Term =
     boundary {
       var result = x
       while (true)

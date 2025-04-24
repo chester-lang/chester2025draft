@@ -10,24 +10,24 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
 
   implicit class TyAndValnuoOpsss(ignored: TyAndVal.type) {
     def create(ty: Term, value: Term)(using
-        StateAbility[Tyck]
+        StateAbility[TyckSession]
     ): TyAndVal =
       new TyAndVal(toTerm(literal(ty)), toTerm(literal(value)))
 
-    def create()(using state: StateAbility[Tyck]): TyAndVal =
+    def create()(using state: StateAbility[TyckSession]): TyAndVal =
       new TyAndVal(toTerm(state.addCell(OnceCell[Term]())), toTerm(state.addCell(OnceCell[Term]())))
   }
 
   extension (context: ContextItem) {
-    def tyId(using StateAbility[Tyck]): CellId[Term] = toId(context.ty)
+    def tyId(using StateAbility[TyckSession]): CellId[Term] = toId(context.ty)
 
-    def tyTerm(using StateAbility[Tyck]): Term = toTerm(context.ty)
+    def tyTerm(using StateAbility[TyckSession]): Term = toTerm(context.ty)
   }
 
   implicit class ContextItemObject(ignored: ContextItem.type) {
     def builtin(
         item: BuiltinItem
-    )(using state: StateAbility[Tyck]): (TyAndVal, ContextItem) = {
+    )(using state: StateAbility[TyckSession]): (TyAndVal, ContextItem) = {
       val varId = Uniqid.generate[ToplevelV]
       val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
       val ty1 = state.toId(item.ty)
@@ -39,18 +39,18 @@ trait ProvideCtx extends ProvideCellId with ElaboraterBase {
   }
 
   implicit class TyAndValOps(tyandval: TyAndVal) {
-    def tyId(using StateAbility[Tyck]): CellId[Term] = toId(tyandval.ty)
+    def tyId(using StateAbility[TyckSession]): CellId[Term] = toId(tyandval.ty)
 
-    def valueId(using StateAbility[Tyck]): CellId[Term] = toId(tyandval.value)
+    def valueId(using StateAbility[TyckSession]): CellId[Term] = toId(tyandval.value)
 
-    def tyTerm(using StateAbility[Tyck]): Term = toTerm(tyandval.ty)
+    def tyTerm(using StateAbility[TyckSession]): Term = toTerm(tyandval.ty)
 
-    def valueTerm(using StateAbility[Tyck]): Term = toTerm(tyandval.value)
+    def valueTerm(using StateAbility[TyckSession]): Term = toTerm(tyandval.value)
 
   }
 
   implicit class LocalCtxOps(ignored: Context.type) {
-    def default(using StateAbility[Tyck]): Context = {
+    def default(using StateAbility[TyckSession]): Context = {
       val items = PreludeBuiltin.builtinItems.map(ContextItem.builtin)
       val map = items.map(item => item._2.name -> item._2.uniqId).toMap
       val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
