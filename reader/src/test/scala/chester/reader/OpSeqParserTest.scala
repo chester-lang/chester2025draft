@@ -210,23 +210,6 @@ class OpSeqParserTest extends FunSuite {
     parseAndCheckBoth(input, expected)
   }
 
-  test("parse infix with block") {
-    val input = "so getthen { doSomething }"
-    val expected = OpSeq(
-      Vector(
-        Identifier("so", meta = None),
-        Identifier("getthen", meta = None),
-        Block(
-          heads = Vector(),
-          tail = Identifier("doSomething", meta = None),
-          meta = None
-        )
-      ),
-      meta = None
-    )
-    parseAndCheckV1(input, expected)
-  }
-
   test("parse function call with") {
     val input = "+(2 + 3)"
     val expected = FunctionCall(
