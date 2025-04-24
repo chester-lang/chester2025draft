@@ -989,6 +989,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     var statements = Vector[Expr]()
     var result: Option[Expr] = None
+    var maxExpressions = 100 // Prevent infinite loops
 
     // Skip the opening brace
     this.state.current match {
@@ -1002,7 +1003,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug(t"parseBlock: After opening brace, state=${this.state}")
 
         // Regular block parsing - all statements are treated the same
-        while (true) {
+        while (maxExpressions > 0) {
+          maxExpressions -= 1
 
           // Skip comments before parsing next statement
           skipComments()
