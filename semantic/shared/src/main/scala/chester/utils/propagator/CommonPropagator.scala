@@ -16,7 +16,6 @@ trait CommonPropagator[Ck] extends ProvideCellId {
         throw new IllegalStateException(
           "Merge propagator should not be used if the values are different"
         )
-        return true
       }
       if (aVal.isDefined) {
         state.fill(b, aVal.get)
@@ -39,7 +38,6 @@ trait CommonPropagator[Ck] extends ProvideCellId {
         throw new IllegalStateException(
           "Merge propagator should not be used if the values are different"
         )
-        return ZonkResult.Done
       }
       if (aVal.isDefined) {
         state.fill(b, aVal.get)
@@ -58,12 +56,12 @@ trait CommonPropagator[Ck] extends ProvideCellId {
       f: Seq[T] => U,
       result: CellId[U]
   ) extends Propagator[Ck] {
-    override val readingCells = xs.toSet
+    override val readingCells: Set[CIdOf[Cell[?]]] = xs.toSet
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(result)
     override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(result)
 
     override def run(using state: StateAbility[Ck], more: Ck): Boolean =
-      xs.traverse(state.readStable(_)).map(f).exists { result =>
+      xs.traverse(state.readStable).map(f).exists { result =>
         state.fill(this.result, result)
         true
       }
@@ -105,7 +103,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
           x.asInstanceOf[CellId[Any]],
           y.asInstanceOf[CellId[Any]]
         ),
-        (xs: Seq[Any]) => f(xs(0).asInstanceOf[A], xs(1).asInstanceOf[B]),
+        (xs: Seq[Any]) => f(xs.head.asInstanceOf[A], xs(1).asInstanceOf[B]),
         cell
       )
     )
@@ -125,7 +123,7 @@ trait CommonPropagator[Ck] extends ProvideCellId {
         ),
         (xs: Seq[Any]) =>
           f(
-            xs(0).asInstanceOf[A],
+            xs.head.asInstanceOf[A],
             xs(1).asInstanceOf[B],
             xs(2).asInstanceOf[C]
           ),

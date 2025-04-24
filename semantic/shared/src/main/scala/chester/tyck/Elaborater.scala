@@ -592,7 +592,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
           // Create direct connections between union and its components
           val unionCellId = toId(unionTerm).asInstanceOf[CellId[Term]]
-          val componentCellIds = elaboratedTypes.map(toId).toVector
+          val componentCellIds = elaboratedTypes.map(toId)
 
           // Connect the union to its components directly
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))

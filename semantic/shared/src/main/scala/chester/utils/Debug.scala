@@ -27,7 +27,7 @@ object Debug {
 
   // Environment variable based flags - initialized at startup
   // These respect the existing environment variables for backwards compatibility
-  val ENV_DEBUG_ENABLED: Boolean = sys.env.get("ENV_DEBUG").isDefined
+  val ENV_DEBUG_ENABLED: Boolean = sys.env.contains("ENV_DEBUG")
   private val envDebugMap = Map(
     "ENV_DEBUG_UNION_SUBTYPING" -> UnionSubtyping,
     "ENV_DEBUG_UNION_MATCHING" -> UnionMatching,
@@ -41,7 +41,7 @@ object Debug {
   {
     // Enable categories from specific env vars
     for ((envVar, category) <- envDebugMap)
-      if (sys.env.get(envVar).isDefined || ENV_DEBUG_ENABLED) {
+      if (sys.env.contains(envVar) || ENV_DEBUG_ENABLED) {
         enabledCategories += category
       }
   }
@@ -79,9 +79,7 @@ object Debug {
       println(t"[DEBUG:$category] Call stack:")
       Thread
         .currentThread()
-        .getStackTrace()
-        .drop(2)
-        .take(depth)
+        .getStackTrace.slice(2, depth + 2)
         .foreach(element =>
           println(t"[DEBUG:$category]   at ${element.getClassName}.${element.getMethodName}(${element.getFileName}:${element.getLineNumber})")
         )

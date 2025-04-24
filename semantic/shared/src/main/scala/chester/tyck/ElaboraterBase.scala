@@ -50,7 +50,7 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
   def toTerm[T <: Term](x: CellIdOr[T])(using StateAbility[Tyck]): T | MetaTerm = x match {
     case x: Term =>
       x match {
-        case Meta(x) => Meta(x).asInstanceOf[T | MetaTerm]
+        case Meta(x) => Meta(x)
         case x       => x.asInstanceOf[T | MetaTerm]
       }
     case x => Meta(x.asInstanceOf[CellId[Term]]).asInstanceOf[T | MetaTerm]
@@ -59,7 +59,7 @@ trait ElaboraterBase extends CommonPropagator[Tyck] {
   def toId[T <: Term](
       x: CellIdOr[T]
   )(using state: StateAbility[Tyck]): CellId[T] = x match {
-    case Meta(id) => id.asInstanceOf[CellId[T]]
+    case Meta(id) => id
     case x        => state.toId(x)
   }
 

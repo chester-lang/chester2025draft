@@ -99,7 +99,7 @@ trait ProvideMultithread extends ProvideImpl {
       override def initialValue(): Integer = 0
     }
 
-    private def getRecursionDepth(): Int = {
+    private def getRecursionDepth: Int = {
       val depth = recursionDepthThreadLocal.get()
       if (depth == null) 0 else depth.intValue()
     }
@@ -264,7 +264,7 @@ trait ProvideMultithread extends ProvideImpl {
           // Process any remaining propagators
           tick
 
-          cellsNeeded = cellsNeeded.filter(this.noAnyValue(_))
+          cellsNeeded = cellsNeeded.filter(this.noAnyValue)
 
           if (cellsNeeded.isEmpty) {
             loop = false

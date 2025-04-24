@@ -47,8 +47,9 @@ private object MatchDeclarationTelescope {
         None
     }
 
-    Option.unless(argsResult.contains(None))(DefTelescope(argsResult.flatten.toVector, implicitly = implicitly, meta = x.meta))
+    Option.unless(argsResult.contains(None))(DefTelescope(argsResult.flatten, implicitly = implicitly, meta = x.meta))
   }
+  @tailrec
   def unapply(
       x: Expr
   )(using reporter: Reporter[TyckProblem]): Option[DefTelescope] = x match {
@@ -427,7 +428,6 @@ case object SimpleDesalt {
               None
           }
           .flatten
-          .toVector
 
         // Desugar body if present
         val desugaredBody = if (bodyExprs.nonEmpty) {
@@ -623,7 +623,7 @@ case object OpSeqDesalt {
         }
 
         // Extract the types (which should be at even indices: 0, 2, 4, ...)
-        val typeIndices = (0 until seq.length).filter(_ % 2 == 0)
+        val typeIndices = seq.indices.filter(_ % 2 == 0)
         if (typeIndices.isEmpty) {
           reporter(NotImplemented(opseq))
           return opseq
