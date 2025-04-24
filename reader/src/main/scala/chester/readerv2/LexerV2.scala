@@ -1351,10 +1351,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   /** Helper method to advance the lexer state by one token
     * @return the previous state before advancing
     */
-  private def advance(): LexerState = {
-    val prevState = this.state
+  private def advance(): Unit = {
     this.state = this.state.advance()
-    prevState
   }
   
   /** Helper method to clear pending tokens from the lexer state
