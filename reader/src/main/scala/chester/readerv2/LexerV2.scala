@@ -973,9 +973,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     case _ => Left(expectedError("left parenthesis", this.state.current))
   }
 
-  // Check if a token is a 'case' identifier
-  private def isCaseIdentifier(token: Either[ParseError, Token]): Boolean = token match {
-    case Right(Token.Identifier(chars, _)) => charsToString(chars) == "case"
+  // Check if a token is a identifier
+  private def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
+    case Right(Token.Identifier(chars, _)) =>true
     case _                                 => false
   }
 
@@ -1068,7 +1068,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                       statements = statements :+ expr
                       debug(t"parseBlock: After whitespace, statements=${statements.size}, state=${this.state}")
 
-                    case Right(_) if isCaseIdentifier(this.state.current) =>
+                    case Right(_) if isIdentifier(this.state.current) =>
                       debug("parseBlock: Found 'case' after expression, adding to statements")
                       statements = statements :+ expr
                     // this.state is already correctly set
