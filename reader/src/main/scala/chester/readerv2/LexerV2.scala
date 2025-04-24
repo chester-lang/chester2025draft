@@ -302,21 +302,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     // Main token dispatch
     this.state.current match {
-      // Match expression handling - treat like any other expression
-      case Right(Token.Identifier(chars, _)) if charsToString(chars) == "match" && expr.isInstanceOf[ConcreteIdentifier] =>
-        debug("parseRest: Found match keyword after identifier")
-        val matchId = ConcreteIdentifier("match", createMeta(None, None))
-        // Advance past the match keyword
-        advance()
-
-        // For match blocks, parse using the regular block parser with no special case handling
-        // this.state is already updated
-        parseBlock().map { block =>
-          // Create the match expression with the block as-is
-          OpSeq(Vector(expr, matchId, block), None)
-        }
-
-      // Block argument handling
       case Right(Token.LBrace(braceSourcePos)) =>
         debug("parseRest: Found LBrace after expression, treating as block argument")
         // this.state is already set to the current state
