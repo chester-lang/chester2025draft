@@ -18,9 +18,9 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 import sbtcrossproject.Platform
 
 import scala.scalanative.build.*
-import sbt.complete.DefaultParsers._
+import sbt.complete.DefaultParsers.*
 
-import scala.sys.process._
+import scala.sys.process.*
 
 addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
 addCommandAlias("testWinCi", ";rootJVM/test; rootJS/test; rootNative/compile") // we have some bugs on ci
@@ -274,12 +274,12 @@ def scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.0" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross (CrossVersion.for2_13Use3),
-    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross (CrossVersion.for2_13Use3)
+    "org.scalameta" %%% "munit" % "1.1.0" % Test cross CrossVersion.for2_13Use3,
+    "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
+    "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
+    "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
+    "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross CrossVersion.for2_13Use3,
+    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross CrossVersion.for2_13Use3
   ),
   excludeDependencies ++= Seq(
     ExclusionRule("com.lihaoyi", "fastparse_2.13"),
@@ -372,7 +372,7 @@ bump := {
   if (args.length != 1) {
     println("Usage: bump <new_version>")
   } else {
-    val newVersion = args(0)
+    val newVersion = args.head
     val oldVersion = (ThisBuild / version).value
     val filesToUpdate = Seq(
       file("build.sbt"),
@@ -416,7 +416,7 @@ bumpScala := {
   if (args.length != 1) {
     println("Usage: bumpScala <new_scala_version>")
   } else {
-    val newScalaVersion = args(0)
+    val newScalaVersion = args.head
     val oldScalaVersion = scalaVersion.value
     val filesToUpdate = Seq(
       file("build.sbt"),
@@ -745,7 +745,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonJvmSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.13.4" cross (CrossVersion.for3Use2_13) exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.4" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
@@ -1136,7 +1136,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     scalaVersion := scala3Version
   )
 
-Global / excludeLintKeys ++= Set[SettingKey[_]](
+Global / excludeLintKeys ++= Set[SettingKey[?]](
   cli.jvm / nativeImageJvm,
   cli.jvm / nativeImageVersion,
   cli.js / nativeImageJvm,
