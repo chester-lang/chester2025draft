@@ -1029,32 +1029,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               skipComments()
               debug(t"parseBlock: After whitespace, state=${this.state}")
 
-            case _ if isCaseIdentifier(this.state.current) =>
-              // When we encounter 'case' at the beginning of an expression, we need to parse it
-              // normally but ensure it's a separate statement
-              debug("parseBlock: Found 'case' identifier, parsing statement")
-              // this.state is already correctly set
-              parseExpr() match {
-                case Left(err) =>
-                  debug(t"parseBlock: Error parsing case expression: $err")
-                  return Left(err)
-                case Right(expr) =>
-                  // this.state has been updated by parseExpr
-                  debug(t"parseBlock: Parsed case statement: $expr")
-                  statements = statements :+ expr
-
-                  // Skip past semicolons
-                  this.state.current match {
-                    case Right(Token.Semicolon(_)) =>
-                      debug("parseBlock: Skipping semicolon after case statement")
-                      advance()
-                    case _ =>
-                    // Keep current state
-                  }
-
-                  debug("parseBlock: Updated block state after case statement")
-              }
-
             case _ =>
               debug(t"parseBlock: Parsing expression at token ${this.state.current}")
               // this.state is already correctly set
