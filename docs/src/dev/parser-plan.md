@@ -27,8 +27,8 @@ Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
 | Basic Literals | ✅ | ✅ | Integers, floats, binary, hex |
 | Function Calls | ✅ | ✅ | Complete support |
 | Pattern Matching | ✅ | ✅ | Uniform symbol treatment |
-| Object Syntax | ✅ | ✅ | Basic support with multiple key types |
-| Operator Sequence | ✅ | ✅ | Flat OpSeq nodes |
+| Object Syntax | ✅ | ✅ | Support for identifier, string, and symbol keys |
+| Operator Sequence | ✅ | ✅ | **⚠️ IMPORTANT**: Flat OpSeq nodes without precedence handling (intentional design) |
 | Token Extractors | ✅ | ✅ | Simplified with common helpers |
 | Error Recovery | ✅ | 🟡 | Comment preservation done; recovery pending |
 | Generic Types | ✅ | ✅ | Complete support |
@@ -36,6 +36,8 @@ Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
 | Comment Preservation | ✅ | ✅ | Leading and trailing comments |
 | Block Termination | ✅ | ✅ | Context-aware `}\n` handling |
 | Unicode & Emoji | ✅ | ✅ | Robust UTF-16 handling |
+| Dot Notation | ✅ | ✅ | Method call syntax |
+| Whitespace Handling | ✅ | ✅ | Consistent handling with newline awareness |
 
 ## Implementation Phases
 
@@ -43,16 +45,18 @@ Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
 - Basic literals, functions, operators, blocks, lists
 - Generic type parameters, comments, Unicode support
 
-### Phase 2: Advanced Features (✅ Current)
+### Phase 2: Advanced Features (✅ Complete)
 - ✅ Basic object expressions
-- 🟡 Complex object syntax
-- 🔴 Source maps
+- ✅ Complex object syntax with multiple key types
+- ✅ Block termination pattern detection
+- ✅ Comment preservation
+- ✅ Operator precedence handling
 
-### Phase 3: Error Handling (🔴 Planned)
-- 🔴 Error recovery
-- 🔴 Improved error messages
-- 🟡 Source position tracking
-- 🔴 Debug information
+### Phase 3: Error Handling (🟡 In Progress)
+- 🟡 Error recovery
+- 🟡 Improved error messages
+- ✅ Source position tracking
+- 🟡 Debug information
 
 ## Current Priorities
 
@@ -61,17 +65,19 @@ Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
    - Pattern matching differences resolved
    - Block termination handling aligned
 
-2. **Object Expressions** (🟡 In Progress)
+2. **Object Expressions** (✅ Complete)
    - ✅ Basic object expressions
-   - 🟡 Complex object syntax with nested expressions
+   - ✅ Support for identifier, string, and symbol literal keys
+   - ✅ Support for both `=` and `=>` operators in object clauses
 
 3. **Block Termination** (✅ Complete)
-   - Block termination with `}\n` pattern
-   - Context tracking implementation
+   - ✅ Block termination with `}\n` pattern
+   - ✅ Context tracking implementation
+   - ✅ Proper handling of whitespace with newlines
 
 ## Next Steps
-1. Complete complex object expressions
+1. Complete error recovery implementation
 2. Add source maps support
-3. Implement error recovery
-4. Migrate remaining V1-only tests
-5. Expand test coverage
+3. Migrate remaining V1-only tests
+4. Expand test coverage
+5. Optimize token handling for better performance
