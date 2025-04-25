@@ -814,8 +814,8 @@ lazy val jsTypings = crossProject(JSPlatform)
       "@types/react" -> "19.0.0", // the latest version broken
       "@types/react-dom" -> "19.0.0", // the latest version broken
       "next" -> "11.1.4", // next.js 14/12 breaks scalablytyped
-      "xterm-readline" -> "1.1.2",
-      "xterm-pty" -> "0.11.1",
+      "xterm-readline" -> "1.1.1",
+      "xterm-pty" -> "0.9.6", // use old version because of https://github.com/mame/xterm-pty/issues/35
       "ts-morph" -> "25.0.1"
     )
   )
