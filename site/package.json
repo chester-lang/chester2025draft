@@ -32,7 +32,7 @@
     "deepmerge": "^4.3.1",
     "monaco-editor": "^0.52.2",
     "next": "15.3.1",
-    "next-intl": "^4.0.3",
+    "next-intl": "^4.1.0",
     "pako": "^2.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.4",
-    "@types/node": "^22.14.1",
+    "@types/node": "^22.15.2",
     "@types/pako": "^2.0.3",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
