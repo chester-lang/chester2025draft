@@ -106,7 +106,7 @@ sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter 
 
   def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr
 
-  def commentAtStart(comment: Comment): Expr = updateMeta {
+  final def commentAtStart(comment: Comment): Expr = updateMeta {
     case Some(meta) =>
       Some(
         meta.copy(commentInfo = meta.commentInfo.map(info => info.copy(commentBefore = info.commentBefore :+ comment)))
@@ -114,7 +114,7 @@ sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter 
     case None => Some(ExprMeta(None, Some(CommentInfo(Vector(comment)))))
   }
 
-  def commentAtStart(comment: Vector[Comment]): Expr = if (comment.isEmpty) this
+  final def commentAtStart(comment: Vector[Comment]): Expr = if (comment.isEmpty) this
   else
     updateMeta {
       case Some(meta) =>
@@ -124,7 +124,7 @@ sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter 
       case None => Some(ExprMeta(None, Some(CommentInfo(comment))))
     }
 
-  def commentInfo: Option[CommentInfo] = meta.flatMap(_.commentInfo)
+  final def commentInfo: Option[CommentInfo] = meta.flatMap(_.commentInfo)
 
   override def toString: String = {
     implicit val options: PrettierOptions = PrettierOptions.Default
