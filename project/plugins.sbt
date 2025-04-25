@@ -1,7 +1,7 @@
 //dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.2.0" // scalablytyped & sbt-microsites
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2")
 addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.3.2")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.19.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.18.2")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.7")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.21.1+36-2d9cbce2-SNAPSHOT")
 addSbtPlugin("org.scalablytyped.converter" % "sbt-converter" % "1.0.0-beta44")
