@@ -37,10 +37,8 @@ class Parameter[T](default: Option[T] = None) {
     ScopedValue.callWhere(
       tl,
       value,
-      new java.util.concurrent.Callable[U] {
-        override def call(): U = block
-      }
+      () => block
     )
   }
-  def get: T = if (tl.isBound()) tl.get() else default.getOrElse(throw new IllegalStateException("No default value"))
+  def get: T = if (tl.isBound) tl.get() else default.getOrElse(throw new IllegalStateException("No default value"))
 }

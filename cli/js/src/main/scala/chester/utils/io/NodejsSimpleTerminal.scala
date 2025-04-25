@@ -15,7 +15,7 @@ class NodejsSimpleTerminal(init: TerminalInit) extends AbstractInTerminal[Future
 
   private var live: Boolean = true
 
-  private var reading: Promise[String] = null
+  private var reading: Promise[String] = _
 
   private def closeCallback(): Unit =
     if (live) {

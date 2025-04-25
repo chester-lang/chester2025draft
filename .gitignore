@@ -43,15 +43,10 @@ target
 project/target
 project/project/target
 
-.idea
-.bsp
-
 node_modules
 
 # This file has permission errors on windows
 /config.sh
-
-.DS_Store
 
 /package-lock.json
 

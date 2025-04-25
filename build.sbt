@@ -21,6 +21,7 @@ import scala.scalanative.build.*
 import sbt.complete.DefaultParsers.*
 
 import scala.sys.process.*
+import scala.util.Using
 
 addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
 addCommandAlias("testWinCi", ";rootJVM/test; rootJS/test; rootNative/compile") // we have some bugs on ci
@@ -349,7 +350,9 @@ Global / stRemoteCache := {
   // Then use "myserver:/path/to/cache" as the pushAddress
   val pushAddress = Try {
     if (configFile.exists) {
-      Source.fromFile(configFile).getLines().mkString.trim
+      Using(Source.fromFile(configFile)) { source =>
+        source.getLines().mkString.trim
+      } .get
     } else {
       "user@server.com:/path/to/cache"
     }

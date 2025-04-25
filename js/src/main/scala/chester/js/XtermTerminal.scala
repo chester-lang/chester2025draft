@@ -24,7 +24,7 @@ final class InXterm(terminal: mod.Terminal, init: TerminalInit) extends InTermin
 
   terminal.onData(handler)
 
-  private var reading: Promise[String] = null
+  private var reading: Promise[String] = _
 
   private def handleLine(data: String): Unit =
     if (reading != null) {

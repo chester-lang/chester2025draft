@@ -136,7 +136,7 @@
    - Verify the commit message accurately describes the changes
    - For complex changes involving multiple files, check each file's changes individually
 
-4. **Git Command Tips**
+6. **Git Command Tips**
    - Always use `| cat` with git commands that might trigger paging:
      ```bash
      git diff | cat

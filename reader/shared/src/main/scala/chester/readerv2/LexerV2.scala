@@ -725,7 +725,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Left(err) => Left(err)
       case LBrace(_) =>
         // Check for empty object or block
-        this.state
         advance()
         skipComments()
         val advance1 = this.state
@@ -1288,7 +1287,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  type CommOrWhite = Comment | Token.Whitespace
+  private type CommOrWhite = Comment | Token.Whitespace
 
   extension (s: LexerState) {
     @deprecated("please handle it correctly")

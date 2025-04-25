@@ -74,15 +74,15 @@ class CLI[F[_]](using
         this.noop()
     }
 
-  def noop(): F[Unit] =
+  private def noop(): F[Unit] =
     Runner.pure(())
 
-  def spawnREPLEngine(): F[Unit] =
+  private def spawnREPLEngine(): F[Unit] =
     Terminal.runTerminal(TerminalInit.Default) {
       REPLEngine[F]
     }
 
-  def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
+  private def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
     _ <- IO.println(t"Expect one file for type checking (more support will be added later) $fileOrDir...")
     _ <- ChesterReader
       .parseTopLevel(FilePath(fileOrDir))
@@ -111,16 +111,16 @@ class CLI[F[_]](using
       )
   } yield ()
 
-  def runIntegrityCheck(): F[Unit] = for {
+  private def runIntegrityCheck(): F[Unit] = for {
     _ <- IO.println("Running integrity check...")
     _ = IntegrityCheck()
     _ <- Runner.pure(())
   } yield ()
 
-  def compileFiles(inputs: Seq[String], targetDir: String, tastDirs: Seq[String]): F[Unit] =
+  private def compileFiles(inputs: Seq[String], targetDir: String, tastDirs: Seq[String]): F[Unit] =
     inputs.foldLeft(Runner.pure(()))((acc, inputFile) => acc.flatMap(_ => this.compileFile(inputFile, targetDir, tastDirs)))
 
-  def loadTASTs(tastDirs: Seq[String]): F[LoadedModules] =
+  private def loadTASTs(tastDirs: Seq[String]): F[LoadedModules] =
     tastDirs.foldLeft(Runner.pure(LoadedModules.Empty)) { (acc, dir) =>
       for {
         modules <- acc
@@ -145,7 +145,7 @@ class CLI[F[_]](using
       } yield newModules
     }
 
-  def compileFile(inputFile: String, targetDir: String, tastDirs: Seq[String]): F[Unit] = {
+  private def compileFile(inputFile: String, targetDir: String, tastDirs: Seq[String]): F[Unit] = {
     // Expected input file extension
     val expectedExtension = ".chester"
 
@@ -201,7 +201,7 @@ class CLI[F[_]](using
     }
   }
 
-  def decompileFile(inputFile: String): F[Unit] =
+  private def decompileFile(inputFile: String): F[Unit] =
     for {
       inputPath = stringToPath(inputFile)
       fileExists <- IO.exists(inputPath)
@@ -238,7 +238,7 @@ class CLI[F[_]](using
        |  "author": "",
        |  "license": ""
        |}""".stripMargin
-  def initializePackageJson(): F[Unit] =
+  private def initializePackageJson(): F[Unit] =
     for {
       currentDir <- IO.workingDir
       packageJsonPath = io.pathOps.join(currentDir, "package.json")
@@ -246,19 +246,19 @@ class CLI[F[_]](using
       _ <- IO.println("Initialized package.json in the current directory.")
     } yield ()
 
-  def installDependencies(): F[Unit] = for {
+  private def installDependencies(): F[Unit] = for {
     _ <- IO.call(Vector("pnpm", "install"))
   } yield ()
 
-  def addPackages(packages: Seq[String]): F[Unit] = for {
+  private def addPackages(packages: Seq[String]): F[Unit] = for {
     _ <- IO.call(Vector("pnpm", "add") ++ packages.map(p => t"$p.chester"))
   } yield ()
 
-  def selfUpdate(): F[Unit] = for {
+  private def selfUpdate(): F[Unit] = for {
     _ <- IO.call(Vector("proto", "install", "chester"))
   } yield ()
 
-  def formatFiles(files: Seq[String]): F[Unit] =
+  private def formatFiles(files: Seq[String]): F[Unit] =
     for {
       _ <- IO.println(t"Formatting files: ${files.mkString(", ")}")
       _ <- IO.println("WIP")

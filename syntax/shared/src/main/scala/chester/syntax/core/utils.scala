@@ -53,7 +53,7 @@ object MetaTerm_ {
 object FunctionType_ {
   @deprecated("meta")
   def apply(telescope: TelescopeTerm, resultTy: Term): FunctionType =
-    new FunctionType(Vector(telescope), resultTy, meta = None)
+    FunctionType(Vector(telescope), resultTy, meta = None)
 }
 
 def TyToty: FunctionType = {
@@ -69,7 +69,7 @@ object Intersection_ {
       case x                   => Vector(x)
     }.distinct
     if (flattened.size == 1) return flattened.head
-    new Intersection(flattened.assumeNonEmpty, None)
+    Intersection(flattened.assumeNonEmpty, None)
   }
 }
 
@@ -84,7 +84,7 @@ object Union_ {
       .distinct
       .filterNot(x => x.isInstanceOf[NothingType])
     if (flattened.size == 1) return flattened.head
-    if (flattened.nonEmpty) new Union(flattened.assumeNonEmpty, None)
+    if (flattened.nonEmpty) Union(flattened.assumeNonEmpty, None)
     else NothingType(None)
   }
 }

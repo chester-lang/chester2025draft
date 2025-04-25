@@ -42,7 +42,7 @@ object FilePath {
 }
 
 case class FilePath private (fileName: String) extends ParserSource {
-  private[chester] var impl: FilePathImpl = null
+  private[chester] var impl: FilePathImpl = _
   override lazy val readContent: Either[ParseError, String] =
     if (impl == null) Left(ParseError("No FilePathImpl provided", Pos.zero))
     else impl.readContent(fileName)
