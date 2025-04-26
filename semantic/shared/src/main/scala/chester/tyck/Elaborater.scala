@@ -271,10 +271,14 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ck: TyckSession,
       state: StateAbility[TyckSession]
   ): Unit = {
-    // Check if all union components can be used where specificType is expected
-    var allCompatible = true
+    // Check if any union component can be used where specificType is expected
+    // Only one component needs to be compatible for the union to be valid in this position
+    var anyCompatible = false
     for (unionType <- unionTypes)
       if (tryUnify(unionType, specificType)) {
+        // We found a compatible component, mark as compatible
+        anyCompatible = true
+        
         // Add a propagator for each compatible union component
         val unionTypeCell = toId(unionType)
         val specificTypeCell = toId(specificType)
@@ -287,13 +291,13 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         // Create a propagator from the union component to the specific type
         state.addPropagator(Unify(unionTypeCell, specificTypeCell, cause))
       } else {
-        allCompatible = false
+        // This component isn't compatible, but that's okay if at least one other is
         ck.reporter.apply(TypeMismatch(unionType, specificType, cause))
-        // No need to break, we want to report all errors
+        // No need to break, we want to report all errors and check all components
       }
 
-    // If any union component doesn't match, the overall unification fails
-    if (!allCompatible) {
+    // If no union component matches, the overall unification fails
+    if (!anyCompatible) {
       ck.reporter.apply(TypeMismatch(union, specificType, cause))
     } else {
       // Connect the union to its components

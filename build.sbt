@@ -230,7 +230,7 @@ def commonSettings0 = Seq(
       "--preview"
     ),
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
-  scalacOptions ++= Seq("-rewrite", "-source", "3.7"),
+  scalacOptions ++= Seq("-rewrite", "-source", "3.7-migration"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.0" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
