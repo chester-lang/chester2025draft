@@ -178,7 +178,7 @@ case class LexerState(
 }
 
 object LexerV2 {
-  val DEBUG = new Parameter[Boolean](Some(false))
+  val DEBUG = Parameter.withDefault(false)
   private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 

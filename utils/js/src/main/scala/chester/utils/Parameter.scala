@@ -15,3 +15,8 @@ class Parameter[T](default: Option[T] = None) {
   }
   def get: T = tl.getOrElse(throw new IllegalStateException("No default value"))
 }
+
+object Parameter {
+  def apply[T](): Parameter[T] = new Parameter(None)
+  def withDefault[T](default: T): Parameter[T] = new Parameter(Some(default))
+}
