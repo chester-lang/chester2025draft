@@ -56,6 +56,11 @@
    - Update existing tests when modifying behavior
    - Test both success and failure cases
    - **💡 Development Tip:** For quickly adding and testing new type checking scenarios during development, you can add code snippets to the `tests/tyck.chester` file and run them using the specific test class `chester.tyck.TheTyckTest` (e.g., `sbt "semantic/testOnly chester.tyck.TheTyckTest"`). This provides a faster feedback loop than adding to the main `FilesTyckTest` suite initially.
+   - **📝 Post-Development Workflow:** Once the code in `tests/tyck.chester` passes type checking with `TheTyckTest`:
+     1. Move the `tests/tyck.chester` file to the main `tests/tyck/` directory.
+     2. Give the file a descriptive name reflecting the feature tested (e.g., `union-assignment.chester`).
+     3. Set the `doTest` flag in `semantic/jvm-native/src/test/scala/chester/tyck/TheTyckTest.scala` to `false` to disable this specific test run until needed again.
+     4. Add the new test file to the main test suite (`FilesTyckTest` or `FilesTyckFailsTest` as appropriate) for regular regression testing.
    - For parser changes:
      - Many tests now run against both old and new readers (V1 and V2)
      - Some complex tests currently only run against V1 (original reader)
