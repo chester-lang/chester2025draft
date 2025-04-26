@@ -1,0 +1,14 @@
+// Simple trait with one field requirement
+trait WithName {
+  def name: String;
+}
+
+// Record that properly implements the trait with all required fields
+record Person(name: String, age: Integer) <: WithName;
+
+// Using the record with correct field
+def getName(p: Person): String = p.name;
+
+// Test with an actual instance
+let john = Person(name = "John", age = 30);
+getName(john); 
