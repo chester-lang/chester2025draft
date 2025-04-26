@@ -1,0 +1,4 @@
+// Simple union type test
+// This test demonstrates assigning an Integer to a variable with union type
+let x = 42;
+let y: Integer | String = x; 

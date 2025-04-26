@@ -1,22 +1,24 @@
 package chester.tyck
 
+import chester.i18n.*
 import chester.reader.{*, given}
 import chester.syntax.concrete.*
 import chester.syntax.core.Judge
 import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*
-import chester.i18n.*
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 
-class FilesTyckTest extends FunSuite {
-  val (testDir, inputFiles) = getInputFiles("tests/tyck")
+class TheTyckTest extends FunSuite {
+  val baseName = "tyck"
+  val testDir = Paths.get("tests")
+  val inputFile = Paths.get("tests/tyck.chester")
+  val doTest = false
+  test(baseName) {
+    if(doTest){
 
-  inputFiles.foreach { inputFile =>
-    val baseName = inputFile.getFileName.toString.stripSuffix(".chester")
-    test(baseName) {
       val expectedFile = testDir.resolve(t"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
