@@ -42,3 +42,9 @@ class Parameter[T](default: Option[T] = None) {
   }
   def get: T = if (tl.isBound) tl.get() else default.getOrElse(throw new IllegalStateException("No default value"))
 }
+
+// Add companion object with factory methods
+object Parameter {
+  def apply[T](): Parameter[T] = new Parameter(None)
+  def withDefault[T](default: T): Parameter[T] = new Parameter(Some(default))
+}
