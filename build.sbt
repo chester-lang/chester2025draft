@@ -237,8 +237,7 @@ def commonSettings0 = Seq(
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
     "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test,
-    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test,
-    "com.lihaoyi" %%% "pprint" % "0.9.0" % Test
+    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test
     // "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test
   ),
   testFrameworks += new TestFramework("verify.runner.Framework"),
@@ -557,6 +556,7 @@ lazy val utils = useSpire(
         "io.github.iltotore" %%% "iron-upickle" % "3.0.0" exclude ("com.lihaoyi", "upickle_3"),
         "org.typelevel" %%% "cats-core" % "2.13.0",
         "org.typelevel" %%% "cats-free" % "2.13.0",
+        "com.lihaoyi" %%% "pprint" % "0.9.0",
         "com.lihaoyi" %%% "upickle" % "4.1.0",
         "com.lihaoyi" %%% "fansi" % "0.5.0",
         "com.lihaoyi" %%% "fastparse" % "3.1.1",
