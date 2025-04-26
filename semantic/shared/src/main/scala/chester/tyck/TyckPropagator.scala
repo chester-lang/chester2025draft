@@ -45,9 +45,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   }
 
   def unify(lhs: Term, rhs: Term, cause: Expr)(using
-                                               localCtx: Context,
-                                               ck: TyckSession,
-                                               state: StateAbility[TyckSession]
+      localCtx: Context,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Unit = {
     def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]): Unit =
       state.addPropagator(Unify(lhsId, rhsId, cause))
@@ -169,23 +169,23 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   }
 
   def unify(t1: Term, t2: CellId[Term], cause: Expr)(using
-                                                     localCtx: Context,
-                                                     ck: TyckSession,
-                                                     state: StateAbility[TyckSession]
+      localCtx: Context,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Unit =
     state.addPropagator(Unify(literal(t1), t2, cause))
 
   def unify(t1: CellId[Term], t2: Term, cause: Expr)(using
-                                                     localCtx: Context,
-                                                     ck: TyckSession,
-                                                     state: StateAbility[TyckSession]
+      localCtx: Context,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Unit =
     state.addPropagator(Unify(t1, literal(t2), cause))
 
   def unify(t1: CellId[Term], t2: CellId[Term], cause: Expr)(using
-                                                             localCtx: Context,
-                                                             ck: TyckSession,
-                                                             state: StateAbility[TyckSession]
+      localCtx: Context,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Unit =
     state.addPropagator(Unify(t1, t2, cause))
 
@@ -477,8 +477,8 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     *   true if terms can be unified, false otherwise
     */
   def tryUnify(lhs: Term, rhs: Term)(using
-                                     state: StateAbility[TyckSession],
-                                     localCtx: Context
+      state: StateAbility[TyckSession],
+      localCtx: Context
   ): Boolean = {
     // Recursion counter for debugging
     new AtomicInteger(0)
@@ -769,8 +769,8 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
   /** t is rhs, listT is lhs */
   case class ListOf(tRhs: CellId[Term], listTLhs: CellId[Term], cause: Expr)(using
-                                                                             ck: TyckSession,
-                                                                             localCtx: Context
+      ck: TyckSession,
+      localCtx: Context
   ) extends Propagator[TyckSession] {
     override val readingCells: Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
     override val writingCells: Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
@@ -889,8 +889,8 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
   /** Helper method to check if a source level is compatible with a target level */
   private def isLevelCompatible(source: Term, target: Term)(using
-                                                            StateAbility[TyckSession],
-                                                            Context
+      StateAbility[TyckSession],
+      Context
   ): Boolean =
     (source, target) match {
       case (LevelFinite(_, _), LevelUnrestricted(_)) => true // Finite is compatible with unrestricted
@@ -918,9 +918,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       traitDef: TraitStmtTerm,
       cause: Expr
   )(using
-    localCtx: Context,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      localCtx: Context,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Boolean = {
     if (Debug.isEnabled(TraitMatching))
       Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Checking if record ${recordDef.name} implements trait ${traitDef.name}")
@@ -987,9 +987,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       parentTraitDef: TraitStmtTerm,
       _cause: Expr
   )(using
-    Context,
-    TyckSession,
-    StateAbility[TyckSession]
+      Context,
+      TyckSession,
+      StateAbility[TyckSession]
   ): Boolean = {
     // Check if they're the same trait (reflexivity)
     if (childTraitDef.uniqId == parentTraitDef.uniqId) {
@@ -1008,15 +1008,15 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
   // Add helper methods for union subtyping compatibility checking
   private def unionUnionCompatible(types1: NonEmptyVector[Term], types2: NonEmptyVector[Term])(using
-                                                                                               StateAbility[TyckSession],
-                                                                                               Context
+      StateAbility[TyckSession],
+      Context
   ): Boolean =
     // For each type in RHS union, at least one type in LHS union must accept it
     types2.forall(t2 => types1.exists(t1 => tryUnify(t1, t2)))
 
   private def specificUnionCompatible(specificType: Term, unionTypes: NonEmptyVector[Term])(using
-                                                                                            StateAbility[TyckSession],
-                                                                                            Context
+      StateAbility[TyckSession],
+      Context
   ): Boolean = {
     // For a specific type to be compatible with a union type,
     // the specific type must be compatible with at least one of the union components
@@ -1038,8 +1038,8 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   }
 
   private def unionSpecificCompatible(unionTypes: NonEmptyVector[Term], specificType: Term)(using
-                                                                                            StateAbility[TyckSession],
-                                                                                            Context
+      StateAbility[TyckSession],
+      Context
   ): Boolean = {
     // For a union type to be compatible with a specific type,
     // at least one type in the union must be compatible with the specific type

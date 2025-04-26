@@ -110,8 +110,8 @@ trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropaga
     Meta(newType)
 
   def newEffects(using
-                 _ck: TyckSession,
-                 state: StateAbility[TyckSession]
+      _ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): CIdOf[EffectsCell] = {
     val cell = state.addCell(DynamicEffectsCell())
     cell

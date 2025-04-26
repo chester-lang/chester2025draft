@@ -58,10 +58,10 @@ object ElaboraterBlock {
 trait ElaboraterBlock { this: ElaboraterBase & ElaboraterCommon =>
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-                                                                               localCtx: Context,
-                                                                               parameter: SemanticCollector,
-                                                                               ck: TyckSession,
-                                                                               state: StateAbility[TyckSession]
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): BlockTerm
 }
 
@@ -69,10 +69,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   import ElaboraterBlock.*
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-                                                                               localCtx: Context,
-                                                                               parameter: SemanticCollector,
-                                                                               ck: TyckSession,
-                                                                               state: StateAbility[TyckSession]
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): BlockTerm = {
     val ty = toId(readMetaVar(toTerm(ty0)))
     val Block(heads0, tail, meta) = expr
@@ -156,10 +156,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       heads: Seq[Expr],
       meta: Option[ExprMeta]
   )(using
-    localCtx: Context,
-    parameter: SemanticCollector,
-    _ck: TyckSession,
-    state: StateAbility[TyckSession]
+      localCtx: Context,
+      parameter: SemanticCollector,
+      _ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): (Seq[DeclarationInfo], Seq[Name], Context) = {
     // Collect all declarations in a single pass
     val declarations = heads.collect {
@@ -222,9 +222,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-    SemanticCollector,
-    TyckSession,
-    StateAbility[TyckSession]
+      SemanticCollector,
+      TyckSession,
+      StateAbility[TyckSession]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val defInfo = declarationsMap(expr).asInstanceOf[DefDeclaration]
@@ -250,9 +250,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-    parameter: SemanticCollector,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val recordInfo = declarationsMap(expr).asInstanceOf[RecordDeclaration]
@@ -318,9 +318,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       effects: CIdOf[EffectsCell],
       meta: Option[ExprMeta]
   )(using
-    parameter: SemanticCollector,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val name = expr.defined match {
@@ -351,9 +351,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-    parameter: SemanticCollector,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): (Seq[StmtTerm], Context) = {
     val traitInfo = declarationsMap(expr).asInstanceOf[TraitDeclaration]
 
@@ -397,9 +397,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-    parameter: SemanticCollector,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val interfaceInfo = declarationsMap(expr).asInstanceOf[InterfaceDeclaration]
@@ -433,9 +433,9 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       declarationsMap: Map[Expr, DeclarationInfo],
       effects: CIdOf[EffectsCell]
   )(using
-    SemanticCollector,
-    TyckSession,
-    StateAbility[TyckSession]
+      SemanticCollector,
+      TyckSession,
+      StateAbility[TyckSession]
   ): (Seq[StmtTerm], Context) = {
     implicit val localCtx: Context = ctx
     val objectInfo = declarationsMap(expr).asInstanceOf[ObjectDeclaration]

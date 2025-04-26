@@ -64,8 +64,8 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
   }
 
   def merge(a: CellIdOr[Term], b: CellIdOr[Term])(using
-                                                  state: StateAbility[TyckSession],
-                                                  ab: TyckSession
+      state: StateAbility[TyckSession],
+      ab: TyckSession
   ): Unit = {
     if (a == b) return
     val t1 = toTerm(a)

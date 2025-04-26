@@ -13,10 +13,10 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-    ctx: Context,
-    parameter: SemanticCollector,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      ctx: Context,
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Term
 
   /** Safely fills a cell with a value, handling the case where the cell already has a value. This prevents "requirement failed" exceptions when
@@ -27,8 +27,8 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       value: T,
       debugCategory: Debug.DebugCategory = Debug.DebugCategory.Tyck
   )(using
-    state: StateAbility[TyckSession],
-    _more: TyckSession
+      state: StateAbility[TyckSession],
+      _more: TyckSession
   ): Unit = {
     // Check if the cell already has a value before attempting to fill it
     val existingValue = state.readUnstable(cell)
@@ -47,10 +47,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-    ctx: Context,
-    parameter: SemanticCollector,
-    ck: TyckSession,
-    state: StateAbility[TyckSession]
+      ctx: Context,
+      parameter: SemanticCollector,
+      ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Term = {
     // Check if the function refers to a record definition
     val functionExpr = expr.function
@@ -82,10 +82,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-    ctx: Context,
-    _parameter: SemanticCollector,
-    _ck: TyckSession,
-    state: StateAbility[TyckSession]
+      ctx: Context,
+      _parameter: SemanticCollector,
+      _ck: TyckSession,
+      state: StateAbility[TyckSession]
   ): Term = {
     // Elaborate the function expression to get its term and type
     val functionTy = newType
@@ -242,8 +242,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         actual: Vector[Calling],
         cause: Expr
     )(using
-      state: StateAbility[TyckSession],
-      ck: TyckSession
+        state: StateAbility[TyckSession],
+        ck: TyckSession
     ): Vector[Calling] = {
       var actualIndex = 0
       var adjustedCallings: Vector[Calling] = Vector.empty
@@ -288,8 +288,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         actualArgs: Seq[CallingArgTerm],
         cause: Expr
     )(using
-      state: StateAbility[TyckSession],
-      ck: TyckSession
+        state: StateAbility[TyckSession],
+        ck: TyckSession
     ): Unit = {
       // Check that the number of arguments matches
       if (expectedArgs.length != actualArgs.length) {

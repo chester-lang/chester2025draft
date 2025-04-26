@@ -124,9 +124,9 @@ implicit val SeqCallingArgTermRW: ReadWriter[Seq[CallingArgTerm]] =
 implicit inline def makeArray[T: scala.reflect.ClassTag](xs: Seq[T]): Array[T] = xs.toArray
 
 case class Calling(
-                    @children args0: Array[CallingArgTerm],
-                    @const implicitly: Boolean = false,
-                    @const meta: OptionTermMeta
+    @children args0: Array[CallingArgTerm],
+    @const implicitly: Boolean = false,
+    @const meta: OptionTermMeta
 ) extends WHNF derives ReadWriter {
 
   val args: Seq[CallingArgTerm] = ArraySeq.unsafeWrapArray(args0)

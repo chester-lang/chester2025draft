@@ -350,9 +350,7 @@ Global / stRemoteCache := {
   // Then use "myserver:/path/to/cache" as the pushAddress
   val pushAddress = Try {
     if (configFile.exists) {
-      Using(Source.fromFile(configFile)) { source =>
-        source.getLines().mkString.trim
-      } .get
+      Using(Source.fromFile(configFile))(source => source.getLines().mkString.trim).get
     } else {
       "user@server.com:/path/to/cache"
     }
