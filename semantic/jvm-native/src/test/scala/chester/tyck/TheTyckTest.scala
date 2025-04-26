@@ -32,7 +32,7 @@ class TheTyckTest extends FunSuite {
           { parsedBlock =>
             assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
             assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
-            Debug.withCategoriesEnabled(Set(DebugCategory.TraitMatching)) {
+            Debug.withCategoriesEnabled(DebugCategory.values.toSet) {
               Tycker.check(parsedBlock) match {
                 case TyckResult.Success(result, _, _) =>
                   if (result.collectMeta.isEmpty) {
