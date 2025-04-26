@@ -163,9 +163,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         val specificCellId = toId(specificType)
         val unionCellId = toId(union).asInstanceOf[CellId[Term]]
 
-        // Create a direct unify connection
-        state.addPropagator(Unify(specificCellId, unionCellId, cause))
-
         // Check compatibility with any union component
         val compatibleComponent = unionTypes.find(unionType => tryUnify(specificType, unionType))
 
@@ -292,7 +289,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         state.addPropagator(Unify(unionTypeCell, specificTypeCell, cause))
       } else {
         // This component isn't compatible, but that's okay if at least one other is
-        ck.reporter.apply(TypeMismatch(unionType, specificType, cause))
+        // ck.reporter.apply(TypeMismatch(unionType, specificType, cause)) // REMOVED - Don't report error if other components might match
         // No need to break, we want to report all errors and check all components
       }
 
@@ -301,12 +298,12 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ck.reporter.apply(TypeMismatch(union, specificType, cause))
     } else {
       // Connect the union to its components
-      val unionCell = toId(union)
-      val componentCells = unionTypes.map(toId).toVector
-      connectUnionToComponents(unionCell, componentCells, cause)
+      // val unionCell = toId(union)
+      // val componentCells = unionTypes.map(toId).toVector
+      // connectUnionToComponents(unionCell, componentCells, cause) // REMOVED to prevent recursion
 
       // Create direct connection from union to specific
-      state.addPropagator(Unify(unionCell, toId(specificType), cause))
+      // state.addPropagator(Unify(unionCell, toId(specificType), cause)) // REMOVED - component connections should suffice
     }
   }
 }

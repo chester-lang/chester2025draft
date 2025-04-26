@@ -522,58 +522,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         if (Debug.isEnabled(UnionMatching))
           Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   After reduction and resolution: $lhsResolved with $rhsResolved")
 
-        // Special cases for integer literals
-        (lhsResolved, rhsResolved) match {
-          // Direct matching for integer values (like 42) with Union types containing Integer
-          case (v: AbstractIntTerm, Union(types, _)) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm $v")
-            val hasIntegerType = types.exists {
-              case IntegerType(_) => true
-              case t =>
-                val reduced = DefaultReducer.reduce(t, ReduceMode.TypeLevel)
-                reduced == IntegerType(None)
-            }
-            if (hasIntegerType) {
-              if (Debug.isEnabled(UnionMatching))
-                Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Union contains Integer, AbstractIntTerm is compatible with union")
-              return true
-            }
-
-          // The reverse - Union containing Integer is compatible with AbstractIntTerm
-          case (Union(types, _), v: AbstractIntTerm) =>
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Checking if union contains Integer for AbstractIntTerm $v")
-            val hasIntegerType = types.exists {
-              case IntegerType(_) => true
-              case t =>
-                val reduced = DefaultReducer.reduce(t, ReduceMode.TypeLevel)
-                reduced == IntegerType(None)
-            }
-            if (hasIntegerType) {
-              if (Debug.isEnabled(UnionMatching))
-                Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Union contains Integer, union is compatible with AbstractIntTerm")
-              return true
-            }
-
-          // Handle the case where a numeric literal needs to match with an Integer type
-          case (_: IntTerm, IntegerType(_)) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Integer literal matches IntegerType: true")
-            return true
-          case (_: IntegerTerm, IntegerType(_)) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Integer literal matches IntegerType: true")
-            return true
-          // The inverse
-          case (IntegerType(_), _: IntTerm) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   IntegerType matches integer literal: true")
-            return true
-          case (IntegerType(_), _: IntegerTerm) =>
-            if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   IntegerType matches integer literal: true")
-            return true
-
-          case _ => // Continue with normal processing
-        }
-
         if (lhsResolved == rhsResolved) {
           if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Reduced terms are equal, returning true")
           true
