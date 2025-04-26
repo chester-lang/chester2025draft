@@ -60,7 +60,7 @@
      1. Move the `tests/tyck.chester` file to the main `tests/tyck/` directory.
      2. Give the file a descriptive name reflecting the feature tested (e.g., `union-assignment.chester`).
      3. Set the `doTest` flag in `semantic/jvm-native/src/test/scala/chester/tyck/TheTyckTest.scala` to `false` to disable this specific test run until needed again.
-     4. Add the new test file to the main test suite (`FilesTyckTest` or `FilesTyckFailsTest` as appropriate) for regular regression testing.
+     (Note: Test suites like `FilesTyckTest` automatically discover files in the `tests/tyck/` directory, so no explicit addition is needed).
    - For parser changes:
      - Many tests now run against both old and new readers (V1 and V2)
      - Some complex tests currently only run against V1 (original reader)
