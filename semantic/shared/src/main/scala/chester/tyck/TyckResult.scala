@@ -8,7 +8,7 @@ case class TyckResult0[Problem <: WithServerity, +S, +T](
     result: T,
     problems: Vector[Problem] = Vector()
 ) {
-  private var noErrors: java.lang.Boolean = _
+  private var noErrors: java.lang.Boolean = scala.compiletime.uninitialized
 
   def errorsEmpty: Boolean = {
     if (noErrors != null) return noErrors
