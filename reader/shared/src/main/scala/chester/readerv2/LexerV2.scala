@@ -1312,10 +1312,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     * @return
     *   the previous state before clearing
     */
-  private def clearPendingTokens(): LexerState = {
+  private def clearPendingTokens(): Unit = {
     val prevState = this.state
     this.state = this.state.clearPendingTokens()
-    prevState
   }
 
   /** Skips all comments and whitespace tokens, updating this.state directly. All skipped tokens are automatically added to the state's pendingTokens
