@@ -1,9 +1,10 @@
 package chester.reader
-import chester.readerv2.{LexerState, LexerV2}
+import chester.readerv2.LexerState
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
 import chester.i18n.*
+import chester.readerv2.LexerV2
 
 // Only runs against V1 (original reader)
 def parseAndCheckV1(input: String, expected: Expr): Unit = {
@@ -43,36 +44,32 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
   val sourceOffset = Source(source)
   val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
   val tokens = tokenizer.tokenize()
-  val oldDebug = LexerV2.DEBUG
-  try {
-    // LexerV2.DEBUG = true // uncomment when needed
-    val lexer = LexerV2(LexerState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
+  val lexer = LexerV2(LexerState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
 
-    val result = lexer
-      .parseExpr()
-      .fold(
-        error => {
-          val errorIndex = error.pos.index.utf16
-          val lineStart = input.lastIndexOf('\n', errorIndex) + 1
-          val lineEnd = input.indexOf('\n', errorIndex) match {
-            case -1 => input.length
-            case n  => n
-          }
-          val line = input.substring(lineStart, lineEnd)
-          val pointer = " " * (errorIndex - lineStart) + "^"
+  val result = lexer
+    .parseExpr()
+    .fold(
+      error => {
+        val errorIndex = error.pos.index.utf16
+        val lineStart = input.lastIndexOf('\n', errorIndex) + 1
+        val lineEnd = input.indexOf('\n', errorIndex) match {
+          case -1 => input.length
+          case n  => n
+        }
+        val line = input.substring(lineStart, lineEnd)
+        val pointer = " " * (errorIndex - lineStart) + "^"
 
-          fail(t"""V2 Parsing failed for input: $input
+        fail(t"""V2 Parsing failed for input: $input
                |Error: ${error.message}
                |At position ${error.pos}:
                |$line
                |$pointer""".stripMargin)
-        },
-        expr => expr
-      )
-      .descentRecursive(_.updateMeta(_ => None))
+      },
+      expr => expr
+    )
+    .descentRecursive(_.updateMeta(_ => None))
 
-    assertEquals(result, expected, t"Failed for input: $input")
-  } finally LexerV2.DEBUG = oldDebug
+  assertEquals(result, expected, t"Failed for input: $input")
 }
 
 // Runs against both V1 and V2 parsers

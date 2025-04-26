@@ -27,6 +27,7 @@ import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
 import chester.syntax.concrete.*
+import chester.utils.Parameter
 
 import scala.annotation.tailrec
 
@@ -177,7 +178,7 @@ case class LexerState(
 }
 
 object LexerV2 {
-  var DEBUG = false // Keep DEBUG flag for tests that use it
+  val DEBUG = new Parameter[Boolean](Some(false))
   private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
@@ -187,7 +188,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   var state: LexerState = initState
 
-  private def debug(msg: => String): Unit = if (DEBUG) println(t"[DEBUG] $msg")
+  private def debug(msg: => String): Unit = if (DEBUG.get) println(t"[DEBUG] $msg")
 
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
@@ -661,7 +662,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     })
 
     // Log if pattern is detected and debug is enabled
-    if (DEBUG && hasNewline) debug("}\n check: pattern detected")
+    if (DEBUG.get && hasNewline) debug("}\n check: pattern detected")
     hasNewline
   }
 
