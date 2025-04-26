@@ -305,7 +305,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state.current match {
       case Right(Token.LBrace(braceSourcePos)) =>
         debug("parseRest: Found LBrace after expression, treating as block argument")
-        // this.state is already set to the current state
+        // this.state is already set correctly
         handleBlockArgument(expr, localTerms, braceSourcePos)
 
       // Colon handling (type annotations, etc)
@@ -556,6 +556,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Main parsing methods
   def parseExpr(): Either[ParseError, Expr] = {
+    parseExprInner()
+  }
+
+  private def parseExprInner(): Either[ParseError, Expr] = {
     // Skip comments and whitespace, storing them internally in pendingTokens
     skipComments()
     // Initialize terms vector for expressions
@@ -1690,5 +1694,33 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       args,
       createMeta(startSourcePos, endSourcePos)
     )
+
+  // Parses a sequence of expressions, typically representing a top-level file or block
+  // Returns a Block containing all parsed expressions.
+  def parseTopLevel(): Either[ParseError, Block] = {
+    var statements = Vector.empty[Expr]
+    var lastExpr: Option[Expr] = None
+    val startPos = state.sourcePos // Capture start position
+
+    while (!state.isAtEnd && !state.current.exists(_.isInstanceOf[Token.EOF])) {
+      skipComments() // Skip leading comments/whitespace before parsing
+      if (state.isAtEnd || state.current.exists(_.isInstanceOf[Token.EOF])) {
+        // Break loop if only comments/whitespace remain
+      } else {
+        // If we already have a last expression, it becomes a statement
+        lastExpr.foreach { expr =>
+          statements = statements :+ expr
+          lastExpr = None
+        }
+        parseExpr() match {
+          case Right(expr) => lastExpr = Some(expr)
+          case Left(err)   => return Left(err) // Return immediately on error
+        }
+      }
+    }
+    val endPos = state.sourcePos // Capture end position
+    // Construct the Block
+    Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
+  }
 
 }

@@ -22,5 +22,10 @@ object ChesterReaderV2 {
     lexer.parseExprList()
   }
 
+  def parseTopLevel(source: FileNameAndContent, ignoreLocation: Boolean = false): Either[ParseError, Expr] = {
+    val lexer = setupLexer(source, ignoreLocation)
+    lexer.parseTopLevel()
+  }
+
   // Add other parsing methods here with the same pattern
 }
