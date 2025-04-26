@@ -2,7 +2,7 @@ package chester.targets.js
 
 import chester.syntax.core.*
 // Explicitly import necessary AST types from the same package
-import chester.targets.js.{Expression, Meta, NumericLiteral, StringLiteral, BooleanLiteral, Identifier}
+import chester.targets.js.{Expression, Meta, NumericLiteral, StringLiteral, BooleanLiteral, Identifier, FunctionExpression, BlockStatement, ReturnStatement, Parameter, IdentifierPattern}
 // Import Doc extension methods like render
 import chester.utils.doc.*
 
@@ -23,9 +23,8 @@ object Backend {
     val jsMeta = term.meta.map(_.sourcePos).map(sp => Meta(sp))
 
     term match {
-      // Use correct literal term names
+      // Literals
       case IntegerTerm(value, meta) =>
-        // Assuming value is BigInt, convert to Double for JS
         NumericLiteral(value.toDouble, jsMeta)
 
       case StringTerm(value, meta) =>
@@ -34,15 +33,38 @@ object Backend {
       case BooleanTerm(value, meta) =>
         BooleanLiteral(value, jsMeta)
 
-      // TODO: Need to find the correct representation for function definitions
-      // case ??? => // Representation of Function Definition
+      // Function Definition
+      case Function(ty, body, meta) =>
+        // Extract parameter identifiers from the function type's telescopes
+        // Wrap each Identifier in an IdentifierPattern, then in a Parameter
+        val params = ty.telescopes.flatMap(_.args.map {
+          arg => Parameter(IdentifierPattern(Identifier(arg.bind.name.toString)))
+        })
+        // Transform the body term
+        val bodyExpr = transform(body)
+        // JS FunctionExpression needs a BlockStatement, so wrap the body expression in a ReturnStatement
+        // ReturnStatement expects Option[Expression]
+        val bodyBlock = BlockStatement(List(ReturnStatement(Some(bodyExpr))))
+        // Create the JS FunctionExpression
+        FunctionExpression(
+          id = None, // TODO: Handle named functions?
+          params = params.toList,
+          returnType = None, // TODO: Handle return type annotations?
+          body = bodyBlock,
+          async = false, // TODO: Handle async?
+          generator = false, // TODO: Handle generators?
+          meta = jsMeta
+        )
 
-      // TODO: Need to find the correct representation for variable references
-      // case ??? => // Representation of Variable Reference
+      // Variable Reference
+      case LocalV(name, ty, uniqId, meta) =>
+        Identifier(name.toString, jsMeta)
 
-      // Placeholder for unhandled core.Term types
+      // TODO: Handle other term types (ToplevelV, Apply, If, etc.)
       case _ =>
-        Identifier("undefined", jsMeta)
+        // Placeholder for unhandled cases
+        // Return a simple identifier indicating the unhandled type for now
+        Identifier(s"Unhandled_${term.getClass.getSimpleName}", jsMeta)
     }
   }
 

@@ -14,6 +14,9 @@ sealed trait ASTNode extends ToDoc derives ReadWriter {
 // Expressions
 sealed trait Expression extends ASTNode derives ReadWriter
 
+// Patterns for destructuring
+sealed trait Pattern extends ASTNode derives ReadWriter
+
 // Unannotated Identifier
 case class Identifier(
     name: String,
@@ -439,8 +442,12 @@ case class ArrayExpression(
   }
 }
 
-// Patterns for destructuring
-sealed trait Pattern extends ASTNode derives ReadWriter
+case class IdentifierPattern(
+    identifier: Identifier,
+    meta: Option[Meta] = None
+) extends Pattern {
+  def toDoc(using PrettierOptions): Doc = identifier.toDoc
+}
 
 case class ObjectPattern(
     properties: List[PatternProperty],
