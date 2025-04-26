@@ -1,7 +1,12 @@
 package chester.utils
 import chester.i18n.*
+// Import Parameter
+import chester.utils.Parameter
+// Import mutable Set
+import scala.collection.mutable
 
 /** Global debug utilities and flags for Chester.
+  * Provides both globally mutable defaults and scoped overrides.
   */
 object Debug {
 
@@ -20,52 +25,55 @@ object Debug {
     case TraitMatching // For trait implementation matching
   }
 
-  import DebugCategory._
 
-  // Debug flags
-  private var enabledCategories: Set[DebugCategory] = Set.empty
+  // Globally mutable set for default enabled categories
+  private val globallyEnabledCategories: mutable.Set[DebugCategory] = mutable.Set.empty
 
-  // Environment variable based flags - initialized at startup
-  // These respect the existing environment variables for backwards compatibility
-  private val ENV_DEBUG_ENABLED: Boolean = sys.env.contains("ENV_DEBUG")
-  private val envDebugMap = Map(
-    "ENV_DEBUG_UNION_SUBTYPING" -> UnionSubtyping,
-    "ENV_DEBUG_UNION_MATCHING" -> UnionMatching,
-    "ENV_DEBUG_LITERALS" -> Literals,
-    "ENV_DEBUG_IDENTIFIERS" -> Identifiers,
-    "ENV_DEBUG_METHOD_CALLS" -> MethodCalls,
-    "ENV_DEBUG_STRING_ARGS" -> StringArgs
-  )
+  // Map from DebugCategory to Parameter[Boolean] for SCOPED overrides.
+  // Parameters are created WITHOUT a default value.
+  val categoryParameters: Map[DebugCategory, Parameter[Boolean]] =
+    DebugCategory.values.map(cat => cat -> Parameter[Boolean]()).toMap
 
-  // Initialize from environment variables
-  {
-    // Enable categories from specific env vars
-    for ((envVar, category) <- envDebugMap)
-      if (sys.env.contains(envVar) || ENV_DEBUG_ENABLED) {
-        enabledCategories += category
-      }
-  }
+  /** Sets the default enabled state for a category globally.
+    */
+  def setDefault(category: DebugCategory, enabled: Boolean): Unit =
+    if (enabled) globallyEnabledCategories.add(category)
+    else globallyEnabledCategories.remove(category)
 
-  // Enable/disable debug for specific categories
-  def enable(category: DebugCategory): Unit =
-    enabledCategories += category
+  /** Resets all global default category settings to disabled.
+    */
+  def resetDefaults(): Unit =
+    globallyEnabledCategories.clear()
 
-  def disable(category: DebugCategory): Unit =
-    enabledCategories -= category
-
+  /** Checks if a category is enabled, considering both scoped overrides and global defaults.
+    */
   def isEnabled(category: DebugCategory): Boolean =
-    enabledCategories.contains(category)
+    categoryParameters.get(category) match {
+      case Some(param) =>
+        // Check scoped value first using getOption
+        param.getOption match {
+          case Some(scopedValue) => scopedValue // Use scoped value if present (true or false)
+          case None => globallyEnabledCategories.contains(category) // Fallback to global default
+        }
+      // Should not happen as map is exhaustive
+      case None => false
+    }
 
-  // Enable/disable multiple categories at once
-  def enableAll(categories: DebugCategory*): Unit =
-    enabledCategories ++= categories
+  /** Executes a block of code with a specific debug category enabled (scoped override).
+    */
+  def withCategoryEnabled[U](category: DebugCategory)(block: => U): U =
+    categoryParameters.get(category) match {
+      case Some(param) => param.withValue(true)(block)
+      case None        => block // Should not happen as map is exhaustive
+    }
 
-  def disableAll(categories: DebugCategory*): Unit =
-    enabledCategories --= categories
-
-  // Reset all debug flags
-  def disableAllCategories(): Unit =
-    enabledCategories = Set.empty
+  /** Executes a block of code with multiple debug categories enabled (scoped override).
+    */
+  def withCategoriesEnabled[U](categories: Iterable[DebugCategory])(block: => U): U = {
+    categories.foldLeft(() => block) { (currentBlock, category) =>
+      () => withCategoryEnabled(category)(currentBlock())
+    }()
+  }
 
   // Debug print method that respects debug flags
   def debugPrint(category: DebugCategory, message: => String): Unit =
