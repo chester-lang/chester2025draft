@@ -24,7 +24,7 @@ final class InXterm(terminal: mod.Terminal, init: TerminalInit) extends InTermin
 
   terminal.onData(handler)
 
-  private var reading: Promise[String] = _
+  private var reading: Promise[String] = scala.compiletime.uninitialized
 
   private def handleLine(data: String): Unit =
     if (reading != null) {
