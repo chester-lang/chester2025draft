@@ -51,9 +51,9 @@ object Backend {
           params = params.toList,
           returnType = None, // TODO: Handle return type annotations?
           body = bodyBlock,
-          false, // async
-          false, // generator
-          jsMeta
+          async = false, // TODO: Handle async?
+          generator = false, // TODO: Handle generators?
+          meta = jsMeta
         )
 
       // Variable Reference
