@@ -445,7 +445,11 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
    - Don't create new reduction contexts unnecessarily
    - Use consistent reduction mode for type checking
 
-## Style Guide
+## Coding Conventions
+
+### Imports
+
+- **Document Utilities:** When using utilities from the `chester.utils.doc` package (such as `Doc`, `PrettierOptions`, or extension methods like `render`), prefer using a single wildcard import: `import chester.utils.doc.*`.
 
 ### String Formatting and Internationalization
 

@@ -75,6 +75,42 @@ Implement a TypeScript code generator with the following components:
 - **Effect Transformer**: Handle effect annotations
 - **Code Emitter**: Generate TypeScript code from the AST
 
+### Code Emitter
+
+Transforms the TypeScript AST into a valid TypeScript code string.
+
+## Implementation Plan
+
+The backend involves several key components:
+
+### 1. AST Definition (`js.AST.scala`)
+
+Defines the structure of the target JavaScript/TypeScript Abstract Syntax Tree (AST).
+
+### 2. AST Transformer
+
+Converts the type-checked Chester **core AST** (`chester.syntax.core.Term`) into the target `js.AST`.
+*   **Node Mapping**: Map each relevant `core.Term` node to its equivalent `js.AST` node(s).
+*   **Type Mapping**: Translate Chester types (including unions, records) to TypeScript types.
+*   **Effect Transformer**: Handle effect annotations (potentially via comments or specific code structures).
+
+### 3. Code Emitter
+
+Transforms the `js.AST` into a valid TypeScript code string.
+
+## Current Status (as of YYYY-MM-DD)
+
+*   The basic AST node definitions (`js.AST.scala`) exist in `compiler/shared/src/main/scala/chester/targets/js/`.
+*   A placeholder backend object (`Backend.scala`) has been created in the same directory (`chester.targets.js` package). It expects `chester.syntax.core.Term` as input and contains basic transformation logic for some nodes, but needs refinement and completion.
+*   The AST Transformer logic within `Backend.scala` is incomplete and requires verification against the actual `core.Term` structure.
+*   The detailed Code Emitter logic **has not yet been implemented**.
+*   The integration of this backend into the main compilation pipeline or test infrastructure needs to be done.
+
+## Challenges
+
+*   Mapping Chester's type system (including union types, structural types) to TypeScript's type system.
+*   Handling effects and ensuring the generated code respects them (perhaps via comments or specific function signatures).
+
 ### 5. Integration with Compiler Pipeline
 
 - Add a TypeScript target option to the compiler
