@@ -1,6 +1,6 @@
 package chester.readerv2
 import chester.i18n.*
-import chester.error.{Pos, RangeInFile, SourcePos, unreachable}
+import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, Source}
 import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, Tuple}
 import chester.syntax.concrete.{Identifier as ConcreteIdentifier, IntegerLiteral as ConcreteIntegerLiteral, RationalLiteral as ConcreteRationalLiteral, StringLiteral as ConcreteStringLiteral}
@@ -798,78 +798,35 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         }
 
       case Right(Token.LBrace(braceSourcePos)) =>
-        // Peek ahead to differentiate between empty object, block, or object with fields
-        // Check specifically for empty object {} first
-        val stateAfterLBrace = this.state.advance() // Consume {
-        val stateAfterLBraceSkipping = stateAfterLBrace.copy(pendingTokens = Vector.empty) // Temporary state for peeking
-        var peekIndex = stateAfterLBraceSkipping.index
-        while(peekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(peekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
-          peekIndex += 1
-        }
-        val firstTokenAfterBrace = if (peekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(peekIndex) else Left(ParseError("EOF after {", stateAfterLBrace.sourcePos.range.start))
+        debug(t"parseAtom: Found LBrace at $braceSourcePos, attempting object parse first.")
+        // Store the state BEFORE the LBrace token was encountered.
+        // originalState is already available from the start of parseAtom
 
-        firstTokenAfterBrace match {
-          case RBrace(_) => // Empty object: {}
-            this.state = originalState // Restore state before LBrace
-            parseObject()
+        // Try parsing as an object. parseObject expects to start *at* the LBrace.
+        parseObject() match {
+          case Right(objExpr) =>
+            debug(t"parseAtom: Successfully parsed as ObjectExpr: $objExpr")
+            // Object parsing consumes tokens and advances state.
+            Right(objExpr) // Return the successfully parsed object
 
-          case Id(_, _) | Sym(_, _) | Str(_, _) => // Potential object key: { key ...
-            // Need to peek at the token *after* the potential key
-            var afterKeyPeekIndex = peekIndex + 1
-            // Skip comments/whitespace after the key
-            while(afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(afterKeyPeekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
-              afterKeyPeekIndex += 1
+          case Left(objError) =>
+            // Failed to parse as object. Restore state to BEFORE the LBrace.
+            debug(s"parseAtom: Object parse failed ($objError), restoring state and trying block parse.")
+            this.state = originalState // Restore the state from the beginning of parseAtom
+
+            // Now, try parsing as a block. parseBlock also expects to start *at* the LBrace.
+            parseBlock() match {
+              case Right(blockExpr) =>
+                debug(t"parseAtom: Successfully parsed as Block: $blockExpr")
+                // Block parsing consumes tokens and advances state.
+                Right(blockExpr) // Return the successfully parsed block
+              case Left(blockError) =>
+                // If both fail, report the block parsing error as it's the fallback.
+                // Alternatively, could try to report a more generic error or the object error?
+                // Reporting block error seems more consistent with fallback logic.
+                debug(s"parseAtom: Block parse also failed ($blockError). Reporting block error.")
+                Left(blockError)
             }
-            val tokenAfterKey = if (afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(afterKeyPeekIndex) else Left(ParseError("EOF after { key", stateAfterLBrace.sourcePos.range.start))
-
-            tokenAfterKey match {
-              case Op(op, _) if op == "=" || op == "=>" =>
-                  // Potential object field. Try parseObject, fallback to parseBlock on failure.
-                  val objAttemptState = this.state // Save state before trying object parse
-                  parseObject() match {
-                      case Right(objExpr) => Right(objExpr) // Success! It was an object.
-                      case Left(objError) =>
-                          // Object parsing failed. Assume it was actually a block.
-                          debug(s"Object parse failed ($objError), assuming block instead.")
-                          this.state = originalState // Restore state to before LBrace
-                          parseBlock() // Fallback to parsing as a block
-                  }
-
-              case Right(Token.Dot(_)) =>
-                  // Dot found after key. Need to trace the dot-call to see if '=' or '=>' follows.
-                  var currentPeekIndex = afterKeyPeekIndex + 1 // Start peeking after the first dot
-                  while(true) {
-                      // Skip comments/whitespace
-                      while(currentPeekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(currentPeekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
-                          currentPeekIndex += 1
-                      }
-                      val peekToken = if (currentPeekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(currentPeekIndex) else Left(ParseError("EOF after { key.", stateAfterLBrace.sourcePos.range.start))
-
-                      peekToken match {
-                          case Right(Token.Identifier(_, _)) => currentPeekIndex += 1 // Skip identifier part of dot call
-                          case Right(Token.Dot(_)) => currentPeekIndex += 1 // Skip dot, continue loop
-                          case Op(op, _) if op == "=" || op == "=>" => // Found assignment operator after dot-call!
-                              this.state = originalState // Restore state before LBrace
-                              debug("Lookahead confirmed object via dot-call key assignment.")
-                              return parseObject() // Commit to object parse
-                          case _ => // Something else found, not a valid object dot-call key
-                              this.state = originalState // Restore state before LBrace
-                              debug("Lookahead failed for dot-call key assignment, assuming block.")
-                              return parseBlock() // Fallback to block parse
-                      }
-                  }
-                  unreachable() // Should exit loop via return
-
-              case _ => // Anything else after the initial key means it's a block.
-                this.state = originalState // Restore state before LBrace
-                debug("Token after initial identifier is not '=', '=>', or '.', assuming block.")
-                parseBlock()
-            }
-            // The 'while(true)' was removed from the outer scope
-
-          case _ => // Anything else after {, assume block: { ... }
-            this.state = originalState // Restore state before LBrace
-            parseBlock()
         }
 
       case LParen(_) =>
