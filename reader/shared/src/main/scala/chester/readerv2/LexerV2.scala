@@ -1193,8 +1193,26 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
         // Advance past the identifier and skip comments
         advance()
-        skipComments()
-        parseField(identifier, idSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
+        
+        // Check if we have a dot notation (x.y)
+        this.state.current match {
+          case Right(Token.Dot(_)) =>
+            // We have a dot notation like x.y - handle it with handleDotCall
+            handleDotCall(this.state.sourcePos, Vector(identifier)).flatMap { dotExpr =>
+              // After parsing the dot expression, skip comments and continue with parseField
+              skipComments()
+              parseField(dotExpr, idSourcePos).flatMap(clause => 
+                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+              )
+            }
+          case _ =>
+            // Normal case - no dot notation
+            skipComments()
+            parseField(identifier, idSourcePos).flatMap(clause => 
+              checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+            )
+        }
+        
       case Right(Token.StringLiteral(chars, strSourcePos)) =>
         val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
         // Advance past the string literal and skip comments
@@ -1224,6 +1242,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           } else { // op == "="
             // For string literals with "=", convert to identifier
             key match {
+              case id: ConcreteIdentifier =>
+                Right(ObjectExprClause(id, value))
+              case dotCall: DotCall =>
+                Right(ObjectExprClause(dotCall, value))
               case stringLit: ConcreteStringLiteral =>
                 val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                 Right(ObjectExprClause(idKey, value))
@@ -1231,7 +1253,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                 Right(ObjectExprClause(qualifiedName, value))
               case other =>
                 // This case should never happen due to validation in caller
-                Left(ParseError(t"Expected identifier for object field key with = operator but got: $other", keySourcePos.range.start))
+                Left(ParseError(t"Expected identifier, qualified name, or dot expression for object field key with = operator but got: $other", keySourcePos.range.start))
             }
           }
         }
