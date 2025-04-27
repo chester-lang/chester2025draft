@@ -2,7 +2,7 @@ package chester.readerv2
 import chester.i18n.*
 import chester.error.{Pos, RangeInFile, SourcePos, unreachable}
 import chester.reader.{ParseError, Source}
-import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, QualifiedName, Tuple}
+import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, Tuple}
 import chester.syntax.concrete.{Identifier as ConcreteIdentifier, IntegerLiteral as ConcreteIntegerLiteral, RationalLiteral as ConcreteRationalLiteral, StringLiteral as ConcreteStringLiteral}
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
@@ -1081,7 +1081,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
     var statements = Vector.empty[Expr]
     var currentResult: Option[Expr] = None
-    var maxExpressions = 100 // Prevent infinite loops
+    val maxExpressions = 100 // Prevent infinite loops
 
     @tailrec
     def loop(count: Int): Either[ParseError, Unit] = {
@@ -1241,56 +1241,65 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         Right(clauses)
       case Right(Token.Identifier(chars, idSourcePos)) =>
         val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
-        // Advance past the identifier and skip comments
         advance()
         
-        // Check if we have a dot notation (x.y)
-        this.state.current match {
-          case Right(Token.Dot(_)) =>
-            // We have a dot notation like x.y - handle it with handleDotCall
-            handleDotCall(this.state.sourcePos, Vector(identifier)).flatMap { dotExpr =>
-              // After parsing the dot expression, skip comments and continue with parseField
-              skipComments()
-              parseField(dotExpr, idSourcePos).flatMap(clause => 
-                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-              )
-            }
-          case _ =>
-            // Normal case - no dot notation
-            skipComments()
-            parseField(identifier, idSourcePos).flatMap(clause => 
-              checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-            )
-        }
+        parseIdentifierField(identifier, idSourcePos, clauses)
         
       case Right(Token.StringLiteral(chars, strSourcePos)) =>
         val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
-        // Advance past the string literal and skip comments
         advance()
         skipComments()
-        parseField(stringLiteral, strSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
+        parseField(stringLiteral, strSourcePos).flatMap(clause => 
+          checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+        )
+        
       case Right(Token.SymbolLiteral(value, symSourcePos)) =>
         val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
-        // Advance past the symbol literal and skip comments
         advance()
         skipComments()
-        parseField(symbolLiteral, symSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
+        parseField(symbolLiteral, symSourcePos).flatMap(clause => 
+          checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+        )
+        
       case Right(t) =>
         Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
+        
       case Left(err) =>
         Left(err)
     }
 
+  /**
+   * Handle identifier fields, including potential dot notation
+   */
+  private def parseIdentifierField(identifier: ConcreteIdentifier, idSourcePos: SourcePos, 
+                                  clauses: Vector[ObjectClause]): Either[ParseError, Vector[ObjectClause]] = {
+    this.state.current match {
+      case Right(Token.Dot(_)) =>
+        // Handle dot notation (x.y)
+        handleDotCall(this.state.sourcePos, Vector(identifier)).flatMap { dotExpr =>
+          skipComments()
+          parseField(dotExpr, idSourcePos).flatMap(clause => 
+            checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+          )
+        }
+      case _ =>
+        // Standard identifier handling
+        skipComments()
+        parseField(identifier, idSourcePos).flatMap(clause => 
+          checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+        )
+    }
+  }
+
   private def parseField(key: Expr, keySourcePos: SourcePos): Either[ParseError, ObjectClause] =
     this.state.current match {
       case Right(Token.Operator(op, _)) =>
-        // Advance past the operator
         advance()
         parseExpr().flatMap { value =>
           if (op == "=>") {
             Right(ObjectExprClauseOnValue(key, value))
-          } else { // op == "="
-            // For string literals with "=", convert to identifier
+          } else if (op == "=") {
+            // Create appropriate clause based on key type
             key match {
               case id: ConcreteIdentifier =>
                 Right(ObjectExprClause(id, value))
@@ -1299,12 +1308,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               case stringLit: ConcreteStringLiteral =>
                 val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                 Right(ObjectExprClause(idKey, value))
-              case qualifiedName: QualifiedName =>
-                Right(ObjectExprClause(qualifiedName, value))
               case other =>
-                // This case should never happen due to validation in caller
-                Left(ParseError(t"Expected identifier, qualified name, or dot expression for object field key with = operator but got: $other", keySourcePos.range.start))
+                Left(ParseError(
+                  t"Expected identifier, qualified name, or dot expression for object field key with = operator but got: $other", 
+                  keySourcePos.range.start
+                ))
             }
+          } else {
+            Left(ParseError(t"Unexpected operator in object field: $op", keySourcePos.range.start))
           }
         }
       case Right(t) =>
@@ -1316,12 +1327,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   private def checkAfterField(): Either[ParseError, Unit] =
     this.state.current match {
       case Right(Token.Comma(_)) =>
-        // Collect comments after comma
         advance()
         skipComments()
         Right(())
       case Right(Token.RBrace(_)) =>
-        // Keep the state as is for the closing brace
         Right(())
       case Right(t) =>
         Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
