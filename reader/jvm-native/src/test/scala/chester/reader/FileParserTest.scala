@@ -4,6 +4,7 @@ import chester.syntax.concrete.*
 import munit.FunSuite
 import upickle.default.*
 import chester.i18n.*
+import chester.readerv2.ChesterReaderV2
 import chester.readerv2.LexerV2.DEBUG
 
 import java.nio.charset.StandardCharsets
@@ -20,7 +21,7 @@ class FileParserTest extends FunSuite {
       val expectedExists = Files.exists(expectedFile)
 
       DEBUG.withValue(true) {
-        ChesterReader
+        ChesterReaderV2
           .parseTopLevel(
             FilePath(inputFile.toString),
             ignoreLocation = true
