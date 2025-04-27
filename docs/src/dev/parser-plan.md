@@ -50,7 +50,7 @@ Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
 - ✅ Complex object syntax with multiple key types
 - ✅ Block termination pattern detection
 - ✅ Comment preservation
-- ✅ Operator precedence handling
+- ✅ Operator precedence handling (Handled via flat OpSeq, verification needed)
 
 ### Phase 3: Error Handling (🟡 In Progress)
 - 🟡 Error recovery

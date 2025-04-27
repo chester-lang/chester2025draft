@@ -160,6 +160,21 @@ case class LexerState(
   def clearPendingTokens(): LexerState =
     copy(pendingTokens = Vector.empty)
 
+  // Looks ahead n non-comment/whitespace tokens without advancing state
+  def peek(n: Int = 1): Either[ParseError, Token] = {
+    var lookaheadIndex = index
+    var count = 0
+    while (count < n && lookaheadIndex < tokens.length) {
+      tokens(lookaheadIndex) match {
+        case Right(_: Token.Comment | _: Token.Whitespace) => // Skip
+        case _                                             => count += 1
+      }
+      if (count < n) lookaheadIndex += 1
+    }
+    if (lookaheadIndex < tokens.length) tokens(lookaheadIndex)
+    else tokens.lastOption.getOrElse(Left(ParseError("Unexpected EOF", Pos.zero))) // Default to EOF if out of bounds
+  }
+
   def hasPendingTokens: Boolean = pendingTokens.nonEmpty
 
   def hasPendingComments: Boolean =
@@ -219,7 +234,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       identity,
       t =>
         ParseError(
-          t"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
+          // Use f-interpolator for cleaner formatting
+          f"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
           t.sourcePos.range.start
         )
     )
@@ -729,37 +745,38 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     this.state.current match {
       case Left(err) => Left(err)
       case LBrace(_) =>
-        // Check for empty object or block
-        advance()
-        skipComments()
-        val advance1 = this.state
-        advance1.current match {
-          case Left(err) => Left(err)
-          case RBrace(_) =>
-            // Restore the original state before parsing the empty object
-            this.state = originalState
-            parseObject() // Empty object
-          case Id(_, _) | Sym(_, _) | Str(_, _) =>
-            // Look ahead for = or => to determine if it's an object
-            val tempState = this.state
-            this.state = advance1.advance()
-            skipComments()
-            val afterId = this.state
-            // Restore original state for parsing
-            this.state = tempState
-            afterId.current match {
-              case Left(err)                            => Left(err)
-              case Op(op, _) if op == "=" || op == "=>" =>
-                // Reset state to original
-                this.state = originalState
+        // Peek ahead to differentiate between empty object, block, or object with fields
+        // Check specifically for empty object {} first
+        val stateAfterLBrace = this.state.advance() // Consume {
+        val stateAfterLBraceSkipping = stateAfterLBrace.copy(pendingTokens = Vector.empty) // Temporary state for peeking
+        var peekIndex = stateAfterLBraceSkipping.index
+        while(peekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(peekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
+          peekIndex += 1
+        }
+        val firstTokenAfterBrace = if (peekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(peekIndex) else Left(ParseError("EOF after {", stateAfterLBrace.sourcePos.range.start))
+
+        firstTokenAfterBrace match {
+          case RBrace(_) => // Empty object: {}
+            this.state = originalState // Restore state before LBrace
+            parseObject()
+          case Id(_, _) | Sym(_, _) | Str(_, _) => // Potential object key: { key ...
+            // Need to peek at the token *after* the potential key
+            var afterKeyPeekIndex = peekIndex + 1
+            while(afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(afterKeyPeekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
+                afterKeyPeekIndex += 1
+            }
+            val tokenAfterKey = if (afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(afterKeyPeekIndex) else Left(ParseError("EOF after { key", stateAfterLBrace.sourcePos.range.start))
+
+            tokenAfterKey match { // Peek at token after potential key
+              case Op(op, _) if op == "=" || op == "=>" => // Object: { key = ... } or { key => ... }
+                this.state = originalState // Restore state before LBrace
                 parseObject()
-              case _ =>
-                // Reset state to original
-                this.state = originalState
+              case _ => // Not an object, assume block: { key ... } (where key is just an expr)
+                this.state = originalState // Restore state before LBrace
                 parseBlock()
             }
-          case _ =>
-            // Use the original state
+          case _ => // Anything else after {, assume block: { ... }
+            this.state = originalState // Restore state before LBrace
             parseBlock()
         }
 
@@ -1136,54 +1153,40 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   private def parseBlock(): Either[ParseError, Block] = {
-    val originalState = this.state // Save state to restore newline handling
-    // Enable newLineAfterBlockMeansEnds for all blocks
-    this.state = this.state.withNewLineTermination(true)
-    debug(t"parseBlock: starting with state=${this.state}")
+    // Use withModifiedState to handle the newLineAfterBlockMeansEnds flag change
+    withModifiedState(_.withNewLineTermination(true)) { () =>
+      debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
 
-    val blockResult = this.state.current match {
-      case LBrace(startPos) =>
-        debug("parseBlock: Found opening brace")
-        // Advance past opening brace and skip comments
-        advance()
-        skipComments()
-        val startPosForMeta = startPos // Use brace position for meta start
+      this.state.current match {
+        case LBrace(startPos) =>
+          debug("parseBlock: Found opening brace")
+          advance()
+          skipComments()
+          val startPosForMeta = startPos
 
-        // Call the helper to parse the sequence
-        parseStatementSequence(
-          isTerminator = _.current.exists(_.isInstanceOf[Token.RBrace]),
-          contextDescription = "block"
-        ).flatMap { case (statements, result) => // Use the returned statements/result directly
-          // State should be at the closing brace now
-          this.state.current match {
-            case RBrace(endPos) =>
-              debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
-              val meta = createMeta(Some(startPosForMeta), Some(endPos))
-              advance() // Consume the closing brace
-              Right(Block(statements, result, meta))
-            case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
-            case Left(err) => Left(err)
+          parseStatementSequence(
+            isTerminator = _.current.exists(_.isInstanceOf[Token.RBrace]),
+            contextDescription = "block"
+          ).flatMap { case (statements, result) =>
+            this.state.current match {
+              case RBrace(endPos) =>
+                debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
+                val meta = createMeta(Some(startPosForMeta), Some(endPos))
+                advance() // Consume the closing brace
+                Right(Block(statements, result, meta))
+              case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
+              case Left(err) => Left(err)
+            }
           }
-        }
 
-      case Right(t) =>
-        debug(t"parseBlock: Expected '{' but found $t")
-        Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
-      case Left(err) =>
-        debug(t"parseBlock: Error at start of block: $err")
-        Left(err)
-    }
-
-    // Restore original newline handling state before returning
-    val finalState = this.state // Capture state after parsing
-    this.state = originalState.copy( // Restore index/tokens etc from original
-      index = finalState.index,
-      previousToken = finalState.previousToken,
-      previousNonCommentToken = finalState.previousNonCommentToken,
-      pendingTokens = finalState.pendingTokens,
-      newLineAfterBlockMeansEnds = originalState.newLineAfterBlockMeansEnds // Crucially restore this flag
-    )
-    blockResult // Return the result computed before state restoration
+        case Right(t) =>
+          debug(t"parseBlock: Expected '{' but found $t")
+          Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+        case Left(err) =>
+          debug(t"parseBlock: Error at start of block: $err")
+          Left(err)
+      }
+    } // State is automatically restored after this block
   }
 
   // Helper method to check if whitespace contains a newline
@@ -1779,6 +1782,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       startPosForError = startPos,
       contextDescription = "expression list"
     )
+  }
+
+  // Helper method to temporarily modify the lexer state for a parsing operation
+  private def withModifiedState[T](modify: LexerState => LexerState)(parseAction: () => Either[ParseError, T]): Either[ParseError, T] = {
+    val originalState = this.state
+    this.state = modify(originalState)
+    val result = parseAction()
+    // Restore original state, preserving progress made by parseAction
+    this.state = originalState.copy(
+      index = this.state.index,
+      previousToken = this.state.previousToken,
+      previousNonCommentToken = this.state.previousNonCommentToken,
+      pendingTokens = this.state.pendingTokens
+      // DO NOT restore newLineAfterBlockMeansEnds here, only the original state's value if needed outside
+    )
+    result
   }
 
 }

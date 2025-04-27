@@ -1525,3 +1525,26 @@ During a comprehensive code review to align with Chester's term architecture pri
   - Type-safe implementation
   - Clearer intent with inline comments
   - Better alignment with the unified Term definition approach
+
+## 2025-04-27
+
+### LexerV2 Refactoring and Plan Cleanup
+
+- **LexerV2 Code Refinements**:
+  - Introduced `peek` method in `LexerState` to look ahead without consuming tokens, simplifying logic.
+  - Refactored `parseAtom` to use `peek` for cleaner handling of empty objects `{}` vs block/object start.
+  - Introduced `withModifiedState` helper in `LexerState` to encapsulate temporary state changes (like `newLineAfterBlockMeansEnds`), simplifying `parseBlock`.
+  - Minor cleanup in `expectedError` using f-interpolators.
+
+- **Parser Plan Update**:
+  - Marked Phase 2 (Advanced Features) as fully complete in `parser-plan.md`.
+  - Marked "V1/V2 Semantic Consistency", "Object Expressions", and "Block Termination" priorities as complete.
+  - Updated `parser-implementation.md` to reflect completed status of these features.
+  - Consolidated completed tasks from planning/implementation docs into this devlog entry.
+  - Current focus remains on Phase 3: Error Handling (Recovery, Messages, Debug Info), Source Maps, Test Migration, and Performance Optimization.
+
+- **Files Modified**:
+  - `reader/shared/src/main/scala/chester/readerv2/LexerV2.scala`
+  - `docs/src/dev/parser-plan.md`
+  - `docs/src/dev/parser-implementation.md`
+  - `docs/src/dev/devlog.md`

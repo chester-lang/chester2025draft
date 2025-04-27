@@ -1,93 +1,52 @@
 # Chester Parser Implementation Details
 
-This document covers key implementation strategies in the Chester V2 parser.
+This document covers key implementation strategies in the Chester V2 parser. 
+Refer to `docs/src/dev/devlog.md` for a chronological log of recent improvements.
 
-## Tokenizer Optimizations
+## Core Implementation Details
 
-### UTF-16 Position Handling
-- Simplified position tracking with proper UTF-16 coordinate mapping
-- Support for surrogate pairs and supplementary characters
-- Benefits: reduced memory footprint, better emoji and Unicode handling
-
-### Token Creation and Handling
-- Centralized token creation with lookup tables and specialized handlers
-- Token extractors using common helper functions for consistent behavior
-- Benefits: reduced code duplication, more maintainable parsing logic
-
-### Unicode and Emoji Support
-- Unicode-aware codepoint handling instead of raw character operations
-- Proper surrogate pair handling and position calculation
-- Benefits: correct handling of all Unicode characters including emoji
-
-## Key Parser Components
+### Tokenizer Optimizations
+- **UTF-16 Position Handling**: Simplified tracking with proper UTF-16 coordinate mapping, supporting surrogate pairs.
+- **Token Creation**: Centralized creation with lookup tables and specialized handlers. Extractors use common helpers.
+- **Unicode/Emoji**: Unicode-aware codepoint handling.
 
 ### State Management
-- Comprehensive `LexerState` tracking with context awareness
-- Efficient token handling with pending token collection
-- Preservation of comment and whitespace information
-- Context flags for block termination detection
+- `LexerState` tracks context (e.g., for block termination) and handles pending tokens, comments, and whitespace.
+- **NEW** `peek` method added to `LexerState` for lookahead without consuming tokens.
+- **NEW** `withModifiedState` helper simplifies state manipulation during parsing actions.
 
 ### Comment Handling
-- Optimized comment collection with `skipComments()` and `pullComments()` methods
-- Proper attachment to expressions for documentation preservation
-- Consistent handling across different parsing contexts
-- Metadata merging for comment preservation
+- Optimized collection (`skipComments()`, `pullComments()`) and attachment to expressions.
+- Metadata merging preserves comment information.
 
-### Expression Parsing and Operator Sequences
-- Context-free parsing with uniform symbol treatment
-- **⚠️ IMPORTANT**: Chester parser **intentionally** produces flat OpSeq nodes **without** imposing operator semantics or precedence
-  - This is a **fundamental design principle**, not a limitation
-  - This is **easy to misunderstand** - many developers incorrectly assume precedence handling
-  - The semantic analyzer handles precedence later, not the parser
-- Token-based parsing with proper expression termination detection
+### Expression Parsing (Flat OpSeq)
+- **Key Principle**: Chester V2 parser **intentionally** produces flat `OpSeq` nodes without handling operator precedence. This is done later by the semantic analyzer.
+- Uniform symbol treatment; no special keywords.
 
-### Block Termination Pattern Handling
+### Block Termination (`}\n`)
+- The `}\n` pattern terminates expressions within blocks.
+- `LexerState` tracks context (`newLineAfterBlockMeansEnds` flag).
+- `parseRest()` detects the pattern based on whitespace analysis.
 
-The `}\n` pattern (closing brace followed by newline) is used for terminating expressions:
+### Object Expressions
+- Supports identifier, string literal, and symbol literal keys.
+- Handles both `=` and `=>` operators.
+- Parses comma-separated clauses.
 
-```
-def factorial(n) {
-  if n <= 1 then 1
-  else n * factorial(n - 1)
-}  // <- newline here ends the function definition
+### Function Calls & Block Arguments
+- Context-aware parsing handles blocks used as function arguments.
 
-val result = factorial(5); // Next statement
-```
+### String and Number Parsing
+- Handles various formats (decimal, hex, binary, float) and escape sequences.
 
-Implementation approach:
-- Context tracking in LexerState with `newLineAfterBlockMeansEnds` flag
-- Whitespace analysis to detect newlines after closing braces
-- Pattern detection in `parseRest()` method
-- Uniform treatment for all blocks without special-casing operators
-- Preserves Chester's uniform symbol treatment principles
+## Recent Refinements (See `devlog.md` for details)
 
-### Object Expression Parsing
-- Support for identifier, string literal, and symbol literal keys
-- Handling of both `=` and `=>` operators in object clauses
-- Proper type conversion for different key types
-- Field parsing with comma-separated clauses
-- Comprehensive error reporting for malformed objects
+- **`LexerV2` Refactoring**: `parseAtom` simplified, `peek` added to `LexerState`, `withModifiedState` introduced.
+- **Completed Features**: Object expressions, block termination, and semantic consistency with V1 are fully implemented and verified.
 
-### Function Call and Block Argument Handling
-- Special handling for blocks used as function arguments
-- Context-aware parsing of function calls with block arguments
-- Proper metadata preservation for source positions
-- Consistent handling of nested function calls
+## Future Work (See `parser-plan.md` Phase 3)
 
-## String and Number Parsing
-- Character-by-character parsing with comprehensive escape sequence support
-- Support for various number formats (decimal, hex, binary, floating-point)
-- Robust validation and error reporting
-- Metadata preservation for source positions
-
-## Current Optimizations
-- Token extractors using common helper functions
-- Efficient whitespace and comment handling
-- Context-aware parsing for better performance
-- Reduced memory usage with streamlined token representation
-
-## Future Optimizations
-- Token stream buffering and specialized token handling
-- Error recovery enhancements
-- Further memory usage optimization
-- Performance improvements for large files
+- Error recovery enhancements.
+- Source Maps support.
+- Migration of remaining V1 tests.
+- Performance optimization (token stream buffering, memory usage).
