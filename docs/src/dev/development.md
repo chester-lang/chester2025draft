@@ -31,25 +31,51 @@
 2. **Testing Requirements**
    - **ALWAYS use the following commands for running tests:**
      ```bash
-     # Run all tests
+     # Run all tests from the root project
      sbt rootJVM/test
 
-     # Run a specific test class
+     # Run a specific test class from the root project
      sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+     
+     # You can also run tests for specific modules when needed
+     sbt reader/test
+     sbt semantic/test
+     sbt cli/test
+     
+     # Run specific test classes in modules
+     sbt "reader/testOnly chester.reader.ReaderTest"
+     sbt "semantic/testOnly chester.tyck.TheTyckTest"
+     sbt "cli/testOnly chester.cli.CLITest"
      ```
-   - **DO NOT** use other project paths like `cli/test`, `semantic/test`, etc. as these may not execute tests correctly
-   - **DO NOT** run tests from subdirectories - always run from the root project directory
-   - **NEVER** use commands like `cd reader && sbt test` as this will not work correctly
+   - **DO NOT** navigate into subdirectories to run tests (e.g., `cd reader && sbt test`)
+   - **ALWAYS** run tests from the root project directory
    - ⚠️ **CRITICAL: NEVER use the `-z` test filter option** ⚠️
+     - `-z` is NOT the correct syntax for filtering tests in MUnit
      - This option is broken and produces unreliable results
      - Tests may appear to pass when they actually fail
      - This can lead to false confidence in your changes
-   - ⚠️ **CRITICAL: NEVER use `--` to pass arguments to tests** ⚠️
-     - ⚠️ **ABSOLUTELY PROHIBITED**: `sbt "rootJVM/testOnly -- -t MyTest"`
-     - ⚠️ **ABSOLUTELY PROHIBITED**: `sbt "rootJVM/testOnly -- -only file.chester"`
-     - ⚠️ **DANGEROUS**: Using `--` with ANY arguments will cause tests to run incorrectly
-     - ⚠️ **DO NOT ATTEMPT**: This is strictly forbidden and will produce incorrect results
-     - There is NO VALID USE CASE for passing arguments after `--` to any test
+     - ScalaTest uses `-z` for filtering, but MUnit uses `--tests=` instead
+   - ⚠️ **IMPORTANT: Only use correct MUnit filter syntax with `--`** ⚠️
+     - When filtering tests, always use proper MUnit syntax:
+     - **CORRECT MUnit syntax examples:**
+       ```bash
+       # Filter by test name
+       sbt "rootJVM/testOnly -- --tests=myTestName"
+       
+       # Filter by glob pattern
+       sbt "rootJVM/testOnly -- *MyTest"
+       ```
+     - **INCORRECT syntax from other frameworks (DO NOT USE):**
+       ```bash
+       # ScalaTest style (WRONG with MUnit)
+       sbt "rootJVM/testOnly -- -t MyTest"
+       
+       # JUnit style (WRONG with MUnit)
+       sbt "rootJVM/testOnly -- -n MyTest"
+       
+       # Custom incorrect style
+       sbt "rootJVM/testOnly -- -only file.chester"
+       ```
    - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
    - Add new tests for new functionality
