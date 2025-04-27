@@ -372,58 +372,76 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
-  private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, Expr] =
+  private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, Expr] = {
     // this.state is already set correctly
     parseBlock().flatMap { block =>
       // parseBlock has already updated this.state
       // Create appropriate expression based on context
-      val newExpr = expr match {
+      expr match {
         case funcCall: FunctionCall =>
-          debug("parseRest: Adding block as argument to existing function call")
-          FunctionCall(
-            funcCall,
-            Tuple(Vector(block), createMeta(None, None)),
-            createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
-          )
+          // Check if this is a case like Vector[T]{...} - don't wrap block as an argument
+          val isFunctionCallWithTypeParams = funcCall.function.isInstanceOf[ConcreteIdentifier] && 
+                                           funcCall.telescope.isInstanceOf[ListExpr]
+          
+          if (isFunctionCallWithTypeParams) {
+            debug("parseRest: Found generic function call with block, treating as separate elements")
+            // Return an OpSeq with both expressions
+            val updatedTerms = terms :+ block
+            debug(t"parseRest: After block following generic function, terms: $updatedTerms")
+            
+            parseRest(block).map {
+              case opSeq: OpSeq => 
+                debug(t"OpSeq construction for generic function with block: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+              case otherExpr => 
+                debug(t"Simple OpSeq construction for generic function with block: updatedTerms=${updatedTerms}")
+                OpSeq(updatedTerms, None)
+            }
+          } else {
+            debug("parseRest: Adding block as argument to existing function call")
+            val newFuncCall = FunctionCall(
+              funcCall,
+              Tuple(Vector(block), createMeta(None, None)),
+              createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+            )
+            
+            if (this.state.isAtTerminator) {
+              Right(newFuncCall)
+            } else {
+              parseRest(newFuncCall)
+            }
+          }
         case id: ConcreteIdentifier =>
           debug("parseRest: Creating function call with block argument from identifier")
-          FunctionCall(
+          val funcCall = FunctionCall(
             id,
             Tuple(Vector(block), createMeta(None, None)),
             createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
           )
+          
+          if (this.state.isAtTerminator) {
+            Right(funcCall)
+          } else {
+            parseRest(funcCall)
+          }
         case _ =>
           debug("parseRest: Default handling for block after expression")
-          block
-      }
-
-      debug(t"handleBlockArgument: Created expression $newExpr")
-
-      // Handle function calls directly
-      if (newExpr.isInstanceOf[FunctionCall]) {
-        debug("parseRest: Returning function call with block directly")
-
-        if (this.state.isAtTerminator) {
-          Right(newExpr)
-        } else {
-          parseRest(newExpr)
-        }
-      } else {
-        // Handle other expressions via OpSeq
-        val updatedTerms = terms.dropRight(1) :+ newExpr
-        debug(t"parseRest: After handling block argument, terms: $updatedTerms")
-
-        parseRest(newExpr).map {
-          case opSeq: OpSeq =>
-            debug(t"OpSeq construction in handleBlockArgument: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
-            debug(t"Creating OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-            OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-          case _ =>
-            debug(t"Simple OpSeq construction in handleBlockArgument: updatedTerms=${updatedTerms}")
-            OpSeq(updatedTerms, None)
-        }
+          val updatedTerms = terms :+ block
+          debug(t"parseRest: After block following other expression, terms: $updatedTerms")
+          
+          parseRest(block).map {
+            case opSeq: OpSeq =>
+              debug(t"OpSeq construction in handleBlockArgument: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              debug(t"Creating OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+              OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
+            case _ =>
+              debug(t"Simple OpSeq construction in handleBlockArgument: updatedTerms=${updatedTerms}")
+              OpSeq(updatedTerms, None)
+          }
       }
     }
+  }
 
   /** Handle colon expressions - uses skipComments() and pullComments() for comment handling
     */
@@ -528,6 +546,27 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                     OpSeq(updatedTerms, None)
                 }
               }
+            case Right(Token.LBrace(_)) =>
+              // Generic type parameters followed by a block: id[T]{...}
+              debug("parseRest: Found identifier with generic type parameters followed by a block")
+              val typeParamsList: ListExpr = typeParams
+              val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
+              
+              parseBlock().flatMap { block =>
+                // Don't create a function call - instead just add both expressions to the sequence
+                val updatedTerms = terms :+ typeCall :+ block
+                debug(t"parseRest: After block following generic type, terms: $updatedTerms")
+                
+                parseRest(block).map {
+                  case opSeq: OpSeq => 
+                    debug(t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                    debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                    OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                  case otherExpr => 
+                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}")
+                    OpSeq(updatedTerms, None)
+                }
+              }
             case _ =>
               // Just generic type parameters: id[T]
               debug("parseRest: Found identifier with generic type parameters")
@@ -597,9 +636,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             debug(t"handleIdentifierInRest: Failed object parse, assuming block arg after identifier $text")
             parseBlock().flatMap { block =>
               val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-              // Treat `id {block}` as `id(block)` in V2 for OpSeq consistency?
-              // Or treat it as `id block` elements in OpSeq like V1?
-              // Let's try treating as `id block` elements for closer V1 compatibility in OpSeq.
+              // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
               val updatedTerms = terms :+ id :+ block
               debug(t"parseRest: After block following identifier, terms: $updatedTerms")
               parseRest(block).map {
