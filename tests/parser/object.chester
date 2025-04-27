@@ -1,6 +1,6 @@
 {
   boot.loader.systemd-boot.enable = true,
-  boot.kernelModules = [ ].
+  boot.kernelModules = [ ],
   console = {
     font = "Lat2-Terminus16",
     keyMap = "us",

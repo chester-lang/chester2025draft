@@ -28,25 +28,17 @@ Block(
             telescope = Vector(),
             meta = None
           ),
-          value = OpSeq(
-            seq = Vector(
-              ListExpr(terms = Vector(), meta = None),
-              Identifier(name = ".", meta = None),
-              Identifier(name = "console", meta = None),
-              Identifier(name = "=", meta = None),
-              ObjectExpr(
-                clauses = Vector(
-                  ObjectExprClause(
-                    key = Identifier(name = "font", meta = None),
-                    value = StringLiteral(value = "Lat2-Terminus16", meta = None)
-                  ),
-                  ObjectExprClause(
-                    key = Identifier(name = "keyMap", meta = None),
-                    value = StringLiteral(value = "us", meta = None)
-                  )
-                ),
-                meta = None
-              )
+          value = ListExpr(terms = Vector(), meta = None)
+        ),
+        ObjectExprClause(
+          key = Identifier(name = "console", meta = None),
+          value = ObjectExpr(
+            clauses = Vector(
+              ObjectExprClause(
+                key = Identifier(name = "font", meta = None),
+                value = StringLiteral(value = "Lat2-Terminus16", meta = None)
+              ),
+              ObjectExprClause(key = Identifier(name = "keyMap", meta = None), value = StringLiteral(value = "us", meta = None))
             ),
             meta = None
           )
