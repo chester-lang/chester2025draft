@@ -1733,7 +1733,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Now, determine the starting position from the current token
     val startPos = this.state.current match {
       case Right(token) => token.sourcePos
-      case Left(err)    => err.sourcePos.getOrElse(SourcePos(source, RangeInFile(Pos.zero, Pos.zero))) // Fallback for error without pos
+      case Left(err)    => return Left(err)
     }
     // The state is already past leading comments, proceed to parse sequence
     parseElementSequence(
