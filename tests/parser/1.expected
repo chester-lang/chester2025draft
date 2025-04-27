@@ -4,6 +4,7 @@ Block(
       seq = Vector(
         Identifier(name = "cons2", meta = None),
         Identifier(name = "=", meta = None),
+        Identifier(name = "Cons", meta = None),
         ObjectExpr(
           clauses = Vector(
             ObjectExprClause(key = Identifier(name = "head", meta = None), value = IntegerLiteral(value = 0, meta = None)),
