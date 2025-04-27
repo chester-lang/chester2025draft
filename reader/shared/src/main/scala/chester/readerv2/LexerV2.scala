@@ -739,8 +739,28 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             advance()
             skipComments()
             
-            // Create the keyword expression
-            Right(Keyword(keyName, Vector(), createMeta(Some(sourcePos), Some(idSourcePos))))
+            // Check for arguments (telescope)
+            var telescope = Vector.empty[Tuple]
+            
+            def parseKeywordArguments(): Either[ParseError, Vector[Tuple]] = {
+              // Check for tuple arguments like (1,2,3)
+              this.state.current match {
+                case Right(Token.LParen(_)) =>
+                  // Parse tuple arguments
+                  parseTuple().flatMap { tupleArg =>
+                    telescope = telescope :+ tupleArg
+                    // Try to parse more arguments
+                    parseKeywordArguments()
+                  }
+                case _ =>
+                  // No more arguments
+                  Right(telescope)
+              }
+            }
+            
+            parseKeywordArguments().map { finalTelescope =>
+              Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos)))
+            }
             
           case Right(token) =>
             Left(ParseError(s"Expected identifier after '#'", token.sourcePos.range.start))
