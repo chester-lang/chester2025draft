@@ -15,41 +15,35 @@ import scala.annotation.tailrec
 // Token extractors for cleaner pattern matching
 private object TokenExtractors {
   import chester.readerv2.Token.*
-  // Define extractors using pattern matching
+  
   object Id {
-    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
-      case Right(Token.Identifier(chars, pos)) => (chars, pos)
-    }
+    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = 
+      PartialFunction.condOpt(token) { case Right(Token.Identifier(chars, pos)) => (chars, pos) }
   }
 
   object Op {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-      case Right(Token.Operator(op, pos)) => (op, pos)
-    }
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+      PartialFunction.condOpt(token) { case Right(Token.Operator(op, pos)) => (op, pos) }
   }
 
   object Str {
-    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = PartialFunction.condOpt(token) {
-      case Right(Token.StringLiteral(chars, pos)) => (chars, pos)
-    }
+    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = 
+      PartialFunction.condOpt(token) { case Right(Token.StringLiteral(chars, pos)) => (chars, pos) }
   }
 
   object Sym {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-      case Right(Token.SymbolLiteral(value, pos)) => (value, pos)
-    }
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+      PartialFunction.condOpt(token) { case Right(Token.SymbolLiteral(value, pos)) => (value, pos) }
   }
 
   object Int {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-      case Right(Token.IntegerLiteral(value, pos)) => (value, pos)
-    }
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+      PartialFunction.condOpt(token) { case Right(Token.IntegerLiteral(value, pos)) => (value, pos) }
   }
 
   object Rat {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = PartialFunction.condOpt(token) {
-      case Right(Token.RationalLiteral(value, pos)) => (value, pos)
-    }
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+      PartialFunction.condOpt(token) { case Right(Token.RationalLiteral(value, pos)) => (value, pos) }
   }
 
   // Helper for source position extractors - consolidated into a single implementation
@@ -59,38 +53,17 @@ private object TokenExtractors {
   }
 
   // Define all delimiter token extractors using the posExtract helper
-  object LParen {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t)
-  }
-
-  object RParen {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t)
-  }
-
-  object LBrace {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t)
-  }
-
-  object RBrace {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t)
-  }
-
-  object LBracket {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t)
-  }
-
-  object RBracket {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t)
-  }
-
-  object Comma {
-    def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t)
-  }
+  object LParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t) }
+  object RParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
+  object LBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
+  object RBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
+  object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
+  object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
+  object Comma { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
 
   object Err {
-    def unapply(token: Either[ParseError, Token]): Option[ParseError] = PartialFunction.condOpt(token) { case Left(err) =>
-      err
-    }
+    def unapply(token: Either[ParseError, Token]): Option[ParseError] = 
+      PartialFunction.condOpt(token) { case Left(err) => err }
   }
 }
 
@@ -184,41 +157,39 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   var state: LexerState = initState
 
-  private def debug(msg: => String): Unit = if (DEBUG.get) println(t"[DEBUG] $msg")
+  private def debug(msg: => String): Unit = if (DEBUG.get) println(s"[DEBUG] $msg")
 
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
 
   private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
     def getTokenType(t: Token): String = t match {
-      case _: Token.Identifier      => t"identifier"
-      case _: Token.IntegerLiteral  => t"integer literal"
-      case _: Token.RationalLiteral => t"rational literal"
-      case _: Token.StringLiteral   => t"string literal"
-      case _: Token.Operator        => t"operator"
-      case _: Token.LParen          => t"left parenthesis '('"
-      case _: Token.RParen          => t"right parenthesis ')'"
-      case _: Token.LBrace          => t"left brace '{'"
-      case _: Token.RBrace          => t"right brace '}'"
-      case _: Token.LBracket        => t"left bracket '['"
-      case _: Token.RBracket        => t"right bracket ']'"
-      case _: Token.Colon           => t"colon ':'"
-      case _: Token.Comma           => t"comma ','"
-      case _: Token.Dot             => t"dot '.'"
-      case _: Token.Semicolon       => t"semicolon"
-      case _: Token.EOF             => t"end of file"
-      case _: Token.Whitespace      => t"whitespace"
-      case _                        => t"unknown token"
+      case _: Token.Identifier      => "identifier"
+      case _: Token.IntegerLiteral  => "integer literal"
+      case _: Token.RationalLiteral => "rational literal"
+      case _: Token.StringLiteral   => "string literal"
+      case _: Token.Operator        => "operator"
+      case _: Token.LParen          => "left parenthesis '('"
+      case _: Token.RParen          => "right parenthesis ')'"
+      case _: Token.LBrace          => "left brace '{'"
+      case _: Token.RBrace          => "right brace '}'"
+      case _: Token.LBracket        => "left bracket '['"
+      case _: Token.RBracket        => "right bracket ']'"
+      case _: Token.Colon           => "colon ':'"
+      case _: Token.Comma           => "comma ','"
+      case _: Token.Dot             => "dot '.'"
+      case _: Token.Semicolon       => "semicolon"
+      case _: Token.EOF             => "end of file"
+      case _: Token.Whitespace      => "whitespace"
+      case _                        => "unknown token"
     }
 
     token.fold(
       identity,
-      t =>
-        ParseError(
-          // Use f-interpolator for cleaner formatting
-          f"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
-          t.sourcePos.range.start
-        )
+      t => ParseError(
+        f"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
+        t.sourcePos.range.start
+      )
     )
   }
 
@@ -1237,14 +1208,24 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   private def parseFields(clauses: Vector[ObjectClause]): Either[ParseError, Vector[ObjectClause]] =
     this.state.current match {
-      case Right(Token.RBrace(_)) =>
-        Right(clauses)
+      case Right(Token.RBrace(_)) => Right(clauses)
       case Right(Token.Identifier(chars, idSourcePos)) =>
         val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
         advance()
-        
-        parseIdentifierField(identifier, idSourcePos, clauses)
-        
+        this.state.current match {
+          case Right(Token.Dot(_)) =>
+            handleDotCall(this.state.sourcePos, Vector(identifier)).flatMap { dotExpr =>
+              skipComments()
+              parseField(dotExpr, idSourcePos).flatMap(clause => 
+                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+              )
+            }
+          case _ =>
+            skipComments()
+            parseField(identifier, idSourcePos).flatMap(clause => 
+              checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
+            )
+        }
       case Right(Token.StringLiteral(chars, strSourcePos)) =>
         val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
         advance()
@@ -1252,7 +1233,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseField(stringLiteral, strSourcePos).flatMap(clause => 
           checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
         )
-        
       case Right(Token.SymbolLiteral(value, symSourcePos)) =>
         val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
         advance()
@@ -1260,36 +1240,10 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseField(symbolLiteral, symSourcePos).flatMap(clause => 
           checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
         )
-        
       case Right(t) =>
         Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
-        
-      case Left(err) =>
-        Left(err)
+      case Left(err) => Left(err)
     }
-
-  /**
-   * Handle identifier fields, including potential dot notation
-   */
-  private def parseIdentifierField(identifier: ConcreteIdentifier, idSourcePos: SourcePos, 
-                                  clauses: Vector[ObjectClause]): Either[ParseError, Vector[ObjectClause]] = {
-    this.state.current match {
-      case Right(Token.Dot(_)) =>
-        // Handle dot notation (x.y)
-        handleDotCall(this.state.sourcePos, Vector(identifier)).flatMap { dotExpr =>
-          skipComments()
-          parseField(dotExpr, idSourcePos).flatMap(clause => 
-            checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-          )
-        }
-      case _ =>
-        // Standard identifier handling
-        skipComments()
-        parseField(identifier, idSourcePos).flatMap(clause => 
-          checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-        )
-    }
-  }
 
   private def parseField(key: Expr, keySourcePos: SourcePos): Either[ParseError, ObjectClause] =
     this.state.current match {
@@ -1299,7 +1253,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           if (op == "=>") {
             Right(ObjectExprClauseOnValue(key, value))
           } else if (op == "=") {
-            // Create appropriate clause based on key type
             key match {
               case id: ConcreteIdentifier =>
                 Right(ObjectExprClause(id, value))
@@ -1309,19 +1262,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                 val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                 Right(ObjectExprClause(idKey, value))
               case other =>
-                Left(ParseError(
-                  t"Expected identifier, qualified name, or dot expression for object field key with = operator but got: $other", 
-                  keySourcePos.range.start
-                ))
+                Left(ParseError(t"Expected identifier, qualified name, or dot expression for key with = operator: $other", keySourcePos.range.start))
             }
           } else {
             Left(ParseError(t"Unexpected operator in object field: $op", keySourcePos.range.start))
           }
         }
-      case Right(t) =>
-        Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
-      case Left(err) =>
-        Left(err)
+      case Right(t) => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+      case Left(err) => Left(err)
     }
 
   private def checkAfterField(): Either[ParseError, Unit] =
@@ -1330,12 +1278,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         advance()
         skipComments()
         Right(())
-      case Right(Token.RBrace(_)) =>
-        Right(())
-      case Right(t) =>
-        Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-      case Left(err) =>
-        Left(err)
+      case Right(Token.RBrace(_)) => Right(())
+      case Right(t) => Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+      case Left(err) => Left(err)
     }
 
   private def parseObject(): Either[ParseError, ObjectExpr] = {
