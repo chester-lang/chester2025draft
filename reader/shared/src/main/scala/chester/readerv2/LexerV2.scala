@@ -1225,6 +1225,40 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
+  @tailrec
+  private def parseElements(exprs: Vector[Expr], sourcePos: SourcePos): Either[ParseError, Vector[Expr]] =
+    if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
+      Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
+    } else
+      this.state.current match {
+        case RBracket(_) => Right(exprs)
+        case Comma(_) =>
+          advance()
+          skipComments()
+          parseElements(exprs,sourcePos)
+        case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
+          skipComments()
+          parseElements(exprs,sourcePos)
+        case _ =>
+          // We're already in the right state (this.state), so parse the expression
+          parseExpr() match {
+            case Left(err) => Left(err)
+            case Right(expr) =>
+              // Skip comments after the expression
+              skipComments()
+
+              // Check what follows the expression
+              this.state.current match {
+                case RBracket(_) => Right(exprs :+ expr)
+                case Comma(_) =>
+                  advance()
+                  skipComments()
+                  parseElements(exprs :+ expr,sourcePos)
+                case _ => Left(expectedError("',' or ']' in list", this.state.current))
+              }
+          }
+      }
+
   private def parseList(): Either[ParseError, ListExpr] = {
 
     // Skip comments before the list
@@ -1236,41 +1270,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         advance()
         skipComments()
 
-        @tailrec
-        def parseElements(exprs: Vector[Expr]): Either[ParseError, Vector[Expr]] =
-          if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
-            Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
-          } else
-            this.state.current match {
-              case RBracket(_) => Right(exprs)
-              case Comma(_) =>
-                advance()
-                skipComments()
-                parseElements(exprs)
-              case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
-                skipComments()
-                parseElements(exprs)
-              case _ =>
-                // We're already in the right state (this.state), so parse the expression
-                parseExpr() match {
-                  case Left(err)   => Left(err)
-                  case Right(expr) =>
-                    // Skip comments after the expression
-                    skipComments()
-
-                    // Check what follows the expression
-                    this.state.current match {
-                      case RBracket(_) => Right(exprs :+ expr)
-                      case Comma(_) =>
-                        advance()
-                        skipComments()
-                        parseElements(exprs :+ expr)
-                      case _ => Left(expectedError("',' or ']' in list", this.state.current))
-                    }
-                }
-            }
-
-        parseElements(Vector.empty).flatMap { exprs =>
+        parseElements(Vector.empty,sourcePos).flatMap { exprs =>
           this.state.current match {
             case RBracket(endPos) =>
               // Get comments that were collected during parsing
