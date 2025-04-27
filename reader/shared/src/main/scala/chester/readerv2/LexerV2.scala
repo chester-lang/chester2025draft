@@ -272,9 +272,45 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Main token dispatch
     this.state.current match {
       case Right(Token.LBrace(braceSourcePos)) =>
-        debug("parseRest: Found LBrace after expression, treating as block argument")
-        // this.state is already set correctly
-        handleBlockArgument(expr, localTerms, braceSourcePos)
+        debug(t"parseRest: Found LBrace after expression $expr, attempting object parse first.")
+        val originalState = this.state // Save state before attempting object parse
+
+        // Try parsing as an object
+        parseObject() match {
+          case Right(objExpr) =>
+            debug(t"parseRest: Successfully parsed as ObjectExpr: $objExpr")
+            // Check if the preceding expression allows an object argument
+            expr match {
+              case id: ConcreteIdentifier =>
+                debug(t"parseRest: Preceding expr is Identifier $id, creating FunctionCall with object arg.")
+                val funcCall = FunctionCall(
+                  id,
+                  Tuple(Vector(objExpr), createMeta(None, None)), // Wrap object in a Tuple
+                  createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+                )
+                // parseObject advanced state, now continue parsing after the object
+                parseRest(funcCall) // Recurse with the new FunctionCall
+              case funcCall: FunctionCall =>
+                 debug(t"parseRest: Preceding expr is FunctionCall $funcCall, adding object as another argument.")
+                 // This assumes the object is an additional argument group like f(a){b=1}
+                 val newFuncCall = FunctionCall(
+                   funcCall,
+                   Tuple(Vector(objExpr), createMeta(None, None)),
+                   createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+                 )
+                 // parseObject advanced state, now continue parsing after the object
+                 parseRest(newFuncCall) // Recurse with the new FunctionCall
+              case _ =>
+                debug(t"parseRest: Preceding expr $expr doesn't support object arg directly. Falling back to block parse.")
+                this.state = originalState // Restore state
+                handleBlockArgument(expr, localTerms, braceSourcePos) // Treat as block
+            }
+
+          case Left(_) => // Failed to parse as object
+            debug("parseRest: Failed to parse as ObjectExpr, falling back to block parse.")
+            this.state = originalState // Restore state before trying block parse
+            handleBlockArgument(expr, localTerms, braceSourcePos) // Treat as block
+        }
 
       // Colon handling (type annotations, etc)
       case Right(Token.Colon(sourcePos)) =>
