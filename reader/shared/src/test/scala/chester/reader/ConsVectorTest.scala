@@ -8,10 +8,7 @@ class ConsVectorTest extends FunSuite {
   test("Cons extending Vector with head and tail") {
     val input = "Cons[n, T] <: Vector[succ(n), T] { head: T; tail: Vector[n, T]; }"
     
-    // Run with V1 parser and print the result with pprint
-    val result = parseV1(input)
-    pprint.pprintln(result, width = 80, height = 1000)
-    
+    // Just define the expected structure without printing
     val expected = OpSeq(
       seq = Vector(
         FunctionCall(
