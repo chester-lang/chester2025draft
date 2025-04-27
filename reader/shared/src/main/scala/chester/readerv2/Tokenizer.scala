@@ -83,15 +83,15 @@ class Tokenizer(src: Source) {
 
     val start = pos
     val c = text.codePointAt(pos)
-    pos += Character.charCount(c)
-    col += 1
-    utf16Pos += (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
+    val len = Character.charCount(c)
+    pos += len; col += 1; utf16Pos += (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
 
     if (Character.isSupplementaryCodePoint(c)) {
       if (isIdentifierFirst(c)) parseIdent(String.valueOf(Character.toChars(c)), start)
       else err(t"Unexpected character: ${String.valueOf(Character.toChars(c))}", start)
     } else
       c.toChar match {
+        case '#'                            => tok(Token.Hash.apply, start)
         case c if tokens.contains(c)        => tok(tokens(c), start)
         case '"'                            => parseStr(start)
         case '\''                           => tok(Token.SymbolLiteral(consume(c => c.isLetterOrDigit || c == '_'), _), start)
@@ -218,8 +218,7 @@ class Tokenizer(src: Source) {
       val c = text.codePointAt(pos)
       val len = Character.charCount(c)
       sb.append(text.substring(pos, pos + len))
-      pos += len; col += 1
-      utf16Pos += (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
+      pos += len; col += 1; utf16Pos += (if (Character.isSupplementaryCodePoint(c)) 2 else 1)
     }
     tok(Token.Identifier(Vector(StringChar(sb.toString, mkPos(start, pos))), _), start)
   }

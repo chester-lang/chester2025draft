@@ -143,8 +143,8 @@ case class LexerState(
   // Helper methods for common state checks
   def isAtTerminator: Boolean = current.exists(t =>
     t.isInstanceOf[Token.EOF] || t.isInstanceOf[Token.RParen] ||
-      t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
-      t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
+    t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
+    t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
 
   // Methods for handling pending tokens
@@ -224,7 +224,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case _: Token.Colon           => t"colon ':'"
       case _: Token.Comma           => t"comma ','"
       case _: Token.Dot             => t"dot '.'"
-      case _: Token.Semicolon       => t"semicolon ';'"
+      case _: Token.Semicolon       => t"semicolon"
       case _: Token.EOF             => t"end of file"
       case _: Token.Whitespace      => t"whitespace"
       case _                        => t"unknown token"
@@ -852,8 +852,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
   private def isTerminator(token: Token): Boolean = token match {
-    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon | _: Token.EOF => true
-    case _                                                                                                          => false
+    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon => true
+    case _: Token.EOF => true
+    case _         => false
   }
 
   // Helper to check if current state has a terminator
@@ -1777,8 +1778,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
     // The state is already past leading comments, proceed to parse sequence
     parseElementSequence(
-      closingTokenPredicate = _.isInstanceOf[Token.EOF], // Expect EOF at the end
-      allowSemicolon = true, // Allow semicolons as separators
+      closingTokenPredicate = _.isInstanceOf[Token.EOF],
+      allowSemicolon = true,
       startPosForError = startPos,
       contextDescription = "expression list"
     )
