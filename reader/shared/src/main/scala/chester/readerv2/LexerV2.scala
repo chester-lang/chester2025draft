@@ -740,15 +740,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             skipComments()
             
             // Check for arguments (telescope)
-            var telescope = Vector.empty[Tuple]
+            var telescope = Vector.empty[MaybeTelescope]
             
-            def parseKeywordArguments(): Either[ParseError, Vector[Tuple]] = {
-              // Check for tuple arguments like (1,2,3)
+            def parseKeywordArguments(): Either[ParseError, Vector[MaybeTelescope]] = {
+              // Check for tuple arguments like (1,2,3) or list arguments like [qaq]
               this.state.current match {
                 case Right(Token.LParen(_)) =>
                   // Parse tuple arguments
                   parseTuple().flatMap { tupleArg =>
                     telescope = telescope :+ tupleArg
+                    // Try to parse more arguments
+                    parseKeywordArguments()
+                  }
+                case Right(Token.LBracket(_)) =>
+                  // Parse list arguments
+                  parseList().flatMap { listArg =>
+                    telescope = telescope :+ listArg
                     // Try to parse more arguments
                     parseKeywordArguments()
                   }

@@ -56,6 +56,6 @@ class KeywordTest extends FunSuite {
       ),
       meta = None
     )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 }
