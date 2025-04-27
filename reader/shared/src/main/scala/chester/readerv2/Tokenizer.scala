@@ -211,9 +211,12 @@ class Tokenizer(src: Source) {
   private def parseIdent(initial: String, start: Int): Either[ParseError, Token] = {
     val sb = new StringBuilder(initial)
     while (
-      pos < text.length && (text.charAt(pos).isLetterOrDigit || text.charAt(pos) == '_' ||
-        (pos < text.length - 1 && Character.isSupplementaryCodePoint(text.codePointAt(pos)) &&
-          isIdentifierPart(text.codePointAt(pos))))
+      pos < text.length && (
+        if (Character.isSupplementaryCodePoint(text.codePointAt(pos)))
+          isIdentifierPart(text.codePointAt(pos))
+        else
+          text.charAt(pos).isLetterOrDigit || text.charAt(pos) == '_' || isIdentifierPart(text.codePointAt(pos))
+      )
     ) {
       val c = text.codePointAt(pos)
       val len = Character.charCount(c)
