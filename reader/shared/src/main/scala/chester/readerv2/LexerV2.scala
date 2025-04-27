@@ -725,7 +725,30 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     this.state.current match {
       case Left(err) => Left(err)
-      case LBrace(_) =>
+
+      case Right(Token.Hash(sourcePos)) =>
+        // Advance past the hash
+        advance()
+        
+        // We expect an identifier to follow the hash
+        this.state.current match {
+          case Right(Token.Identifier(chars, idSourcePos)) =>
+            val keyName = charsToString(chars)
+            
+            // Advance past the identifier
+            advance()
+            skipComments()
+            
+            // Create the keyword expression
+            Right(Keyword(keyName, Vector(), createMeta(Some(sourcePos), Some(idSourcePos))))
+            
+          case Right(token) =>
+            Left(ParseError(s"Expected identifier after '#'", token.sourcePos.range.start))
+            
+          case Left(err) => Left(err)
+        }
+
+      case Right(Token.LBrace(braceSourcePos)) =>
         // Peek ahead to differentiate between empty object, block, or object with fields
         // Check specifically for empty object {} first
         val stateAfterLBrace = this.state.advance() // Consume {
