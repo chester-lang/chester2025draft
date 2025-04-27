@@ -3,7 +3,7 @@ package chester.reader
 import chester.syntax.concrete.Identifier
 import munit.FunSuite
 
-class SymbolTest  extends FunSuite{
+class SymbolTest extends FunSuite {
 
   test("systemd-sth") {
     val input = "systemd-sth"
@@ -12,7 +12,7 @@ class SymbolTest  extends FunSuite{
         name = "systemd-sth",
         meta = None
       )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
 }
