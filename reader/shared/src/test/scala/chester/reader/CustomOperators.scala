@@ -54,7 +54,7 @@ class CustomOperators extends FunSuite{
         result = None,
         meta = None
       )
-    parseAndCheckV1(input, expected)
+    parseAndCheckBoth(input, expected)
   }
 
 }
