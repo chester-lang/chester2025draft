@@ -851,91 +851,91 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     case _                                                     => false
   }
 
+  @tailrec
+  private def parseElements1(exprs: Vector[Expr], maxExprs: Int): Either[ParseError, Vector[Expr]] =
+    if (exprs.length >= maxExprs) {
+      Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", this.state.sourcePos.range.start))
+    } else {
+      debug(t"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${this.state.current}")
+      this.state.current match {
+        case Right(token) if isRightDelimiter(token) =>
+          debug("Found right delimiter after expression")
+          Right(exprs)
+        case Right(_: Token.Comment | _: Token.Whitespace) =>
+          // Skip comments and whitespace
+          skipComments()
+          parseElements1(exprs, maxExprs)
+        case Right(_: Token.Comma | _: Token.Semicolon) =>
+          debug("Found comma or semicolon, skipping")
+          // Skip any comments after comma/semicolon
+          advance()
+          skipComments()
+          parseElements1(exprs, maxExprs)
+        case _ =>
+          debug("Parsing expression")
+          parseExpr() match {
+            case Left(err) => Left(err)
+            case Right(expr) =>
+              // Skip comments after the expression
+              skipComments()
+              // Comments will be pulled later if needed
+
+              // Check if we've reached a terminator
+              this.state.current match {
+                case Right(token) if isRightDelimiter(token) =>
+                  // Get any collected comments
+                  val comments = pullComments()
+                  // Attach comments to the expression if any
+                  val updatedExpr = if (comments.nonEmpty) {
+                    expr.updateMeta { meta =>
+                      val newMeta = createMetaWithComments(
+                        meta.flatMap(_.sourcePos),
+                        Vector.empty,
+                        comments.collect { case c: Comment => c }
+                      )
+                      // Merge with existing meta
+                      mergeMeta(meta, newMeta)
+                    }
+                  } else {
+                    expr
+                  }
+                  Right(exprs :+ updatedExpr)
+
+                case Right(_: Token.Comma | _: Token.Semicolon) =>
+                  debug("Found comma or semicolon after expression")
+                  // Get any collected comments
+                  val comments = pullComments()
+                  // Attach comments to the expression if any
+                  val updatedExpr = if (comments.nonEmpty) {
+                    expr.updateMeta { meta =>
+                      val newMeta = createMetaWithComments(
+                        meta.flatMap(_.sourcePos),
+                        Vector.empty,
+                        comments.collect { case c: Comment => c }
+                      )
+                      // Merge with existing meta
+                      mergeMeta(meta, newMeta)
+                    }
+                  } else {
+                    expr
+                  }
+                  advance()
+                  skipComments()
+                  parseElements1(exprs :+ updatedExpr, maxExprs)
+
+                case _ =>
+                  // We haven't reached a terminator, treat this as a parsing error
+                  Left(ParseError("Expected delimiter after expression", this.state.sourcePos.range.start))
+              }
+          }
+      }
+    }
+
   def parseExprList(): Either[ParseError, Vector[Expr]] = {
     // Skip any comments at the start
     skipComments()
 
-    @tailrec
-    def parseElements(exprs: Vector[Expr], maxExprs: Int): Either[ParseError, Vector[Expr]] =
-      if (exprs.length >= maxExprs) {
-        Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", this.state.sourcePos.range.start))
-      } else {
-        debug(t"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${this.state.current}")
-        this.state.current match {
-          case Right(token) if isRightDelimiter(token) =>
-            debug("Found right delimiter after expression")
-            Right(exprs)
-          case Right(_: Token.Comment | _: Token.Whitespace) =>
-            // Skip comments and whitespace
-            skipComments()
-            parseElements(exprs, maxExprs)
-          case Right(_: Token.Comma | _: Token.Semicolon) =>
-            debug("Found comma or semicolon, skipping")
-            // Skip any comments after comma/semicolon
-            advance()
-            skipComments()
-            parseElements(exprs, maxExprs)
-          case _ =>
-            debug("Parsing expression")
-            parseExpr() match {
-              case Left(err)   => Left(err)
-              case Right(expr) =>
-                // Skip comments after the expression
-                skipComments()
-                // Comments will be pulled later if needed
-
-                // Check if we've reached a terminator
-                this.state.current match {
-                  case Right(token) if isRightDelimiter(token) =>
-                    // Get any collected comments
-                    val comments = pullComments()
-                    // Attach comments to the expression if any
-                    val updatedExpr = if (comments.nonEmpty) {
-                      expr.updateMeta { meta =>
-                        val newMeta = createMetaWithComments(
-                          meta.flatMap(_.sourcePos),
-                          Vector.empty,
-                          comments.collect { case c: Comment => c }
-                        )
-                        // Merge with existing meta
-                        mergeMeta(meta, newMeta)
-                      }
-                    } else {
-                      expr
-                    }
-                    Right(exprs :+ updatedExpr)
-
-                  case Right(_: Token.Comma | _: Token.Semicolon) =>
-                    debug("Found comma or semicolon after expression")
-                    // Get any collected comments
-                    val comments = pullComments()
-                    // Attach comments to the expression if any
-                    val updatedExpr = if (comments.nonEmpty) {
-                      expr.updateMeta { meta =>
-                        val newMeta = createMetaWithComments(
-                          meta.flatMap(_.sourcePos),
-                          Vector.empty,
-                          comments.collect { case c: Comment => c }
-                        )
-                        // Merge with existing meta
-                        mergeMeta(meta, newMeta)
-                      }
-                    } else {
-                      expr
-                    }
-                    advance()
-                    skipComments()
-                    parseElements(exprs :+ updatedExpr, maxExprs)
-
-                  case _ =>
-                    // We haven't reached a terminator, treat this as a parsing error
-                    Left(ParseError("Expected delimiter after expression", this.state.sourcePos.range.start))
-                }
-            }
-        }
-      }
-
-    parseElements(Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
+    parseElements1(Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
   }
 
   private def parseTuple(): Either[ParseError, Tuple] = this.state.current match {
