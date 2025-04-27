@@ -1026,114 +1026,146 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     case _                             => false
   }
 
+  // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
+  private def parseStatementSequence(
+    isTerminator: LexerState => Boolean,
+    contextDescription: String
+  ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
+    var statements = Vector.empty[Expr]
+    var currentResult: Option[Expr] = None
+    var maxExpressions = 100 // Prevent infinite loops
+
+    @tailrec
+    def loop(count: Int): Either[ParseError, Unit] = {
+      if (count <= 0) {
+        return Left(ParseError(s"Too many expressions in $contextDescription", this.state.sourcePos.range.start))
+      }
+
+      // Skip comments/whitespace before checking for terminator or next statement
+      skipComments()
+      val stateBeforePossibleExpr = this.state // Remember state
+
+      // Check for termination condition first
+      if (isTerminator(this.state)) {
+        debug(s"parseStatementSequence: Reached terminator for $contextDescription")
+        Right(()) // Sequence finished successfully
+      } else {
+        // Handle explicit separators (semicolons) BEFORE parsing the expression
+        var consumedSeparator = false
+        while (this.state.current.exists(_.isInstanceOf[Token.Semicolon])) {
+          debug(s"parseStatementSequence: Consuming explicit semicolon separator in $contextDescription")
+          // If there was a result pending, it becomes a statement due to the semicolon
+          currentResult.foreach { res =>
+             statements = statements :+ res
+             currentResult = None
+          }
+          advance()
+          skipComments()
+          consumedSeparator = true
+        }
+
+        // Check again for terminator after consuming semicolons
+        if (isTerminator(this.state)) {
+          // If we consumed a separator and then hit the terminator, any pending result became a statement.
+          debug(s"parseStatementSequence: Reached terminator after consuming semicolon(s) for $contextDescription")
+          Right(()) // Sequence finished successfully
+        } else {
+          // If we are here, we expect an expression.
+          // If there was a previous result and we *didn't* consume an explicit semicolon,
+          // we need to check for implicit separation (like a significant newline) based on tokens between.
+          if (!consumedSeparator && currentResult.isDefined) {
+             // Check if newline handling is enabled and if there was significant whitespace
+             val whitespaceTokens = stateBeforePossibleExpr.collectPendingWhitespaces()
+             val hasSignificantNewline = this.state.newLineAfterBlockMeansEnds && 
+                                         whitespaceTokens.exists(isNewlineWhitespace)
+             if (hasSignificantNewline) {
+                debug(s"parseStatementSequence: Detected significant newline separator in $contextDescription")
+                // Treat newline as separator: move result to statements
+                statements = statements :+ currentResult.get
+                currentResult = None
+             } else {
+                // Not separated by semicolon or significant newline, likely an OpSeq continuation or error
+                // Let parseExpr handle it. If parseExpr succeeds, the previous result becomes a statement.
+                debug(s"parseStatementSequence: No explicit/newline separator, assuming OpSeq continuation or error in $contextDescription")
+                statements = statements :+ currentResult.get
+                currentResult = None
+             }
+          } else if (currentResult.isDefined && consumedSeparator) {
+            // Result already moved to statements above if separator was consumed
+          }
+
+          // --- Parse the next expression --- 
+          debug(s"parseStatementSequence: Attempting to parse expression in $contextDescription at ${this.state.current}")
+          parseExpr() match {
+            case Left(err) =>
+              // Check if the error occurred because we expected an expression but found a terminator
+              if (isTerminator(this.state)) { 
+                 debug(s"parseStatementSequence: Hit terminator instead of expected expression in $contextDescription. Ending sequence.")
+                 Right(()) // End sequence gracefully if terminator found where expression expected
+              } else {
+                debug(s"parseStatementSequence: Error parsing expression in $contextDescription: $err")
+                Left(err)
+              }
+            case Right(parsedExpr) =>
+              debug(s"parseStatementSequence: Parsed expression $parsedExpr in $contextDescription, state after: ${this.state}")
+              // This is the new potential result
+              currentResult = Some(parsedExpr)
+              
+              // Peek ahead: Skip comments/whitespace and check the *very next* token
+              val stateAfterExpr = this.state
+              skipComments()
+              val isFollowedByTerminator = isTerminator(this.state)
+              // Restore state to right after the expression was parsed
+              this.state = stateAfterExpr 
+
+              if (isFollowedByTerminator) {
+                 debug(s"parseStatementSequence: Terminator found immediately after expression in $contextDescription. Final result found.")
+                 Right(()) // Expression is the final result, end the loop.
+              } else {
+                 // Not followed immediately by terminator. It might be followed by a separator, or another expression.
+                 // Loop again. The start of the next loop will handle separators and moving the currentResult.
+                 loop(count - 1)
+              }
+          }
+        }
+      }
+    }
+
+    // Start the loop
+    loop(maxExpressions).map(_ => (statements, currentResult))
+  }
+
   private def parseBlock(): Either[ParseError, Block] = {
+    val originalState = this.state // Save state to restore newline handling
     // Enable newLineAfterBlockMeansEnds for all blocks
     this.state = this.state.withNewLineTermination(true)
     debug(t"parseBlock: starting with state=${this.state}")
 
-    // Skip comments at the start
-    skipComments()
-
-    var statements = Vector[Expr]()
-    var result: Option[Expr] = None
-    var maxExpressions = 100 // Prevent infinite loops
-
-    // Skip the opening brace
-    this.state.current match {
-      case Right(Token.LBrace(_)) =>
+    val blockResult = this.state.current match {
+      case LBrace(startPos) =>
         debug("parseBlock: Found opening brace")
         // Advance past opening brace and skip comments
         advance()
         skipComments()
+        val startPosForMeta = startPos // Use brace position for meta start
 
-        // State is already updated by skipComments()
-        debug(t"parseBlock: After opening brace, state=${this.state}")
-
-        // Regular block parsing - all statements are treated the same
-        while (maxExpressions > 0) {
-          maxExpressions -= 1
-
-          // Skip comments before parsing next statement
-          skipComments()
-
+        // Call the helper to parse the sequence
+        parseStatementSequence(
+          isTerminator = _.current.exists(_.isInstanceOf[Token.RBrace]),
+          contextDescription = "block"
+        ).flatMap { case (statements, result) => // Use the returned statements/result directly
+          // State should be at the closing brace now
           this.state.current match {
-            case Right(Token.RBrace(_)) =>
+            case RBrace(endPos) =>
               debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
-              val finalBlock = Block(statements, result, None)
-              advance()
-              debug(t"parseBlock: Returning block with ${statements.size} statements, result=${result.isDefined}")
-              return Right(finalBlock)
-
-            case Right(Token.Semicolon(_)) =>
-              debug("parseBlock: Found semicolon, advancing")
-              advance()
-              skipComments()
-              debug(t"parseBlock: After semicolon, state=${this.state}")
-
-            case Right(Token.Whitespace(_, _)) =>
-              debug("parseBlock: Found whitespace, advancing")
-              advance()
-              skipComments()
-              debug(t"parseBlock: After whitespace, state=${this.state}")
-
-            case _ =>
-              debug(t"parseBlock: Parsing expression at token ${this.state.current}")
-              // this.state is already correctly set
-              parseExpr() match {
-                case Left(err) =>
-                  debug(t"parseBlock: Error parsing expression: $err")
-                  return Left(err)
-                case Right(expr) =>
-                  // this.state has been updated by parseExpr
-                  debug(t"parseBlock: Parsed expression: $expr, next token: ${this.state.current}")
-
-                  this.state.current match {
-                    case Right(Token.RBrace(_)) =>
-                      debug("parseBlock: Expression followed by closing brace, setting as result")
-                      // This is the V1 style: put the last expression in the result field
-                      result = Some(expr)
-                      advance()
-                      debug(t"parseBlock: Returning block with ${statements.size} statements and result=$expr")
-                      return Right(Block(statements, result, None))
-
-                    case Right(Token.Semicolon(_)) =>
-                      debug("parseBlock: Expression followed by semicolon, adding to statements")
-                      statements = statements :+ expr
-
-                      // Check for case after semicolon
-                      advance()
-                      skipComments()
-                      debug(t"parseBlock: After semicolon, statements=${statements.size}, state=${this.state}")
-
-                    case Right(_ @Token.Whitespace(_, _)) =>
-                      debug("parseBlock: Expression followed by whitespace, checking for newlines and case")
-
-                      // Skip whitespace and comments
-                      skipComments()
-
-                      // Add statement and advance
-                      statements = statements :+ expr
-                      debug(t"parseBlock: After whitespace, statements=${statements.size}, state=${this.state}")
-
-                    case Right(_) if isIdentifier(this.state.current) =>
-                      debug("parseBlock: Found 'case' after expression, adding to statements")
-                      statements = statements :+ expr
-                    // this.state is already correctly set
-
-                    case Right(t) =>
-                      debug(t"parseBlock: Unexpected token after expression: $t")
-                      return Left(ParseError("Expected ';', whitespace, or '}' after expression in block", t.sourcePos.range.start))
-
-                    case Left(err) =>
-                      debug(t"parseBlock: Error after expression: $err")
-                      return Left(err)
-                  }
-              }
+              val meta = createMeta(Some(startPosForMeta), Some(endPos))
+              advance() // Consume the closing brace
+              Right(Block(statements, result, meta))
+            case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
+            case Left(err) => Left(err)
           }
         }
 
-        debug("parseBlock: Too many expressions in block")
-        Left(ParseError("Too many expressions in block", this.state.sourcePos.range.start))
       case Right(t) =>
         debug(t"parseBlock: Expected '{' but found $t")
         Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
@@ -1141,6 +1173,17 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug(t"parseBlock: Error at start of block: $err")
         Left(err)
     }
+
+    // Restore original newline handling state before returning
+    val finalState = this.state // Capture state after parsing
+    this.state = originalState.copy( // Restore index/tokens etc from original
+      index = finalState.index,
+      previousToken = finalState.previousToken,
+      previousNonCommentToken = finalState.previousNonCommentToken,
+      pendingTokens = finalState.pendingTokens,
+      newLineAfterBlockMeansEnds = originalState.newLineAfterBlockMeansEnds // Crucially restore this flag
+    )
+    blockResult // Return the result computed before state restoration
   }
 
   // Helper method to check if whitespace contains a newline
@@ -1701,29 +1744,23 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   // Parses a sequence of expressions, typically representing a top-level file or block
   // Returns a Block containing all parsed expressions.
   def parseTopLevel(): Either[ParseError, Block] = {
-    var statements = Vector.empty[Expr]
-    var lastExpr: Option[Expr] = None
     val startPos = state.sourcePos // Capture start position
+    debug(t"parseTopLevel: starting with state=${this.state}")
 
-    while (!state.isAtEnd && !state.current.exists(_.isInstanceOf[Token.EOF])) {
-      skipComments() // Skip leading comments/whitespace before parsing
-      if (state.isAtEnd || state.current.exists(_.isInstanceOf[Token.EOF])) {
-        // Break loop if only comments/whitespace remain
-      } else {
-        // If we already have a last expression, it becomes a statement
-        lastExpr.foreach { expr =>
-          statements = statements :+ expr
-          lastExpr = None
-        }
-        parseExpr() match {
-          case Right(expr) => lastExpr = Some(expr)
-          case Left(err)   => return Left(err) // Return immediately on error
-        }
-      }
+    // Call the helper to parse the sequence, terminating at EOF
+    parseStatementSequence(
+      isTerminator = s => s.isAtEnd || s.current.exists(_.isInstanceOf[Token.EOF]),
+      contextDescription = "top-level"
+    ) match {
+      case Right((statements, lastExpr)) => // Use the returned statements/result directly
+        val endPos = state.sourcePos // Capture end position
+        debug(t"parseTopLevel: Finished, statements=${statements.size}, has result=${lastExpr.isDefined}")
+        // Construct the Block
+        Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
+      case Left(err) =>
+        debug(t"parseTopLevel: Error parsing sequence: $err")
+        Left(err)
     }
-    val endPos = state.sourcePos // Capture end position
-    // Construct the Block
-    Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
   }
 
   // Restore public API for parsing expression lists, calling the new helper
