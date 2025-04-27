@@ -374,41 +374,55 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     */
   private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, Expr] = {
     // this.state is already set correctly
+    debug(t"handleBlockArgument called with expr=$expr, terms size=${terms.length}")
+    if (terms.nonEmpty) {
+      debug(t"handleBlockArgument terms contents: ${terms.mkString(", ")}")
+    }
+    
     parseBlock().flatMap { block =>
       // parseBlock has already updated this.state
+      debug(t"handleBlockArgument parsed block: $block")
+      
       // Create appropriate expression based on context
       expr match {
         case funcCall: FunctionCall =>
-          // Check if this is a case like Vector[T]{...} - don't wrap block as an argument
-          val isFunctionCallWithTypeParams = funcCall.function.isInstanceOf[ConcreteIdentifier] && 
-                                           funcCall.telescope.isInstanceOf[ListExpr]
+          debug(t"handleBlockArgument examining function call: function=${funcCall.function}, telescope=${funcCall.telescope}")
           
-          if (isFunctionCallWithTypeParams) {
-            debug("parseRest: Found generic function call with block, treating as separate elements")
+          // Determine if we're in an OpSeq context by simply checking if terms.length > 0
+          // If we are, don't bundle the block as a function call argument
+          val isOpSeqContext = terms.length > 0
+          
+          debug(t"handleBlockArgument detected OpSeq context: $isOpSeqContext (terms.length=${terms.length})")
+          
+          if (isOpSeqContext) {
+            debug(t"IMPORTANT: In OpSeq context, treating block as separate element - NOT wrapping in function call")
             // Return an OpSeq with both expressions
             val updatedTerms = terms :+ block
-            debug(t"parseRest: After block following generic function, terms: $updatedTerms")
+            debug(t"parseRest: After block in OpSeq context, terms: $updatedTerms")
             
             parseRest(block).map {
               case opSeq: OpSeq => 
-                debug(t"OpSeq construction for generic function with block: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                debug(t"OpSeq construction in OpSeq context: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
                 debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                 OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
               case otherExpr => 
-                debug(t"Simple OpSeq construction for generic function with block: updatedTerms=${updatedTerms}")
+                debug(t"Simple OpSeq construction in OpSeq context: updatedTerms=${updatedTerms}")
                 OpSeq(updatedTerms, None)
             }
           } else {
-            debug("parseRest: Adding block as argument to existing function call")
+            debug(t"IMPORTANT: Not in OpSeq context, adding block as argument to function call")
             val newFuncCall = FunctionCall(
               funcCall,
               Tuple(Vector(block), createMeta(None, None)),
               createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
             )
+            debug(t"Created function call with block argument: $newFuncCall")
             
             if (this.state.isAtTerminator) {
+              debug(t"At terminator, returning function call directly")
               Right(newFuncCall)
             } else {
+              debug(t"Not at terminator, continuing parsing")
               parseRest(newFuncCall)
             }
           }
@@ -548,23 +562,61 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               }
             case Right(Token.LBrace(_)) =>
               // Generic type parameters followed by a block: id[T]{...}
-              debug("parseRest: Found identifier with generic type parameters followed by a block")
+              debug(t"parseRest: Found identifier with generic type parameters followed by a block")
+              debug(t"Identifier: $text, terms size: ${terms.length}")
+              if (terms.nonEmpty) {
+                debug(t"Terms contents: ${terms.mkString(", ")}")
+              }
+              
               val typeParamsList: ListExpr = typeParams
+              debug(t"Type params list: $typeParamsList")
               val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
+              debug(t"Created type call: $typeCall")
+              
+              // Simply check if we're already in an OpSeq context (terms.length > 0)
+              // If we are, don't bundle the block as a function call argument
+              val isOpSeqContext = terms.length > 0
+              
+              debug(t"Detected OpSeq context: $isOpSeqContext (terms.length=${terms.length})")
               
               parseBlock().flatMap { block =>
-                // Don't create a function call - instead just add both expressions to the sequence
-                val updatedTerms = terms :+ typeCall :+ block
-                debug(t"parseRest: After block following generic type, terms: $updatedTerms")
+                debug(t"Parsed block: $block")
                 
-                parseRest(block).map {
-                  case opSeq: OpSeq => 
-                    debug(t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
-                    debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                    OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                  case otherExpr => 
-                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}")
-                    OpSeq(updatedTerms, None)
+                if (isOpSeqContext) {
+                  // In an OpSeq context, treat type call and block as separate entities
+                  debug(t"IMPORTANT: In OpSeq context, treating as separate elements - NOT wrapping block in function call")
+                  val updatedTerms = terms :+ typeCall :+ block
+                  debug(t"parseRest: After block in OpSeq context, terms: $updatedTerms")
+                  
+                  parseRest(block).map {
+                    case opSeq: OpSeq => 
+                      debug(t"OpSeq construction in OpSeq context: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                      debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                      OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                    case otherExpr => 
+                      debug(t"Simple OpSeq construction in OpSeq context: updatedTerms=${updatedTerms}")
+                      OpSeq(updatedTerms, None)
+                  }
+                } else {
+                  // Not in an OpSeq context, create a function call with the block as an argument
+                  debug(t"IMPORTANT: Not in OpSeq context, creating function call with block argument")
+                  val funcCall = FunctionCall(
+                    typeCall,
+                    Tuple(Vector(block), createMeta(None, None)),
+                    createMeta(Some(sourcePos), Some(this.state.sourcePos))
+                  )
+                  debug(t"Created function call with block argument: $funcCall")
+                  val updatedTerms = terms :+ funcCall
+                  
+                  parseRest(funcCall).map {
+                    case opSeq: OpSeq => 
+                      debug(t"OpSeq construction for function call with block arg: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                      debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                      OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                    case otherExpr => 
+                      debug(t"Simple OpSeq for function call with block arg: updatedTerms=${updatedTerms}")
+                      OpSeq(updatedTerms, None)
+                  }
                 }
               }
             case _ =>
