@@ -1,0 +1,15 @@
+Block(
+  statements = Vector(
+    OpSeq(
+      seq = Vector(
+        Identifier(name = "proof1", meta = None),
+        Identifier(name = "=", meta = None),
+        Identifier(name = "?", meta = None),
+        Identifier(name = "hole", meta = None)
+      ),
+      meta = None
+    )
+  ),
+  result = None,
+  meta = None
+)
