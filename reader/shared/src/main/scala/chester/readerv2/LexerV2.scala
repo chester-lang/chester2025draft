@@ -1,28 +1,9 @@
 package chester.readerv2
 import chester.i18n.*
-import chester.error.{Pos, RangeInFile, SourcePos}
+import chester.error.{Pos, RangeInFile, SourcePos, unreachable}
 import chester.reader.{ParseError, Source}
-import chester.syntax.concrete.{
-  Block,
-  DotCall,
-  Expr,
-  ExprMeta,
-  FunctionCall,
-  ListExpr,
-  ObjectClause,
-  ObjectExpr,
-  ObjectExprClause,
-  ObjectExprClauseOnValue,
-  OpSeq,
-  QualifiedName,
-  Tuple
-}
-import chester.syntax.concrete.{
-  Identifier as ConcreteIdentifier,
-  IntegerLiteral as ConcreteIntegerLiteral,
-  RationalLiteral as ConcreteRationalLiteral,
-  StringLiteral as ConcreteStringLiteral
-}
+import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, QualifiedName, Tuple}
+import chester.syntax.concrete.{Identifier as ConcreteIdentifier, IntegerLiteral as ConcreteIntegerLiteral, RationalLiteral as ConcreteRationalLiteral, StringLiteral as ConcreteStringLiteral}
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
@@ -762,19 +743,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case Id(_, _) | Sym(_, _) | Str(_, _) => // Potential object key: { key ...
             // Need to peek at the token *after* the potential key
             var afterKeyPeekIndex = peekIndex + 1
-            while(afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(afterKeyPeekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
+            while(true){
+              while(afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length && stateAfterLBraceSkipping.tokens(afterKeyPeekIndex).exists(t => t.isInstanceOf[Token.Comment] || t.isInstanceOf[Token.Whitespace])) {
                 afterKeyPeekIndex += 1
+              }
+              var tokenAfterKey = if (afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(afterKeyPeekIndex) else Left(ParseError("EOF after { key", stateAfterLBrace.sourcePos.range.start))
+              tokenAfterKey match { // Peek at token after potential key
+                case Op(op, _) if op == "=" || op == "=>" => // Object: { key = ... } or { key => ... }
+                  this.state = originalState // Restore state before LBrace
+                  return parseObject()
+                case Right(Token.Dot(_)) => afterKeyPeekIndex +=2
+                case _ => // Not an object, assume block: { key ... } (where key is just an expr)
+                  this.state = originalState // Restore state before LBrace
+                  return parseBlock()
+              }
             }
-            val tokenAfterKey = if (afterKeyPeekIndex < stateAfterLBraceSkipping.tokens.length) stateAfterLBraceSkipping.tokens(afterKeyPeekIndex) else Left(ParseError("EOF after { key", stateAfterLBrace.sourcePos.range.start))
-
-            tokenAfterKey match { // Peek at token after potential key
-              case Op(op, _) if op == "=" || op == "=>" => // Object: { key = ... } or { key => ... }
-                this.state = originalState // Restore state before LBrace
-                parseObject()
-              case _ => // Not an object, assume block: { key ... } (where key is just an expr)
-                this.state = originalState // Restore state before LBrace
-                parseBlock()
-            }
+            unreachable()
           case _ => // Anything else after {, assume block: { ... }
             this.state = originalState // Restore state before LBrace
             parseBlock()
