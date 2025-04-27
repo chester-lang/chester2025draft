@@ -1,0 +1,2 @@
+
+cons2 = Cons { head = 0, tail = Nil };

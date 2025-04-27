@@ -1,0 +1,20 @@
+Block(
+  statements = Vector(
+    OpSeq(
+      seq = Vector(
+        Identifier(name = "cons2", meta = None),
+        Identifier(name = "=", meta = None),
+        ObjectExpr(
+          clauses = Vector(
+            ObjectExprClause(key = Identifier(name = "head", meta = None), value = IntegerLiteral(value = 0, meta = None)),
+            ObjectExprClause(key = Identifier(name = "tail", meta = None), value = Identifier(name = "Nil", meta = None))
+          ),
+          meta = None
+        )
+      ),
+      meta = None
+    )
+  ),
+  result = None,
+  meta = None
+)
