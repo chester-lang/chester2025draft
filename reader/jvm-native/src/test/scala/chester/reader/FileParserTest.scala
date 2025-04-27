@@ -4,7 +4,6 @@ import chester.syntax.concrete.*
 import munit.FunSuite
 import upickle.default.*
 import chester.i18n.*
-import chester.readerv2.ChesterReaderV2
 import chester.readerv2.LexerV2.DEBUG
 
 import java.nio.charset.StandardCharsets

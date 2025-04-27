@@ -839,13 +839,9 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseList()
 
       case Right(token) =>
-        // Restore original state on error
-        this.state = originalState
         Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
 
       case Err(error) =>
-        // Restore original state on error
-        this.state = originalState
         Left(error)
     }
   }
