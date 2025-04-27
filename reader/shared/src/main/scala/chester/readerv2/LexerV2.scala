@@ -851,102 +851,145 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     case _                                                     => false
   }
 
-  @tailrec
-  private def parseElements1(exprs: Vector[Expr]): Either[ParseError, Vector[Expr]] =
-    if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
-      Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", this.state.sourcePos.range.start))
-    } else {
-      debug(t"Iteration ${exprs.length + 1}: maxExprs=$LexerV2.MAX_LIST_ELEMENTS, current token=${this.state.current}")
-      this.state.current match {
-        case Right(token) if isRightDelimiter(token) =>
-          debug("Found right delimiter after expression")
-          Right(exprs)
-        case Right(_: Token.Comment | _: Token.Whitespace) =>
-          // Skip comments and whitespace
-          skipComments()
-          parseElements1(exprs)
-        case Right(_: Token.Comma | _: Token.Semicolon) =>
-          debug("Found comma or semicolon, skipping")
-          // Skip any comments after comma/semicolon
-          advance()
-          skipComments()
-          parseElements1(exprs)
-        case _ =>
-          debug("Parsing expression")
-          parseExpr() match {
-            case Left(err) => Left(err)
-            case Right(expr) =>
-              // Skip comments after the expression
-              skipComments()
-              // Comments will be pulled later if needed
-
-              // Check if we've reached a terminator
-              this.state.current match {
-                case Right(token) if isRightDelimiter(token) =>
-                  // Get any collected comments
-                  val comments = pullComments()
-                  // Attach comments to the expression if any
-                  val updatedExpr = if (comments.nonEmpty) {
-                    expr.updateMeta { meta =>
-                      val newMeta = createMetaWithComments(
-                        meta.flatMap(_.sourcePos),
-                        Vector.empty,
-                        comments.collect { case c: Comment => c }
-                      )
-                      // Merge with existing meta
-                      mergeMeta(meta, newMeta)
-                    }
-                  } else {
-                    expr
-                  }
-                  Right(exprs :+ updatedExpr)
-
-                case Right(_: Token.Comma | _: Token.Semicolon) =>
-                  debug("Found comma or semicolon after expression")
-                  // Get any collected comments
-                  val comments = pullComments()
-                  // Attach comments to the expression if any
-                  val updatedExpr = if (comments.nonEmpty) {
-                    expr.updateMeta { meta =>
-                      val newMeta = createMetaWithComments(
-                        meta.flatMap(_.sourcePos),
-                        Vector.empty,
-                        comments.collect { case c: Comment => c }
-                      )
-                      // Merge with existing meta
-                      mergeMeta(meta, newMeta)
-                    }
-                  } else {
-                    expr
-                  }
-                  advance()
-                  skipComments()
-                  parseElements1(exprs :+ updatedExpr)
-
-                case _ =>
-                  // We haven't reached a terminator, treat this as a parsing error
-                  Left(ParseError("Expected delimiter after expression", this.state.sourcePos.range.start))
-              }
-          }
-      }
-    }
-
-  def parseExprList(): Either[ParseError, Vector[Expr]] = {
+  /** Parses a sequence of expressions typically used in tuples or function calls.
+    * Allows semicolons as separators in addition to commas.
+    * Expects a closing parenthesis `)`.
+    */
+  private def parseTupleExprList(startPos: SourcePos): Either[ParseError, Vector[Expr]] = {
     // Skip any comments at the start
     skipComments()
+    parseElementSequence(
+      closingTokenPredicate = _.isInstanceOf[Token.RParen],
+      allowSemicolon = true,
+      startPosForError = startPos,
+      contextDescription = "tuple or argument list"
+    )
+  }
 
-    parseElements1(Vector.empty)
+  /** Parses a sequence of comma-separated (and optionally semicolon-separated) expressions
+    * until a specific closing token is found. Handles comment attachment to elements.
+    *
+    * @param closingTokenPredicate Predicate to identify the closing token (e.g., `_.isInstanceOf[Token.RBracket]`).
+    * @param allowSemicolon If true, semicolons are treated as valid separators like commas.
+    * @param startPosForError The source position of the opening delimiter, used for error messages.
+    * @param contextDescription Description of the context (e.g., "list", "tuple") for error messages.
+    * @return A vector of parsed expressions or a ParseError.
+    */
+  @tailrec
+  private def parseElementSequence(
+      closingTokenPredicate: Token => Boolean,
+      allowSemicolon: Boolean,
+      startPosForError: SourcePos,
+      contextDescription: String,
+      accumulatedExprs: Vector[Expr] = Vector.empty
+  ): Either[ParseError, Vector[Expr]] = {
+
+    if (accumulatedExprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
+      return Left(ParseError(t"Too many elements in $contextDescription (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", startPosForError.range.start))
+    }
+
+    // Skip comments and whitespace before checking the token
+    skipComments()
+
+    debug(t"parseElementSequence: Iteration ${accumulatedExprs.length + 1}, current token=${this.state.current}")
+
+    this.state.current match {
+      // Check for the closing token first
+      case Right(token) if closingTokenPredicate(token) =>
+        debug(s"Found closing token for $contextDescription")
+        Right(accumulatedExprs)
+
+      // Handle separators (comma and optionally semicolon)
+      case Right(token @ (_: Token.Comma | _: Token.Semicolon)) =>
+        if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
+          Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", token.sourcePos.range.start))
+        } else {
+          debug(s"Found separator ($token), skipping")
+          advance() // Skip the separator
+          // Continue parsing elements recursively
+          parseElementSequence(closingTokenPredicate, allowSemicolon, startPosForError, contextDescription, accumulatedExprs)
+        }
+
+      // End of file or unexpected error
+      case Right(_: Token.EOF) => Left(ParseError(t"Unexpected end of file in $contextDescription", this.state.sourcePos.range.start))
+      case Left(err)           => Left(err)
+
+      // Otherwise, parse an expression
+      case _ =>
+        debug("Parsing expression in sequence")
+        // State is already advanced past previous separator or is at the start
+        parseExpr() match {
+          case Left(err) => Left(err)
+          case Right(expr) =>
+            // State is now after the parsed expression
+            // Skip potential comments/whitespace *after* the expression
+            skipComments()
+
+            // Look ahead to see if we are followed by a separator or the closing token
+            this.state.current match {
+              // Found the closing token right after the expression
+              case Right(token) if closingTokenPredicate(token) =>
+                // Pull comments collected *after* the expression
+                val trailingComments = pullComments().collect { case c: Comment => c }
+                val updatedExpr = if (trailingComments.nonEmpty) {
+                  expr.updateMeta { meta =>
+                    mergeMeta(
+                      meta,
+                      createMetaWithComments(meta.flatMap(_.sourcePos), Vector.empty, trailingComments)
+                    )
+                  }
+                } else {
+                  expr
+                }
+                Right(accumulatedExprs :+ updatedExpr) // Return the final list
+
+              // Found a separator after the expression
+              case Right(token @ (_: Token.Comma | _: Token.Semicolon)) =>
+                if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
+                  Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", token.sourcePos.range.start))
+                } else {
+                  debug(s"Found separator ($token) after expression")
+                  // Pull comments collected *after* the expression, before the separator
+                  val trailingComments = pullComments().collect { case c: Comment => c }
+                  val updatedExpr = if (trailingComments.nonEmpty) {
+                    expr.updateMeta { meta =>
+                      mergeMeta(
+                        meta,
+                        createMetaWithComments(meta.flatMap(_.sourcePos), Vector.empty, trailingComments)
+                      )
+                    }
+                  } else {
+                    expr
+                  }
+                  // Advance past the separator
+                  advance()
+                  // Continue parsing elements recursively
+                  parseElementSequence(
+                    closingTokenPredicate,
+                    allowSemicolon,
+                    startPosForError,
+                    contextDescription,
+                    accumulatedExprs :+ updatedExpr
+                  )
+                }
+              // Unexpected token after expression
+              case Right(other) =>
+                val separatorDesc = if (allowSemicolon) "',' or ';'" else "','"
+                Left(ParseError(t"Expected $separatorDesc or closing token for $contextDescription, but found $other", other.sourcePos.range.start))
+              case Left(err) => Left(err)
+            }
+        }
+    }
   }
 
   private def parseTuple(): Either[ParseError, Tuple] = this.state.current match {
     case LParen(sourcePos) =>
       // Advance past the left parenthesis and skip comments
       advance()
-      skipComments()
-      // Comments will be retrieved via pullComments() later
+      // Comments are handled within parseTupleExprList and pullComments below
 
-      // Parse the expression list
-      parseExprList().flatMap { exprs =>
+      // Parse the expression list using the new helper via parseTupleExprList
+      parseTupleExprList(sourcePos).flatMap { exprs =>
         // Skip comments after the expressions
         skipComments()
         // We'll pull these comments later
@@ -1225,40 +1268,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  @tailrec
-  private def parseElements(exprs: Vector[Expr], sourcePos: SourcePos): Either[ParseError, Vector[Expr]] =
-    if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
-      Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", sourcePos.range.start))
-    } else
-      this.state.current match {
-        case RBracket(_) => Right(exprs)
-        case Comma(_) =>
-          advance()
-          skipComments()
-          parseElements(exprs,sourcePos)
-        case Right(Token.Comment(_, _)) | Right(Token.Whitespace(_, _)) =>
-          skipComments()
-          parseElements(exprs,sourcePos)
-        case _ =>
-          // We're already in the right state (this.state), so parse the expression
-          parseExpr() match {
-            case Left(err) => Left(err)
-            case Right(expr) =>
-              // Skip comments after the expression
-              skipComments()
-
-              // Check what follows the expression
-              this.state.current match {
-                case RBracket(_) => Right(exprs :+ expr)
-                case Comma(_) =>
-                  advance()
-                  skipComments()
-                  parseElements(exprs :+ expr,sourcePos)
-                case _ => Left(expectedError("',' or ']' in list", this.state.current))
-              }
-          }
-      }
-
   private def parseList(): Either[ParseError, ListExpr] = {
 
     // Skip comments before the list
@@ -1270,7 +1279,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         advance()
         skipComments()
 
-        parseElements(Vector.empty,sourcePos).flatMap { exprs =>
+        // Use the new helper method
+        parseElementSequence(
+          closingTokenPredicate = _.isInstanceOf[Token.RBracket],
+          allowSemicolon = false, // Semicolons not allowed in lists
+          startPosForError = sourcePos,
+          contextDescription = "list"
+        ).flatMap { exprs =>
+          // The state should now be at the closing bracket RBracket
           this.state.current match {
             case RBracket(endPos) =>
               // Get comments that were collected during parsing
@@ -1708,6 +1724,24 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     val endPos = state.sourcePos // Capture end position
     // Construct the Block
     Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
+  }
+
+  // Restore public API for parsing expression lists, calling the new helper
+  def parseExprList(): Either[ParseError, Vector[Expr]] = {
+    // Skip any comments at the start *first*
+    skipComments()
+    // Now, determine the starting position from the current token
+    val startPos = this.state.current match {
+      case Right(token) => token.sourcePos
+      case Left(err)    => err.sourcePos.getOrElse(SourcePos(source, RangeInFile(Pos.zero, Pos.zero))) // Fallback for error without pos
+    }
+    // The state is already past leading comments, proceed to parse sequence
+    parseElementSequence(
+      closingTokenPredicate = _.isInstanceOf[Token.EOF], // Expect EOF at the end
+      allowSemicolon = true, // Allow semicolons as separators
+      startPosForError = startPos,
+      contextDescription = "expression list"
+    )
   }
 
 }
