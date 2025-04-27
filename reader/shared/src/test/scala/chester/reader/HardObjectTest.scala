@@ -57,7 +57,7 @@ class HardObjectTest  extends FunSuite {
         ),
         meta = None
       )
-    parseAndCheckBoth(input, expected)
+    parseAndCheckV1(input, expected)
   }
 
 }
