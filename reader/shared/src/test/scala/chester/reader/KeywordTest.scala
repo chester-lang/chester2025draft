@@ -34,4 +34,28 @@ class KeywordTest extends FunSuite {
     parseAndCheckBoth(input, expected)
   }
 
+  test("parse a keyword with different arguments") {
+    val input = "#qwq[qaq](1,2,3)"
+    val expected = Keyword(
+      key = "qwq",
+      telescope = Vector(
+        ListExpr(
+          Vector(
+            Identifier("qaq", meta = None)
+          ),
+          meta = None
+        ),
+        Tuple(
+          Vector(
+            IntegerLiteral(1, meta = None),
+            IntegerLiteral(2, meta = None),
+            IntegerLiteral(3, meta = None)
+          ),
+          meta = None
+        )
+      ),
+      meta = None
+    )
+    parseAndCheckV1(input, expected)
+  }
 }
