@@ -203,7 +203,7 @@ class HardFunctionCallTest extends FunSuite{
         meta = None
       )
     DEBUG.withValue(false) {
-      parseAndCheckV1(input, expected)
+      parseAndCheckBoth(input, expected)
     }
   }
 
@@ -268,7 +268,7 @@ class HardFunctionCallTest extends FunSuite{
         meta = None
       )
     DEBUG.withValue(false) {
-      parseAndCheckV1(input, expected)
+      parseAndCheckBoth(input, expected)
     }
   }
 }
