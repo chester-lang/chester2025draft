@@ -852,11 +852,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   @tailrec
-  private def parseElements1(exprs: Vector[Expr], maxExprs: Int): Either[ParseError, Vector[Expr]] =
-    if (exprs.length >= maxExprs) {
+  private def parseElements1(exprs: Vector[Expr]): Either[ParseError, Vector[Expr]] =
+    if (exprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
       Left(ParseError(t"Too many elements in list (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", this.state.sourcePos.range.start))
     } else {
-      debug(t"Iteration ${exprs.length + 1}: maxExprs=$maxExprs, current token=${this.state.current}")
+      debug(t"Iteration ${exprs.length + 1}: maxExprs=$LexerV2.MAX_LIST_ELEMENTS, current token=${this.state.current}")
       this.state.current match {
         case Right(token) if isRightDelimiter(token) =>
           debug("Found right delimiter after expression")
@@ -864,13 +864,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         case Right(_: Token.Comment | _: Token.Whitespace) =>
           // Skip comments and whitespace
           skipComments()
-          parseElements1(exprs, maxExprs)
+          parseElements1(exprs)
         case Right(_: Token.Comma | _: Token.Semicolon) =>
           debug("Found comma or semicolon, skipping")
           // Skip any comments after comma/semicolon
           advance()
           skipComments()
-          parseElements1(exprs, maxExprs)
+          parseElements1(exprs)
         case _ =>
           debug("Parsing expression")
           parseExpr() match {
@@ -921,7 +921,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                   }
                   advance()
                   skipComments()
-                  parseElements1(exprs :+ updatedExpr, maxExprs)
+                  parseElements1(exprs :+ updatedExpr)
 
                 case _ =>
                   // We haven't reached a terminator, treat this as a parsing error
@@ -935,7 +935,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     // Skip any comments at the start
     skipComments()
 
-    parseElements1(Vector.empty, LexerV2.MAX_LIST_ELEMENTS)
+    parseElements1(Vector.empty)
   }
 
   private def parseTuple(): Either[ParseError, Tuple] = this.state.current match {
