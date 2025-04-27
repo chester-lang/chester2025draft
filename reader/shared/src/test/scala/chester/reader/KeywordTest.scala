@@ -1,6 +1,6 @@
 package chester.reader
 
-import chester.syntax.concrete.Keyword
+import chester.syntax.concrete.*
 import munit.FunSuite
 
 class KeywordTest extends FunSuite {
@@ -13,6 +13,25 @@ class KeywordTest extends FunSuite {
       meta = None
     )
     parseAndCheckBoth(input, expected)
+  }
+
+  test("parse a keyword with arguments") {
+    val input = "#qwq(1,2,3)"
+    val expected = Keyword(
+      key = "qwq",
+      telescope = Vector(
+        Tuple(
+          Vector(
+            IntegerLiteral(1, meta = None),
+            IntegerLiteral(2, meta = None),
+            IntegerLiteral(3, meta = None)
+          ),
+          meta = None
+        )
+      ),
+      meta = None
+    )
+    parseAndCheckV1(input, expected)
   }
 
 }
