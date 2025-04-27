@@ -1294,18 +1294,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   private type CommOrWhite = Comment | Token.Whitespace
 
-  extension (s: LexerState) {
-    @deprecated("please handle it correctly")
-    def skipComments: LexerState = {
-      val savedState = LexerV2.this.state
-      LexerV2.this.state = s
-      LexerV2.this.skipComments()
-      val result = LexerV2.this.state
-      LexerV2.this.state = savedState
-      result
-    }
-  }
-
   /** Helper method to advance the lexer state by one token
     * @return
     *   the previous state before advancing
@@ -1318,7 +1306,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     *   the previous state before clearing
     */
   private def clearPendingTokens(): Unit = {
-    val prevState = this.state
     this.state = this.state.clearPendingTokens()
   }
 
