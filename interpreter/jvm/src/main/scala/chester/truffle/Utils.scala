@@ -3,7 +3,7 @@ package chester.truffle
 import chester.error.unreachable
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.reader.*
-import chester.readerv1.ChesterReaderV1
+import chester.readerv2.ChesterReaderV2
 import chester.syntax.core.*
 import chester.truffle.ChesterLang.ChesterRootNode
 import chester.tyck.*
@@ -11,7 +11,7 @@ import chester.tyck.*
 object Utils {
   @throws[Exception]
   def parse(lang: ChesterLang, request: TruffleLanguage.ParsingRequest): CallTarget =
-    ChesterReaderV1
+    ChesterReaderV2
       .parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString))
       .fold(
         _err => ???,

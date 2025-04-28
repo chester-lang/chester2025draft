@@ -5,7 +5,7 @@ import org.log4s.*
 import chester.reader.FileNameAndContent
 import chester.tyck.{TyckResult, Tycker}
 import chester.i18n.*
-import chester.readerv1.ChesterReaderV1
+import chester.readerv2.ChesterReaderV2
 
 import java.util.concurrent.CompletableFuture
 import java.util.Collections
@@ -289,7 +289,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
         Files.walk(dir).forEach { path =>
           if (Files.isRegularFile(path) && path.toString.endsWith(".chester")) {
             val content = Files.readString(path)
-            ChesterReaderV1
+            ChesterReaderV2
               .parseTopLevel(FileNameAndContent(path.toString, content))
               .fold(
                 error =>
