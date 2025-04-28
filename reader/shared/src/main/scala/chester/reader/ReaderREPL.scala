@@ -1,14 +1,12 @@
 package chester.reader
 
-import chester.error.*
 import chester.syntax.concrete.*
 import chester.utils.term.*
 import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
-import fastparse.*
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
-import chester.readerv1.ReaderV1
+import chester.readerv1.ChesterReader
 
 import scala.util.*
 
@@ -67,18 +65,10 @@ object ReaderREPL {
       linesOffset: Int :| Positive0,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
-    parse(
-      input,
-      p =>
-        ReaderV1(
-          Source(
-            FileNameAndContent("repl", input),
-            linesOffset = linesOffset,
-            posOffset = posOffset
-          )
-        )(using p).exprEntrance
-    ) match {
-      case Parsed.Success(expr, _) => Right(expr)
-      case f: Parsed.Failure       => Left(ParseError(f.msg, Pos.zero))
-    }
+    ChesterReader.parseExprWithOffset(
+      sourceName = "repl",
+      content = input,
+      linesOffset = linesOffset,
+      posOffset = posOffset
+    )
 }

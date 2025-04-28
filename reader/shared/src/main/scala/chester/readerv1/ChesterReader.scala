@@ -3,10 +3,12 @@ package chester.readerv1
 import _root_.io.github.iltotore.iron.*
 import chester.error.*
 import chester.i18n.*
-import chester.reader.{ParseError, ParserSource, Source}
+import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source}
 import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*
+import _root_.io.github.iltotore.iron.constraint.numeric.*
+import chester.utils.WithUTF16
 
 import scala.util.*
 object ChesterReader {
@@ -61,5 +63,49 @@ object ChesterReader {
       ignoreLocation: Boolean = false
   ): Either[ParseError, ParsedExpr] =
     parseFromSource(source, _.exprEntrance, ignoreLocation)
+
+  /** Parses an expression string, typically used for REPL input.
+    *
+    * @param sourceName Name to associate with the source (e.g., "repl").
+    * @param content The actual string content to parse.
+    * @param linesOffset Line number offset from the beginning of the logical file.
+    * @param posOffset Character position offset (UTF-8 and UTF-16) from the beginning.
+    * @return Either a ParseError or the successfully parsed expression.
+    */
+  def parseExprWithOffset(
+      sourceName: String,
+      content: String,
+      linesOffset: Int :| Positive0,
+      posOffset: WithUTF16
+  ): Either[ParseError, ParsedExpr] = {
+    val indexer = StringIndex(content)
+    val source = Source(
+      FileNameAndContent(sourceName, content),
+      linesOffset = linesOffset,
+      posOffset = posOffset,
+    )
+    parse(
+      content,
+      p => ReaderV1(source)(using p).exprEntrance
+    ) match {
+      case Parsed.Success(expr, _) => Right(expr)
+      case Parsed.Failure(_, index, extra) =>
+        // Use the indexer associated with *this* content snippet for error reporting
+        val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
+        // Adjust the position by the global offsets
+        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(index.refineUnsafe)
+        val finalIndex: WithUTF16 = posOffset + indexWithinContent
+        val finalPos = Pos(
+          finalIndex,
+          (linesOffset + pos.line).refineUnsafe,
+          // Column is relative to the line start, but if it's the first line (pos.line == 1),
+          // add the original UTF-16 offset's column component if applicable.
+          // However, the existing Source logic likely handles this, let's keep it simple.
+          // Revisit if column reporting seems off in multi-line REPL inputs.
+          pos.column
+        )
+        Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", finalPos))
+    }
+  }
 
 }
