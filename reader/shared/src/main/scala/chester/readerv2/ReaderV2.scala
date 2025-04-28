@@ -31,31 +31,6 @@ import chester.utils.asInt
 
 import scala.annotation.tailrec
 
-// Token extractors for cleaner pattern matching
-private object TokenExtractors {
- 
-  // Helper for source position extractors - consolidated into a single implementation
-  private def posExtract(tokenPredicate: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
-    case Right(token) if tokenPredicate(token) => Some(token.sourcePos)
-    case _                                     => None
-  }
-
-  // Define all delimiter token extractors using the posExtract helper
-  object RParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
-  object LBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
-  object RBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
-  object LBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBracket])(t) }
-  object RBracket { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBracket])(t) }
-  object Comma { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
-
-  object Err {
-    def unapply(token: Either[ParseError, Token]): Option[ParseError] =
-      PartialFunction.condOpt(token) { case Left(err) => err }
-  }
-}
-
-import TokenExtractors._
-
 case class ReaderContext(
     inOpSeq: Boolean = false,
     dontallowOpSeq: Boolean = false,
@@ -983,7 +958,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(Token.Identifier(chars, sourcePos)) =>
         val afterId = this.state.advance()
         afterId.current match {
-          case LBracket(_) =>
+          case Right(Token.LBracket(_)) =>
             // Generic type parameters
             val identifier = createIdentifier(chars, sourcePos)
             this.state = afterId
@@ -1030,14 +1005,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         // this.state is already set to current
         parseSymbol()
 
-      case LBracket(_) =>
+      case Right(Token.LBracket(_)) =>
         // this.state is already set to current
         parseList()
 
       case Right(token) =>
         Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
 
-      case Err(error) =>
+      case Left(error) =>
         Left(error)
     }
   }
@@ -1194,7 +1169,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
         // Check for the closing parenthesis
         this.state.current match {
-          case RParen(_) =>
+          case Right(Token.RParen(_)) =>
             // Get the comments we've collected
             val comments = pullComments()
             val meta =
@@ -1397,7 +1372,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
 
       this.state.current match {
-        case LBrace(startPos) =>
+        case Right(Token.LBrace(startPos)) =>
           debug("parseBlock: Found opening brace")
           advance()
           skipComments()
@@ -1408,7 +1383,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             contextDescription = "block"
           ).flatMap { case (statements, result) =>
             this.state.current match {
-              case RBrace(endPos) =>
+              case Right(Token.RBrace(endPos)) =>
                 debug(t"parseBlock: Found closing brace, statements=${statements.size}, has result=${result.isDefined}")
                 val meta = createMeta(Some(startPosForMeta), Some(endPos))
                 advance() // Consume the closing brace
@@ -1555,7 +1530,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     skipComments()
 
     this.state.current match {
-      case LBracket(sourcePos) =>
+      case Right(Token.LBracket(sourcePos)) =>
         // Advance past the opening bracket and skip comments
         advance()
         skipComments()
@@ -1569,7 +1544,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         ).flatMap { exprs =>
           // The state should now be at the closing bracket RBracket
           this.state.current match {
-            case RBracket(endPos) =>
+            case Right(Token.RBracket(endPos)) =>
               // Get comments that were collected during parsing
               val comments = pullComments()
               val listMeta = if (comments.nonEmpty) {
