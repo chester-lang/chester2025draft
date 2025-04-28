@@ -161,7 +161,20 @@ Parser tests are organized into several categories:
 3. **Regression Tests**: Ensure previously fixed issues don't reoccur
 4. **Migration Tests**: Track progress in supporting V1 features in V2
 
-This testing framework enables confident refactoring and enhancement of both parser implementations while maintaining backward compatibility.
+### File-Based Testing
+
+In addition to the core testing functions, Chester implements file-based integration tests:
+
+- **FileParserTest.scala**: Tests ReaderV2 against a suite of test files in `tests/parser` directory
+- **FileParserTestV1.scala**: Tests ReaderV1 against the same test suite for comparison
+
+These file-based tests:
+- Ensure consistency when parsing complete Chester files
+- Verify parser behavior across a wide range of syntax combinations
+- Automatically generate expected output for regression testing
+- Maintain backward compatibility during parser evolution
+
+This comprehensive testing framework enables confident refactoring and enhancement of both parser implementations while maintaining backward compatibility.
 
 ## Future Development
 
