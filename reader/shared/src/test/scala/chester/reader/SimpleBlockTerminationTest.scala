@@ -236,6 +236,8 @@ class SimpleBlockTerminationTest extends FunSuite {
       None
     )
 
+if(false){
+
     // Parse with V1 parser
     val resultV1 = parseV1(input)
     println("\n===== V1 PARSER RESULT =====")
@@ -256,13 +258,14 @@ class SimpleBlockTerminationTest extends FunSuite {
     // Run the original check to see if it fails
     println("\n===== COMPARING RESULTS =====")
 
+    // Simple equality check
+    println("\n===== V1 VS V2 EQUALITY CHECK =====")
+    println(t"V1 equals V2: ${resultV1 == resultV2}")
+}
     // LexerV2.DEBUG = true
     ReaderV2.DEBUG.withValue(false) {
       parseAndCheckBoth(input, expected)
     }
 
-    // Simple equality check
-    println("\n===== V1 VS V2 EQUALITY CHECK =====")
-    println(t"V1 equals V2: ${resultV1 == resultV2}")
   }
 }
