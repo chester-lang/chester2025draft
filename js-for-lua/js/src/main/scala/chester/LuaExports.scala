@@ -42,7 +42,7 @@ object LuaExports {
     */
   @JSExportTopLevel("Chester")
   val chester: js.Object = js.Dynamic.literal(
-    test = (() => test()),
+    test = () => test(),
     reverseString = reverseString,
     factorial = factorial,
     processData = processData

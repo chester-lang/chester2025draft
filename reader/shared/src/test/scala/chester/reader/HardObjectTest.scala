@@ -3,7 +3,7 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 
-class HardObjectTest  extends FunSuite {
+class HardObjectTest extends FunSuite {
 
   test("{ boot.loader.systemd-boot.enable = true, y = 0, }") {
     val input = "{ boot.loader.systemd-boot.enable = true, y = 0, }"

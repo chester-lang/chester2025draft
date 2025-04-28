@@ -7,7 +7,7 @@ import chester.syntax.concrete.*
 class ConsVectorTest2 extends FunSuite {
   test("block in opseq") {
     val input = "Cons haha { head: T; tail: Vector[n, T]; }"
-    
+
     val expected =
       OpSeq(
         seq = Vector(
@@ -78,9 +78,9 @@ class ConsVectorTest2 extends FunSuite {
         ),
         meta = None
       )
-    
+
     DEBUG.withValue(true) {
       parseAndCheckBoth(input, expected)
     }
   }
-} 
+}

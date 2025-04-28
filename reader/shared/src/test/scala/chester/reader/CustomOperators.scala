@@ -3,7 +3,7 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 
-class CustomOperators extends FunSuite{
+class CustomOperators extends FunSuite {
 
   test("?hole") {
     val input = "?hole"

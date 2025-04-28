@@ -275,7 +275,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       if (tryUnify(unionType, specificType)) {
         // We found a compatible component, mark as compatible
         anyCompatible = true
-        
+
         // Add a propagator for each compatible union component
         val unionTypeCell = toId(unionType)
         val specificTypeCell = toId(specificType)

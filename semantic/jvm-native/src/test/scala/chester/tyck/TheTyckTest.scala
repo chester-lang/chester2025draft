@@ -20,7 +20,7 @@ class TheTyckTest extends FunSuite {
   val inputFile = Paths.get("tests/tyck.chester")
   val doTest = false
   test(baseName) {
-    if(doTest){
+    if (doTest) {
 
       val expectedFile = testDir.resolve(t"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)

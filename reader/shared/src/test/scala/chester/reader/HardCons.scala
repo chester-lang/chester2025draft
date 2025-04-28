@@ -3,7 +3,7 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 
-class HardCons extends FunSuite{
+class HardCons extends FunSuite {
 
   test("Cons { head = 0, tail = Nil }") {
     val input = "Cons { head = 0, tail = Nil }"

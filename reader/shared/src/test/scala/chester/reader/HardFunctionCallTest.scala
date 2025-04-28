@@ -4,7 +4,7 @@ import chester.syntax.concrete.*
 import munit.FunSuite
 import chester.readerv2.LexerV2.DEBUG
 
-class HardFunctionCallTest extends FunSuite{
+class HardFunctionCallTest extends FunSuite {
   test("OpSeq And FunctionCall F<nospace>[]") {
     val input = "trait #sealed Vector[n: Nat, T: Type]"
     val expected =

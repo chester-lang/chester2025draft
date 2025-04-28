@@ -4,8 +4,7 @@ import chester.readerv2.LexerV2.DEBUG
 import chester.syntax.concrete.*
 import munit.FunSuite
 
-class HardCons2 extends FunSuite{
-
+class HardCons2 extends FunSuite {
 
   test("{cons2 = Cons { head = 0, tail = Nil };}") {
     val input = "{cons2 = Cons { head = 0, tail = Nil };}"

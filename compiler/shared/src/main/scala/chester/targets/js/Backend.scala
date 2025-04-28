@@ -2,22 +2,31 @@ package chester.targets.js
 
 import chester.syntax.core.*
 // Explicitly import necessary AST types from the same package
-import chester.targets.js.{Expression, Meta, NumericLiteral, StringLiteral, BooleanLiteral, Identifier, FunctionExpression, BlockStatement, ReturnStatement, Parameter, IdentifierPattern}
+import chester.targets.js.{
+  Expression,
+  Meta,
+  NumericLiteral,
+  StringLiteral,
+  BooleanLiteral,
+  Identifier,
+  FunctionExpression,
+  BlockStatement,
+  ReturnStatement,
+  Parameter,
+  IdentifierPattern
+}
 // Import Doc extension methods like render
 import chester.utils.doc.*
 
-/**
- * Basic JavaScript/TypeScript backend.
- * Transforms core.Term nodes into jsAST nodes.
- */
+/** Basic JavaScript/TypeScript backend. Transforms core.Term nodes into jsAST nodes.
+  */
 object Backend {
 
   // Use Default (capital D)
   given PrettierOptions = PrettierOptions.Default
 
-  /**
-   * Transforms a Chester core.Term into a JavaScript AST Expression.
-   */
+  /** Transforms a Chester core.Term into a JavaScript AST Expression.
+    */
   private def transform(term: Term): Expression = {
     // Use map instead of flatMap, should be equivalent for Option[TermMeta]
     val jsMeta = term.meta.map(_.sourcePos).map(sp => Meta(sp))
@@ -37,9 +46,7 @@ object Backend {
       case Function(ty, body, meta) =>
         // Extract parameter identifiers from the function type's telescopes
         // Wrap each Identifier in an IdentifierPattern, then in a Parameter
-        val params = ty.telescopes.flatMap(_.args.map {
-          arg => Parameter(IdentifierPattern(Identifier(arg.bind.name.toString)))
-        })
+        val params = ty.telescopes.flatMap(_.args.map(arg => Parameter(IdentifierPattern(Identifier(arg.bind.name.toString)))))
         // Transform the body term
         val bodyExpr = transform(body)
         // JS FunctionExpression needs a BlockStatement, so wrap the body expression in a ReturnStatement
@@ -68,10 +75,9 @@ object Backend {
     }
   }
 
-  /**
-   * Compiles a Chester core.Term to a JavaScript code string.
-   */
-  def compileToJs(term: Term): String = { // Input is core.Term
+  /** Compiles a Chester core.Term to a JavaScript code string.
+    */
+  def compileToJs(term: Term): String = // Input is core.Term
     try {
       val jsAst = transform(term)
       // Use render extension method
@@ -83,7 +89,6 @@ object Backend {
       case e: Exception =>
         s"// Error: Backend transform failed: ${e.getMessage}\n"
     }
-  }
 
   // Overload or alternative entry point if the absolute top-level input isn't a single Term
   // For example, if it's a sequence of top-level definitions or a specific 'Program' node

@@ -2,8 +2,26 @@ package chester.readerv2
 import chester.i18n.*
 import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, Source}
-import chester.syntax.concrete.{Block, DotCall, Expr, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, Tuple}
-import chester.syntax.concrete.{Identifier as ConcreteIdentifier, IntegerLiteral as ConcreteIntegerLiteral, RationalLiteral as ConcreteRationalLiteral, StringLiteral as ConcreteStringLiteral}
+import chester.syntax.concrete.{
+  Block,
+  DotCall,
+  Expr,
+  ExprMeta,
+  FunctionCall,
+  ListExpr,
+  ObjectClause,
+  ObjectExpr,
+  ObjectExprClause,
+  ObjectExprClauseOnValue,
+  OpSeq,
+  Tuple
+}
+import chester.syntax.concrete.{
+  Identifier as ConcreteIdentifier,
+  IntegerLiteral as ConcreteIntegerLiteral,
+  RationalLiteral as ConcreteRationalLiteral,
+  StringLiteral as ConcreteStringLiteral
+}
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
@@ -15,31 +33,29 @@ import scala.annotation.tailrec
 // Token extractors for cleaner pattern matching
 private object TokenExtractors {
   import chester.readerv2.Token.*
-  
+
   object Id {
-    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = 
+    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] =
       PartialFunction.condOpt(token) { case Right(Token.Identifier(chars, pos)) => (chars, pos) }
   }
 
-  
-
   object Str {
-    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = 
+    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] =
       PartialFunction.condOpt(token) { case Right(Token.StringLiteral(chars, pos)) => (chars, pos) }
   }
 
   object Sym {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] =
       PartialFunction.condOpt(token) { case Right(Token.SymbolLiteral(value, pos)) => (value, pos) }
   }
 
   object Int {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] =
       PartialFunction.condOpt(token) { case Right(Token.IntegerLiteral(value, pos)) => (value, pos) }
   }
 
   object Rat {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
+    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] =
       PartialFunction.condOpt(token) { case Right(Token.RationalLiteral(value, pos)) => (value, pos) }
   }
 
@@ -59,7 +75,7 @@ private object TokenExtractors {
   object Comma { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.Comma])(t) }
 
   object Err {
-    def unapply(token: Either[ParseError, Token]): Option[ParseError] = 
+    def unapply(token: Either[ParseError, Token]): Option[ParseError] =
       PartialFunction.condOpt(token) { case Left(err) => err }
   }
 }
@@ -94,8 +110,8 @@ case class LexerState(
   // Helper methods for common state checks
   def isAtTerminator: Boolean = current.exists(t =>
     t.isInstanceOf[Token.EOF] || t.isInstanceOf[Token.RParen] ||
-    t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
-    t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
+      t.isInstanceOf[Token.RBrace] || t.isInstanceOf[Token.RBracket] ||
+      t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
 
   def collectPendingWhitespaces(): Vector[Token.Whitespace] =
@@ -153,10 +169,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     token.fold(
       identity,
-      t => ParseError(
-        f"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
-        t.sourcePos.range.start
-      )
+      t =>
+        ParseError(
+          f"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
+          t.sourcePos.range.start
+        )
     )
   }
 
@@ -210,7 +227,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Vector(expr) if comments.nonEmpty =>
         Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), comments))))
       case Vector(expr) => Right(expr)
-      case _            => 
+      case _ =>
         debug(t"Creating OpSeq with terms: $terms")
         Right(OpSeq(terms, createMetaWithComments(None, comments)))
     }
@@ -260,15 +277,15 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                 // parseObject advanced state, now continue parsing after the object
                 parseRest(funcCall) // Recurse with the new FunctionCall
               case funcCall: FunctionCall =>
-                 debug(t"parseRest: Preceding expr is FunctionCall $funcCall, adding object as another argument.")
-                 // This assumes the object is an additional argument group like f(a){b=1}
-                 val newFuncCall = FunctionCall(
-                   funcCall,
-                   Tuple(Vector(objExpr), createMeta(None, None)),
-                   createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
-                 )
-                 // parseObject advanced state, now continue parsing after the object
-                 parseRest(newFuncCall) // Recurse with the new FunctionCall
+                debug(t"parseRest: Preceding expr is FunctionCall $funcCall, adding object as another argument.")
+                // This assumes the object is an additional argument group like f(a){b=1}
+                val newFuncCall = FunctionCall(
+                  funcCall,
+                  Tuple(Vector(objExpr), createMeta(None, None)),
+                  createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+                )
+                // parseObject advanced state, now continue parsing after the object
+                parseRest(newFuncCall) // Recurse with the new FunctionCall
               case _ =>
                 debug(t"parseRest: Preceding expr $expr doesn't support object arg directly. Falling back to block parse.")
                 this.state = originalState // Restore state
@@ -339,7 +356,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
-  private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, Expr] = {
+  private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos): Either[ParseError, Expr] =
     // this.state is already set correctly
     parseBlock().flatMap { block =>
       // parseBlock has already updated this.state
@@ -347,21 +364,23 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       expr match {
         case funcCall: FunctionCall =>
           // Check if this is a case like Vector[T]{...} - don't wrap block as an argument
-          val isFunctionCallWithTypeParams = funcCall.function.isInstanceOf[ConcreteIdentifier] && 
-                                           funcCall.telescope.isInstanceOf[ListExpr]
-          
+          val isFunctionCallWithTypeParams = funcCall.function.isInstanceOf[ConcreteIdentifier] &&
+            funcCall.telescope.isInstanceOf[ListExpr]
+
           if (isFunctionCallWithTypeParams) {
             debug("parseRest: Found generic function call with block, treating as separate elements")
             // Return an OpSeq with both expressions
             val updatedTerms = terms :+ block
             debug(t"parseRest: After block following generic function, terms: $updatedTerms")
-            
+
             parseRest(block).map {
-              case opSeq: OpSeq => 
-                debug(t"OpSeq construction for generic function with block: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              case opSeq: OpSeq =>
+                debug(
+                  t"OpSeq construction for generic function with block: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                )
                 debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                 OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-              case _ => 
+              case _ =>
                 debug(t"Simple OpSeq construction for generic function with block: updatedTerms=$updatedTerms")
                 OpSeq(updatedTerms, None)
             }
@@ -372,7 +391,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               Tuple(Vector(block), createMeta(None, None)),
               createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
             )
-            
+
             if (this.state.isAtTerminator) {
               Right(newFuncCall)
             } else {
@@ -386,7 +405,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             Tuple(Vector(block), createMeta(None, None)),
             createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
           )
-          
+
           if (this.state.isAtTerminator) {
             Right(funcCall)
           } else {
@@ -396,10 +415,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           debug("parseRest: Default handling for block after expression")
           val updatedTerms = terms :+ block
           debug(t"parseRest: After block following other expression, terms: $updatedTerms")
-          
+
           parseRest(block).map {
             case opSeq: OpSeq =>
-              debug(t"OpSeq construction in handleBlockArgument: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              debug(
+                t"OpSeq construction in handleBlockArgument: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+              )
               debug(t"Creating OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
@@ -408,7 +429,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           }
       }
     }
-  }
 
   /** Handle colon expressions - uses skipComments() and pullComments() for comment handling
     */
@@ -425,11 +445,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       // withComments has updated this.state already
       parseRest(next).map {
         case opSeq: OpSeq =>
-          debug(t"OpSeq construction in handleColon: newTerms=${newTerms}, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+          debug(t"OpSeq construction in handleColon: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
           debug(t"Creating OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
           OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
         case _ =>
-          debug(t"Simple OpSeq construction in handleColon: newTerms=${newTerms}")
+          debug(t"Simple OpSeq construction in handleColon: newTerms=$newTerms")
           OpSeq(newTerms, None)
       }
     }
@@ -467,11 +487,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseRest(next).map {
           case opSeq: OpSeq =>
             // Flatten the nested OpSeq
-            debug(t"OpSeq construction in handleOperatorInRest: newTerms=${newTerms}, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+            debug(t"OpSeq construction in handleOperatorInRest: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
             debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
             OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
           case otherExpr => // If the rest is not an OpSeq, just build normally
-            debug(t"Simple OpSeq construction in handleOperatorInRest: newTerms=${newTerms}")
+            debug(t"Simple OpSeq construction in handleOperatorInRest: newTerms=$newTerms")
             OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
         }
       }
@@ -489,7 +509,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug("parseRest: Found lbracket after identifier - handling generic type parameters")
         // Create the identifier
         val identifier = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-        
+
         // Parse the generic type parameters (list)
         parseList().flatMap { typeParams =>
           val afterTypeParams = this.state
@@ -502,14 +522,16 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                 val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
                 val funcCall = createFunctionCall(typeCall, tuple, Some(sourcePos), Some(this.state.sourcePos))
                 val updatedTerms = terms :+ funcCall
-                
+
                 parseRest(funcCall).map {
                   case opSeq: OpSeq =>
-                    debug(t"OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                    debug(
+                      t"OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                    )
                     debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                     OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
                   case _ =>
-                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=${updatedTerms}")
+                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms")
                     OpSeq(updatedTerms, None)
                 }
               }
@@ -518,19 +540,21 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               debug("parseRest: Found identifier with generic type parameters followed by a block")
               val typeParamsList: ListExpr = typeParams
               val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
-              
+
               parseBlock().flatMap { block =>
                 // Don't create a function call - instead just add both expressions to the sequence
                 val updatedTerms = terms :+ typeCall :+ block
                 debug(t"parseRest: After block following generic type, terms: $updatedTerms")
-                
+
                 parseRest(block).map {
-                  case opSeq: OpSeq => 
-                    debug(t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                  case opSeq: OpSeq =>
+                    debug(
+                      t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                    )
                     debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                     OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                  case _ => 
-                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}")
+                  case _ =>
+                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms")
                     OpSeq(updatedTerms, None)
                 }
               }
@@ -540,19 +564,21 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               val typeParamsList: ListExpr = typeParams
               val funcCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
               val updatedTerms = terms :+ funcCall
-              
+
               parseRest(funcCall).map {
                 case opSeq: OpSeq =>
-                  debug(t"OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                  debug(
+                    t"OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                  )
                   debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                   OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
                 case _ =>
-                  debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=${updatedTerms}")
+                  debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms")
                   OpSeq(updatedTerms, None)
               }
           }
         }
-      
+
       case Right(Token.LParen(_)) =>
         debug("parseRest: Found lparen after identifier")
         // this.state is already set to the position after the identifier
@@ -569,15 +595,17 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           parseRest(functionCall).map {
             case opSeq: OpSeq =>
               // Flatten
-              debug(t"OpSeq construction in handleIdentifierInRest (function call): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              debug(
+                t"OpSeq construction in handleIdentifierInRest (function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+              )
               debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              debug(t"Simple OpSeq construction in handleIdentifierInRest (function call): updatedTerms=${updatedTerms}")
+              debug(t"Simple OpSeq construction in handleIdentifierInRest (function call): updatedTerms=$updatedTerms")
               OpSeq(updatedTerms, None)
           }
         }
-        
+
       case Right(Token.LBrace(_)) =>
         debug("parseRest: Found lbrace after identifier")
         // this.state is already set to the position after the identifier
@@ -585,19 +613,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         val originalState = this.state
         parseObject() match {
           case Right(objExpr) => // Object argument
-             debug(t"handleIdentifierInRest: Parsed object arg $objExpr after identifier $text")
-             val idExpr = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-             val funcCall = FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
-             val updatedTerms = terms :+ funcCall
-             parseRest(funcCall).map {
-                 case opSeq: OpSeq => 
-                   debug(t"OpSeq construction in handleIdentifierInRest (object): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
-                   debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                   OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                 case _ => 
-                   debug(t"Simple OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms")
-                   OpSeq(updatedTerms, None)
-             }
+            debug(t"handleIdentifierInRest: Parsed object arg $objExpr after identifier $text")
+            val idExpr = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+            val funcCall =
+              FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
+            val updatedTerms = terms :+ funcCall
+            parseRest(funcCall).map {
+              case opSeq: OpSeq =>
+                debug(
+                  t"OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                )
+                debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+              case _ =>
+                debug(t"Simple OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms")
+                OpSeq(updatedTerms, None)
+            }
           case Left(_) => // Assume block argument
             this.state = originalState // Restore state
             debug(t"handleIdentifierInRest: Failed object parse, assuming block arg after identifier $text")
@@ -607,12 +638,14 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               val updatedTerms = terms :+ id :+ block
               debug(t"parseRest: After block following identifier, terms: $updatedTerms")
               parseRest(block).map {
-                case opSeq: OpSeq => 
-                  debug(t"OpSeq construction in handleIdentifierInRest (block): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                case opSeq: OpSeq =>
+                  debug(
+                    t"OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                  )
                   debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                   OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                case _ => 
-                  debug(t"Simple OpSeq construction in handleIdentifierInRest (block): updatedTerms=${updatedTerms}")
+                case _ =>
+                  debug(t"Simple OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms")
                   OpSeq(updatedTerms, None)
               }
             }
@@ -635,11 +668,13 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           parseRest(next).map {
             case opSeq: OpSeq =>
               // Flatten the nested OpSeq
-              debug(t"OpSeq construction in handleIdentifierInRest (operator): newTerms=${newTerms}, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              debug(
+                t"OpSeq construction in handleIdentifierInRest (operator): newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+              )
               debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-            case _ => 
-              debug(t"Simple OpSeq construction in handleIdentifierInRest (operator): newTerms=${newTerms}")
+            case _ =>
+              debug(t"Simple OpSeq construction in handleIdentifierInRest (operator): newTerms=$newTerms")
               OpSeq(newTerms, None)
           }
         }
@@ -650,26 +685,27 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug(t"parseRest: After adding bare id, terms: $updatedTerms")
 
         parseRest(id).map {
-          case opSeq: OpSeq => 
-            debug(t"OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+          case opSeq: OpSeq =>
+            debug(
+              t"OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+            )
             debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
             OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
           // Special case adjustment: Treat f(block) returned from block handling as f block in sequence
-          case FunctionCall(f, Tuple(Vector(b: Block), _), _) => 
+          case FunctionCall(f, Tuple(Vector(b: Block), _), _) =>
             debug(t"Special case in handleIdentifierInRest: treating f(block) as sequence [f, block]")
             debug(t"Creating OpSeq with adjusted sequence: ${updatedTerms.dropRight(1) ++ Vector(f, b)}")
             OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
-          case _ => 
-            debug(t"Simple OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=${updatedTerms}")
+          case _ =>
+            debug(t"Simple OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms")
             OpSeq(updatedTerms, None)
         }
     }
   }
 
   // Main parsing methods
-  def parseExpr(): Either[ParseError, Expr] = {
+  def parseExpr(): Either[ParseError, Expr] =
     parseExprInner()
-  }
 
   private def parseExprInner(): Either[ParseError, Expr] = {
     // Skip comments and whitespace, storing them internally in pendingTokens
@@ -846,20 +882,20 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       case Right(Token.Hash(sourcePos)) =>
         // Advance past the hash
         advance()
-        
+
         // We expect an identifier to follow the hash
         this.state.current match {
           case Right(Token.Identifier(chars, idSourcePos)) =>
             val keyName = charsToString(chars)
-            
+
             // Advance past the identifier
             advance()
             skipComments()
-            
+
             // Check for arguments (telescope)
             var telescope = Vector.empty[MaybeTelescope]
-            
-            def parseKeywordArguments(): Either[ParseError, Vector[MaybeTelescope]] = {
+
+            def parseKeywordArguments(): Either[ParseError, Vector[MaybeTelescope]] =
               // Check for tuple arguments like (1,2,3) or list arguments like [qaq]
               this.state.current match {
                 case Right(Token.LParen(_)) =>
@@ -880,15 +916,12 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                   // No more arguments
                   Right(telescope)
               }
-            }
-            
-            parseKeywordArguments().map { finalTelescope =>
-              Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos)))
-            }
-            
+
+            parseKeywordArguments().map(finalTelescope => Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos))))
+
           case Right(token) =>
             Left(ParseError(s"Expected identifier after '#'", token.sourcePos.range.start))
-            
+
           case Left(err) => Left(err)
         }
 
@@ -993,9 +1026,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   // Helper to check if current state has a terminator
   private def isAtTerminator: Boolean = this.state.isAtTerminator
 
-  /** Parses a sequence of expressions typically used in tuples or function calls.
-    * Allows semicolons as separators in addition to commas.
-    * Expects a closing parenthesis `)`.
+  /** Parses a sequence of expressions typically used in tuples or function calls. Allows semicolons as separators in addition to commas. Expects a
+    * closing parenthesis `)`.
     */
   private def parseTupleExprList(startPos: SourcePos): Either[ParseError, Vector[Expr]] = {
     // Skip any comments at the start
@@ -1008,14 +1040,19 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     )
   }
 
-  /** Parses a sequence of comma-separated (and optionally semicolon-separated) expressions
-    * until a specific closing token is found. Handles comment attachment to elements.
+  /** Parses a sequence of comma-separated (and optionally semicolon-separated) expressions until a specific closing token is found. Handles comment
+    * attachment to elements.
     *
-    * @param closingTokenPredicate Predicate to identify the closing token (e.g., `_.isInstanceOf[Token.RBracket]`).
-    * @param allowSemicolon If true, semicolons are treated as valid separators like commas.
-    * @param startPosForError The source position of the opening delimiter, used for error messages.
-    * @param contextDescription Description of the context (e.g., "list", "tuple") for error messages.
-    * @return A vector of parsed expressions or a ParseError.
+    * @param closingTokenPredicate
+    *   Predicate to identify the closing token (e.g., `_.isInstanceOf[Token.RBracket]`).
+    * @param allowSemicolon
+    *   If true, semicolons are treated as valid separators like commas.
+    * @param startPosForError
+    *   The source position of the opening delimiter, used for error messages.
+    * @param contextDescription
+    *   Description of the context (e.g., "list", "tuple") for error messages.
+    * @return
+    *   A vector of parsed expressions or a ParseError.
     */
   @tailrec
   private def parseElementSequence(
@@ -1061,7 +1098,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         debug("Parsing expression in sequence")
         // State is already advanced past previous separator or is at the start
         parseExpr() match {
-          case Left(err) => Left(err)
+          case Left(err)   => Left(err)
           case Right(expr) =>
             // State is now after the parsed expression
             // Skip potential comments/whitespace *after* the expression
@@ -1164,8 +1201,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
-    isTerminator: LexerState => Boolean,
-    contextDescription: String
+      isTerminator: LexerState => Boolean,
+      contextDescription: String
   ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
     var statements = Vector.empty[Expr]
     var currentResult: Option[Expr] = None
@@ -1192,8 +1229,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           debug(s"parseStatementSequence: Consuming explicit semicolon separator in $contextDescription")
           // If there was a result pending, it becomes a statement due to the semicolon
           currentResult.foreach { res =>
-             statements = statements :+ res
-             currentResult = None
+            statements = statements :+ res
+            currentResult = None
           }
           advance()
           skipComments()
@@ -1210,34 +1247,34 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           // If there was a previous result and we *didn't* consume an explicit semicolon,
           // we need to check for implicit separation (like a significant newline) based on tokens between.
           if (!consumedSeparator && currentResult.isDefined) {
-             // Check if newline handling is enabled and if there was significant whitespace
-             val whitespaceTokens = stateBeforePossibleExpr.collectPendingWhitespaces()
-             val hasSignificantNewline = this.state.newLineAfterBlockMeansEnds && 
-                                         whitespaceTokens.exists(isNewlineWhitespace)
-             if (hasSignificantNewline) {
-                debug(s"parseStatementSequence: Detected significant newline separator in $contextDescription")
-                // Treat newline as separator: move result to statements
-                statements = statements :+ currentResult.get
-                currentResult = None
-             } else {
-                // Not separated by semicolon or significant newline, likely an OpSeq continuation or error
-                // Let parseExpr handle it. If parseExpr succeeds, the previous result becomes a statement.
-                debug(s"parseStatementSequence: No explicit/newline separator, assuming OpSeq continuation or error in $contextDescription")
-                statements = statements :+ currentResult.get
-                currentResult = None
-             }
+            // Check if newline handling is enabled and if there was significant whitespace
+            val whitespaceTokens = stateBeforePossibleExpr.collectPendingWhitespaces()
+            val hasSignificantNewline = this.state.newLineAfterBlockMeansEnds &&
+              whitespaceTokens.exists(isNewlineWhitespace)
+            if (hasSignificantNewline) {
+              debug(s"parseStatementSequence: Detected significant newline separator in $contextDescription")
+              // Treat newline as separator: move result to statements
+              statements = statements :+ currentResult.get
+              currentResult = None
+            } else {
+              // Not separated by semicolon or significant newline, likely an OpSeq continuation or error
+              // Let parseExpr handle it. If parseExpr succeeds, the previous result becomes a statement.
+              debug(s"parseStatementSequence: No explicit/newline separator, assuming OpSeq continuation or error in $contextDescription")
+              statements = statements :+ currentResult.get
+              currentResult = None
+            }
           } else if (currentResult.isDefined && consumedSeparator) {
             // Result already moved to statements above if separator was consumed
           }
 
-          // --- Parse the next expression --- 
+          // --- Parse the next expression ---
           debug(s"parseStatementSequence: Attempting to parse expression in $contextDescription at ${this.state.current}")
           parseExpr() match {
             case Left(err) =>
               // Check if the error occurred because we expected an expression but found a terminator
-              if (isTerminator(this.state)) { 
-                 debug(s"parseStatementSequence: Hit terminator instead of expected expression in $contextDescription. Ending sequence.")
-                 Right(()) // End sequence gracefully if terminator found where expression expected
+              if (isTerminator(this.state)) {
+                debug(s"parseStatementSequence: Hit terminator instead of expected expression in $contextDescription. Ending sequence.")
+                Right(()) // End sequence gracefully if terminator found where expression expected
               } else {
                 debug(s"parseStatementSequence: Error parsing expression in $contextDescription: $err")
                 Left(err)
@@ -1246,21 +1283,21 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               debug(s"parseStatementSequence: Parsed expression $parsedExpr in $contextDescription, state after: ${this.state}")
               // This is the new potential result
               currentResult = Some(parsedExpr)
-              
+
               // Peek ahead: Skip comments/whitespace and check the *very next* token
               val stateAfterExpr = this.state
               skipComments()
               val isFollowedByTerminator = isTerminator(this.state)
               // Restore state to right after the expression was parsed
-              this.state = stateAfterExpr 
+              this.state = stateAfterExpr
 
               if (isFollowedByTerminator) {
-                 debug(s"parseStatementSequence: Terminator found immediately after expression in $contextDescription. Final result found.")
-                 Right(()) // Expression is the final result, end the loop.
+                debug(s"parseStatementSequence: Terminator found immediately after expression in $contextDescription. Final result found.")
+                Right(()) // Expression is the final result, end the loop.
               } else {
-                 // Not followed immediately by terminator. It might be followed by a separator, or another expression.
-                 // Loop again. The start of the next loop will handle separators and moving the currentResult.
-                 loop(count - 1)
+                // Not followed immediately by terminator. It might be followed by a separator, or another expression.
+                // Loop again. The start of the next loop will handle separators and moving the currentResult.
+                loop(count - 1)
               }
           }
         }
@@ -1271,7 +1308,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     loop(maxExpressions).map(_ => (statements, currentResult))
   }
 
-  private def parseBlock(): Either[ParseError, Block] = {
+  private def parseBlock(): Either[ParseError, Block] =
     // Use withModifiedState to handle the newLineAfterBlockMeansEnds flag change
     withModifiedState(_.withNewLineTermination(true)) { () =>
       debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
@@ -1293,7 +1330,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                 val meta = createMeta(Some(startPosForMeta), Some(endPos))
                 advance() // Consume the closing brace
                 Right(Block(statements, result, meta))
-              case Right(t) => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
+              case Right(t)  => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
               case Left(err) => Left(err)
             }
           }
@@ -1306,7 +1343,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           Left(err)
       }
     } // State is automatically restored after this block
-  }
 
   // Helper method to check if whitespace contains a newline
   private def isNewlineWhitespace(token: Token.Whitespace): Boolean = {
@@ -1333,30 +1369,22 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           case Right(Token.Dot(_)) =>
             handleDotCall(this.state.sourcePos, Vector(identifier)).flatMap { dotExpr =>
               skipComments()
-              parseField(dotExpr, idSourcePos).flatMap(clause => 
-                checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-              )
+              parseField(dotExpr, idSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
             }
           case _ =>
             skipComments()
-            parseField(identifier, idSourcePos).flatMap(clause => 
-              checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-            )
+            parseField(identifier, idSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
         }
       case Right(Token.StringLiteral(chars, strSourcePos)) =>
         val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
         advance()
         skipComments()
-        parseField(stringLiteral, strSourcePos).flatMap(clause => 
-          checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-        )
+        parseField(stringLiteral, strSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
       case Right(Token.SymbolLiteral(value, symSourcePos)) =>
         val symbolLiteral = chester.syntax.concrete.SymbolLiteral(value, createMeta(Some(symSourcePos), Some(symSourcePos)))
         advance()
         skipComments()
-        parseField(symbolLiteral, symSourcePos).flatMap(clause => 
-          checkAfterField().flatMap(_ => parseFields(clauses :+ clause))
-        )
+        parseField(symbolLiteral, symSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
       case Right(t) =>
         Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
       case Left(err) => Left(err)
@@ -1385,7 +1413,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             Left(ParseError(t"Unexpected operator in object field: $op", keySourcePos.range.start))
           }
         }
-      case Right(t) => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+      case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
       case Left(err) => Left(err)
     }
 
@@ -1396,8 +1424,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         skipComments()
         Right(())
       case Right(Token.RBrace(_)) => Right(())
-      case Right(t) => Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
-      case Left(err) => Left(err)
+      case Right(t)               => Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+      case Left(err)              => Left(err)
     }
 
   private def parseObject(): Either[ParseError, ObjectExpr] = {
@@ -1491,9 +1519,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     * @return
     *   the previous state before clearing
     */
-  private def clearPendingTokens(): Unit = {
+  private def clearPendingTokens(): Unit =
     this.state = this.state.clearPendingTokens()
-  }
 
   /** Skips all comments and whitespace tokens, updating this.state directly. All skipped tokens are automatically added to the state's pendingTokens
     * for later retrieval.

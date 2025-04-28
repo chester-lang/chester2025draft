@@ -5,8 +5,7 @@ import chester.utils.Parameter
 // Import mutable Set
 import scala.collection.mutable
 
-/** Global debug utilities and flags for Chester.
-  * Provides both globally mutable defaults and scoped overrides.
+/** Global debug utilities and flags for Chester. Provides both globally mutable defaults and scoped overrides.
   */
 object Debug {
 
@@ -24,7 +23,6 @@ object Debug {
     case StringArgs // For string arguments handling debug info
     case TraitMatching // For trait implementation matching
   }
-
 
   // Globally mutable set for default enabled categories
   private val globallyEnabledCategories: mutable.Set[DebugCategory] = mutable.Set.empty
@@ -53,7 +51,7 @@ object Debug {
         // Check scoped value first using getOption
         param.getOption match {
           case Some(scopedValue) => scopedValue // Use scoped value if present (true or false)
-          case None => globallyEnabledCategories.contains(category) // Fallback to global default
+          case None              => globallyEnabledCategories.contains(category) // Fallback to global default
         }
       // Should not happen as map is exhaustive
       case None => false
@@ -69,11 +67,8 @@ object Debug {
 
   /** Executes a block of code with multiple debug categories enabled (scoped override).
     */
-  def withCategoriesEnabled[U](categories: Iterable[DebugCategory])(block: => U): U = {
-    categories.foldLeft(() => block) { (currentBlock, category) =>
-      () => withCategoryEnabled(category)(currentBlock())
-    }()
-  }
+  def withCategoriesEnabled[U](categories: Iterable[DebugCategory])(block: => U): U =
+    categories.foldLeft(() => block)((currentBlock, category) => () => withCategoryEnabled(category)(currentBlock()))()
 
   // Debug print method that respects debug flags
   def debugPrint(category: DebugCategory, message: => String): Unit =
