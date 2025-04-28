@@ -1,26 +1,13 @@
 package chester.readerv2
 import chester.reader.{ParseError, ParserSource, Source}
-import chester.syntax.concrete.*
+import chester.syntax.concrete.Expr
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.utils.WithUTF16
 import chester.reader.FileNameAndContent
 import chester.error.Pos
-import scala.language.implicitConversions
 
 object ChesterReaderV2 {
-  private inline implicit def dirtyFix1(x: Either[ParseError, Expr]): Either[ParseError, ParsedExpr] = {
-    x.asInstanceOf[Either[ParseError, ParsedExpr]]
-  }
-  private inline implicit def dirtyFix2(x: Either[ParseError, Vector[Expr]]): Either[ParseError, Vector[ParsedExpr]] = {
-    x.asInstanceOf[Either[ParseError, Vector[ParsedExpr]]]
-  }
-  private inline implicit def dirtyFix3(x: Either[ParseError, ParsedExpr]): Either[ParseError, Expr] = {
-    x.asInstanceOf[Either[ParseError, Expr]]
-  }
-  private inline implicit def dirtyFix4(x: Either[ParseError, Vector[ParsedExpr]]): Either[ParseError, Vector[Expr]] = {
-    x.asInstanceOf[Either[ParseError, Vector[Expr]]]
-  }
   // Helper method to set up tokenizer and lexer with common logic
   private def setupLexer(source: ParserSource, ignoreLocation: Boolean = false): ReaderV2 = {
     val sourceOffset = Source(source)
@@ -30,17 +17,17 @@ object ChesterReaderV2 {
     new ReaderV2(initialState, sourceOffset, ignoreLocation)
   }
 
-  def parseExpr(source: ParserSource): Either[ParseError, ParsedExpr] = {
+  def parseExpr(source: ParserSource): Either[ParseError, Expr] = {
     val lexer = setupLexer(source)
     lexer.parseExpr()
   }
 
-  def parseExprList(source: ParserSource): Either[ParseError, Vector[ParsedExpr]] = {
+  def parseExprList(source: ParserSource): Either[ParseError, Vector[Expr]] = {
     val lexer = setupLexer(source)
     lexer.parseExprList()
   }
 
-  def parseTopLevel(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, ParsedExpr] = {
+  def parseTopLevel(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, Expr] = {
     val lexer = setupLexer(source, ignoreLocation)
     lexer.parseTopLevel()
   }
@@ -66,7 +53,7 @@ object ChesterReaderV2 {
       linesOffset: Int :| Positive0,
       posOffset: WithUTF16,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, ParsedExpr] = {
+  ): Either[ParseError, Expr] = {
     val source = Source(
       FileNameAndContent(sourceName, content),
       linesOffset = linesOffset,
