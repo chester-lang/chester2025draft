@@ -17,4 +17,5 @@
     - [TypeScript Backend Implementation](dev/typescript-backend.md)
     - [Union Types Progress](dev/union_types_progress.md)
 - [Statements](statements.md)
+- [Chester Syntax Grammar (BNF-like)](syntax-grammar.md)
 - [Traits and Interfaces in Chester](trait-and-interface.md)
