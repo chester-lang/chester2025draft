@@ -1,7 +1,7 @@
 package chester.reader
 
 import chester.i18n.*
-import chester.readerv1.ChesterReaderV1
+import chester.readerv1.ChesterReader
 import chester.readerv2.ReaderV2.DEBUG
 import chester.syntax.concrete.*
 import munit.FunSuite
