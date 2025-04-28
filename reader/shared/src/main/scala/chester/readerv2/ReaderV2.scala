@@ -82,6 +82,17 @@ private object TokenExtractors {
 
 import TokenExtractors._
 
+case class ReaderContext(
+                           inOpSeq: Boolean = false,
+                           dontallowOpSeq: Boolean = false,
+                           newLineAfterBlockMeansEnds: Boolean = false,
+                           dontAllowBlockApply: Boolean = false
+                         ) {
+  def opSeq: Boolean = !inOpSeq && !dontallowOpSeq
+
+  def blockCall: Boolean = !inOpSeq && !dontAllowBlockApply
+}
+
 case class ReaderState(
     tokens: Vector[Either[ParseError, Token]],
     index: Int,
