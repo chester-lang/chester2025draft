@@ -40,29 +40,19 @@ ReaderV1 uses the FastParse library to implement a parser combinator approach.
 
 ### Implementation Details
 
-```scala
-case class ReaderV1(
-    sourceOffset: Source,
-    ignoreLocation: Boolean = false,
-    defaultIndexer: Option[StringIndex] = None
-)(using p: P[?]) {
-  // Parser state
-  private def nEnd: P[Unit] = P("\n" | End)
-  private def commentOneLine: P[Comment] = ...
-  private def delimiter1: P[Vector[Comment]] = ...
-  
-  // Parse expressions 
-  def parseExpr(ctx: ParsingContext = ParsingContext()): P[Expr] = ...
-  
-  // Helper parsers for different expression types
-  def parseOperator(ctx: ParsingContext): P[Expr] = ...
-  def parseAtom(ctx: ParsingContext): P[Expr] = ...
-  def parseBlock(ctx: ParsingContext): P[Block] = ...
-  
-  // Track source positions for error reporting
-  private def loc(begin: Natural, end: Natural): Option[SourcePos] = ...
-}
-```
+ReaderV1 uses a hierarchical structure of parser components:
+
+1. **Expression Parsers**: Methods like `parseExpr`, `parseAtom`, and `parseOperator` form the core of the parser. They use FastParse combinators to build complex parsers from simpler ones.
+
+2. **Context Tracking**: A `ParsingContext` object tracks the current parsing state, including whether we're in an operator sequence, a block, or other specialized contexts.
+
+3. **Source Position Tracking**: Dedicated methods map character positions to line/column positions for error reporting, with special handling for UTF-16 surrogate pairs.
+
+4. **Whitespace and Comment Handling**: Dedicated parsers for whitespace, line endings, and comments ensure these elements are preserved in the AST.
+
+5. **Parser Extensions**: Custom extension methods for FastParse parsers add support for metadata attachment, relaxed parsing, and error recovery.
+
+6. **Parser Composition**: The implementation composes smaller parsers into larger ones, following FastParse's combinator approach.
 
 ## ReaderV2 Implementation
 
@@ -85,27 +75,21 @@ ReaderV2 uses a custom tokenizer and a state machine-based approach for parsing.
 
 ### Implementation Details
 
-```scala
-class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) {
-  // State management
-  var state: ReaderState = initState
-  
-  // Main parsing methods
-  def parseExpr(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = ...
-  private def parseAtom(context: ReaderContext): Either[ParseError, Expr] = ...
-  private def parseRest(expr: Expr, context: ReaderContext): Either[ParseError, Expr] = ...
-  
-  // Helper methods for common parsing patterns
-  private def checkForRBraceNewlinePattern(context: ReaderContext): Boolean = ...
-  private def skipComments(): Unit = ...
-  private def pullComments(): Vector[Comment] = ...
-  
-  // Specialized parsers for complex structures
-  private def parseTuple(context: ReaderContext): Either[ParseError, Tuple] = ...
-  private def parseObject(context: ReaderContext): Either[ParseError, ObjectExpr] = ...
-  private def parseBlock(context: ReaderContext): Either[ParseError, Block] = ...
-}
-```
+ReaderV2 implements a token-based parsing approach:
+
+1. **Two-Phase Parsing**: Separates tokenization from parsing, with a dedicated Tokenizer creating a stream of tokens before parsing begins.
+
+2. **State Machine**: The parser maintains explicit state through a `ReaderState` object that tracks the current token, previous tokens, pending comments/whitespace, and other contextual information.
+
+3. **Context-Aware Processing**: A `ReaderContext` object tracks semantic context, enabling context-sensitive decisions during parsing.
+
+4. **Explicit Comment Handling**: Methods like `skipComments()` and `pullComments()` manage comment attachment without recursive descent, improving performance.
+
+5. **Block Termination Detection**: The special `}\n` pattern detection uses explicit context tracking and lookahead to determine when blocks end.
+
+6. **Error Handling**: The parser produces structured `ParseError` objects with detailed source position information and recovery mechanisms.
+
+7. **Bottom-Up Construction**: Parsing builds expressions from atoms and then extends them through continuation-based parsing in `parseRest()`.
 
 ## Key Similarities Between Implementations
 
