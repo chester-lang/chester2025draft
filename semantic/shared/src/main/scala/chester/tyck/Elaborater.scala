@@ -643,7 +643,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               if (Debug.isEnabled(MethodCalls)) Debug.debugPrint(MethodCalls, "[METHOD CALL DEBUG] Found Integer.+ method call")
               args.headOption match {
                 case Some(arg) =>
-                  if(args.length>=2){
+                  if (args.length >= 2) {
                     ???
                   }
                   val argTy = newType
