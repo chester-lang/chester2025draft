@@ -527,7 +527,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         parseList().flatMap { typeParams =>
           val afterTypeParams = this.state
           afterTypeParams.current match {
-            case Right(Token.LParen(_)) =>
+            case Right(Token.LParen(_)) | Right(Token.LBracket(_)) =>
               // Function call with generic type args: id[T](args)
               debug("parseRest: Found function call with generic type parameters")
               parseTuple().flatMap { tuple =>
