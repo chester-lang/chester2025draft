@@ -80,7 +80,7 @@ class ConsVectorTest2 extends FunSuite {
       )
     
     DEBUG.withValue(true) {
-      parseAndCheckV1(input, expected)
+      parseAndCheckBoth(input, expected)
     }
   }
 } 
