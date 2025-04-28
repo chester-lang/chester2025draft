@@ -15,6 +15,7 @@ import scala.scalajs.js
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js.typedarray.*
 import scala.scalajs.js.JSConverters.*
+import chester.utils.asInt
 
 given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
@@ -93,7 +94,7 @@ given DefaultIO: IO[Future] {
     val result = childProcessMod.spawnSync(command.head, command.tail.toJSArray, SpawnSyncOptions().setStdio(IOType.inherit))
     val status = result.status match {
       case null      => None
-      case s: Double => Some(s.toInt)
+      case s: Double => Some(s.asInt)
     }
     Future.successful(CommandOutput(status))
   }

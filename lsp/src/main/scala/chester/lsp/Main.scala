@@ -5,6 +5,7 @@ import org.log4s.*
 import org.slf4j.simple.SimpleLogger
 import chester.i18n.*
 
+import chester.utils.asInt
 import java.io.{InputStream, OutputStream}
 import java.net.ServerSocket
 
@@ -16,7 +17,7 @@ object Main {
   enableDebug()
   private val logger = getLogger
   def main(args: Array[String]): Unit = {
-    val port = if (args.nonEmpty) args(0).toInt else 1044
+    val port = if (args.nonEmpty) args(0).asInt else 1044
     logger.info(t"Starting Chester Language Server on port $port")
     logger.debug("Debugging enabled")
     logger.trace("Trace enabled")

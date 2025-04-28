@@ -1,4 +1,5 @@
 package chester.utils
+import chester.utils.asInt
 
 extension (x: String) {
   def getCodePoints: Seq[Int] = {
@@ -13,7 +14,7 @@ extension (x: String) {
         codePoints += Character.toCodePoint(codePoint, x.charAt(i + 1))
         i += 2
       } else {
-        codePoints += codePoint.toInt
+        codePoints += codePoint.asInt
         i += 1
       }
     }

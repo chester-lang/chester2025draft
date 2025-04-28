@@ -9,6 +9,7 @@ import chester.syntax.concrete.Expr
 import os.*
 import chester.reader.given
 
+import chester.utils.asInt
 import scala.meta.internal.semanticdb.*
 
 class SemanticDBGenerator extends VectorSemanticCollector {
@@ -77,10 +78,10 @@ class SemanticDBGenerator extends VectorSemanticCollector {
   private def exprRange(expr: Expr): Option[Range] =
     expr.sourcePos.map { pos =>
       Range(
-        startLine = pos.range.start.line.toInt,
-        startCharacter = pos.range.start.column.utf16.toInt,
-        endLine = pos.range.end.line.toInt,
-        endCharacter = pos.range.end.column.utf16.toInt
+        startLine = pos.range.start.line.asInt,
+        startCharacter = pos.range.start.column.utf16.asInt,
+        endLine = pos.range.end.line.asInt,
+        endCharacter = pos.range.end.column.utf16.asInt
       )
     }
 

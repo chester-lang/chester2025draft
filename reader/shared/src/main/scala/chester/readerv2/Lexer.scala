@@ -6,6 +6,7 @@ import chester.utils.WithUTF16
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import chester.i18n.*
 import spire.math.Natural
+import chester.utils.asInt
 
 import scala.util.{Try, boundary}
 
@@ -96,7 +97,7 @@ class Lexer(src: Source) {
         case '\''                           => tok(Token.SymbolLiteral(consume(c => c.isLetterOrDigit || c == '_'), _), start)
         case d if d.isDigit                 => parseNum(start)
         case a if a.isLetter || a == '_'    => parseIdent(a.toString, start)
-        case o if isOperatorSymbol(o.toInt) => parseOp(o.toString, start)
+        case o if isOperatorSymbol(o.asInt) => parseOp(o.toString, start)
         case x                              => err(t"Unexpected character: $x", start)
       }
   }
@@ -230,6 +231,6 @@ class Lexer(src: Source) {
       pos += 1; col += 1; utf16Pos += 1
       return tok(Token.Comment(consume(_ != '\n'), _), start)
     }
-    tok(Token.Operator(initial + consume(c => isOperatorSymbol(c.toInt)), _), start)
+    tok(Token.Operator(initial + consume(c => isOperatorSymbol(c.asInt)), _), start)
   }
 }

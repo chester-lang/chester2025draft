@@ -16,6 +16,8 @@ import scala.annotation.tailrec
 import chester.utils.impls.uintRW // Import needed for Pos derives ReadWriter
 import chester.utils.impls.naturalRW // Import needed for Natural ReadWriter
 
+import chester.utils.asInt
+
 case class Pos(index: WithUTF16, line: spire.math.Natural, column: WithUTF16) derives ReadWriter
 
 object Pos {
@@ -48,14 +50,14 @@ object FileContent {
 
   def apply(source: Source): FileContent = FileContent(
     source.readContent.getOrElse(""),
-    source.linesOffset.toInt,
+    source.linesOffset.asInt,
     source.posOffset
   )
 }
 
 case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
   private lazy val fileContent: Option[FileContent] = source.readContent.toOption.map(
-    content => FileContent(content, source.linesOffset.toInt, source.posOffset)
+    content => FileContent(content, source.linesOffset.asInt, source.posOffset)
   )
   val fileName: String = source.fileName
 
@@ -68,8 +70,8 @@ case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
     *     display
     */
   def getLinesInRange: Option[Vector[(Int, String)]] = fileContent map { fileContent =>
-    val startLine = range.start.line.toInt - fileContent.lineOffset
-    val endLine = range.end.line.toInt - fileContent.lineOffset
+    val startLine = range.start.line.asInt - fileContent.lineOffset
+    val endLine = range.end.line.asInt - fileContent.lineOffset
     val contentString = FileContent.convertToString(fileContent)
     val lines = contentString.split('\n').toVector
 

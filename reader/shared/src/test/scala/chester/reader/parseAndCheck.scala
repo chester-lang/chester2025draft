@@ -5,6 +5,7 @@ import upickle.default.*
 import chester.i18n.*
 import chester.readerv1.ChesterReader
 import chester.readerv2.ChesterReaderV2
+import chester.utils.asInt
 
 // Only runs against V1 (original reader)
 def parseAndCheckV1(input: String, expected: Expr): Unit = {
@@ -54,7 +55,7 @@ def parseV2(input: String): Expr = {
   ChesterReaderV2.parseExpr(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = error.pos.index.utf16.toInt
+        val errorIndex = error.pos.index.utf16.asInt
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length
@@ -89,7 +90,7 @@ def parseTopLevelV2(input: String): Expr = {
   ChesterReaderV2.parseTopLevel(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = error.pos.index.utf16.toInt
+        val errorIndex = error.pos.index.utf16.asInt
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length

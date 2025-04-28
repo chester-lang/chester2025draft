@@ -2,19 +2,20 @@ package chester.utils
 
 import munit.FunSuite
 import spire.math.Natural
+import chester.utils.asInt
 
 class StringIndexSuite extends FunSuite {
   test("charIndexToUnicodeIndex for simple characters") {
     val sp = StringIndex("hello")
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).toInt, 0)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(4)).toInt, 4)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).asInt, 0)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(4)).asInt, 4)
   }
   test("charIndexToUnicodeIndex for characters with surrogate pairs") {
     val sp = StringIndex("a\uD834\uDD1Eb")
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).toInt, 0)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(1)).toInt, 1)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(2)).toInt, 1)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(3)).toInt, 2)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).asInt, 0)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(1)).asInt, 1)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(2)).asInt, 1)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(3)).asInt, 2)
   }
 
   test("unicodeIndexToCharIndex for simple characters") {
@@ -87,10 +88,10 @@ class StringIndexSuite extends FunSuite {
   }
   test("charIndexToUnicodeIndex for Chinese characters") {
     val sp = StringIndex("你好世界") // "Hello world" in Chinese
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).toInt, 0)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(1)).toInt, 1)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(2)).toInt, 2)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(3)).toInt, 3)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).asInt, 0)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(1)).asInt, 1)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(2)).asInt, 2)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(3)).asInt, 3)
   }
 
   test("unicodeIndexToCharIndex for Chinese characters") {
@@ -121,11 +122,11 @@ class StringIndexSuite extends FunSuite {
   test("charIndexToUnicodeIndex for Chinese characters with surrogate pairs") {
     val sp =
       StringIndex("𠀋好𠀌") // Includes rare Chinese characters outside the BMP
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).toInt, 0)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(1)).toInt, 0)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(2)).toInt, 1)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(3)).toInt, 2)
-    assertEquals(sp.charIndexToUnicodeIndex(Natural(4)).toInt, 2)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(0)).asInt, 0)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(1)).asInt, 0)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(2)).asInt, 1)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(3)).asInt, 2)
+    assertEquals(sp.charIndexToUnicodeIndex(Natural(4)).asInt, 2)
   }
 
   test("unicodeIndexToCharIndex for Chinese characters with surrogate pairs") {

@@ -2,13 +2,14 @@ package chester.syntax
 
 import chester.utils.{codePointIsEmoji, getCodePoints}
 import chester.utils.parse.Character
+import chester.utils.asInt
 
 import java.lang.Character.{isDigit, isLetter}
 
 object IdentifierRules {
-  private val AllowedOperatorSymbols: Set[Int] = ".:=-+\\|<>/?`~!@$%^&*".toSet.map(_.toInt)
-  private val AllowedWordingSymbols: Set[Int] = "_".toSet.map(_.toInt)
-  private val AllowedMiddleWordingSymbols: Set[Int] = "-".toSet.map(_.toInt)
+  private val AllowedOperatorSymbols: Set[Int] = ".:=-+\\|<>/?`~!@$%^&*".toSet.map(_.asInt)
+  private val AllowedWordingSymbols: Set[Int] = "_".toSet.map(_.asInt)
+  private val AllowedMiddleWordingSymbols: Set[Int] = "-".toSet.map(_.asInt)
   val ReservedSymbols = ";,#()[]{}'\""
 
   private def isEmoji(codePoint: Int): Boolean =

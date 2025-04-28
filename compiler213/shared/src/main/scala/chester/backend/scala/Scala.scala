@@ -2,6 +2,7 @@ package chester.backend.scala
 
 import chester.syntax.core._
 
+import chester.utils.AsInt._
 import scala.meta
 import scala.annotation.experimental
 @experimental
@@ -10,7 +11,7 @@ object Scala {
   def compileExpr(term: Term)(implicit ctx: ScalaContext = null): meta.Term = term match {
     case IntegerTerm(i, _) =>
       require(i.isValidInt)
-      meta.Lit.Int(i.toInt)
+      meta.Lit.Int(i.asInt)
     case IntTerm(i, _)     => meta.Lit.Int(i)
     case StringTerm(s, _)  => meta.Lit.String(s)
     case SymbolTerm(s, _)  => meta.Lit.Symbol(Symbol(s))

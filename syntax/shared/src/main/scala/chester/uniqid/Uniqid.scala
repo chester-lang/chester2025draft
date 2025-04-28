@@ -8,6 +8,7 @@ import chester.i18n.*
 import spire.math.Natural
 import chester.utils.impls.uintRW
 import chester.utils.impls.naturalRW
+import chester.utils.asInt
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
@@ -17,7 +18,7 @@ private val uniqIdCounter = new AtomicInteger(0)
 type Uniqid = UniqidOf[Any]
 
 private val rwUniqID: ReadWriter[UniqidOf[Any]] = readwriter[Int].bimap(
-  _.id.toInt, // Convert Natural ID to Int for serialization
+  _.id.asInt, // Convert Natural ID to Int for serialization
   x => UniqidOf(Natural(x)) // Convert Int back to Natural and wrap in UniqidOf
 )
 
@@ -86,7 +87,7 @@ object Uniqid {
   def generate[T]: UniqidOf[T] = UniqidOf(Natural(uniqIdCounter.getAndIncrement()))
 
   def requireRange(size: spire.math.Natural): UniqIdRange = { // size is Natural
-    val sizeInt = size.toInt // Convert to Int for AtomicInteger
+    val sizeInt = size.asInt // Convert to Int for AtomicInteger
     val start = uniqIdCounter.getAndAdd(sizeInt) // Returns Int
     UniqIdRange(Natural(start), Natural(start + sizeInt)) // Convert results back to Natural
   }

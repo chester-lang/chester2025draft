@@ -25,7 +25,7 @@ object UnitTerm_ {
 
 object AbstractIntTerm_ {
   def from(value: BigInt, meta: OptionTermMeta): AbstractIntTerm =
-    if (value.isValidInt) IntTerm(value.toInt, meta)
+    if (value.isValidInt) IntTerm(value.asInt, meta)
     else IntegerTerm(value, meta)
 
   def unapply(term: Term): Option[BigInt] = PartialFunction.condOpt(term) {

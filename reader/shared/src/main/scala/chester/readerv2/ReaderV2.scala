@@ -27,6 +27,7 @@ import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
 import chester.syntax.concrete.*
 import chester.utils.Parameter
+import chester.utils.asInt
 
 import scala.annotation.tailrec
 
@@ -1439,8 +1440,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     maybeSource.exists { source =>
       val startPos = token.sourcePos.range.start.index.utf16
       val endPos = token.sourcePos.range.end.index.utf16
-      if (startPos.toInt < source.length && endPos.toInt <= source.length) {
-        val whitespaceText = source.substring(startPos.toInt, endPos.toInt)
+      if (startPos.asInt < source.length && endPos.asInt <= source.length) {
+        val whitespaceText = source.substring(startPos.asInt, endPos.asInt)
         whitespaceText.contains('\n')
       } else {
         false

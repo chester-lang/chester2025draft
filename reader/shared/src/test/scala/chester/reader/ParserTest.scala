@@ -4,6 +4,7 @@ import chester.syntax.concrete.*
 import munit.FunSuite
 import chester.i18n.*
 import chester.readerv1.ChesterReader
+import chester.utils.asInt
 
 class ParserTest extends FunSuite {
   test("parse valid identifier") {
@@ -15,8 +16,8 @@ class ParserTest extends FunSuite {
         meta.sourcePos match {
           case Some(pos) =>
             assertEquals(pos.fileName, "testFile")
-            assertEquals(pos.range.start.line.toInt, 0)
-            assertEquals(pos.range.start.column.i.toInt, 0)
+            assertEquals(pos.range.start.line.asInt, 0)
+            assertEquals(pos.range.start.column.i.asInt, 0)
           case None => fail("Source position not found")
         }
       case _ => fail("Parsing failed")
@@ -32,8 +33,8 @@ class ParserTest extends FunSuite {
         meta.sourcePos match {
           case Some(pos) =>
             assertEquals(pos.fileName, "testFile")
-            assertEquals(pos.range.start.line.toInt, 0)
-            assertEquals(pos.range.start.column.i.toInt, 0)
+            assertEquals(pos.range.start.line.asInt, 0)
+            assertEquals(pos.range.start.column.i.asInt, 0)
           case None => fail("Source position not found")
         }
       case _ => fail("Parsing failed")

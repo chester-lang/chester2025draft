@@ -11,6 +11,7 @@ import fastparse.NoWhitespace.*
 import spire.math.Natural
 
 import scala.util.*
+import chester.utils.asInt
 
 case class ReaderV1(
     sourceOffset: Source,
@@ -88,8 +89,8 @@ case class ReaderV1(
       end: spire.math.Natural
   ): Option[SourcePos] = {
     if (ignoreLocation) return None
-    val start = indexer.charIndexToLineAndColumnWithUTF16(begin.toInt)
-    val endPos = indexer.charIndexToLineAndColumnWithUTF16(end.toInt)
+    val start = indexer.charIndexToLineAndColumnWithUTF16(begin.asInt)
+    val endPos = indexer.charIndexToLineAndColumnWithUTF16(end.asInt)
     val range = RangeInFile(
       Pos(
         posOffset + WithUTF16(indexer.charIndexToUnicodeIndex(begin), begin),
