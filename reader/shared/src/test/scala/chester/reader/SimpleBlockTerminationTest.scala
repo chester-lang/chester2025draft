@@ -66,7 +66,7 @@ class SimpleBlockTerminationTest extends FunSuite {
     )
 
     ReaderV2.DEBUG.withValue(false) {
-    parseAndCheckBoth(input, expected)
+      parseAndCheckBoth(input, expected)
     }
   }
   test("block with newline termination complex") {

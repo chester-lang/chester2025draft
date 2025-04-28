@@ -1201,8 +1201,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
-                                      isTerminator: ReaderState => Boolean,
-                                      contextDescription: String
+      isTerminator: ReaderState => Boolean,
+      contextDescription: String
   ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
     var statements = Vector.empty[Expr]
     var currentResult: Option[Expr] = None

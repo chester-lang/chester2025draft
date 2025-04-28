@@ -34,12 +34,18 @@ object ChesterReaderV2 {
 
   /** Parses an expression string with offsets, typically used for REPL input.
     *
-    * @param sourceName Name to associate with the source (e.g., "repl").
-    * @param content The actual string content to parse.
-    * @param linesOffset Line number offset from the beginning of the logical file.
-    * @param posOffset Character position offset (Unicode and UTF-16) from the beginning.
-    * @param ignoreLocation If true, source location information is not recorded.
-    * @return Either a ParseError or the successfully parsed expression.
+    * @param sourceName
+    *   Name to associate with the source (e.g., "repl").
+    * @param content
+    *   The actual string content to parse.
+    * @param linesOffset
+    *   Line number offset from the beginning of the logical file.
+    * @param posOffset
+    *   Character position offset (Unicode and UTF-16) from the beginning.
+    * @param ignoreLocation
+    *   If true, source location information is not recorded.
+    * @return
+    *   Either a ParseError or the successfully parsed expression.
     */
   def parseExprWithOffset(
       sourceName: String,

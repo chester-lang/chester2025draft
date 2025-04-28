@@ -14,9 +14,9 @@ import scala.util.*
 object ChesterReader {
 
   private def parseFromSource[T](
-                                  source: ParserSource,
-                                  parserFunc: ReaderV1 => P[T],
-                                  ignoreLocation: Boolean = false
+      source: ParserSource,
+      parserFunc: ReaderV1 => P[T],
+      ignoreLocation: Boolean = false
   ): Either[ParseError, T] =
     source.readContent.fold(
       error => Left(error),
@@ -66,11 +66,16 @@ object ChesterReader {
 
   /** Parses an expression string, typically used for REPL input.
     *
-    * @param sourceName Name to associate with the source (e.g., "repl").
-    * @param content The actual string content to parse.
-    * @param linesOffset Line number offset from the beginning of the logical file.
-    * @param posOffset Character position offset (UTF-8 and UTF-16) from the beginning.
-    * @return Either a ParseError or the successfully parsed expression.
+    * @param sourceName
+    *   Name to associate with the source (e.g., "repl").
+    * @param content
+    *   The actual string content to parse.
+    * @param linesOffset
+    *   Line number offset from the beginning of the logical file.
+    * @param posOffset
+    *   Character position offset (UTF-8 and UTF-16) from the beginning.
+    * @return
+    *   Either a ParseError or the successfully parsed expression.
     */
   def parseExprWithOffset(
       sourceName: String,
@@ -82,13 +87,13 @@ object ChesterReader {
     val source = Source(
       FileNameAndContent(sourceName, content),
       linesOffset = linesOffset,
-      posOffset = posOffset,
+      posOffset = posOffset
     )
     parse(
       content,
       p => ReaderV1(source)(using p).exprEntrance
     ) match {
-      case Parsed.Success(expr, _) => Right(expr)
+      case Parsed.Success(expr, _)         => Right(expr)
       case Parsed.Failure(_, index, extra) =>
         // Use the indexer associated with *this* content snippet for error reporting
         val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
