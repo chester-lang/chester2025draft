@@ -59,7 +59,7 @@ class HardDef extends FunSuite{
         meta = None
       )
     DEBUG.withValue(true) {
-      parseAndCheckV1(input, expected)
+      parseAndCheckBoth(input, expected)
     }
   }
 
