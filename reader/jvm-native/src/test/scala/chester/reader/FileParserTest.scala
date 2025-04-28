@@ -20,7 +20,7 @@ class FileParserTest extends FunSuite {
 
       val expectedExists = Files.exists(expectedFile)
 
-      DEBUG.withValue(true) {
+      DEBUG.withValue(false) {
         ChesterReaderV2
           .parseTopLevel(
             FilePath(inputFile.toString),

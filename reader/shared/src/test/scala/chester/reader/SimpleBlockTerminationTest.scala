@@ -257,7 +257,7 @@ class SimpleBlockTerminationTest extends FunSuite {
     println("\n===== COMPARING RESULTS =====")
 
     // LexerV2.DEBUG = true
-    ReaderV2.DEBUG.withValue(true) {
+    ReaderV2.DEBUG.withValue(false) {
       parseAndCheckBoth(input, expected)
     }
 
