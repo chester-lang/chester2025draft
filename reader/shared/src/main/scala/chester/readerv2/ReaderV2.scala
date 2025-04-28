@@ -1248,7 +1248,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           // we need to check for implicit separation (like a significant newline) based on tokens between.
           if (!consumedSeparator && currentResult.isDefined) {
             // Check if newline handling is enabled and if there was significant whitespace
-            val whitespaceTokens = stateBeforePossibleExpr.collectPendingWhitespaces()
+            // Use state *before* skipping comments for whitespace check
+            val whitespaceTokens = stateBeforePossibleExpr.pendingTokens.collect { case w: Token.Whitespace => w }
             val hasSignificantNewline = this.state.newLineAfterBlockMeansEnds &&
               whitespaceTokens.exists(isNewlineWhitespace)
             if (hasSignificantNewline) {
@@ -1269,6 +1270,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
           // --- Parse the next expression ---
           debug(s"parseStatementSequence: Attempting to parse expression in $contextDescription at ${this.state.current}")
+          val stateBeforeExpr = this.state // State before parsing the expression
           parseExpr() match {
             case Left(err) =>
               // Check if the error occurred because we expected an expression but found a terminator
@@ -1280,24 +1282,59 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 Left(err)
               }
             case Right(parsedExpr) =>
-              debug(s"parseStatementSequence: Parsed expression $parsedExpr in $contextDescription, state after: ${this.state}")
-              // This is the new potential result
-              currentResult = Some(parsedExpr)
+              val stateAfterExpr = this.state // State *after* parsing the expression
+              debug(s"parseStatementSequence: Parsed expression $parsedExpr in $contextDescription, state after: ${stateAfterExpr}")
 
-              // Peek ahead: Skip comments/whitespace and check the *very next* token
-              val stateAfterExpr = this.state
-              skipComments()
-              val isFollowedByTerminator = isTerminator(this.state)
-              // Restore state to right after the expression was parsed
-              this.state = stateAfterExpr
+              // --- Check for '}\n' termination ---
+              val endedWithBrace = stateAfterExpr.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])
+              val followedByNewlineOrEOF = {
+                var tempState = stateAfterExpr
+                // Look ahead past comments/whitespace
+                while (!tempState.isAtEnd && tempState.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
+                   tempState = tempState.advance()
+                }
+                // Check if the next significant token is EOF or includes a newline
+                tempState.current.fold(
+                  _ => false, // Error token
+                  token => token.isInstanceOf[Token.EOF] || (token match {
+                    case ws: Token.Whitespace => isNewlineWhitespace(ws)
+                    case _ => false // Not EOF or newline whitespace
+                  })
+                )
+              }
 
-              if (isFollowedByTerminator) {
-                debug(s"parseStatementSequence: Terminator found immediately after expression in $contextDescription. Final result found.")
-                Right(()) // Expression is the final result, end the loop.
+              if (endedWithBrace && followedByNewlineOrEOF && this.state.newLineAfterBlockMeansEnds) {
+                debug(s"parseStatementSequence: Expression ending with '}' followed by newline/EOF in $contextDescription. Treating as statement.")
+                statements = statements :+ parsedExpr
+                currentResult = None
+                // Skip comments/whitespace *after* the expression to check the actual terminator
+                skipComments()
+                if (isTerminator(this.state)) {
+                  debug(s"parseStatementSequence: Terminator found after treating '}\\n' as statement end in $contextDescription.")
+                  Right(()) // End loop, sequence finished
+                } else {
+                   loop(count - 1) // Continue parsing more statements
+                }
               } else {
-                // Not followed immediately by terminator. It might be followed by a separator, or another expression.
-                // Loop again. The start of the next loop will handle separators and moving the currentResult.
-                loop(count - 1)
+                 // --- Original logic: Treat as potential result ---
+                currentResult = Some(parsedExpr)
+                // Peek ahead: Skip comments/whitespace and check the *very next* token
+                val stateAfterExprPeek = stateAfterExpr // Use state right after parseExpr
+                var tempState = stateAfterExprPeek
+                // Look ahead past comments/whitespace
+                while (!tempState.isAtEnd && tempState.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
+                   tempState = tempState.advance()
+                }
+                val isFollowedByTerminator = isTerminator(tempState) // Check terminator on the lookahead state
+
+                if (isFollowedByTerminator) {
+                  debug(s"parseStatementSequence: Terminator found immediately after expression in $contextDescription. Final result found.")
+                  Right(()) // Expression is the final result, end the loop.
+                } else {
+                  // Not followed immediately by terminator. It might be followed by a separator, or another expression.
+                  // Loop again. The start of the next loop will handle separators and moving the currentResult.
+                  loop(count - 1)
+                }
               }
           }
         }

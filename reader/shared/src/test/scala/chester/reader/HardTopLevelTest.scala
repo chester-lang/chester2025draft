@@ -64,7 +64,7 @@ class HardTopLevelTest extends FunSuite{
         meta = None
       )
     DEBUG.withValue(true) {
-      parseAndCheckTopLevelV1(input, expected)
+      parseAndCheckTopLevelBoth(input, expected)
     }
   }
 
