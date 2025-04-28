@@ -30,13 +30,13 @@ object ChesterReaderV2 {
     new ReaderV2(initialState, sourceOffset, ignoreLocation)
   }
 
-  def parseExpr(source: ParserSource): Either[ParseError, ParsedExpr] = {
-    val lexer = setupLexer(source)
+  def parseExpr(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, ParsedExpr] = {
+    val lexer = setupLexer(source, ignoreLocation)
     lexer.parseExpr()
   }
 
-  def parseExprList(source: ParserSource): Either[ParseError, Vector[ParsedExpr]] = {
-    val lexer = setupLexer(source)
+  def parseExprList(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, Vector[ParsedExpr]] = {
+    val lexer = setupLexer(source, ignoreLocation)
     lexer.parseExprList()
   }
 
