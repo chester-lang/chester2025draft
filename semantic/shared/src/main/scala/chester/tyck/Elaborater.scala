@@ -643,6 +643,9 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               if (Debug.isEnabled(MethodCalls)) Debug.debugPrint(MethodCalls, "[METHOD CALL DEBUG] Found Integer.+ method call")
               args.headOption match {
                 case Some(arg) =>
+                  if(args.length>=2){
+                    ???
+                  }
                   val argTy = newType
                   val argTerm = elab(arg, argTy, effects)
                   if (Debug.isEnabled(MethodCalls)) Debug.debugPrint(MethodCalls, t"[METHOD CALL DEBUG] Argument term: $argTerm")
