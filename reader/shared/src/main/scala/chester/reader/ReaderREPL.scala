@@ -6,7 +6,7 @@ import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
-import chester.readerv1.ChesterReader
+import chester.readerv2.ChesterReaderV2
 
 import scala.util.*
 
@@ -65,7 +65,7 @@ object ReaderREPL {
       linesOffset: Int :| Positive0,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
-    ChesterReader.parseExprWithOffset(
+    ChesterReaderV2.parseExprWithOffset(
       sourceName = "repl",
       content = input,
       linesOffset = linesOffset,

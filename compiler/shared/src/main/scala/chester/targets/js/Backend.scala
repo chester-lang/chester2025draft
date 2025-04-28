@@ -1,21 +1,7 @@
 package chester.targets.js
 
 import chester.syntax.core.*
-// Explicitly import necessary AST types from the same package
-import chester.targets.js.{
-  Expression,
-  Meta,
-  NumericLiteral,
-  StringLiteral,
-  BooleanLiteral,
-  Identifier,
-  FunctionExpression,
-  BlockStatement,
-  ReturnStatement,
-  Parameter,
-  IdentifierPattern
-}
-// Import Doc extension methods like render
+import chester.targets.js.{BlockStatement, BooleanLiteral, Expression, FunctionExpression, Identifier, IdentifierPattern, Meta, NumericLiteral, Parameter, ReturnStatement, StringLiteral}
 import chester.utils.doc.*
 
 /** Basic JavaScript/TypeScript backend. Transforms core.Term nodes into jsAST nodes.

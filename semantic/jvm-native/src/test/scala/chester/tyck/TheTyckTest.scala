@@ -8,16 +8,17 @@ import chester.syntax.core.Judge
 import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*
-
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
 import chester.utils.Debug
 import chester.utils.Debug.DebugCategory
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
+import java.nio.file.Path
+
 class TheTyckTest extends FunSuite {
   val baseName = "tyck"
-  val testDir = Paths.get("tests")
-  val inputFile = Paths.get("tests/tyck.chester")
+  val testDir: Path = Paths.get("tests")
+  val inputFile: Path = Paths.get("tests/tyck.chester")
   val doTest = false
   test(baseName) {
     if (doTest) {

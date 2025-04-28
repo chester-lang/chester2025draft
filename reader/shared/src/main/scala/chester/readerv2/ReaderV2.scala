@@ -490,7 +490,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             debug(t"OpSeq construction in handleOperatorInRest: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
             debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
             OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
-          case otherExpr => // If the rest is not an OpSeq, just build normally
+          case _ => // If the rest is not an OpSeq, just build normally
             debug(t"Simple OpSeq construction in handleOperatorInRest: newTerms=$newTerms")
             OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
         }
@@ -920,7 +920,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseKeywordArguments().map(finalTelescope => Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos))))
 
           case Right(token) =>
-            Left(ParseError(s"Expected identifier after '#'", token.sourcePos.range.start))
+            Left(ParseError("Expected identifier after '#'", token.sourcePos.range.start))
 
           case Left(err) => Left(err)
         }
