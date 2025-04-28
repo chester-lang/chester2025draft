@@ -1,6 +1,6 @@
 # Chester Reader Architecture
 
-This document describes the core design of Chester's parsers (also called "readers"), which transform Chester source code into abstract syntax trees (ASTs).
+Design of Chester's parsers ("readers") that transform source code into abstract syntax trees.
 
 ## Overview
 
@@ -9,7 +9,7 @@ Chester currently has two parser implementations:
 1. **ReaderV1**: The original parser using FastParse combinators
 2. **ReaderV2**: The newer implementation using a token-based state machine
 
-Both parsers adhere to the same core principles and produce semantically identical ASTs, though they use different internal approaches.
+Both parsers produce semantically identical ASTs using different internal approaches.
 
 ## Core Design Principles
 
@@ -174,8 +174,6 @@ These file-based tests:
 - Automatically generate expected output for regression testing
 - Maintain backward compatibility during parser evolution
 
-This comprehensive testing framework enables confident refactoring and enhancement of both parser implementations while maintaining backward compatibility.
-
 ## Future Development
 
 ReaderV2 is the focus of ongoing development, with priorities including:
@@ -186,4 +184,4 @@ ReaderV2 is the focus of ongoing development, with priorities including:
 4. Expanding test coverage
 5. Optimizing token handling for better performance
 
-For a detailed chronological record of parser improvements, see [devlog.md](devlog.md).
+See [devlog.md](devlog.md) for chronological implementation details.
