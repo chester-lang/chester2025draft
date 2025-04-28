@@ -3,7 +3,7 @@ package chester.integrity
 import chester.reader.FileNameAndContent
 import chester.syntax.concrete.*
 import chester.i18n.*
-import chester.readerv1.ChesterReader
+import chester.readerv1.ChesterReaderV1
 
 // Test that the binary is still performing well when compiled differently.
 object IntegrityCheck {
@@ -30,10 +30,10 @@ object IntegrityCheck {
     throw new AssertionError(message)
 
   private def parseAndCheck(input: String, expected: Expr): Unit = {
-    val _ = ChesterReader.parseExpr(
+    val _ = ChesterReaderV1.parseExpr(
       FileNameAndContent("testFile", input)
     ) // it must parse with location
-    ChesterReader
+    ChesterReaderV1
       .parseExpr(
         FileNameAndContent("testFile", input),
         ignoreLocation = true

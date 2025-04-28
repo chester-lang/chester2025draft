@@ -3,13 +3,13 @@ import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
 import chester.i18n.*
-import chester.readerv1.ChesterReader
+import chester.readerv1.ChesterReaderV1
 import chester.readerv2.ChesterReaderV2
 import chester.utils.asInt
 
 // Only runs against V1 (original reader)
 def parseAndCheckV1(input: String, expected: Expr): Unit = {
-  val resultignored = ChesterReader.parseExpr(
+  val resultignored = ChesterReaderV1.parseExpr(
     FileNameAndContent("testFile", input)
   ) // it must parse with location
   val value = parseV1(input)
@@ -41,7 +41,7 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
 
 // New function to parse with V1 parser only and return the result
 def parseV1(input: String): Expr =
-  ChesterReader
+  ChesterReaderV1
     .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
       error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
@@ -77,7 +77,7 @@ def parseV2(input: String): Expr = {
 
 // New function to parse with V1 parser only and return the result (using TopLevel)
 def parseTopLevelV1(input: String): Expr =
-  ChesterReader
+  ChesterReaderV1
     .parseTopLevel(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
       error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),

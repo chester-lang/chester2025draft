@@ -10,7 +10,7 @@ import chester.utils.WithUTF16
 import spire.math.Natural
 
 import scala.util.*
-object ChesterReader {
+object ChesterReaderV1 {
 
   private def parseFromSource[T](
       source: ParserSource,

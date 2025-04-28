@@ -2,7 +2,7 @@ package chester.core
 
 import chester.error.*
 import chester.reader.*
-import chester.readerv1.ChesterReader
+import chester.readerv1.ChesterReaderV1
 import chester.syntax.*
 import chester.syntax.core.*
 import chester.tyck.*
@@ -15,7 +15,7 @@ def parseCheckTAST(
     loadedModules: LoadedModules = LoadedModules.Empty
 )(using reporter: Reporter[Problem]): chester.syntax.TAST =
   // Parse the source code into an Expr using parseTopLevel
-  ChesterReader
+  ChesterReaderV1
     .parseTopLevel(source, ignoreLocation)
     .fold(
       { error =>

@@ -18,7 +18,7 @@ import chester.syntax.concrete.Expr
 import upickle.default.{read, readBinary, write, writeBinary}
 import cats.implicits.*
 import chester.i18n.*
-import chester.readerv1.ChesterReader
+import chester.readerv1.ChesterReaderV1
 
 import scala.language.experimental.betterFors
 
@@ -85,7 +85,7 @@ class CLI[F[_]](using
 
   private def runFileOrDirectory(fileOrDir: String): F[Unit] = for {
     _ <- IO.println(t"Expect one file for type checking (more support will be added later) $fileOrDir...")
-    _ <- ChesterReader
+    _ <- ChesterReaderV1
       .parseTopLevel(FilePath(fileOrDir))
       .fold(
         _ => ???,
