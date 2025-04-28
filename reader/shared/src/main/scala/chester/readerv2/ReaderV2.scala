@@ -33,33 +33,7 @@ import scala.annotation.tailrec
 
 // Token extractors for cleaner pattern matching
 private object TokenExtractors {
-  import chester.readerv2.Token.*
-
-  object Id {
-    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] =
-      PartialFunction.condOpt(token) { case Right(Token.Identifier(chars, pos)) => (chars, pos) }
-  }
-
-  object Str {
-    def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] =
-      PartialFunction.condOpt(token) { case Right(Token.StringLiteral(chars, pos)) => (chars, pos) }
-  }
-
-  object Sym {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] =
-      PartialFunction.condOpt(token) { case Right(Token.SymbolLiteral(value, pos)) => (value, pos) }
-  }
-
-  object Int {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] =
-      PartialFunction.condOpt(token) { case Right(Token.IntegerLiteral(value, pos)) => (value, pos) }
-  }
-
-  object Rat {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] =
-      PartialFunction.condOpt(token) { case Right(Token.RationalLiteral(value, pos)) => (value, pos) }
-  }
-
+ 
   // Helper for source position extractors - consolidated into a single implementation
   private def posExtract(tokenPredicate: Token => Boolean): Either[ParseError, Token] => Option[SourcePos] = {
     case Right(token) if tokenPredicate(token) => Some(token.sourcePos)
@@ -67,7 +41,6 @@ private object TokenExtractors {
   }
 
   // Define all delimiter token extractors using the posExtract helper
-  object LParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LParen])(t) }
   object RParen { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RParen])(t) }
   object LBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.LBrace])(t) }
   object RBrace { def unapply(t: Either[ParseError, Token]): Option[SourcePos] = posExtract(_.isInstanceOf[Token.RBrace])(t) }
@@ -1003,11 +976,11 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             }
         }
 
-      case LParen(_) =>
+      case Right(Token.LParen(_)) =>
         // this.state is already set to current
         parseTuple()
 
-      case Id(chars, sourcePos) =>
+      case Right(Token.Identifier(chars, sourcePos)) =>
         val afterId = this.state.advance()
         afterId.current match {
           case LBracket(_) =>
@@ -1017,7 +990,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseList().flatMap { typeParams =>
               val afterTypeParams = this.state
               afterTypeParams.current match {
-                case LParen(_) =>
+                case Right(Token.LParen(_)) =>
                   // Function call with generic type args
                   this.state = afterTypeParams
                   parseTuple().map { tuple =>
@@ -1033,7 +1006,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   )
               }
             }
-          case LParen(_) =>
+          case Right(Token.LParen(_)) =>
             // Regular function call
             val identifier = createIdentifier(chars, sourcePos)
             this.state = afterId
@@ -1044,16 +1017,16 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             Right(createIdentifier(chars, sourcePos))
         }
 
-      case Int(_, _) =>
+      case Right(Token.IntegerLiteral(value, pos)) =>
         // this.state is already set to current
         parseInt()
-      case Rat(_, _) =>
+      case  Right(Token.RationalLiteral(value, pos)) =>
         // this.state is already set to current
         parseRational()
-      case Str(_, _) =>
+      case Right(Token.StringLiteral(chars, pos)) =>
         // this.state is already set to current
         parseString()
-      case Sym(_, _) =>
+      case Right(Token.SymbolLiteral(value, pos)) =>
         // this.state is already set to current
         parseSymbol()
 
@@ -1208,7 +1181,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   }
 
   private def parseTuple(context: ReaderContext = ReaderContext()): Either[ParseError, Tuple] = this.state.current match {
-    case LParen(sourcePos) =>
+    case Right(Token.LParen(sourcePos)) =>
       // Advance past the left parenthesis and skip comments
       advance()
       // Comments are handled within parseTupleExprList and pullComments below
@@ -1723,7 +1696,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       context: ReaderContext = ReaderContext()
   ): Either[ParseError, FunctionCall] =
     this.state.current match {
-      case LParen(_) =>
+      case Right(Token.LParen(_)) =>
         parseTuple().map { args =>
           val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
           createFunctionCall(identifier, args, funcSourcePos, Some(this.state.sourcePos))
