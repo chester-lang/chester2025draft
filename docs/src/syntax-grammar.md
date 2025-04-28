@@ -2,7 +2,7 @@
 
 **IMPORTANT NOTE:** This document provides only a rough description of the Chester language syntax and might be highly incorrect or not fully aligned with the current implementation. It should be used as a general guide rather than a precise specification.
 
-This document provides a formal description of the Chester language syntax using a BNF-like notation.
+This document attempts to describe the Chester language syntax using a BNF-like notation.
 
 **Note:** Whitespace and comments (`// ...`) are generally allowed between tokens and are not explicitly shown in the grammar rules unless significant (like newlines in blocks).
 
@@ -29,6 +29,7 @@ Atom ::= ID
        | Application
        | MethodCall
        | SymbolLookup
+       | Keyword
 
 Tuple ::= '(' ExprList? ')'
 List  ::= '[' ExprList? ']'
@@ -46,6 +47,8 @@ CombinedApplication ::= GenericApplication FunctionCall
                       | GenericApplication FunctionCall BlockApplication
 
 MethodCall   ::= Atom '.' ID ('(' ExprList? ')')?  // Parentheses are optional for field access
+Attribute ::= '@' ID // NOT IMPLEMENTED YET
+Keyword      ::= '#' ID (GenericApplication | FunctionCall)*
 ```
 
 *Note: All identifiers are treated uniformly at the syntax level, with no distinction between different kinds of identifiers. Operator precedence and associativity are handled during semantic analysis, not in the grammar.*
@@ -60,8 +63,11 @@ ObjectClauseList ::= ObjectClause (',' ObjectClause)* ','?
 ObjectClause ::= ObjectKey ('=' | '=>') Expr
 
 ObjectKey ::= ID
+            | QualifiedName
             | STRING_LITERAL
             | SYMBOL_LITERAL
+
+QualifiedName ::= ID ('.' ID)*
 ```
 
 ## Literals
@@ -71,6 +77,8 @@ Literal ::= INT_LITERAL
           | RAT_LITERAL
           | STRING_LITERAL
           | SYMBOL_LITERAL
+
+SYMBOL_LITERAL ::= "'" ID
 ```
 
 ## Terminals
@@ -81,7 +89,6 @@ Operator       ::= /* Sequence of operator symbols like +, -, *, /, =, ->, =>, :
 INT_LITERAL    ::= /* Integer in decimal, hex (0x...), or binary (0b...) format */
 RAT_LITERAL    ::= /* Rational/float literal (e.g., 1.2, 3.14e-5) */
 STRING_LITERAL ::= /* Double-quoted string "..." with escapes */
-SYMBOL_LITERAL ::= /* Single-quoted identifier like 'symbol */
 Newline        ::= /* \n or \r\n */
 ```
 
