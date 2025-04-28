@@ -47,20 +47,19 @@ case class ReaderState(
     index: Int,
     previousToken: Option[Token] = None,
     previousNonCommentToken: Option[Token] = None,
-    newLineAfterBlockMeansEnds: Boolean = false,
     pendingTokens: Vector[Token.Comment | Token.Whitespace] = Vector.empty
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
   def advance(): ReaderState = current match {
     case Right(token: Token.Comment) =>
-      ReaderState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens :+ token)
+      copy(index=index + 1, previousToken=Some(token), pendingTokens=pendingTokens :+ token)
     case Right(token: Token.Whitespace) =>
-      ReaderState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens :+ token)
+      copy(index=index + 1, previousToken=Some(token), pendingTokens= pendingTokens :+ token)
     case Right(token) =>
-      ReaderState(tokens, index + 1, Some(token), Some(token), newLineAfterBlockMeansEnds, pendingTokens)
+      copy(index=index + 1,  previousToken=Some(token), previousNonCommentToken=Some(token))
     case Left(_) =>
-      ReaderState(tokens, index + 1, previousToken, previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens)
+      copy(index=index + 1)
   }
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(Source(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
@@ -80,13 +79,8 @@ case class ReaderState(
   def clearPendingTokens(): ReaderState =
     copy(pendingTokens = Vector.empty)
 
-  // Helper method to create a state with modified context
-  def withNewLineTermination(enabled: Boolean): ReaderState =
-    if (this.newLineAfterBlockMeansEnds == enabled) this
-    else copy(newLineAfterBlockMeansEnds = enabled)
-
   override def toString: String =
-    t"LexerState(index=$index, current=$current, previousToken=$previousToken, remaining=${tokens.length - index} tokens)"
+    t"ReaderState(index=$index, current=$current, previousToken=$previousToken, remaining=${tokens.length - index} tokens)"
 }
 
 object ReaderV2 {
@@ -200,7 +194,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     debug(t"parseRest called with expr: $expr, state: ${this.state}, current terms: $localTerms")
 
     // Handle special closing brace + newline pattern
-    if (checkForRBraceNewlinePattern()) {
+    if (checkForRBraceNewlinePattern(context=context)) {
       debug("parseRest: Terminating expression due to }\n pattern")
       // State is already set correctly
       // buildOpSeq will pull comments internally
@@ -255,14 +249,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           case Left(_) => // Failed to parse as object
             debug("parseRest: Failed to parse as ObjectExpr, falling back to block parse.")
             this.state = originalState // Restore state before trying block parse
-            handleBlockArgument(expr, localTerms, braceSourcePos) // Treat as block
+            handleBlockArgument(expr, localTerms, braceSourcePos,context=context) // Treat as block
         }
 
       // Colon handling (type annotations, etc)
       case Right(Token.Colon(sourcePos)) =>
         debug("parseRest: Found colon")
         // this.state is already set to the current state
-        handleColon(sourcePos, localTerms)
+        handleColon(sourcePos, localTerms,context=context)
 
       // Dot call handling
       case Right(Token.Dot(dotSourcePos)) =>
@@ -279,14 +273,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseRest: Found operator $op")
         // this.state is already set to the current state
-        handleOperatorInRest(op, sourcePos, localTerms)
+        handleOperatorInRest(op, sourcePos, localTerms,context=context)
 
       // Identifier handling
       case Right(Token.Identifier(chars, sourcePos)) =>
         val text = charsToString(chars)
         debug(t"parseRest: Found identifier $text")
         // this.state is already set to the current state
-        handleIdentifierInRest(text, sourcePos, localTerms)
+        handleIdentifierInRest(text, sourcePos, localTerms,context=context)
 
       // Generic token handling
       case Right(_) =>
@@ -323,7 +317,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       context: ReaderContext = ReaderContext()
   ): Either[ParseError, Expr] =
     // this.state is already set correctly
-    parseBlock().flatMap { block =>
+    parseBlock(context0=context).flatMap { block =>
       // parseBlock has already updated this.state
       // Create appropriate expression based on context
       expr match {
@@ -374,7 +368,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           if (this.state.isAtTerminator) {
             Right(funcCall)
           } else {
-            parseRest(funcCall)
+            parseRest(funcCall,context=context)
           }
         case _ =>
           debug("parseRest: Default handling for block after expression")
@@ -403,12 +397,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
     debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
-    withComments(() => parseAtom()).flatMap { next =>
+    withComments(() => parseAtom(context=context)).flatMap { next =>
       val newTerms = updatedTerms :+ next
       debug(t"parseRest: After parsing atom after colon, terms: $newTerms")
 
       // withComments has updated this.state already
-      parseRest(next).map {
+      parseRest(next,context=context).map {
         case opSeq: OpSeq =>
           debug(t"OpSeq construction in handleColon: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
           debug(t"Creating OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
@@ -448,13 +442,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     } else {
       // Continue parsing the rest of the expression
       // Change parseAtom() to parseExprInner() to handle prefix operators after infix op
-      withComments(() => parseExpr()).flatMap { next =>
+      withComments(() => parseExpr(context=context)).flatMap { next =>
         debug(t"parseRest: After parsing expr after operator, got: $next")
         val newTerms = updatedTerms :+ next
         debug(t"parseRest: Updated terms after operator: $newTerms")
 
         // Continue parsing the rest - withComments has updated this.state already
-        parseRest(next).map {
+        parseRest(next,context=context).map {
           case opSeq: OpSeq =>
             // Flatten the nested OpSeq
             debug(t"OpSeq construction in handleOperatorInRest: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
@@ -557,7 +551,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(Token.LParen(_)) =>
         debug("parseRest: Found lparen after identifier")
         // this.state is already set to the position after the identifier
-        parseTuple().flatMap { tuple =>
+        parseTuple(context=context).flatMap { tuple =>
           // parseTuple has updated this.state
           val functionCall = FunctionCall(
             ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
@@ -567,7 +561,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           val updatedTerms = terms :+ functionCall
           debug(t"parseRest: After function call, terms: $updatedTerms")
 
-          parseRest(functionCall).map {
+          parseRest(functionCall,context=context).map {
             case opSeq: OpSeq =>
               // Flatten
               debug(
@@ -659,7 +653,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         val updatedTerms = terms :+ id
         debug(t"parseRest: After adding bare id, terms: $updatedTerms")
 
-        parseRest(id).map {
+        parseRest(id,context=context).map {
           case opSeq: OpSeq =>
             debug(
               t"OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -751,10 +745,10 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       // Standard expression handling
       case _ =>
         debug("parseExpr: Starting with atom")
-        withComments(() => parseAtom()).flatMap { first =>
+        withComments(() => parseAtom(context=context)).flatMap { first =>
           debug(t"parseExpr: After initial atom, got: $first")
           // withComments has updated this.state already
-          parseRest(first)
+          parseRest(first,context=context)
         }
     }
   }
@@ -771,7 +765,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Restore the original state
     this.state = savedState
 
-    if (!stateWithoutComments.newLineAfterBlockMeansEnds || !stateWithoutComments.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])) {
+    if (!context.newLineAfterBlockMeansEnds || !stateWithoutComments.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])) {
       return false
     }
 
@@ -985,7 +979,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             // Regular function call
             val identifier = createIdentifier(chars, sourcePos)
             this.state = afterId
-            parseFunctionCallWithId(identifier)
+            parseFunctionCallWithId(identifier,context=context)
           case _ =>
             // Plain identifier
             this.state = afterId
@@ -1030,7 +1024,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       closingTokenPredicate = _.isInstanceOf[Token.RParen],
       allowSemicolon = true,
       startPosForError = startPos,
-      contextDescription = "tuple or argument list"
+      contextDescription = "tuple or argument list",context=context
     )
   }
 
@@ -1054,7 +1048,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       allowSemicolon: Boolean,
       startPosForError: SourcePos,
       contextDescription: String,
-      accumulatedExprs: Vector[Expr] = Vector.empty
+      accumulatedExprs: Vector[Expr] = Vector.empty,
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, Vector[Expr]] = {
 
     if (accumulatedExprs.length >= ReaderV2.MAX_LIST_ELEMENTS) {
@@ -1080,7 +1075,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           debug(s"Found separator ($token), skipping")
           advance() // Skip the separator
           // Continue parsing elements recursively
-          parseElementSequence(closingTokenPredicate, allowSemicolon, startPosForError, contextDescription, accumulatedExprs)
+          parseElementSequence(closingTokenPredicate, allowSemicolon, startPosForError, contextDescription, accumulatedExprs,context)
         }
 
       // End of file or unexpected error
@@ -1091,7 +1086,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case _ =>
         debug("Parsing expression in sequence")
         // State is already advanced past previous separator or is at the start
-        parseExpr() match {
+        parseExpr(context=context) match {
           case Left(err)   => Left(err)
           case Right(expr) =>
             // State is now after the parsed expression
@@ -1142,7 +1137,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                     allowSemicolon,
                     startPosForError,
                     contextDescription,
-                    accumulatedExprs :+ updatedExpr
+                    accumulatedExprs :+ updatedExpr,context
                   )
                 }
               // Unexpected token after expression
@@ -1162,7 +1157,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       // Comments are handled within parseTupleExprList and pullComments below
 
       // Parse the expression list using the new helper via parseTupleExprList
-      parseTupleExprList(sourcePos).flatMap { exprs =>
+      parseTupleExprList(sourcePos,context=context).flatMap { exprs =>
         // Skip comments after the expressions
         skipComments()
         // We'll pull these comments later
@@ -1196,7 +1191,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
       isTerminator: ReaderState => Boolean,
-      contextDescription: String
+      contextDescription: String,
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
     var statements = Vector.empty[Expr]
     var currentResult: Option[Expr] = None
@@ -1244,7 +1240,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             // Check if newline handling is enabled and if there was significant whitespace
             // Use state *before* skipping comments for whitespace check
             val whitespaceTokens = stateBeforePossibleExpr.pendingTokens.collect { case w: Token.Whitespace => w }
-            val hasSignificantNewline = this.state.newLineAfterBlockMeansEnds &&
+            val hasSignificantNewline = context.newLineAfterBlockMeansEnds &&
               whitespaceTokens.exists(x => isNewlineWhitespace(x))
             if (hasSignificantNewline) {
               debug(s"parseStatementSequence: Detected significant newline separator in $contextDescription")
@@ -1265,7 +1261,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           // --- Parse the next expression ---
           debug(s"parseStatementSequence: Attempting to parse expression in $contextDescription at ${this.state.current}")
           this.state // State before parsing the expression
-          parseExpr() match {
+          parseExpr(context=context) match {
             case Left(err) =>
               // Check if the error occurred because we expected an expression but found a terminator
               if (isTerminator(this.state)) {
@@ -1299,7 +1295,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 )
               }
 
-              if (endedWithBrace && followedByNewlineOrEOF && this.state.newLineAfterBlockMeansEnds) {
+              if (endedWithBrace && followedByNewlineOrEOF && context.newLineAfterBlockMeansEnds) {
                 debug(s"parseStatementSequence: Expression ending with '}' followed by newline/EOF in $contextDescription. Treating as statement.")
                 statements = statements :+ parsedExpr
                 currentResult = None
@@ -1345,14 +1341,15 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   // Parses a sequence of expressions, typically representing a top-level file or block
   // Returns a Block containing all parsed expressions.
   // TODO: withModifiedState LOGIC IS BUGGY
-  def parseTopLevel(context: ReaderContext = ReaderContext()): Either[ParseError, Block] = withModifiedState(_.withNewLineTermination(true)) {
+  def parseTopLevel(context0: ReaderContext = ReaderContext()): Either[ParseError, Block] = {
+    val context = context0.copy(newLineAfterBlockMeansEnds = true)
     val startPos = state.sourcePos // Capture start position
     debug(t"parseTopLevel: starting with state=${this.state}")
 
     // Call the helper to parse the sequence, terminating at EOF
     parseStatementSequence(
       isTerminator = s => s.isAtEnd || s.current.exists(_.isInstanceOf[Token.EOF]),
-      contextDescription = "top-level"
+      contextDescription = "top-level",context=context
     ) match {
       case Right((statements, lastExpr)) => // Use the returned statements/result directly
         val endPos = state.sourcePos // Capture end position
@@ -1365,10 +1362,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseBlock(context: ReaderContext = ReaderContext()): Either[ParseError, Block] =
-    // Use withModifiedState to handle the newLineAfterBlockMeansEnds flag change
-    // TODO: withModifiedState LOGIC IS BUGGY
-    withModifiedState(_.withNewLineTermination(true)) {
+  private def parseBlock(context0: ReaderContext = ReaderContext()): Either[ParseError, Block] ={
+    val context = context0.copy(newLineAfterBlockMeansEnds = true)
       debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
 
       this.state.current match {
@@ -1380,7 +1375,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
           parseStatementSequence(
             isTerminator = _.current.exists(_.isInstanceOf[Token.RBrace]),
-            contextDescription = "block"
+            contextDescription = "block",
+            context=context
           ).flatMap { case (statements, result) =>
             this.state.current match {
               case Right(Token.RBrace(endPos)) =>
@@ -1672,7 +1668,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   ): Either[ParseError, FunctionCall] =
     this.state.current match {
       case Right(Token.LParen(_)) =>
-        parseTuple().map { args =>
+        parseTuple(context=context).map { args =>
           val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
           createFunctionCall(identifier, args, funcSourcePos, Some(this.state.sourcePos))
         }
@@ -1904,23 +1900,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       startPosForError = startPos,
       contextDescription = "expression list"
     )
-  }
-
-  // Helper method to temporarily modify the lexer state for a parsing operation
-  // TODO: THIS LOGIC IS BUGGY
-  private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction: => Either[ParseError, T]): Either[ParseError, T] = {
-    val originalState = this.state
-    this.state = modify(originalState)
-    val result = parseAction
-    // Restore original state, preserving progress made by parseAction
-    this.state = originalState.copy(
-      index = this.state.index,
-      previousToken = this.state.previousToken,
-      previousNonCommentToken = this.state.previousNonCommentToken,
-      pendingTokens = this.state.pendingTokens
-      // DO NOT restore newLineAfterBlockMeansEnds here, only the original state's value if needed outside
-    )
-    result
   }
 
 }
