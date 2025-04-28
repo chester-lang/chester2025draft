@@ -4,12 +4,12 @@ import chester.syntax.concrete.Expr
 
 object ChesterReaderV2 {
   // Helper method to set up tokenizer and lexer with common logic
-  private def setupLexer(source: ParserSource, ignoreLocation: Boolean = false): LexerV2 = {
+  private def setupLexer(source: ParserSource, ignoreLocation: Boolean = false): ReaderV2 = {
     val sourceOffset = Source(source)
-    val tokenizer = new Tokenizer(sourceOffset)
+    val tokenizer = new Lexer(sourceOffset)
     val tokens = tokenizer.tokenize()
-    val initialState = LexerState(tokens.toVector, 0)
-    new LexerV2(initialState, sourceOffset, ignoreLocation)
+    val initialState = ReaderState(tokens.toVector, 0)
+    new ReaderV2(initialState, sourceOffset, ignoreLocation)
   }
 
   def parseExpr(source: ParserSource): Either[ParseError, Expr] = {

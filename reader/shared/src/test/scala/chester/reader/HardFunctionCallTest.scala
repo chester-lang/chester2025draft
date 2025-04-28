@@ -2,7 +2,7 @@ package chester.reader
 
 import chester.syntax.concrete.*
 import munit.FunSuite
-import chester.readerv2.LexerV2.DEBUG
+import chester.readerv2.ReaderV2.DEBUG
 
 class HardFunctionCallTest extends FunSuite {
   test("OpSeq And FunctionCall F<nospace>[]") {

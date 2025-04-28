@@ -1,10 +1,10 @@
 package chester.reader
-import chester.readerv2.LexerState
+import chester.readerv2.ReaderState
 import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
 import chester.i18n.*
-import chester.readerv2.LexerV2
+import chester.readerv2.ReaderV2
 
 // Only runs against V1 (original reader)
 def parseAndCheckV1(input: String, expected: Expr): Unit = {
@@ -42,9 +42,9 @@ def parseAndCheckV2(input: String, expected: Expr): Unit = {
   val source = FileNameAndContent("testFile", input)
 
   val sourceOffset = Source(source)
-  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
+  val tokenizer = chester.readerv2.Lexer(sourceOffset)
   val tokens = tokenizer.tokenize()
-  val lexer = LexerV2(LexerState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
+  val lexer = ReaderV2(ReaderState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
 
   val result = lexer
     .parseExpr()
@@ -91,9 +91,9 @@ def parseV1(input: String): Expr =
 def parseV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
   val sourceOffset = Source(source)
-  val tokenizer = chester.readerv2.Tokenizer(sourceOffset)
+  val tokenizer = chester.readerv2.Lexer(sourceOffset)
   val tokens = tokenizer.tokenize()
-  val lexer = LexerV2(LexerState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
+  val lexer = ReaderV2(ReaderState(tokens.toVector, 0), sourceOffset, ignoreLocation = true)
 
   lexer
     .parseExpr()

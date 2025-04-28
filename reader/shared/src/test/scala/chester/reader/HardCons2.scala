@@ -1,6 +1,6 @@
 package chester.reader
 
-import chester.readerv2.LexerV2.DEBUG
+import chester.readerv2.ReaderV2.DEBUG
 import chester.syntax.concrete.*
 import munit.FunSuite
 

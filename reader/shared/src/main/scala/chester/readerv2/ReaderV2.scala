@@ -82,7 +82,7 @@ private object TokenExtractors {
 
 import TokenExtractors._
 
-case class LexerState(
+case class ReaderState(
     tokens: Vector[Either[ParseError, Token]],
     index: Int,
     previousToken: Option[Token] = None,
@@ -92,15 +92,15 @@ case class LexerState(
 ) {
   def current: Either[ParseError, Token] = tokens(index)
   def isAtEnd: Boolean = index >= tokens.length
-  def advance(): LexerState = current match {
+  def advance(): ReaderState = current match {
     case Right(token: Token.Comment) =>
-      LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens :+ token)
+      ReaderState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens :+ token)
     case Right(token: Token.Whitespace) =>
-      LexerState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens :+ token)
+      ReaderState(tokens, index + 1, Some(token), previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens :+ token)
     case Right(token) =>
-      LexerState(tokens, index + 1, Some(token), Some(token), newLineAfterBlockMeansEnds, pendingTokens)
+      ReaderState(tokens, index + 1, Some(token), Some(token), newLineAfterBlockMeansEnds, pendingTokens)
     case Left(_) =>
-      LexerState(tokens, index + 1, previousToken, previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens)
+      ReaderState(tokens, index + 1, previousToken, previousNonCommentToken, newLineAfterBlockMeansEnds, pendingTokens)
   }
   def sourcePos: SourcePos = current match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(Source(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
@@ -117,11 +117,11 @@ case class LexerState(
   def collectPendingWhitespaces(): Vector[Token.Whitespace] =
     pendingTokens.collect { case w: Token.Whitespace => w }
 
-  def clearPendingTokens(): LexerState =
+  def clearPendingTokens(): ReaderState =
     copy(pendingTokens = Vector.empty)
 
   // Helper method to create a state with modified context
-  def withNewLineTermination(enabled: Boolean): LexerState =
+  def withNewLineTermination(enabled: Boolean): ReaderState =
     if (this.newLineAfterBlockMeansEnds == enabled) this
     else copy(newLineAfterBlockMeansEnds = enabled)
 
@@ -129,16 +129,16 @@ case class LexerState(
     t"LexerState(index=$index, current=$current, previousToken=$previousToken, remaining=${tokens.length - index} tokens)"
 }
 
-object LexerV2 {
+object ReaderV2 {
   val DEBUG: Parameter[Boolean] = Parameter.withDefault(false)
   private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
-import LexerV2.DEBUG
+import ReaderV2.DEBUG
 
-class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
+class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) {
 
-  var state: LexerState = initState
+  var state: ReaderState = initState
 
   private def debug(msg: => String): Unit = if (DEBUG.get) println(s"[DEBUG] $msg")
 
@@ -1063,8 +1063,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       accumulatedExprs: Vector[Expr] = Vector.empty
   ): Either[ParseError, Vector[Expr]] = {
 
-    if (accumulatedExprs.length >= LexerV2.MAX_LIST_ELEMENTS) {
-      return Left(ParseError(t"Too many elements in $contextDescription (maximum is ${LexerV2.MAX_LIST_ELEMENTS})", startPosForError.range.start))
+    if (accumulatedExprs.length >= ReaderV2.MAX_LIST_ELEMENTS) {
+      return Left(ParseError(t"Too many elements in $contextDescription (maximum is ${ReaderV2.MAX_LIST_ELEMENTS})", startPosForError.range.start))
     }
 
     // Skip comments and whitespace before checking the token
@@ -1201,8 +1201,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
-      isTerminator: LexerState => Boolean,
-      contextDescription: String
+                                      isTerminator: ReaderState => Boolean,
+                                      contextDescription: String
   ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
     var statements = Vector.empty[Expr]
     var currentResult: Option[Expr] = None
@@ -1884,7 +1884,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
   }
 
   // Helper method to temporarily modify the lexer state for a parsing operation
-  private def withModifiedState[T](modify: LexerState => LexerState)(parseAction: () => Either[ParseError, T]): Either[ParseError, T] = {
+  private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction: () => Either[ParseError, T]): Either[ParseError, T] = {
     val originalState = this.state
     this.state = modify(originalState)
     val result = parseAction()

@@ -2,7 +2,7 @@ package chester.reader
 
 import chester.syntax.concrete.*
 import munit.FunSuite
-import chester.readerv2.LexerV2
+import chester.readerv2.ReaderV2
 import pprint.Tree
 import chester.i18n.*
 import chester.reader.parseAndCheckBoth
@@ -257,7 +257,7 @@ class SimpleBlockTerminationTest extends FunSuite {
     println("\n===== COMPARING RESULTS =====")
 
     // LexerV2.DEBUG = true
-    LexerV2.DEBUG.withValue(true) {
+    ReaderV2.DEBUG.withValue(true) {
       parseAndCheckBoth(input, expected)
     }
 
