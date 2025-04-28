@@ -18,8 +18,8 @@ private val rwUniqID: ReadWriter[UniqidOf[Any]] =
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqidOf[T]] = rwUniqID.asInstanceOf[ReadWriter[UniqidOf[T]]]
 
-case class UniqidOf[+A] private[uniqid] (id: Int :| Positive0) extends AnyVal {}
-type UniqidOffset = Int :| Positive0
+case class UniqidOf[+A] private[uniqid] (id: spire.math.UInt) extends AnyVal {}
+type UniqidOffset = spire.math.UInt
 
 private implicit val UniqIdOffsetRW: ReadWriter[UniqidOffset] =
   readwriter[java.lang.Integer].bimap(_.toInt, _.toInt.refineUnsafe)
@@ -34,7 +34,7 @@ extension (id: UniqidOffset) {
 case class UniqIdRange(start: UniqidOffset, end: UniqidOffset) derives ReadWriter {
   require(start <= end, t"Invalid range: $start > $end")
 
-  def size: Int :| Positive0 = (end - start).refineUnsafe
+  def size: spire.math.UInt = (end - start).refineUnsafe
 }
 
 extension (x: Uniqid) {
@@ -83,7 +83,7 @@ trait HasUniqid extends Any with ContainsUniqid with OnlyHasUniqid {}
 object Uniqid {
   def generate[T]: UniqidOf[T] = UniqidOf(uniqIdCounter.getAndIncrement().refineUnsafe)
 
-  def requireRange(size: Int :| Positive0): UniqIdRange = {
+  def requireRange(size: spire.math.UInt): UniqIdRange = {
     val start = uniqIdCounter.getAndAdd(size)
     UniqIdRange(start.refineUnsafe, (start + size).refineUnsafe)
   }

@@ -76,17 +76,17 @@ case class ReaderV1(
     ).rep).!
   )
 
-  def begin: P[Int :| Positive0] =
+  def begin: P[spire.math.UInt] =
     Index.map(_.refineUnsafe[Positive0])
 
-  def end: P[Int :| Positive0] =
+  def end: P[spire.math.UInt] =
     Index.map(_.refineUnsafe[Positive0])
 
   val indexer: StringIndex = defaultIndexer.getOrElse(StringIndex(p.input))
 
   private def loc(
-      begin: Int :| Positive0,
-      end: Int :| Positive0
+      begin: spire.math.UInt,
+      end: spire.math.UInt
   ): Option[SourcePos] = {
     if (ignoreLocation) return None
     val start = indexer.charIndexToLineAndColumnWithUTF16(begin)

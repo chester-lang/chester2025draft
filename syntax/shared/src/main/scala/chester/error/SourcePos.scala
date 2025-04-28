@@ -12,7 +12,7 @@ import chester.i18n.*
 
 import scala.annotation.tailrec
 
-case class Pos(index: WithUTF16, line: Int :| Positive0, column: WithUTF16) derives ReadWriter
+case class Pos(index: WithUTF16, line: spire.math.UInt, column: WithUTF16) derives ReadWriter
 
 object Pos {
   val zero: Pos = Pos(WithUTF16.Zero, 0, WithUTF16.Zero)

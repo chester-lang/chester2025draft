@@ -5,12 +5,13 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
+import spire.math.UInt
 
 case class LineAndColumn(
-    line: Int :| Positive0,
-    column: Int :| Positive0
+    line: spire.math.UInt,
+    column: spire.math.UInt
 )
-case class LineAndColumnWithUTF16(line: Int :| Positive0, column: WithUTF16)
+case class LineAndColumnWithUTF16(line: spire.math.UInt, column: WithUTF16)
 
 case class StringIndex(stringList: LazyList[String]) {
 
@@ -23,13 +24,13 @@ case class StringIndex(stringList: LazyList[String]) {
 
   lazy val charLength: Int = stringIterator.foldLeft(0)((count, _) => count + 1)
 
-  def charIndexToWithUTF16(charIndex: Int :| Positive0): WithUTF16 =
+  def charIndexToWithUTF16(charIndex: spire.math.UInt): WithUTF16 =
     WithUTF16(charIndexToUnicodeIndex(charIndex), charIndex)
 
   /** 0 <= charIndex <= charLength */
-  def charIndexToUnicodeIndex(charIndex: Int :| Positive0): Int :| Positive0 = {
-    var index = 0
-    var unicodeIndex = 0
+  def charIndexToUnicodeIndex(charIndex: spire.math.UInt): spire.math.UInt = {
+    var index = UInt(0)
+    var unicodeIndex = UInt(0)
     val it = stringIterator
     while (index < charIndex)
       if (it.hasNext) {
@@ -37,26 +38,26 @@ case class StringIndex(stringList: LazyList[String]) {
         if (index < charIndex && isHighSurrogate(char)) {
           val nextChar = if (it.hasNext) it.next() else '\u0000'
           if (isLowSurrogate(nextChar)) {
-            if (index + 1 < charIndex) {
-              unicodeIndex += 1
-              index += 2
+            if (index + UInt(1) < charIndex) {
+              unicodeIndex = unicodeIndex+UInt(1)
+              index = index+UInt(2)
             } else {
-              index += 1
+              index = index+UInt(1)
             }
           } else {
-            unicodeIndex += 1
-            index += 1
+            unicodeIndex =unicodeIndex +UInt(1)
+            index =index +UInt(1)
           }
         } else {
-          unicodeIndex += 1
-          index += 1
+          unicodeIndex = unicodeIndex+UInt(1)
+          index = index+UInt(1)
         }
       } else {
         throw new IllegalArgumentException(
           t"Index out of bounds (exceeds string length) $charIndex"
         )
       }
-    unicodeIndex.refineUnsafe
+    UInt(unicodeIndex)
   }
 
   def unicodeIndexToCharIndex(unicodeIndex: Int): Int = {
@@ -105,7 +106,7 @@ case class StringIndex(stringList: LazyList[String]) {
         )
       }
 
-    LineAndColumn(line.refineUnsafe, column.refineUnsafe)
+    LineAndColumn(UInt(line), UInt(column))
   }
 
   def charIndexToLineAndColumnWithUTF16(

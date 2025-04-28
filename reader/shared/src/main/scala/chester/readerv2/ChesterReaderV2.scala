@@ -63,7 +63,7 @@ object ChesterReaderV2 {
   def parseExprWithOffset(
       sourceName: String,
       content: String,
-      linesOffset: Int :| Positive0,
+      linesOffset: spire.math.UInt,
       posOffset: WithUTF16,
       ignoreLocation: Boolean = false
   ): Either[ParseError, ParsedExpr] = {

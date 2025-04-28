@@ -80,7 +80,7 @@ object ChesterReader {
   def parseExprWithOffset(
       sourceName: String,
       content: String,
-      linesOffset: Int :| Positive0,
+      linesOffset: spire.math.UInt,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] = {
     val indexer = StringIndex(content)

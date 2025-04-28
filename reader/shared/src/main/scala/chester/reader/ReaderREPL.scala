@@ -62,7 +62,7 @@ object ReaderREPL {
 
   private def parseCompleteExpression(
       input: String,
-      linesOffset: Int :| Positive0,
+      linesOffset: spire.math.UInt,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
     ChesterReaderV2.parseExprWithOffset(

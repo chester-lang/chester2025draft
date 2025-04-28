@@ -7,7 +7,7 @@ import _root_.io.github.iltotore.iron.constraint.numeric.*
 import _root_.io.github.iltotore.iron.upickle.given
 
 // i is unicode character position
-case class WithUTF16(i: Int :| Positive0, utf16: Int :| Positive0) derives ReadWriter {
+case class WithUTF16(i: spire.math.UInt, utf16: spire.math.UInt) derives ReadWriter {
   require(i <= utf16, "i must be less than or equal to utf16")
   def <(other: WithUTF16): Boolean = i < other.i && utf16 < other.utf16
   def >(other: WithUTF16): Boolean = i > other.i && utf16 > other.utf16
