@@ -28,10 +28,9 @@ class TopLevelParserTest extends FunSuite {
   }
 
   test("parse variable declaration as top level") {
-    val input = "let x = 42"
+    val input = "let x = 42;"
     val expected = Block(
-      statements = Vector.empty,
-      result = Some(
+      statements = Vector(
         OpSeq(
           seq = Vector(
             Identifier(name = "let", meta = None),
@@ -40,18 +39,17 @@ class TopLevelParserTest extends FunSuite {
             IntegerLiteral(value = 42, meta = None)
           ),
           meta = None
-        )
-      ),
+        )),
+      result = None,
       meta = None
     )
     parseAndCheckTopLevelBoth(input, expected)
   }
 
   test("parse function declaration as top level") {
-    val input = "def add(x, y) = x + y"
+    val input = "def add(x, y) = x + y;"
     val expected = Block(
-      statements = Vector.empty,
-      result = Some(
+      statements = Vector(
         OpSeq(
           seq = Vector(
             Identifier(name = "def", meta = None),
@@ -72,8 +70,8 @@ class TopLevelParserTest extends FunSuite {
             Identifier(name = "y", meta = None)
           ),
           meta = None
-        )
-      ),
+        )),
+      result = None,
       meta = None
     )
     parseAndCheckTopLevelBoth(input, expected)
@@ -81,9 +79,9 @@ class TopLevelParserTest extends FunSuite {
 
   test("parse multiple top level statements") {
     val input = """
-      let x = 1
-      let y = 2
-      let z = x + y
+      let x = 1;
+      let y = 2;
+      let z = x + y;
     """
     val result1 = parseTopLevelV1(input)
     val result2 = parseTopLevelV2(input)
