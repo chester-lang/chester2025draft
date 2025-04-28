@@ -1310,6 +1310,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   // Parses a sequence of expressions, typically representing a top-level file or block
   // Returns a Block containing all parsed expressions.
+  // TODO: withModifiedState LOGIC IS BUGGY
   def parseTopLevel(): Either[ParseError, Block] = withModifiedState(_.withNewLineTermination(true)) {
     val startPos = state.sourcePos // Capture start position
     debug(t"parseTopLevel: starting with state=${this.state}")
@@ -1332,6 +1333,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   private def parseBlock(): Either[ParseError, Block] =
     // Use withModifiedState to handle the newLineAfterBlockMeansEnds flag change
+    // TODO: withModifiedState LOGIC IS BUGGY
     withModifiedState(_.withNewLineTermination(true)) {  
       debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
 
@@ -1884,6 +1886,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   }
 
   // Helper method to temporarily modify the lexer state for a parsing operation
+  // TODO: THIS LOGIC IS BUGGY
   private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction:  => Either[ParseError, T]): Either[ParseError, T] = {
     val originalState = this.state
     this.state = modify(originalState)

@@ -6,7 +6,11 @@ import munit.FunSuite
 
 class HardDef extends FunSuite{
   test("parse block with multiple statements without newlines") {
-    val input = " { data Dog extends AnimalType { wo: String; };}"
+    val input =
+      """{
+        |data Dog extends AnimalType { wo: String; }
+        |2
+        |}""".stripMargin
     val expected =
       Block(
         statements = Vector(
@@ -55,7 +59,12 @@ class HardDef extends FunSuite{
             meta = None
           )
         ),
-        result = None,
+        result = Some(
+          value = IntegerLiteral(
+            value = 2,
+            meta = None
+          )
+        ),
         meta = None
       )
     DEBUG.withValue(true) {
