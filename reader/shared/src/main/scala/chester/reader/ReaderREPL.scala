@@ -1,10 +1,9 @@
 package chester.reader
 
+import spire.math.UInt
 import chester.syntax.concrete.*
 import chester.utils.term.*
 import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
 import chester.readerv2.ChesterReaderV2
 
@@ -27,8 +26,8 @@ object ReaderREPL {
 
     parseCompleteExpression(
       currentInput,
-      linesOffset.refineUnsafe,
-      WithUTF16(posOffsetUnicode.refineUnsafe, posOffsetUTF16.refineUnsafe)
+      UInt(linesOffset),
+      WithUTF16(UInt(posOffsetUnicode), UInt(posOffsetUTF16))
     )
   }
 
@@ -62,7 +61,7 @@ object ReaderREPL {
 
   private def parseCompleteExpression(
       input: String,
-      linesOffset: spire.math.UInt,
+      linesOffset: UInt,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
     ChesterReaderV2.parseExprWithOffset(

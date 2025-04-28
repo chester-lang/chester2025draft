@@ -1,7 +1,5 @@
 package chester.readerv1
 
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.all.*
 import chester.error.*
 import chester.reader.Source
 import chester.syntax.IdentifierRules.*
@@ -10,6 +8,7 @@ import chester.utils.parse.*
 import chester.utils.{StringIndex, WithUTF16}
 import fastparse.*
 import fastparse.NoWhitespace.*
+import spire.math.UInt
 
 import scala.util.*
 
@@ -19,11 +18,11 @@ case class ReaderV1(
     defaultIndexer: Option[StringIndex] = None
 )(using p: P[?]) {
   val fileName: String = sourceOffset.fileName
-  val linesOffset: Character :| Positive0 = sourceOffset.linesOffset
+  val linesOffset: spire.math.UInt = sourceOffset.linesOffset
   val posOffset: WithUTF16 = sourceOffset.posOffset
   // TODO: column offset for :t command in repl
-  if (linesOffset != 0) require(posOffset.nonZero)
-  if (posOffset.nonZero) require(linesOffset != 0)
+  if (linesOffset != UInt(0)) require(posOffset.nonZero)
+  if (posOffset.nonZero) require(linesOffset != UInt(0))
 
   private def nEnd: P[Unit] = P("\n" | End)
 
@@ -77,10 +76,10 @@ case class ReaderV1(
   )
 
   def begin: P[spire.math.UInt] =
-    Index.map(_.refineUnsafe[Positive0])
+    Index.map(UInt(_))
 
   def end: P[spire.math.UInt] =
-    Index.map(_.refineUnsafe[Positive0])
+    Index.map(UInt(_))
 
   val indexer: StringIndex = defaultIndexer.getOrElse(StringIndex(p.input))
 
@@ -89,17 +88,17 @@ case class ReaderV1(
       end: spire.math.UInt
   ): Option[SourcePos] = {
     if (ignoreLocation) return None
-    val start = indexer.charIndexToLineAndColumnWithUTF16(begin)
-    val endPos = indexer.charIndexToLineAndColumnWithUTF16(end)
+    val start = indexer.charIndexToLineAndColumnWithUTF16(begin.toInt)
+    val endPos = indexer.charIndexToLineAndColumnWithUTF16(end.toInt)
     val range = RangeInFile(
       Pos(
         posOffset + WithUTF16(indexer.charIndexToUnicodeIndex(begin), begin),
-        (linesOffset + start.line).refineUnsafe,
+        linesOffset + start.line,
         start.column
       ),
       Pos(
         posOffset + WithUTF16(indexer.charIndexToUnicodeIndex(end), end),
-        (linesOffset + endPos.line).refineUnsafe,
+        linesOffset + endPos.line,
         endPos.column
       )
     )

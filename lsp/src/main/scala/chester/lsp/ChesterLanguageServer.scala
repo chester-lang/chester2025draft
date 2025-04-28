@@ -6,13 +6,13 @@ import chester.syntax.core.*
 import chester.tyck.api.*
 import chester.tyck.*
 import chester.utils.{StringIndex, WithUTF16}
-import _root_.io.github.iltotore.iron.*
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.log4s.*
 import chester.i18n.*
 import chester.readerv2.ChesterReaderV2
+import spire.math.UInt
 
 import java.util.List as JList
 import java.util.concurrent.CompletableFuture
@@ -184,8 +184,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     parseResult.fold(
       { parseError =>
         val range = new Range(
-          new Position(parseError.pos.line, parseError.pos.column.utf16),
-          new Position(parseError.pos.line, parseError.pos.column.utf16)
+          new Position(parseError.pos.line.toInt, parseError.pos.column.utf16.toInt),
+          new Position(parseError.pos.line.toInt, parseError.pos.column.utf16.toInt)
         )
         val diagnostic = new Diagnostic(
           range,
@@ -347,14 +347,14 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         )
 
         val codepointIndex =
-          stringIndex.charIndexToUnicodeIndex(charIndexUtf16.refineUnsafe)
+          stringIndex.charIndexToUnicodeIndex(UInt(charIndexUtf16))
 
         // Get the line and column with both Unicode code points and UTF-16 code units
         val lineAndColumn =
-          stringIndex.charIndexToLineAndColumnWithUTF16(charIndexUtf16)
+          stringIndex.charIndexToLineAndColumnWithUTF16(charIndexUtf16.toInt)
 
         val pos = Pos(
-          index = WithUTF16(codepointIndex, charIndexUtf16.refineUnsafe),
+          index = WithUTF16(codepointIndex, UInt(charIndexUtf16)),
           line = lineAndColumn.line,
           column = lineAndColumn.column
         )
@@ -372,10 +372,10 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   }
 
   private def rangeFromSourcePos(sourcePos: SourcePos): Range = {
-    val startLine = sourcePos.range.start.line
-    val startCharacter = sourcePos.range.start.column.utf16
-    val endLine = sourcePos.range.end.line
-    val endCharacter = sourcePos.range.end.column.utf16
+    val startLine = sourcePos.range.start.line.toInt
+    val startCharacter = sourcePos.range.start.column.utf16.toInt
+    val endLine = sourcePos.range.end.line.toInt
+    val endCharacter = sourcePos.range.end.column.utf16.toInt
 
     val start = new Position(startLine, startCharacter)
     val end = new Position(endLine, endCharacter)
@@ -449,9 +449,9 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
   private def comparePositions(p1: Pos, p2: Pos): Int =
     if (p1.line != p2.line) {
-      p1.line.compareTo(p2.line)
+      p1.line.toInt.compareTo(p2.line.toInt)
     } else {
-      p1.column.utf16.compareTo(p2.column.utf16)
+      p1.column.utf16.toInt.compareTo(p2.column.utf16.toInt)
     }
 
   override def references(

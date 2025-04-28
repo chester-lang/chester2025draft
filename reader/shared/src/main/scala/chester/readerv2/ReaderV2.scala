@@ -1434,13 +1434,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     } // State is automatically restored after this block
 
   // Helper method to check if whitespace contains a newline
-  private def isNewlineWhitespace(token: Token.Whitespace,context: ReaderContext = ReaderContext()): Boolean = {
+  private def isNewlineWhitespace(token: Token): Boolean = {
     val maybeSource = source.readContent.toOption
     maybeSource.exists { source =>
       val startPos = token.sourcePos.range.start.index.utf16
       val endPos = token.sourcePos.range.end.index.utf16
-      if (startPos < source.length && endPos <= source.length) {
-        val whitespaceText = source.substring(startPos, endPos)
+      if (startPos.toInt < source.length && endPos.toInt <= source.length) {
+        val whitespaceText = source.substring(startPos.toInt, endPos.toInt)
         whitespaceText.contains('\n')
       } else {
         false

@@ -1,5 +1,6 @@
 package chester.error
 
+import spire.math.UInt
 import chester.utils.doc.*
 import upickle.default.*
 import chester.i18n.*
@@ -100,7 +101,7 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
     case Some(pos) =>
       val locationHeader = Doc.text(t"Location") <+>
         Doc.text(
-          t"${pos.fileName} [${pos.range.start.line + 1}:${pos.range.start.column.i + 1}] to [${pos.range.end.line + 1}:${pos.range.end.column.i + 1}]",
+          t"${pos.fileName} [${pos.range.start.line + UInt(1)}:${pos.range.start.column.i + UInt(1)}] to [${pos.range.end.line + UInt(1)}:${pos.range.end.column.i + UInt(1)}]",
           Styling.BoldOn
         )
 

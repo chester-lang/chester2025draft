@@ -1,14 +1,13 @@
 package chester.readerv1
 
-import _root_.io.github.iltotore.iron.*
 import chester.error.*
 import chester.i18n.*
 import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source}
 import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.utils.WithUTF16
+import spire.math.UInt
 
 import scala.util.*
 object ChesterReader {
@@ -37,7 +36,7 @@ object ChesterReader {
           case Parsed.Failure(_, index, extra) =>
             val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
             val p = Pos(
-              indexer.charIndexToWithUTF16(index.refineUnsafe),
+              indexer.charIndexToWithUTF16(UInt(index)),
               pos.line,
               pos.column
             )
@@ -98,11 +97,11 @@ object ChesterReader {
         // Use the indexer associated with *this* content snippet for error reporting
         val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
         // Adjust the position by the global offsets
-        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(index.refineUnsafe)
+        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(UInt(index))
         val finalIndex: WithUTF16 = posOffset + indexWithinContent
         val finalPos = Pos(
           finalIndex,
-          (linesOffset + pos.line).refineUnsafe,
+          linesOffset + pos.line,
           // Column is relative to the line start, but if it's the first line (pos.line == 1),
           // add the original UTF-16 offset's column component if applicable.
           // However, the existing Source logic likely handles this, let's keep it simple.

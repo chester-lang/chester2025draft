@@ -77,10 +77,10 @@ class SemanticDBGenerator extends VectorSemanticCollector {
   private def exprRange(expr: Expr): Option[Range] =
     expr.sourcePos.map { pos =>
       Range(
-        startLine = pos.range.start.line,
-        startCharacter = pos.range.start.column.utf16,
-        endLine = pos.range.end.line,
-        endCharacter = pos.range.end.column.utf16
+        startLine = pos.range.start.line.toInt,
+        startCharacter = pos.range.start.column.utf16.toInt,
+        endLine = pos.range.end.line.toInt,
+        endCharacter = pos.range.end.column.utf16.toInt
       )
     }
 

@@ -1,5 +1,6 @@
 package chester.error
 
+import spire.math.UInt
 import chester.reader.Source
 import chester.utils.{WithUTF16, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
@@ -12,10 +13,12 @@ import chester.i18n.*
 
 import scala.annotation.tailrec
 
+import chester.utils.impls.uintRW // Import needed for Pos derives ReadWriter
+
 case class Pos(index: WithUTF16, line: spire.math.UInt, column: WithUTF16) derives ReadWriter
 
 object Pos {
-  val zero: Pos = Pos(WithUTF16.Zero, 0, WithUTF16.Zero)
+  val zero: Pos = Pos(WithUTF16.Zero, UInt(0), WithUTF16.Zero)
 }
 
 /** start <= i < end */
@@ -41,11 +44,17 @@ object FileContent {
   def convertToString(fileContent: FileContent): String = convertToString0(
     fileContent.content
   )
+
+  def apply(source: Source): FileContent = FileContent(
+    source.readContent.getOrElse(""),
+    source.linesOffset.toInt,
+    source.posOffset
+  )
 }
 
 case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
   private lazy val fileContent: Option[FileContent] = source.readContent.toOption.map(
-    FileContent(_, source.linesOffset, source.posOffset)
+    content => FileContent(content, source.linesOffset.toInt, source.posOffset)
   )
   val fileName: String = source.fileName
 
@@ -58,15 +67,15 @@ case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
     *     display
     */
   def getLinesInRange: Option[Vector[(Int, String)]] = fileContent map { fileContent =>
-    val startLine = range.start.line - fileContent.lineOffset
-    val endLine = range.end.line - fileContent.lineOffset
+    val startLine = range.start.line.toInt - fileContent.lineOffset
+    val endLine = range.end.line.toInt - fileContent.lineOffset
     val contentString = FileContent.convertToString(fileContent)
     val lines = contentString.split('\n').toVector
 
     // Assert that the start and end lines are within valid bounds
     assert(
-      startLine >= 0 && endLine < lines.length,
-      t"Invalid line range: startLine=$startLine, endLine=$endLine, totalLines=${lines.length}"
+      startLine >= 0 && startLine <= endLine && endLine < lines.length,
+      t"Invalid line range: startLine=${startLine + fileContent.lineOffset}, endLine=${endLine + fileContent.lineOffset}, totalLines=${lines.length}"
     )
 
     // Slice the lines and keep their line numbers

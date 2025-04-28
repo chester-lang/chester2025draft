@@ -4,9 +4,8 @@ import chester.error.{Pos, RangeInFile, SourcePos}
 import chester.reader.{ParseError, Source}
 import chester.utils.WithUTF16
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
+import spire.math.UInt
 
 import scala.util.{Try, boundary}
 
@@ -46,14 +45,14 @@ class Lexer(src: Source) {
     src,
     RangeInFile(
       Pos(
-        WithUTF16(start.refineUnsafe[Positive0], text.substring(0, start).length.refineUnsafe[Positive0]),
-        line.refineUnsafe[Positive0],
-        WithUTF16(0.refineUnsafe, col.refineUnsafe[Positive0])
+        WithUTF16(UInt(start), UInt(text.substring(0, start).length)),
+        UInt(line),
+        WithUTF16(UInt(0), UInt(col))
       ),
       Pos(
-        WithUTF16(end.refineUnsafe[Positive0], text.substring(0, end).length.refineUnsafe[Positive0]),
-        line.refineUnsafe[Positive0],
-        WithUTF16((end - start).refineUnsafe, (text.substring(0, end).length - text.substring(0, start).length).refineUnsafe)
+        WithUTF16(UInt(end), UInt(text.substring(0, end).length)),
+        UInt(line),
+        WithUTF16(UInt(end - start), UInt(text.substring(start, end).length))
       )
     )
   )

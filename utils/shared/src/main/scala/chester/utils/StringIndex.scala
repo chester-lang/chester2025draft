@@ -57,7 +57,7 @@ case class StringIndex(stringList: LazyList[String]) {
           t"Index out of bounds (exceeds string length) $charIndex"
         )
       }
-    UInt(unicodeIndex)
+    unicodeIndex
   }
 
   def unicodeIndexToCharIndex(unicodeIndex: Int): Int = {
@@ -161,7 +161,7 @@ case class StringIndex(stringList: LazyList[String]) {
         )
       }
 
-    LineAndColumn(line.refineUnsafe, column.refineUnsafe)
+    LineAndColumn(UInt(line), UInt(column))
   }
 
 }

@@ -54,7 +54,7 @@ def parseV2(input: String): Expr = {
   ChesterReaderV2.parseExpr(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = error.pos.index.utf16
+        val errorIndex = error.pos.index.utf16.toInt
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length
@@ -89,7 +89,7 @@ def parseTopLevelV2(input: String): Expr = {
   ChesterReaderV2.parseTopLevel(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = error.pos.index.utf16
+        val errorIndex = error.pos.index.utf16.toInt
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length
