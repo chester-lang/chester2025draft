@@ -126,7 +126,7 @@ class ConsVectorTest extends FunSuite {
       meta = None
     )
 
-    DEBUG.withValue(true) {
+    DEBUG.withValue(false) {
       parseAndCheckBoth(input, expected)
     }
   }

@@ -1,16 +1,16 @@
 package chester.reader
 
+import chester.i18n.*
+import chester.readerv1.ChesterReader
+import chester.readerv2.ReaderV2.DEBUG
 import chester.syntax.concrete.*
 import munit.FunSuite
 import upickle.default.*
-import chester.i18n.*
-import chester.readerv2.ChesterReaderV2
-import chester.readerv2.ReaderV2.DEBUG
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-class FileParserTest extends FunSuite {
+class FileParserTestV1 extends FunSuite {
   val (testDir, inputFiles) = getInputFiles("tests/parser")
 
   inputFiles.foreach { inputFile =>
@@ -21,7 +21,7 @@ class FileParserTest extends FunSuite {
       val expectedExists = Files.exists(expectedFile)
 
       DEBUG.withValue(false) {
-        ChesterReaderV2
+        ChesterReader
           .parseTopLevel(
             FilePath(inputFile.toString),
             ignoreLocation = true

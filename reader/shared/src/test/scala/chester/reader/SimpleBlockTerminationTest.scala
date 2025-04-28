@@ -3,26 +3,11 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 import chester.readerv2.ReaderV2
-import pprint.Tree
-import chester.i18n.*
 import chester.reader.parseAndCheckBoth
 
 class SimpleBlockTerminationTest extends FunSuite {
 
   test("simple block with newline termination") {
-    // Enable debug output
-    // val oldDebug = LexerV2.DEBUG
-    // LexerV2.DEBUG = true
-
-    // Custom pprinter with wider width and colors
-    val myPPrinter = pprint.PPrinter.Color.copy(
-      defaultWidth = 120,
-      additionalHandlers = {
-        case obj: AnyRef if obj.getClass.getName.startsWith("chester.syntax") =>
-          Tree.Apply("Syntax", Iterator(Tree.Literal(obj.toString)))
-      }
-    )
-
     val input =
       """
         |test match {
@@ -80,43 +65,11 @@ class SimpleBlockTerminationTest extends FunSuite {
       None
     )
 
-    // Parse with V1 parser
-    val resultV1 = parseV1(input)
-    println("\n===== V1 PARSER RESULT =====")
-    myPPrinter.pprintln(resultV1)
-
-    // Parse with V2 parser
-    val resultV2 = parseV2(input)
-    println("\n===== V2 PARSER RESULT =====")
-    myPPrinter.pprintln(resultV2)
-
-    // Deep AST inspection with pprint
-    println("\n===== V1 AST STRUCTURE =====")
-    pprint.log(resultV1, "V1 AST")
-
-    println("\n===== V2 AST STRUCTURE =====")
-    pprint.log(resultV2, "V2 AST")
-
-    // Run the original check to see if it fails
-    println("\n===== COMPARING RESULTS =====")
+    ReaderV2.DEBUG.withValue(false) {
     parseAndCheckBoth(input, expected)
-
-    // Simple equality check
-    println("\n===== V1 VS V2 EQUALITY CHECK =====")
-    println(t"V1 equals V2: ${resultV1 == resultV2}")
+    }
   }
   test("block with newline termination complex") {
-    // Enable debug output
-    // val oldDebug = LexerV2.DEBUG
-
-    // Custom pprinter with wider width and colors
-    val myPPrinter = pprint.PPrinter.Color.copy(
-      defaultWidth = 120,
-      additionalHandlers = {
-        case obj: AnyRef if obj.getClass.getName.startsWith("chester.syntax") =>
-          Tree.Apply("Syntax", Iterator(Tree.Literal(obj.toString)))
-      }
-    )
 
     val input =
       """
@@ -236,33 +189,9 @@ class SimpleBlockTerminationTest extends FunSuite {
       None
     )
 
-    // Parse with V1 parser
-    val resultV1 = parseV1(input)
-    println("\n===== V1 PARSER RESULT =====")
-    myPPrinter.pprintln(resultV1)
-
-    // Parse with V2 parser
-    val resultV2 = parseV2(input)
-    println("\n===== V2 PARSER RESULT =====")
-    myPPrinter.pprintln(resultV2)
-
-    // Deep AST inspection with pprint
-    println("\n===== V1 AST STRUCTURE =====")
-    pprint.log(resultV1, "V1 AST")
-
-    println("\n===== V2 AST STRUCTURE =====")
-    pprint.log(resultV2, "V2 AST")
-
-    // Run the original check to see if it fails
-    println("\n===== COMPARING RESULTS =====")
-
-    // LexerV2.DEBUG = true
-    ReaderV2.DEBUG.withValue(true) {
+    ReaderV2.DEBUG.withValue(false) {
       parseAndCheckBoth(input, expected)
     }
 
-    // Simple equality check
-    println("\n===== V1 VS V2 EQUALITY CHECK =====")
-    println(t"V1 equals V2: ${resultV1 == resultV2}")
   }
 }
