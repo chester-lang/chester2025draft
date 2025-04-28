@@ -19,7 +19,7 @@ class TheTyckTest extends FunSuite {
   val baseName = "tyck"
   val testDir: Path = Paths.get("tests")
   val inputFile: Path = Paths.get("tests/tyck.chester")
-  val doTest = false
+  val doTest = true
   test(baseName) {
     if (doTest) {
 

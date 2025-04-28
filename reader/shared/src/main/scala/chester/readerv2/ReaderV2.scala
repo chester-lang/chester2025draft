@@ -229,7 +229,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
                 )
                 // parseObject advanced state, now continue parsing after the object
-                parseRest(funcCall) // Recurse with the new FunctionCall
+                parseRest(funcCall,context = context) // Recurse with the new FunctionCall
               case funcCall: FunctionCall =>
                 debug(t"parseRest: Preceding expr is FunctionCall $funcCall, adding object as another argument.")
                 // This assumes the object is an additional argument group like f(a){b=1}
@@ -239,7 +239,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
                 )
                 // parseObject advanced state, now continue parsing after the object
-                parseRest(newFuncCall) // Recurse with the new FunctionCall
+                parseRest(newFuncCall,context = context) // Recurse with the new FunctionCall
               case _ =>
                 debug(t"parseRest: Preceding expr $expr doesn't support object arg directly. Falling back to block parse.")
                 this.state = originalState // Restore state
@@ -266,7 +266,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           localTerms = Vector(dotCall)
           debug(t"parseRest: After dot call, terms: $localTerms")
           // handleDotCall has updated this.state already
-          parseRest(dotCall)
+          parseRest(dotCall,context = context)
         }
 
       // Operator handling
@@ -290,7 +290,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           localTerms = localTerms :+ next
           debug(t"parseRest: After parsing other token as atom, terms: $localTerms")
           // withComments has updated this.state already
-          parseRest(next).map {
+          parseRest(next,context = context).map {
             case opSeq: OpSeq =>
               debug(t"OpSeq construction in parseRest: localTerms=$localTerms, dropping last=${localTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
               debug(t"Creating OpSeq with combined sequence: ${localTerms.dropRight(1) ++ opSeq.seq}")
@@ -332,7 +332,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             val updatedTerms = terms :+ block
             debug(t"parseRest: After block following generic function, terms: $updatedTerms")
 
-            parseRest(block).map {
+            parseRest(block,context = context).map {
               case opSeq: OpSeq =>
                 debug(
                   t"OpSeq construction for generic function with block: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -354,7 +354,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             if (this.state.isAtTerminator) {
               Right(newFuncCall)
             } else {
-              parseRest(newFuncCall)
+              parseRest(newFuncCall,context = context)
             }
           }
         case id: ConcreteIdentifier =>
@@ -375,7 +375,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           val updatedTerms = terms :+ block
           debug(t"parseRest: After block following other expression, terms: $updatedTerms")
 
-          parseRest(block).map {
+          parseRest(block,context = context).map {
             case opSeq: OpSeq =>
               debug(
                 t"OpSeq construction in handleBlockArgument: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -492,7 +492,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 val funcCall = createFunctionCall(typeCall, tuple, Some(sourcePos), Some(this.state.sourcePos))
                 val updatedTerms = terms :+ funcCall
 
-                parseRest(funcCall).map {
+                parseRest(funcCall,context = context).map {
                   case opSeq: OpSeq =>
                     debug(
                       t"OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -515,7 +515,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 val updatedTerms = terms :+ typeCall :+ block
                 debug(t"parseRest: After block following generic type, terms: $updatedTerms")
 
-                parseRest(block).map {
+                parseRest(block,context = context).map {
                   case opSeq: OpSeq =>
                     debug(
                       t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -534,7 +534,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               val funcCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
               val updatedTerms = terms :+ funcCall
 
-              parseRest(funcCall).map {
+              parseRest(funcCall,context = context).map {
                 case opSeq: OpSeq =>
                   debug(
                     t"OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -587,7 +587,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             val funcCall =
               FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
             val updatedTerms = terms :+ funcCall
-            parseRest(funcCall).map {
+            parseRest(funcCall,context = context).map {
               case opSeq: OpSeq =>
                 debug(
                   t"OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -606,7 +606,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
               val updatedTerms = terms :+ id :+ block
               debug(t"parseRest: After block following identifier, terms: $updatedTerms")
-              parseRest(block).map {
+              parseRest(block,context = context).map {
                 case opSeq: OpSeq =>
                   debug(
                     t"OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -634,7 +634,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           debug(t"parseRest: After parsing expr after operator, terms: $newTerms")
 
           // withComments has updated this.state already
-          parseRest(next).map {
+          parseRest(next,context = context).map {
             case opSeq: OpSeq =>
               // Flatten the nested OpSeq
               debug(
@@ -716,7 +716,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 Right(OpSeq(terms, None))
               } else {
                 // withComments has updated this.state already
-                parseRest(expr)
+                parseRest(expr,context = context)
               }
             }
         }
@@ -738,7 +738,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             Right(OpSeq(terms, None))
           } else {
             // withComments has updated this.state already
-            parseRest(expr)
+            parseRest(expr,context = context)
           }
         }
 
