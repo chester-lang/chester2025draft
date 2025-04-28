@@ -1,5 +1,5 @@
 package chester.readerv2
-import chester.reader.{ParseError, Source, ParserSource}
+import chester.reader.{ParseError, ParserSource, Source}
 import chester.syntax.concrete.Expr
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
