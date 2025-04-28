@@ -2,7 +2,7 @@ package chester.tyck
 
 import chester.i18n.*
 import chester.reader.{*, given}
-import chester.readerv1.ChesterReader
+import chester.readerv2.ChesterReaderV2
 import chester.syntax.concrete.*
 import chester.syntax.core.Judge
 import chester.utils.doc.*
@@ -26,7 +26,7 @@ class TheTyckTest extends FunSuite {
       val expectedFile = testDir.resolve(t"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
-      ChesterReader
+      ChesterReaderV2
         .parseTopLevel(FilePath(inputFile.toString))
         .fold(
           error => fail(t"Failed to parse file: $inputFile, error: $error"),

@@ -7,7 +7,7 @@ import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*
 import chester.i18n.*
-import chester.readerv1.ChesterReader
+import chester.readerv2.ChesterReaderV2
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -21,7 +21,7 @@ class FilesTyckTest extends FunSuite {
       val expectedFile = testDir.resolve(t"$baseName.expected")
       val expectedExists = Files.exists(expectedFile)
 
-      ChesterReader
+      ChesterReaderV2
         .parseTopLevel(FilePath(inputFile.toString))
         .fold(
           error => fail(t"Failed to parse file: $inputFile, error: $error"),
