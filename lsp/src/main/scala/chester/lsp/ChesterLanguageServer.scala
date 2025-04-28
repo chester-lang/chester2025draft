@@ -12,7 +12,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.log4s.*
 import chester.i18n.*
-import chester.readerv1.ChesterReader
 import chester.readerv2.ChesterReaderV2
 
 import java.util.List as JList
