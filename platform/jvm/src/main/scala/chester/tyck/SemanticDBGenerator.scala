@@ -8,8 +8,8 @@ import chester.syntax.*
 import chester.syntax.concrete.Expr
 import os.*
 import chester.reader.given
-
 import chester.utils.asInt
+
 import scala.meta.internal.semanticdb.*
 
 class SemanticDBGenerator extends VectorSemanticCollector {

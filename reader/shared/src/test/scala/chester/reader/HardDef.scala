@@ -4,7 +4,7 @@ import chester.readerv2.ReaderV2.DEBUG
 import chester.syntax.concrete.*
 import munit.FunSuite
 
-class HardDef extends FunSuite{
+class HardDef extends FunSuite {
   test("parse block with multiple statements without newlines") {
     val input =
       """{

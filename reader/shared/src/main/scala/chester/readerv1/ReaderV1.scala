@@ -9,9 +9,9 @@ import chester.utils.{StringIndex, WithUTF16}
 import fastparse.*
 import fastparse.NoWhitespace.*
 import spire.math.Natural
+import chester.utils.asInt
 
 import scala.util.*
-import chester.utils.asInt
 
 case class ReaderV1(
     sourceOffset: Source,

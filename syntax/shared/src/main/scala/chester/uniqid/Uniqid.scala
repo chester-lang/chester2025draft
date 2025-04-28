@@ -1,12 +1,8 @@
 package chester.uniqid
 
 import upickle.default.*
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.all.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
 import spire.math.Natural
-import chester.utils.impls.uintRW
 import chester.utils.impls.naturalRW
 import chester.utils.asInt
 

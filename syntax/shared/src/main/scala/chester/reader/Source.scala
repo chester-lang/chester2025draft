@@ -3,12 +3,8 @@ package chester.reader
 import upickle.default.*
 import chester.error.*
 import chester.utils.WithUTF16
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.all.*
-import _root_.io.github.iltotore.iron.upickle.given
 import chester.utils.doc.{Doc, PrettierOptions}
 import spire.math.Natural
-import chester.utils.impls.uintRW
 import chester.utils.impls.naturalRW
 
 case class ParseError(message: String, pos: Pos) extends Problem {

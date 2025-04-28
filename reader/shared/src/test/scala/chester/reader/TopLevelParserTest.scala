@@ -39,7 +39,8 @@ class TopLevelParserTest extends FunSuite {
             IntegerLiteral(value = 42, meta = None)
           ),
           meta = None
-        )),
+        )
+      ),
       result = None,
       meta = None
     )
@@ -70,7 +71,8 @@ class TopLevelParserTest extends FunSuite {
             Identifier(name = "y", meta = None)
           ),
           meta = None
-        )),
+        )
+      ),
       result = None,
       meta = None
     )
@@ -85,7 +87,7 @@ class TopLevelParserTest extends FunSuite {
     """
     val result1 = parseTopLevelV1(input)
     val result2 = parseTopLevelV2(input)
-    
+
     assertEquals(result1, result2, t"V1 and V2 parsers should produce the same result")
   }
-} 
+}

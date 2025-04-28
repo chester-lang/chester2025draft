@@ -5,18 +5,11 @@ import chester.reader.Source
 import chester.utils.{WithUTF16, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
 import upickle.default.*
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.all.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
-import _root_.io.github.iltotore.iron.upickle.given
 import chester.i18n.*
+import chester.utils.impls.naturalRW
+import chester.utils.asInt
 
 import scala.annotation.tailrec
-
-import chester.utils.impls.uintRW // Import needed for Pos derives ReadWriter
-import chester.utils.impls.naturalRW // Import needed for Natural ReadWriter
-
-import chester.utils.asInt
 
 case class Pos(index: WithUTF16, line: spire.math.Natural, column: WithUTF16) derives ReadWriter
 
@@ -56,9 +49,8 @@ object FileContent {
 }
 
 case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
-  private lazy val fileContent: Option[FileContent] = source.readContent.toOption.map(
-    content => FileContent(content, source.linesOffset.asInt, source.posOffset)
-  )
+  private lazy val fileContent: Option[FileContent] =
+    source.readContent.toOption.map(content => FileContent(content, source.linesOffset.asInt, source.posOffset))
   val fileName: String = source.fileName
 
   /** Extracts all lines within the range with their line numbers.

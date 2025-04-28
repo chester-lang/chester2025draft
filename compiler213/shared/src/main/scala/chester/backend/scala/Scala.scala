@@ -1,8 +1,8 @@
 package chester.backend.scala
 
 import chester.syntax.core._
-
 import chester.utils.AsInt._
+
 import scala.meta
 import scala.annotation.experimental
 @experimental

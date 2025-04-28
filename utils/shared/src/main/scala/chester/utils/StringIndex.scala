@@ -1,9 +1,7 @@
 package chester.utils
 
 import fastparse.ParserInput
-import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
 import spire.math.Natural
 
@@ -39,18 +37,18 @@ case class StringIndex(stringList: LazyList[String]) {
           val nextChar = if (it.hasNext) it.next() else '\u0000'
           if (isLowSurrogate(nextChar)) {
             if (index + Natural(1) < charIndex) {
-              unicodeIndex = unicodeIndex+Natural(1)
-              index = index+Natural(2)
+              unicodeIndex = unicodeIndex + Natural(1)
+              index = index + Natural(2)
             } else {
-              index = index+Natural(1)
+              index = index + Natural(1)
             }
           } else {
-            unicodeIndex =unicodeIndex +Natural(1)
-            index =index +Natural(1)
+            unicodeIndex = unicodeIndex + Natural(1)
+            index = index + Natural(1)
           }
         } else {
-          unicodeIndex = unicodeIndex+Natural(1)
-          index = index+Natural(1)
+          unicodeIndex = unicodeIndex + Natural(1)
+          index = index + Natural(1)
         }
       } else {
         throw new IllegalArgumentException(

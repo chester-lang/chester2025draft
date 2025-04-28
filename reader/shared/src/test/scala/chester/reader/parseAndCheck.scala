@@ -51,8 +51,9 @@ def parseV1(input: String): Expr =
 // New function to parse with V2 parser only and return the result
 def parseV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
-  
-  ChesterReaderV2.parseExpr(source, ignoreLocation = true)
+
+  ChesterReaderV2
+    .parseExpr(source, ignoreLocation = true)
     .fold(
       error => {
         val errorIndex = error.pos.index.utf16.asInt
@@ -86,8 +87,9 @@ def parseTopLevelV1(input: String): Expr =
 // New function to parse with V2 parser only and return the result (using TopLevel)
 def parseTopLevelV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
-  
-  ChesterReaderV2.parseTopLevel(source, ignoreLocation = true)
+
+  ChesterReaderV2
+    .parseTopLevel(source, ignoreLocation = true)
     .fold(
       error => {
         val errorIndex = error.pos.index.utf16.asInt

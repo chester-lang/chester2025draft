@@ -2,6 +2,7 @@ package chester.lsp
 
 import munit.FunSuite
 import org.eclipse.lsp4j.*
+
 import java.util.concurrent.TimeUnit
 
 class ChesterLanguageServerTest extends FunSuite {
@@ -37,4 +38,4 @@ class ChesterLanguageServerTest extends FunSuite {
     // Add more assertions for other capabilities if needed
   }
 
-} 
+}

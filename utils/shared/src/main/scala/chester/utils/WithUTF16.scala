@@ -1,12 +1,7 @@
 package chester.utils
 
 import upickle.default.*
-import _root_.io.github.iltotore.iron.*
-import _root_.io.github.iltotore.iron.constraint.all.*
-import _root_.io.github.iltotore.iron.constraint.numeric.*
-import _root_.io.github.iltotore.iron.upickle.given
 import spire.math.Natural
-import chester.utils.impls.uintRW
 import chester.utils.impls.naturalRW
 
 // i is unicode character position

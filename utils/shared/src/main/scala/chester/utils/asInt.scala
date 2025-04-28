@@ -6,7 +6,7 @@ private val MaxInt = Natural(Integer.MAX_VALUE)
 private val MaxIntUInt = UInt(Integer.MAX_VALUE)
 
 extension (n: Natural) {
-  def asInt: Int = if(n <= MaxInt) n.toInt else throw new IllegalArgumentException("Natural is too large to fit in an Int")
+  def asInt: Int = if (n <= MaxInt) n.toInt else throw new IllegalArgumentException("Natural is too large to fit in an Int")
 }
 
 extension (n: Double) {
@@ -15,11 +15,11 @@ extension (n: Double) {
 }
 
 extension (n: BigInt) {
-  def asInt: Int = if(n.isValidInt) n.toInt else throw new IllegalArgumentException("BigInt is too large to fit in an Int")
+  def asInt: Int = if (n.isValidInt) n.toInt else throw new IllegalArgumentException("BigInt is too large to fit in an Int")
 }
 
 extension (n: UInt) {
-  def asInt: Int = if(n <= MaxIntUInt) n.toInt else throw new IllegalArgumentException("UInt is too large to fit in an Int")
+  def asInt: Int = if (n <= MaxIntUInt) n.toInt else throw new IllegalArgumentException("UInt is too large to fit in an Int")
 }
 
 // Char is 16bit - always safe
@@ -34,6 +34,6 @@ extension (s: String) {
 // for Scala2
 object AsInt {
   implicit class AsIntFor(n: BigInt) {
-    def asInt: Int = if(n.isValidInt) n.toInt else throw new IllegalArgumentException("BigInt is too large to fit in an Int")
+    def asInt: Int = if (n.isValidInt) n.toInt else throw new IllegalArgumentException("BigInt is too large to fit in an Int")
   }
 }

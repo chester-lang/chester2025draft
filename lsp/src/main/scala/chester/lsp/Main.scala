@@ -4,8 +4,8 @@ import org.eclipse.lsp4j.launch.LSPLauncher
 import org.log4s.*
 import org.slf4j.simple.SimpleLogger
 import chester.i18n.*
-
 import chester.utils.asInt
+
 import java.io.{InputStream, OutputStream}
 import java.net.ServerSocket
 

@@ -620,7 +620,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
         // Special case for Integer.+ method with a string argument
         if (field.name == "+" && args.nonEmpty) {
-          if(args.length>=2){
+          if (args.length >= 2) {
             ???
           }
           // First handle argument elaboration

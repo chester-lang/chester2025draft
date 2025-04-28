@@ -84,11 +84,11 @@ private object TokenExtractors {
 import TokenExtractors._
 
 case class ReaderContext(
-                           inOpSeq: Boolean = false,
-                           dontallowOpSeq: Boolean = false,
-                           newLineAfterBlockMeansEnds: Boolean = false,
-                           dontAllowBlockApply: Boolean = false
-                         ) {
+    inOpSeq: Boolean = false,
+    dontallowOpSeq: Boolean = false,
+    newLineAfterBlockMeansEnds: Boolean = false,
+    dontAllowBlockApply: Boolean = false
+) {
   def opSeq: Boolean = !inOpSeq && !dontallowOpSeq
 
   def blockCall: Boolean = !inOpSeq && !dontAllowBlockApply
@@ -229,7 +229,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Helper for building operator sequences Gets comments directly from pendingTokens via pullComments()
     */
-  private def buildOpSeq(terms: Vector[Expr],context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def buildOpSeq(terms: Vector[Expr], context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
     debug(t"Building OpSeq with terms: $terms")
     // Get any collected comments from pendingTokens
     val comments = pullComments()
@@ -247,7 +247,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Main expression continuation parser. Uses skipComments() and pullComments() internally to handle comments without passing them around.
     */
-  private def parseRest(expr: Expr,context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def parseRest(expr: Expr, context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
     var localTerms = Vector(expr)
     debug(t"parseRest called with expr: $expr, state: ${this.state}, current terms: $localTerms")
 
@@ -368,7 +368,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
-  private def handleBlockArgument(expr: Expr, terms: Vector[Expr], braceSourcePos: SourcePos,context: ReaderContext = ReaderContext()): Either[ParseError, Expr] =
+  private def handleBlockArgument(
+      expr: Expr,
+      terms: Vector[Expr],
+      braceSourcePos: SourcePos,
+      context: ReaderContext = ReaderContext()
+  ): Either[ParseError, Expr] =
     // this.state is already set correctly
     parseBlock().flatMap { block =>
       // parseBlock has already updated this.state
@@ -444,7 +449,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Handle colon expressions - uses skipComments() and pullComments() for comment handling
     */
-  private def handleColon(sourcePos: SourcePos, terms: Vector[Expr],context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def handleColon(sourcePos: SourcePos, terms: Vector[Expr], context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
     // Advance past the colon
     advance()
     val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
@@ -469,7 +474,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Handle operators in expression continuations - uses skipComments() and pullComments() for comment handling
     */
-  private def handleOperatorInRest(op: String, sourcePos: SourcePos, terms: Vector[Expr],context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def handleOperatorInRest(
+      op: String,
+      sourcePos: SourcePos,
+      terms: Vector[Expr],
+      context: ReaderContext = ReaderContext()
+  ): Either[ParseError, Expr] = {
     // Advance past the operator
     advance()
 
@@ -512,7 +522,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Handle identifiers in expression continuations - uses skipComments() and pullComments() for comment handling
     */
-  private def handleIdentifierInRest(text: String, sourcePos: SourcePos, terms: Vector[Expr],context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def handleIdentifierInRest(
+      text: String,
+      sourcePos: SourcePos,
+      terms: Vector[Expr],
+      context: ReaderContext = ReaderContext()
+  ): Either[ParseError, Expr] = {
     // Advance past the identifier
     advance()
 
@@ -829,7 +844,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     hasNewline
   }
 
-  private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[Expr],context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[Expr], context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
     // Skip the dot
     advance()
 
@@ -889,12 +904,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               )
             }
           case _ =>
-            Right(DotCall(
-              terms.last,
-              field,
-              Vector.empty,
-              createMeta(Some(dotSourcePos), Some(idSourcePos))
-            ))
+            Right(
+              DotCall(
+                terms.last,
+                field,
+                Vector.empty,
+                createMeta(Some(dotSourcePos), Some(idSourcePos))
+              )
+            )
         }
       case Right(t)  => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
       case Left(err) => Left(err)
@@ -1058,7 +1075,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Parses a sequence of expressions typically used in tuples or function calls. Allows semicolons as separators in addition to commas. Expects a
     * closing parenthesis `)`.
     */
-  private def parseTupleExprList(startPos: SourcePos,context: ReaderContext = ReaderContext()): Either[ParseError, Vector[Expr]] = {
+  private def parseTupleExprList(startPos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, Vector[Expr]] = {
     // Skip any comments at the start
     skipComments()
     parseElementSequence(
@@ -1280,7 +1297,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             // Use state *before* skipping comments for whitespace check
             val whitespaceTokens = stateBeforePossibleExpr.pendingTokens.collect { case w: Token.Whitespace => w }
             val hasSignificantNewline = this.state.newLineAfterBlockMeansEnds &&
-              whitespaceTokens.exists(x=>isNewlineWhitespace(x))
+              whitespaceTokens.exists(x => isNewlineWhitespace(x))
             if (hasSignificantNewline) {
               debug(s"parseStatementSequence: Detected significant newline separator in $contextDescription")
               // Treat newline as separator: move result to statements
@@ -1299,7 +1316,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
           // --- Parse the next expression ---
           debug(s"parseStatementSequence: Attempting to parse expression in $contextDescription at ${this.state.current}")
-          val stateBeforeExpr = this.state // State before parsing the expression
+          this.state // State before parsing the expression
           parseExpr() match {
             case Left(err) =>
               // Check if the error occurred because we expected an expression but found a terminator
@@ -1312,23 +1329,25 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               }
             case Right(parsedExpr) =>
               val stateAfterExpr = this.state // State *after* parsing the expression
-              debug(s"parseStatementSequence: Parsed expression $parsedExpr in $contextDescription, state after: ${stateAfterExpr}")
+              debug(s"parseStatementSequence: Parsed expression $parsedExpr in $contextDescription, state after: $stateAfterExpr")
 
               // --- Check for '}\n' termination ---
               val endedWithBrace = stateAfterExpr.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])
               val followedByNewlineOrEOF = {
                 var tempState = stateAfterExpr
                 // Look ahead past comments/whitespace
-                while (!tempState.isAtEnd && tempState.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
-                   tempState = tempState.advance()
-                }
+                while (
+                  !tempState.isAtEnd && tempState.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
+                )
+                  tempState = tempState.advance()
                 // Check if the next significant token is EOF or includes a newline
                 tempState.current.fold(
                   _ => false, // Error token
-                  token => token.isInstanceOf[Token.EOF] || (token match {
-                    case ws: Token.Whitespace => isNewlineWhitespace(ws)
-                    case _ => false // Not EOF or newline whitespace
-                  })
+                  token =>
+                    token.isInstanceOf[Token.EOF] || (token match {
+                      case ws: Token.Whitespace => isNewlineWhitespace(ws)
+                      case _                    => false // Not EOF or newline whitespace
+                    })
                 )
               }
 
@@ -1342,18 +1361,19 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   debug(s"parseStatementSequence: Terminator found after treating '}\\n' as statement end in $contextDescription.")
                   Right(()) // End loop, sequence finished
                 } else {
-                   loop(count - 1) // Continue parsing more statements
+                  loop(count - 1) // Continue parsing more statements
                 }
               } else {
-                 // --- Original logic: Treat as potential result ---
+                // --- Original logic: Treat as potential result ---
                 currentResult = Some(parsedExpr)
                 // Peek ahead: Skip comments/whitespace and check the *very next* token
                 val stateAfterExprPeek = stateAfterExpr // Use state right after parseExpr
                 var tempState = stateAfterExprPeek
                 // Look ahead past comments/whitespace
-                while (!tempState.isAtEnd && tempState.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])) {
-                   tempState = tempState.advance()
-                }
+                while (
+                  !tempState.isAtEnd && tempState.current.exists(token => token.isInstanceOf[Token.Comment] || token.isInstanceOf[Token.Whitespace])
+                )
+                  tempState = tempState.advance()
                 val isFollowedByTerminator = isTerminator(tempState) // Check terminator on the lookahead state
 
                 if (isFollowedByTerminator) {
@@ -1400,7 +1420,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   private def parseBlock(context: ReaderContext = ReaderContext()): Either[ParseError, Block] =
     // Use withModifiedState to handle the newLineAfterBlockMeansEnds flag change
     // TODO: withModifiedState LOGIC IS BUGGY
-    withModifiedState(_.withNewLineTermination(true)) {  
+    withModifiedState(_.withNewLineTermination(true)) {
       debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
 
       this.state.current match {
@@ -1449,7 +1469,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseFields(clauses: Vector[ObjectClause],context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ObjectClause]] =
+  private def parseFields(clauses: Vector[ObjectClause], context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ObjectClause]] =
     this.state.current match {
       case Right(Token.RBrace(_)) => Right(clauses)
       case Right(Token.Identifier(chars, idSourcePos)) =>
@@ -1480,7 +1500,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Left(err) => Left(err)
     }
 
-  private def parseField(key: Expr, keySourcePos: SourcePos,context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
+  private def parseField(key: Expr, keySourcePos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
     this.state.current match {
       case Right(Token.Operator(op, _)) =>
         advance()
@@ -1699,7 +1719,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   // Parse a function call with the given identifier
   private def parseFunctionCallWithId(
-      identifier: ConcreteIdentifier,context: ReaderContext = ReaderContext()
+      identifier: ConcreteIdentifier,
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, FunctionCall] =
     this.state.current match {
       case LParen(_) =>
@@ -1843,7 +1864,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   private def parseLiteral[T <: Expr](
       extract: Token => Option[(String, SourcePos)],
       create: (String, Option[ExprMeta]) => T,
-      errorMsg: String,context: ReaderContext = ReaderContext()
+      errorMsg: String,
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, T] =
     this.state.current match {
       case Right(token) =>
@@ -1915,7 +1937,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     )
 
   // Helper to create identifier expressions
-  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos,context: ReaderContext = ReaderContext()): ConcreteIdentifier =
+  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos, context: ReaderContext = ReaderContext()): ConcreteIdentifier =
     ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
 
   // Restore public API for parsing expression lists, calling the new helper
@@ -1938,7 +1960,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   // Helper method to temporarily modify the lexer state for a parsing operation
   // TODO: THIS LOGIC IS BUGGY
-  private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction:  => Either[ParseError, T]): Either[ParseError, T] = {
+  private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction: => Either[ParseError, T]): Either[ParseError, T] = {
     val originalState = this.state
     this.state = modify(originalState)
     val result = parseAction

@@ -4,8 +4,8 @@ import chester.syntax.concrete.*
 import chester.readerv2.ReaderV2.DEBUG
 import munit.FunSuite
 
-class HardTopLevelTest extends FunSuite{
-  test("a def"){
+class HardTopLevelTest extends FunSuite {
+  test("a def") {
 
     val input = """
                   |data Dog extends AnimalType {

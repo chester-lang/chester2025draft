@@ -1,7 +1,5 @@
 package chester.utils
 import com.eed3si9n.ifdef.*
-
-import java.util.Objects
 @ifndef("scalaNativeNoMultithread")
 class Parameter[T](val default: Option[T] = None) {
   val tl: InheritableThreadLocal[T] = default match {

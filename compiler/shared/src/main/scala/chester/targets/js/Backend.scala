@@ -1,7 +1,19 @@
 package chester.targets.js
 
 import chester.syntax.core.*
-import chester.targets.js.{BlockStatement, BooleanLiteral, Expression, FunctionExpression, Identifier, IdentifierPattern, Meta, NumericLiteral, Parameter, ReturnStatement, StringLiteral}
+import chester.targets.js.{
+  BlockStatement,
+  BooleanLiteral,
+  Expression,
+  FunctionExpression,
+  Identifier,
+  IdentifierPattern,
+  Meta,
+  NumericLiteral,
+  Parameter,
+  ReturnStatement,
+  StringLiteral
+}
 import chester.utils.doc.*
 
 /** Basic JavaScript/TypeScript backend. Transforms core.Term nodes into jsAST nodes.
