@@ -1,5 +1,32 @@
 # Development Memo
 
+NOTE THAT ALL CODE AND DOCUMENTS CAN AND WILL BE OUTDATED OR CONFLICTING. ANALYSE INFORMATION AVAIABLE TO YOU CAREFULLY
+
+## Documentation Guidelines
+
+1. **Avoid Meaningless Adjectives**
+   - ❌ **NEVER USE** subjective qualifiers like: "better", "improved", "good", "great", "enhanced", "advanced", "beautiful", "powerful", "robust", "excellent", "high-quality"
+   - ✅ **ALWAYS USE** factual, specific, measurable descriptions
+   - Describe concrete characteristics and behaviors
+   - Focus on correctness and functionality first
+
+2. **Focus on Facts**
+   - Document what something IS, not how "good" you think it is
+   - Identify concrete capabilities and limitations
+   - Omit subjective assessments and emotional language (BUT EMPHASIZE ON WHAT ALWAYS DID WRONG BY DEVELOPERS IS OK LIKE EMOJI EMPHASIZE AND UPPERCASE AND **BOLD**)
+   - Avoid superlatives and value judgments
+
+3. **Eliminate Fluff Phrases**
+   - Remove sentences that don't add information
+   - Avoid concluding paragraphs that just say "this is useful"
+   - Don't add generic statements about quality or value
+   - Delete phrases like "comprehensive framework", "elegant solution", etc.
+
+4. **Be Specific and Concrete**
+   - Instead of "improved performance", describe the specific optimization technique
+   - Instead of "enhanced error reporting", specify exactly what information is included in errors
+   - Replace "powerful features" with a specific list of capabilities
+
 ## Development Practices
 
 ### Planning Changes
@@ -678,69 +705,3 @@ def checkFieldAccess(recordTy: Term, field: Name): Term = {
    - Add temporary debugging code when needed, but mark it clearly and remove when done
    - Consider adding permanent debugging hooks for areas prone to issues
    - Document debugging insights even if they seem obvious
-
-### Debug Flags Management
-
-Chester uses a centralized debug system that categorizes debug output by component type. This approach:
-- Allows targeted debugging of specific components without noise from others
-- Prevents debug flags scattered throughout the codebase
-- Enables easy enabling/disabling of debug output
-
-1. **Debug Category System**
-   - All debug output is organized into categories defined in `Debug.scala`:
-     ```scala
-     enum DebugCategory {
-       case Cell          // For cell filling debug info
-       case Tyck          // For type checker debug info
-       case Reducer       // For reducer debug info
-       case UnionSubtyping// For union subtyping debug info
-       case UnionMatching // For union matching debug info
-       case Literals      // For literal type handling debug info
-       case Identifiers   // For identifier handling debug info
-       case MethodCalls   // For method call handling debug info
-       case StringArgs    // For string args handling debug info
-       case TraitMatching // For trait implementation matching
-     }
-     ```
-
-2. **Using Debug Logging**
-   - Enable categories explicitly with `Debug.enable(DebugCategory.XXX)`
-   - Log with category specificity: `Debug.debugPrint(DebugCategory.Tyck, "message")`
-   - Check if category enabled: `if (Debug.isEnabled(DebugCategory.Tyck)) { ... }`
-   - Stack traces: `Debug.printCallStack(DebugCategory.Tyck)`
-
-3. **Debug Flags Script**
-   - Use `debug-flags.sh` to manage debug flags in your shell sessions:
-     ```bash
-     # First, source the script to load functions
-     source ./debug-flags.sh
-
-     # Enable specific debug categories
-     enable_debug ENV_DEBUG_UNION_MATCHING
-
-     # Enable all debug categories
-     enable_all_debug
-
-     # Disable all debug categories
-     disable_all_debug
-
-     # Show current debug flag status
-     show_debug_status
-
-     # List available debug flags
-     list_debug_flags
-     ```
-
-4. **Environment Variables**
-   - Any debug category can be enabled via environment variables
-   - Global debug flag: `ENV_DEBUG=true`
-   - Category-specific flags: `ENV_DEBUG_UNION_MATCHING=true`
-   - One-time usage: `ENV_DEBUG=true sbt rootJVM/test`
-
-5. **Best Practices for Debug Logging**
-   - Debug flags are all disabled by default for better performance
-   - Enable only the specific categories you need
-   - Keep debug statements clear, concise, and helpful
-   - Clean up any temporary debug code when done
-   - Add new categories to `DebugCategory` enum when needed for new components
-   - Remember to source the `debug-flags.sh` script when starting a new shell
