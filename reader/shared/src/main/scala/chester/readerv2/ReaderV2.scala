@@ -1308,9 +1308,31 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     loop(maxExpressions).map(_ => (statements, currentResult))
   }
 
+  // Parses a sequence of expressions, typically representing a top-level file or block
+  // Returns a Block containing all parsed expressions.
+  def parseTopLevel(): Either[ParseError, Block] = withModifiedState(_.withNewLineTermination(true)) {
+    val startPos = state.sourcePos // Capture start position
+    debug(t"parseTopLevel: starting with state=${this.state}")
+
+    // Call the helper to parse the sequence, terminating at EOF
+    parseStatementSequence(
+      isTerminator = s => s.isAtEnd || s.current.exists(_.isInstanceOf[Token.EOF]),
+      contextDescription = "top-level"
+    ) match {
+      case Right((statements, lastExpr)) => // Use the returned statements/result directly
+        val endPos = state.sourcePos // Capture end position
+        debug(t"parseTopLevel: Finished, statements=${statements.size}, has result=${lastExpr.isDefined}")
+        // Construct the Block
+        Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
+      case Left(err) =>
+        debug(t"parseTopLevel: Error parsing sequence: $err")
+        Left(err)
+    }
+  }
+
   private def parseBlock(): Either[ParseError, Block] =
     // Use withModifiedState to handle the newLineAfterBlockMeansEnds flag change
-    withModifiedState(_.withNewLineTermination(true)) { () =>
+    withModifiedState(_.withNewLineTermination(true)) {  
       debug(t"parseBlock: starting with state=${this.state}") // State is already modified here
 
       this.state.current match {
@@ -1843,28 +1865,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       createMeta(startSourcePos, endSourcePos)
     )
 
-  // Parses a sequence of expressions, typically representing a top-level file or block
-  // Returns a Block containing all parsed expressions.
-  def parseTopLevel(): Either[ParseError, Block] = {
-    val startPos = state.sourcePos // Capture start position
-    debug(t"parseTopLevel: starting with state=${this.state}")
-
-    // Call the helper to parse the sequence, terminating at EOF
-    parseStatementSequence(
-      isTerminator = s => s.isAtEnd || s.current.exists(_.isInstanceOf[Token.EOF]),
-      contextDescription = "top-level"
-    ) match {
-      case Right((statements, lastExpr)) => // Use the returned statements/result directly
-        val endPos = state.sourcePos // Capture end position
-        debug(t"parseTopLevel: Finished, statements=${statements.size}, has result=${lastExpr.isDefined}")
-        // Construct the Block
-        Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
-      case Left(err) =>
-        debug(t"parseTopLevel: Error parsing sequence: $err")
-        Left(err)
-    }
-  }
-
   // Restore public API for parsing expression lists, calling the new helper
   def parseExprList(): Either[ParseError, Vector[Expr]] = {
     // Skip any comments at the start *first*
@@ -1884,10 +1884,10 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   }
 
   // Helper method to temporarily modify the lexer state for a parsing operation
-  private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction: () => Either[ParseError, T]): Either[ParseError, T] = {
+  private def withModifiedState[T](modify: ReaderState => ReaderState)(parseAction:  => Either[ParseError, T]): Either[ParseError, T] = {
     val originalState = this.state
     this.state = modify(originalState)
-    val result = parseAction()
+    val result = parseAction
     // Restore original state, preserving progress made by parseAction
     this.state = originalState.copy(
       index = this.state.index,
