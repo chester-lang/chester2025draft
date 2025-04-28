@@ -1,6 +1,6 @@
 package chester.error
 
-import spire.math.UInt
+import spire.math.Natural
 import chester.reader.Source
 import chester.utils.{WithUTF16, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
@@ -14,11 +14,12 @@ import chester.i18n.*
 import scala.annotation.tailrec
 
 import chester.utils.impls.uintRW // Import needed for Pos derives ReadWriter
+import chester.utils.impls.naturalRW // Import needed for Natural ReadWriter
 
-case class Pos(index: WithUTF16, line: spire.math.UInt, column: WithUTF16) derives ReadWriter
+case class Pos(index: WithUTF16, line: spire.math.Natural, column: WithUTF16) derives ReadWriter
 
 object Pos {
-  val zero: Pos = Pos(WithUTF16.Zero, UInt(0), WithUTF16.Zero)
+  val zero: Pos = Pos(WithUTF16.Zero, Natural(0), WithUTF16.Zero)
 }
 
 /** start <= i < end */

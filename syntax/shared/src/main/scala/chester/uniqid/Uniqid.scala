@@ -5,8 +5,9 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
-import spire.math.UInt
+import spire.math.Natural
 import chester.utils.impls.uintRW
+import chester.utils.impls.naturalRW
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
@@ -16,26 +17,26 @@ private val uniqIdCounter = new AtomicInteger(0)
 type Uniqid = UniqidOf[Any]
 
 private val rwUniqID: ReadWriter[UniqidOf[Any]] = readwriter[Int].bimap(
-  _.id.toInt, // Convert UInt ID to Int for serialization
-  x => UniqidOf(UInt(x)) // Convert Int back to UInt and wrap in UniqidOf
+  _.id.toInt, // Convert Natural ID to Int for serialization
+  x => UniqidOf(Natural(x)) // Convert Int back to Natural and wrap in UniqidOf
 )
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqidOf[T]] = rwUniqID.asInstanceOf[ReadWriter[UniqidOf[T]]]
 
-case class UniqidOf[+A] private[uniqid] (id: spire.math.UInt) {}
-type UniqidOffset = spire.math.UInt
+case class UniqidOf[+A] private[uniqid] (id: spire.math.Natural) {}
+type UniqidOffset = spire.math.Natural
 
 extension (id: UniqidOffset) {
   def <=(that: UniqidOffset): Boolean = id <= that
-  private[uniqid] def +(offset: UInt): UniqidOffset = id + offset // No refineUnsafe needed
-  private[uniqid] def -(offset: UniqidOffset): UInt = id - offset // Return UInt
+  private[uniqid] def +(offset: Natural): UniqidOffset = id + offset // No refineUnsafe needed
+  private[uniqid] def -(offset: UniqidOffset): Natural = id - offset // Return Natural
 }
 
 /** start <= x < end */
 case class UniqIdRange(start: UniqidOffset, end: UniqidOffset) derives ReadWriter {
   require(start <= end, t"Invalid range: $start > $end")
 
-  def size: spire.math.UInt = end - start // No refineUnsafe needed
+  def size: spire.math.Natural = end - start // No refineUnsafe needed
 }
 
 extension (x: Uniqid) {
@@ -50,7 +51,7 @@ extension [T](x: UniqidOf[T]) {
       t"Invalid range: $current, $x"
     )
     val offset = x.id - current.start
-    UniqidOf(target.start + offset) // Add UInt directly, offset is already UInt
+    UniqidOf(target.start + offset) // Add Natural directly, offset is already Natural
   }
 }
 
@@ -82,15 +83,15 @@ trait OnlyHasUniqid extends Any {
 trait HasUniqid extends Any with ContainsUniqid with OnlyHasUniqid {}
 
 object Uniqid {
-  def generate[T]: UniqidOf[T] = UniqidOf(UInt(uniqIdCounter.getAndIncrement()))
+  def generate[T]: UniqidOf[T] = UniqidOf(Natural(uniqIdCounter.getAndIncrement()))
 
-  def requireRange(size: spire.math.UInt): UniqIdRange = { // size is UInt
+  def requireRange(size: spire.math.Natural): UniqIdRange = { // size is Natural
     val sizeInt = size.toInt // Convert to Int for AtomicInteger
     val start = uniqIdCounter.getAndAdd(sizeInt) // Returns Int
-    UniqIdRange(UInt(start), UInt(start + sizeInt)) // Convert results back to UInt
+    UniqIdRange(Natural(start), Natural(start + sizeInt)) // Convert results back to Natural
   }
 
-  def currentOffset(): UniqidOffset = UInt(uniqIdCounter.get()) // Convert Int to UInt
+  def currentOffset(): UniqidOffset = Natural(uniqIdCounter.get()) // Convert Int to Natural
 
   def captureRange[T](f: => T): (UniqIdRange, T) = {
     val start = currentOffset()
@@ -111,9 +112,9 @@ object Uniqid {
         currentRangeCollect.append(id)
     }
     x.collectU(collecter)
-    import spire.compat.ordering // Import ordering for UInt
+    import spire.compat.ordering // Import ordering for Natural
     if (currentRangeCollect.isEmpty) UniqIdRange(currentOffset(), currentOffset())
-    else UniqIdRange(currentRangeCollect.map(_.id).min, currentRangeCollect.map(_.id).max + UInt(1))
+    else UniqIdRange(currentRangeCollect.map(_.id).min, currentRangeCollect.map(_.id).max + Natural(1))
   }
 
   case class GiveNewRangeResult[T <: ContainsUniqid](

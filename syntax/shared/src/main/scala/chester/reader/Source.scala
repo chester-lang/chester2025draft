@@ -7,8 +7,9 @@ import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.all.*
 import _root_.io.github.iltotore.iron.upickle.given
 import chester.utils.doc.{Doc, PrettierOptions}
-import spire.math.UInt
+import spire.math.Natural
 import chester.utils.impls.uintRW
+import chester.utils.impls.naturalRW
 
 case class ParseError(message: String, pos: Pos) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
@@ -50,13 +51,10 @@ case class FilePath private (fileName: String) extends ParserSource {
     else impl.readContent(fileName)
 }
 
-// Explicitly import the given instance for UInt ReadWriter
-import chester.utils.impls.uintRW
-
 // TODO: maybe column offset for the first line also
 case class Source(
     source: ParserSource,
-    linesOffset: spire.math.UInt = UInt(0),
+    linesOffset: spire.math.Natural = Natural(0),
     posOffset: WithUTF16 = WithUTF16.Zero
 ) derives ReadWriter {
   def fileName: String = source.fileName
