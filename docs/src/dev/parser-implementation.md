@@ -39,10 +39,8 @@ Refer to `docs/src/dev/devlog.md` for a chronological log of recent improvements
 ### String and Number Parsing
 - Handles various formats (decimal, hex, binary, float) and escape sequences.
 
-## Recent Refinements (See `devlog.md` for details)
-
-- **`LexerV2` Refactoring**: `parseAtom` simplified, `peek` added to `LexerState`, `withModifiedState` introduced.
-- **Completed Features**: Object expressions, block termination, and semantic consistency with V1 are fully implemented and verified.
+## Recent Refinements
+For a detailed chronological record of parser improvements, see [devlog.md](devlog.md).
 
 ## Future Work (See `parser-plan.md` Phase 3)
 

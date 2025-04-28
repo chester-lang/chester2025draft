@@ -39,25 +39,6 @@ Chester is migrating from the original `reader` (V1) to `readerv2` (V2).
 | Dot Notation | ✅ | ✅ | Method call syntax |
 | Whitespace Handling | ✅ | ✅ | Consistent handling with newline awareness |
 
-## Implementation Phases
-
-### Phase 1: Core Functionality (✅ Complete)
-- Basic literals, functions, operators, blocks, lists
-- Generic type parameters, comments, Unicode support
-
-### Phase 2: Advanced Features (✅ Complete)
-- ✅ Basic object expressions
-- ✅ Complex object syntax with multiple key types
-- ✅ Block termination pattern detection
-- ✅ Comment preservation
-- ✅ Operator precedence handling (Handled via flat OpSeq, verification needed)
-
-### Phase 3: Error Handling (🟡 In Progress)
-- 🟡 Error recovery
-- 🟡 Improved error messages
-- ✅ Source position tracking
-- 🟡 Debug information
-
 ## Current Priorities
 
 1. **V1/V2 Semantic Consistency** (✅ Complete)

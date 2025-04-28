@@ -128,30 +128,27 @@
 3. **Verify Changes with Git**
    ```bash
    # After each change - ALWAYS use | cat to prevent terminal control issues:
-   git diff | cat            # Review what changed (⚠️ ALWAYS use | cat to prevent interactive mode)
+   git diff | cat            # Review what changed 
    git add <files>          # Stage specific files
-   git status | cat         # Verify staged changes - also use | cat here for consistency
+   git status | cat         # Verify staged changes 
    git commit -m "..."     # Commit with clear message
    ```
    
-   **⚠️ CRITICAL: Always use `git diff | cat` to verify changes**
-   - Never use plain `git diff` without `| cat` - it can cause terminal issues
-   - The `| cat` suffix prevents interactive paging that might obscure parts of the diff
-   - This is ESPECIALLY important when reviewing complex changes or large files
+   ⚠️ **Always append `| cat` to git diff commands to avoid paging issues.**
 
 4. **Change Verification Checklist**
    - [ ] Changes are minimal and focused
    - [ ] Git diff shows only intended changes
    - [ ] Tests pass after changes
    - [ ] Changes align with existing code style
-   - [ ] **⚠️ CRITICAL: Always review the git diff output carefully using `git diff | cat`**
+   - [ ] Review the git diff output carefully
      ```bash
      # Before committing, ALWAYS verify changes with:
-     git diff | cat     # MANDATORY: The | cat suffix is not optional!
+     git diff | cat     
      ```
      
-     > 💡 **WHY THIS MATTERS**: Failure to review diffs properly with `git diff | cat` is the #1 cause of accidental code deletions and introduction of subtle bugs. The `| cat` suffix ensures you see the COMPLETE diff without terminal paging issues.
-   - [ ] **IMPORTANT**: Reviewing git diff output is essential for catching:
+     > 💡 **WHY THIS MATTERS**: Failure to review diffs properly is the #1 cause of accidental code deletions and introduction of subtle bugs.
+   - [ ] Reviewing git diff output is essential for catching:
      - Accidental deletions of important methods or logic
      - Unintended modification of critical code
      - Formatting changes that might impact behavior
@@ -162,7 +159,6 @@
 
 5. **Post-Commit Verification**
    - **⚠️ MANDATORY**: Always verify your changes after committing with `git diff HEAD^ HEAD | cat`
-   - The `| cat` suffix is REQUIRED to ensure you see the complete changes without paging
    - Check the diff output carefully to ensure:
      - No unintended changes were included
      - All intended changes were properly committed
