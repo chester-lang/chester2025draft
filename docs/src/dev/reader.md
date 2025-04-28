@@ -115,14 +115,53 @@ Both parsers:
 | **Performance** | Good | Better (especially on large files) |
 | **Unicode Support** | Basic | Enhanced with better UTF-16 handling |
 
-## Testing and Verification
+## Testing Infrastructure
 
-Both parsers are extensively tested through:
+Chester implements a comprehensive test framework for validating parser correctness and ensuring compatibility between V1 and V2 implementations. This framework, defined in `reader/shared/src/test/scala/chester/reader/parseAndCheck.scala`, provides several key testing functions:
 
-1. **Unit Tests**: Individual parsers for expressions, blocks, etc.
-2. **Integration Tests**: Full file parsing with AST verification
-3. **Property Tests**: Randomized inputs to verify robustness
-4. **Cross-Verification**: `parseAndCheckBoth` ensures both parsers produce identical results
+### Core Testing Functions
+
+1. **Parser-Specific Testing**:
+   - `parseV1(input)`: Parses input with V1 parser only and returns the result
+   - `parseV2(input)`: Parses input with V2 parser only and returns the result
+   - `parseAndCheckV1(input, expected)`: Tests V1 parser against expected output
+   - `parseAndCheckV2(input, expected)`: Tests V2 parser against expected output
+
+2. **Cross-Parser Verification**:
+   - `parseAndCheckBoth(input, expected)`: Tests both parsers and ensures they produce identical results
+   - Ensures backward compatibility and feature parity
+
+3. **Top-Level Parsing**:
+   - `parseTopLevelV1/V2` and `parseAndCheckTopLevelV1/V2/Both`: Similar functions for testing top-level parsing
+   - Handle file-level parsing with multiple expressions
+
+### Error Reporting
+
+The testing framework includes enhanced error reporting with:
+
+- Detailed error messages showing exact failure position
+- Visual pointer to error location in source code
+- Context-aware error descriptions
+- Comparison between expected and actual AST structures
+
+### Serialization Verification
+
+The framework also tests that parsed expressions can be correctly serialized and deserialized:
+
+- Verifies JSON serialization with `read[Expr](write[Expr](value))`
+- Confirms binary serialization with `readBinary[Expr](writeBinary[Expr](value))`
+- Ensures AST structures maintain integrity through serialization cycles
+
+### Test Organization
+
+Parser tests are organized into several categories:
+
+1. **Expression Tests**: Verify parsing of individual expression types
+2. **Integration Tests**: Test combined language features
+3. **Regression Tests**: Ensure previously fixed issues don't reoccur
+4. **Migration Tests**: Track progress in supporting V1 features in V2
+
+This testing framework enables confident refactoring and enhancement of both parser implementations while maintaining backward compatibility.
 
 ## Future Development
 
