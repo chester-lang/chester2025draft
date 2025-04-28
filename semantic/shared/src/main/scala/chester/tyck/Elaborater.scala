@@ -620,11 +620,15 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
         // Special case for Integer.+ method with a string argument
         if (field.name == "+" && args.nonEmpty) {
+          if(args.length>=2){
+            ???
+          }
           // First handle argument elaboration
           val arg = args.head
           val argTy = newType
           val argTerm = elab(arg, argTy, effects)
 
+          state.addPropagator(Unify(argTy, toId(IntegerType(None)), expr))
           // For Integer.+, the return type is always Integer
           state.addPropagator(Unify(ty, toId(IntegerType(None)), expr))
 
