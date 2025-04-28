@@ -715,12 +715,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       // Create a dot call term with the argument wrapped in Calling
                       val calling = Calling(Vector(CallingArgTerm(argTerm, toTerm(argTy), None, false, convertMeta(meta))), false, convertMeta(meta))
                       DotCallTerm(recordTerm, field.name, Vector(calling), toTerm(ty), convertMeta(meta))
-                    case StringType(_) =>
-                      Debug.debugPrint(MethodCalls, "[CRITICAL DEBUG] Argument is a string type - INVALID")
-                      // Special handling for string to make sure we fail the test
-                      val problem = TypeMismatch(IntegerType(None), StringType(None), arg)
-                      ck.reporter.apply(problem)
-                      ErrorTerm(problem, convertMeta(meta))
+             
                     case _ =>
                       Debug.debugPrint(MethodCalls, t"[CRITICAL DEBUG] Argument is another type: $reducedArgType - INVALID")
                       // If it's not an Integer, report a type error
