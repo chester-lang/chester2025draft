@@ -21,10 +21,7 @@ private object TokenExtractors {
       PartialFunction.condOpt(token) { case Right(Token.Identifier(chars, pos)) => (chars, pos) }
   }
 
-  object Op {
-    def unapply(token: Either[ParseError, Token]): Option[(String, SourcePos)] = 
-      PartialFunction.condOpt(token) { case Right(Token.Operator(op, pos)) => (op, pos) }
-  }
+  
 
   object Str {
     def unapply(token: Either[ParseError, Token]): Option[(Vector[StringChar], SourcePos)] = 
@@ -101,41 +98,11 @@ case class LexerState(
     t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
 
-  // Methods for handling pending tokens
-  def collectPendingComments(): Vector[Token.Comment] =
-    pendingTokens.collect { case c: Token.Comment => c }
-
   def collectPendingWhitespaces(): Vector[Token.Whitespace] =
     pendingTokens.collect { case w: Token.Whitespace => w }
 
-  def collectPendingTokens(): Vector[Token.Comment | Token.Whitespace] =
-    pendingTokens
-
   def clearPendingTokens(): LexerState =
     copy(pendingTokens = Vector.empty)
-
-  // Looks ahead n non-comment/whitespace tokens without advancing state
-  def peek(n: Int = 1): Either[ParseError, Token] = {
-    var lookaheadIndex = index
-    var count = 0
-    while (count < n && lookaheadIndex < tokens.length) {
-      tokens(lookaheadIndex) match {
-        case Right(_: Token.Comment | _: Token.Whitespace) => // Skip
-        case _                                             => count += 1
-      }
-      if (count < n) lookaheadIndex += 1
-    }
-    if (lookaheadIndex < tokens.length) tokens(lookaheadIndex)
-    else tokens.lastOption.getOrElse(Left(ParseError("Unexpected EOF", Pos.zero))) // Default to EOF if out of bounds
-  }
-
-  def hasPendingTokens: Boolean = pendingTokens.nonEmpty
-
-  def hasPendingComments: Boolean =
-    pendingTokens.exists(_.isInstanceOf[Token.Comment])
-
-  def hasPendingWhitespaces: Boolean =
-    pendingTokens.exists(_.isInstanceOf[Token.Whitespace])
 
   // Helper method to create a state with modified context
   def withNewLineTermination(enabled: Boolean): LexerState =
@@ -147,7 +114,7 @@ case class LexerState(
 }
 
 object LexerV2 {
-  val DEBUG = Parameter.withDefault(false)
+  val DEBUG: Parameter[Boolean] = Parameter.withDefault(false)
   private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
 
@@ -265,7 +232,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
 
     // Skip comments and check for terminators
     skipComments()
-    if (isAtTerminator()) {
+    if (isAtTerminator) {
       debug("parseRest: Hit terminator token")
       // buildOpSeq will pull comments internally
       return buildOpSeq(localTerms)
@@ -354,11 +321,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           // withComments has updated this.state already
           parseRest(next).map {
             case opSeq: OpSeq =>
-              debug(t"OpSeq construction in parseRest: localTerms=${localTerms}, dropping last=${localTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              debug(t"OpSeq construction in parseRest: localTerms=$localTerms, dropping last=${localTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
               debug(t"Creating OpSeq with combined sequence: ${localTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(localTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              debug(t"Simple OpSeq construction in parseRest: localTerms=${localTerms}")
+              debug(t"Simple OpSeq construction in parseRest: localTerms=$localTerms")
               OpSeq(localTerms, None)
           }
         }
@@ -391,11 +358,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             
             parseRest(block).map {
               case opSeq: OpSeq => 
-                debug(t"OpSeq construction for generic function with block: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                debug(t"OpSeq construction for generic function with block: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
                 debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                 OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-              case otherExpr => 
-                debug(t"Simple OpSeq construction for generic function with block: updatedTerms=${updatedTerms}")
+              case _ => 
+                debug(t"Simple OpSeq construction for generic function with block: updatedTerms=$updatedTerms")
                 OpSeq(updatedTerms, None)
             }
           } else {
@@ -432,11 +399,11 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
           
           parseRest(block).map {
             case opSeq: OpSeq =>
-              debug(t"OpSeq construction in handleBlockArgument: updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+              debug(t"OpSeq construction in handleBlockArgument: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
               debug(t"Creating OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              debug(t"Simple OpSeq construction in handleBlockArgument: updatedTerms=${updatedTerms}")
+              debug(t"Simple OpSeq construction in handleBlockArgument: updatedTerms=$updatedTerms")
               OpSeq(updatedTerms, None)
           }
       }
@@ -562,7 +529,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                     debug(t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
                     debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                     OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                  case otherExpr => 
+                  case _ => 
                     debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=${updatedTerms}")
                     OpSeq(updatedTerms, None)
                 }
@@ -605,7 +572,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               debug(t"OpSeq construction in handleIdentifierInRest (function call): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
               debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-            case otherExpr =>
+            case _ =>
               debug(t"Simple OpSeq construction in handleIdentifierInRest (function call): updatedTerms=${updatedTerms}")
               OpSeq(updatedTerms, None)
           }
@@ -627,8 +594,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                    debug(t"OpSeq construction in handleIdentifierInRest (object): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
                    debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                    OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                 case other => 
-                   debug(t"Simple OpSeq construction in handleIdentifierInRest (object): updatedTerms=${updatedTerms}")
+                 case _ => 
+                   debug(t"Simple OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms")
                    OpSeq(updatedTerms, None)
              }
           case Left(_) => // Assume block argument
@@ -644,7 +611,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
                   debug(t"OpSeq construction in handleIdentifierInRest (block): updatedTerms=${updatedTerms}, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
                   debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
                   OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                case otherExpr => 
+                case _ => 
                   debug(t"Simple OpSeq construction in handleIdentifierInRest (block): updatedTerms=${updatedTerms}")
                   OpSeq(updatedTerms, None)
               }
@@ -671,7 +638,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
               debug(t"OpSeq construction in handleIdentifierInRest (operator): newTerms=${newTerms}, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
               debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
               OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-            case otherExpr => 
+            case _ => 
               debug(t"Simple OpSeq construction in handleIdentifierInRest (operator): newTerms=${newTerms}")
               OpSeq(newTerms, None)
           }
@@ -692,7 +659,7 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
             debug(t"Special case in handleIdentifierInRest: treating f(block) as sequence [f, block]")
             debug(t"Creating OpSeq with adjusted sequence: ${updatedTerms.dropRight(1) ++ Vector(f, b)}")
             OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
-          case otherExpr => 
+          case _ => 
             debug(t"Simple OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=${updatedTerms}")
             OpSeq(updatedTerms, None)
         }
@@ -1023,24 +990,8 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
     }
   }
 
-  // Helper method to check if a token is a terminator (right delimiter or comma/semicolon)
-  private def isTerminator(token: Token): Boolean = token match {
-    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket | _: Token.Comma | _: Token.Semicolon => true
-    case _: Token.EOF => true
-    case _         => false
-  }
-
   // Helper to check if current state has a terminator
-  private def isAtTerminator(): Boolean = this.state.current match {
-    case Right(token) => isTerminator(token)
-    case _            => false
-  }
-
-  // Helper method to check if a token is specifically a right delimiter
-  private def isRightDelimiter(token: Token): Boolean = token match {
-    case _: Token.RParen | _: Token.RBrace | _: Token.RBracket => true
-    case _                                                     => false
-  }
+  private def isAtTerminator: Boolean = this.state.isAtTerminator
 
   /** Parses a sequence of expressions typically used in tuples or function calls.
     * Allows semicolons as separators in addition to commas.
@@ -1209,12 +1160,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
         }
       }
     case _ => Left(expectedError("left parenthesis", this.state.current))
-  }
-
-  // Check if a token is a identifier
-  private def isIdentifier(token: Either[ParseError, Token]): Boolean = token match {
-    case Right(Token.Identifier(_, _)) => true
-    case _                             => false
   }
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
@@ -1668,58 +1613,6 @@ class LexerV2(initState: LexerState, source: Source, ignoreLocation: Boolean) {
       // Collect trailing comments (state is modified by collectTrailingComments)
       val trailingComments = collectTrailingComments()
       // State is already updated
-
-      // Update expression with comments
-      val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
-        expr.updateMeta { existingMeta =>
-          val newMeta = createMetaWithComments(
-            existingMeta.flatMap(_.sourcePos),
-            leadingComments,
-            trailingComments
-          )
-
-          // Merge the existing meta with new comment information
-          mergeMeta(existingMeta, newMeta)
-        }
-      } else {
-        expr
-      }
-
-      // Cast is safe because we're only modifying metadata
-      Right(updatedExpr.asInstanceOf[T])
-    }
-
-    // Restore original state in case of error
-    result match {
-      case Left(err) =>
-        this.state = originalState
-        Left(err)
-      case right => right
-    }
-  }
-
-  // Original implementation for methods that return state in tuple format
-  private def withComments[T <: Expr](
-      parseMethod: LexerState => Either[ParseError, (T, LexerState)]
-  ): Either[ParseError, T] = {
-    // Implementation for methods that return state in tuple format
-    // Save original state
-    val originalState = this.state
-
-    // Skip comments at the start
-    skipComments()
-
-    // Get any collected comments
-    val leadingComments = pullComments()
-
-    // Parse the expression using the provided method
-    val result = parseMethod(this.state).flatMap { case (expr, afterExpr) =>
-      // Update state to after expression
-      this.state = afterExpr
-
-      // Collect trailing comments
-      // Collect trailing comments (state is updated directly by the method)
-      val trailingComments = collectTrailingComments()
 
       // Update expression with comments
       val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
