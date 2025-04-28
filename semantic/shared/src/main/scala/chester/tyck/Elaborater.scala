@@ -625,61 +625,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           val argTy = newType
           val argTerm = elab(arg, argTy, effects)
 
-          // Now check if the argument type is String
-          // This is done by adding a special case for string literal arguments
-          // and also adding a propagator for String type detection
-          arg match {
-            case _ =>
-              // Not a direct string literal, so use a propagator to check the type later
-              if (Debug.isEnabled(MethodCalls)) {
-                Debug.debugPrint(MethodCalls, "[METHOD CALL DEBUG] Adding strict string type check for + method argument")
-              }
-              // Add a propagator that will check if argTy is StringType and report an error
-              state.addPropagator(new Propagator[TyckSession] {
-                override val readingCells: Set[CIdOf[Cell[?]]] = Set(toId(argTy).asInstanceOf[CIdOf[Cell[?]]])
-                override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
-                override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(toId(argTy).asInstanceOf[CIdOf[Cell[?]]])
-
-                override def run(using state: StateAbility[TyckSession], more: TyckSession): Boolean =
-                  // Read the argument type
-                  state.readStable(toId(argTy)) match {
-                    case Some(Meta(_)) =>
-                      // Add another propagator for the meta variable
-                      state.addPropagator(this)
-                      true
-                    case Some(argTypeValue) =>
-                      // Check if the arg type is StringType
-                      val reducedArgType = DefaultReducer.reduce(argTypeValue, ReduceMode.TypeLevel)
-                      if (Debug.isEnabled(MethodCalls)) {
-                        Debug.debugPrint(MethodCalls, t"[METHOD CALL DEBUG] Checking arg type: $reducedArgType")
-                      }
-
-                      reducedArgType match {
-                        case StringType(_) =>
-                          // It's a string, report an error
-                          if (Debug.isEnabled(MethodCalls)) {
-                            Debug.debugPrint(MethodCalls, "[METHOD CALL DEBUG] Found String type argument to + method - reporting error")
-                          }
-                          val problem = TypeMismatch(IntegerType(None), StringType(None), arg)
-                          more.reporter.apply(problem)
-                          true
-                        case _ =>
-                          // Not a string, which is good
-                          if (Debug.isEnabled(MethodCalls)) {
-                            Debug.debugPrint(MethodCalls, t"[METHOD CALL DEBUG] Arg type for + method is OK: $reducedArgType")
-                          }
-                          true
-                      }
-                    case None =>
-                      // Not ready yet
-                      false
-                  }
-
-                override def zonk(needed: Vector[CellIdAny])(using StateAbility[TyckSession], TyckSession): ZonkResult =
-                  ZonkResult.Done
-              })
-          }
-
           // For Integer.+, the return type is always Integer
           state.addPropagator(Unify(ty, toId(IntegerType(None)), expr))
 
@@ -715,7 +660,7 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       // Create a dot call term with the argument wrapped in Calling
                       val calling = Calling(Vector(CallingArgTerm(argTerm, toTerm(argTy), None, false, convertMeta(meta))), false, convertMeta(meta))
                       DotCallTerm(recordTerm, field.name, Vector(calling), toTerm(ty), convertMeta(meta))
-             
+
                     case _ =>
                       Debug.debugPrint(MethodCalls, t"[CRITICAL DEBUG] Argument is another type: $reducedArgType - INVALID")
                       // If it's not an Integer, report a type error
