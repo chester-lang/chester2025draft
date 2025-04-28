@@ -317,7 +317,7 @@ case class IntType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWri
 case class UIntType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
   override type ThisTree = UIntType
   override def toDoc(using PrettierOptions): Doc =
-    Doc.text("UInt", ColorProfile.typeColor)
+    Doc.text("Natural", ColorProfile.typeColor)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }

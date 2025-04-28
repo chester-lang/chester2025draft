@@ -1,6 +1,6 @@
 package chester.reader
 
-import spire.math.UInt
+import spire.math.Natural
 import chester.syntax.concrete.*
 import chester.utils.term.*
 import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
@@ -26,8 +26,8 @@ object ReaderREPL {
 
     parseCompleteExpression(
       currentInput,
-      UInt(linesOffset),
-      WithUTF16(UInt(posOffsetUnicode), UInt(posOffsetUTF16))
+      Natural(linesOffset),
+      WithUTF16(Natural(posOffsetUnicode), Natural(posOffsetUTF16))
     )
   }
 
@@ -61,7 +61,7 @@ object ReaderREPL {
 
   private def parseCompleteExpression(
       input: String,
-      linesOffset: UInt,
+      linesOffset: Natural,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
     ChesterReaderV2.parseExprWithOffset(

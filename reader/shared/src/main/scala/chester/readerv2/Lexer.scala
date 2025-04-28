@@ -5,7 +5,7 @@ import chester.reader.{ParseError, Source}
 import chester.utils.WithUTF16
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
 import chester.i18n.*
-import spire.math.UInt
+import spire.math.Natural
 
 import scala.util.{Try, boundary}
 
@@ -45,14 +45,14 @@ class Lexer(src: Source) {
     src,
     RangeInFile(
       Pos(
-        WithUTF16(UInt(start), UInt(text.substring(0, start).length)),
-        UInt(line),
-        WithUTF16(UInt(0), UInt(col))
+        WithUTF16(Natural(start), Natural(text.substring(0, start).length)),
+        Natural(line),
+        WithUTF16(Natural(0), Natural(col))
       ),
       Pos(
-        WithUTF16(UInt(end), UInt(text.substring(0, end).length)),
-        UInt(line),
-        WithUTF16(UInt(end - start), UInt(text.substring(start, end).length))
+        WithUTF16(Natural(end), Natural(text.substring(0, end).length)),
+        Natural(line),
+        WithUTF16(Natural(end - start), Natural(text.substring(start, end).length))
       )
     )
   )

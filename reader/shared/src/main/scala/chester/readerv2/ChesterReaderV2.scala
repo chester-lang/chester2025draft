@@ -61,7 +61,7 @@ object ChesterReaderV2 {
   def parseExprWithOffset(
       sourceName: String,
       content: String,
-      linesOffset: spire.math.UInt,
+      linesOffset: spire.math.Natural,
       posOffset: WithUTF16,
       ignoreLocation: Boolean = false
   ): Either[ParseError, ParsedExpr] = {

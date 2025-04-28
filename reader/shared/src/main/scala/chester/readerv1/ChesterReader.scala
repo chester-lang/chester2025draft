@@ -7,7 +7,7 @@ import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*
 import chester.utils.WithUTF16
-import spire.math.UInt
+import spire.math.Natural
 
 import scala.util.*
 object ChesterReader {
@@ -36,7 +36,7 @@ object ChesterReader {
           case Parsed.Failure(_, index, extra) =>
             val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
             val p = Pos(
-              indexer.charIndexToWithUTF16(UInt(index)),
+              indexer.charIndexToWithUTF16(Natural(index)),
               pos.line,
               pos.column
             )
@@ -79,7 +79,7 @@ object ChesterReader {
   def parseExprWithOffset(
       sourceName: String,
       content: String,
-      linesOffset: spire.math.UInt,
+      linesOffset: spire.math.Natural,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] = {
     val indexer = StringIndex(content)
@@ -97,7 +97,7 @@ object ChesterReader {
         // Use the indexer associated with *this* content snippet for error reporting
         val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
         // Adjust the position by the global offsets
-        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(UInt(index))
+        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(Natural(index))
         val finalIndex: WithUTF16 = posOffset + indexWithinContent
         val finalPos = Pos(
           finalIndex,
