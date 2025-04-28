@@ -2,9 +2,10 @@ package chester.build
 
 import ch.epfl.scala.bsp4j.*
 import org.log4s.*
-import chester.reader.{ChesterReader, FileNameAndContent}
+import chester.reader.FileNameAndContent
 import chester.tyck.{TyckResult, Tycker}
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 import java.util.concurrent.CompletableFuture
 import java.util.Collections

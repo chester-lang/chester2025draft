@@ -1,19 +1,20 @@
-package chester.reader
+package chester.readerv1
 
+import _root_.io.github.iltotore.iron.*
+import chester.error.*
+import chester.i18n.*
+import chester.reader.{ParseError, ParserSource, Source}
 import chester.syntax.concrete.*
 import chester.utils.StringIndex
 import fastparse.*
-import chester.error.*
-import _root_.io.github.iltotore.iron.*
-import chester.i18n.*
 
 import scala.util.*
 object ChesterReader {
 
   private def parseFromSource[T](
-      source: ParserSource,
-      parserFunc: ReaderInternal => P[T],
-      ignoreLocation: Boolean = false
+                                  source: ParserSource,
+                                  parserFunc: ReaderV1 => P[T],
+                                  ignoreLocation: Boolean = false
   ): Either[ParseError, T] =
     source.readContent.fold(
       error => Left(error),
@@ -23,7 +24,7 @@ object ChesterReader {
           content,
           x =>
             parserFunc(
-              ReaderInternal(
+              ReaderV1(
                 Source(source),
                 ignoreLocation = ignoreLocation,
                 defaultIndexer = Some(indexer)

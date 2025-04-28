@@ -3,6 +3,7 @@ package chester.reader
 import chester.syntax.concrete.*
 import munit.FunSuite
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 class ParserTest extends FunSuite {
   test("parse valid identifier") {

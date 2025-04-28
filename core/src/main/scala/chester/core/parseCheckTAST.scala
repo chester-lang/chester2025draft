@@ -2,6 +2,7 @@ package chester.core
 
 import chester.error.*
 import chester.reader.*
+import chester.readerv1.ChesterReader
 import chester.syntax.*
 import chester.syntax.core.*
 import chester.tyck.*

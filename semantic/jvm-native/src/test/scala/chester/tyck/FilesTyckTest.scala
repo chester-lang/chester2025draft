@@ -7,6 +7,7 @@ import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

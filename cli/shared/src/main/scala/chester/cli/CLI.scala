@@ -4,7 +4,7 @@ import chester.core.parseCheckTAST
 import chester.error.*
 import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
-import chester.reader.{ChesterReader, FilePath, FilePathImpl}
+import chester.reader.{FilePath, FilePathImpl}
 import chester.repl.REPLEngine
 import chester.tyck.{TyckResult, Tycker}
 import chester.utils.env.Environment
@@ -18,6 +18,7 @@ import chester.syntax.concrete.Expr
 import upickle.default.{read, readBinary, write, writeBinary}
 import cats.implicits.*
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 import scala.language.experimental.betterFors
 

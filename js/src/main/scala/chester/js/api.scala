@@ -1,11 +1,12 @@
 package chester.js
 
 import chester.doc.consts.LightMode
-import chester.reader.{ChesterReader, FileNameAndContent}
+import chester.reader.FileNameAndContent
 import chester.tyck.*
 import chester.utils.doc.ColorfulToHtml.colorfulToHtml
 import chester.utils.doc.*
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
   given options: PrettierOptions =

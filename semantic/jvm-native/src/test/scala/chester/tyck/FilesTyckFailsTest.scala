@@ -3,6 +3,7 @@ package chester.tyck
 import chester.reader.{*, given}
 import munit.FunSuite
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

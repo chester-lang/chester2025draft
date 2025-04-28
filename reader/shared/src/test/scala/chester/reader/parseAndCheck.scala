@@ -4,6 +4,7 @@ import chester.syntax.concrete.*
 import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 import chester.readerv2.ReaderV2
 
 // Only runs against V1 (original reader)

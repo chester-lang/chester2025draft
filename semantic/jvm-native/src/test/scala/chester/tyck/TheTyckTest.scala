@@ -2,6 +2,7 @@ package chester.tyck
 
 import chester.i18n.*
 import chester.reader.{*, given}
+import chester.readerv1.ChesterReader
 import chester.syntax.concrete.*
 import chester.syntax.core.Judge
 import chester.utils.doc.*
@@ -10,7 +11,6 @@ import upickle.default.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
-
 import chester.utils.Debug
 import chester.utils.Debug.DebugCategory
 

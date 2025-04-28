@@ -1,8 +1,9 @@
 package chester.integrity
 
-import chester.reader.{ChesterReader, FileNameAndContent}
+import chester.reader.FileNameAndContent
 import chester.syntax.concrete.*
 import chester.i18n.*
+import chester.readerv1.ChesterReader
 
 // Test that the binary is still performing well when compiled differently.
 object IntegrityCheck {

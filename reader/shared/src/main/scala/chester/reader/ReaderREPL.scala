@@ -8,6 +8,7 @@ import fastparse.*
 import _root_.io.github.iltotore.iron.*
 import _root_.io.github.iltotore.iron.constraint.numeric.*
 import chester.i18n.*
+import chester.readerv1.ReaderV1
 
 import scala.util.*
 
@@ -69,7 +70,7 @@ object ReaderREPL {
     parse(
       input,
       p =>
-        ReaderInternal(
+        ReaderV1(
           Source(
             FileNameAndContent("repl", input),
             linesOffset = linesOffset,
