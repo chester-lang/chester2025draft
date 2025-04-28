@@ -31,16 +31,15 @@ ReaderV1 uses the FastParse library to implement a parser combinator approach.
 - **ParsingContext**: Tracks parsing state (e.g., whether currently in an operator sequence)
 - **ExprMeta**: Metadata handling for source positions and comments
 
-### Strengths
+### Characteristics
 
-- Declarative approach with readable grammar definitions
-- Good error reporting with FastParse diagnostics
-- Mature and stable implementation
-- Recursive descent makes some patterns easier to express
+- Declarative grammar definitions
+- FastParse-based error reporting
+- Recursive descent parsing model
 
-### Implementation Details
+### Implementation Structure
 
-ReaderV1 uses a hierarchical structure of parser components:
+ReaderV1 consists of:
 
 1. **Expression Parsers**: Methods like `parseExpr`, `parseAtom`, and `parseOperator` form the core of the parser. They use FastParse combinators to build complex parsers from simpler ones.
 
@@ -65,17 +64,17 @@ ReaderV2 uses a custom tokenizer and a state machine-based approach for parsing.
 - **ReaderContext**: Tracks semantic context for parsing decisions
 - **Token Handlers**: Specialized methods for parsing different token types
 
-### Strengths
+### Characteristics
 
-- More efficient processing with pre-tokenization
-- Cleaner separation of lexing and parsing phases
-- Better context tracking for complex syntactic patterns
-- Improved Unicode and emoji handling
-- More maintainable state management
+- Pre-tokenization for token stream processing
+- Separate lexing and parsing phases
+- Explicit context tracking for syntactic patterns
+- UTF-16 aware Unicode and emoji handling
+- Explicit state management
 
-### Implementation Details
+### Implementation Structure
 
-ReaderV2 implements a token-based parsing approach:
+ReaderV2 consists of:
 
 1. **Two-Phase Parsing**: Separates tokenization from parsing, with a dedicated Tokenizer creating a stream of tokens before parsing begins.
 
@@ -83,7 +82,7 @@ ReaderV2 implements a token-based parsing approach:
 
 3. **Context-Aware Processing**: A `ReaderContext` object tracks semantic context, enabling context-sensitive decisions during parsing.
 
-4. **Explicit Comment Handling**: Methods like `skipComments()` and `pullComments()` manage comment attachment without recursive descent, improving performance.
+4. **Comment Handling**: Methods like `skipComments()` and `pullComments()` manage comment attachment without recursive descent.
 
 5. **Block Termination Detection**: The special `}\n` pattern detection uses explicit context tracking and lookahead to determine when blocks end.
 
@@ -117,7 +116,7 @@ Both parsers:
 
 ## Testing Infrastructure
 
-Chester implements a comprehensive test framework for validating parser correctness and ensuring compatibility between V1 and V2 implementations. This framework, defined in `reader/shared/src/test/scala/chester/reader/parseAndCheck.scala`, provides several key testing functions:
+Chester's test framework validates parser correctness and compatibility between V1 and V2 implementations. This framework, defined in `reader/shared/src/test/scala/chester/reader/parseAndCheck.scala`, provides several key testing functions:
 
 ### Core Testing Functions
 
@@ -129,7 +128,7 @@ Chester implements a comprehensive test framework for validating parser correctn
 
 2. **Cross-Parser Verification**:
    - `parseAndCheckBoth(input, expected)`: Tests both parsers and ensures they produce identical results
-   - Ensures backward compatibility and feature parity
+   - Tests backward compatibility and feature parity
 
 3. **Top-Level Parsing**:
    - `parseTopLevelV1/V2` and `parseAndCheckTopLevelV1/V2/Both`: Similar functions for testing top-level parsing
@@ -137,7 +136,7 @@ Chester implements a comprehensive test framework for validating parser correctn
 
 ### Error Reporting
 
-The testing framework includes enhanced error reporting with:
+The testing framework provides error reporting with:
 
 - Detailed error messages showing exact failure position
 - Visual pointer to error location in source code
