@@ -1441,7 +1441,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         debug(t"parseBlock: Error at start of block: $err")
         Left(err)
     }
-  } // State is automatically restored after this block
+  }
 
   // Helper method to check if whitespace contains a newline
   private def isNewlineWhitespace(token: Token): Boolean = {
