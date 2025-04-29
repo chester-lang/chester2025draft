@@ -64,9 +64,9 @@ jobs:
 
     - name: Setup GraalVM
       uses: graalvm/setup-graalvm@v1
-      if: runner.os != 'Linux' || true
+      if: runner.os != 'Linux'
       with:
-        java-version: '24'
+        java-version: '25-ea'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
         native-image-job-reports: 'true'
@@ -83,18 +83,18 @@ jobs:
       run: |
         echo "NATIVE_IMAGE_OPTIONS=-march=native" >> $GITHUB_ENV
 
-    - name: GraalVM - Linux - musl - disabled
+    - name: GraalVM - Linux - musl
       uses: graalvm/setup-graalvm@v1
-      if: runner.os == 'Linux' && false
+      if: runner.os == 'Linux'
       with:
         native-image-musl: 'true'
-        java-version: '23'
+        java-version: '25-ea'
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
         native-image-job-reports: 'true'
 
-    - name: GraalVM Env - Linux - musl - disabled
-      if: runner.os == 'Linux' && false
+    - name: GraalVM Env - Linux - musl
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         echo "NATIVE_IMAGE_OPTIONS=--static --libc=musl" >> $GITHUB_ENV
