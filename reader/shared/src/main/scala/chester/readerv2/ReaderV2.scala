@@ -26,8 +26,7 @@ import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
 import chester.syntax.concrete.*
-import chester.utils.Parameter
-import chester.utils.asInt
+import chester.utils.*
 
 import scala.annotation.tailrec
 
@@ -61,7 +60,7 @@ case class ReaderState(
     case Left(_) =>
       copy(index = index + 1)
   }
-  def sourcePos: SourcePos = current match {
+  def sourcePos: SourcePos = current.orelse(previousToken) match {
     case Left(err) => err.sourcePos.getOrElse(SourcePos(Source(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
     case Right(t)  => t.sourcePos
   }
