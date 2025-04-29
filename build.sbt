@@ -201,7 +201,7 @@ val defaultNativeImageOptions = Seq(
 
 val jdk17: Boolean = false
 val jdk21: Boolean = false
-val javaOutputVersion: String = "11"
+val javaOutputVersion: String = "8"
 val testJavaOutputVersion: String = "17"
 
 def commonSettings0 = Seq(
