@@ -16,12 +16,6 @@ import chester.syntax.concrete.{
   OpSeq,
   Tuple
 }
-import chester.syntax.concrete.{
-  Identifier as ConcreteIdentifier,
-  IntegerLiteral as ConcreteIntegerLiteral,
-  RationalLiteral as ConcreteRationalLiteral,
-  StringLiteral as ConcreteStringLiteral
-}
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
@@ -217,7 +211,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             debug(t"parseRest: Successfully parsed as ObjectExpr: $objExpr")
             // Check if the preceding expression allows an object argument
             expr match {
-              case id: ConcreteIdentifier =>
+              case id: Identifier =>
                 debug(t"parseRest: Preceding expr is Identifier $id, creating FunctionCall with object arg.")
                 val funcCall = FunctionCall(
                   id,
@@ -255,7 +249,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         {
           // Advance past the colon
           advance()
-          val updatedTerms = localTerms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
+          val updatedTerms = localTerms :+ Identifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
           debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
           withComments(() => parseAtom(context = context)).flatMap { next =>
@@ -295,7 +289,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           advance()
 
           // Add operator to terms
-          val updatedTerms = localTerms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
+          val updatedTerms = localTerms :+ Identifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
 
           // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
           if (
@@ -346,7 +340,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             case Right(Token.LBracket(_)) =>
               debug("parseRest: Found lbracket after identifier - handling generic type parameters")
               // Create the identifier
-              val identifier = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val identifier = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
 
               // Parse the generic type parameters (list)
               parseList().flatMap { typeParams =>
@@ -439,7 +433,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               parseTuple(context = context).flatMap { tuple =>
                 // parseTuple has updated this.state
                 val functionCall = FunctionCall(
-                  ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
+                  Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
                   tuple,
                   createMeta(Some(sourcePos), Some(sourcePos))
                 )
@@ -468,7 +462,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               parseObject() match {
                 case Right(objExpr) => // Object argument
                   debug(t"handleIdentifierInRest: Parsed object arg $objExpr after identifier $text")
-                  val idExpr = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                  val idExpr = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
                   val funcCall =
                     FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
                   val updatedTerms = localTerms :+ funcCall
@@ -487,7 +481,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   this.state = originalState // Restore state
                   debug(t"handleIdentifierInRest: Failed object parse, assuming block arg after identifier $text")
                   parseBlock().flatMap { block =>
-                    val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                    val id = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
                     // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
                     val updatedTerms = localTerms :+ id :+ block
                     debug(t"parseRest: After block following identifier, terms: $updatedTerms")
@@ -507,8 +501,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
             case Right(Token.Operator(op, opSourcePos)) =>
               debug(t"parseRest: Found operator $op after identifier")
-              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-              val opId = ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
+              val id = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val opId = Identifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
               val updatedTerms = localTerms :+ id :+ opId
               debug(t"parseRest: After adding id and op, terms: $updatedTerms")
 
@@ -534,7 +528,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               }
             case _ =>
               debug(t"parseRest: Found bare identifier $text")
-              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val id = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
               val updatedTerms = localTerms :+ id
               debug(t"parseRest: After adding bare id, terms: $updatedTerms")
 
@@ -598,7 +592,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       expr match {
         case funcCall: FunctionCall =>
           // Check if this is a case like Vector[T]{...} - don't wrap block as an argument
-          val isFunctionCallWithTypeParams = funcCall.function.isInstanceOf[ConcreteIdentifier] &&
+          val isFunctionCallWithTypeParams = funcCall.function.isInstanceOf[Identifier] &&
             funcCall.telescope.isInstanceOf[ListExpr]
 
           if (isFunctionCallWithTypeParams) {
@@ -632,7 +626,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               parseRest(newFuncCall, context = context)
             }
           }
-        case id: ConcreteIdentifier =>
+        case id: Identifier =>
           debug("parseRest: Creating function call with block argument from identifier")
           val funcCall = FunctionCall(
             id,
@@ -688,7 +682,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseTuple().map { tuple =>
               // parseTuple has already updated this.state
               FunctionCall(
-                ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
+                Identifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
                 tuple,
                 createMeta(Some(sourcePos), Some(sourcePos))
               )
@@ -696,7 +690,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           // Prefix form: op expr
           case _ =>
             debug("parseExpr: Parsing atom after initial operator")
-            terms = Vector(ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos))))
+            terms = Vector(Identifier(op, createMeta(Some(sourcePos), Some(sourcePos))))
             withComments(() => parseAtom()).flatMap { expr =>
               terms = terms :+ expr
               debug(t"parseExpr: After initial operator and atom, terms: $terms")
@@ -718,7 +712,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         debug(t"parseExpr: Starting with keyword operator ${charsToString(chars)}")
         // Advance past the keyword operator
         advance()
-        terms = Vector(ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
+        terms = Vector(Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
         withComments(() => parseAtom()).flatMap { expr =>
           terms = terms :+ expr
           debug(t"parseExpr: After initial keyword operator and atom, terms: $terms")
@@ -822,7 +816,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         parseNextTelescope()
       case Right(Token.Operator(op, idSourcePos)) =>
         // Save operator, advance, and process
-        val field = ConcreteIdentifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
+        val field = Identifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
         advance()
 
         this.state.current match {
@@ -1020,7 +1014,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 }
               case _ => None
             },
-            (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
+            (value, meta) => IntegerLiteral(BigInt(value), meta),
             "Expected integer literal"
           ),
           "Error parsing integer"
@@ -1038,7 +1032,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 }
               case _ => None
             },
-            (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
+            (value, meta) => RationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
             "Expected rational literal"
           ),
           "Error parsing rational number"
@@ -1051,7 +1045,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               PartialFunction.condOpt(token) { case Token.StringLiteral(chars, sourcePos) =>
                 (charsToString(chars), sourcePos)
               },
-            (value, meta) => ConcreteStringLiteral(value, meta),
+            (value, meta) => StringLiteral(value, meta),
             "Expected string literal"
           ),
           "Error parsing string"
@@ -1483,7 +1477,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     this.state.current match {
       case Right(Token.RBrace(_)) => Right(clauses)
       case Right(Token.Identifier(chars, idSourcePos)) =>
-        val identifier = ConcreteIdentifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
+        val identifier = Identifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
         advance()
         this.state.current match {
           case Right(Token.Dot(_)) =>
@@ -1496,7 +1490,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseField(identifier, idSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
         }
       case Right(Token.StringLiteral(chars, strSourcePos)) =>
-        val stringLiteral = ConcreteStringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
+        val stringLiteral = StringLiteral(charsToString(chars), createMeta(Some(strSourcePos), Some(strSourcePos)))
         advance()
         skipComments()
         parseField(stringLiteral, strSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
@@ -1519,12 +1513,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             Right(ObjectExprClauseOnValue(key, value))
           } else if (op == "=") {
             key match {
-              case id: ConcreteIdentifier =>
+              case id: Identifier =>
                 Right(ObjectExprClause(id, value))
               case dotCall: DotCall =>
                 Right(ObjectExprClause(dotCall, value))
-              case stringLit: ConcreteStringLiteral =>
-                val idKey = ConcreteIdentifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
+              case stringLit: StringLiteral =>
+                val idKey = Identifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                 Right(ObjectExprClause(idKey, value))
               case other =>
                 Left(ParseError(t"Expected identifier, qualified name, or dot expression for key with = operator: $other", keySourcePos.range.start))
@@ -1838,8 +1832,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
 
   // Helper to create identifier expressions
-  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos, context: ReaderContext = ReaderContext()): ConcreteIdentifier =
-    ConcreteIdentifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
+  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos, context: ReaderContext = ReaderContext()): Identifier =
+    Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
 
   // Restore public API for parsing expression lists, calling the new helper
   def parseExprList(context: ReaderContext = ReaderContext()): Either[ParseError, Vector[Expr]] = {
