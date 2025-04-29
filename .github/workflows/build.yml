@@ -64,7 +64,7 @@ jobs:
 
     - name: Setup GraalVM
       uses: graalvm/setup-graalvm@v1
-      if: runner.os != 'Linux' || matrix.os == 'ubuntu-22.04-arm'
+      if: runner.os != 'Linux'
       with:
         java-version: '25-ea'
         distribution: 'graalvm'
@@ -85,7 +85,7 @@ jobs:
 
     - name: GraalVM - Linux - musl
       uses: graalvm/setup-graalvm@v1
-      if: runner.os == 'Linux' && matrix.os != 'ubuntu-22.04-arm'
+      if: runner.os == 'Linux'
       with:
         native-image-musl: 'true'
         java-version: '25-ea'
@@ -94,7 +94,7 @@ jobs:
         native-image-job-reports: 'true'
 
     - name: GraalVM Env - Linux - musl
-      if: runner.os == 'Linux' && matrix.os != 'ubuntu-22.04-arm'
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         echo "NATIVE_IMAGE_OPTIONS=--static --libc=musl" >> $GITHUB_ENV
