@@ -33,7 +33,7 @@ extension (s: String) {
 
 // for Scala2
 object AsInt {
-  implicit class AsIntFor(private val n: BigInt) extends AnyVal  {
+  implicit class AsIntFor(private val n: BigInt) extends AnyVal {
     def asInt: Int = if (n.isValidInt) n.toInt else throw new IllegalArgumentException("BigInt is too large to fit in an Int")
   }
 }

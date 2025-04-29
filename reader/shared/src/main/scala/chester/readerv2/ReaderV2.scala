@@ -72,9 +72,6 @@ case class ReaderState(
       t.isInstanceOf[Token.Comma] || t.isInstanceOf[Token.Semicolon]
   )
 
-  def collectPendingWhitespaces(): Vector[Token.Whitespace] =
-    pendingTokens.collect { case w: Token.Whitespace => w }
-
   def clearPendingTokens(): ReaderState =
     copy(pendingTokens = Vector.empty)
 
@@ -202,7 +199,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
     // Skip comments and check for terminators
     skipComments()
-    if (isAtTerminator()) {
+    if (this.state.isAtTerminator) {
       debug("parseRest: Hit terminator token")
       // buildOpSeq will pull comments internally
       return buildOpSeq(localTerms)
@@ -228,7 +225,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
                 )
                 // parseObject advanced state, now continue parsing after the object
-                parseRest(funcCall,context = context) // Recurse with the new FunctionCall
+                parseRest(funcCall, context = context) // Recurse with the new FunctionCall
               case funcCall: FunctionCall =>
                 debug(t"parseRest: Preceding expr is FunctionCall $funcCall, adding object as another argument.")
                 // This assumes the object is an additional argument group like f(a){b=1}
@@ -238,7 +235,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
                 )
                 // parseObject advanced state, now continue parsing after the object
-                parseRest(newFuncCall,context = context) // Recurse with the new FunctionCall
+                parseRest(newFuncCall, context = context) // Recurse with the new FunctionCall
               case _ =>
                 debug(t"parseRest: Preceding expr $expr doesn't support object arg directly. Falling back to block parse.")
                 this.state = originalState // Restore state
@@ -255,7 +252,28 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(Token.Colon(sourcePos)) =>
         debug("parseRest: Found colon")
         // this.state is already set to the current state
-        handleColon(sourcePos, localTerms, context = context)
+        {
+          // Advance past the colon
+          advance()
+          val updatedTerms = localTerms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
+          debug(t"parseRest: After adding colon, terms: $updatedTerms")
+
+          withComments(() => parseAtom(context = context)).flatMap { next =>
+            val newTerms = updatedTerms :+ next
+            debug(t"parseRest: After parsing atom after colon, terms: $newTerms")
+
+            // withComments has updated this.state already
+            parseRest(next, context = context).map {
+              case opSeq: OpSeq =>
+                debug(t"OpSeq construction in handleColon: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
+                debug(t"Creating OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
+                OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
+              case _ =>
+                debug(t"Simple OpSeq construction in handleColon: newTerms=$newTerms")
+                OpSeq(newTerms, None)
+            }
+          }
+        }
 
       // Dot call handling
       case Right(Token.Dot(dotSourcePos)) =>
@@ -265,21 +283,279 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           localTerms = Vector(dotCall)
           debug(t"parseRest: After dot call, terms: $localTerms")
           // handleDotCall has updated this.state already
-          parseRest(dotCall,context = context)
+          parseRest(dotCall, context = context)
         }
 
       // Operator handling
       case Right(Token.Operator(op, sourcePos)) =>
         debug(t"parseRest: Found operator $op")
         // this.state is already set to the current state
-        handleOperatorInRest(op, sourcePos, localTerms, context = context)
+        {
+          // Advance past the operator
+          advance()
+
+          // Add operator to terms
+          val updatedTerms = localTerms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
+
+          // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
+          if (
+            this.state.current match {
+              case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
+              case _                                              => false
+            }
+          ) {
+            debug(t"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
+            // We already have set state correctly
+            // buildOpSeq will pull comments internally
+            buildOpSeq(updatedTerms)
+          } else {
+            // Continue parsing the rest of the expression
+            // Change parseAtom() to parseExprInner() to handle prefix operators after infix op
+            withComments(() => parseExpr(context = context)).flatMap { next =>
+              debug(t"parseRest: After parsing expr after operator, got: $next")
+              val newTerms = updatedTerms :+ next
+              debug(t"parseRest: Updated terms after operator: $newTerms")
+
+              // Continue parsing the rest - withComments has updated this.state already
+              parseRest(next, context = context).map {
+                case opSeq: OpSeq =>
+                  // Flatten the nested OpSeq
+                  debug(
+                    t"OpSeq construction in handleOperatorInRest: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                  )
+                  debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
+                  OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
+                case _ => // If the rest is not an OpSeq, just build normally
+                  debug(t"Simple OpSeq construction in handleOperatorInRest: newTerms=$newTerms")
+                  OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
+              }
+            }
+          }
+        }
 
       // Identifier handling
       case Right(Token.Identifier(chars, sourcePos)) =>
         val text = charsToString(chars)
         debug(t"parseRest: Found identifier $text")
         // this.state is already set to the current state
-        handleIdentifierInRest(text, sourcePos, localTerms, context = context)
+        {
+          // Advance past the identifier
+          advance()
+
+          this.state.current match {
+            case Right(Token.LBracket(_)) =>
+              debug("parseRest: Found lbracket after identifier - handling generic type parameters")
+              // Create the identifier
+              val identifier = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+
+              // Parse the generic type parameters (list)
+              parseList().flatMap { typeParams =>
+                val afterTypeParams = this.state
+                afterTypeParams.current match {
+                  case Right(Token.LParen(_)) | Right(Token.LBracket(_)) =>
+                    // Function call with generic type args: id[T](args)
+                    debug("parseRest: Found function call with generic type parameters")
+                    parseTuple().flatMap { tuple =>
+                      val typeParamsList: ListExpr = typeParams
+                      val typeCall = FunctionCall(
+                        identifier,
+                        typeParamsList,
+                        createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
+                      )
+                      val funcCall = FunctionCall(
+                        typeCall,
+                        tuple.asInstanceOf[Tuple],
+                        createMeta(Some(sourcePos), Some(this.state.sourcePos))
+                      )
+                      val updatedTerms = localTerms :+ funcCall
+
+                      parseRest(funcCall, context = context).map {
+                        case opSeq: OpSeq =>
+                          debug(
+                            t"OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                          )
+                          debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                          OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
+                        case _ =>
+                          debug(t"Simple OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms")
+                          OpSeq(updatedTerms, None)
+                      }
+                    }
+                  case Right(Token.LBrace(_)) =>
+                    // Generic type parameters followed by a block: id[T]{...}
+                    debug("parseRest: Found identifier with generic type parameters followed by a block")
+                    val typeParamsList: ListExpr = typeParams
+                    val typeCall = FunctionCall(
+                      identifier,
+                      typeParamsList,
+                      createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
+                    )
+
+                    parseBlock().flatMap { block =>
+                      // Don't create a function call - instead just add both expressions to the sequence
+                      val updatedTerms = localTerms :+ typeCall :+ block
+                      debug(t"parseRest: After block following generic type, terms: $updatedTerms")
+
+                      parseRest(block, context = context).map {
+                        case opSeq: OpSeq =>
+                          debug(
+                            t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                          )
+                          debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                          OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                        case _ =>
+                          debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms")
+                          OpSeq(updatedTerms, None)
+                      }
+                    }
+                  case _ =>
+                    // Just generic type parameters: id[T]
+                    debug("parseRest: Found identifier with generic type parameters")
+                    val typeParamsList: ListExpr = typeParams
+                    val funcCall = FunctionCall(
+                      identifier,
+                      typeParamsList,
+                      createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
+                    )
+                    val updatedTerms = localTerms :+ funcCall
+
+                    parseRest(funcCall, context = context).map {
+                      case opSeq: OpSeq =>
+                        debug(
+                          t"OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                        )
+                        debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                        OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
+                      case _ =>
+                        debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms")
+                        OpSeq(updatedTerms, None)
+                    }
+                }
+              }
+
+            case Right(Token.LParen(_)) =>
+              debug("parseRest: Found lparen after identifier")
+              // this.state is already set to the position after the identifier
+              parseTuple(context = context).flatMap { tuple =>
+                // parseTuple has updated this.state
+                val functionCall = FunctionCall(
+                  ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
+                  tuple,
+                  createMeta(Some(sourcePos), Some(sourcePos))
+                )
+                val updatedTerms = localTerms :+ functionCall
+                debug(t"parseRest: After function call, terms: $updatedTerms")
+
+                parseRest(functionCall, context = context).map {
+                  case opSeq: OpSeq =>
+                    // Flatten
+                    debug(
+                      t"OpSeq construction in handleIdentifierInRest (function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                    )
+                    debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                    OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
+                  case _ =>
+                    debug(t"Simple OpSeq construction in handleIdentifierInRest (function call): updatedTerms=$updatedTerms")
+                    OpSeq(updatedTerms, None)
+                }
+              }
+
+            case Right(Token.LBrace(_)) =>
+              debug("parseRest: Found lbrace after identifier")
+              // this.state is already set to the position after the identifier
+              // Decide if block or object based on content
+              val originalState = this.state
+              parseObject() match {
+                case Right(objExpr) => // Object argument
+                  debug(t"handleIdentifierInRest: Parsed object arg $objExpr after identifier $text")
+                  val idExpr = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                  val funcCall =
+                    FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
+                  val updatedTerms = localTerms :+ funcCall
+                  parseRest(funcCall, context = context).map {
+                    case opSeq: OpSeq =>
+                      debug(
+                        t"OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                      )
+                      debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                      OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                    case _ =>
+                      debug(t"Simple OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms")
+                      OpSeq(updatedTerms, None)
+                  }
+                case Left(_) => // Assume block argument
+                  this.state = originalState // Restore state
+                  debug(t"handleIdentifierInRest: Failed object parse, assuming block arg after identifier $text")
+                  parseBlock().flatMap { block =>
+                    val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                    // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
+                    val updatedTerms = localTerms :+ id :+ block
+                    debug(t"parseRest: After block following identifier, terms: $updatedTerms")
+                    parseRest(block, context = context).map {
+                      case opSeq: OpSeq =>
+                        debug(
+                          t"OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                        )
+                        debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                        OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                      case _ =>
+                        debug(t"Simple OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms")
+                        OpSeq(updatedTerms, None)
+                    }
+                  }
+              }
+
+            case Right(Token.Operator(op, opSourcePos)) =>
+              debug(t"parseRest: Found operator $op after identifier")
+              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val opId = ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
+              val updatedTerms = localTerms :+ id :+ opId
+              debug(t"parseRest: After adding id and op, terms: $updatedTerms")
+
+              // Advance past the operator
+              advance()
+              withComments(() => parseExpr()).flatMap { next => // Using parseExprInner now
+                val newTerms = updatedTerms :+ next
+                debug(t"parseRest: After parsing expr after operator, terms: $newTerms")
+
+                // withComments has updated this.state already
+                parseRest(next, context = context).map {
+                  case opSeq: OpSeq =>
+                    // Flatten the nested OpSeq
+                    debug(
+                      t"OpSeq construction in handleIdentifierInRest (operator): newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                    )
+                    debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
+                    OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                  case _ =>
+                    debug(t"Simple OpSeq construction in handleIdentifierInRest (operator): newTerms=$newTerms")
+                    OpSeq(newTerms, None)
+                }
+              }
+            case _ =>
+              debug(t"parseRest: Found bare identifier $text")
+              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val updatedTerms = localTerms :+ id
+              debug(t"parseRest: After adding bare id, terms: $updatedTerms")
+
+              parseRest(id, context = context).map {
+                case opSeq: OpSeq =>
+                  debug(
+                    t"OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
+                  )
+                  debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
+                  OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
+                // Special case adjustment: Treat f(block) returned from block handling as f block in sequence
+                case FunctionCall(f, Tuple(Vector(b: Block), _), _) =>
+                  debug(t"Special case in handleIdentifierInRest: treating f(block) as sequence [f, block]")
+                  debug(t"Creating OpSeq with adjusted sequence: ${updatedTerms.dropRight(1) ++ Vector(f, b)}")
+                  OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
+                case _ =>
+                  debug(t"Simple OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms")
+                  OpSeq(updatedTerms, None)
+              }
+          }
+        }
 
       // Generic token handling
       case Right(_) =>
@@ -289,7 +565,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           localTerms = localTerms :+ next
           debug(t"parseRest: After parsing other token as atom, terms: $localTerms")
           // withComments has updated this.state already
-          parseRest(next,context = context).map {
+          parseRest(next, context = context).map {
             case opSeq: OpSeq =>
               debug(t"OpSeq construction in parseRest: localTerms=$localTerms, dropping last=${localTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
               debug(t"Creating OpSeq with combined sequence: ${localTerms.dropRight(1) ++ opSeq.seq}")
@@ -331,7 +607,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             val updatedTerms = terms :+ block
             debug(t"parseRest: After block following generic function, terms: $updatedTerms")
 
-            parseRest(block,context = context).map {
+            parseRest(block, context = context).map {
               case opSeq: OpSeq =>
                 debug(
                   t"OpSeq construction for generic function with block: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -353,7 +629,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             if (this.state.isAtTerminator) {
               Right(newFuncCall)
             } else {
-              parseRest(newFuncCall,context = context)
+              parseRest(newFuncCall, context = context)
             }
           }
         case id: ConcreteIdentifier =>
@@ -374,7 +650,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           val updatedTerms = terms :+ block
           debug(t"parseRest: After block following other expression, terms: $updatedTerms")
 
-          parseRest(block,context = context).map {
+          parseRest(block, context = context).map {
             case opSeq: OpSeq =>
               debug(
                 t"OpSeq construction in handleBlockArgument: updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
@@ -387,289 +663,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           }
       }
     }
-
-  /** Handle colon expressions - uses skipComments() and pullComments() for comment handling
-    */
-  private def handleColon(sourcePos: SourcePos, terms: Vector[Expr], context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
-    // Advance past the colon
-    advance()
-    val updatedTerms = terms :+ ConcreteIdentifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
-    debug(t"parseRest: After adding colon, terms: $updatedTerms")
-
-    withComments(() => parseAtom(context = context)).flatMap { next =>
-      val newTerms = updatedTerms :+ next
-      debug(t"parseRest: After parsing atom after colon, terms: $newTerms")
-
-      // withComments has updated this.state already
-      parseRest(next, context = context).map {
-        case opSeq: OpSeq =>
-          debug(t"OpSeq construction in handleColon: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
-          debug(t"Creating OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
-          OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
-        case _ =>
-          debug(t"Simple OpSeq construction in handleColon: newTerms=$newTerms")
-          OpSeq(newTerms, None)
-      }
-    }
-  }
-
-  /** Handle operators in expression continuations - uses skipComments() and pullComments() for comment handling
-    */
-  private def handleOperatorInRest(
-      op: String,
-      sourcePos: SourcePos,
-      terms: Vector[Expr],
-      context: ReaderContext = ReaderContext()
-  ): Either[ParseError, Expr] = {
-    // Advance past the operator
-    advance()
-
-    // Add operator to terms
-    val updatedTerms = terms :+ ConcreteIdentifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
-
-    // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
-    if (
-      this.state.current match {
-        case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-        case _                                              => false
-      }
-    ) {
-      debug(t"parseRest: Added operator $op at argument boundary, terms: $updatedTerms")
-      // We already have set state correctly
-      // buildOpSeq will pull comments internally
-      buildOpSeq(updatedTerms)
-    } else {
-      // Continue parsing the rest of the expression
-      // Change parseAtom() to parseExprInner() to handle prefix operators after infix op
-      withComments(() => parseExpr(context = context)).flatMap { next =>
-        debug(t"parseRest: After parsing expr after operator, got: $next")
-        val newTerms = updatedTerms :+ next
-        debug(t"parseRest: Updated terms after operator: $newTerms")
-
-        // Continue parsing the rest - withComments has updated this.state already
-        parseRest(next, context = context).map {
-          case opSeq: OpSeq =>
-            // Flatten the nested OpSeq
-            debug(t"OpSeq construction in handleOperatorInRest: newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}")
-            debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
-            OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
-          case _ => // If the rest is not an OpSeq, just build normally
-            debug(t"Simple OpSeq construction in handleOperatorInRest: newTerms=$newTerms")
-            OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
-        }
-      }
-    }
-  }
-
-  /** Handle identifiers in expression continuations - uses skipComments() and pullComments() for comment handling
-    */
-  private def handleIdentifierInRest(
-      text: String,
-      sourcePos: SourcePos,
-      terms: Vector[Expr],
-      context: ReaderContext = ReaderContext()
-  ): Either[ParseError, Expr] = {
-    // Advance past the identifier
-    advance()
-
-    this.state.current match {
-      case Right(Token.LBracket(_)) =>
-        debug("parseRest: Found lbracket after identifier - handling generic type parameters")
-        // Create the identifier
-        val identifier = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-
-        // Parse the generic type parameters (list)
-        parseList().flatMap { typeParams =>
-          val afterTypeParams = this.state
-          afterTypeParams.current match {
-            case Right(Token.LParen(_)) | Right(Token.LBracket(_)) =>
-              // Function call with generic type args: id[T](args)
-              debug("parseRest: Found function call with generic type parameters")
-              parseTuple().flatMap { tuple =>
-                val typeParamsList: ListExpr = typeParams
-                val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
-                val funcCall = createFunctionCall(typeCall, tuple, Some(sourcePos), Some(this.state.sourcePos))
-                val updatedTerms = terms :+ funcCall
-
-                parseRest(funcCall,context = context).map {
-                  case opSeq: OpSeq =>
-                    debug(
-                      t"OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-                    )
-                    debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                    OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-                  case _ =>
-                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic function call): updatedTerms=$updatedTerms")
-                    OpSeq(updatedTerms, None)
-                }
-              }
-            case Right(Token.LBrace(_)) =>
-              // Generic type parameters followed by a block: id[T]{...}
-              debug("parseRest: Found identifier with generic type parameters followed by a block")
-              val typeParamsList: ListExpr = typeParams
-              val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
-
-              parseBlock().flatMap { block =>
-                // Don't create a function call - instead just add both expressions to the sequence
-                val updatedTerms = terms :+ typeCall :+ block
-                debug(t"parseRest: After block following generic type, terms: $updatedTerms")
-
-                parseRest(block,context = context).map {
-                  case opSeq: OpSeq =>
-                    debug(
-                      t"OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-                    )
-                    debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                    OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                  case _ =>
-                    debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type with block): updatedTerms=$updatedTerms")
-                    OpSeq(updatedTerms, None)
-                }
-              }
-            case _ =>
-              // Just generic type parameters: id[T]
-              debug("parseRest: Found identifier with generic type parameters")
-              val typeParamsList: ListExpr = typeParams
-              val funcCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
-              val updatedTerms = terms :+ funcCall
-
-              parseRest(funcCall,context = context).map {
-                case opSeq: OpSeq =>
-                  debug(
-                    t"OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-                  )
-                  debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                  OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-                case _ =>
-                  debug(t"Simple OpSeq construction in handleIdentifierInRest (generic type): updatedTerms=$updatedTerms")
-                  OpSeq(updatedTerms, None)
-              }
-          }
-        }
-
-      case Right(Token.LParen(_)) =>
-        debug("parseRest: Found lparen after identifier")
-        // this.state is already set to the position after the identifier
-        parseTuple(context = context).flatMap { tuple =>
-          // parseTuple has updated this.state
-          val functionCall = FunctionCall(
-            ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
-            tuple,
-            createMeta(Some(sourcePos), Some(sourcePos))
-          )
-          val updatedTerms = terms :+ functionCall
-          debug(t"parseRest: After function call, terms: $updatedTerms")
-
-          parseRest(functionCall, context = context).map {
-            case opSeq: OpSeq =>
-              // Flatten
-              debug(
-                t"OpSeq construction in handleIdentifierInRest (function call): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-              )
-              debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-              OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
-            case _ =>
-              debug(t"Simple OpSeq construction in handleIdentifierInRest (function call): updatedTerms=$updatedTerms")
-              OpSeq(updatedTerms, None)
-          }
-        }
-
-      case Right(Token.LBrace(_)) =>
-        debug("parseRest: Found lbrace after identifier")
-        // this.state is already set to the position after the identifier
-        // Decide if block or object based on content
-        val originalState = this.state
-        parseObject() match {
-          case Right(objExpr) => // Object argument
-            debug(t"handleIdentifierInRest: Parsed object arg $objExpr after identifier $text")
-            val idExpr = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-            val funcCall =
-              FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
-            val updatedTerms = terms :+ funcCall
-            parseRest(funcCall,context = context).map {
-              case opSeq: OpSeq =>
-                debug(
-                  t"OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-                )
-                debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-              case _ =>
-                debug(t"Simple OpSeq construction in handleIdentifierInRest (object): updatedTerms=$updatedTerms")
-                OpSeq(updatedTerms, None)
-            }
-          case Left(_) => // Assume block argument
-            this.state = originalState // Restore state
-            debug(t"handleIdentifierInRest: Failed object parse, assuming block arg after identifier $text")
-            parseBlock().flatMap { block =>
-              val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-              // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
-              val updatedTerms = terms :+ id :+ block
-              debug(t"parseRest: After block following identifier, terms: $updatedTerms")
-              parseRest(block,context = context).map {
-                case opSeq: OpSeq =>
-                  debug(
-                    t"OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-                  )
-                  debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-                  OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-                case _ =>
-                  debug(t"Simple OpSeq construction in handleIdentifierInRest (block): updatedTerms=$updatedTerms")
-                  OpSeq(updatedTerms, None)
-              }
-            }
-        }
-
-      case Right(Token.Operator(op, opSourcePos)) =>
-        debug(t"parseRest: Found operator $op after identifier")
-        val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-        val opId = ConcreteIdentifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
-        val updatedTerms = terms :+ id :+ opId
-        debug(t"parseRest: After adding id and op, terms: $updatedTerms")
-
-        // Advance past the operator
-        advance()
-        withComments(() => parseExpr()).flatMap { next => // Using parseExprInner now
-          val newTerms = updatedTerms :+ next
-          debug(t"parseRest: After parsing expr after operator, terms: $newTerms")
-
-          // withComments has updated this.state already
-          parseRest(next,context = context).map {
-            case opSeq: OpSeq =>
-              // Flatten the nested OpSeq
-              debug(
-                t"OpSeq construction in handleIdentifierInRest (operator): newTerms=$newTerms, dropping last=${newTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-              )
-              debug(t"Creating flattened OpSeq with combined sequence: ${newTerms.dropRight(1) ++ opSeq.seq}")
-              OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-            case _ =>
-              debug(t"Simple OpSeq construction in handleIdentifierInRest (operator): newTerms=$newTerms")
-              OpSeq(newTerms, None)
-          }
-        }
-      case _ =>
-        debug(t"parseRest: Found bare identifier $text")
-        val id = ConcreteIdentifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-        val updatedTerms = terms :+ id
-        debug(t"parseRest: After adding bare id, terms: $updatedTerms")
-
-        parseRest(id, context = context).map {
-          case opSeq: OpSeq =>
-            debug(
-              t"OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms, dropping last=${updatedTerms.dropRight(1)}, opSeq.seq=${opSeq.seq}"
-            )
-            debug(t"Creating flattened OpSeq with combined sequence: ${updatedTerms.dropRight(1) ++ opSeq.seq}")
-            OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
-          // Special case adjustment: Treat f(block) returned from block handling as f block in sequence
-          case FunctionCall(f, Tuple(Vector(b: Block), _), _) =>
-            debug(t"Special case in handleIdentifierInRest: treating f(block) as sequence [f, block]")
-            debug(t"Creating OpSeq with adjusted sequence: ${updatedTerms.dropRight(1) ++ Vector(f, b)}")
-            OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
-          case _ =>
-            debug(t"Simple OpSeq construction in handleIdentifierInRest (bare id): updatedTerms=$updatedTerms")
-            OpSeq(updatedTerms, None)
-        }
-    }
-  }
 
   // Main parsing methods
   def parseExpr(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
@@ -715,7 +708,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 Right(OpSeq(terms, None))
               } else {
                 // withComments has updated this.state already
-                parseRest(expr,context = context)
+                parseRest(expr, context = context)
               }
             }
         }
@@ -737,7 +730,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             Right(OpSeq(terms, None))
           } else {
             // withComments has updated this.state already
-            parseRest(expr,context = context)
+            parseRest(expr, context = context)
           }
         }
 
@@ -963,14 +956,26 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   this.state = afterTypeParams
                   parseTuple().map { tuple =>
                     val typeParamsList: ListExpr = typeParams
-                    val typeCall = createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
-                    createFunctionCall(typeCall, tuple, Some(sourcePos), Some(this.state.sourcePos))
+                    val typeCall = FunctionCall(
+                      identifier,
+                      typeParamsList,
+                      createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
+                    )
+                    FunctionCall(
+                      typeCall,
+                      tuple.asInstanceOf[Tuple],
+                      createMeta(Some(sourcePos), Some(this.state.sourcePos))
+                    )
                   }
                 case _ =>
                   // Just the generic type parameters
                   val typeParamsList: ListExpr = typeParams
                   Right(
-                    createFunctionCallWithTypeParams(identifier, typeParamsList, Some(sourcePos), Some(afterTypeParams.sourcePos))
+                    FunctionCall(
+                      identifier,
+                      typeParamsList,
+                      createMeta(Some(sourcePos), Some(afterTypeParams.sourcePos))
+                    )
                   )
               }
             }
@@ -978,7 +983,19 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             // Regular function call
             val identifier = createIdentifier(chars, sourcePos)
             this.state = afterId
-            parseFunctionCallWithId(identifier, context = context)
+            this.state.current match {
+              case Right(Token.LParen(_)) =>
+                parseTuple(context = context).map { args =>
+                  val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
+                  FunctionCall(
+                    identifier,
+                    args.asInstanceOf[Tuple],
+                    createMeta(funcSourcePos, Some(this.state.sourcePos))
+                  )
+                }
+              case _ =>
+                Left(ParseError("Expected left parenthesis for function call", this.state.sourcePos.range.start))
+            }
           case _ =>
             // Plain identifier
             this.state = afterId
@@ -987,16 +1004,71 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       case Right(Token.IntegerLiteral(value, _)) =>
         // this.state is already set to current
-        parseInt()
+        withCommentsAndErrorHandling(
+          parseLiteral(
+            {
+              case Token.IntegerLiteral(value, sourcePos) =>
+                // Handle different bases
+                val (numStr, base) =
+                  if (value.startsWith("0x")) (value.drop(2), 16)
+                  else if (value.startsWith("0b")) (value.drop(2), 2)
+                  else (value, 10)
+                try
+                  Some((BigInt(numStr, base).toString, sourcePos))
+                catch {
+                  case _: NumberFormatException => None
+                }
+              case _ => None
+            },
+            (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
+            "Expected integer literal"
+          ),
+          "Error parsing integer"
+        )
       case Right(Token.RationalLiteral(value, _)) =>
         // this.state is already set to current
-        parseRational()
+        withCommentsAndErrorHandling(
+          parseLiteral(
+            {
+              case Token.RationalLiteral(value, sourcePos) =>
+                try
+                  Some((value, sourcePos))
+                catch {
+                  case _: NumberFormatException => None
+                }
+              case _ => None
+            },
+            (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
+            "Expected rational literal"
+          ),
+          "Error parsing rational number"
+        )
       case Right(Token.StringLiteral(_, _)) =>
         // this.state is already set to current
-        parseString()
+        withCommentsAndErrorHandling(
+          parseLiteral(
+            token =>
+              PartialFunction.condOpt(token) { case Token.StringLiteral(chars, sourcePos) =>
+                (charsToString(chars), sourcePos)
+              },
+            (value, meta) => ConcreteStringLiteral(value, meta),
+            "Expected string literal"
+          ),
+          "Error parsing string"
+        )
       case Right(Token.SymbolLiteral(value, _)) =>
         // this.state is already set to current
-        parseSymbol()
+        withCommentsAndErrorHandling(
+          parseLiteral(
+            token =>
+              PartialFunction.condOpt(token) { case Token.SymbolLiteral(value, sourcePos) =>
+                (value, sourcePos)
+              },
+            chester.syntax.concrete.SymbolLiteral.apply,
+            "Expected symbol literal"
+          ),
+          "Error parsing symbol"
+        )
 
       case Right(Token.LBracket(_)) =>
         // this.state is already set to current
@@ -1008,24 +1080,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Left(error) =>
         Left(error)
     }
-  }
-
-  // Helper to check if current state has a terminator
-  private def isAtTerminator(context: ReaderContext = ReaderContext()): Boolean = this.state.isAtTerminator
-
-  /** Parses a sequence of expressions typically used in tuples or function calls. Allows semicolons as separators in addition to commas. Expects a
-    * closing parenthesis `)`.
-    */
-  private def parseTupleExprList(startPos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, Vector[Expr]] = {
-    // Skip any comments at the start
-    skipComments()
-    parseElementSequence(
-      closingTokenPredicate = _.isInstanceOf[Token.RParen],
-      allowSemicolon = true,
-      startPosForError = startPos,
-      contextDescription = "tuple or argument list",
-      context = context
-    )
   }
 
   /** Parses a sequence of comma-separated (and optionally semicolon-separated) expressions until a specific closing token is found. Handles comment
@@ -1158,7 +1212,17 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       // Comments are handled within parseTupleExprList and pullComments below
 
       // Parse the expression list using the new helper via parseTupleExprList
-      parseTupleExprList(sourcePos, context = context).flatMap { exprs =>
+      {
+        // Skip any comments at the start
+        skipComments()
+        parseElementSequence(
+          closingTokenPredicate = _.isInstanceOf[Token.RParen],
+          allowSemicolon = true,
+          startPosForError = sourcePos,
+          contextDescription = "tuple or argument list",
+          context = context
+        )
+      }.flatMap { exprs =>
         // Skip comments after the expressions
         skipComments()
         // We'll pull these comments later
@@ -1568,14 +1632,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     * @return
     *   the previous state before advancing
     */
-  private def advance(): Unit =
+  private inline def advance(): Unit =
     this.state = this.state.advance()
 
   /** Helper method to clear pending tokens from the lexer state
     * @return
     *   the previous state before clearing
     */
-  private def clearPendingTokens(): Unit =
+  private inline def clearPendingTokens(): Unit =
     this.state = this.state.clearPendingTokens()
 
   /** Skips all comments and whitespace tokens, updating this.state directly. All skipped tokens are automatically added to the state's pendingTokens
@@ -1636,47 +1700,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       trailingComments: Vector[Comment] = Vector.empty
   ): Option[ExprMeta] =
     ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments, trailingComments))
-
-  // Helper for creating function calls
-  private def createFunctionCall(
-      func: Expr,
-      args: Expr,
-      startSourcePos: Option[SourcePos],
-      endSourcePos: Option[SourcePos]
-  ): FunctionCall =
-    FunctionCall(
-      func,
-      args.asInstanceOf[Tuple],
-      createMeta(startSourcePos, endSourcePos)
-    )
-
-  // Special version for type parameters
-  private def createFunctionCallWithTypeParams(
-      func: Expr,
-      typeParams: ListExpr,
-      startSourcePos: Option[SourcePos],
-      endSourcePos: Option[SourcePos]
-  ): FunctionCall =
-    FunctionCall(
-      func,
-      typeParams,
-      createMeta(startSourcePos, endSourcePos)
-    )
-
-  // Parse a function call with the given identifier
-  private def parseFunctionCallWithId(
-      identifier: ConcreteIdentifier,
-      context: ReaderContext = ReaderContext()
-  ): Either[ParseError, FunctionCall] =
-    this.state.current match {
-      case Right(Token.LParen(_)) =>
-        parseTuple(context = context).map { args =>
-          val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
-          createFunctionCall(identifier, args, funcSourcePos, Some(this.state.sourcePos))
-        }
-      case _ =>
-        Left(ParseError("Expected left parenthesis for function call", this.state.sourcePos.range.start))
-    }
 
   /** Generic parser combinator that adds comment handling to any parse method */
   // New overload for methods that return just an expression using mutable state
@@ -1793,19 +1816,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseString(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] =
-    withCommentsAndErrorHandling(
-      parseLiteral(
-        token =>
-          PartialFunction.condOpt(token) { case Token.StringLiteral(chars, sourcePos) =>
-            (charsToString(chars), sourcePos)
-          },
-        (value, meta) => ConcreteStringLiteral(value, meta),
-        "Expected string literal"
-      ),
-      "Error parsing string"
-    )
-
   // Create a helper method for parsing literals with common pattern
   private def parseLiteral[T <: Expr](
       extract: Token => Option[(String, SourcePos)],
@@ -1826,61 +1836,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
       case Left(err) => Left(err)
     }
-
-  // Helper functions for other literal types
-  private def parseInt(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] =
-    withCommentsAndErrorHandling(
-      parseLiteral(
-        {
-          case Token.IntegerLiteral(value, sourcePos) =>
-            // Handle different bases
-            val (numStr, base) =
-              if (value.startsWith("0x")) (value.drop(2), 16)
-              else if (value.startsWith("0b")) (value.drop(2), 2)
-              else (value, 10)
-            try
-              Some((BigInt(numStr, base).toString, sourcePos))
-            catch {
-              case _: NumberFormatException => None
-            }
-          case _ => None
-        },
-        (value, meta) => ConcreteIntegerLiteral(BigInt(value), meta),
-        "Expected integer literal"
-      ),
-      "Error parsing integer"
-    )
-
-  private def parseRational(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] =
-    withCommentsAndErrorHandling(
-      parseLiteral(
-        {
-          case Token.RationalLiteral(value, sourcePos) =>
-            try
-              Some((value, sourcePos))
-            catch {
-              case _: NumberFormatException => None
-            }
-          case _ => None
-        },
-        (value, meta) => ConcreteRationalLiteral(spire.math.Rational(BigDecimal(value)), meta),
-        "Expected rational literal"
-      ),
-      "Error parsing rational number"
-    )
-
-  private def parseSymbol(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] =
-    withCommentsAndErrorHandling(
-      parseLiteral(
-        token =>
-          PartialFunction.condOpt(token) { case Token.SymbolLiteral(value, sourcePos) =>
-            (value, sourcePos)
-          },
-        chester.syntax.concrete.SymbolLiteral.apply,
-        "Expected symbol literal"
-      ),
-      "Error parsing symbol"
-    )
 
   // Helper to create identifier expressions
   private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos, context: ReaderContext = ReaderContext()): ConcreteIdentifier =
