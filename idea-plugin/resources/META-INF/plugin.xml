@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>chester.language.plugin</id>
+    <id>chester.plugin</id>
     <name>Chester Language Support</name>
     <version>0.0.33</version>
     <vendor>mio-19</vendor>
