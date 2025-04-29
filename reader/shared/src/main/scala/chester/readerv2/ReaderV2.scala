@@ -75,16 +75,13 @@ case class ReaderState(
 
 object ReaderV2 {
   val DEBUG: Parameter[Boolean] = Parameter.withDefault(false)
-  private val MAX_LIST_ELEMENTS = 50 // Constants for parser configuration
 }
-
-import ReaderV2.DEBUG
 
 class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) {
 
   var state: ReaderState = initState
 
-  private def debug(msg: => String): Unit = if (DEBUG.get) println(s"[DEBUG] $msg")
+  private def debug(msg: => String): Unit = if (ReaderV2.DEBUG.get) println(s"[DEBUG] $msg")
 
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
@@ -768,7 +765,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     })
 
     // Log if pattern is detected and debug is enabled
-    if (DEBUG.get && hasNewline) debug("}\n check: pattern detected")
+    if (ReaderV2.DEBUG.get && hasNewline) debug("}\n check: pattern detected")
     hasNewline
   }
 
@@ -1099,11 +1096,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       accumulatedExprs: Vector[Expr] = Vector.empty,
       context: ReaderContext = ReaderContext()
   ): Either[ParseError, Vector[Expr]] = {
-
-    if (accumulatedExprs.length >= ReaderV2.MAX_LIST_ELEMENTS) {
-      return Left(ParseError(t"Too many elements in $contextDescription (maximum is ${ReaderV2.MAX_LIST_ELEMENTS})", startPosForError.range.start))
-    }
-
     // Skip comments and whitespace before checking the token
     skipComments()
 
@@ -1255,14 +1247,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
     var statements = Vector.empty[Expr]
     var currentResult: Option[Expr] = None
-    val maxExpressions = 100 // Prevent infinite loops
 
     @tailrec
-    def loop(count: Int): Either[ParseError, Unit] = {
-      if (count <= 0) {
-        return Left(ParseError(s"Too many expressions in $contextDescription", this.state.sourcePos.range.start))
-      }
-
+    def loop(): Either[ParseError, Unit] = {
       // Skip comments/whitespace before checking for terminator or next statement
       skipComments()
       val stateBeforePossibleExpr = this.state // Remember state
@@ -1319,7 +1306,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
           // --- Parse the next expression ---
           debug(s"parseStatementSequence: Attempting to parse expression in $contextDescription at ${this.state.current}")
-          this.state // State before parsing the expression
           parseExpr(context = context) match {
             case Left(err) =>
               // Check if the error occurred because we expected an expression but found a terminator
@@ -1364,7 +1350,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   debug(s"parseStatementSequence: Terminator found after treating '}\\n' as statement end in $contextDescription.")
                   Right(()) // End loop, sequence finished
                 } else {
-                  loop(count - 1) // Continue parsing more statements
+                  loop() // Continue parsing more statements
                 }
               } else {
                 // --- Original logic: Treat as potential result ---
@@ -1385,7 +1371,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 } else {
                   // Not followed immediately by terminator. It might be followed by a separator, or another expression.
                   // Loop again. The start of the next loop will handle separators and moving the currentResult.
-                  loop(count - 1)
+                  loop()
                 }
               }
           }
@@ -1394,7 +1380,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
 
     // Start the loop
-    loop(maxExpressions).map(_ => (statements, currentResult))
+    loop().map(_ => (statements, currentResult))
   }
 
   // Parses a sequence of expressions, typically representing a top-level file or block
