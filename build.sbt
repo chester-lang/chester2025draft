@@ -202,6 +202,7 @@ val defaultNativeImageOptions = Seq(
 val jdk17: Boolean = false
 val jdk21: Boolean = false
 val javaOutputVersion: String = "11"
+val testJavaOutputVersion: String = "17"
 
 def commonSettings0 = Seq(
   // Workaround for Metals: disable BSP for native/js targets to prevent compilation issues
@@ -298,13 +299,13 @@ def scala2Common = Seq(
 def commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala3Lib,
-  scalacOptions ++= Seq("-java-output-version", "11"),
+  scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
   scalacOptions += "-nowarn"
 )
 def scala2VendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala2Version,
-  scalacOptions ++= Seq("-java-output-version", "11"),
+  scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
   scalacOptions += "-nowarn"
 )
 def cpsSettings = Seq(
@@ -316,7 +317,8 @@ def cpsSettings = Seq(
 def commonJvmSettings = Seq(
   scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
   scalacOptions ++= (if (jdk21) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk21") else Seq()),
-  scalacOptions ++= Seq("-java-output-version", javaOutputVersion)
+  Compile / scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
+  Test / scalacOptions ++= Seq("-java-output-version", testJavaOutputVersion)
 )
 def jvmScala3Settings = Seq(
   scalaVersion := scala3Nightly
