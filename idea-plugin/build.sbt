@@ -1,7 +1,7 @@
 import org.jetbrains.sbtidea.Keys._
 
 
-ThisBuild / intellijPluginName := "Chester Language Support"
+ThisBuild / intellijPluginName := "Chester"
 ThisBuild / intellijBuild := "243.23654.117"
 ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity
 
