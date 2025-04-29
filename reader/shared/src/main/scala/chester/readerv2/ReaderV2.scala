@@ -1385,7 +1385,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   // Parses a sequence of expressions, typically representing a top-level file or block
   // Returns a Block containing all parsed expressions.
-  // TODO: withModifiedState LOGIC IS BUGGY
   def parseTopLevel(context0: ReaderContext = ReaderContext()): Either[ParseError, Block] = {
     val context = context0.copy(newLineAfterBlockMeansEnds = true)
     val startPos = state.sourcePos // Capture start position
