@@ -24,5 +24,8 @@
     "cli.js",
     "main.js",
     "main.js.map"
-  ]
+  ],
+  "dependencies": {
+    "ts-morph": "^25.0.1"
+  }
 }
