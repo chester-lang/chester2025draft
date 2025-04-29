@@ -776,7 +776,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     this.state.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) =>
         // Save identifier and advance
-        val field = createIdentifier(chars1, idSourcePos1)
+        val field = Identifier(charsToString(chars1), createMeta(Some(idSourcePos1), Some(idSourcePos1)))
         advance()
         var telescope = Vector.empty[Tuple]
 
@@ -937,7 +937,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         afterId.current match {
           case Right(Token.LBracket(_)) =>
             // Generic type parameters
-            val identifier = createIdentifier(chars, sourcePos)
+            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
             this.state = afterId
             parseList().flatMap { typeParams =>
               val afterTypeParams = this.state
@@ -972,7 +972,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             }
           case Right(Token.LParen(_)) =>
             // Regular function call
-            val identifier = createIdentifier(chars, sourcePos)
+            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
             this.state = afterId
             this.state.current match {
               case Right(Token.LParen(_)) =>
@@ -990,7 +990,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           case _ =>
             // Plain identifier
             this.state = afterId
-            Right(createIdentifier(chars, sourcePos))
+            Right(Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
         }
 
       case Right(Token.IntegerLiteral(value, _)) =>
@@ -1815,10 +1815,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
       case Left(err) => Left(err)
     }
-
-  // Helper to create identifier expressions
-  private def createIdentifier(chars: Vector[StringChar], sourcePos: SourcePos, context: ReaderContext = ReaderContext()): Identifier =
-    Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
 
   // Restore public API for parsing expression lists, calling the new helper
   def parseExprList(context: ReaderContext = ReaderContext()): Either[ParseError, Vector[Expr]] = {
