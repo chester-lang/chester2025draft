@@ -134,6 +134,9 @@ sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter 
 
 sealed trait ParsedExpr extends Expr derives ReadWriter {
   override type ThisTree <: ParsedExpr
+
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ParsedExpr
+
 }
 
 sealed trait MaybeSaltedExpr extends Expr derives ReadWriter {
@@ -567,7 +570,7 @@ case class IntegerLiteral(value: BigInt, meta: Option[ExprMeta]) extends Literal
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): IntegerLiteral = this
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): IntegerLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc =
@@ -579,7 +582,7 @@ case class RationalLiteral(value: Rational, meta: Option[ExprMeta]) extends Lite
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): RationalLiteral = this
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): RationalLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc =
@@ -597,7 +600,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
       s"StringLiteral(\"${encodeString(value)}\", $pos)"
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): StringLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc =
@@ -609,7 +612,7 @@ case class SymbolLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): SymbolLiteral = this
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): SymbolLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using PrettierOptions): Doc =

@@ -5,7 +5,7 @@ import chester.reader.{ParseError, Source}
 import chester.syntax.concrete.{
   Block,
   DotCall,
-  Expr,
+  ParsedExpr,
   ExprMeta,
   FunctionCall,
   ListExpr,
@@ -158,7 +158,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Helper for building operator sequences Gets comments directly from pendingTokens via pullComments()
     */
-  private def buildOpSeq(terms: Vector[Expr], context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def buildOpSeq(terms: Vector[ParsedExpr], context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
     debug(t"Building OpSeq with terms: $terms")
     // Get any collected comments from pendingTokens
     val comments = pullComments()
@@ -176,7 +176,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Main expression continuation parser. Uses skipComments() and pullComments() internally to handle comments without passing them around.
     */
-  private def parseRest(expr: Expr, context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def parseRest(expr: ParsedExpr, context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
     var localTerms = Vector(expr)
     debug(t"parseRest called with expr: $expr, state: ${this.state}, current terms: $localTerms")
 
@@ -577,11 +577,11 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
   private def handleBlockArgument(
-      expr: Expr,
-      terms: Vector[Expr],
+      expr: ParsedExpr,
+      terms: Vector[ParsedExpr],
       braceSourcePos: SourcePos,
       context: ReaderContext = ReaderContext()
-  ): Either[ParseError, Expr] =
+  ): Either[ParseError, ParsedExpr] =
     // this.state is already set correctly
     parseBlock(context0 = context).flatMap { block =>
       // parseBlock has already updated this.state
@@ -656,11 +656,11 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
 
   // Main parsing methods
-  def parseExpr(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  def parseExpr(context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
     // Skip comments and whitespace, storing them internally in pendingTokens
     skipComments()
     // Initialize terms vector for expressions
-    var terms = Vector.empty[Expr]
+    var terms = Vector.empty[ParsedExpr]
     debug(t"Starting parseExpr with state: ${this.state}")
 
     // Main parsing logic - handle different token types
@@ -769,7 +769,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     hasNewline
   }
 
-  private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[Expr], context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[ParsedExpr], context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
     // Skip the dot
     advance()
 
@@ -780,7 +780,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         advance()
         var telescope = Vector.empty[Tuple]
 
-        def parseNextTelescope(): Either[ParseError, Expr] =
+        def parseNextTelescope(): Either[ParseError, ParsedExpr] =
           this.state.current match {
             case Right(Token.LParen(_)) =>
               parseTuple().flatMap { args =>
@@ -843,7 +843,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseAtom(context: ReaderContext = ReaderContext()): Either[ParseError, Expr] = {
+  private def parseAtom(context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
     // Save original state for error handling
     val originalState = this.state
 
@@ -1093,9 +1093,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       allowSemicolon: Boolean,
       startPosForError: SourcePos,
       contextDescription: String,
-      accumulatedExprs: Vector[Expr] = Vector.empty,
+      accumulatedExprs: Vector[ParsedExpr] = Vector.empty,
       context: ReaderContext = ReaderContext()
-  ): Either[ParseError, Vector[Expr]] = {
+  ): Either[ParseError, Vector[ParsedExpr]] = {
     // Skip comments and whitespace before checking the token
     skipComments()
 
@@ -1244,9 +1244,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       isTerminator: ReaderState => Boolean,
       contextDescription: String,
       context: ReaderContext = ReaderContext()
-  ): Either[ParseError, (Vector[Expr], Option[Expr])] = {
-    var statements = Vector.empty[Expr]
-    var currentResult: Option[Expr] = None
+  ): Either[ParseError, (Vector[ParsedExpr], Option[ParsedExpr])] = {
+    var statements = Vector.empty[ParsedExpr]
+    var currentResult: Option[ParsedExpr] = None
 
     @tailrec
     def loop(): Either[ParseError, Unit] = {
@@ -1489,7 +1489,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Left(err) => Left(err)
     }
 
-  private def parseField(key: Expr, keySourcePos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
+  private def parseField(key: ParsedExpr, keySourcePos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
     this.state.current match {
       case Right(Token.Operator(op, _)) =>
         advance()
@@ -1682,7 +1682,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   /** Generic parser combinator that adds comment handling to any parse method */
   // New overload for methods that return just an expression using mutable state
-  private def withComments[T <: Expr](
+  private def withComments[T <: ParsedExpr](
       parseMethod: () => Either[ParseError, T]
   ): Either[ParseError, T] = {
     // Save original state
@@ -1751,7 +1751,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
 
   // Helper that combines collecting comments and parsing with error handling
-  private def withCommentsAndErrorHandling[T <: Expr](
+  private def withCommentsAndErrorHandling[T <: ParsedExpr](
       parser: => Either[ParseError, T],
       errorMsg: String
   ): Either[ParseError, T] = {
@@ -1796,7 +1796,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   }
 
   // Create a helper method for parsing literals with common pattern
-  private def parseLiteral[T <: Expr](
+  private def parseLiteral[T <: ParsedExpr](
       extract: Token => Option[(String, SourcePos)],
       create: (String, Option[ExprMeta]) => T,
       errorMsg: String,
@@ -1817,7 +1817,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
 
   // Restore public API for parsing expression lists, calling the new helper
-  def parseExprList(context: ReaderContext = ReaderContext()): Either[ParseError, Vector[Expr]] = {
+  def parseExprList(context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ParsedExpr]] = {
     // Skip any comments at the start *first*
     skipComments()
     // Now, determine the starting position from the current token

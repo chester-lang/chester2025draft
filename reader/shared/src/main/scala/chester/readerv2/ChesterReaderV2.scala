@@ -8,14 +8,6 @@ import chester.error.Pos
 import scala.language.implicitConversions
 
 object ChesterReaderV2 {
-  private implicit inline def dirtyFix1(x: Either[ParseError, Expr]): Either[ParseError, ParsedExpr] =
-    x.asInstanceOf[Either[ParseError, ParsedExpr]]
-  private implicit inline def dirtyFix2(x: Either[ParseError, Vector[Expr]]): Either[ParseError, Vector[ParsedExpr]] =
-    x.asInstanceOf[Either[ParseError, Vector[ParsedExpr]]]
-  private implicit inline def dirtyFix3(x: Either[ParseError, ParsedExpr]): Either[ParseError, Expr] =
-    x.asInstanceOf[Either[ParseError, Expr]]
-  private implicit inline def dirtyFix4(x: Either[ParseError, Vector[ParsedExpr]]): Either[ParseError, Vector[Expr]] =
-    x.asInstanceOf[Either[ParseError, Vector[Expr]]]
   // Helper method to set up tokenizer and lexer with common logic
   private def setupLexer(source: ParserSource, ignoreLocation: Boolean = false): ReaderV2 = {
     val sourceOffset = Source(source)
