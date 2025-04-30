@@ -101,7 +101,7 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
     case Some(pos) =>
       val locationHeader = Doc.text(t"Location") <+>
         Doc.text(
-          t"${pos.fileName} [${pos.range.start.line + Natural(1)}:${pos.range.start.column.i + Natural(1)}] to [${pos.range.end.line + Natural(1)}:${pos.range.end.column.i + Natural(1)}]",
+          t"${pos.fileName} [${pos.range.start.line + Natural(1)}:${pos.range.start.column.unicode + Natural(1)}] to [${pos.range.end.line + Natural(1)}:${pos.range.end.column.unicode + Natural(1)}]",
           Styling.BoldOn
         )
 

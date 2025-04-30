@@ -17,7 +17,7 @@ class ParserTest extends FunSuite {
           case Some(pos) =>
             assertEquals(pos.fileName, "testFile")
             assertEquals(pos.range.start.line.asInt, 0)
-            assertEquals(pos.range.start.column.i.asInt, 0)
+            assertEquals(pos.range.start.column.unicode.asInt, 0)
           case None => fail("Source position not found")
         }
       case _ => fail("Parsing failed")
@@ -34,7 +34,7 @@ class ParserTest extends FunSuite {
           case Some(pos) =>
             assertEquals(pos.fileName, "testFile")
             assertEquals(pos.range.start.line.asInt, 0)
-            assertEquals(pos.range.start.column.i.asInt, 0)
+            assertEquals(pos.range.start.column.unicode.asInt, 0)
           case None => fail("Source position not found")
         }
       case _ => fail("Parsing failed")
