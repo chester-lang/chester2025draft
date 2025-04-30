@@ -298,7 +298,8 @@ def scala2Common = Seq(
   )
 )
 def scala2JVM = Seq(
-  scalaVersion := scala2Beta
+  scalaVersion := scala2Beta,
+  semanticdbEnabled := false // not supported for beta
 )
 def commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
