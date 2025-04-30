@@ -121,15 +121,15 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Creates expression metadata from source positions and comments. */
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] =
     if (ignoreLocation) None
-    else
-      PartialFunction.condOpt((startPos, endPos)) {
-        case (Some(start), Some(end)) =>
-          ExprMeta(Some(SourcePos(source, RangeInFile(start.range.start, end.range.end))), None)
-        case (Some(pos), None) =>
-          ExprMeta(Some(pos), None)
-        case (None, Some(pos)) =>
-          ExprMeta(Some(pos), None)
-      }
+    else (startPos, endPos) match {
+      case (Some(start), Some(end)) =>
+        ExprMeta.maybe(Some(SourcePos(source, RangeInFile(start.range.start, end.range.end))))
+      case (Some(pos), _) =>
+        ExprMeta.maybe(Some(pos))
+      case (_, Some(pos)) =>
+        ExprMeta.maybe(Some(pos))
+      case _ => None
+    }
 
   private def getStartPos(token: Either[ParseError, Token]): Pos =
     token.fold(_.pos, _.sourcePos.range.start)
@@ -1484,19 +1484,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   }
 
   // Helper method to check if whitespace contains a newline
-  private def isNewlineWhitespace(token: Token): Boolean = {
-    val maybeSource = source.readContent.toOption
-    maybeSource.exists { source =>
-      val startPos = token.sourcePos.range.start.index.utf16
-      val endPos = token.sourcePos.range.end.index.utf16
-      if (startPos.asInt < source.length && endPos.asInt <= source.length) {
-        val whitespaceText = source.substring(startPos.asInt, endPos.asInt)
-        whitespaceText.contains('\n')
-      } else {
-        false
-      }
+  private def isNewlineWhitespace(token: Token): Boolean = 
+    source.readContent.toOption.exists { src =>
+      val startPos = token.sourcePos.range.start.index.utf16.asInt
+      val endPos = token.sourcePos.range.end.index.utf16.asInt
+      startPos < src.length && endPos <= src.length && 
+        src.substring(startPos, endPos).contains('\n')
     }
-  }
 
   private def parseFields(clauses: Vector[ObjectClause], context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ObjectClause]] =
     this.state.current match {
@@ -1680,55 +1674,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   ): Option[ExprMeta] =
     ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments, trailingComments))
 
-  /** Generic parser combinator that adds comment handling to any parse method */
-  // New overload for methods that return just an expression using mutable state
-  private def withComments[T <: ParsedExpr](
-      parseMethod: () => Either[ParseError, T]
-  ): Either[ParseError, T] = {
-    // Save original state
-    val originalState = this.state
-
-    // Skip comments at the start
-    skipComments()
-
-    // Get any collected comments
-    val leadingComments = pullComments()
-
-    // Parse the expression using the provided method
-    val result = parseMethod().flatMap { expr =>
-      // Collect trailing comments (state is modified by collectTrailingComments)
-      val trailingComments = collectTrailingComments()
-      // State is already updated
-
-      // Update expression with comments
-      val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
-        expr.updateMeta { existingMeta =>
-          val newMeta = createMetaWithComments(
-            existingMeta.flatMap(_.sourcePos),
-            leadingComments,
-            trailingComments
-          )
-
-          // Merge the existing meta with new comment information
-          mergeMeta(existingMeta, newMeta)
-        }
-      } else {
-        expr
-      }
-
-      // Cast is safe because we're only modifying metadata
-      Right(updatedExpr.asInstanceOf[T])
-    }
-
-    // Restore original state in case of error
-    result match {
-      case Left(err) =>
-        this.state = originalState
-        Left(err)
-      case right => right
-    }
-  }
-
   private def createCommentInfo(
       leadingComments: Vector[CommOrWhite],
       trailingComments: Vector[Comment] = Vector.empty
@@ -1750,10 +1695,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case right     => right
     }
 
-  // Helper that combines collecting comments and parsing with error handling
-  private def withCommentsAndErrorHandling[T <: ParsedExpr](
-      parser: => Either[ParseError, T],
-      errorMsg: String
+  // Core implementation for comment handling
+  private def withCommentsCore[T <: ParsedExpr](
+      parser: => Either[ParseError, T]
   ): Either[ParseError, T] = {
     // Save original state
     val originalState = this.state
@@ -1764,8 +1708,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Get any collected comments
     val leadingComments = pullComments()
 
-    val result = withErrorHandling(parser, errorMsg).flatMap { expr =>
-      // Collect trailing comments
+    val result = parser.flatMap { expr =>
       // Collect trailing comments (state is updated directly by the method)
       val trailingComments = collectTrailingComments()
 
@@ -1794,6 +1737,17 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case right => right
     }
   }
+
+  /** Generic parser combinator that adds comment handling to any parse method */
+  private def withComments[T <: ParsedExpr](
+      parseMethod: () => Either[ParseError, T]
+  ): Either[ParseError, T] = withCommentsCore(parseMethod())
+
+  // Helper that combines collecting comments and parsing with error handling
+  private def withCommentsAndErrorHandling[T <: ParsedExpr](
+      parser: => Either[ParseError, T],
+      errorMsg: String
+  ): Either[ParseError, T] = withCommentsCore(withErrorHandling(parser, errorMsg))
 
   // Create a helper method for parsing literals with common pattern
   private def parseLiteral[T <: ParsedExpr](
