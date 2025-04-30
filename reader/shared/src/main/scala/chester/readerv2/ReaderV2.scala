@@ -5,7 +5,6 @@ import chester.reader.{ParseError, Source}
 import chester.syntax.concrete.{
   Block,
   DotCall,
-  ParsedExpr,
   ExprMeta,
   FunctionCall,
   ListExpr,
@@ -14,6 +13,7 @@ import chester.syntax.concrete.{
   ObjectExprClause,
   ObjectExprClauseOnValue,
   OpSeq,
+  ParsedExpr,
   Tuple
 }
 import chester.reader.FileNameAndContent
@@ -121,15 +121,16 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Creates expression metadata from source positions and comments. */
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] =
     if (ignoreLocation) None
-    else (startPos, endPos) match {
-      case (Some(start), Some(end)) =>
-        ExprMeta.maybe(Some(SourcePos(source, RangeInFile(start.range.start, end.range.end))))
-      case (Some(pos), _) =>
-        ExprMeta.maybe(Some(pos))
-      case (_, Some(pos)) =>
-        ExprMeta.maybe(Some(pos))
-      case _ => None
-    }
+    else
+      (startPos, endPos) match {
+        case (Some(start), Some(end)) =>
+          ExprMeta.maybe(Some(SourcePos(source, RangeInFile(start.range.start, end.range.end))))
+        case (Some(pos), _) =>
+          ExprMeta.maybe(Some(pos))
+        case (_, Some(pos)) =>
+          ExprMeta.maybe(Some(pos))
+        case _ => None
+      }
 
   private def getStartPos(token: Either[ParseError, Token]): Pos =
     token.fold(_.pos, _.sourcePos.range.start)
@@ -769,7 +770,11 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     hasNewline
   }
 
-  private def handleDotCall(dotSourcePos: SourcePos, terms: Vector[ParsedExpr], context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
+  private def handleDotCall(
+      dotSourcePos: SourcePos,
+      terms: Vector[ParsedExpr],
+      context: ReaderContext = ReaderContext()
+  ): Either[ParseError, ParsedExpr] = {
     // Skip the dot
     advance()
 
@@ -1193,14 +1198,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   // Helper method to parse delimited expressions (lists, tuples, etc.)
   private def parseDelimitedExpr[T](
-    context0: ReaderContext = ReaderContext(),
-    openingTokenMatcher: PartialFunction[Either[ParseError, Token], Token],
-    openingTokenDescription: String,
-    closingTokenPredicate: Token => Boolean,
-    closingTokenDescription: String,
-    allowSemicolon: Boolean,
-    contextDescription: String,
-    createResult: (Vector[ParsedExpr], Option[ExprMeta]) => T
+      context0: ReaderContext = ReaderContext(),
+      openingTokenMatcher: PartialFunction[Either[ParseError, Token], Token],
+      openingTokenDescription: String,
+      closingTokenPredicate: Token => Boolean,
+      closingTokenDescription: String,
+      allowSemicolon: Boolean,
+      contextDescription: String,
+      createResult: (Vector[ParsedExpr], Option[ExprMeta]) => T
   ): Either[ParseError, T] = {
     val context = context0.copy(inOpSeq = false, dontallowOpSeq = false, newLineAfterBlockMeansEnds = false, dontAllowBlockApply = false)
 
@@ -1234,10 +1239,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               val comments = pullComments()
               val meta = if (comments.nonEmpty) {
                 createMeta(Some(sourcePos), Some(this.state.sourcePos))
-                  .map(m => ExprMeta(
-                    m.sourcePos, 
-                    createCommentInfo(comments.collect { case c: Comment => c }, Vector.empty)
-                  ))
+                  .map(m =>
+                    ExprMeta(
+                      m.sourcePos,
+                      createCommentInfo(comments.collect { case c: Comment => c }, Vector.empty)
+                    )
+                  )
               } else {
                 createMeta(Some(sourcePos), Some(this.state.sourcePos))
               }
@@ -1253,7 +1260,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseList(context0: ReaderContext = ReaderContext()): Either[ParseError, ListExpr] = {
+  private def parseList(context0: ReaderContext = ReaderContext()): Either[ParseError, ListExpr] =
     parseDelimitedExpr(
       context0 = context0,
       openingTokenMatcher = { case Right(t: Token.LBracket) => t },
@@ -1264,9 +1271,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       contextDescription = "list",
       createResult = (exprs, meta) => ListExpr(exprs, meta)
     )
-  }
 
-  private def parseTuple(context0: ReaderContext = ReaderContext()): Either[ParseError, Tuple] = {
+  private def parseTuple(context0: ReaderContext = ReaderContext()): Either[ParseError, Tuple] =
     parseDelimitedExpr(
       context0 = context0,
       openingTokenMatcher = { case Right(t: Token.LParen) => t },
@@ -1277,7 +1283,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       contextDescription = "tuple or argument list",
       createResult = (exprs, meta) => Tuple(exprs, meta)
     )
-  }
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
@@ -1484,12 +1489,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   }
 
   // Helper method to check if whitespace contains a newline
-  private def isNewlineWhitespace(token: Token): Boolean = 
+  private def isNewlineWhitespace(token: Token): Boolean =
     source.readContent.toOption.exists { src =>
       val startPos = token.sourcePos.range.start.index.utf16.asInt
       val endPos = token.sourcePos.range.end.index.utf16.asInt
-      startPos < src.length && endPos <= src.length && 
-        src.substring(startPos, endPos).contains('\n')
+      startPos < src.length && endPos <= src.length &&
+      src.substring(startPos, endPos).contains('\n')
     }
 
   private def parseFields(clauses: Vector[ObjectClause], context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ObjectClause]] =

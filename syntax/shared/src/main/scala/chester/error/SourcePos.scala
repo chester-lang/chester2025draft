@@ -10,8 +10,6 @@ import chester.utils.impls.naturalRW
 import chester.utils.asInt
 
 import scala.annotation.tailrec
-import com.github.plokhotnyuk.jsoniter_scala.macros._
-import com.github.plokhotnyuk.jsoniter_scala.core._
 
 case class Pos(index: WithUTF16, line: spire.math.Natural, column: WithUTF16) derives ReadWriter
 

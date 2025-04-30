@@ -298,8 +298,8 @@ def scala2Common = Seq(
   )
 )
 def scala2JVM = Seq(
-  scalaVersion := scala2Beta,
-  semanticdbEnabled := false // not supported for beta
+  // scalaVersion := scala2Beta,
+// semanticdbEnabled := false // not supported for beta
 )
 def commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
@@ -577,7 +577,7 @@ lazy val utils = useSpire(
         "com.outr" %%% "scribe" % "3.16.1",
         "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.35.2",
         "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.35.2",
-        "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION, // Logging
+        "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
         "org.wvlet.airframe" %%% "airframe-codec" % AIRFRAME_VERSION, // MessagePack-based schema-on-read codec
@@ -724,7 +724,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
     // scalap is a dependency of scalameta
     libraryDependencies += ("org.scala-lang" % "scalap" % scala2Version).exclude("org.jline", "jline")
   )
-  .jvmSettings(commonJvmSettings,scala2JVM)
+  .jvmSettings(commonJvmSettings, scala2JVM)
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
