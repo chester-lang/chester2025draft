@@ -4,6 +4,7 @@ val scala3Nightly = "3.7.1-RC1-bin-20250428-08f2e4a-NIGHTLY"
 val scala3Version = "3.7.0-RC4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
+val scala2Beta = "2.13.17-M1"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
@@ -295,6 +296,12 @@ def scala2Common = Seq(
     ExclusionRule("org.scala-native", "junit-runtime_native0.5_3"),
     ExclusionRule("org.scala-native", "test-interface_native0.5_3")
   )
+)
+def scala2JVM = Seq(
+  scalaVersion := scala2Beta
+)
+def scala2Native = Seq(
+  scalaVersion := scala2Beta
 )
 def commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
@@ -719,7 +726,8 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
     // scalap is a dependency of scalameta
     libraryDependencies += ("org.scala-lang" % "scalap" % scala2Version).exclude("org.jline", "jline")
   )
-  .jvmSettings(commonJvmSettings)
+  .jvmSettings(commonJvmSettings,scala2JVM)
+  .nativeSettings(scala2Native)
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
