@@ -2,32 +2,30 @@ package chester.readerv2
 import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, SourceOffset}
 import chester.syntax.concrete.*
 import chester.utils.WithUTF16
-import chester.error.Pos
 
 import scala.language.implicitConversions
 
 object ChesterReaderV2 {
   // Helper method to set up tokenizer and lexer with common logic
-  private def setupLexer(source: ParserSource, ignoreLocation: Boolean = false): ReaderV2 = {
-    val sourceOffset = Source(source)
-    val tokenizer = new Lexer(sourceOffset)
+  private def setupLexer(source: Source, ignoreLocation: Boolean = false): ReaderV2 = {
+    val tokenizer = new Lexer(source)
     val tokens = tokenizer.tokenize()
     val initialState = ReaderState(tokens.toVector, 0)
-    new ReaderV2(initialState, sourceOffset, ignoreLocation)
+    new ReaderV2(initialState, source, ignoreLocation)
   }
 
   def parseExpr(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, ParsedExpr] = {
-    val lexer = setupLexer(source, ignoreLocation)
+    val lexer = setupLexer(Source(source), ignoreLocation)
     lexer.parseExpr()
   }
 
   def parseExprList(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, Vector[ParsedExpr]] = {
-    val lexer = setupLexer(source, ignoreLocation)
+    val lexer = setupLexer(Source(source), ignoreLocation)
     lexer.parseExprList()
   }
 
   def parseTopLevel(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, ParsedExpr] = {
-    val lexer = setupLexer(source, ignoreLocation)
+    val lexer = setupLexer(Source(source), ignoreLocation)
     lexer.parseTopLevel()
   }
 
@@ -60,23 +58,8 @@ object ChesterReaderV2 {
         posOffset = posOffset
       )
     )
-    // V2 reader setup might involve error handling during lexing itself
-    try {
-      val tokenizer = new Lexer(source)
-      val tokens = tokenizer.tokenize().toVector
-      // Check for lexer errors first
-      tokens.collectFirst { case Left(err) => err } match {
-        case Some(lexError) => Left(lexError)
-        case None =>
-          val readerState = ReaderState(tokens, 0)
-          val reader = new ReaderV2(readerState, source, ignoreLocation)
-          reader.parseExpr()
-      }
-    } catch {
-      // Catch potential exceptions during lexer/parser initialization or execution
-      // Although ReaderV2 is designed to return Either, safeguard against unexpected throws.
-      case e: Exception => Left(ParseError(s"Unexpected error during parsing: ${e.getMessage}", Pos.zero))
-    }
+    val lexer = setupLexer(source, ignoreLocation)
+    lexer.parseExpr()
   }
 
   // Add other parsing methods here with the same pattern
