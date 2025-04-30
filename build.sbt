@@ -3,7 +3,7 @@
 val scala3Nightly = "3.7.1-RC1-bin-20250417-05b102a-NIGHTLY"
 val scala3Version = "3.7.0-RC3"
 val scala3Lib = "3.6.4"
-val scala2Version = "2.13.16"
+val scala2Version = "2.13.17-M1"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
@@ -25,9 +25,9 @@ import scala.util.Using
 
 addCommandAlias("testAll", ";rootJVM/test; rootJS/test; rootNative/test")
 addCommandAlias("testWinCi", ";rootJVM/test; rootJS/test; rootNative/compile") // we have some bugs on ci
-addCommandAlias("updates", ";dependencyUpdates; reload plugins; dependencyUpdates")
-addCommandAlias("format0", ";scalafmtAll; scalafmtSbt; rootJVM/scalafixAll")
-addCommandAlias("format", ";scalafmtAll; scalafmtSbt; rootJVM/scalafixAll; rootJS/scalafixAll; rootNative/scalafixAll")
+addCommandAlias("updates", "reload plugins; dependencyUpdates; reload return; dependencyUpdates;")
+addCommandAlias("format0", "scalafmtAll; scalafmtSbt; rootJVM/scalafixAll;")
+addCommandAlias("format", "scalafmtAll; scalafmtSbt; rootJVM/scalafixAll; rootJS/scalafixAll; rootNative/scalafixAll;")
 
 val scalafixRules = Seq(
   "AddExplicitImplicitTypes",
@@ -233,7 +233,7 @@ def commonSettings0 = Seq(
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.7-migration"),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.0" % Test,
+    "org.scalameta" %%% "munit" % "1.1.1" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
@@ -275,7 +275,7 @@ def scala2Common = Seq(
     "-Ytasty-reader"
   ),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.0" % Test cross CrossVersion.for2_13Use3,
+    "org.scalameta" %%% "munit" % "1.1.1" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
@@ -542,7 +542,7 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmSettings)
 
-val AIRFRAME_VERSION = "2025.1.8"
+val AIRFRAME_VERSION = "2025.1.10"
 
 // split modules trying to increase incremental compilation speed
 lazy val utils = useSpire(
@@ -713,7 +713,7 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(utils, syntax, err)
   .settings(
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.4")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.5")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -750,7 +750,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonJvmSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.13.4" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.5" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),

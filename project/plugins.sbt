@@ -19,6 +19,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 //addSbtPlugin("io.get-coursier" % "sbt-shading" % "2.1.5")
 
 dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
+dependencyUpdatesFilter -= moduleFilter(organization = "ch.epfl.scala")
 
 // cli tools
 resolvers ++= Resolver.sonatypeOssRepos("snapshots")
