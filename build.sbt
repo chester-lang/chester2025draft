@@ -693,10 +693,10 @@ lazy val testCommon = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jvmSettings(commonJvmSettings)
 
-lazy val semantic = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val semantics = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("semantic"))
+  .in(file("semantics"))
   .dependsOn(utils, syntax, err, compatibility % Test, testCommon % Test, reader % Test)
   .settings(
     commonSettings
@@ -722,7 +722,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("compiler"))
-  .dependsOn(semantic)
+  .dependsOn(semantics)
   .jvmConfigure(_.dependsOn(compiler213.jvm))
   .jsConfigure(_.dependsOn(compiler213.js))
   .settings(
@@ -736,7 +736,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("platform"))
-  .dependsOn(compatibility, compiler, semantic, core)
+  .dependsOn(compatibility, compiler, semantics, core)
   .jsConfigure(
     _.dependsOn(jsTypings.js)
   )
@@ -788,7 +788,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("core"))
-  .dependsOn(utils, reader, syntax, pretty, semantic)
+  .dependsOn(utils, reader, syntax, pretty, semantics)
   .settings(
     name := "core",
     assembly / assemblyOutputPath := file("target") / "chester-core.jar",
@@ -970,7 +970,7 @@ lazy val lsp = crossProject(JVMPlatform)
   .in(file("lsp"))
   .jvmEnablePlugins(NativeImagePlugin)
   // .enablePlugins(SbtProguard)
-  .dependsOn(buildProtocol, semantic, core)
+  .dependsOn(buildProtocol, semantics, core)
   .settings(
     libraryDependencies ++= Seq(
     ),
@@ -1032,7 +1032,7 @@ lazy val buildTool = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("build-tool"))
   .jvmEnablePlugins(NativeImagePlugin)
-  .dependsOn(buildProtocol, semantic, core)
+  .dependsOn(buildProtocol, semantics, core)
   .settings(
     name := "build-tool",
     Compile / mainClass := Some("chester.build.Main"),
@@ -1050,7 +1050,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("interpreter"))
-  .dependsOn(reader, semantic)
+  .dependsOn(reader, semantics)
   .settings(commonSettings)
   // https://github.com/b-studios/scala-graal-truffle-example/blob/c2747a6eece156f878c5b934116aaa00a2cd6311/build.sbt
   .settings(
@@ -1098,7 +1098,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val allprojects = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("project/allprojects"))
-  .dependsOn(utils, reader, compiler, compiler213, syntax, err, pretty, semantic, platform, lsp, cli, platform, core, interpreter)
+  .dependsOn(utils, reader, compiler, compiler213, syntax, err, pretty, semantics, platform, lsp, cli, platform, core, interpreter)
   .settings(
     commonSettings
   )
@@ -1118,7 +1118,7 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     syntax,
     err,
     pretty,
-    semantic,
+    semantics,
     platform,
     core,
     compatibility,
