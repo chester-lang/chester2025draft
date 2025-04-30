@@ -8,6 +8,8 @@ import chester.i18n.*
 import chester.readerv2.ChesterReaderV2
 
 import scala.util.*
+import scala.util.boundary
+import boundary.break
 
 object ReaderREPL {
 
@@ -34,25 +36,31 @@ object ReaderREPL {
   def checkInputStatus(currentInput: String): InputStatus =
     checkUnclosedPairs(currentInput)
 
-  private def checkUnclosedPairs(input: String): InputStatus = {
+  private def checkUnclosedPairs(input: String): InputStatus = boundary {
     val stack = scala.collection.mutable.Stack[Char]()
     for ((char, index) <- input.zipWithIndex)
       char match {
         case '(' | '{' | '[' => stack.push(char)
         case ')' =>
           if (stack.isEmpty || stack.pop() != '(')
-            return InputStatus.Error(
-              t"Unmatched closing parenthesis at position $index"
+            break(
+              InputStatus.Error(
+                t"Unmatched closing parenthesis at position $index"
+              )
             )
         case ']' =>
           if (stack.isEmpty || stack.pop() != '[')
-            return InputStatus.Error(
-              t"Unmatched closing bracket at position $index"
+            break(
+              InputStatus.Error(
+                t"Unmatched closing bracket at position $index"
+              )
             )
         case '}' =>
           if (stack.isEmpty || stack.pop() != '{')
-            return InputStatus.Error(
-              t"Unmatched closing brace at position $index"
+            break(
+              InputStatus.Error(
+                t"Unmatched closing brace at position $index"
+              )
             )
         case _ => // Ignore other characters
       }
