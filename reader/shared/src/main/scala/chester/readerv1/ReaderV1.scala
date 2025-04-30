@@ -13,16 +13,11 @@ import spire.math.Natural
 import scala.util.*
 
 case class ReaderV1(
-    sourceOffset: Source,
+    source: Source,
     ignoreLocation: Boolean = false,
     defaultIndexer: Option[StringIndex] = None
 )(using p: P[?]) {
-  val fileName: String = sourceOffset.fileName
-  val linesOffset: spire.math.Natural = sourceOffset.offset.lineOffset
-  val posOffset: WithUTF16 = sourceOffset.offset.posOffset
-  // TODO: column offset for :t command in repl
-  if (linesOffset != Nat(0)) require(posOffset.nonZero)
-  if (posOffset.nonZero) require(linesOffset != Nat(0))
+  val fileName: String = source.fileName
 
   private def nEnd: P[Unit] = P("\n" | End)
 
@@ -92,17 +87,17 @@ case class ReaderV1(
     val endPos = indexer.charIndexToLineAndColumnWithUTF16(end.asInt)
     val range = RangeInFile(
       Pos(
-        posOffset + WithUTF16(indexer.charIndexToUnicodeIndex(begin), begin),
-        linesOffset + start.line,
+        WithUTF16(indexer.charIndexToUnicodeIndex(begin), begin),
+        start.line,
         start.column
       ),
       Pos(
-        posOffset + WithUTF16(indexer.charIndexToUnicodeIndex(end), end),
-        linesOffset + endPos.line,
+        WithUTF16(indexer.charIndexToUnicodeIndex(end), end),
+        endPos.line,
         endPos.column
       )
     )
-    Some(SourcePos(sourceOffset, range))
+    Some(source.offset.add(SourcePos(source, range)))
   }
 
   private def createMeta(

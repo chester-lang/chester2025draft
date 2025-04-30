@@ -7,6 +7,7 @@ import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOp
 import chester.i18n.*
 
 import scala.util.{Try, boundary}
+import boundary.break
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 
@@ -28,10 +29,10 @@ object Lexer {
   )
 }
 
-class Lexer(src: Source) {
-  import Lexer.*, boundary.break
+class Lexer(source: Source) {
+  import Lexer.*
 
-  private val text = src.readContent.getOrElse("")
+  private val text = source.readContent.getOrElse("")
   private var pos, line, col, utf16Pos = 0
 
   def tokenize(): TokenStream = LazyList.unfold(false)(done =>
@@ -40,18 +41,20 @@ class Lexer(src: Source) {
     else Some((nextToken, false))
   )
 
-  private def mkPos(start: Int, end: Int = pos) = SourcePos(
-    src,
-    RangeInFile(
-      Pos(
-        WithUTF16(Nat(start), Nat(text.substring(0, start).length)),
-        Nat(line),
-        WithUTF16(Nat(0), Nat(col))
-      ),
-      Pos(
-        WithUTF16(Nat(end), Nat(text.substring(0, end).length)),
-        Nat(line),
-        WithUTF16(Nat(end - start), Nat(text.substring(start, end).length))
+  private def mkPos(start: Int, end: Int = pos) = source.offset.add(
+    SourcePos(
+      source,
+      RangeInFile(
+        Pos(
+          WithUTF16(Nat(start), Nat(text.substring(0, start).length)),
+          Nat(line),
+          WithUTF16(Nat(0), Nat(col))
+        ),
+        Pos(
+          WithUTF16(Nat(end), Nat(text.substring(0, end).length)),
+          Nat(line),
+          WithUTF16(Nat(end - start), Nat(text.substring(start, end).length))
+        )
       )
     )
   )

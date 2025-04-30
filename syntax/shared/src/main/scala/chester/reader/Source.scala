@@ -60,7 +60,14 @@ case class Source(
 case class SourceOffset(
     lineOffset: spire.math.Natural = Nat(0),
     posOffset: WithUTF16 = WithUTF16.Zero
-) derives ReadWriter
+) derives ReadWriter {
+
+  if (lineOffset != Nat(0)) require(posOffset.nonZero)
+  if (posOffset.nonZero) require(lineOffset != Nat(0))
+  def add(x: Pos): Pos = Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)
+  def add(x: RangeInFile): RangeInFile = RangeInFile(start = add(x.start), end = add(x.end))
+  def add(x: SourcePos): SourcePos = SourcePos(source = x.source, range = add(x.range))
+}
 
 object SourceOffset {
   val Zero = SourceOffset()
