@@ -229,7 +229,6 @@ def commonSettings0 = Seq(
       "-deprecation",
       "-feature",
       "-experimental"
-      // "--preview"
     ),
   // required by scalafix?
   scalacOptions ++= Seq("-Wunused:all"), // "-Xlint:adapted-args"
@@ -329,7 +328,8 @@ def commonJvmSettings = Seq(
   Test / scalacOptions ++= Seq("-java-output-version", testJavaOutputVersion)
 )
 def jvmScala3Settings = Seq(
-  scalaVersion := scala3Nightly
+  scalaVersion := scala3Nightly,
+  scalacOptions ++= Seq("--preview")
 )
 
 val NativeImageOptions = sys.env.get("NATIVE_IMAGE_OPTIONS").map(_.split(" ").toList).getOrElse(List[String]())
