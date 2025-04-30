@@ -246,7 +246,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         {
           // Advance past the colon
           advance()
-          val updatedTerms = localTerms :+ Identifier(":", createMeta(Some(sourcePos), Some(sourcePos)))
+          val updatedTerms = localTerms :+ Identifier(":", createMeta(Some(sourcePos), None))
           debug(t"parseRest: After adding colon, terms: $updatedTerms")
 
           withComments(() => parseAtom(context = context)).flatMap { next =>
@@ -286,7 +286,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           advance()
 
           // Add operator to terms
-          val updatedTerms = localTerms :+ Identifier(op, createMeta(Some(sourcePos), Some(sourcePos)))
+          val updatedTerms = localTerms :+ Identifier(op, createMeta(Some(sourcePos), None))
 
           // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
           if (
@@ -337,7 +337,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             case Right(Token.LBracket(_)) =>
               debug("parseRest: Found lbracket after identifier - handling generic type parameters")
               // Create the identifier
-              val identifier = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val identifier = Identifier(text, createMeta(Some(sourcePos), None))
 
               // Parse the generic type parameters (list)
               parseList().flatMap { typeParams =>
@@ -430,9 +430,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               parseTuple(context0 = context).flatMap { tuple =>
                 // parseTuple has updated this.state
                 val functionCall = FunctionCall(
-                  Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
+                  Identifier(text, createMeta(Some(sourcePos), None)),
                   tuple,
-                  createMeta(Some(sourcePos), Some(sourcePos))
+                  createMeta(Some(sourcePos), None)
                 )
                 val updatedTerms = localTerms :+ functionCall
                 debug(t"parseRest: After function call, terms: $updatedTerms")
@@ -459,7 +459,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               parseObject() match {
                 case Right(objExpr) => // Object argument
                   debug(t"handleIdentifierInRest: Parsed object arg $objExpr after identifier $text")
-                  val idExpr = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                  val idExpr = Identifier(text, createMeta(Some(sourcePos), None))
                   val funcCall =
                     FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
                   val updatedTerms = localTerms :+ funcCall
@@ -478,7 +478,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   this.state = originalState // Restore state
                   debug(t"handleIdentifierInRest: Failed object parse, assuming block arg after identifier $text")
                   parseBlock().flatMap { block =>
-                    val id = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+                    val id = Identifier(text, createMeta(Some(sourcePos), None))
                     // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
                     val updatedTerms = localTerms :+ id :+ block
                     debug(t"parseRest: After block following identifier, terms: $updatedTerms")
@@ -498,8 +498,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
             case Right(Token.Operator(op, opSourcePos)) =>
               debug(t"parseRest: Found operator $op after identifier")
-              val id = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
-              val opId = Identifier(op, createMeta(Some(opSourcePos), Some(opSourcePos)))
+              val id = Identifier(text, createMeta(Some(sourcePos), None))
+              val opId = Identifier(op, createMeta(Some(opSourcePos), None))
               val updatedTerms = localTerms :+ id :+ opId
               debug(t"parseRest: After adding id and op, terms: $updatedTerms")
 
@@ -525,7 +525,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               }
             case _ =>
               debug(t"parseRest: Found bare identifier $text")
-              val id = Identifier(text, createMeta(Some(sourcePos), Some(sourcePos)))
+              val id = Identifier(text, createMeta(Some(sourcePos), None))
               val updatedTerms = localTerms :+ id
               debug(t"parseRest: After adding bare id, terms: $updatedTerms")
 
@@ -679,15 +679,15 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseTuple().map { tuple =>
               // parseTuple has already updated this.state
               FunctionCall(
-                Identifier(op, createMeta(Some(sourcePos), Some(sourcePos))),
+                Identifier(op, createMeta(Some(sourcePos), None)),
                 tuple,
-                createMeta(Some(sourcePos), Some(sourcePos))
+                createMeta(Some(sourcePos), None)
               )
             }
           // Prefix form: op expr
           case _ =>
             debug("parseExpr: Parsing atom after initial operator")
-            terms = Vector(Identifier(op, createMeta(Some(sourcePos), Some(sourcePos))))
+            terms = Vector(Identifier(op, createMeta(Some(sourcePos), None)))
             withComments(() => parseAtom()).flatMap { expr =>
               terms = terms :+ expr
               debug(t"parseExpr: After initial operator and atom, terms: $terms")
@@ -709,7 +709,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         debug(t"parseExpr: Starting with keyword operator ${charsToString(chars)}")
         // Advance past the keyword operator
         advance()
-        terms = Vector(Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
+        terms = Vector(Identifier(charsToString(chars), createMeta(Some(sourcePos), None)))
         withComments(() => parseAtom()).flatMap { expr =>
           terms = terms :+ expr
           debug(t"parseExpr: After initial keyword operator and atom, terms: $terms")
@@ -776,7 +776,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     this.state.current match {
       case Right(Token.Identifier(chars1, idSourcePos1)) =>
         // Save identifier and advance
-        val field = Identifier(charsToString(chars1), createMeta(Some(idSourcePos1), Some(idSourcePos1)))
+        val field = Identifier(charsToString(chars1), createMeta(Some(idSourcePos1), None))
         advance()
         var telescope = Vector.empty[Tuple]
 
@@ -813,7 +813,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         parseNextTelescope()
       case Right(Token.Operator(op, idSourcePos)) =>
         // Save operator, advance, and process
-        val field = Identifier(op, createMeta(Some(idSourcePos), Some(idSourcePos)))
+        val field = Identifier(op, createMeta(Some(idSourcePos), None))
         advance()
 
         this.state.current match {
@@ -937,7 +937,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         afterId.current match {
           case Right(Token.LBracket(_)) =>
             // Generic type parameters
-            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
+            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), None))
             this.state = afterId
             parseList().flatMap { typeParams =>
               val afterTypeParams = this.state
@@ -972,7 +972,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             }
           case Right(Token.LParen(_)) =>
             // Regular function call
-            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos)))
+            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), None))
             this.state = afterId
             this.state.current match {
               case Right(Token.LParen(_)) =>
@@ -990,7 +990,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           case _ =>
             // Plain identifier
             this.state = afterId
-            Right(Identifier(charsToString(chars), createMeta(Some(sourcePos), Some(sourcePos))))
+            Right(Identifier(charsToString(chars), createMeta(Some(sourcePos), None)))
         }
 
       case Right(Token.IntegerLiteral(value, _)) =>
@@ -1806,7 +1806,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(token) =>
         extract(token) match {
           case Some((value, sourcePos)) =>
-            val meta = createMeta(Some(sourcePos), Some(sourcePos))
+            val meta = createMeta(Some(sourcePos), None)
             // Advance the state after extracting the token
             advance()
             Right(create(value, meta))
