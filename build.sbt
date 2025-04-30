@@ -228,8 +228,8 @@ def commonSettings0 = Seq(
       "-Wnonunit-statement",
       "-deprecation",
       "-feature",
-      "-experimental",
-      //"--preview"
+      "-experimental"
+      // "--preview"
     ),
   // required by scalafix?
   scalacOptions ++= Seq("-Wunused:all"), // "-Xlint:adapted-args"
@@ -277,7 +277,7 @@ def scala2Common = Seq(
     "-Ytasty-reader"
   ),
   // required by scalafix?
-  scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
+  scalacOptions ++= Seq("-Xlint:adapted-args"), // "-Wunused:all",
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.1" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
