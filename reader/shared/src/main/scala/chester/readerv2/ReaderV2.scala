@@ -427,7 +427,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             case Right(Token.LParen(_)) =>
               debug("parseRest: Found lparen after identifier")
               // this.state is already set to the position after the identifier
-              parseTuple(context = context).flatMap { tuple =>
+              parseTuple(context0 = context).flatMap { tuple =>
                 // parseTuple has updated this.state
                 val functionCall = FunctionCall(
                   Identifier(text, createMeta(Some(sourcePos), Some(sourcePos))),
@@ -976,7 +976,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             this.state = afterId
             this.state.current match {
               case Right(Token.LParen(_)) =>
-                parseTuple(context = context).map { args =>
+                parseTuple(context0 = context).map { args =>
                   val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
                   FunctionCall(
                     identifier,
@@ -1191,7 +1191,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseTuple(context: ReaderContext = ReaderContext()): Either[ParseError, Tuple] = this.state.current match {
+  private def parseTuple(context0: ReaderContext = ReaderContext()): Either[ParseError, Tuple] = {
+    val context = context0.copy(inOpSeq = false,dontallowOpSeq = false,newLineAfterBlockMeansEnds=false,dontAllowBlockApply=false)
+    this.state.current match {
     case Right(Token.LParen(sourcePos)) =>
       // Advance past the left parenthesis and skip comments
       advance()
@@ -1237,7 +1239,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
       }
     case _ => Left(expectedError("left parenthesis", this.state.current))
-  }
+  }}
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
