@@ -229,7 +229,7 @@ def commonSettings0 = Seq(
       "-deprecation",
       "-feature",
       "-experimental",
-      "--preview"
+      //"--preview"
     ),
   scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   scalacOptions ++= Seq("-rewrite", "-source", "3.7-migration"),
