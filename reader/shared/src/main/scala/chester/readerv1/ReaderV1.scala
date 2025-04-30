@@ -5,11 +5,10 @@ import chester.reader.Source
 import chester.syntax.IdentifierRules.*
 import chester.syntax.concrete.*
 import chester.utils.parse.*
-import chester.utils.{StringIndex, WithUTF16}
+import chester.utils.{Nat, StringIndex, WithUTF16, asInt}
 import fastparse.*
 import fastparse.NoWhitespace.*
 import spire.math.Natural
-import chester.utils.asInt
 
 import scala.util.*
 
@@ -22,8 +21,8 @@ case class ReaderV1(
   val linesOffset: spire.math.Natural = sourceOffset.linesOffset
   val posOffset: WithUTF16 = sourceOffset.posOffset
   // TODO: column offset for :t command in repl
-  if (linesOffset != Natural(0)) require(posOffset.nonZero)
-  if (posOffset.nonZero) require(linesOffset != Natural(0))
+  if (linesOffset != Nat(0)) require(posOffset.nonZero)
+  if (posOffset.nonZero) require(linesOffset != Nat(0))
 
   private def nEnd: P[Unit] = P("\n" | End)
 
@@ -77,10 +76,10 @@ case class ReaderV1(
   )
 
   def begin: P[spire.math.Natural] =
-    Index.map(Natural(_))
+    Index.map(Nat(_))
 
   def end: P[spire.math.Natural] =
-    Index.map(Natural(_))
+    Index.map(Nat(_))
 
   val indexer: StringIndex = defaultIndexer.getOrElse(StringIndex(p.input))
 

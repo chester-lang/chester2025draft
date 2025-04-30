@@ -4,7 +4,7 @@ import upickle.default.*
 import chester.i18n.*
 import spire.math.Natural
 import chester.utils.impls.naturalRW
-import chester.utils.asInt
+import chester.utils.{Nat, asInt}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
@@ -15,7 +15,7 @@ type Uniqid = UniqidOf[Any]
 
 private val rwUniqID: ReadWriter[UniqidOf[Any]] = readwriter[Int].bimap(
   _.id.asInt, // Convert Natural ID to Int for serialization
-  x => UniqidOf(Natural(x)) // Convert Int back to Natural and wrap in UniqidOf
+  x => UniqidOf(Nat(x)) // Convert Int back to Natural and wrap in UniqidOf
 )
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqidOf[T]] = rwUniqID.asInstanceOf[ReadWriter[UniqidOf[T]]]
@@ -80,15 +80,15 @@ trait OnlyHasUniqid extends Any {
 trait HasUniqid extends Any with ContainsUniqid with OnlyHasUniqid {}
 
 object Uniqid {
-  def generate[T]: UniqidOf[T] = UniqidOf(Natural(uniqIdCounter.getAndIncrement()))
+  def generate[T]: UniqidOf[T] = UniqidOf(Nat(uniqIdCounter.getAndIncrement()))
 
   def requireRange(size: spire.math.Natural): UniqIdRange = { // size is Natural
     val sizeInt = size.asInt // Convert to Int for AtomicInteger
     val start = uniqIdCounter.getAndAdd(sizeInt) // Returns Int
-    UniqIdRange(Natural(start), Natural(start + sizeInt)) // Convert results back to Natural
+    UniqIdRange(Nat(start), Nat(start + sizeInt)) // Convert results back to Natural
   }
 
-  def currentOffset(): UniqidOffset = Natural(uniqIdCounter.get()) // Convert Int to Natural
+  def currentOffset(): UniqidOffset = Nat(uniqIdCounter.get()) // Convert Int to Natural
 
   def captureRange[T](f: => T): (UniqIdRange, T) = {
     val start = currentOffset()
@@ -111,7 +111,7 @@ object Uniqid {
     x.collectU(collecter)
     import spire.compat.ordering // Import ordering for Natural
     if (currentRangeCollect.isEmpty) UniqIdRange(currentOffset(), currentOffset())
-    else UniqIdRange(currentRangeCollect.map(_.id).min, currentRangeCollect.map(_.id).max + Natural(1))
+    else UniqIdRange(currentRangeCollect.map(_.id).min, currentRangeCollect.map(_.id).max + Nat(1))
   }
 
   case class GiveNewRangeResult[T <: ContainsUniqid](

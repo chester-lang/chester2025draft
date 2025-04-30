@@ -4,10 +4,8 @@ import chester.error.*
 import chester.i18n.*
 import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source}
 import chester.syntax.concrete.*
-import chester.utils.StringIndex
+import chester.utils.{Nat, StringIndex, WithUTF16}
 import fastparse.*
-import chester.utils.WithUTF16
-import spire.math.Natural
 
 import scala.util.*
 object ChesterReaderV1 {
@@ -36,7 +34,7 @@ object ChesterReaderV1 {
           case Parsed.Failure(_, index, extra) =>
             val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
             val p = Pos(
-              indexer.charIndexToWithUTF16(Natural(index)),
+              indexer.charIndexToWithUTF16(Nat(index)),
               pos.line,
               pos.column
             )
@@ -97,7 +95,7 @@ object ChesterReaderV1 {
         // Use the indexer associated with *this* content snippet for error reporting
         val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
         // Adjust the position by the global offsets
-        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(Natural(index))
+        val indexWithinContent: WithUTF16 = indexer.charIndexToWithUTF16(Nat(index))
         val finalIndex: WithUTF16 = posOffset + indexWithinContent
         val finalPos = Pos(
           finalIndex,

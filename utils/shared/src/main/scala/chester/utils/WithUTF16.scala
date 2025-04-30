@@ -15,11 +15,11 @@ case class WithUTF16(unicode: spire.math.Natural, utf16: spire.math.Natural) der
   def >=(other: WithUTF16): Boolean = unicode >= other.unicode && utf16 >= other.utf16
   def +(other: WithUTF16): WithUTF16 =
     WithUTF16(unicode + other.unicode, utf16 + other.utf16)
-  def isZero: Boolean = unicode == Natural(0) && utf16 == Natural(0)
-  def nonZero: Boolean = unicode != Natural(0) && utf16 != Natural(0)
+  def isZero: Boolean = unicode == Nat(0) && utf16 == Nat(0)
+  def nonZero: Boolean = unicode != Nat(0) && utf16 != Nat(0)
 }
 
 object WithUTF16 {
-  val Zero: WithUTF16 = WithUTF16(Natural(0), Natural(0))
-  val One: WithUTF16 = WithUTF16(Natural(1), Natural(1))
+  val Zero: WithUTF16 = WithUTF16(Nat(0), Nat(0))
+  val One: WithUTF16 = WithUTF16(Nat(1), Nat(1))
 }

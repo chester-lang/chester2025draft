@@ -2,7 +2,7 @@ package chester.reader
 
 import upickle.default.*
 import chester.error.*
-import chester.utils.WithUTF16
+import chester.utils.{Nat, WithUTF16}
 import chester.utils.doc.{Doc, PrettierOptions}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
@@ -50,7 +50,7 @@ case class FilePath private (fileName: String) extends ParserSource {
 // TODO: maybe column offset for the first line also
 case class Source(
     source: ParserSource,
-    linesOffset: spire.math.Natural = Natural(0),
+    linesOffset: spire.math.Natural = Nat(0),
     posOffset: WithUTF16 = WithUTF16.Zero
 ) derives ReadWriter {
   def fileName: String = source.fileName

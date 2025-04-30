@@ -3,7 +3,7 @@ package chester.reader
 import spire.math.Natural
 import chester.syntax.concrete.*
 import chester.utils.term.*
-import chester.utils.{StringIndex, WithUTF16, platformUseCRLF}
+import chester.utils.{Nat, StringIndex, WithUTF16, platformUseCRLF}
 import chester.i18n.*
 import chester.readerv2.ChesterReaderV2
 
@@ -26,8 +26,8 @@ object ReaderREPL {
 
     parseCompleteExpression(
       currentInput,
-      Natural(linesOffset),
-      WithUTF16(Natural(posOffsetUnicode), Natural(posOffsetUTF16))
+      Nat(linesOffset),
+      WithUTF16(Nat(posOffsetUnicode), Nat(posOffsetUTF16))
     )
   }
 

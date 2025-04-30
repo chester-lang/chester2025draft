@@ -27,8 +27,8 @@ case class StringIndex(stringList: LazyList[String]) {
 
   /** 0 <= charIndex <= charLength */
   def charIndexToUnicodeIndex(charIndex: spire.math.Natural): spire.math.Natural = {
-    var index = Natural(0)
-    var unicodeIndex = Natural(0)
+    var index = Nat(0)
+    var unicodeIndex = Nat(0)
     val it = stringIterator
     while (index < charIndex)
       if (it.hasNext) {
@@ -36,19 +36,19 @@ case class StringIndex(stringList: LazyList[String]) {
         if (index < charIndex && isHighSurrogate(char)) {
           val nextChar = if (it.hasNext) it.next() else '\u0000'
           if (isLowSurrogate(nextChar)) {
-            if (index + Natural(1) < charIndex) {
-              unicodeIndex = unicodeIndex + Natural(1)
-              index = index + Natural(2)
+            if (index + Nat(1) < charIndex) {
+              unicodeIndex = unicodeIndex + Nat(1)
+              index = index + Nat(2)
             } else {
-              index = index + Natural(1)
+              index = index + Nat(1)
             }
           } else {
-            unicodeIndex = unicodeIndex + Natural(1)
-            index = index + Natural(1)
+            unicodeIndex = unicodeIndex + Nat(1)
+            index = index + Nat(1)
           }
         } else {
-          unicodeIndex = unicodeIndex + Natural(1)
-          index = index + Natural(1)
+          unicodeIndex = unicodeIndex + Nat(1)
+          index = index + Nat(1)
         }
       } else {
         throw new IllegalArgumentException(
@@ -104,7 +104,7 @@ case class StringIndex(stringList: LazyList[String]) {
         )
       }
 
-    LineAndColumn(Natural(line), Natural(column))
+    LineAndColumn(Nat(line), Nat(column))
   }
 
   def charIndexToLineAndColumnWithUTF16(
@@ -159,7 +159,7 @@ case class StringIndex(stringList: LazyList[String]) {
         )
       }
 
-    LineAndColumn(Natural(line), Natural(column))
+    LineAndColumn(Nat(line), Nat(column))
   }
 
 }

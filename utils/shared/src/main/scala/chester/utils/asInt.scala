@@ -2,7 +2,7 @@ package chester.utils
 
 import spire.math.{Natural, UInt}
 
-private val MaxInt = Natural(Integer.MAX_VALUE)
+private val MaxInt = Nat(Integer.MAX_VALUE)
 private val MaxIntUInt = UInt(Integer.MAX_VALUE)
 
 extension (n: Natural) {

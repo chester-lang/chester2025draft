@@ -5,15 +5,13 @@ import chester.reader.*
 import chester.syntax.core.*
 import chester.tyck.api.*
 import chester.tyck.*
-import chester.utils.{StringIndex, WithUTF16}
+import chester.utils.{Nat, StringIndex, WithUTF16, asInt}
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.log4s.*
 import chester.i18n.*
 import chester.readerv2.ChesterReaderV2
-import spire.math.Natural
-import chester.utils.asInt
 
 import java.util.List as JList
 import java.util.concurrent.CompletableFuture
@@ -348,14 +346,14 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         )
 
         val codepointIndex =
-          stringIndex.charIndexToUnicodeIndex(Natural(charIndexUtf16))
+          stringIndex.charIndexToUnicodeIndex(Nat(charIndexUtf16))
 
         // Get the line and column with both Unicode code points and UTF-16 code units
         val lineAndColumn =
           stringIndex.charIndexToLineAndColumnWithUTF16(charIndexUtf16.asInt)
 
         val pos = Pos(
-          index = WithUTF16(codepointIndex, Natural(charIndexUtf16)),
+          index = WithUTF16(codepointIndex, Nat(charIndexUtf16)),
           line = lineAndColumn.line,
           column = lineAndColumn.column
         )
