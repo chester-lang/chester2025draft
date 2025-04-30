@@ -231,7 +231,8 @@ def commonSettings0 = Seq(
       "-experimental",
       //"--preview"
     ),
-  scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
+  // required by scalafix?
+  scalacOptions ++= Seq("-Wunused:all"), // "-Xlint:adapted-args"
   scalacOptions ++= Seq("-rewrite", "-source", "3.7-migration"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.1" % Test,
@@ -275,6 +276,8 @@ def scala2Common = Seq(
     "-Wunused:imports",
     "-Ytasty-reader"
   ),
+  // required by scalafix?
+  scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % "1.1.1" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
