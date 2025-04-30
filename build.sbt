@@ -300,9 +300,6 @@ def scala2Common = Seq(
 def scala2JVM = Seq(
   scalaVersion := scala2Beta
 )
-def scala2Native = Seq(
-  scalaVersion := scala2Beta
-)
 def commonVendorSettings = Seq(
   resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
   scalaVersion := scala3Lib,
@@ -727,7 +724,6 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies += ("org.scala-lang" % "scalap" % scala2Version).exclude("org.jline", "jline")
   )
   .jvmSettings(commonJvmSettings,scala2JVM)
-  .nativeSettings(scala2Native)
 lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
