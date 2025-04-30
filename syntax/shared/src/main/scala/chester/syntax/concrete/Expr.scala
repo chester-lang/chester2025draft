@@ -16,6 +16,12 @@ import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
 
 import scala.language.implicitConversions
+import com.github.plokhotnyuk.jsoniter_scala.macros._
+import com.github.plokhotnyuk.jsoniter_scala.core._
+
+//given exprCodec: JsonValueCodec[Expr] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+
+//given exprMetaCodec: JsonValueCodec[ExprMeta] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
 enum CommentType derives ReadWriter {
   case OneLine

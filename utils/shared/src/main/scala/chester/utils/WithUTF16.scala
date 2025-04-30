@@ -3,6 +3,10 @@ package chester.utils
 import upickle.default.*
 import spire.math.Natural
 import chester.utils.impls.naturalRW
+import com.github.plokhotnyuk.jsoniter_scala.macros._
+import com.github.plokhotnyuk.jsoniter_scala.core._
+
+//given WithUTF16Codec: JsonValueCodec[WithUTF16] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
 // i is unicode character position
 case class WithUTF16(i: spire.math.Natural, utf16: spire.math.Natural) derives ReadWriter {
