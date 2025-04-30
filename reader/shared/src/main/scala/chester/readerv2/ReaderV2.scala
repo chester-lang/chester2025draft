@@ -1191,6 +1191,48 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
+  private def parseList(context0: ReaderContext = ReaderContext()): Either[ParseError, ListExpr] = {
+
+    val context = context0.copy(inOpSeq = false,dontallowOpSeq = false,newLineAfterBlockMeansEnds=false,dontAllowBlockApply=false)
+
+    // Skip comments before the list
+    skipComments()
+
+    this.state.current match {
+      case Right(Token.LBracket(sourcePos)) =>
+        // Advance past the opening bracket and skip comments
+        advance()
+        skipComments()
+
+        // Use the new helper method
+        parseElementSequence(
+          closingTokenPredicate = _.isInstanceOf[Token.RBracket],
+          allowSemicolon = false, // Semicolons not allowed in lists
+          startPosForError = sourcePos,
+          contextDescription = "list"
+        ).flatMap { exprs =>
+          // The state should now be at the closing bracket RBracket
+          this.state.current match {
+            case Right(Token.RBracket(endPos)) =>
+              // Get comments that were collected during parsing
+              val comments = pullComments()
+              val listMeta = if (comments.nonEmpty) {
+                createMeta(Some(sourcePos), Some(endPos))
+                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(comments)))
+              } else {
+                createMeta(Some(sourcePos), Some(endPos))
+              }
+
+              // Advance past the closing bracket
+              advance()
+              Right(ListExpr(exprs, listMeta))
+            case _ => Left(expectedError("']' at end of list", this.state.current))
+          }
+        }
+      case _ => Left(expectedError("[", this.state.current))
+    }
+  }
+
   private def parseTuple(context0: ReaderContext = ReaderContext()): Either[ParseError, Tuple] = {
     val context = context0.copy(inOpSeq = false,dontallowOpSeq = false,newLineAfterBlockMeansEnds=false,dontAllowBlockApply=false)
     this.state.current match {
@@ -1564,46 +1606,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
       case Left(err) =>
         Left(err)
-    }
-  }
-
-  private def parseList(context: ReaderContext = ReaderContext()): Either[ParseError, ListExpr] = {
-
-    // Skip comments before the list
-    skipComments()
-
-    this.state.current match {
-      case Right(Token.LBracket(sourcePos)) =>
-        // Advance past the opening bracket and skip comments
-        advance()
-        skipComments()
-
-        // Use the new helper method
-        parseElementSequence(
-          closingTokenPredicate = _.isInstanceOf[Token.RBracket],
-          allowSemicolon = false, // Semicolons not allowed in lists
-          startPosForError = sourcePos,
-          contextDescription = "list"
-        ).flatMap { exprs =>
-          // The state should now be at the closing bracket RBracket
-          this.state.current match {
-            case Right(Token.RBracket(endPos)) =>
-              // Get comments that were collected during parsing
-              val comments = pullComments()
-              val listMeta = if (comments.nonEmpty) {
-                createMeta(Some(sourcePos), Some(endPos))
-                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(comments)))
-              } else {
-                createMeta(Some(sourcePos), Some(endPos))
-              }
-
-              // Advance past the closing bracket
-              advance()
-              Right(ListExpr(exprs, listMeta))
-            case _ => Left(expectedError("']' at end of list", this.state.current))
-          }
-        }
-      case _ => Left(expectedError("[", this.state.current))
     }
   }
 
