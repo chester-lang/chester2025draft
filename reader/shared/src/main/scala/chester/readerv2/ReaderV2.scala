@@ -1191,97 +1191,93 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  private def parseList(context0: ReaderContext = ReaderContext()): Either[ParseError, ListExpr] = {
+  // Helper method to parse delimited expressions (lists, tuples, etc.)
+  private def parseDelimitedExpr[T](
+    context0: ReaderContext = ReaderContext(),
+    openingTokenMatcher: PartialFunction[Either[ParseError, Token], Token],
+    openingTokenDescription: String,
+    closingTokenPredicate: Token => Boolean,
+    closingTokenDescription: String,
+    allowSemicolon: Boolean,
+    contextDescription: String,
+    createResult: (Vector[ParsedExpr], Option[ExprMeta]) => T
+  ): Either[ParseError, T] = {
+    val context = context0.copy(inOpSeq = false, dontallowOpSeq = false, newLineAfterBlockMeansEnds = false, dontAllowBlockApply = false)
 
-    val context = context0.copy(inOpSeq = false,dontallowOpSeq = false,newLineAfterBlockMeansEnds=false,dontAllowBlockApply=false)
-
-    // Skip comments before the list
+    // Skip comments before the expression
     skipComments()
 
     this.state.current match {
-      case Right(Token.LBracket(sourcePos)) =>
-        // Advance past the opening bracket and skip comments
+      case Right(token) if openingTokenMatcher.isDefinedAt(Right(token)) =>
+        val openToken = openingTokenMatcher(Right(token))
+        val sourcePos = openToken.sourcePos
+
+        // Advance past the opening token and skip comments
         advance()
         skipComments()
 
-        // Use the new helper method
+        // Parse the element sequence
         parseElementSequence(
-          closingTokenPredicate = _.isInstanceOf[Token.RBracket],
-          allowSemicolon = false, // Semicolons not allowed in lists
+          closingTokenPredicate = closingTokenPredicate,
+          allowSemicolon = allowSemicolon,
           startPosForError = sourcePos,
-          contextDescription = "list"
+          contextDescription = contextDescription,
+          context = context
         ).flatMap { exprs =>
-          // The state should now be at the closing bracket RBracket
+          // Skip comments after the expressions
+          skipComments()
+
+          // Check for the closing token
           this.state.current match {
-            case Right(Token.RBracket(endPos)) =>
+            case Right(token) if closingTokenPredicate(token) =>
               // Get comments that were collected during parsing
               val comments = pullComments()
-              val listMeta = if (comments.nonEmpty) {
-                createMeta(Some(sourcePos), Some(endPos))
-                  .map(m => ExprMeta(m.sourcePos, createCommentInfo(comments)))
+              val meta = if (comments.nonEmpty) {
+                createMeta(Some(sourcePos), Some(this.state.sourcePos))
+                  .map(m => ExprMeta(
+                    m.sourcePos, 
+                    createCommentInfo(comments.collect { case c: Comment => c }, Vector.empty)
+                  ))
               } else {
-                createMeta(Some(sourcePos), Some(endPos))
+                createMeta(Some(sourcePos), Some(this.state.sourcePos))
               }
 
-              // Advance past the closing bracket
+              // Advance past the closing token
               advance()
-              Right(ListExpr(exprs, listMeta))
-            case _ => Left(expectedError("']' at end of list", this.state.current))
+              Right(createResult(exprs, meta))
+
+            case _ => Left(expectedError(closingTokenDescription, this.state.current))
           }
         }
-      case _ => Left(expectedError("[", this.state.current))
+      case _ => Left(expectedError(openingTokenDescription, this.state.current))
     }
   }
 
+  private def parseList(context0: ReaderContext = ReaderContext()): Either[ParseError, ListExpr] = {
+    parseDelimitedExpr(
+      context0 = context0,
+      openingTokenMatcher = { case Right(t: Token.LBracket) => t },
+      openingTokenDescription = "[",
+      closingTokenPredicate = _.isInstanceOf[Token.RBracket],
+      closingTokenDescription = "']' at end of list",
+      allowSemicolon = false, // Semicolons not allowed in lists
+      contextDescription = "list",
+      createResult = (exprs, meta) => ListExpr(exprs, meta)
+    )
+  }
+
   private def parseTuple(context0: ReaderContext = ReaderContext()): Either[ParseError, Tuple] = {
-    val context = context0.copy(inOpSeq = false,dontallowOpSeq = false,newLineAfterBlockMeansEnds=false,dontAllowBlockApply=false)
-    this.state.current match {
-    case Right(Token.LParen(sourcePos)) =>
-      // Advance past the left parenthesis and skip comments
-      advance()
-      // Comments are handled within parseTupleExprList and pullComments below
-
-      // Parse the expression list using the new helper via parseTupleExprList
-      {
-        // Skip any comments at the start
-        skipComments()
-        parseElementSequence(
-          closingTokenPredicate = _.isInstanceOf[Token.RParen],
-          allowSemicolon = true,
-          startPosForError = sourcePos,
-          contextDescription = "tuple or argument list",
-          context = context
-        )
-      }.flatMap { exprs =>
-        // Skip comments after the expressions
-        skipComments()
-        // We'll pull these comments later
-
-        // Check for the closing parenthesis
-        this.state.current match {
-          case Right(Token.RParen(_)) =>
-            // Get the comments we've collected
-            val comments = pullComments()
-            val meta =
-              if comments.nonEmpty then
-                createMeta(Some(sourcePos), Some(this.state.sourcePos))
-                  .map(m =>
-                    ExprMeta(
-                      m.sourcePos,
-                      createCommentInfo(comments.collect { case c: Comment => c }, Vector.empty)
-                    )
-                  )
-              else createMeta(Some(sourcePos), Some(this.state.sourcePos))
-
-            // Advance past the right parenthesis
-            advance()
-            Right(Tuple(exprs, meta))
-
-          case _ => Left(expectedError("right parenthesis", this.state.current))
-        }
-      }
-    case _ => Left(expectedError("left parenthesis", this.state.current))
-  }}
+    parseDelimitedExpr(
+      context0 = context0,
+      openingTokenMatcher = { case Right(t: Token.LParen) => t },
+      openingTokenDescription = "left parenthesis",
+      closingTokenPredicate = _.isInstanceOf[Token.RParen],
+      closingTokenDescription = "right parenthesis",
+      allowSemicolon = false,
+      contextDescription = "tuple or argument list",
+      createResult = (exprs, meta) => Tuple(exprs, meta)
+    )
+  }
 
   // Re-revised helper method to parse a sequence of statements/expressions, returning statements and optional result
   private def parseStatementSequence(
