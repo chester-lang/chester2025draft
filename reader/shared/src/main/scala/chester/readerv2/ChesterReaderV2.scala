@@ -1,5 +1,5 @@
 package chester.readerv2
-import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, SourceOffset}
+import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, Offset}
 import chester.syntax.concrete.*
 import chester.utils.WithUTF16
 
@@ -53,7 +53,7 @@ object ChesterReaderV2 {
   ): Either[ParseError, ParsedExpr] = {
     val source = Source(
       FileNameAndContent(sourceName, content),
-      offset = SourceOffset(
+      offset = Offset(
         lineOffset = linesOffset,
         posOffset = posOffset
       )

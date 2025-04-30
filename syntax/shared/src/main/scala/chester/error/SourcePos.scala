@@ -1,7 +1,7 @@
 package chester.error
 
 import spire.math.Natural
-import chester.reader.{Source, SourceOffset}
+import chester.reader.{Source, Offset}
 import chester.utils.{Nat, WithUTF16, asInt, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
 import upickle.default.*
@@ -23,7 +23,7 @@ type AcceptedString = String | LazyList[String] | ParserInput
 
 case class FileContent(
     content: AcceptedString,
-    offset: SourceOffset
+    offset: Offset
 )
 
 object FileContent {
