@@ -816,9 +816,9 @@ lazy val jsTypings = crossProject(JSPlatform)
     Compile / npmDependencies ++= Seq(
       "@types/node" -> "22.7.0", // the latest version broken
       "@xterm/xterm" -> "5.5.0",
-      //"@types/react" -> "19.0.0", // the latest version broken
-      //"@types/react-dom" -> "19.0.0", // the latest version broken
-      //"next" -> "11.1.4", // next.js 14/12 breaks scalablytyped
+      "@types/react" -> "19.0.0", // the latest version broken
+      "@types/react-dom" -> "19.0.0", // the latest version broken
+      "next" -> "11.1.4", // next.js 14/12 breaks scalablytyped
       "xterm-readline" -> "1.1.2",
       "xterm-pty" -> "0.11.1",
       "ts-morph" -> "25.0.1"
