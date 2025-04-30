@@ -4,21 +4,23 @@ import chester.cli.Main.CliConfig
 import chester.tyck.SemanticDBGenerator
 import chester.utils.*
 import chester.i18n.*
+import scala.util.boundary
+import scala.util.boundary.break
 
-def genSemanticDB(config: CliConfig): Unit = {
+def genSemanticDB(config: CliConfig): Unit = boundary {
   val inputPath = config.input.getOrElse {
     println(t"Error: Input path is required.")
-    return
+    break()
   }
 
   val path = os2.path(inputPath)
   if (!os.exists(path)) {
     println(t"Error: Input path does not exist: $inputPath")
-    return
+    break()
   }
   if (path.ext != "chester") {
     println(t"Error: Input path must be a .chester file: $inputPath")
-    return
+    break()
   }
 
   // Create a new SemanticDBGenerator instance
