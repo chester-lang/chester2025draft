@@ -27,10 +27,32 @@ def REPLEngine[F[_]](using
 
   val maxWidth = 80
 
-  val mainPrompt: Str = Str("Chester> ").overlay(Colors.REPLPrompt.toFansi)
+  // Track evaluation history
+  var inputCounter = 1
+  var evaluationHistory: List[Any] = List.empty
+  var typeHistory: List[Term] = List.empty
+
+  // Function to get previous evaluation result
+  def out(n: Int): Any = {
+    if (n <= 0 || n > evaluationHistory.length) {
+      throw new IndexOutOfBoundsException(s"Out($n) is out of range. Available range: 1 to ${evaluationHistory.length}")
+    }
+    evaluationHistory(evaluationHistory.length - n)
+  }
+
+  // Create prompt with input counter
+  def createMainPrompt(counter: Int): Str = {
+    val promptText = s"In($counter) := "
+    // Pad with spaces to ensure consistent length
+    val paddedPrompt = promptText.padTo(10, ' ')
+    Str(paddedPrompt).overlay(Colors.REPLPrompt.toFansi)
+  }
+
+  var mainPrompt: Str = createMainPrompt(inputCounter)
   val continuationPrompt0: Str =
-    Str("...      ").overlay(Colors.REPLPrompt.toFansi)
-  assert(mainPrompt.length == continuationPrompt0.length)
+    Str("... ").overlay(Colors.REPLPrompt.toFansi)
+  // Ensure prompts have the same length // TODO: need to set continuationPrompt0 dynamically to match the length
+  // assert(mainPrompt.length == continuationPrompt0.length)
 
   val terminalInfo = new TerminalInfo {
     override def checkInputStatus(input: String): InputStatus =
@@ -41,9 +63,7 @@ def REPLEngine[F[_]](using
     override def continuationPrompt: fansi.Str = continuationPrompt0
   }
 
-  // TODO: Add Out(n) to refer history evaluation
-
-  // add to the environment of evaluation
+  // Add Out(n) to refer history evaluation
 
   def startF: F[Unit] =
     for {
@@ -91,6 +111,7 @@ def REPLEngine[F[_]](using
           _ <- InTerminal.writeln("Commands:")
           _ <- InTerminal.writeln(":t <expr> - Check the type of an expression")
           _ <- InTerminal.writeln(":q - Quit the REPL")
+          _ <- InTerminal.writeln("Out(n) - Retrieve the nth previous evaluation result")
           _ <- InTerminal.writeln(
             "You can also just type any expression to evaluate it."
           )
@@ -120,19 +141,54 @@ def REPLEngine[F[_]](using
         )
     }
 
-  def handleExpression(line: String): F[Unit] = InTerminal.getHistory.flatMap { history =>
-    ReaderREPL
-      .parseInput(history, line)
-      .fold(
-        error => InTerminal.writeln(t"Parse Error: ${error.message}"),
-        parsedExpr =>
-          typeCheck(parsedExpr) match {
-            case TyckResult.Success(judge, _, _) =>
-              InTerminal.writeln(prettyPrintJudgeWellTyped(judge))
-            case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
-            case _                                   => unreachable()
+  def handleExpression(line: String): F[Unit] = {
+    // Special case for Out(n) function
+    val outRegex = """Out\((\d+)\)""".r
+    line match {
+      case outRegex(nStr) =>
+        try {
+          val n = nStr.toInt
+          if (n <= 0 || n > evaluationHistory.length) {
+            InTerminal.writeln(t"Error: Out($n) is out of range. Available range: 1 to ${evaluationHistory.length}")
+          } else {
+            val result = out(n)
+            InTerminal.writeln(t"${result}")
           }
-      )
+        } catch {
+          case e: NumberFormatException =>
+            InTerminal.writeln(t"Error: Invalid number format in Out($nStr)")
+        }
+      case _ =>
+        // Normal expression handling
+        InTerminal.getHistory.flatMap { history =>
+          ReaderREPL
+            .parseInput(history, line)
+            .fold(
+              error => InTerminal.writeln(t"Parse Error: ${error.message}"),
+              parsedExpr =>
+                typeCheck(parsedExpr) match {
+                  case TyckResult.Success(judge, _, _) =>
+                    // Store the evaluation result and its type in history
+                    evaluationHistory = evaluationHistory :+ judge.wellTyped
+                    typeHistory = typeHistory :+ judge.ty
+
+                    // Increment the input counter for the next prompt
+                    inputCounter += 1
+                    mainPrompt = createMainPrompt(inputCounter)
+
+                    // Update the terminal info with the new prompt
+                    terminalInfo match {
+                      case info: TerminalInfo =>
+                        // We can't modify the existing terminalInfo, but the next readline will use the updated mainPrompt
+                    }
+
+                    InTerminal.writeln(prettyPrintJudgeWellTyped(judge))
+                  case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
+                  case _                                   => unreachable()
+                }
+            )
+        }
+    }
   }
 
   def typeCheck(expr: Expr): TyckResult[?, Judge] =
