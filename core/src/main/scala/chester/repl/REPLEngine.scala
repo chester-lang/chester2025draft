@@ -152,7 +152,7 @@ def REPLEngine[F[_]](using
             InTerminal.writeln(t"Error: Out($n) is out of range. Available range: 1 to ${evaluationHistory.length}")
           } else {
             val result = out(n)
-            InTerminal.writeln(t"${result}")
+            InTerminal.writeln(t"$result")
           }
         } catch {
           case e: NumberFormatException =>
@@ -179,7 +179,7 @@ def REPLEngine[F[_]](using
                     // Update the terminal info with the new prompt
                     terminalInfo match {
                       case info: TerminalInfo =>
-                        // We can't modify the existing terminalInfo, but the next readline will use the updated mainPrompt
+                      // We can't modify the existing terminalInfo, but the next readline will use the updated mainPrompt
                     }
 
                     InTerminal.writeln(prettyPrintJudgeWellTyped(judge))

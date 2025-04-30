@@ -50,10 +50,18 @@ case class FilePath private (fileName: String) extends ParserSource {
 // TODO: maybe column offset for the first line also
 case class Source(
     source: ParserSource,
-    linesOffset: spire.math.Natural = Nat(0),
-    posOffset: WithUTF16 = WithUTF16.Zero
+    offset: SourceOffset = SourceOffset.Zero
 ) derives ReadWriter {
   def fileName: String = source.fileName
 
   def readContent: Either[ParseError, String] = source.readContent
+}
+
+case class SourceOffset(
+    lineOffset: spire.math.Natural = Nat(0),
+    posOffset: WithUTF16 = WithUTF16.Zero
+) derives ReadWriter
+
+object SourceOffset {
+  val Zero = SourceOffset()
 }

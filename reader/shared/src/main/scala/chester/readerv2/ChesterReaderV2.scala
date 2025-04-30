@@ -1,8 +1,7 @@
 package chester.readerv2
-import chester.reader.{ParseError, ParserSource, Source}
+import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, SourceOffset}
 import chester.syntax.concrete.*
 import chester.utils.WithUTF16
-import chester.reader.FileNameAndContent
 import chester.error.Pos
 
 import scala.language.implicitConversions
@@ -56,8 +55,10 @@ object ChesterReaderV2 {
   ): Either[ParseError, ParsedExpr] = {
     val source = Source(
       FileNameAndContent(sourceName, content),
-      linesOffset = linesOffset,
-      posOffset = posOffset
+      offset = SourceOffset(
+        lineOffset = linesOffset,
+        posOffset = posOffset
+      )
     )
     // V2 reader setup might involve error handling during lexing itself
     try {

@@ -2,7 +2,7 @@ package chester.readerv1
 
 import chester.error.*
 import chester.i18n.*
-import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source}
+import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, SourceOffset}
 import chester.syntax.concrete.*
 import chester.utils.{Nat, StringIndex, WithUTF16}
 import fastparse.*
@@ -83,8 +83,10 @@ object ChesterReaderV1 {
     val indexer = StringIndex(content)
     val source = Source(
       FileNameAndContent(sourceName, content),
-      linesOffset = linesOffset,
-      posOffset = posOffset
+      offset = SourceOffset(
+        lineOffset = linesOffset,
+        posOffset = posOffset
+      )
     )
     parse(
       content,

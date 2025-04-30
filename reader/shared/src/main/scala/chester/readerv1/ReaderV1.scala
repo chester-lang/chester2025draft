@@ -18,8 +18,8 @@ case class ReaderV1(
     defaultIndexer: Option[StringIndex] = None
 )(using p: P[?]) {
   val fileName: String = sourceOffset.fileName
-  val linesOffset: spire.math.Natural = sourceOffset.linesOffset
-  val posOffset: WithUTF16 = sourceOffset.posOffset
+  val linesOffset: spire.math.Natural = sourceOffset.offset.lineOffset
+  val posOffset: WithUTF16 = sourceOffset.offset.posOffset
   // TODO: column offset for :t command in repl
   if (linesOffset != Nat(0)) require(posOffset.nonZero)
   if (posOffset.nonZero) require(linesOffset != Nat(0))
