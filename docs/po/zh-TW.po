@@ -498,93 +498,94 @@ msgstr "JavaScript AST 是以一組 case class 的形式實現的："
 msgid ""
 "Each node includes a `toDoc` method for pretty printing and source "
 "generation."
-msgstr ""
+msgstr "每個節點都包含一個用於美化輸出和源代碼生成的 `toDoc` 方法。"
 
 #: src/dev/compiler-backend.md:89
 msgid "JVM (Java/Scala)"
-msgstr ""
+msgstr "JVM (Java/Scala)"
 
 #: src/dev/compiler-backend.md:91
 msgid ""
 "The JVM target enables integration with the Java ecosystem and leverages the "
 "JVM runtime."
 msgstr ""
+"JVM 目標實現了與 Java 生態系統的集成，並利用 JVM 運行時。"
 
 #: src/dev/compiler-backend.md:95
 msgid "The JVM backend consists of:"
-msgstr ""
+msgstr "JVM 後端包含："
 
 #: src/dev/compiler-backend.md:97
 msgid "**Bytecode Generation**: Direct generation of JVM bytecode"
-msgstr ""
+msgstr "**字節碼生成**：直接生成 JVM 字節碼"
 
 #: src/dev/compiler-backend.md:98
 msgid "**Class Builder**: Creates JVM class files"
-msgstr ""
+msgstr "**類別構建器**：創建 JVM 類別文件"
 
 #: src/dev/compiler-backend.md:99
 msgid "**Runtime Library**: Core runtime support for Chester on JVM"
-msgstr ""
+msgstr "**運行時庫**：JVM 上 Chester 的核心運行時支持"
 
 #: src/dev/compiler-backend.md:100
 msgid "**Java Interop**: Enables calling Java code from Chester"
-msgstr ""
+msgstr "**Java 互操作**：實現從 Chester 調用 Java 代碼"
 
 #: src/dev/compiler-backend.md:104
 msgid "Java interoperability"
-msgstr ""
+msgstr "Java 互操作性"
 
 #: src/dev/compiler-backend.md:105
 msgid "Scala library integration"
-msgstr ""
+msgstr "Scala 庫集成"
 
 #: src/dev/compiler-backend.md:106
 msgid "JVM optimizations"
-msgstr ""
+msgstr "JVM 優化"
 
 #: src/dev/compiler-backend.md:107
 msgid "Access to the Java standard library"
-msgstr ""
+msgstr "訪問 Java 標準庫"
 
 #: src/dev/compiler-backend.md:108
 msgid "Advanced JVM optimizations (inlining, specialization)"
-msgstr ""
+msgstr "高級 JVM 優化（內聯，特化）"
 
 #: src/dev/compiler-backend.md:110 src/dev/compiler-backend.md:135
 msgid "Native (Planned)"
-msgstr ""
+msgstr "原生 (計劃中)"
 
 #: src/dev/compiler-backend.md:112
 msgid "A native code target is planned for high-performance applications."
-msgstr ""
+msgstr "為高性能應用程序計劃了原生代碼目標。"
 
 #: src/dev/compiler-backend.md:114
 msgid "Potential Architecture"
-msgstr ""
+msgstr "潛在架構"
 
 #: src/dev/compiler-backend.md:116
 msgid "The native backend will likely include:"
-msgstr ""
+msgstr "原生後端可能包括："
 
 #: src/dev/compiler-backend.md:118
 msgid "**LLVM IR Generation**: Translation to LLVM intermediate representation"
-msgstr ""
+msgstr "**LLVM IR 生成**：轉換為 LLVM 中間表示"
 
 #: src/dev/compiler-backend.md:119
 msgid "**Native Runtime**: Minimal runtime support library"
-msgstr ""
+msgstr "**原生運行時**：最小運行時支持庫"
 
 #: src/dev/compiler-backend.md:120
 msgid "**ABI Compatibility**: Interoperability with C/C++ code"
-msgstr ""
+msgstr "**ABI 兼容性**：與 C/C++ 代碼的互操作性"
 
 #: src/dev/compiler-backend.md:121
 msgid "**Platform Support**: Cross-compilation for different CPU architectures"
-msgstr ""
+msgstr "**平台支持**：為不同 CPU 架構的交叉編譯"
 
 #: src/dev/compiler-backend.md:123
 msgid "Planned Features"
-msgstr ""
+msgstr "計劃功能"
 
 #: src/dev/compiler-backend.md:125
 msgid "LLVM-based code generation"
