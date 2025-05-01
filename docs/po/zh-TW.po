@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: The Chester Programming Language\n"
-"POT-Creation-Date: 2025-05-01T20:10:16+12:00\n"
+"POT-Creation-Date: 2025-05-01T21:01:19+12:00\n"
 "PO-Revision-Date: 2025-05-01 20:10+1200\n"
 "Last-Translator:  <email@address.com>\n"
 "Language-Team: Language zh-TW\n"
@@ -19,75 +19,80 @@ msgstr ""
 msgid "Chester"
 msgstr "Chester"
 
-#: src/SUMMARY.md:3 src/Record.md:1
-msgid "Record Syntax in Chester"
-msgstr "Chester 的記錄語法"
-
-#: src/SUMMARY.md:4 src/dev/index.md:1
+#: src/SUMMARY.md:3 src/dev/index.md:1
 msgid "Chester Development Documentation"
 msgstr ""
 
-#: src/SUMMARY.md:5 src/dev/TODO.md:1
+#: src/SUMMARY.md:4 src/dev/TODO.md:1
 msgid "TODO"
 msgstr ""
 
-#: src/SUMMARY.md:6 src/dev/compiler-backend.md:1
+#: src/SUMMARY.md:5 src/dev/compiler-backend.md:1
 msgid "Chester Compiler Backend Architecture"
 msgstr ""
 
-#: src/SUMMARY.md:7 src/dev/development.md:1
+#: src/SUMMARY.md:6 src/dev/development.md:1
 msgid "Development Memo"
 msgstr ""
 
-#: src/SUMMARY.md:8 src/dev/devlog.md:1
+#: src/SUMMARY.md:7 src/dev/devlog.md:1
 msgid "Development Log"
 msgstr ""
 
-#: src/SUMMARY.md:9 src/dev/effects-implementation-plan.md:1
+#: src/SUMMARY.md:8 src/dev/effects-implementation-plan.md:1
 msgid "Effect System Implementation Plan"
 msgstr ""
 
-#: src/SUMMARY.md:10 src/dev/effects-system.md:1
+#: src/SUMMARY.md:9 src/dev/effects-system.md:1
 msgid "Effect System Design"
 msgstr ""
 
-#: src/SUMMARY.md:11 src/dev/js2py.md:1
+#: src/SUMMARY.md:10 src/dev/js2py.md:1
 msgid "JavaScript to Python Conversion Process"
 msgstr ""
 
-#: src/SUMMARY.md:12 src/dev/reader.md:1
+#: src/SUMMARY.md:11 src/dev/reader.md:1
 msgid "Chester Reader Architecture"
 msgstr ""
 
-#: src/SUMMARY.md:13 src/dev/scalablytyped-bindings.md:1
+#: src/SUMMARY.md:12 src/dev/scalablytyped-bindings.md:1
 msgid "ScalablyTyped Bindings Guide"
 msgstr ""
 
-#: src/SUMMARY.md:14 src/dev/tyck-improvement-proposal.md:1
+#: src/SUMMARY.md:13 src/dev/tyck-improvement-proposal.md:1
 msgid "Comprehensive Type System Improvement Proposal"
 msgstr ""
 
-#: src/SUMMARY.md:15 src/dev/type-checking-system.md:1
+#: src/SUMMARY.md:14 src/dev/type-checking-system.md:1
 msgid "Type Checking System: Propagator Network and Design"
 msgstr ""
 
-#: src/SUMMARY.md:16 src/dev/typescript-backend.md:1
+#: src/SUMMARY.md:15 src/dev/typescript-backend.md:1
 msgid "TypeScript Backend Implementation"
 msgstr ""
 
-#: src/SUMMARY.md:17 src/dev/union_types_progress.md:1
+#: src/SUMMARY.md:16 src/dev/union_types_progress.md:1
 msgid "Union Types Progress"
 msgstr ""
 
-#: src/SUMMARY.md:18 src/dev/compiler-backend.md:198 src/statements.md:1
+#: src/SUMMARY.md:17 src/guide/index.md:1
+#, fuzzy
+msgid "Chester Guide"
+msgstr "Chester 是什麼？"
+
+#: src/SUMMARY.md:18 src/guide/Record.md:1
+msgid "Record Syntax in Chester"
+msgstr "Chester 的記錄語法"
+
+#: src/SUMMARY.md:19 src/dev/compiler-backend.md:198 src/guide/statements.md:1
 msgid "Statements"
 msgstr "語句"
 
-#: src/SUMMARY.md:19 src/syntax-grammar.md:1
+#: src/SUMMARY.md:20 src/guide/syntax-grammar.md:1
 msgid "Chester Syntax Grammar (BNF-like)"
 msgstr ""
 
-#: src/SUMMARY.md:20 src/trait-and-interface.md:1
+#: src/SUMMARY.md:21 src/guide/trait-and-interface.md:1
 msgid "Traits and Interfaces in Chester"
 msgstr "Chester 中的特質和介面"
 
@@ -97,7 +102,8 @@ msgid ""
 "modern, expressive language designed to combine the best features of "
 "functional and object-oriented programming paradigms."
 msgstr ""
-"歡迎來到 Chester 程式語言文件！Chester 是一種現代、表達力強的程式語言，旨在結合函數式和物件導向程式設計的最佳特性。"
+"歡迎來到 Chester 程式語言文件！Chester 是一種現代、表達力強的程式語言，旨在結"
+"合函數式和物件導向程式設計的最佳特性。"
 
 #: src/index.md:5
 msgid ""
@@ -105,7 +111,8 @@ msgid ""
 "Many important features are not implemented yet, including some described in "
 "this documentation."
 msgstr ""
-"此程式語言正在積極開發中，尚未準備好供使用。許多重要功能尚未實現，包括本文件中描述的一些功能。"
+"此程式語言正在積極開發中，尚未準備好供使用。許多重要功能尚未實現，包括本文件"
+"中描述的一些功能。"
 
 #: src/index.md:7
 msgid "What is Chester?"
@@ -167,55 +174,11 @@ msgstr ""
 "def me: String = \"インターネット・エンジェル\";\n"
 "```"
 
-#: src/Record.md:3
-msgid ""
-"Chester provides a concise and powerful syntax for defining records, which "
-"are similar to structs or classes in other languages. Records in Chester are "
-"immutable by default and provide a convenient way to group related data."
-msgstr ""
-"Chester 提供了簡潔而強大的語法來定義記錄（records），這類似於其他語言中的結構體（structs）或類（classes）。Chester 中的記錄預設是不可變的，並提供了一種便捷的方式來組織相關數據。"
-
-#: src/Record.md:5
-msgid "Basic Record Syntax"
-msgstr "記錄的基本語法"
-
-#: src/Record.md:7
-msgid "The basic syntax for defining a record in Chester is as follows:"
-msgstr "Chester 中定義記錄的基本語法如下："
-
-#: src/Record.md:13
-msgid "Here's a simple example of a `Person` record:"
-msgstr "以下是一個簡單的 `Person` 記錄範例："
-
-#: src/Record.md:19
-msgid "Using Records"
-msgstr "使用記錄"
-
-#: src/Record.md:21
-msgid ""
-"Once defined, you can create instances of records and access their fields:"
-msgstr "一旦定義，就可以創建記錄的實例並訪問它們的字段："
-
-#: src/Record.md:23
-msgid ""
-"```chester,playground,editable\n"
-"let alice = Person(\"Alice\", 30);\n"
-"println(alice.name);  // Outputs: Alice\n"
-"println(alice.age);   // Outputs: 30\n"
-"```"
-msgstr ""
-"```chester,playground,editable\n"
-"let alice = Person(\"Alice\", 30);\n"
-"println(alice.name);  // 輸出: Alice\n"
-"println(alice.age);   // 輸出: 30\n"
-"```"
-
 #: src/dev/index.md:3
 msgid ""
 "This section contains technical documentation for Chester's implementation "
 "details and development notes."
-msgstr ""
-"本節包含 Chester 實現細節和開發說明的技術文檔。"
+msgstr "本節包含 Chester 實現細節和開發說明的技術文檔。"
 
 #: src/dev/index.md:5
 msgid "Documentation Structure"
@@ -226,7 +189,8 @@ msgid ""
 "We use [mdBook](https://rust-lang.github.io/mdBook/) for organizing and "
 "presenting our documentation. The documentation is structured as follows:"
 msgstr ""
-"我們使用 [mdBook](https://rust-lang.github.io/mdBook/) 來組織和展示我們的文檔。文檔結構如下："
+"我們使用 [mdBook](https://rust-lang.github.io/mdBook/) 來組織和展示我們的文"
+"檔。文檔結構如下："
 
 #: src/dev/index.md:9
 msgid "Documentation Management"
@@ -243,8 +207,7 @@ msgstr "**SUMMARY.md 生成**："
 #: src/dev/index.md:14
 msgid ""
 "The `SUMMARY.md` file is automatically generated using the `dev.sh` script"
-msgstr ""
-"`SUMMARY.md` 文件是使用 `dev.sh` 腳本自動生成的"
+msgstr "`SUMMARY.md` 文件是使用 `dev.sh` 腳本自動生成的"
 
 #: src/dev/index.md:15
 msgid "To update the summary: `cd docs && ./dev.sh summary`"
@@ -278,8 +241,7 @@ msgstr "添加新的開發文檔時："
 msgid ""
 "Create your markdown file in the appropriate subdirectory under `docs/src/"
 "dev/`"
-msgstr ""
-"在 `docs/src/dev/` 下的適當子目錄中創建您的 markdown 文件"
+msgstr "在 `docs/src/dev/` 下的適當子目錄中創建您的 markdown 文件"
 
 #: src/dev/index.md:27
 msgid "Place development-related documentation in the `dev/` directory"
@@ -347,7 +309,8 @@ msgid ""
 "system. The backend is responsible for transforming Chester's internal "
 "representation into executable code for various target platforms."
 msgstr ""
-"本文檔概述了 Chester 編譯器系統的後端架構。後端負責將 Chester 的內部表示轉換為各種目標平台的可執行代碼。"
+"本文檔概述了 Chester 編譯器系統的後端架構。後端負責將 Chester 的內部表示轉換"
+"為各種目標平台的可執行代碼。"
 
 #: src/dev/compiler-backend.md:7
 msgid "Backend Pipeline"
@@ -356,8 +319,7 @@ msgstr "後端流水線"
 #: src/dev/compiler-backend.md:9
 msgid ""
 "The Chester compiler backend follows a multi-phase code generation pipeline:"
-msgstr ""
-"Chester 編譯器後端遵循多階段代碼生成流水線："
+msgstr "Chester 編譯器後端遵循多階段代碼生成流水線："
 
 #: src/dev/compiler-backend.md:15
 msgid "Backend Components"
@@ -378,8 +340,7 @@ msgstr "每個目標平台都有一個專門的 AST 生成階段："
 #: src/dev/compiler-backend.md:23
 msgid ""
 "**Target AST Construction**: Builds an AST specific to the target language"
-msgstr ""
-"**目標 AST 構建**：構建特定於目標語言的 AST"
+msgstr "**目標 AST 構建**：構建特定於目標語言的 AST"
 
 #: src/dev/compiler-backend.md:24
 msgid "**Type Mapping**: Maps Chester types to target language types"
@@ -389,8 +350,7 @@ msgstr "**類型映射**：將 Chester 類型映射到目標語言類型"
 msgid ""
 "**Effect Translation**: Converts Chester effects to target language "
 "constructs"
-msgstr ""
-"**效果轉換**：將 Chester 效果轉換為目標語言結構"
+msgstr "**效果轉換**：將 Chester 效果轉換為目標語言結構"
 
 #: src/dev/compiler-backend.md:26
 msgid "**Standard Library Binding**: Connects to platform-specific libraries"
@@ -415,8 +375,7 @@ msgstr "**常量折疊**：在編譯時計算常量表達式"
 #: src/dev/compiler-backend.md:34
 msgid ""
 "**Inlining**: Replaces function calls with function bodies where beneficial"
-msgstr ""
-"**內聯**：在有益的情況下用函數體替換函數調用"
+msgstr "**內聯**：在有益的情況下用函數體替換函數調用"
 
 #: src/dev/compiler-backend.md:35
 msgid "**Specialization**: Creates specialized versions of generic functions"
@@ -441,8 +400,7 @@ msgstr "**美化輸出**：生成格式化的源代碼"
 #: src/dev/compiler-backend.md:43
 msgid ""
 "**Native Code Generation**: For targets that compile directly to machine code"
-msgstr ""
-"**原生代碼生成**：用於直接編譯到機器碼的目標"
+msgstr "**原生代碼生成**：用於直接編譯到機器碼的目標"
 
 #: src/dev/compiler-backend.md:44
 msgid "**Bytecode Generation**: For VM-based targets like the JVM"
@@ -460,8 +418,7 @@ msgstr "支持的編譯器目標"
 msgid ""
 "Chester supports multiple compiler targets, each with its own backend "
 "implementation:"
-msgstr ""
-"Chester 支持多種編譯器目標，每種目標都有自己的後端實現："
+msgstr "Chester 支持多種編譯器目標，每種目標都有自己的後端實現："
 
 #: src/dev/compiler-backend.md:51 src/dev/compiler-backend.md:135
 msgid "JavaScript/TypeScript"
@@ -473,7 +430,8 @@ msgid ""
 "targets/js/AST.scala`) enables running Chester programs in web browsers and "
 "Node.js."
 msgstr ""
-"JavaScript/TypeScript 目標（`compiler/shared/src/main/scala/chester/targets/js/AST.scala`）使 Chester 程序能夠在網頁瀏覽器和 Node.js 中運行。"
+"JavaScript/TypeScript 目標（`compiler/shared/src/main/scala/chester/targets/"
+"js/AST.scala`）使 Chester 程序能夠在網頁瀏覽器和 Node.js 中運行。"
 
 #: src/dev/compiler-backend.md:55 src/dev/compiler-backend.md:93
 #: src/dev/type-checking-system.md:49
@@ -488,8 +446,7 @@ msgstr "JavaScript 後端包括："
 msgid ""
 "**AST Nodes**: Comprehensive representation of JavaScript/TypeScript "
 "constructs"
-msgstr ""
-"**AST 節點**：JavaScript/TypeScript 結構的全面表示"
+msgstr "**AST 節點**：JavaScript/TypeScript 結構的全面表示"
 
 #: src/dev/compiler-backend.md:60
 msgid "**Type Translator**: Maps Chester types to TypeScript type annotations"
@@ -844,7 +801,7 @@ msgstr ""
 msgid "The JavaScript AST supports a wide range of node types:"
 msgstr ""
 
-#: src/dev/compiler-backend.md:189 src/syntax-grammar.md:18
+#: src/dev/compiler-backend.md:189 src/guide/syntax-grammar.md:18
 msgid "Expressions"
 msgstr ""
 
@@ -10855,11 +10812,56 @@ msgstr ""
 msgid "`FilesTyckTest.scala` (test framework)"
 msgstr ""
 
-#: src/statements.md:3
+#: src/guide/Record.md:3
+msgid ""
+"Chester provides a concise and powerful syntax for defining records, which "
+"are similar to structs or classes in other languages. Records in Chester are "
+"immutable by default and provide a convenient way to group related data."
+msgstr ""
+"Chester 提供了簡潔而強大的語法來定義記錄（records），這類似於其他語言中的結構"
+"體（structs）或類（classes）。Chester 中的記錄預設是不可變的，並提供了一種便"
+"捷的方式來組織相關數據。"
+
+#: src/guide/Record.md:5
+msgid "Basic Record Syntax"
+msgstr "記錄的基本語法"
+
+#: src/guide/Record.md:7
+msgid "The basic syntax for defining a record in Chester is as follows:"
+msgstr "Chester 中定義記錄的基本語法如下："
+
+#: src/guide/Record.md:13
+msgid "Here's a simple example of a `Person` record:"
+msgstr "以下是一個簡單的 `Person` 記錄範例："
+
+#: src/guide/Record.md:19
+msgid "Using Records"
+msgstr "使用記錄"
+
+#: src/guide/Record.md:21
+msgid ""
+"Once defined, you can create instances of records and access their fields:"
+msgstr "一旦定義，就可以創建記錄的實例並訪問它們的字段："
+
+#: src/guide/Record.md:23
+msgid ""
+"```chester,playground,editable\n"
+"let alice = Person(\"Alice\", 30);\n"
+"println(alice.name);  // Outputs: Alice\n"
+"println(alice.age);   // Outputs: 30\n"
+"```"
+msgstr ""
+"```chester,playground,editable\n"
+"let alice = Person(\"Alice\", 30);\n"
+"println(alice.name);  // 輸出: Alice\n"
+"println(alice.age);   // 輸出: 30\n"
+"```"
+
+#: src/guide/statements.md:3
 msgid "Scope of `let` and `def`"
 msgstr "let 和 def 的範圍"
 
-#: src/statements.md:5
+#: src/guide/statements.md:5
 msgid ""
 "In Chester, `let` and `def` are used to declare bindings, but they differ in "
 "how they handle scoping and forward references. Understanding these "
@@ -10868,33 +10870,33 @@ msgstr ""
 "在 Chester 中，let 和 def 用於宣告繫結，但它們在處理範圍和前向引用時有所不"
 "同。了解這些差異對於撰寫正確且高效的 Chester 程式至關重要。"
 
-#: src/statements.md:7
+#: src/guide/statements.md:7
 msgid "`let` Bindings"
 msgstr "let 繫結"
 
-#: src/statements.md:9
+#: src/guide/statements.md:9
 msgid ""
 "**Local Scope**: `let` bindings are only visible **after** their declaration "
 "within the current block."
 msgstr "**區域範圍**：let 繫結僅在宣告後在當前塊中可見。"
 
-#: src/statements.md:10
+#: src/guide/statements.md:10
 msgid ""
 "**No Forward References**: You cannot reference a `let` binding before it's "
 "declared."
 msgstr "**不允許前向引用**：你不能在宣告之前引用 let 繫結。"
 
-#: src/statements.md:11
+#: src/guide/statements.md:11
 msgid ""
 "**Type Inference**: If no type annotation is provided, the compiler infers "
 "the type from the binding's body."
 msgstr "**類型推斷**：如果沒有提供類型註解，編譯器會從繫結的主體推斷類型。"
 
-#: src/statements.md:13 src/statements.md:33
+#: src/guide/statements.md:13 src/guide/statements.md:33
 msgid "**Example:**"
 msgstr "**範例**："
 
-#: src/statements.md:15
+#: src/guide/statements.md:15
 msgid ""
 "```chester,playground,editable\n"
 "// Correct usage of 'let'\n"
@@ -10908,7 +10910,7 @@ msgstr ""
 "let y = x; // 'x' 在使用前已定義\n"
 "```"
 
-#: src/statements.md:21
+#: src/guide/statements.md:21
 msgid ""
 "```chester,playground,editable\n"
 "// Incorrect usage of 'let'\n"
@@ -10917,29 +10919,29 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/statements.md:27
+#: src/guide/statements.md:27
 msgid "`def` Bindings"
 msgstr ""
 
-#: src/statements.md:29
+#: src/guide/statements.md:29
 msgid ""
 "**Global Scope**: `def` bindings are visible throughout the entire block, "
 "even before their declaration."
 msgstr "**全域範圍**：def 繫結在整個塊中可見，甚至在宣告之前。"
 
-#: src/statements.md:30
+#: src/guide/statements.md:30
 msgid ""
 "**Allows Forward References**: You can reference a `def` binding before it's "
 "declared."
 msgstr "**允許前向引用**：你可以在宣告之前引用 def 繫結。"
 
-#: src/statements.md:31
+#: src/guide/statements.md:31
 msgid ""
 "**Type Annotation Required for Forward References**: If you use a `def` "
 "binding before its declaration, you must provide a type annotation."
 msgstr "**需要類型註解**：如果你在宣告之前使用 def 繫結，必須提供類型註解。"
 
-#: src/statements.md:35
+#: src/guide/statements.md:35
 msgid ""
 "```chester,playground,editable\n"
 "// Correct usage of 'def' with type annotation\n"
@@ -10955,7 +10957,7 @@ msgstr ""
 "def square(n: Int) = n * n; // 需要類型註解\n"
 "```"
 
-#: src/statements.md:42
+#: src/guide/statements.md:42
 msgid ""
 "```chester,playground,editable\n"
 "// Incorrect usage of 'def' without type annotation\n"
@@ -10965,47 +10967,47 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/statements.md:49
+#: src/guide/statements.md:49
 msgid "Summary of Scoping Rules"
 msgstr "範圍規則摘要"
 
-#: src/statements.md:51
+#: src/guide/statements.md:51
 msgid "**`let` Bindings**:"
 msgstr "**let 繫結**："
 
-#: src/statements.md:52
+#: src/guide/statements.md:52
 msgid "Visible only after their declaration within the current block."
 msgstr "僅在當前塊中宣告後可見。"
 
-#: src/statements.md:53
+#: src/guide/statements.md:53
 msgid "Do **not** allow forward references."
 msgstr "不允許前向引用。"
 
-#: src/statements.md:54
+#: src/guide/statements.md:54
 msgid "Type annotations are optional if the type can be inferred."
 msgstr "如果類型可以推斷，則類型註解是可選的。"
 
-#: src/statements.md:56
+#: src/guide/statements.md:56
 msgid "**`def` Bindings**:"
 msgstr "**def 繫結**："
 
-#: src/statements.md:57
+#: src/guide/statements.md:57
 msgid "Visible throughout the entire block."
 msgstr "在整個塊中可見。"
 
-#: src/statements.md:58
+#: src/guide/statements.md:58
 msgid "Allow forward references."
 msgstr "允許前向引用。"
 
-#: src/statements.md:59
+#: src/guide/statements.md:59
 msgid "Require type annotations when used before their declarations."
 msgstr "在宣告之前使用時需要類型註解。"
 
-#: src/statements.md:61
+#: src/guide/statements.md:61
 msgid "Compiler Behavior"
 msgstr "編譯器行為"
 
-#: src/statements.md:63
+#: src/guide/statements.md:63
 msgid ""
 "When processing a block, the Chester compiler handles `let` and `def` "
 "bindings differently to manage scope and type checking."
@@ -11013,29 +11015,29 @@ msgstr ""
 "當處理一個塊時，Chester 編譯器會以不同的方式處理 let 和 def 繫結，以管理範圍"
 "和類型檢查。"
 
-#: src/statements.md:65
+#: src/guide/statements.md:65
 msgid "Processing `def` Bindings"
 msgstr "處理 def 繫結"
 
-#: src/statements.md:67
+#: src/guide/statements.md:67
 msgid "**Collection Phase**:"
 msgstr "**收集階段**："
 
-#: src/statements.md:68
+#: src/guide/statements.md:68
 msgid ""
 "The compiler collects all `def` bindings, noting their names, type "
 "annotations, and identifiers."
 msgstr "編譯器收集所有 def 繫結，記錄它們的名稱、類型註解和識別符。"
 
-#: src/statements.md:69
+#: src/guide/statements.md:69
 msgid "It tracks forward references to detect usages before declarations."
 msgstr "它追蹤前向引用以檢測在宣告之前的用法。"
 
-#: src/statements.md:71
+#: src/guide/statements.md:71
 msgid "**Type Annotation Checks**:"
 msgstr "**類型註解檢查**："
 
-#: src/statements.md:72
+#: src/guide/statements.md:72
 msgid ""
 "For forward-referenced `def` bindings without type annotations, the compiler "
 "reports a `MissingTypeAnnotationError`."
@@ -11043,69 +11045,69 @@ msgstr ""
 "對於沒有類型註解的前向引用 def 繫結，編譯器會報告 "
 "`MissingTypeAnnotationError`。"
 
-#: src/statements.md:74
+#: src/guide/statements.md:74
 msgid "**Context Updates**:"
 msgstr "**上下文更新**："
 
-#: src/statements.md:75
+#: src/guide/statements.md:75
 msgid ""
 "The compiler adds placeholders or inferred types to the context, allowing "
 "forward-referenced `def` bindings to be used."
 msgstr "編譯器將佔位符或推斷的類型添加到上下文中，允許使用前向引用 def 繫結。"
 
-#: src/statements.md:77
+#: src/guide/statements.md:77
 msgid "Processing `let` Bindings"
 msgstr ""
 
-#: src/statements.md:79
+#: src/guide/statements.md:79
 msgid "**Sequential Processing**:"
 msgstr ""
 
-#: src/statements.md:80
+#: src/guide/statements.md:80
 msgid "`let` bindings are processed in order of their appearance."
 msgstr ""
 
-#: src/statements.md:81
+#: src/guide/statements.md:81
 msgid "Each `let` binding is added to the context **after** its declaration."
 msgstr ""
 
-#: src/statements.md:82
+#: src/guide/statements.md:82
 msgid "**No Forward References**:"
 msgstr ""
 
-#: src/statements.md:83
+#: src/guide/statements.md:83
 msgid "Referencing a `let` binding before its declaration results in an error."
 msgstr ""
 
-#: src/statements.md:85
+#: src/guide/statements.md:85
 msgid "Best Practices"
 msgstr ""
 
-#: src/statements.md:87
+#: src/guide/statements.md:87
 msgid ""
 "Use `let` when you don't need to reference the binding before its "
 "declaration."
 msgstr ""
 
-#: src/statements.md:88
+#: src/guide/statements.md:88
 msgid ""
 "Use `def` when you need forward references or are defining recursive "
 "functions."
 msgstr "當需要前向引用或定義遞歸函數時使用 def。"
 
-#: src/statements.md:89
+#: src/guide/statements.md:89
 msgid ""
 "Always provide type annotations for `def` bindings that are forward-"
 "referenced to avoid compilation errors."
 msgstr "為了避免編譯錯誤，始終為前向引用 def 繫結提供類型註解。"
 
-#: src/statements.md:91
+#: src/guide/statements.md:91
 msgid ""
 "By understanding these scoping rules, you can write more predictable and "
 "maintainable Chester code."
 msgstr "通過理解這些範圍規則，可以撰寫更可預測且可維護的 Chester 程式。"
 
-#: src/syntax-grammar.md:3
+#: src/guide/syntax-grammar.md:3
 msgid ""
 "**IMPORTANT NOTE:** This document provides only a rough description of the "
 "Chester language syntax and might be highly incorrect or not fully aligned "
@@ -11113,31 +11115,31 @@ msgid ""
 "than a precise specification."
 msgstr ""
 
-#: src/syntax-grammar.md:5
+#: src/guide/syntax-grammar.md:5
 msgid ""
 "This document attempts to describe the Chester language syntax using a BNF-"
 "like notation."
 msgstr ""
 
-#: src/syntax-grammar.md:7
+#: src/guide/syntax-grammar.md:7
 msgid ""
 "**Note:** Whitespace and comments (`// ...`) are generally allowed between "
 "tokens and are not explicitly shown in the grammar rules unless significant "
 "(like newlines in blocks)."
 msgstr ""
 
-#: src/syntax-grammar.md:9
+#: src/guide/syntax-grammar.md:9
 msgid "Top Level"
 msgstr ""
 
-#: src/syntax-grammar.md:16
+#: src/guide/syntax-grammar.md:16
 msgid ""
 "_Note: In many contexts (like blocks or top-level), newlines can act as "
 "statement separators similar to semicolons. The last expression in a block "
 "acts as its return value unless followed by a semicolon._"
 msgstr ""
 
-#: src/syntax-grammar.md:20
+#: src/guide/syntax-grammar.md:20
 msgid ""
 "```bnf\n"
 "Expr ::= Atom | Expr Operator Expr | Operator Expr | Expr Operator\n"
@@ -11176,22 +11178,22 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/syntax-grammar.md:54
+#: src/guide/syntax-grammar.md:54
 msgid ""
 "_Note: All identifiers are treated uniformly at the syntax level, with no "
 "distinction between different kinds of identifiers. Operator precedence and "
 "associativity are handled during semantic analysis, not in the grammar._"
 msgstr ""
 
-#: src/syntax-grammar.md:56
+#: src/guide/syntax-grammar.md:56
 msgid "Object Literals"
 msgstr ""
 
-#: src/syntax-grammar.md:73
+#: src/guide/syntax-grammar.md:73
 msgid "Literals"
 msgstr ""
 
-#: src/syntax-grammar.md:75
+#: src/guide/syntax-grammar.md:75
 msgid ""
 "```bnf\n"
 "Literal ::= INT_LITERAL\n"
@@ -11203,11 +11205,11 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/syntax-grammar.md:84
+#: src/guide/syntax-grammar.md:84
 msgid "Terminals"
 msgstr ""
 
-#: src/syntax-grammar.md:86
+#: src/guide/syntax-grammar.md:86
 msgid ""
 "```bnf\n"
 "ID             ::= /* Starts with letter, _, or emoji; contains letters, "
@@ -11222,33 +11224,33 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/syntax-grammar.md:95
+#: src/guide/syntax-grammar.md:95
 msgid "Punctuation and Symbols (Terminals)"
 msgstr ""
 
-#: src/trait-and-interface.md:3
+#: src/guide/trait-and-interface.md:3
 msgid ""
 "Chester provides two distinct mechanisms for defining abstract types: traits "
 "and interfaces. While both serve to define contracts that other types can "
 "implement, they differ in their subtyping behavior and intended use cases."
 msgstr ""
 
-#: src/trait-and-interface.md:5
+#: src/guide/trait-and-interface.md:5
 msgid "Traits: Nominal Subtyping"
 msgstr ""
 
-#: src/trait-and-interface.md:7
+#: src/guide/trait-and-interface.md:7
 msgid ""
 "Traits in Chester use nominal subtyping, which means that the name of the "
 "type is significant in determining subtype relationships."
 msgstr ""
 
-#: src/trait-and-interface.md:9
+#: src/guide/trait-and-interface.md:9
 #, fuzzy
 msgid "Here's an example of a trait definition in Chester:"
 msgstr "以下是一個簡單的 `Person` 記錄範例："
 
-#: src/trait-and-interface.md:11
+#: src/guide/trait-and-interface.md:11
 msgid ""
 "```chester,playground,editable\n"
 "trait Animal {\n"
@@ -11261,30 +11263,30 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/trait-and-interface.md:21
+#: src/guide/trait-and-interface.md:21
 msgid ""
 "In this example, `Dog` is explicitly declared as a subtype of `Animal` using "
 "the `<:` operator. This relationship is based on the names of the types, not "
 "just their structure."
 msgstr ""
 
-#: src/trait-and-interface.md:23
+#: src/guide/trait-and-interface.md:23
 msgid "Interfaces: Structural Subtyping"
 msgstr ""
 
-#: src/trait-and-interface.md:25
+#: src/guide/trait-and-interface.md:25
 msgid ""
 "Interfaces in Chester use structural subtyping, which means that subtype "
 "relationships are determined by the structure (methods and properties) of "
 "the types, regardless of their names."
 msgstr ""
 
-#: src/trait-and-interface.md:27
+#: src/guide/trait-and-interface.md:27
 #, fuzzy
 msgid "Here's an example of an interface definition:"
 msgstr "以下是一個簡單的 `Person` 記錄範例："
 
-#: src/trait-and-interface.md:29
+#: src/guide/trait-and-interface.md:29
 msgid ""
 "```chester,playground,editable\n"
 "interface Soundmaker {\n"
@@ -11300,54 +11302,54 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/trait-and-interface.md:42
+#: src/guide/trait-and-interface.md:42
 msgid ""
 "In this case, `Cat` is considered a subtype of `Soundmaker` because it has a "
 "matching `makeSound` method, even though it wasn't explicitly declared as "
 "such."
 msgstr ""
 
-#: src/trait-and-interface.md:44
+#: src/guide/trait-and-interface.md:44
 msgid "Design Inspiration"
 msgstr ""
 
-#: src/trait-and-interface.md:46
+#: src/guide/trait-and-interface.md:46
 msgid ""
 "This dual approach to abstract types is inspired by the Pony programming "
 "language, as described in:"
 msgstr ""
 
-#: src/trait-and-interface.md:48
+#: src/guide/trait-and-interface.md:48
 msgid ""
 "Steed, G., & Drossopoulou, S. (2016). A principled design of capabilities in "
 "Pony. URL: https://www.ponylang.io/media/papers/"
 "a_prinicipled_design_of_capabilities_in_pony.pdf"
 msgstr ""
 
-#: src/trait-and-interface.md:50
+#: src/guide/trait-and-interface.md:50
 msgid ""
 "The Pony language uses a similar distinction between traits (which they call "
 "\"interfaces\") for nominal subtyping and \"structural types\" for "
 "structural subtyping."
 msgstr ""
 
-#: src/trait-and-interface.md:52
+#: src/guide/trait-and-interface.md:52
 msgid "Choosing Between Traits and Interfaces"
 msgstr ""
 
-#: src/trait-and-interface.md:54
+#: src/guide/trait-and-interface.md:54
 msgid ""
 "Use traits when you want to create a named hierarchy of types and control "
 "which types can be subtypes."
 msgstr ""
 
-#: src/trait-and-interface.md:55
+#: src/guide/trait-and-interface.md:55
 msgid ""
 "Use interfaces when you want to define a contract that any type can "
 "implicitly satisfy by implementing the required structure."
 msgstr ""
 
-#: src/trait-and-interface.md:57
+#: src/guide/trait-and-interface.md:57
 msgid ""
 "This design gives Chester developers flexibility in how they structure their "
 "code, allowing for both strict hierarchies and more flexible, duck-typed-"

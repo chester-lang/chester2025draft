@@ -1,6 +1,5 @@
 # https://github.com/rust-lang-nursery/mdBook/issues/677
 - [Chester](README.md)
-- [Record Syntax in Chester](Record.md)
 - [Chester Development Documentation](dev/README.md)
     - [TODO](dev/TODO.md)
     - [Chester Compiler Backend Architecture](dev/compiler-backend.md)
@@ -15,6 +14,8 @@
     - [Type Checking System: Propagator Network and Design](dev/type-checking-system.md)
     - [TypeScript Backend Implementation](dev/typescript-backend.md)
     - [Union Types Progress](dev/union_types_progress.md)
-- [Statements](statements.md)
-- [Chester Syntax Grammar (BNF-like)](syntax-grammar.md)
-- [Traits and Interfaces in Chester](trait-and-interface.md)
+- [Chester Guide](guide/README.md)
+    - [Record Syntax in Chester](guide/Record.md)
+    - [Statements](guide/statements.md)
+    - [Chester Syntax Grammar (BNF-like)](guide/syntax-grammar.md)
+    - [Traits and Interfaces in Chester](guide/trait-and-interface.md)
