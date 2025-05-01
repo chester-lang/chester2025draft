@@ -464,35 +464,35 @@ msgstr "**模塊系統**：生成 ES 模塊導出和導入"
 
 #: src/dev/compiler-backend.md:64 src/dev/compiler-backend.md:102
 msgid "Key Features"
-msgstr ""
+msgstr "關鍵特性"
 
 #: src/dev/compiler-backend.md:66
 msgid "Complete JavaScript language support"
-msgstr ""
+msgstr "完整的 JavaScript 語言支援"
 
 #: src/dev/compiler-backend.md:67
 msgid "TypeScript type annotations"
-msgstr ""
+msgstr "TypeScript 類型註解"
 
 #: src/dev/compiler-backend.md:68
 msgid "ECMAScript module system"
-msgstr ""
+msgstr "ECMAScript 模塊系統"
 
 #: src/dev/compiler-backend.md:69
 msgid "Web API integration"
-msgstr ""
+msgstr "Web API 集成"
 
 #: src/dev/compiler-backend.md:70
 msgid "Sourcemap generation for debugging"
-msgstr ""
+msgstr "用於調試的源碼映射生成"
 
 #: src/dev/compiler-backend.md:72
 msgid "JS AST Structure"
-msgstr ""
+msgstr "JS AST 結構"
 
 #: src/dev/compiler-backend.md:74
 msgid "The JavaScript AST is implemented as a set of case classes:"
-msgstr ""
+msgstr "JavaScript AST 是以一組 case class 的形式實現的："
 
 #: src/dev/compiler-backend.md:87
 msgid ""
@@ -1588,15 +1588,15 @@ msgstr ""
 
 #: src/dev/development.md:198
 msgid "**Git Command Tips**"
-msgstr ""
+msgstr "**Git 命令技巧**"
 
 #: src/dev/development.md:199
 msgid "Always use `| cat` with git commands that might trigger paging:"
-msgstr ""
+msgstr "始終在可能觸發分頁的 git 命令中使用 `| cat`："
 
 #: src/dev/development.md:205
 msgid "This ensures consistent output and avoids interactive paging"
-msgstr ""
+msgstr "這確保了一致的輸出並避免了互動式分頁"
 
 #: src/dev/development.md:207
 msgid "Terminal Control with Git Commands"
@@ -4943,11 +4943,11 @@ msgstr ""
 
 #: src/dev/devlog.md:730 src/dev/devlog.md:1460
 msgid "Implementation Approach"
-msgstr ""
+msgstr "實作方法"
 
 #: src/dev/devlog.md:732
 msgid "We implemented a 3-step fix that maintains uniform symbol treatment:"
-msgstr ""
+msgstr "我們實現了一個保持統一符號處理的三步驟修復方案："
 
 #: src/dev/devlog.md:734
 msgid "**Added Context to LexerState**:"
