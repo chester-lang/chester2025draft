@@ -646,11 +646,14 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
                     else if (value > 0 && tryUnify(ty_, NaturalType(None))) true
                     else if (tryUnify(ty_, IntegerType(None))) true
                     else {
-                      val i = Vector(IntegerType(None)) ++
-                        Vector(NaturalType(None)).filter(x => value > 0) ++
-                        Vector(IntType(None)).filter(x => value.isValidInt) ++
-                        Vector(UIntType(None)).filter(x => value > 0 && value.isValidInt)
-                      unify(ty_, Intersection(i.assumeNonEmpty, None), x)
+                      // Create a vector of compatible types based on value properties
+                      val possibleTypes = Vector(
+                        IntegerType(None)                                 // Always included
+                      ) ++ 
+                      (if (value > 0) Vector(NaturalType(None)) else Vector.empty) ++  // Only if value > 0
+                      (if (value.isValidInt) Vector(IntType(None)) else Vector.empty) ++  // Only if value is a valid Int
+                      (if (value > 0 && value.isValidInt) Vector(UIntType(None)) else Vector.empty)  // Only if value > 0 and is a valid Int
+                      unify(ty_, Intersection(possibleTypes.assumeNonEmpty, None), x)
                       true
                     }
                 }
@@ -1025,7 +1028,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     override def run(using StateAbility[TyckSession], TyckSession): Boolean = {
       // Delegate to the checkTraitImplementation method
       // We don't need to check the result - any errors will be reported directly
-      checkTraitImplementation(recordDef, traitDef, cause)
+      val _ = checkTraitImplementation(recordDef, traitDef, cause)
       // Always return true to ensure the propagator is removed
       true
     }

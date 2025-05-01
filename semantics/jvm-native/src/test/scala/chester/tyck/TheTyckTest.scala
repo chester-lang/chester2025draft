@@ -1,5 +1,6 @@
 package chester.tyck
 
+import chester.error.TyckError
 import chester.i18n.*
 import chester.reader.{*, given}
 import chester.readerv2.ChesterReaderV2
@@ -34,54 +35,57 @@ class TheTyckTest extends FunSuite {
             assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
             assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
             Debug.withCategoriesEnabled(DebugCategory.values.toSet) {
-              Tycker.check(parsedBlock) match {
-                case TyckResult.Success(result, _, _) =>
-                  if (result.collectMeta.isEmpty) {
-                    println(t"Testing read/write for $inputFile")
-                    assertEquals(
-                      StringPrinter.render(read[Judge](write[Judge](result)))(using
-                        PrettierOptions.Default
-                      ),
-                      StringPrinter.render(result)(using
-                        PrettierOptions.Default
-                      )
+              val tyckResult = Tycker.check(parsedBlock)
+              if (tyckResult.errorsEmpty) {
+                // This is equivalent to TyckResult.Success case
+                val result = tyckResult.result
+                if (result.collectMeta.isEmpty) {
+                  println(t"Testing read/write for $inputFile")
+                  assertEquals(
+                    StringPrinter.render(read[Judge](write[Judge](result)))(using
+                      PrettierOptions.Default
+                    ),
+                    StringPrinter.render(result)(using
+                      PrettierOptions.Default
                     )
-                    assertEquals(
-                      StringPrinter.render(readBinary[Judge](writeBinary[Judge](result)))(using
-                        PrettierOptions.Default
-                      ),
-                      StringPrinter.render(result)(using
-                        PrettierOptions.Default
-                      )
-                    )
-                    assertEquals(
-                      StringPrinter.render(result.wellTyped)(using
-                        PrettierOptions.Default
-                      ),
-                      StringPrinter.render(result.wellTyped)(using
-                        PrettierOptions.Default
-                      )
-                    )
-                  } else {
-                    println(t"Skipping read/write test for $inputFile")
-                  }
-                  val actual = StringPrinter.render(result.wellTyped)(using
-                    PrettierOptions.Default
                   )
+                  assertEquals(
+                    StringPrinter.render(readBinary[Judge](writeBinary[Judge](result)))(using
+                      PrettierOptions.Default
+                    ),
+                    StringPrinter.render(result)(using
+                      PrettierOptions.Default
+                    )
+                  )
+                  assertEquals(
+                    StringPrinter.render(result.wellTyped)(using
+                      PrettierOptions.Default
+                    ),
+                    StringPrinter.render(result.wellTyped)(using
+                      PrettierOptions.Default
+                    )
+                  )
+                } else {
+                  println(t"Skipping read/write test for $inputFile")
+                }
+                val actual = StringPrinter.render(result.wellTyped)(using
+                  PrettierOptions.Default
+                )
 
-                  if (false) {
-                    if (!expectedExists) {
-                      Files.write(expectedFile, actual.getBytes)
-                      println(t"Created expected file: $expectedFile")
-                    } else {
-                      val expected =
-                        Files.readString(expectedFile, StandardCharsets.UTF_8)
-                      assertEquals(actual, expected)
-                    }
+                if (false) {
+                  if (!expectedExists) {
+                    Files.write(expectedFile, actual.getBytes)
+                    println(t"Created expected file: $expectedFile")
+                  } else {
+                    val expected =
+                      Files.readString(expectedFile, StandardCharsets.UTF_8)
+                    assertEquals(actual, expected)
                   }
-
-                case TyckResult.Failure(errors, _, _, _) =>
-                  fail(t"Failed to type check file: $inputFile, errors: $errors")
+                }
+              } else {
+                // This is equivalent to TyckResult.Failure case
+                val errors = tyckResult.problems.collect { case e: TyckError => e }
+                fail(t"Failed to type check file: $inputFile, errors: $errors")
               }
             }
           }

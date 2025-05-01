@@ -1,6 +1,5 @@
 package chester.truffle
 
-import chester.error.unreachable
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.reader.*
 import chester.readerv2.ChesterReaderV2
@@ -16,13 +15,16 @@ object Utils {
       .fold(
         _err => ???,
         parsedBlock =>
-          Tycker.check(parsedBlock) match {
-            case TyckResult.Success(result, _, _) =>
-              val t: Term = result.wellTyped
-              val root = new ChesterRootNode(lang, t)
-              root.getCallTarget
-            case TyckResult.Failure(_, _, _, _) => ???
-            case _                              => unreachable()
+          val tyckResult = Tycker.check(parsedBlock)
+          if (tyckResult.errorsEmpty) {
+            // This is equivalent to TyckResult.Success case
+            val result = tyckResult.result
+            val t: Term = result.wellTyped
+            val root = new ChesterRootNode(lang, t)
+            root.getCallTarget
+          } else {
+            // This is equivalent to TyckResult.Failure case
+            ???
           }
       )
 }

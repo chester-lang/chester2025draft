@@ -6,7 +6,7 @@ import chester.error.Problem.Severity
 import chester.integrity.IntegrityCheck
 import chester.reader.{FilePath, FilePathImpl}
 import chester.repl.REPLEngine
-import chester.tyck.{TyckResult, Tycker}
+import chester.tyck.Tycker
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
@@ -92,21 +92,27 @@ class CLI[F[_]](using
         { parsedBlock =>
           assert(read[Expr](write[Expr](parsedBlock)) == parsedBlock)
           assert(readBinary[Expr](writeBinary[Expr](parsedBlock)) == parsedBlock)
-          Tycker.check(parsedBlock) match {
-            case TyckResult.Success(result, _, _) =>
-              if (result.collectMeta.nonEmpty) {
-                ???
-              }
-              val text = StringPrinter.render(result)(using PrettierOptions.Default)
-              IO.println(text)
-            case TyckResult.Failure(errors, warnings, _, _) =>
-              given sourceReader: SourceReader = SourceReader.default
-              given prettierOptions: PrettierOptions = PrettierOptions.Default
+          val tyckResult = Tycker.check(parsedBlock)
+          if (tyckResult.errorsEmpty) {
+            // This is equivalent to TyckResult.Success case
+            val result = tyckResult.result
+            if (result.collectMeta.nonEmpty) {
+              ???
+            }
+            val text = StringPrinter.render(result)(using PrettierOptions.Default)
+            IO.println(text)
+          } else {
+            // This is equivalent to TyckResult.Failure case
+            val errors = tyckResult.problems.collect { case e: TyckError => e }
+            val warnings = tyckResult.problems.collect { case w: TyckWarning => w }
 
-              for {
-                _ <- errors.traverse(error => IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
-                _ <- warnings.traverse(warning => IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
-              } yield ()
+            given sourceReader: SourceReader = SourceReader.default
+            given prettierOptions: PrettierOptions = PrettierOptions.Default
+
+            for {
+              _ <- errors.traverse(error => IO.println(FansiPrettyPrinter.render(error.renderDoc, 80).render))
+              _ <- warnings.traverse(warning => IO.println(FansiPrettyPrinter.render(warning.renderDoc, 80).render))
+            } yield ()
           }
         }
       )

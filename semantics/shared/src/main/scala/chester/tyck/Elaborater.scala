@@ -232,8 +232,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ctx: Context,
       ck: TyckSession
   ): Unit = {
-    // Connect the function
-    toId(fcall.f)
 
     // Connect all arguments
     for (calling <- fcall.args)
@@ -824,8 +822,7 @@ trait DefaultImpl
   )(using
       ck: TyckSession,
       able: StateAbility[TyckSession],
-      recording: SemanticCollector,
-      _reporter: Reporter[TyckProblem]
+      recording: SemanticCollector
   ): Judge = {
     if (Debug.isEnabled(UnionSubtyping)) {
       Debug.debugPrint(UnionSubtyping, "\n=== STARTING FINALIZE JUDGE ===")

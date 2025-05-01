@@ -36,26 +36,4 @@ object TyckResult {
   ): TyckResult[S, T] =
     TyckResult0(state, result, warnings ++ errors)
 
-  object Success {
-    def unapply[S, T](
-        x: TyckResult[S, T]
-    ): Option[(T, S, Vector[TyckWarning])] =
-      Option.when(x.errorsEmpty)((x.result, x.state, x.problems.asInstanceOf[Vector[TyckWarning]]))
-  }
-
-  object Failure {
-    def unapply[S, T](
-        x: TyckResult[S, T]
-    ): Option[(Vector[TyckError], Vector[TyckWarning], S, T)] =
-      Option.when(!x.errorsEmpty)(
-        (
-          x.problems
-            .collect { case e: TyckError => e },
-          x.problems
-            .collect { case w: TyckWarning => w },
-          x.state,
-          x.result
-        )
-      )
-  }
 }
