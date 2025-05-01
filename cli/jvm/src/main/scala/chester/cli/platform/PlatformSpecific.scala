@@ -4,6 +4,7 @@ import chester.cli.Main.CliConfig
 import chester.tyck.SemanticDBGenerator
 import chester.utils.*
 import chester.i18n.*
+
 import scala.util.boundary
 import scala.util.boundary.break
 

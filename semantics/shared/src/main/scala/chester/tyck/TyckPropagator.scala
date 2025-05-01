@@ -648,11 +648,11 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
                     else {
                       // Create a vector of compatible types based on value properties
                       val possibleTypes = Vector(
-                        IntegerType(None)                                 // Always included
-                      ) ++ 
-                      (if (value > 0) Vector(NaturalType(None)) else Vector.empty) ++  // Only if value > 0
-                      (if (value.isValidInt) Vector(IntType(None)) else Vector.empty) ++  // Only if value is a valid Int
-                      (if (value > 0 && value.isValidInt) Vector(UIntType(None)) else Vector.empty)  // Only if value > 0 and is a valid Int
+                        IntegerType(None) // Always included
+                      ) ++
+                        (if (value > 0) Vector(NaturalType(None)) else Vector.empty) ++ // Only if value > 0
+                        (if (value.isValidInt) Vector(IntType(None)) else Vector.empty) ++ // Only if value is a valid Int
+                        (if (value > 0 && value.isValidInt) Vector(UIntType(None)) else Vector.empty) // Only if value > 0 and is a valid Int
                       unify(ty_, Intersection(possibleTypes.assumeNonEmpty, None), x)
                       true
                     }

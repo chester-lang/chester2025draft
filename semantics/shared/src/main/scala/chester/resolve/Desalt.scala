@@ -7,8 +7,8 @@ import chester.syntax.{Const, ModuleRef}
 import chester.syntax.concrete.*
 import chester.utils.*
 import chester.i18n.*
-import scala.util.boundary
 
+import scala.util.boundary
 import scala.annotation.tailrec
 
 case class DesugarInfo()
@@ -203,7 +203,7 @@ case object StmtDesalt {
       kw: Identifier,
       xs: Vector[Expr],
       cause: Expr
-  )(using reporter: Reporter[TyckProblem]): Stmt = {
+  )(using reporter: Reporter[TyckProblem]): Stmt =
     boundary {
       val typeIdx = xs.indexWhere {
         case Identifier(Const.`:`, _) => true; case _ => false
@@ -248,7 +248,6 @@ case object StmtDesalt {
         )
       )
     }
-  }
 
   private def unrollFunction(stmt: LetDefStmt): LetDefStmt =
     stmt.defined match {
@@ -489,7 +488,7 @@ case object SimpleDesalt {
           )
         }
         result
-      
+
       case expr @ OpSeq(Vector(Identifier(Const.Object, _), nameExpr, rest @ _*), meta) =>
         // Parse the object name
         val result = boundary {
@@ -524,7 +523,7 @@ case object SimpleDesalt {
           )
         }
         result
-      
+
       // Handling 'interface' keyword
       case expr @ OpSeq(Vector(Identifier(Const.Interface, _), nameExpr, rest @ _*), meta) =>
         // Parse the interface name and parameters if any

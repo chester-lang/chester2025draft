@@ -231,7 +231,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       state: StateAbility[TyckSession],
       ctx: Context,
       ck: TyckSession
-  ): Unit = {
+  ): Unit =
 
     // Connect all arguments
     for (calling <- fcall.args)
@@ -253,7 +253,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
               case _ => // No special handling needed
             }
         }
-  }
 
   // Helper method to handle union-to-specific subtyping
   private def unionToSpecific(

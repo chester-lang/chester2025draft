@@ -7,7 +7,7 @@ import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOp
 import chester.i18n.*
 
 import scala.util.{Try, boundary}
-import boundary.break
+import scala.util.boundary.break
 
 type TokenStream = LazyList[Either[ParseError, Token]]
 

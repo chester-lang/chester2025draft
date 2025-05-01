@@ -159,7 +159,7 @@ def REPLEngine[F[_]](using
             InTerminal.writeln(t"$result")
           }
         } catch {
-          case e: NumberFormatException =>
+          case _: NumberFormatException =>
             InTerminal.writeln(t"Error: Invalid number format in Out($nStr)")
         }
       case _ =>
@@ -185,7 +185,7 @@ def REPLEngine[F[_]](using
 
                   // Update the terminal info with the new prompt
                   terminalInfo match {
-                    case info: TerminalInfo =>
+                    case _: TerminalInfo =>
                     // We can't modify the existing terminalInfo, but the next readline will use the updated mainPrompt
                   }
 

@@ -1,5 +1,5 @@
 package chester.readerv2
-import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, Offset}
+import chester.reader.{FileNameAndContent, Offset, ParseError, ParserSource, Source}
 import chester.syntax.concrete.*
 import chester.utils.WithUTF16
 

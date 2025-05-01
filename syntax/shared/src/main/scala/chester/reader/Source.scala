@@ -70,5 +70,5 @@ case class Offset(
 }
 
 object Offset {
-  val Zero = Offset()
+  val Zero: Offset = Offset()
 }

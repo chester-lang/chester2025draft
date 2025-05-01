@@ -1,7 +1,7 @@
 package chester.error
 
 import spire.math.Natural
-import chester.reader.{Source, Offset}
+import chester.reader.{Offset, Source}
 import chester.utils.{Nat, WithUTF16, asInt, encodeString, parserInputToLazyList}
 import fastparse.ParserInput
 import upickle.default.*

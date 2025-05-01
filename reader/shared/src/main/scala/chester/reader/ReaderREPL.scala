@@ -9,7 +9,7 @@ import chester.readerv2.ChesterReaderV2
 
 import scala.util.*
 import scala.util.boundary
-import boundary.break
+import scala.util.boundary.break
 
 object ReaderREPL {
 

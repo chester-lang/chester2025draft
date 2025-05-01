@@ -2,7 +2,7 @@ package chester.readerv1
 
 import chester.error.*
 import chester.i18n.*
-import chester.reader.{FileNameAndContent, ParseError, ParserSource, Source, Offset}
+import chester.reader.{FileNameAndContent, Offset, ParseError, ParserSource, Source}
 import chester.syntax.concrete.*
 import chester.utils.{Nat, StringIndex, WithUTF16}
 import fastparse.*
