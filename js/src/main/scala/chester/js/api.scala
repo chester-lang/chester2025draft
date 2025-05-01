@@ -15,11 +15,15 @@ def runFileTopLevel(content: String, lightMode: Boolean): String = {
     FileNameAndContent("playground.chester", content)
   ) match {
     case Right(parsedBlock) =>
-      Tycker.check(parsedBlock) match {
-        case TyckResult.Success(result, _, _) =>
-          colorfulToHtml(ColorfulPrettyPrinter.render(result.wellTyped))
-        case TyckResult.Failure(errors, _, _, _) =>
-          t"Failed to type check file: $errors"
+      val tyckResult = Tycker.check(parsedBlock)
+      if (tyckResult.errorsEmpty) {
+        // This is equivalent to TyckResult.Success case
+        val result = tyckResult.result
+        colorfulToHtml(ColorfulPrettyPrinter.render(result.wellTyped))
+      } else {
+        // This is equivalent to TyckResult.Failure case
+        val errors = tyckResult.problems.collect { case e: TyckError => e }
+        t"Failed to type check file: $errors"
       }
     case Left(error) =>
       error.message

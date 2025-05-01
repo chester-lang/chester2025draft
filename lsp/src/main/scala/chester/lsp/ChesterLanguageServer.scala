@@ -202,51 +202,55 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         val tyckResult = Tycker.check(parsedExpr, sementicCollector = collecter)
 
         // Generate diagnostics from the TyckResult
-        val diagnostics = tyckResult match {
-          case TyckResult.Success(_, _, warnings) =>
-            // Process warnings
-            warnings.map { warning =>
-              val range = warning.sourcePos
-                .map(rangeFromSourcePos)
-                .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
+        val diagnostics = if (tyckResult.errorsEmpty) {
+          // This is equivalent to TyckResult.Success case
+          // Process warnings
+          val warnings = tyckResult.problems.collect { case w: TyckWarning => w }
+          warnings.map { warning =>
+            val range = warning.sourcePos
+              .map(rangeFromSourcePos)
+              .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
-              new Diagnostic(
-                range,
-                warning.getMessage,
-                DiagnosticSeverity.Warning,
-                "ChesterLanguageServer"
-              )
-            }.toList
+            new Diagnostic(
+              range,
+              warning.getMessage,
+              DiagnosticSeverity.Warning,
+              "ChesterLanguageServer"
+            )
+          }.toList
+        } else {
+          // This is equivalent to TyckResult.Failure case
+          // Combine errors and warnings into diagnostics
+          val errors = tyckResult.problems.collect { case e: TyckError => e }
+          val warnings = tyckResult.problems.collect { case w: TyckWarning => w }
 
-          case TyckResult.Failure(errors, warnings, _, _) =>
-            // Combine errors and warnings into diagnostics
-            val errorDiagnostics = errors.map { error =>
-              val range = error.sourcePos
-                .map(rangeFromSourcePos)
-                .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
+          val errorDiagnostics = errors.map { error =>
+            val range = error.sourcePos
+              .map(rangeFromSourcePos)
+              .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
-              new Diagnostic(
-                range,
-                error.getMessage,
-                DiagnosticSeverity.Error,
-                "ChesterLanguageServer"
-              )
-            }
+            new Diagnostic(
+              range,
+              error.getMessage,
+              DiagnosticSeverity.Error,
+              "ChesterLanguageServer"
+            )
+          }
 
-            val warningDiagnostics = warnings.map { warning =>
-              val range = warning.sourcePos
-                .map(rangeFromSourcePos)
-                .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
+          val warningDiagnostics = warnings.map { warning =>
+            val range = warning.sourcePos
+              .map(rangeFromSourcePos)
+              .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
 
-              new Diagnostic(
-                range,
-                warning.getMessage,
-                DiagnosticSeverity.Warning,
-                "ChesterLanguageServer"
-              )
-            }
+            new Diagnostic(
+              range,
+              warning.getMessage,
+              DiagnosticSeverity.Warning,
+              "ChesterLanguageServer"
+            )
+          }
 
-            (errorDiagnostics ++ warningDiagnostics).toList
+          (errorDiagnostics ++ warningDiagnostics).toList
         }
 
         (tyckResult, collecter.get, diagnostics)

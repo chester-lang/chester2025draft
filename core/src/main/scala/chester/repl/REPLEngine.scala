@@ -132,11 +132,15 @@ def REPLEngine[F[_]](using
         .fold(
           error => InTerminal.writeln(t"Parse Error: ${error.message}"),
           parsedExpr =>
-            typeCheck(parsedExpr) match {
-              case TyckResult.Success(judge, _, _) =>
-                InTerminal.writeln(prettyPrintJudge(judge))
-              case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
-              case _                                   => unreachable()
+            val tyckResult = typeCheck(parsedExpr)
+            if (tyckResult.errorsEmpty) {
+              // This is equivalent to TyckResult.Success case
+              val judge = tyckResult.result
+              InTerminal.writeln(prettyPrintJudge(judge))
+            } else {
+              // This is equivalent to TyckResult.Failure case
+              val errors = tyckResult.problems.collect { case e: TyckError => e }
+              printErrors(errors)
             }
         )
     }
@@ -166,25 +170,30 @@ def REPLEngine[F[_]](using
             .fold(
               error => InTerminal.writeln(t"Parse Error: ${error.message}"),
               parsedExpr =>
-                typeCheck(parsedExpr) match {
-                  case TyckResult.Success(judge, _, _) =>
-                    // Store the evaluation result and its type in history
-                    evaluationHistory = evaluationHistory :+ judge.wellTyped
-                    typeHistory = typeHistory :+ judge.ty
+                val tyckResult = typeCheck(parsedExpr)
+                if (tyckResult.errorsEmpty) {
+                  // This is equivalent to TyckResult.Success case
+                  val judge = tyckResult.result
 
-                    // Increment the input counter for the next prompt
-                    inputCounter += 1
-                    mainPrompt = createMainPrompt(inputCounter)
+                  // Store the evaluation result and its type in history
+                  evaluationHistory = evaluationHistory :+ judge.wellTyped
+                  typeHistory = typeHistory :+ judge.ty
 
-                    // Update the terminal info with the new prompt
-                    terminalInfo match {
-                      case info: TerminalInfo =>
-                      // We can't modify the existing terminalInfo, but the next readline will use the updated mainPrompt
-                    }
+                  // Increment the input counter for the next prompt
+                  inputCounter += 1
+                  mainPrompt = createMainPrompt(inputCounter)
 
-                    InTerminal.writeln(prettyPrintJudgeWellTyped(judge))
-                  case TyckResult.Failure(errors, _, _, _) => printErrors(errors)
-                  case _                                   => unreachable()
+                  // Update the terminal info with the new prompt
+                  terminalInfo match {
+                    case info: TerminalInfo =>
+                    // We can't modify the existing terminalInfo, but the next readline will use the updated mainPrompt
+                  }
+
+                  InTerminal.writeln(prettyPrintJudgeWellTyped(judge))
+                } else {
+                  // This is equivalent to TyckResult.Failure case
+                  val errors = tyckResult.problems.collect { case e: TyckError => e }
+                  printErrors(errors)
                 }
             )
         }
