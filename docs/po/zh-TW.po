@@ -13,7 +13,7 @@ msgstr ""
 
 #: src/SUMMARY.md:1
 msgid "https://github.com/rust-lang-nursery/mdBook/issues/677"
-msgstr ""
+msgstr "https://github.com/rust-lang-nursery/mdBook/issues/677"
 
 #: src/SUMMARY.md:2 src/index.md:1
 msgid "Chester"
@@ -76,9 +76,8 @@ msgid "Union Types Progress"
 msgstr "聯合類型進展"
 
 #: src/SUMMARY.md:17 src/guide/index.md:1
-#, fuzzy
 msgid "Chester Guide"
-msgstr "Chester 是什麼？"
+msgstr "Chester 指南"
 
 #: src/SUMMARY.md:18 src/guide/Record.md:1
 msgid "Record Syntax in Chester"
@@ -90,7 +89,7 @@ msgstr "語句"
 
 #: src/SUMMARY.md:20 src/guide/syntax-grammar.md:1
 msgid "Chester Syntax Grammar (BNF-like)"
-msgstr ""
+msgstr "Chester 語法文法 (類 BNF)"
 
 #: src/SUMMARY.md:21 src/guide/trait-and-interface.md:1
 msgid "Traits and Interfaces in Chester"
@@ -617,9 +616,8 @@ msgid ""
 msgstr ""
 
 #: src/dev/compiler-backend.md:135 src/dev/typescript-backend.md:34
-#, fuzzy
 msgid "Chester Type"
-msgstr "Chester 是什麼？"
+msgstr "Chester 類型"
 
 #: src/dev/compiler-backend.md:135
 msgid "JVM"
@@ -699,9 +697,8 @@ msgid "Specialized classes"
 msgstr ""
 
 #: src/dev/compiler-backend.md:142 src/dev/typescript-backend.md:42
-#, fuzzy
 msgid "Record"
-msgstr "使用記錄"
+msgstr "記錄"
 
 #: src/dev/compiler-backend.md:142
 msgid "interface/class"
@@ -1479,9 +1476,8 @@ msgid ""
 msgstr ""
 
 #: src/dev/development.md:166
-#, fuzzy
 msgid "**Change Verification Checklist**"
-msgstr "**類型註解檢查**："
+msgstr "**變更驗證檢查清單**"
 
 #: src/dev/development.md:167
 msgid "Changes are minimal and focused"
@@ -1632,9 +1628,8 @@ msgstr ""
 
 #: src/dev/development.md:214 src/dev/devlog.md:357
 #: src/dev/effects-system.md:23
-#, fuzzy
 msgid "Examples:"
-msgstr "**範例**："
+msgstr "範例："
 
 #: src/dev/development.md:224
 msgid "**Common Git Operations**"
@@ -1881,9 +1876,8 @@ msgid "This will give you access to all the Term implementations"
 msgstr ""
 
 #: src/dev/development.md:317
-#, fuzzy
 msgid "Example"
-msgstr "**範例**："
+msgstr "範例"
 
 #: src/dev/development.md:320 src/dev/development.md:332
 #: src/dev/development.md:354
@@ -1896,9 +1890,8 @@ msgid "// INCORRECT"
 msgstr ""
 
 #: src/dev/development.md:328
-#, fuzzy
 msgid "Pattern Matching and Type Usage"
-msgstr "模式匹配和代數數據類型"
+msgstr "模式匹配和類型使用"
 
 #: src/dev/development.md:330
 msgid "Use concrete types for pattern matching:"
@@ -2135,9 +2128,8 @@ msgid "NEVER use reduction in elaborated results"
 msgstr ""
 
 #: src/dev/development.md:442
-#, fuzzy
 msgid "Example:"
-msgstr "**範例**："
+msgstr "範例："
 
 #: src/dev/development.md:444
 msgid "// Original code"
@@ -2780,9 +2772,8 @@ msgid "Added extensive debug logging for easier maintenance"
 msgstr ""
 
 #: src/dev/devlog.md:41 src/dev/devlog.md:849
-#, fuzzy
 msgid "**Completed Features**:"
-msgstr "**上下文更新**："
+msgstr "**已完成功能**："
 
 #: src/dev/devlog.md:42 src/dev/devlog.md:153
 msgid "✅ Block termination with context tracking"
@@ -2844,9 +2835,8 @@ msgid ""
 msgstr ""
 
 #: src/dev/devlog.md:60
-#, fuzzy
 msgid "**Implementation Details**:"
-msgstr "**類型註解檢查**："
+msgstr "**實現細節**："
 
 #: src/dev/devlog.md:61
 msgid "**Removed Hacky Components**:"
@@ -3329,9 +3319,8 @@ msgstr ""
 #: src/dev/devlog.md:977 src/dev/devlog.md:993 src/dev/devlog.md:1009
 #: src/dev/devlog.md:1024 src/dev/devlog.md:1066 src/dev/devlog.md:1085
 #: src/dev/devlog.md:1103 src/dev/devlog.md:1121
-#, fuzzy
 msgid "**Implementation**:"
-msgstr "**類型註解檢查**："
+msgstr "**實作**："
 
 #: src/dev/devlog.md:206
 msgid "Removed special case in `parseOperator()`"
@@ -3396,9 +3385,8 @@ msgid "V1/V2 Semantic Consistency"
 msgstr ""
 
 #: src/dev/devlog.md:226 src/dev/devlog.md:240 src/dev/devlog.md:249
-#, fuzzy
 msgid "**Implementation Plan**:"
-msgstr "**收集階段**："
+msgstr "**實現計劃**："
 
 #: src/dev/devlog.md:227
 msgid ""
@@ -3982,9 +3970,8 @@ msgid "Scala treats 'match' as a special keyword with defined precedence"
 msgstr ""
 
 #: src/dev/devlog.md:412
-#, fuzzy
 msgid "Pattern matching is handled as a distinct grammar construct"
-msgstr "模式匹配和代數數據類型"
+msgstr "模式匹配被處理為獨特的語法結構"
 
 #: src/dev/devlog.md:413
 msgid "This differs from Chester's uniform symbol treatment philosophy"
@@ -4579,9 +4566,8 @@ msgid "`syntax/shared/src/main/scala/chester/syntax/core/Term.scala`"
 msgstr ""
 
 #: src/dev/devlog.md:606 src/dev/devlog.md:698
-#, fuzzy
 msgid "**Next Steps**:"
-msgstr "**上下文更新**："
+msgstr "**下一步**："
 
 #: src/dev/devlog.md:607
 msgid "Complete trait-record subtyping implementation"
@@ -4844,9 +4830,8 @@ msgid "Used the propagator network for maintaining trait subtyping constraints"
 msgstr ""
 
 #: src/dev/devlog.md:693
-#, fuzzy
 msgid "**Test Status**:"
-msgstr "**上下文更新**："
+msgstr "**測試狀態**："
 
 #: src/dev/devlog.md:694
 msgid "All tests passing, including the basic-trait test"
@@ -4961,9 +4946,8 @@ msgid "We implemented a 3-step fix that maintains uniform symbol treatment:"
 msgstr ""
 
 #: src/dev/devlog.md:734
-#, fuzzy
 msgid "**Added Context to LexerState**:"
-msgstr "**上下文更新**："
+msgstr "**向 LexerState 添加上下文**："
 
 #: src/dev/devlog.md:737
 msgid "// Existing fields..."
@@ -6625,9 +6609,8 @@ msgid "Minor cleanup in `expectedError` using f-interpolators."
 msgstr ""
 
 #: src/dev/devlog.md:1537
-#, fuzzy
 msgid "**Parser Plan Update**:"
-msgstr "**上下文更新**："
+msgstr "**解析器計劃更新**："
 
 #: src/dev/devlog.md:1538
 msgid ""
