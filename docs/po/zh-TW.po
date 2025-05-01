@@ -8629,9 +8629,8 @@ msgid "Ensure consistent reduction behavior for composed functions"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:78
-#, fuzzy
 msgid "**Type Checking Integration**:"
-msgstr "**類型註解檢查**："
+msgstr "**類型檢查整合**："
 
 #: src/dev/tyck-improvement-proposal.md:79
 msgid ""
@@ -8699,9 +8698,8 @@ msgid "Implement tests that verify:"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:113
-#, fuzzy
 msgid "Function types with type dependencies"
-msgstr "強大的類型系統和類型推斷"
+msgstr "帶有類型依賴的函數類型"
 
 #: src/dev/tyck-improvement-proposal.md:114
 msgid "Equality of types with different variable names but same structure"
@@ -9322,9 +9320,8 @@ msgid "To solve the \"cells not covered by any propagator\" errors:"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:379
-#, fuzzy
 msgid "**Specific Implementation Changes:**"
-msgstr "**類型註解檢查**："
+msgstr "**具體實現變更**："
 
 #: src/dev/tyck-improvement-proposal.md:380
 msgid ""
@@ -9634,9 +9631,8 @@ msgid "**LiteralType Propagator**"
 msgstr ""
 
 #: src/dev/type-checking-system.md:96
-#, fuzzy
 msgid "Handles literal type inference"
-msgstr "強大的類型系統和類型推斷"
+msgstr "處理字面值類型推斷"
 
 #: src/dev/type-checking-system.md:97
 msgid "Manages type constraints for literals"
@@ -10410,9 +10406,8 @@ msgid "Example Transformation"
 msgstr ""
 
 #: src/dev/typescript-backend.md:144
-#, fuzzy
 msgid "Chester Input:"
-msgstr "Chester 是什麼？"
+msgstr "Chester 輸入："
 
 #: src/dev/typescript-backend.md:145
 msgid ""
@@ -10740,9 +10735,8 @@ msgid "Modify `common.scala` to recognize `.todo` extensions:"
 msgstr ""
 
 #: src/dev/union_types_progress.md:220 src/dev/union_types_progress.md:231
-#, fuzzy
 msgid "\".chester\""
-msgstr "Chester 是什麼？"
+msgstr "\".chester\""
 
 #: src/dev/union_types_progress.md:220 src/dev/union_types_progress.md:228
 #: src/dev/union_types_progress.md:229
