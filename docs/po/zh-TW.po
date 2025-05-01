@@ -21,59 +21,59 @@ msgstr "Chester"
 
 #: src/SUMMARY.md:3 src/dev/index.md:1
 msgid "Chester Development Documentation"
-msgstr ""
+msgstr "Chester 開發文檔"
 
 #: src/SUMMARY.md:4 src/dev/TODO.md:1
 msgid "TODO"
-msgstr ""
+msgstr "待辦事項"
 
 #: src/SUMMARY.md:5 src/dev/compiler-backend.md:1
 msgid "Chester Compiler Backend Architecture"
-msgstr ""
+msgstr "Chester 編譯器後端架構"
 
 #: src/SUMMARY.md:6 src/dev/development.md:1
 msgid "Development Memo"
-msgstr ""
+msgstr "開發備忘錄"
 
 #: src/SUMMARY.md:7 src/dev/devlog.md:1
 msgid "Development Log"
-msgstr ""
+msgstr "開發日誌"
 
 #: src/SUMMARY.md:8 src/dev/effects-implementation-plan.md:1
 msgid "Effect System Implementation Plan"
-msgstr ""
+msgstr "效果系統實現計劃"
 
 #: src/SUMMARY.md:9 src/dev/effects-system.md:1
 msgid "Effect System Design"
-msgstr ""
+msgstr "效果系統設計"
 
 #: src/SUMMARY.md:10 src/dev/js2py.md:1
 msgid "JavaScript to Python Conversion Process"
-msgstr ""
+msgstr "JavaScript 到 Python 的轉換過程"
 
 #: src/SUMMARY.md:11 src/dev/reader.md:1
 msgid "Chester Reader Architecture"
-msgstr ""
+msgstr "Chester 讀取器架構"
 
 #: src/SUMMARY.md:12 src/dev/scalablytyped-bindings.md:1
 msgid "ScalablyTyped Bindings Guide"
-msgstr ""
+msgstr "ScalablyTyped 綁定指南"
 
 #: src/SUMMARY.md:13 src/dev/tyck-improvement-proposal.md:1
 msgid "Comprehensive Type System Improvement Proposal"
-msgstr ""
+msgstr "全面的類型系統改進提案"
 
 #: src/SUMMARY.md:14 src/dev/type-checking-system.md:1
 msgid "Type Checking System: Propagator Network and Design"
-msgstr ""
+msgstr "類型檢查系統：傳播器網絡和設計"
 
 #: src/SUMMARY.md:15 src/dev/typescript-backend.md:1
 msgid "TypeScript Backend Implementation"
-msgstr ""
+msgstr "TypeScript 後端實現"
 
 #: src/SUMMARY.md:16 src/dev/union_types_progress.md:1
 msgid "Union Types Progress"
-msgstr ""
+msgstr "聯合類型進展"
 
 #: src/SUMMARY.md:17 src/guide/index.md:1
 #, fuzzy
@@ -921,7 +921,7 @@ msgstr ""
 
 #: src/dev/compiler-backend.md:231 src/dev/union_types_progress.md:242
 msgid "References"
-msgstr ""
+msgstr "參考資料"
 
 #: src/dev/compiler-backend.md:233
 msgid ""
@@ -1860,7 +1860,7 @@ msgstr ""
 
 #: src/dev/development.md:308
 msgid "Platform-Specific Type System Implementation"
-msgstr ""
+msgstr "平台特定類型系統實現"
 
 #: src/dev/development.md:310
 msgid ""
