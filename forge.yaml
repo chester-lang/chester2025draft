@@ -1,47 +1,4 @@
-variables:
-  mode: ACT
-
-# Define model anchors with simpler, purpose-based names
-models:
-  # Role-based model definitions - easy to swap implementation
-  - &advanced_model anthropic/claude-3.7-sonnet
-  - &standard_model anthropic/claude-3.5-haiku
-
-agents:
-  - id: software-engineer
-    compact:
-      max_tokens: 2000
-      token_threshold: 180000
-      model: *advanced_model
-      retention_window: 6
-      message_threshold: 200
-      prompt: "{{> system-prompt-context-summarizer.hbs }}"
-    tool_supported: true
-    model: *advanced_model
-    system_prompt: |-
-      {{#if (eq variables.mode "PLAN") }}
-      {{> system-prompt-engineer-plan.hbs }}
-      {{else}}
-      {{> system-prompt-engineer-act.hbs }}
-      {{/if}}
-    user_prompt: |-
-      <task>{{event.value}}</task>
-      <current_time>{{current_time}}</current_time>
-    ephemeral: false
-    tools:
-      - tool_forge_fs_read
-      - tool_forge_fs_create
-      - tool_forge_fs_remove
-      - tool_forge_fs_patch
-      - tool_forge_process_shell
-      - tool_forge_net_fetch
-      - tool_forge_fs_search
-      - tool_forge_fs_undo
-    subscribe:
-      - user_task_init
-      - user_task_update
-    max_walker_depth: 1
-
-custom_rules: |
+model: anthropic/claude-3.7-sonnet:thinking
+custom_rules: |-
   1. Always THINK CAREFULLY before you act.
   2. read docs/src/dev for development guidelines and documents first. READ docs/src/dev/development.md first
