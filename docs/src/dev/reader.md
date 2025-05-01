@@ -59,9 +59,10 @@ ReaderV2 uses a custom tokenizer and a state machine-based approach for parsing,
 
 ### Key Components
 
-- **Tokenizer**: Converts source code into a stream of tokens for efficient parsing
-- **LexerState**: Tracks current position, token history, pending tokens, and context flags
-- **ReaderContext**: Maintains semantic context for context-aware parsing decisions
+- **Lexer**: Converts source code into a stream of tokens for efficient parsing
+- **ReaderState**: Tracks current token position, history, and pending whitespace/comments
+- **ReaderContext**: Contains context flags like `newLineAfterBlockMeansEnds` for parsing decisions
+- **Token**: Represents tokens like identifiers, operators, literals, with source position information
 - **Token Handlers**: Specialized methods for parsing different token types and structures
 
 ### Characteristics
@@ -80,17 +81,16 @@ ReaderV2 consists of:
 
 1. **Two-Phase Parsing**: Separates tokenization from parsing, with a dedicated Tokenizer creating a stream of tokens before parsing begins.
 
-2. **Enhanced State Machine**: The parser maintains explicit state through a `LexerState` object that tracks:
-   - Current and previous tokens
-   - Context-specific flags like `newLineAfterBlockMeansEnds`
-   - Whitespace and comment information
-   - Source position tracking
+2. **State Management**: The parser maintains state through two complementary objects:
+   - **ReaderState**: Tracks token position, history, and pending whitespace/comments
+   - **ReaderContext**: Contains context flags like `newLineAfterBlockMeansEnds` for syntactic decisions 
+   - Together they enable precise tracking of parser state and contextual information
 
 3. **Context-Aware Processing**: Context flags enable important syntactic decisions like proper block termination with the `}\n` pattern, while maintaining uniform symbol treatment.
 
 4. **Optimized Comment Handling**: Non-recursive methods like `skipComments()` and `pullComments()` efficiently manage comment attachment, replacing the previous recursive approach.
 
-5. **Robust Block Termination**: The special `}\n` pattern detection is implemented with context flags and lookahead detection in `checkForRBraceNewlinePattern()`.
+5. **Robust Block Termination**: The special `}\n` pattern detection is implemented in the `checkForRBraceNewlinePattern()` method, which uses the `newLineAfterBlockMeansEnds` flag from ReaderContext to determine when blocks should end.
 
 6. **Enhanced Object Expressions**: Support for multiple key types:
    - Identifier keys (e.g., `{ x = 1 }`)
