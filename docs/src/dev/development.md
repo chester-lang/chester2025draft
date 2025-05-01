@@ -305,29 +305,35 @@ NOTE THAT ALL CODE AND DOCUMENTS CAN AND WILL BE OUTDATED OR CONFLICTING. ANALYS
      - Do not experiment with different project paths
    - If tests are taking too long to complete, inform the user and suggest they run the tests locally
 
-## Platform-Specific Type System Implementation
+## Term System Architecture
 
-Chester implements its type system with a unified Term definition in `Term.scala`.
+Chester uses a unified term representation architecture to support multiple platforms:
+
+### Term Definition Structure
+
+1. **Unified Term Definition**
+   - All term types are defined in a single file: `syntax/shared/src/main/scala/chester/syntax/core/Term.scala`
+   - This approach simplifies the codebase and eliminates the need for separate platform-specific implementations
+   - Each term type follows a consistent pattern with standard methods and field annotations
 
 ### Import Guidelines
 
 1. **DO** use `import chester.syntax.core.*`
-   - This will give you access to all the Term implementations
-
-### Example
+   - This will give you access to all term implementations
 
 ```scala
 // CORRECT
 import chester.syntax.core.*
 
-// INCORRECT
-import chester.syntax.core.spec.*
-import chester.syntax.core.simple.{BlockTerm, FCallTerm}
+// INCORRECT - unnecessarily specific imports
+import chester.syntax.core.BlockTerm
+import chester.syntax.core.FCallTerm
 ```
 
 ### Pattern Matching and Type Usage
 
-1. Use concrete types for pattern matching:
+Use concrete term types directly for pattern matching:
+
 ```scala
 // CORRECT
 case t: BlockTerm => {
@@ -335,88 +341,75 @@ case t: BlockTerm => {
   val reducedResult = r.reduce(t.result)
   BlockTerm(reducedStatements, reducedResult, t.meta)
 }
-
-// INCORRECT
-case t: BlockTermC[Term] => {
-  // Don't use *C suffix traits
-}
 ```
 
-2. **DO NOT** use trait versions with suffixes (e.g., `*C`, `*T`):
+### Term Type Implementation Pattern
+
+All term types follow a consistent implementation pattern:
+
 ```scala
-// INCORRECT
-val reducedStatements = t.statements.map { case stmt: StmtTermT[Term] =>
-  r.reduce(stmt).asInstanceOf[StmtTermT[Term]]
+case class ExampleTerm(
+  @child var field1: Term,        // Use @child for term fields that should be traversed
+  @const val field2: String,      // Use @const for non-term fields 
+  @const meta: OptionTermMeta
+) extends BaseTerm {
+  override type ThisTree = ExampleTerm
+  
+  // Pretty printing method
+  override def toDoc(using PrettierOptions): Doc =
+    Doc.text("ExampleTerm(") <> field1.toDoc <> Doc.text(")")
+  
+  // Tree traversal method
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term =
+    thisOr(copy(field1 = g(field1)))
 }
-
-// INCORRECT
-case t: BlockTermC[Term] => // Don't use *C suffix
-
-// CORRECT
-val reducedStatements = t.statements.map(stmt => r.reduce(stmt))
 ```
 
-The codebase provides implicit convert functions for these cases, so explicit type annotations with trait suffixes are unnecessary.
+### Adding New Term Types
 
-### Why This Matters
+When adding a new term type:
 
-- Using concrete types ensures cross-platform compatibility
-- The convert functions handle type conversions safely and efficiently
-- Avoiding trait suffixes makes the code more maintainable
-- This approach leverages the type system to catch potential platform-specific issues at compile time
-
-## Core Term Architecture and Cross-Platform Implementation
-
-Chester uses a carefully designed architecture for its term representation to support multiple platforms:
-
-### Core Files and Their Relationships
-
-1. **Term.scala** (`syntax/shared/src/main/scala/chester/syntax/core/Term.scala`)
-   - Contains all Term definitions
-   - Shared across all platforms
-   - Defines behavior, structure and implementation
-   - Used by all platforms
-
-The previous architecture with separate files (`spec/Term.scala`, `simple.scala`, and `truffle.scala`) has been refactored. Now all Term definitions are in a single `Term.scala` file.
-
-### Platform-Specific Export Mechanism
-
-The core term implementation is exported through a single unified Term.scala file.
-
-### Making Changes to the Term System
-
-When adding or modifying types in the term system, changes should be made directly in `Term.scala`:
-
-1. Define the trait or case class in `Term.scala`
-   - Follow the existing patterns for similar term types
-   - Use appropriate annotations like `@child` and `@const` for fields
-   - Implement the required methods like `descent` and `toDoc`
+1. Add it directly to `Term.scala`
+2. Follow the existing pattern for similar term types
+3. Implement all required methods (`toDoc`, `descent`, etc.)
+4. Use correct field annotations (`@child`, `@const`)
+5. Extend the appropriate base type (e.g., `TypeTerm`, `ExprTerm`)
 
 ### Example: Adding a New Term Type
 
-To add a new term type (e.g., `TraitType`), you would add it directly to `Term.scala`:
+For example, to add a new term type for union types:
 
 ```scala
-case class TraitType(
-  @child var traitDef: TraitStmtTerm,
+case class UnionTypeTerm(
+  @child var types: Vector[Term],
   @const meta: OptionTermMeta
 ) extends TypeTerm {
-  override type ThisTree = TraitType
+  override type ThisTree = UnionTypeTerm
   override def toDoc(using PrettierOptions): Doc =
-    Doc.text("TraitType(") <> traitDef.toDoc <> Doc.text(")")
+    Doc.text("UnionType(") <> Doc.join(Doc.text(", "), types.map(_.toDoc)) <> Doc.text(")")
   override def descent(f: Term => Term, g: TreeMap[Term]): Term =
-    thisOr(copy(traitDef = g(traitDef)))
+    thisOr(copy(types = types.map(g)))
 }
 ```
 
-### IMPORTANT: Keeping Types Consistent
+### Key Term Types
 
-It is **crucial** that:
+The system includes several important term categories:
 
-- All term types follow a consistent pattern
-- Field annotations are applied correctly
-- All required methods are implemented
-- Serialization with ReadWriter is handled properly
+1. **Expression Terms**: Represent runtime values (variables, function calls, literals)
+2. **Type Terms**: Represent type information (primitive types, function types, union types)
+3. **Statement Terms**: Represent declarations and control flow (let/def bindings, trait definitions)
+4. **Pattern Terms**: Represent pattern matching constructs
+5. **Special Terms**: Represent special language constructs (holes, placeholders)
+
+Each category has a base trait that defines its common behavior.
+
+### Why This Matters
+
+- **Simplified Architecture**: The unified term definition makes the codebase more maintainable
+- **Cross-Platform Compatibility**: All platforms use the same term representation
+- **Consistent Patterns**: All term types follow the same implementation pattern
+- **Easier Extensions**: Adding new term types follows a clear and consistent approach
 
 ## Elaboration and Reduction Strategy
 

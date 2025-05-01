@@ -55,22 +55,24 @@ ReaderV1 consists of:
 
 ## ReaderV2 Implementation
 
-ReaderV2 uses a custom tokenizer and a state machine-based approach for parsing.
+ReaderV2 uses a custom tokenizer and a state machine-based approach for parsing, with significant improvements to block termination detection and object expression parsing.
 
 ### Key Components
 
-- **Tokenizer**: Converts source code into a stream of tokens
-- **ReaderState**: Tracks current position, token history, and pending tokens
-- **ReaderContext**: Tracks semantic context for parsing decisions
-- **Token Handlers**: Specialized methods for parsing different token types
+- **Tokenizer**: Converts source code into a stream of tokens for efficient parsing
+- **LexerState**: Tracks current position, token history, pending tokens, and context flags
+- **ReaderContext**: Maintains semantic context for context-aware parsing decisions
+- **Token Handlers**: Specialized methods for parsing different token types and structures
 
 ### Characteristics
 
-- Pre-tokenization for token stream processing
-- Separate lexing and parsing phases
-- Explicit context tracking for syntactic patterns
-- UTF-16 aware Unicode and emoji handling
-- Explicit state management
+- Pre-tokenization for efficient token stream processing
+- Separate lexing and parsing phases for cleaner code organization
+- Context-aware parsing with explicit state tracking
+- Enhanced UTF-16 aware Unicode and emoji handling
+- Robust block termination detection with the `}\n` pattern
+- Comprehensive object expression support with multiple key types
+- Optimized comment handling and attachment
 
 ### Implementation Structure
 
@@ -78,17 +80,27 @@ ReaderV2 consists of:
 
 1. **Two-Phase Parsing**: Separates tokenization from parsing, with a dedicated Tokenizer creating a stream of tokens before parsing begins.
 
-2. **State Machine**: The parser maintains explicit state through a `ReaderState` object that tracks the current token, previous tokens, pending comments/whitespace, and other contextual information.
+2. **Enhanced State Machine**: The parser maintains explicit state through a `LexerState` object that tracks:
+   - Current and previous tokens
+   - Context-specific flags like `newLineAfterBlockMeansEnds`
+   - Whitespace and comment information
+   - Source position tracking
 
-3. **Context-Aware Processing**: A `ReaderContext` object tracks semantic context, enabling context-sensitive decisions during parsing.
+3. **Context-Aware Processing**: Context flags enable important syntactic decisions like proper block termination with the `}\n` pattern, while maintaining uniform symbol treatment.
 
-4. **Comment Handling**: Methods like `skipComments()` and `pullComments()` manage comment attachment without recursive descent.
+4. **Optimized Comment Handling**: Non-recursive methods like `skipComments()` and `pullComments()` efficiently manage comment attachment, replacing the previous recursive approach.
 
-5. **Block Termination Detection**: The special `}\n` pattern detection uses explicit context tracking and lookahead to determine when blocks end.
+5. **Robust Block Termination**: The special `}\n` pattern detection is implemented with context flags and lookahead detection in `checkForRBraceNewlinePattern()`.
 
-6. **Error Handling**: The parser produces structured `ParseError` objects with detailed source position information and recovery mechanisms.
+6. **Enhanced Object Expressions**: Support for multiple key types:
+   - Identifier keys (e.g., `{ x = 1 }`)
+   - String literal keys (e.g., `{ "x" = 1 }`)
+   - Symbol literal keys (e.g., `{ 'x = 1 }`)
+   - Both `=` and `=>` operators in object clauses
 
-7. **Bottom-Up Construction**: Parsing builds expressions from atoms and then extends them through continuation-based parsing in `parseRest()`.
+7. **Error Handling**: The parser produces structured `ParseError` objects with detailed source position information and recovery mechanisms.
+
+8. **Bottom-Up Construction**: Parsing builds expressions from atoms and then extends them through continuation-based parsing in `parseRest()`.
 
 ## Key Similarities Between Implementations
 

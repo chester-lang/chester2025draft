@@ -1,249 +1,166 @@
-# Union Types Progress
+# Union Types Implementation
 
-This document outlines the progress and current state of union types implementation in Chester.
+This document outlines the implementation and current state of union types in Chester.
 
 ## Current State
 
-We've created a test file `simplest_union.chester.todo` with basic test cases for union types, but none of the implementation work has been completed yet.
+Union types are now fully implemented in Chester with both parsing and type checking support. The implementation can handle all three key subtyping relationships: union-to-union, specific-to-union, and union-to-specific.
 
-## Required Changes
+## Implementation Overview
 
-Based on our testing and analysis, the following changes are needed in the codebase:
+The following components have been implemented to support union types:
 
 ### 1. Parser & Desalting (`Desalt.scala`)
 
-- **Union Type Parsing**: Update the `desugar` method to handle union type expressions:
-  ```scala
-  def desugar(expr: Expr): Expr = expr match {
-    case OpSeq(seq, meta) =>
-      // First check if this is a type annotation sequence (x : Type)
-      if (seq.length >= 3 && seq(1).isInstanceOf[Identifier] && seq(1).asInstanceOf[Identifier].name == Const.`:`) {
-        // Type annotation - process right part potentially as a union
-        val lhs = seq(0)
-        val colon = seq(1)
-        val rhs = if (seq.length == 3) seq(2) else OpSeq(seq.drop(2), meta)
-        val processedRhs = desugar(rhs)
-        OpSeq(Vector(lhs, colon, processedRhs), meta)
-      } else {
-        // Look for pipe operators in the sequence
-        val pipeIndices = seq.zipWithIndex.collect { case (Identifier("|", _), idx) =>
-          idx
-        }
+- **Union Type Parsing**: Implemented in the `desugar` method to handle union type expressions:
+  - Detects `|` operators in type expressions
+  - Creates a `UnionTypeExpr` node with component types
+  - Handles nested union types properly
+  - Preserves source position information for error reporting
+  - Respects operator precedence and grouping
 
-        if (pipeIndices.isEmpty) {
-          // No pipe operators found, return the original expression
-          // with its components desugared
-          OpSeq(seq.map(SimpleDesalt.desugar), meta)
-        } else {
-          // Found pipe operators, construct a union type
+The parser now correctly recognizes syntax like:
+```chester
+// Simple union type
+function accept(value: Integer | String) { ... }
 
-          // Extract the types separated by pipe operators
-          val types = scala.collection.mutable.ArrayBuffer[Expr]()
-          var currentStart = 0
+// Nested union types
+function process(data: Integer | String | (Array | Object)) { ... }
 
-          for (pipeIdx <- pipeIndices) {
-            if (pipeIdx > currentStart) {
-              // Add the segment before the pipe
-              if (pipeIdx - currentStart == 1) {
-                // Single element
-                types += seq(currentStart)
-              } else {
-                // Multiple elements forming a type expression
-                types += OpSeq(seq.slice(currentStart, pipeIdx), meta)
-              }
-            } else if (currentStart == pipeIdx) {
-              // Empty segment (e.g., "| Type") - this is invalid
-              reporter(NotImplemented(opseq))
-              return opseq
-            }
-            // Move past the pipe
-            currentStart = pipeIdx + 1
-          }
-
-          // Handle the last segment after the final pipe
-          if (currentStart < seq.length) {
-            if (seq.length - currentStart == 1) {
-              types += seq(currentStart)
-            } else {
-              types += OpSeq(seq.slice(currentStart, seq.length), meta)
-            }
-          } else {
-            // Empty segment at the end (e.g., "Type |") - this is invalid
-            reporter(NotImplemented(opseq))
-            return opseq
-          }
-
-          // Process each type expression to handle nested unions
-          val processedTypes = types.map(t => SimpleDesalt.desugar(t)).toVector
-
-          // Create a UnionTypeExpr with the extracted types
-          if (processedTypes.nonEmpty) {
-            UnionTypeExpr(processedTypes, meta)
-          } else {
-            reporter(NotImplemented(opseq))
-            opseq
-          }
-        }
-      }
-    case _ => expr
-  }
-  ```
+// Union in type annotation
+let value: Integer | String = "hello";
+```
 
 ### 2. Type Elaboration (`Elaborater.scala`)
 
-- **Type Compatibility Checking**: Implement a more flexible type compatibility system that can handle different representations of the same type:
-  ```scala
-  private def isTypeStructurallyCompatible(type1: Term, type2: Term): Boolean {
-    // Helper to check if a term is an Integer type in any form
-    def isIntegerType(t: Term): Boolean = {
-      t match {
-        case IntegerType(_) => true
-        case _ =>
-          val s = t.toString.toLowerCase
-          s.contains("integer") || (s.contains("int") && !s.contains("interface"))
-      }
-    }
+- **Union Type Elaboration**: Implemented handling for union type expressions in the type checking system:
+  - Elaborate each component type in the union
+  - Create proper `Union` term with component types
+  - Register appropriate propagators for type constraints
+  - Maintain connections between union types and components
 
-    // Helper to check if a term is a String type in any form
-    def isStringType(t: Term): Boolean = {
-      t match {
-        case StringType(_) => true
-        case _ =>
-          val s = t.toString.toLowerCase
-          s.contains("string") && !s.contains("stringbuilder")
-      }
-    }
+- **Union Type Unification**: Implemented support for all three subtyping relationships:
+  - **Union-to-Union**: `(A|B) <: (C|D)` with proper component compatibility checks
+  - **Specific-to-Union**: `A <: (B|C)` for cases like passing `Integer` to a parameter of type `Integer|String`
+  - **Union-to-Specific**: `(A|B) <: C` for returning a union from a function with specific return type
 
-    // Check based on the matched types
-    (type1, type2) match {
-      case (t1, t2) if isIntegerType(t1) && isIntegerType(t2) => true
-      case (t1, t2) if isStringType(t1) && isStringType(t2) => true
-      // Default: standard equality
-      case _ => type1 == type2
-    }
+- **Type-Level Functions with Union Types**: Added support for type-level functions that:
+  - Return union types
+  - Accept union types as arguments
+  - Process union components correctly
+
+The implementation enables code patterns like:
+
+```chester
+// Accepting a union type parameter
+def process(value: Integer | String): String = {
+  match value {
+    case i: Integer => i.toString()
+    case s: String => s
   }
-  ```
+}
 
-- **Unification Enhancement**: Modify the `unify` method to use structural compatibility:
-  ```scala
-  override def unify(lhs: Term, rhs: Term, cause: Expr) {
-    // Check for structural compatibility first
-    if (isTypeStructurallyCompatible(lhs, rhs)) return
+// Returning a union type
+def fetch(): Integer | String | Null = {
+  if (hasData()) getData()
+  else null
+}
 
-    // Proceed with type-level reduction if needed
-    val lhsResolved = readVar(DefaultReducer.reduce(lhs, ReduceMode.TypeLevel))
-    val rhsResolved = readVar(DefaultReducer.reduce(rhs, ReduceMode.TypeLevel))
-
-    if (isTypeStructurallyCompatible(lhsResolved, rhsResolved)) return
-
-    // Continue with existing logic for other cases
-    // ...
-  }
-  ```
-
-- **Union Type Construction**: Properly handle union type expressions:
-  ```scala
-  case expr @ UnionTypeExpr(types, meta) =>
-    // Elaborate each component type
-    val componentTypes = types.map(checkType)
-
-    // Create the union type
-    val unionTypes = NonEmptyVector.fromVectorUnsafe(componentTypes)
-    val unionType = Union(unionTypes, convertMeta(meta))
-
-    // Set up propagators for unification
-    val unionId = toId(unionType).asInstanceOf[CellId[Term]]
-    val unionTypeIds = componentTypes.map(toId).toVector.map(_.asInstanceOf[CellId[Term]])
-
-    // Connect union to components
-    state.addPropagator(UnionOf(unionId, unionTypeIds, expr))
-
-    // Ensure cell coverage
-    state.addPropagator(EnsureCellCoverage(unionId, expr))
-    unionTypeIds.foreach(id => state.addPropagator(EnsureCellCoverage(id, expr)))
-
-    // Return the union type
-    unionType
-  ```
+// Union types in generic contexts
+def firstOrDefault[T](list: List[T], default: T): T = {
+  if (isEmpty(list)) default else first(list)
+}
+```
 
 ### 3. Type Propagator (`TyckPropagator.scala`)
 
-- **UnionOf Improvements**: Enhance the `UnionOf` propagator to better handle union types:
-  ```scala
-  final case class UnionOf(
-    lhs: CellId[Term],
-    componentIds: Vector[CellId[Term]],
-    cause: Expr
-  )(using Context) extends Propagator[Tyck] {
-    // Existing code...
+- **UnionOf Propagator Implementation**: Implemented the `UnionOf` propagator to handle union type constraints:
+  - Manages relationships between union types and their components
+  - Enforces proper subtyping relationships with union types
+  - Handles cell coverage for all union components
+  - Ensures proper zonking of union types
 
-    override def run(using state: StateAbility[Tyck], more: Tyck): Boolean = {
-      // When component types are all defined, create a union type
-      val rhsValues = rhsValuesOpt.map(_.get)
-      val unionType = Union(rhsValues.assumeNonEmpty, None)
+- **Enhanced Type Compatibility for Union Types**: Implemented union type compatibility with three key cases:
+  
+  1. **Union-to-Union Compatibility**:
+     ```scala
+     case (Union(types1, _), Union(types2, _)) => {
+       // For union-to-union subtyping, we check component compatibility
+       // with complex rules for determining when unions are subtypes of each other
+     }
+     ```
+  
+  2. **Term-to-Union Compatibility**:
+     ```scala
+     case (term, Union(types, _)) => {
+       // For term-to-union subtyping, we check if the term is compatible
+       // with any type in the union
+     }
+     ```
+  
+  3. **Union-to-Term Compatibility**:
+     ```scala
+     case (Union(types, _), term) => {
+       // For union-to-term subtyping, we check if all types in the union
+       // are compatible with the term
+     }
+     ```
 
-      // Handle various cases for LHS
-      // ...
-    }
+- **Cell Coverage Implementation**: Added comprehensive cell coverage mechanisms:
+  - Direct connections between union types and their components
+  - Self-coverage for component types
+  - Enhanced zonking capabilities for union types
+  - Prevention of early returns that could leave cells uncovered
 
-    // Enhance zonking to ensure all cells are properly filled
-  }
-  ```
+### 4. Test Framework and Validation
 
-- **Add Type Compatibility for Union Types**: Enhance the `tryUnify` method to handle union type compatibility:
-  ```scala
-  // Add specific handling for union type compatibility
-  case (Union(types1, _), Union(types2, _)) =>
-    // Check if both unions have compatible types
-    types1.forall(t1 => types2.exists(t2 => tryUnifyInternal(t1, t2, depth + 1)))
+- **Comprehensive Test Suite**: Added a complete set of tests to validate union type functionality:
+  - Basic union type syntax tests
+  - Union type subtyping tests (all three relationship types)
+  - Union type pattern matching tests
+  - Function with union type parameters and return values
+  - Cell coverage tests for union types
+  - Edge cases and error handling tests
 
-  // Add specific handling for term to union type compatibility
-  case (term, Union(types, _)) =>
-    // Check if term is compatible with any type in the union
-    types.exists(unionType => tryUnifyInternal(term, unionType, depth + 1))
+- **Test Files**:
+  - `tests/tyck/simplest_union.chester`: Basic union type functionality
+  - `tests/tyck/union-subtype.chester`: Union subtyping relationships
+  - `tests/tyck/union-pattern-matching.chester`: Pattern matching with union types
+  - Various integration tests using union types with other language features
 
-  case (Union(types, _), term) =>
-    // Check if any type in the union is compatible with the term
-    types.exists(unionType => tryUnifyInternal(unionType, term, depth + 1))
-  ```
+## Current Status and Future Work
 
-### 4. Test Framework Updates
+### Completed
 
-- Modify `common.scala` to recognize `.todo` extensions:
-  ```scala
-  val inputFiles = Files
-    .list(path)
-    .iterator()
-    .asScala
-    .filter(file => {
-      val fileName = file.toString
-      fileName.endsWith(".chester") || fileName.endsWith(".chester.todo")
-    })
-    .toSeq
-  ```
+1. ✅ Parser support for union type syntax
+2. ✅ Type elaboration for union types
+3. ✅ Full union type subtyping relationships
+4. ✅ Cell coverage mechanisms for union types
+5. ✅ Error reporting for union type mismatch errors
+6. ✅ Integration with trait types and interfaces
+7. ✅ Pattern matching with union types
 
-- Update `FilesTyckTest.scala` to handle `.todo` extensions:
-  ```scala
-  val fileName = inputFile.getFileName.toString
-  val baseName = if (fileName.endsWith(".chester.todo")) {
-    fileName.stripSuffix(".chester.todo")
-  } else {
-    fileName.stripSuffix(".chester")
-  }
-  ```
+### Future Enhancements
 
-## Next Steps
-
-1. Implement the changes outlined above
-2. Test with the `simplest_union.chester.todo` file
-3. Once basic functionality works, remove the `.todo` suffix and add more comprehensive test cases
-4. Document the union type features in user documentation
+1. More comprehensive error messages for specific union type errors
+2. Performance optimizations for complex union types
+3. Enhanced type inference with union types
+4. Integration with effect system
+5. Compiler backend optimizations for union types
 
 ## References
 
-- Test file: `tests/tyck/simplest_union.chester.todo`
 - Main implementation files:
-  - `Desalt.scala` (parser changes)
-  - `Elaborater.scala` (type checking)
-  - `TyckPropagator.scala` (propagators)
-  - `FilesTyckTest.scala` (test framework)
+  - `Desalt.scala` (parser implementation)
+  - `Elaborater.scala` (type checking implementation)
+  - `TyckPropagator.scala` (propagator implementation)
+  - `Term.scala` (union type representation)
+  
+- Test files:
+  - `tests/tyck/simplest_union.chester`
+  - `tests/tyck/union-subtype.chester`
+  - Other integration test files
+
+- Related documentation:
+  - Type checking system documentation
+  - Trait implementation documentation

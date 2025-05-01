@@ -168,19 +168,44 @@ The union type subtyping implementation addresses several challenges:
 
 ## Current Implementation Status
 
-The implementation of the core type system features, including union type subtyping and cell coverage mechanisms, has been completed. See the devlog entry for 2025-03-25 for detailed implementation information.
+The implementation of the core type system features has been completed with recent significant enhancements. Major milestones include:
+
+### 1. Cell Coverage Improvements (2025-04-21)
+
+The previously "hacky" approach to cell coverage has been completely redesigned:
+- Removed the `AutoConnect` propagator and related indirection
+- Implemented direct type relationship handling during unification
+- Created explicit relationships between types directly at creation/unification points
+- Simplified codebase by removing several layers of indirection
+- Maintained the same type checking capabilities with a cleaner implementation
+
+### 2. Union Type Subtyping (2025-03-25)
+
+Union types are now fully implemented with support for all subtyping relationships:
+- **Union-to-Union**: `(A|B) <: (C|D)` with proper component compatibility
+- **Specific-to-Union**: `A <: (B|C)` for cases like passing `Integer` to `Integer|String`
+- **Union-to-Specific**: `(A|B) <: C` for returning unions from specific return type functions
+
+### 3. Trait Implementation (2025-03-19)
+
+Basic trait support is now available:
+- Empty traits and record extension using `<:` syntax
+- Trait-record subtyping relation in type system
+- `TraitTypeTerm` representation with proper error reporting
+- Context tracking for trait processing
 
 ### Remaining Challenges
 
-1. **Complex Type-Level Expressions**
-   - More complex nested type-level function applications
-   - Advanced dependent type scenarios with multiple levels of abstraction
-   - Recursive type-level computation
+1. **Type-Level Computation**
+   - Further improvements to recursive type-level function applications
+   - Advanced dependent types with multiple levels of abstraction
+   - More comprehensive testing of type-level computation
 
 2. **Advanced Trait Features**
    - Complete field requirement verification
    - Multiple trait inheritance
    - Trait methods and default implementations
+   - Trait-to-trait inheritance constraints
 
 ## Testing Strategy
 
