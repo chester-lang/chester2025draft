@@ -58,17 +58,20 @@ case class RegionTable(table: Map[RegionTag, Map[String, String]]) {
     table.toSeq.sortBy((_, map) => -map.size).map(_._2).toVector
 
   def get(region: RegionTag, context: String): String = {
-    table.get(region).flatMap(_.get(context)) match {
-      case Some(value) => return value
-      case None        =>
-    }
-    alternatives.foreach { map =>
-      map.get(context) match {
-        case Some(value) => return value
+    import scala.util.boundary
+    boundary {
+      table.get(region).flatMap(_.get(context)) match {
+        case Some(value) => boundary.break(value)
         case None        =>
       }
+      alternatives.foreach { map =>
+        map.get(context) match {
+          case Some(value) => boundary.break(value)
+          case None        =>
+        }
+      }
+      context
     }
-    context
   }
 }
 

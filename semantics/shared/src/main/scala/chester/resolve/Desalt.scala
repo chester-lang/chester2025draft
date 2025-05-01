@@ -7,6 +7,7 @@ import chester.syntax.{Const, ModuleRef}
 import chester.syntax.concrete.*
 import chester.utils.*
 import chester.i18n.*
+import scala.util.boundary
 
 import scala.annotation.tailrec
 
@@ -203,48 +204,50 @@ case object StmtDesalt {
       xs: Vector[Expr],
       cause: Expr
   )(using reporter: Reporter[TyckProblem]): Stmt = {
-    val typeIdx = xs.indexWhere {
-      case Identifier(Const.`:`, _) => true; case _ => false
-    }
-    val valueIdx = xs.indexWhere {
-      case Identifier(Const.`=`, _) => true; case _ => false
-    }
-    val kind = kw.name match {
-      case Const.Let => LetDefType.Let
-      case Const.Def => LetDefType.Def
-      case name      => unreachable(t"Unknown keyword $name")
-    }
+    boundary {
+      val typeIdx = xs.indexWhere {
+        case Identifier(Const.`:`, _) => true; case _ => false
+      }
+      val valueIdx = xs.indexWhere {
+        case Identifier(Const.`=`, _) => true; case _ => false
+      }
+      val kind = kw.name match {
+        case Const.Let => LetDefType.Let
+        case Const.Def => LetDefType.Def
+        case name      => unreachable(t"Unknown keyword $name")
+      }
 
-    val (onExprs, typeExprs, valueExprs) = (typeIdx, valueIdx) match {
-      case (-1, -1)   => (xs, Vector.empty[Expr], Vector.empty[Expr])
-      case (tIdx, -1) => (xs.take(tIdx), xs.drop(tIdx + 1), Vector.empty[Expr])
-      case (-1, vIdx) => (xs.take(vIdx), Vector.empty[Expr], xs.drop(vIdx + 1))
-      case (tIdx, vIdx) if tIdx < vIdx =>
-        (xs.take(tIdx), xs.slice(tIdx + 1, vIdx), xs.drop(vIdx + 1))
-      case _ =>
+      val (onExprs, typeExprs, valueExprs) = (typeIdx, valueIdx) match {
+        case (-1, -1)   => (xs, Vector.empty[Expr], Vector.empty[Expr])
+        case (tIdx, -1) => (xs.take(tIdx), xs.drop(tIdx + 1), Vector.empty[Expr])
+        case (-1, vIdx) => (xs.take(vIdx), Vector.empty[Expr], xs.drop(vIdx + 1))
+        case (tIdx, vIdx) if tIdx < vIdx =>
+          (xs.take(tIdx), xs.slice(tIdx + 1, vIdx), xs.drop(vIdx + 1))
+        case _ =>
+          val error = ExpectLetDef(cause)
+          reporter(error)
+          boundary.break(DesaltFailed(cause, error, cause.meta))
+      }
+
+      val on = defined(onExprs).getOrElse {
         val error = ExpectLetDef(cause)
         reporter(error)
-        return DesaltFailed(cause, error, cause.meta)
-    }
+        boundary.break(DesaltFailed(cause, error, cause.meta))
+      }
 
-    val on = defined(onExprs).getOrElse {
-      val error = ExpectLetDef(cause)
-      reporter(error)
-      return DesaltFailed(cause, error, cause.meta)
-    }
-
-    val ty = Option.when(typeExprs.nonEmpty)(opSeq(typeExprs))
-    val body = Option.when(valueExprs.nonEmpty)(opSeq(valueExprs))
-    unrollFunction(
-      LetDefStmt(
-        kind,
-        on,
-        ty = ty,
-        body = body,
-        decorations = decorations,
-        meta = cause.meta
+      val ty = Option.when(typeExprs.nonEmpty)(opSeq(typeExprs))
+      val body = Option.when(valueExprs.nonEmpty)(opSeq(valueExprs))
+      unrollFunction(
+        LetDefStmt(
+          kind,
+          on,
+          ty = ty,
+          body = body,
+          decorations = decorations,
+          meta = cause.meta
+        )
       )
-    )
+    }
   }
 
   private def unrollFunction(stmt: LetDefStmt): LetDefStmt =
@@ -385,168 +388,182 @@ case object SimpleDesalt {
         }
       case expr @ OpSeq(Vector(Identifier(Const.Record, _), nameExpr, rest @ _*), meta) =>
         // Parse the record name and parameters if any
-        val (name, parameterExprs) = nameExpr match {
-          case id: Identifier =>
-            (id, Vector.empty[Expr])
-          case FunctionCall(id: Identifier, telescope, _) =>
-            (id, Vector(telescope))
-          case _ =>
-            val error = ExpectRecordName(nameExpr)
-            reporter(error)
-            return DesaltFailed(expr, error, meta)
+        val result = boundary {
+          val (name, parameterExprs) = nameExpr match {
+            case id: Identifier =>
+              (id, Vector.empty[Expr])
+            case FunctionCall(id: Identifier, telescope, _) =>
+              (id, Vector(telescope))
+            case _ =>
+              val error = ExpectRecordName(nameExpr)
+              reporter(error)
+              boundary.break[Expr](DesaltFailed(expr, error, meta))
+          }
+
+          // Process the rest of the tokens
+          var tokens = rest.toList
+
+          // Use the common method to parse the optional ExtendsClause
+          val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+          tokens = remainingTokens
+
+          // Parse fields and body
+          val (fieldExprs0, bodyExprs) = tokens.span {
+            case Tuple(_, _) => true
+            case _           => false
+          }
+          val fieldExprs = parameterExprs ++ fieldExprs0
+
+          // Desugar fields into Field instances
+          val desugaredFields = fieldExprs.flatMap {
+            case Tuple(terms, _) =>
+              terms.map {
+                case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
+                  Some(RecordField(name = id, ty = Some(ty), meta = id.meta))
+                case id: Identifier =>
+                  Some(RecordField(name = id, meta = id.meta))
+                case other =>
+                  reporter(ExpectFieldDeclaration(other))
+                  None
+              }
+            case other =>
+              reporter(ExpectFieldDeclaration(other))
+              None
+          }.flatten
+
+          // Desugar body if present
+          val desugaredBody = if (bodyExprs.nonEmpty) {
+            val bodyExpr = opSeq(bodyExprs)
+            Some(desugar(bodyExpr) match {
+              case b: Block => b
+              case other    => Block(Vector(other), None, meta = other.meta)
+            })
+          } else None
+
+          RecordStmt(
+            name = name,
+            extendsClause = extendsClause,
+            fields = desugaredFields,
+            body = desugaredBody,
+            meta = meta
+          )
         }
-
-        // Process the rest of the tokens
-        var tokens = rest.toList
-
-        // Use the common method to parse the optional ExtendsClause
-        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
-        tokens = remainingTokens
-
-        // Parse fields and body
-        val (fieldExprs0, bodyExprs) = tokens.span {
-          case Tuple(_, _) => true
-          case _           => false
-        }
-        val fieldExprs = parameterExprs ++ fieldExprs0
-
-        // Desugar fields into Field instances
-        val desugaredFields = fieldExprs.flatMap {
-          case Tuple(terms, _) =>
-            terms.map {
-              case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
-                Some(RecordField(name = id, ty = Some(ty), meta = id.meta))
-              case id: Identifier =>
-                Some(RecordField(name = id, meta = id.meta))
-              case other =>
-                reporter(ExpectFieldDeclaration(other))
-                None
-            }
-          case other =>
-            reporter(ExpectFieldDeclaration(other))
-            None
-        }.flatten
-
-        // Desugar body if present
-        val desugaredBody = if (bodyExprs.nonEmpty) {
-          val bodyExpr = opSeq(bodyExprs)
-          Some(desugar(bodyExpr) match {
-            case b: Block => b
-            case other    => Block(Vector(other), None, meta = other.meta)
-          })
-        } else None
-
-        RecordStmt(
-          name = name,
-          extendsClause = extendsClause,
-          fields = desugaredFields,
-          body = desugaredBody,
-          meta = meta
-        )
+        result
 
       // Handling 'trait' keyword
       case expr @ OpSeq(Vector(Identifier(Const.Trait, _), nameExpr, rest @ _*), meta) =>
         // Parse the trait name and parameters if any
-        val (name, parameterExprs) = nameExpr match {
-          case id: Identifier =>
-            (id, Vector.empty[Expr])
-          case FunctionCall(id: Identifier, telescope, _) =>
-            (id, Vector(telescope))
-          case _ =>
-            val error = ExpectTraitName(nameExpr)
-            reporter(error)
-            return DesaltFailed(expr, error, meta)
+        val result = boundary {
+          val (name, parameterExprs) = nameExpr match {
+            case id: Identifier =>
+              (id, Vector.empty[Expr])
+            case FunctionCall(id: Identifier, telescope, _) =>
+              (id, Vector(telescope))
+            case _ =>
+              val error = ExpectTraitName(nameExpr)
+              reporter(error)
+              boundary.break[Expr](DesaltFailed(expr, error, meta))
+          }
+
+          // Process the rest of the tokens
+          var tokens = rest.toList
+
+          // Use the common method to parse the optional ExtendsClause
+          val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+          tokens = remainingTokens
+
+          // Parse body if present
+          val bodyExpr = if (tokens.nonEmpty) {
+            val body = opSeq(tokens)
+            Some(desugar(body) match {
+              case b: Block => b
+              case other    => Block(Vector(other), None, meta = other.meta)
+            })
+          } else None
+
+          TraitStmt(
+            name = name,
+            extendsClause = extendsClause,
+            body = bodyExpr,
+            meta = meta
+          )
         }
-
-        // Process the rest of the tokens
-        var tokens = rest.toList
-
-        // Use the common method to parse the optional ExtendsClause
-        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
-        tokens = remainingTokens
-
-        // Parse body if present
-        val bodyExpr = if (tokens.nonEmpty) {
-          val body = opSeq(tokens)
-          Some(desugar(body) match {
-            case b: Block => b
-            case other    => Block(Vector(other), None, meta = other.meta)
-          })
-        } else None
-
-        TraitStmt(
-          name = name,
-          extendsClause = extendsClause,
-          body = bodyExpr,
-          meta = meta
-        )
+        result
+      
       case expr @ OpSeq(Vector(Identifier(Const.Object, _), nameExpr, rest @ _*), meta) =>
         // Parse the object name
-        val name = nameExpr match {
-          case id: Identifier => id
-          case _ =>
-            val error = ExpectObjectName(nameExpr)
-            reporter(error)
-            return DesaltFailed(expr, error, meta)
+        val result = boundary {
+          val name = nameExpr match {
+            case id: Identifier => id
+            case _ =>
+              val error = ExpectObjectName(nameExpr)
+              reporter(error)
+              boundary.break[Expr](DesaltFailed(expr, error, meta))
+          }
+
+          // Process the rest of the tokens
+          val tokens = rest.toList
+
+          // Parse the optional ExtendsClause
+          val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+
+          // Parse body if present
+          val bodyExpr = if (remainingTokens.nonEmpty) {
+            val body = opSeq(remainingTokens)
+            Some(desugar(body) match {
+              case b: Block => b
+              case other    => Block(Vector(other), None, meta = other.meta)
+            })
+          } else None
+
+          ObjectStmt(
+            name = name,
+            extendsClause = extendsClause,
+            body = bodyExpr,
+            meta = meta
+          )
         }
-
-        // Process the rest of the tokens
-        val tokens = rest.toList
-
-        // Parse the optional ExtendsClause
-        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
-
-        // Parse body if present
-        val bodyExpr = if (remainingTokens.nonEmpty) {
-          val body = opSeq(remainingTokens)
-          Some(desugar(body) match {
-            case b: Block => b
-            case other    => Block(Vector(other), None, meta = other.meta)
-          })
-        } else None
-
-        ObjectStmt(
-          name = name,
-          extendsClause = extendsClause,
-          body = bodyExpr,
-          meta = meta
-        )
+        result
+      
       // Handling 'interface' keyword
       case expr @ OpSeq(Vector(Identifier(Const.Interface, _), nameExpr, rest @ _*), meta) =>
         // Parse the interface name and parameters if any
-        val (name, parameterExprs) = nameExpr match {
-          case id: Identifier =>
-            (id, Vector.empty[Expr])
-          case FunctionCall(id: Identifier, telescope, _) =>
-            (id, Vector(telescope))
-          case _ =>
-            val error = ExpectInterfaceName(nameExpr)
-            reporter(error)
-            return DesaltFailed(expr, error, meta)
+        val result = boundary {
+          val (name, parameterExprs) = nameExpr match {
+            case id: Identifier =>
+              (id, Vector.empty[Expr])
+            case FunctionCall(id: Identifier, telescope, _) =>
+              (id, Vector(telescope))
+            case _ =>
+              val error = ExpectInterfaceName(nameExpr)
+              reporter(error)
+              boundary.break[Expr](DesaltFailed(expr, error, meta))
+          }
+
+          // Process the rest of the tokens
+          var tokens = rest.toList
+
+          // Use the common method to parse the optional ExtendsClause
+          val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
+          tokens = remainingTokens
+
+          // Parse body if present
+          val bodyExpr = if (tokens.nonEmpty) {
+            val body = opSeq(tokens)
+            Some(desugar(body) match {
+              case b: Block => b
+              case other    => Block(Vector(other), None, meta = other.meta)
+            })
+          } else None
+
+          InterfaceStmt(
+            name = name,
+            extendsClause = extendsClause,
+            body = bodyExpr,
+            meta = meta
+          )
         }
-
-        // Process the rest of the tokens
-        var tokens = rest.toList
-
-        // Use the common method to parse the optional ExtendsClause
-        val (extendsClause, remainingTokens) = parseExtendsClause(tokens, meta)
-        tokens = remainingTokens
-
-        // Parse body if present
-        val bodyExpr = if (tokens.nonEmpty) {
-          val body = opSeq(tokens)
-          Some(desugar(body) match {
-            case b: Block => b
-            case other    => Block(Vector(other), None, meta = other.meta)
-          })
-        } else None
-
-        InterfaceStmt(
-          name = name,
-          extendsClause = extendsClause,
-          body = bodyExpr,
-          meta = meta
-        )
+        result
 
       case default => default
     }
