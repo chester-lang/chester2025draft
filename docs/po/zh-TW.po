@@ -464,127 +464,128 @@ msgstr "**模塊系統**：生成 ES 模塊導出和導入"
 
 #: src/dev/compiler-backend.md:64 src/dev/compiler-backend.md:102
 msgid "Key Features"
-msgstr ""
+msgstr "關鍵特性"
 
 #: src/dev/compiler-backend.md:66
 msgid "Complete JavaScript language support"
-msgstr ""
+msgstr "完整的 JavaScript 語言支援"
 
 #: src/dev/compiler-backend.md:67
 msgid "TypeScript type annotations"
-msgstr ""
+msgstr "TypeScript 類型註解"
 
 #: src/dev/compiler-backend.md:68
 msgid "ECMAScript module system"
-msgstr ""
+msgstr "ECMAScript 模塊系統"
 
 #: src/dev/compiler-backend.md:69
 msgid "Web API integration"
-msgstr ""
+msgstr "Web API 集成"
 
 #: src/dev/compiler-backend.md:70
 msgid "Sourcemap generation for debugging"
-msgstr ""
+msgstr "用於調試的源碼映射生成"
 
 #: src/dev/compiler-backend.md:72
 msgid "JS AST Structure"
-msgstr ""
+msgstr "JS AST 結構"
 
 #: src/dev/compiler-backend.md:74
 msgid "The JavaScript AST is implemented as a set of case classes:"
-msgstr ""
+msgstr "JavaScript AST 是以一組 case class 的形式實現的："
 
 #: src/dev/compiler-backend.md:87
 msgid ""
 "Each node includes a `toDoc` method for pretty printing and source "
 "generation."
-msgstr ""
+msgstr "每個節點都包含一個用於美化輸出和源代碼生成的 `toDoc` 方法。"
 
 #: src/dev/compiler-backend.md:89
 msgid "JVM (Java/Scala)"
-msgstr ""
+msgstr "JVM (Java/Scala)"
 
 #: src/dev/compiler-backend.md:91
 msgid ""
 "The JVM target enables integration with the Java ecosystem and leverages the "
 "JVM runtime."
 msgstr ""
+"JVM 目標實現了與 Java 生態系統的集成，並利用 JVM 運行時。"
 
 #: src/dev/compiler-backend.md:95
 msgid "The JVM backend consists of:"
-msgstr ""
+msgstr "JVM 後端包含："
 
 #: src/dev/compiler-backend.md:97
 msgid "**Bytecode Generation**: Direct generation of JVM bytecode"
-msgstr ""
+msgstr "**字節碼生成**：直接生成 JVM 字節碼"
 
 #: src/dev/compiler-backend.md:98
 msgid "**Class Builder**: Creates JVM class files"
-msgstr ""
+msgstr "**類別構建器**：創建 JVM 類別文件"
 
 #: src/dev/compiler-backend.md:99
 msgid "**Runtime Library**: Core runtime support for Chester on JVM"
-msgstr ""
+msgstr "**運行時庫**：JVM 上 Chester 的核心運行時支持"
 
 #: src/dev/compiler-backend.md:100
 msgid "**Java Interop**: Enables calling Java code from Chester"
-msgstr ""
+msgstr "**Java 互操作**：實現從 Chester 調用 Java 代碼"
 
 #: src/dev/compiler-backend.md:104
 msgid "Java interoperability"
-msgstr ""
+msgstr "Java 互操作性"
 
 #: src/dev/compiler-backend.md:105
 msgid "Scala library integration"
-msgstr ""
+msgstr "Scala 庫集成"
 
 #: src/dev/compiler-backend.md:106
 msgid "JVM optimizations"
-msgstr ""
+msgstr "JVM 優化"
 
 #: src/dev/compiler-backend.md:107
 msgid "Access to the Java standard library"
-msgstr ""
+msgstr "訪問 Java 標準庫"
 
 #: src/dev/compiler-backend.md:108
 msgid "Advanced JVM optimizations (inlining, specialization)"
-msgstr ""
+msgstr "高級 JVM 優化（內聯，特化）"
 
 #: src/dev/compiler-backend.md:110 src/dev/compiler-backend.md:135
 msgid "Native (Planned)"
-msgstr ""
+msgstr "原生 (計劃中)"
 
 #: src/dev/compiler-backend.md:112
 msgid "A native code target is planned for high-performance applications."
-msgstr ""
+msgstr "為高性能應用程序計劃了原生代碼目標。"
 
 #: src/dev/compiler-backend.md:114
 msgid "Potential Architecture"
-msgstr ""
+msgstr "潛在架構"
 
 #: src/dev/compiler-backend.md:116
 msgid "The native backend will likely include:"
-msgstr ""
+msgstr "原生後端可能包括："
 
 #: src/dev/compiler-backend.md:118
 msgid "**LLVM IR Generation**: Translation to LLVM intermediate representation"
-msgstr ""
+msgstr "**LLVM IR 生成**：轉換為 LLVM 中間表示"
 
 #: src/dev/compiler-backend.md:119
 msgid "**Native Runtime**: Minimal runtime support library"
-msgstr ""
+msgstr "**原生運行時**：最小運行時支持庫"
 
 #: src/dev/compiler-backend.md:120
 msgid "**ABI Compatibility**: Interoperability with C/C++ code"
-msgstr ""
+msgstr "**ABI 兼容性**：與 C/C++ 代碼的互操作性"
 
 #: src/dev/compiler-backend.md:121
 msgid "**Platform Support**: Cross-compilation for different CPU architectures"
-msgstr ""
+msgstr "**平台支持**：為不同 CPU 架構的交叉編譯"
 
 #: src/dev/compiler-backend.md:123
 msgid "Planned Features"
-msgstr ""
+msgstr "計劃功能"
 
 #: src/dev/compiler-backend.md:125
 msgid "LLVM-based code generation"
@@ -1177,43 +1178,43 @@ msgstr ""
 
 #: src/dev/development.md:79 src/dev/development.md:291
 msgid "⚠️ **CRITICAL: NEVER use the `-z` test filter option** ⚠️"
-msgstr ""
+msgstr "⚠️ **關鍵：切勿使用 `-z` 測試過濾選項** ⚠️"
 
 #: src/dev/development.md:80
 msgid "`-z` is NOT the correct syntax for filtering tests in MUnit"
-msgstr ""
+msgstr "`-z` 不是 MUnit 中過濾測試的正確語法"
 
 #: src/dev/development.md:81
 msgid "This option is broken and produces unreliable results"
-msgstr ""
+msgstr "此選項已損壞並產生不可靠的結果"
 
 #: src/dev/development.md:82
 msgid "Tests may appear to pass when they actually fail"
-msgstr ""
+msgstr "測試可能看起來通過，但實際上失敗了"
 
 #: src/dev/development.md:83
 msgid "This can lead to false confidence in your changes"
-msgstr ""
+msgstr "這可能導致對您的更改產生錯誤的信心"
 
 #: src/dev/development.md:84
 msgid "ScalaTest uses `-z` for filtering, but MUnit uses `--tests=` instead"
-msgstr ""
+msgstr "ScalaTest 使用 `-z` 進行過濾，但 MUnit 使用 `--tests=` 代替"
 
 #: src/dev/development.md:85
 msgid "⚠️ **IMPORTANT: Only use correct MUnit filter syntax with `--`** ⚠️"
-msgstr ""
+msgstr "⚠️ **重要：僅使用帶有 `--` 的正確 MUnit 過濾語法** ⚠️"
 
 #: src/dev/development.md:86
 msgid "When filtering tests, always use proper MUnit syntax:"
-msgstr ""
+msgstr "過濾測試時，始終使用正確的 MUnit 語法："
 
 #: src/dev/development.md:87
 msgid "**CORRECT MUnit syntax examples:**"
-msgstr ""
+msgstr "**正確的 MUnit 語法示例：**"
 
 #: src/dev/development.md:89
 msgid "# Filter by test name\n"
-msgstr ""
+msgstr "# 按測試名稱過濾\n"
 
 #: src/dev/development.md:90
 msgid "\"rootJVM/testOnly -- --tests=myTestName\""
@@ -1221,7 +1222,7 @@ msgstr ""
 
 #: src/dev/development.md:92
 msgid "# Filter by glob pattern\n"
-msgstr ""
+msgstr "# 按全局模式過濾\n"
 
 #: src/dev/development.md:93
 msgid "\"rootJVM/testOnly -- *MyTest\""
@@ -1229,11 +1230,11 @@ msgstr ""
 
 #: src/dev/development.md:95
 msgid "**INCORRECT syntax from other frameworks (DO NOT USE):**"
-msgstr ""
+msgstr "**來自其他框架的錯誤語法（不要使用）：**"
 
 #: src/dev/development.md:97
 msgid "# ScalaTest style (WRONG with MUnit)\n"
-msgstr ""
+msgstr "# ScalaTest 風格（與 MUnit 一起使用是錯誤的）\n"
 
 #: src/dev/development.md:98
 msgid "\"rootJVM/testOnly -- -t MyTest\""
@@ -1241,7 +1242,7 @@ msgstr ""
 
 #: src/dev/development.md:100
 msgid "# JUnit style (WRONG with MUnit)\n"
-msgstr ""
+msgstr "# JUnit 風格（與 MUnit 一起使用是錯誤的）\n"
 
 #: src/dev/development.md:101
 msgid "\"rootJVM/testOnly -- -n MyTest\""
@@ -1249,7 +1250,7 @@ msgstr ""
 
 #: src/dev/development.md:103
 msgid "# Custom incorrect style\n"
-msgstr ""
+msgstr "# 自定義錯誤風格\n"
 
 #: src/dev/development.md:104
 msgid "\"rootJVM/testOnly -- -only file.chester\""
@@ -1257,23 +1258,23 @@ msgstr ""
 
 #: src/dev/development.md:106
 msgid "ALWAYS run `sbt rootJVM/test` before committing changes"
-msgstr ""
+msgstr "提交更改前始終運行 `sbt rootJVM/test`"
 
 #: src/dev/development.md:107
 msgid "Fix any test failures before committing"
-msgstr ""
+msgstr "提交前修復所有測試失敗"
 
 #: src/dev/development.md:108
 msgid "Add new tests for new functionality"
-msgstr ""
+msgstr "為新功能添加新測試"
 
 #: src/dev/development.md:109
 msgid "Update existing tests when modifying behavior"
-msgstr ""
+msgstr "修改行為時更新現有測試"
 
 #: src/dev/development.md:110
 msgid "Test both success and failure cases"
-msgstr ""
+msgstr "測試成功和失敗的情況"
 
 #: src/dev/development.md:111
 msgid ""
@@ -1588,43 +1589,45 @@ msgstr ""
 
 #: src/dev/development.md:198
 msgid "**Git Command Tips**"
-msgstr ""
+msgstr "**Git 命令技巧**"
 
 #: src/dev/development.md:199
 msgid "Always use `| cat` with git commands that might trigger paging:"
-msgstr ""
+msgstr "始終在可能觸發分頁的 git 命令中使用 `| cat`："
 
 #: src/dev/development.md:205
 msgid "This ensures consistent output and avoids interactive paging"
-msgstr ""
+msgstr "這確保了一致的輸出並避免了互動式分頁"
 
 #: src/dev/development.md:207
 msgid "Terminal Control with Git Commands"
-msgstr ""
+msgstr "使用 Git 命令的終端控制"
 
 #: src/dev/development.md:209
 msgid "**⚠️ CRITICAL: ALWAYS Use `| cat` Suffix**"
-msgstr ""
+msgstr "**⚠️ 關鍵: 始終使用 `| cat` 後綴**"
 
 #: src/dev/development.md:210
 msgid ""
 "Git commands that might trigger paging or interactive prompts MUST ALWAYS "
 "end with `| cat`"
 msgstr ""
+"可能觸發分頁或互動提示的 Git 命令必須始終以 `| cat` 結尾"
 
 #: src/dev/development.md:211
 msgid "This is a MANDATORY practice, not a suggestion"
-msgstr ""
+msgstr "這是強制性的做法，而不是建議"
 
 #: src/dev/development.md:212
 msgid "This ensures consistent output and prevents terminal control issues"
-msgstr ""
+msgstr "這可確保輸出一致並防止終端控制問題"
 
 #: src/dev/development.md:213
 msgid ""
 "Failure to use `| cat` is the leading cause of incomplete reviews and missed "
 "errors"
 msgstr ""
+"未使用 `| cat` 是導致審查不完整和錯過錯誤的主要原因"
 
 #: src/dev/development.md:214 src/dev/devlog.md:357
 #: src/dev/effects-system.md:23
@@ -1633,7 +1636,7 @@ msgstr "範例："
 
 #: src/dev/development.md:224
 msgid "**Common Git Operations**"
-msgstr ""
+msgstr "**常見 Git 操作**"
 
 #: src/dev/development.md:226
 msgid "# Switching branches\n"
@@ -1661,31 +1664,31 @@ msgstr ""
 
 #: src/dev/development.md:244 src/dev/development.md:536
 msgid "**Why This Matters**"
-msgstr ""
+msgstr "**為什麼這很重要**"
 
 #: src/dev/development.md:245
 msgid "Prevents terminal from entering interactive mode"
-msgstr ""
+msgstr "防止終端進入互動模式"
 
 #: src/dev/development.md:246
 msgid "Ensures consistent output formatting"
-msgstr ""
+msgstr "確保輸出格式一致"
 
 #: src/dev/development.md:247
 msgid "Avoids getting stuck in pagers like `less`"
-msgstr ""
+msgstr "避免卡在像 `less` 這樣的分頁器中"
 
 #: src/dev/development.md:248
 msgid "Makes automation and scripting more reliable"
-msgstr ""
+msgstr "使自動化和腳本更可靠"
 
 #: src/dev/development.md:250
 msgid "Troubleshooting Development Issues"
-msgstr ""
+msgstr "疑難排解開發問題"
 
 #: src/dev/development.md:252
 msgid "**Recovering from Broken Edit Tools**"
-msgstr ""
+msgstr "**從損壞的編輯工具中恢復**"
 
 #: src/dev/development.md:253
 msgid ""
@@ -1719,61 +1722,62 @@ msgstr ""
 
 #: src/dev/development.md:267
 msgid "AI Agent Testing Instructions"
-msgstr ""
+msgstr "AI 代理測試說明"
 
 #: src/dev/development.md:269
 msgid "**Terminal Interruption Issues**"
-msgstr ""
+msgstr "**終端中斷問題**"
 
 #: src/dev/development.md:270
 msgid "If you are an AI agent working on Chester code and notice:"
-msgstr ""
+msgstr "如果你是一個處理 Chester 代碼的 AI 代理並注意到："
 
 #: src/dev/development.md:271
 msgid "Frequent `^C` characters appearing in command output"
-msgstr ""
+msgstr "命令輸出中頻繁出現 `^C` 字符"
 
 #: src/dev/development.md:272
 msgid "Commands being interrupted prematurely"
-msgstr ""
+msgstr "命令被提前中斷"
 
 #: src/dev/development.md:273
 msgid "Test results not displaying properly"
-msgstr ""
+msgstr "測試結果顯示不正確"
 
 #: src/dev/development.md:274
 msgid "Terminal output being cut off"
-msgstr ""
+msgstr "終端輸出被切斷"
 
 #: src/dev/development.md:275
 msgid "STOP attempting to run tests and:"
-msgstr ""
+msgstr "停止嘗試運行測試並且："
 
 #: src/dev/development.md:276
 msgid "Inform the user about the terminal connection issues"
-msgstr ""
+msgstr "告知用戶有關終端連接問題"
 
 #: src/dev/development.md:277
 msgid "Ask the user to run the tests manually"
-msgstr ""
+msgstr "請用戶手動運行測試"
 
 #: src/dev/development.md:278
 msgid "Request that the user provide the test results"
-msgstr ""
+msgstr "請用戶提供測試結果"
 
 #: src/dev/development.md:279
 msgid ""
 "This indicates a problem with the terminal connection, not with the code "
 "itself"
 msgstr ""
+"這表示終端連接存在問題，而非代碼本身的問題"
 
 #: src/dev/development.md:281
 msgid "**Test Running Best Practices for AI Agents**"
-msgstr ""
+msgstr "**AI 代理運行測試的最佳實踐**"
 
 #: src/dev/development.md:282
 msgid "**ALWAYS use these exact commands for running tests:**"
-msgstr ""
+msgstr "**始終使用這些確切的命令來運行測試：**"
 
 #: src/dev/development.md:284
 msgid "# Run all tests\n"
@@ -1788,6 +1792,7 @@ msgid ""
 "**NEVER** attempt to run tests with other project paths like `cli/test`, "
 "`semantic/test`, etc."
 msgstr ""
+"**切勿**嘗試使用其他項目路徑（如 `cli/test`、`semantic/test` 等）來運行測試。"
 
 #: src/dev/development.md:292
 msgid ""
@@ -4939,11 +4944,11 @@ msgstr ""
 
 #: src/dev/devlog.md:730 src/dev/devlog.md:1460
 msgid "Implementation Approach"
-msgstr ""
+msgstr "實作方法"
 
 #: src/dev/devlog.md:732
 msgid "We implemented a 3-step fix that maintains uniform symbol treatment:"
-msgstr ""
+msgstr "我們實現了一個保持統一符號處理的三步驟修復方案："
 
 #: src/dev/devlog.md:734
 msgid "**Added Context to LexerState**:"
