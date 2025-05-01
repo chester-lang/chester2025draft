@@ -800,7 +800,7 @@ msgstr ""
 
 #: src/dev/compiler-backend.md:189 src/guide/syntax-grammar.md:18
 msgid "Expressions"
-msgstr ""
+msgstr "表達式"
 
 #: src/dev/compiler-backend.md:191
 msgid "**Literals**: Numbers, strings, booleans, null, BigInt, RegExp"
@@ -11091,12 +11091,13 @@ msgid ""
 "with the current implementation. It should be used as a general guide rather "
 "than a precise specification."
 msgstr ""
+"**重要提示：** 本文檔僅提供Chester語言語法的大致描述，可能高度不準確或與當前實現不完全一致。應將其用作一般指南，而非精確的規範。"
 
 #: src/guide/syntax-grammar.md:5
 msgid ""
 "This document attempts to describe the Chester language syntax using a BNF-"
 "like notation."
-msgstr ""
+msgstr "本文檔嘗試使用類似BNF的符號來描述Chester語言語法。"
 
 #: src/guide/syntax-grammar.md:7
 msgid ""
@@ -11104,10 +11105,11 @@ msgid ""
 "tokens and are not explicitly shown in the grammar rules unless significant "
 "(like newlines in blocks)."
 msgstr ""
+"**注意：** 空白字符和註釋（`// ...`）通常允許在標記之間出現，除非有特殊意義（如區塊中的換行），否則在語法規則中不會明確顯示。"
 
 #: src/guide/syntax-grammar.md:9
 msgid "Top Level"
-msgstr ""
+msgstr "頂層結構"
 
 #: src/guide/syntax-grammar.md:16
 msgid ""
@@ -11115,6 +11117,7 @@ msgid ""
 "statement separators similar to semicolons. The last expression in a block "
 "acts as its return value unless followed by a semicolon._"
 msgstr ""
+"_注意：在許多上下文（如區塊或頂層）中，換行可以像分號一樣作為語句分隔符。區塊中的最後一個表達式作為其返回值，除非後跟分號。_"
 
 #: src/guide/syntax-grammar.md:20
 msgid ""
@@ -11164,11 +11167,11 @@ msgstr ""
 
 #: src/guide/syntax-grammar.md:56
 msgid "Object Literals"
-msgstr ""
+msgstr "物件字面值"
 
 #: src/guide/syntax-grammar.md:73
 msgid "Literals"
-msgstr ""
+msgstr "字面值"
 
 #: src/guide/syntax-grammar.md:75
 msgid ""
@@ -11184,7 +11187,7 @@ msgstr ""
 
 #: src/guide/syntax-grammar.md:84
 msgid "Terminals"
-msgstr ""
+msgstr "終結符"
 
 #: src/guide/syntax-grammar.md:86
 msgid ""
@@ -11203,7 +11206,7 @@ msgstr ""
 
 #: src/guide/syntax-grammar.md:95
 msgid "Punctuation and Symbols (Terminals)"
-msgstr ""
+msgstr "標點符號和符號（終結符）"
 
 #: src/guide/trait-and-interface.md:3
 msgid ""
@@ -11211,21 +11214,22 @@ msgid ""
 "and interfaces. While both serve to define contracts that other types can "
 "implement, they differ in their subtyping behavior and intended use cases."
 msgstr ""
+"Chester提供了兩種不同的機制來定義抽象類型：特質(traits)和介面(interfaces)。雖然它們都用於定義其他類型可以實現的契約，但它們在子類型行為和預期用例方面有所不同。"
 
 #: src/guide/trait-and-interface.md:5
 msgid "Traits: Nominal Subtyping"
-msgstr ""
+msgstr "特質：名義子類型"
 
 #: src/guide/trait-and-interface.md:7
 msgid ""
 "Traits in Chester use nominal subtyping, which means that the name of the "
 "type is significant in determining subtype relationships."
 msgstr ""
+"Chester中的特質使用名義子類型(nominal subtyping)，這意味著類型的名稱在確定子類型關係時很重要。"
 
 #: src/guide/trait-and-interface.md:9
-#, fuzzy
 msgid "Here's an example of a trait definition in Chester:"
-msgstr "以下是一個簡單的 `Person` 記錄範例："
+msgstr "以下是 Chester 中的特質定義範例："
 
 #: src/guide/trait-and-interface.md:11
 msgid ""
@@ -11246,10 +11250,11 @@ msgid ""
 "the `<:` operator. This relationship is based on the names of the types, not "
 "just their structure."
 msgstr ""
+"在此例中，`Dog` 通過使用 `<:` 操作符明確聲明為 `Animal` 的子類型。這種關係基於類型的名稱，而不僅僅是它們的結構。"
 
 #: src/guide/trait-and-interface.md:23
 msgid "Interfaces: Structural Subtyping"
-msgstr ""
+msgstr "介面：結構子類型"
 
 #: src/guide/trait-and-interface.md:25
 msgid ""
@@ -11257,11 +11262,11 @@ msgid ""
 "relationships are determined by the structure (methods and properties) of "
 "the types, regardless of their names."
 msgstr ""
+"Chester中的介面使用結構子類型(structural subtyping)，這意味著子類型關係是由類型的結構（方法和屬性）決定的，而不考慮它們的名稱。"
 
 #: src/guide/trait-and-interface.md:27
-#, fuzzy
 msgid "Here's an example of an interface definition:"
-msgstr "以下是一個簡單的 `Person` 記錄範例："
+msgstr "以下是介面定義的範例："
 
 #: src/guide/trait-and-interface.md:29
 msgid ""
@@ -11285,16 +11290,18 @@ msgid ""
 "matching `makeSound` method, even though it wasn't explicitly declared as "
 "such."
 msgstr ""
+"在這個例子中，`Cat` 被視為 `Soundmaker` 的子類型，因為它有一個匹配的 `makeSound` 方法，即使它並沒有被明確聲明為這樣。"
 
 #: src/guide/trait-and-interface.md:44
 msgid "Design Inspiration"
-msgstr ""
+msgstr "設計靈感"
 
 #: src/guide/trait-and-interface.md:46
 msgid ""
 "This dual approach to abstract types is inspired by the Pony programming "
 "language, as described in:"
 msgstr ""
+"這種對抽象類型的雙重方法受到 Pony 程式語言的啟發，如以下文獻所述："
 
 #: src/guide/trait-and-interface.md:48
 msgid ""
@@ -11312,19 +11319,21 @@ msgstr ""
 
 #: src/guide/trait-and-interface.md:52
 msgid "Choosing Between Traits and Interfaces"
-msgstr ""
+msgstr "在特質和介面之間選擇"
 
 #: src/guide/trait-and-interface.md:54
 msgid ""
 "Use traits when you want to create a named hierarchy of types and control "
 "which types can be subtypes."
 msgstr ""
+"當您想要創建命名的類型層次結構並控制哪些類型可以成為子類型時，請使用特質。"
 
 #: src/guide/trait-and-interface.md:55
 msgid ""
 "Use interfaces when you want to define a contract that any type can "
 "implicitly satisfy by implementing the required structure."
 msgstr ""
+"當您想要定義任何類型都可以通過實現所需結構而隱式滿足的契約時，請使用介面。"
 
 #: src/guide/trait-and-interface.md:57
 msgid ""
@@ -11332,3 +11341,4 @@ msgid ""
 "code, allowing for both strict hierarchies and more flexible, duck-typed-"
 "style programming where appropriate."
 msgstr ""
+"這種設計給予Chester開發者靈活性，使他們能夠根據需要同時使用嚴格的類型層次結構和更靈活的鴨子類型風格編程。"
