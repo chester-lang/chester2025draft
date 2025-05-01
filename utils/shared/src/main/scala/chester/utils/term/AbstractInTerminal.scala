@@ -28,7 +28,7 @@ abstract class AbstractInTerminal[F[_]](using Runner[F]) extends InTerminal[F] {
   def readALine(prompt: fansi.Str): F[String]
 
   /** When an implementation can only handle one line at a time in history */
-  private def saveALine(line: String): F[Unit] = Runner.pure(())
+  private def saveALine(_line: String): F[Unit] = Runner.pure(())
 
   override def readline(info: TerminalInfo): F[ReadLineResult] = {
     def loop(prompt: fansi.Str): F[ReadLineResult] =

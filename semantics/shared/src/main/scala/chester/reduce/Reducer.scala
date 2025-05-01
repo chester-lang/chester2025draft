@@ -86,7 +86,7 @@ object DefaultReducer extends Reducer {
   }
 
   /** Standard reduction logic for terms */
-  private def reduceStandard(term: Term, mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = term match {
+  private def reduceStandard(term: Term, _mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = term match {
     // WHNF terms - return as is
     case t: WHNF => t
 

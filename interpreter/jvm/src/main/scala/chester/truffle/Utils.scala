@@ -13,7 +13,7 @@ object Utils {
     ChesterReaderV2
       .parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString))
       .fold(
-        _err => ???,
+        _ => ???,
         parsedBlock =>
           val tyckResult = Tycker.check(parsedBlock)
           if (tyckResult.errorsEmpty) {

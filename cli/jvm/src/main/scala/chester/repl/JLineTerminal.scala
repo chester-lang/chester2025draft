@@ -1,7 +1,7 @@
 package chester.repl
 
 import chester.utils.term.*
-class JLineTerminal(init: TerminalInit) {
+class JLineTerminal(_init: TerminalInit) {
   private val terminal = org.jline.terminal.TerminalBuilder.terminal()
   private val history = new org.jline.reader.impl.history.DefaultHistory()
 

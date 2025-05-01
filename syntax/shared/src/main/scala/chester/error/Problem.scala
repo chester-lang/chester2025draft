@@ -1,6 +1,5 @@
 package chester.error
 
-import spire.math.Natural
 import chester.utils.doc.*
 import upickle.default.*
 import chester.i18n.*

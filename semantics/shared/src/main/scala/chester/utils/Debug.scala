@@ -34,8 +34,8 @@ object Debug {
   /** Sets the default enabled state for a category globally.
     */
   def setDefault(category: DebugCategory, enabled: Boolean): Unit =
-    if (enabled) globallyEnabledCategories.add(category)
-    else globallyEnabledCategories.remove(category)
+    if (enabled) globallyEnabledCategories.add(category): Unit
+    else globallyEnabledCategories.remove(category): Unit
 
   /** Resets all global default category settings to disabled.
     */
