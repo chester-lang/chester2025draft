@@ -37,6 +37,14 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     }
   }
 
+  /** Creates a new local variable with the given name, type, ID, and metadata.
+    *
+    * @param name The name of the local variable
+    * @param ty The type of the local variable
+    * @param id The unique ID for the local variable
+    * @param meta Optional expression metadata
+    * @return A new LocalV instance
+    */
   def newLocalv(
       name: Name,
       ty: CellIdOr[Term],
@@ -47,6 +55,11 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     LocalV(name, toTerm(ty), id, m)
   }
 
+  /** Converts a CellIdOr[T] to a Term (either the original T or a MetaTerm).
+    *
+    * @param x The CellIdOr[T] to convert
+    * @return Either the original term or a MetaTerm
+    */
   def toTerm[T <: Term](x: CellIdOr[T])(using StateAbility[TyckSession]): T | MetaTerm = x match {
     case x: Term =>
       x match {
@@ -56,6 +69,11 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     case x => Meta(x.asInstanceOf[CellId[Term]]).asInstanceOf[T | MetaTerm]
   }
 
+  /** Converts a CellIdOr[T] to a CellId[T].
+    *
+    * @param x The CellIdOr[T] to convert
+    * @return The CellId[T] for the term
+    */
   def toId[T <: Term](
       x: CellIdOr[T]
   )(using state: StateAbility[TyckSession]): CellId[T] = x match {
@@ -63,6 +81,12 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     case x        => state.toId(x)
   }
 
+  /** Merges two CellIdOr[Term] values, handling meta-terms appropriately.
+    * If the terms are identical, no action is taken.
+    *
+    * @param a The first term to merge
+    * @param b The second term to merge
+    */
   def merge(a: CellIdOr[Term], b: CellIdOr[Term])(using
       state: StateAbility[TyckSession],
       ab: TyckSession
