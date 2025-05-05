@@ -33,6 +33,7 @@ object Token {
   case class StringLiteral(value: Vector[StringChar], sourcePos: SourcePos) extends Token
   case class SymbolLiteral(value: String, sourcePos: SourcePos) extends Token
   case class Identifier(parts: Vector[StringChar], sourcePos: SourcePos) extends Token
+  // TODO: Operator merge with Identifier
   case class Operator(value: String, sourcePos: SourcePos) extends Token
   case class Hash(sourcePos: SourcePos) extends Token
 }
