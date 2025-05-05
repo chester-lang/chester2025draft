@@ -469,7 +469,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     }
   }
 
-  // TODO: refact and rename to handle both object/block argument
+  // TODO: refact and rename to handle both object/block argument and come up a name for two { .. } things (object/block)
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
   private def handleBlockArgument(
