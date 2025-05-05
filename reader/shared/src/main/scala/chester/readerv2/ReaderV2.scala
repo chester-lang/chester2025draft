@@ -2,7 +2,20 @@ package chester.readerv2
 import chester.i18n.*
 import chester.error.{Pos, RangeInFile, SourcePos, unreachableOr}
 import chester.reader.{ParseError, Source}
-import chester.syntax.concrete.{Block, DotCall, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, ParsedExpr, Tuple}
+import chester.syntax.concrete.{
+  Block,
+  DotCall,
+  ExprMeta,
+  FunctionCall,
+  ListExpr,
+  ObjectClause,
+  ObjectExpr,
+  ObjectExprClause,
+  ObjectExprClauseOnValue,
+  OpSeq,
+  ParsedExpr,
+  Tuple
+}
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
@@ -147,7 +160,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Helper for building operator sequences Gets comments directly from pendingTokens via pullComments()
     */
   private def buildOpSeq(terms: Vector[ParsedExpr], context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
-    ()
     // Get any collected comments from pendingTokens
     val comments = pullComments()
 
@@ -157,7 +169,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), comments))))
       case Vector(expr) => Right(expr)
       case _ =>
-        ()
         Right(OpSeq(terms, createMetaWithComments(None, comments)))
     }
   }
@@ -166,11 +177,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     */
   private def parseRest(expr: ParsedExpr, context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
     var localTerms = Vector(expr)
-    ()
 
     // Handle special closing brace + newline pattern
     if (checkForRBraceNewlinePattern(context = context)) {
-      ()
       // State is already set correctly
       // buildOpSeq will pull comments internally
       return buildOpSeq(localTerms)
@@ -179,7 +188,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Skip comments and check for terminators
     skipComments()
     if (this.state.isAtTerminator) {
-      ()
       // buildOpSeq will pull comments internally
       return buildOpSeq(localTerms)
     }
@@ -187,17 +195,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Main token dispatch
     this.state.current match {
       case Right(Token.LBrace(braceSourcePos)) =>
-        ()
         val originalState = this.state // Save state before attempting object parse
 
         // Try parsing as an object
         parseObject() match {
           case Right(objExpr) =>
-            ()
             // Check if the preceding expression allows an object argument
             expr match {
               case id: Identifier =>
-                ()
                 val funcCall = FunctionCall(
                   id,
                   Tuple(Vector(objExpr), createMeta(None, None)), // Wrap object in a Tuple
@@ -206,7 +211,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 // parseObject advanced state, now continue parsing after the object
                 parseRest(funcCall, context = context) // Recurse with the new FunctionCall
               case funcCall: FunctionCall =>
-                ()
                 // This assumes the object is an additional argument group like f(a){b=1}
                 val newFuncCall = FunctionCall(
                   funcCall,
@@ -216,39 +220,31 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 // parseObject advanced state, now continue parsing after the object
                 parseRest(newFuncCall, context = context) // Recurse with the new FunctionCall
               case _ =>
-                ()
                 this.state = originalState // Restore state
                 handleBlockArgument(expr, localTerms, braceSourcePos) // Treat as block
             }
 
           case Left(_) => // Failed to parse as object
-            ()
             this.state = originalState // Restore state before trying block parse
             handleBlockArgument(expr, localTerms, braceSourcePos, context = context) // Treat as block
         }
 
       // Colon handling (type annotations, etc)
       case Right(Token.Colon(sourcePos)) =>
-        ()
         // this.state is already set to the current state
         {
           // Advance past the colon
           advance()
           val updatedTerms = localTerms :+ Identifier(":", createMeta(Some(sourcePos), None))
-          ()
 
           withComments(() => parseAtom(context = context)).flatMap { next =>
             val newTerms = updatedTerms :+ next
-            ()
 
             // withComments has updated this.state already
             parseRest(next, context = context).map {
               case opSeq: OpSeq =>
-                ()
-                ()
                 OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
               case _ =>
-                ()
                 OpSeq(newTerms, None)
             }
           }
@@ -256,18 +252,15 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       // Dot call handling
       case Right(Token.Dot(dotSourcePos)) =>
-        ()
         // this.state is already set to the current state
         handleDotCall(dotSourcePos, localTerms).flatMap { dotCall =>
           localTerms = Vector(dotCall)
-          ()
           // handleDotCall has updated this.state already
           parseRest(dotCall, context = context)
         }
 
       // Operator handling
       case Right(Token.Operator(op, sourcePos)) =>
-        ()
         // this.state is already set to the current state
         {
           // Advance past the operator
@@ -283,7 +276,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               case _                                              => false
             }
           ) {
-            ()
             // We already have set state correctly
             // buildOpSeq will pull comments internally
             buildOpSeq(updatedTerms)
@@ -291,19 +283,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             // Continue parsing the rest of the expression
             // Change parseAtom() to parseExprInner() to handle prefix operators after infix op
             withComments(() => parseExpr(context = context)).flatMap { next =>
-              ()
               val newTerms = updatedTerms :+ next
-              ()
 
               // Continue parsing the rest - withComments has updated this.state already
               parseRest(next, context = context).map {
                 case opSeq: OpSeq =>
                   // Flatten the nested OpSeq
-                  ()
-                  ()
                   OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
                 case _ => // If the rest is not an OpSeq, just build normally
-                  ()
                   OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
               }
             }
@@ -313,7 +300,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       // Identifier handling
       case Right(Token.Identifier(chars, sourcePos)) =>
         val text = charsToString(chars)
-        ()
         // this.state is already set to the current state
         {
           // Advance past the identifier
@@ -321,7 +307,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
           this.state.current match {
             case Right(Token.LBracket(_)) =>
-              ()
               // Create the identifier
               val identifier = Identifier(text, createMeta(Some(sourcePos), None))
 
@@ -331,7 +316,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 afterTypeParams.current match {
                   case Right(Token.LParen(_)) | Right(Token.LBracket(_)) =>
                     // Function call with generic type args: id[T](args)
-                    ()
                     parseTuple().flatMap { tuple =>
                       val typeParamsList: ListExpr = typeParams
                       val typeCall = FunctionCall(
@@ -348,17 +332,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
                       parseRest(funcCall, context = context).map {
                         case opSeq: OpSeq =>
-                          ()
-                          ()
                           OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
                         case _ =>
-                          ()
                           OpSeq(updatedTerms, None)
                       }
                     }
                   case Right(Token.LBrace(_)) =>
                     // Generic type parameters followed by a block: id[T]{...}
-                    ()
                     val typeParamsList: ListExpr = typeParams
                     val typeCall = FunctionCall(
                       identifier,
@@ -369,21 +349,16 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                     parseBlock().flatMap { block =>
                       // Don't create a function call - instead just add both expressions to the sequence
                       val updatedTerms = localTerms :+ typeCall :+ block
-                      ()
 
                       parseRest(block, context = context).map {
                         case opSeq: OpSeq =>
-                          ()
-                          ()
                           OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
                         case _ =>
-                          ()
                           OpSeq(updatedTerms, None)
                       }
                     }
                   case _ =>
                     // Just generic type parameters: id[T]
-                    ()
                     val typeParamsList: ListExpr = typeParams
                     val funcCall = FunctionCall(
                       identifier,
@@ -394,18 +369,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
                     parseRest(funcCall, context = context).map {
                       case opSeq: OpSeq =>
-                        ()
-                        ()
                         OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
                       case _ =>
-                        ()
                         OpSeq(updatedTerms, None)
                     }
                 }
               }
 
             case Right(Token.LParen(_)) =>
-              ()
               // this.state is already set to the position after the identifier
               parseTuple(context0 = context).flatMap { tuple =>
                 // parseTuple has updated this.state
@@ -415,104 +386,77 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   createMeta(Some(sourcePos), None)
                 )
                 val updatedTerms = localTerms :+ functionCall
-                ()
 
                 parseRest(functionCall, context = context).map {
                   case opSeq: OpSeq =>
                     // Flatten
-                    ()
-                    ()
                     OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
                   case _ =>
-                    ()
                     OpSeq(updatedTerms, None)
                 }
               }
 
             case Right(Token.LBrace(_)) =>
-              ()
               // this.state is already set to the position after the identifier
               // Decide if block or object based on content
               val originalState = this.state
               parseObject() match {
                 case Right(objExpr) => // Object argument
-                  ()
                   val idExpr = Identifier(text, createMeta(Some(sourcePos), None))
                   val funcCall =
                     FunctionCall(idExpr, Tuple(Vector(objExpr), createMeta(None, None)), createMeta(Some(sourcePos), Some(this.state.sourcePos)))
                   val updatedTerms = localTerms :+ funcCall
                   parseRest(funcCall, context = context).map {
                     case opSeq: OpSeq =>
-                      ()
-                      ()
                       OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
                     case _ =>
-                      ()
                       OpSeq(updatedTerms, None)
                   }
                 case Left(_) => // Assume block argument
                   this.state = originalState // Restore state
-                  ()
                   parseBlock().flatMap { block =>
                     val id = Identifier(text, createMeta(Some(sourcePos), None))
                     // Change: Always treat as `id block` elements in OpSeq like V1 for compatibility
                     val updatedTerms = localTerms :+ id :+ block
-                    ()
                     parseRest(block, context = context).map {
                       case opSeq: OpSeq =>
-                        ()
-                        ()
                         OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
                       case _ =>
-                        ()
                         OpSeq(updatedTerms, None)
                     }
                   }
               }
 
             case Right(Token.Operator(op, opSourcePos)) =>
-              ()
               val id = Identifier(text, createMeta(Some(sourcePos), None))
               val opId = Identifier(op, createMeta(Some(opSourcePos), None))
               val updatedTerms = localTerms :+ id :+ opId
-              ()
 
               // Advance past the operator
               advance()
               withComments(() => parseExpr()).flatMap { next => // Using parseExprInner now
                 val newTerms = updatedTerms :+ next
-                ()
 
                 // withComments has updated this.state already
                 parseRest(next, context = context).map {
                   case opSeq: OpSeq =>
                     // Flatten the nested OpSeq
-                    ()
-                    ()
                     OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
                   case _ =>
-                    ()
                     OpSeq(newTerms, None)
                 }
               }
             case _ =>
-              ()
               val id = Identifier(text, createMeta(Some(sourcePos), None))
               val updatedTerms = localTerms :+ id
-              ()
 
               parseRest(id, context = context).map {
                 case opSeq: OpSeq =>
-                  ()
-                  ()
                   OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
                 // Special case adjustment: Treat f(block) returned from block handling as f block in sequence
                 case FunctionCall(f, Tuple(Vector(b: Block), _), _) =>
-                  ()
-                  ()
                   OpSeq(updatedTerms.dropRight(1) ++ Vector(f, b), None)
                 case _ =>
-                  ()
                   OpSeq(updatedTerms, None)
               }
           }
@@ -520,26 +464,20 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       // Generic token handling
       case Right(_) =>
-        ()
         // this.state is already set to the current state
         withComments(() => parseAtom()).flatMap { next =>
           localTerms = localTerms :+ next
-          ()
           // withComments has updated this.state already
           parseRest(next, context = context).map {
             case opSeq: OpSeq =>
-              ()
-              ()
               OpSeq(localTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              ()
               OpSeq(localTerms, None)
           }
         }
 
       // Error handling
       case Left(error) =>
-        ()
         Left(error)
     }
   }
@@ -563,22 +501,16 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             funcCall.telescope.isInstanceOf[ListExpr]
 
           if (isFunctionCallWithTypeParams) {
-            ()
             // Return an OpSeq with both expressions
             val updatedTerms = terms :+ block
-            ()
 
             parseRest(block, context = context).map {
               case opSeq: OpSeq =>
-                ()
-                ()
                 OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None) // Flatten
               case _ =>
-                ()
                 OpSeq(updatedTerms, None)
             }
           } else {
-            ()
             val newFuncCall = FunctionCall(
               funcCall,
               Tuple(Vector(block), createMeta(None, None)),
@@ -592,7 +524,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             }
           }
         case id: Identifier =>
-          ()
           val funcCall = FunctionCall(
             id,
             Tuple(Vector(block), createMeta(None, None)),
@@ -605,17 +536,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseRest(funcCall, context = context)
           }
         case _ =>
-          ()
           val updatedTerms = terms :+ block
-          ()
 
           parseRest(block, context = context).map {
             case opSeq: OpSeq =>
-              ()
-              ()
               OpSeq(updatedTerms.dropRight(1) ++ opSeq.seq, None)
             case _ =>
-              ()
               OpSeq(updatedTerms, None)
           }
       }
@@ -627,20 +553,17 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     skipComments()
     // Initialize terms vector for expressions
     var terms = Vector.empty[ParsedExpr]
-    ()
 
     // Main parsing logic - handle different token types
     this.state.current match {
       // Prefix operator
       case Right(Token.Operator(op, sourcePos)) =>
-        ()
         // Advance past the operator
         advance()
 
         this.state.current match {
           // Function call form: op(args)
           case Right(Token.LParen(_)) =>
-            ()
             // this.state is already pointing to the open paren
             parseTuple().map { tuple =>
               // parseTuple has already updated this.state
@@ -652,16 +575,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             }
           // Prefix form: op expr
           case _ =>
-            ()
             terms = Vector(Identifier(op, createMeta(Some(sourcePos), None)))
             withComments(() => parseAtom()).flatMap { expr =>
               terms = terms :+ expr
-              ()
 
               if (this.state.isAtTerminator) {
-                ()
                 // this.state is already updated by withComments
-                ()
                 Right(OpSeq(terms, None))
               } else {
                 // withComments has updated this.state already
@@ -672,18 +591,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       // Keyword operator handling
       case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(charsToString(chars)) =>
-        ()
         // Advance past the keyword operator
         advance()
         terms = Vector(Identifier(charsToString(chars), createMeta(Some(sourcePos), None)))
         withComments(() => parseAtom()).flatMap { expr =>
           terms = terms :+ expr
-          ()
 
           if (this.state.isAtTerminator) {
-            ()
             // this.state is already updated by withComments
-            ()
             Right(OpSeq(terms, None))
           } else {
             // withComments has updated this.state already
@@ -693,9 +608,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       // Standard expression handling
       case _ =>
-        ()
         withComments(() => parseAtom(context = context)).flatMap { first =>
-          ()
           // withComments has updated this.state already
           parseRest(first, context = context)
         }
@@ -723,7 +636,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(ws: Token.Whitespace) => unreachableOr(isNewlineWhitespace(ws))
       case Right(_: Token.EOF)         => true
       case Right(_: Token.Semicolon)   => true // Also treat semicolons as terminators
-      case _ => false
+      case _                           => false
     }) || (stateWithoutComments.previousToken match {
       case Some(ws: Token.Whitespace) => isNewlineWhitespace(ws)
       case _                          => false
@@ -863,34 +776,29 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           case Left(err) => Left(err)
         }
 
-      case Right(Token.LBrace(braceSourcePos)) =>
-        ()
+      case Right(Token.LBrace(_)) =>
         // Store the state BEFORE the LBrace token was encountered.
         // originalState is already available from the start of parseAtom
 
         // Try parsing as an object. parseObject expects to start *at* the LBrace.
         parseObject() match {
           case Right(objExpr) =>
-            ()
             // Object parsing consumes tokens and advances state.
             Right(objExpr) // Return the successfully parsed object
 
-          case Left(objError) =>
+          case Left(_) =>
             // Failed to parse as object. Restore state to BEFORE the LBrace.
-            ()
             this.state = originalState // Restore the state from the beginning of parseAtom
 
             // Now, try parsing as a block. parseBlock also expects to start *at* the LBrace.
             parseBlock() match {
               case Right(blockExpr) =>
-                ()
                 // Block parsing consumes tokens and advances state.
                 Right(blockExpr) // Return the successfully parsed block
               case Left(blockError) =>
                 // If both fail, report the block parsing error as it's the fallback.
                 // Alternatively, could try to report a more generic error or the object error?
                 // Reporting block error seems more consistent with fallback logic.
-                ()
                 Left(blockError)
             }
         }
@@ -1034,9 +942,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       case Right(token) =>
         Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
-
-      case Left(error) =>
-        Left(error)
     }
   }
 
@@ -1066,12 +971,10 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Skip comments and whitespace before checking the token
     skipComments()
 
-    ()
 
     this.state.current match {
       // Check for the closing token first
       case Right(token) if closingTokenPredicate(token) =>
-        ()
         Right(accumulatedExprs)
 
       // Handle separators (comma and optionally semicolon)
@@ -1079,7 +982,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
           Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", token.sourcePos.range.start))
         } else {
-          ()
           advance() // Skip the separator
           // Continue parsing elements recursively
           parseElementSequence(closingTokenPredicate, allowSemicolon, startPosForError, contextDescription, accumulatedExprs, context)
@@ -1091,7 +993,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       // Otherwise, parse an expression
       case _ =>
-        ()
         // State is already advanced past previous separator or is at the start
         parseExpr(context = context) match {
           case Left(err)   => Left(err)
@@ -1123,7 +1024,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
                   Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", token.sourcePos.range.start))
                 } else {
-                  ()
                   // Pull comments collected *after* the expression, before the separator
                   val trailingComments = pullComments().collect { case c: Comment => c }
                   val updatedExpr = if (trailingComments.nonEmpty) {
@@ -1263,13 +1163,11 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       // Check for termination condition first
       if (isTerminator(this.state)) {
-        ()
         Right(()) // Sequence finished successfully
       } else {
         // Handle explicit separators (semicolons) BEFORE parsing the expression
         var consumedSeparator = false
         while (this.state.current.exists(_.isInstanceOf[Token.Semicolon])) {
-          ()
           // If there was a result pending, it becomes a statement due to the semicolon
           currentResult.foreach { res =>
             statements = statements :+ res
@@ -1283,7 +1181,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         // Check again for terminator after consuming semicolons
         if (isTerminator(this.state)) {
           // If we consumed a separator and then hit the terminator, any pending result became a statement.
-          ()
           Right(()) // Sequence finished successfully
         } else {
           // If we are here, we expect an expression.
@@ -1296,14 +1193,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             val hasSignificantNewline = context.newLineAfterBlockMeansEnds &&
               whitespaceTokens.exists(isNewlineWhitespace)
             if (hasSignificantNewline) {
-              ()
               // Treat newline as separator: move result to statements
               statements = statements :+ currentResult.get
               currentResult = None
             } else {
               // Not separated by semicolon or significant newline, likely an OpSeq continuation or error
               // Let parseExpr handle it. If parseExpr succeeds, the previous result becomes a statement.
-              ()
               statements = statements :+ currentResult.get
               currentResult = None
             }
@@ -1312,20 +1207,16 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           }
 
           // --- Parse the next expression ---
-          ()
           parseExpr(context = context) match {
             case Left(err) =>
               // Check if the error occurred because we expected an expression but found a terminator
               if (isTerminator(this.state)) {
-                ()
                 Right(()) // End sequence gracefully if terminator found where expression expected
               } else {
-                ()
                 Left(err)
               }
             case Right(parsedExpr) =>
               val stateAfterExpr = this.state // State *after* parsing the expression
-              ()
 
               // --- Check for '}\n' termination ---
               val endedWithBrace = stateAfterExpr.previousNonCommentToken.exists(_.isInstanceOf[Token.RBrace])
@@ -1348,13 +1239,11 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               }
 
               if (endedWithBrace && followedByNewlineOrEOF && context.newLineAfterBlockMeansEnds) {
-                ()
                 statements = statements :+ parsedExpr
                 currentResult = None
                 // Skip comments/whitespace *after* the expression to check the actual terminator
                 skipComments()
                 if (isTerminator(this.state)) {
-                  ()
                   Right(()) // End loop, sequence finished
                 } else {
                   loop() // Continue parsing more statements
@@ -1373,7 +1262,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 val isFollowedByTerminator = isTerminator(tempState) // Check terminator on the lookahead state
 
                 if (isFollowedByTerminator) {
-                  ()
                   Right(()) // Expression is the final result, end the loop.
                 } else {
                   // Not followed immediately by terminator. It might be followed by a separator, or another expression.
@@ -1395,7 +1283,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   def parseTopLevel(context0: ReaderContext = ReaderContext()): Either[ParseError, Block] = {
     val context = context0.copy(newLineAfterBlockMeansEnds = true)
     val startPos = state.sourcePos // Capture start position
-    ()
 
     // Call the helper to parse the sequence, terminating at EOF
     parseStatementSequence(
@@ -1405,11 +1292,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     ) match {
       case Right((statements, lastExpr)) => // Use the returned statements/result directly
         val endPos = state.sourcePos // Capture end position
-        ()
         // Construct the Block
         Right(Block(statements, lastExpr, createMeta(Some(startPos), Some(endPos))))
       case Left(err) =>
-        ()
         Left(err)
     }
   }
@@ -1420,7 +1305,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
     this.state.current match {
       case Right(Token.LBrace(startPos)) =>
-        ()
         advance()
         skipComments()
         val startPosForMeta = startPos
@@ -1432,7 +1316,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         ).flatMap { case (statements, result) =>
           this.state.current match {
             case Right(Token.RBrace(endPos)) =>
-              ()
               val meta = createMeta(Some(startPosForMeta), Some(endPos))
               advance() // Consume the closing brace
               Right(Block(statements, result, meta))
@@ -1442,10 +1325,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
 
       case Right(t) =>
-        ()
         Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
       case Left(err) =>
-        ()
         Left(err)
     }
   }

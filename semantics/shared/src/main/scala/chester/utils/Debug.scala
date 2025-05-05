@@ -45,16 +45,7 @@ object Debug {
   /** Checks if a category is enabled, considering both scoped overrides and global defaults.
     */
   def isEnabled(category: DebugCategory): Boolean =
-    categoryParameters.get(category) match {
-      case Some(param) =>
-        // Check scoped value first using getOption
-        param.getOption match {
-          case Some(scopedValue) => scopedValue // Use scoped value if present (true or false)
-          case None              => globallyEnabledCategories.contains(category) // Fallback to global default
-        }
-      // Should not happen as map is exhaustive
-      case None => false
-    }
+    categoryParameters.get(category).exists(param => param.getOption.getOrElse(globallyEnabledCategories.contains(category)))
 
   /** Executes a block of code with a specific debug category enabled (scoped override).
     */

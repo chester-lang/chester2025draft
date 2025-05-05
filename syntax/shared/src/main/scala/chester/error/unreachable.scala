@@ -12,6 +12,5 @@ inline def unreachable(message: String | ToDoc = ""): Nothing = {
   throw new AssertionError(msg)
 }
 
-inline def unreachableOr[T](canBe: =>T): T = {
+inline def unreachableOr[T](canBe: => T): T =
   unreachable("but can be a value")
-}
