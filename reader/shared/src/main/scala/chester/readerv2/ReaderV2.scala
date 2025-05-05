@@ -87,36 +87,15 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   // Helper methods
   private def charsToString(chars: Seq[StringChar]): String = chars.map(_.text).mkString
 
-  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError = {
-    def getTokenType(t: Token): String = t match {
-      case _: Token.Identifier      => "identifier"
-      case _: Token.IntegerLiteral  => "integer literal"
-      case _: Token.RationalLiteral => "rational literal"
-      case _: Token.StringLiteral   => "string literal"
-      case _: Token.Operator        => "operator"
-      case _: Token.LParen          => "left parenthesis '('"
-      case _: Token.RParen          => "right parenthesis ')'"
-      case _: Token.LBrace          => "left brace '{'"
-      case _: Token.RBrace          => "right brace '}'"
-      case _: Token.LBracket        => "left bracket '['"
-      case _: Token.RBracket        => "right bracket ']'"
-      case _: Token.Comma           => "comma ','"
-      case _: Token.Dot             => "dot '.'"
-      case _: Token.Semicolon       => "semicolon"
-      case _: Token.EOF             => "end of file"
-      case _: Token.Whitespace      => "whitespace"
-      case _                        => "unknown token"
-    }
-
+  private def expectedError(expected: String, token: Either[ParseError, Token]): ParseError =
     token.fold(
       identity,
       t =>
         ParseError(
-          f"Expected $expected but found ${getTokenType(t)} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
+          f"Expected $expected but found ${t.tokenType} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
           t.sourcePos.range.start
         )
     )
-  }
 
   /** Creates expression metadata from source positions and comments. */
   private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] =
@@ -176,7 +155,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Main expression continuation parser. Uses skipComments() and pullComments() internally to handle comments without passing them around.
     */
   private def parseRest(expr: ParsedExpr, context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
-    if(context.noOpSeq) return Right(expr)
+    if (context.noOpSeq) return Right(expr)
     var localTerms = Vector(expr)
 
     // Handle special closing brace + newline pattern
@@ -227,37 +206,35 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       // Operator handling
       case Right(Token.Operator(op, sourcePos)) =>
         // this.state is already set to the current state
-        {
-          // Advance past the operator
-          advance()
+        // Advance past the operator
+        advance()
 
-          // Add operator to terms
-          val updatedTerms = localTerms :+ Identifier(op, createMeta(Some(sourcePos), None))
+        // Add operator to terms
+        val updatedTerms = localTerms :+ Identifier(op, createMeta(Some(sourcePos), None))
 
-          // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
-          if (
-            this.state.current match {
-              case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
-              case _                                              => false
-            }
-          ) {
-            // We already have set state correctly
-            // buildOpSeq will pull comments internally
-            buildOpSeq(updatedTerms)
-          } else {
-            // Continue parsing the rest of the expression
-            // Change parseAtom() to parseExprInner() to handle prefix operators after infix op
-            withComments(() => parseExpr(context = context)).flatMap { next =>
-              val newTerms = updatedTerms :+ next
+        // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
+        if (
+          this.state.current match {
+            case Right(Token.RParen(_)) | Right(Token.Comma(_)) => true
+            case _                                              => false
+          }
+        ) {
+          // We already have set state correctly
+          // buildOpSeq will pull comments internally
+          buildOpSeq(updatedTerms)
+        } else {
+          // Continue parsing the rest of the expression
+          // Change parseAtom() to parseExprInner() to handle prefix operators after infix op
+          withComments(() => parseExpr(context = context)).flatMap { next =>
+            val newTerms = updatedTerms :+ next
 
-              // Continue parsing the rest - withComments has updated this.state already
-              parseRest(next, context = context).map {
-                case opSeq: OpSeq =>
-                  // Flatten the nested OpSeq
-                  OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
-                case _ => // If the rest is not an OpSeq, just build normally
-                  OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
-              }
+            // Continue parsing the rest - withComments has updated this.state already
+            parseRest(next, context = context).map {
+              case opSeq: OpSeq =>
+                // Flatten the nested OpSeq
+                OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
+              case _ => // If the rest is not an OpSeq, just build normally
+                OpSeq(newTerms, None) // newTerms already contains 'next' (which is otherExpr)
             }
           }
         }
@@ -936,7 +913,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   ): Either[ParseError, Vector[ParsedExpr]] = {
     // Skip comments and whitespace before checking the token
     skipComments()
-
 
     this.state.current match {
       // Check for the closing token first
