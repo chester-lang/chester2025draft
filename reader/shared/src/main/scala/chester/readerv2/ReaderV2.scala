@@ -200,29 +200,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         // Try parsing as an object
         parseObject() match {
           case Right(objExpr) =>
-            // Check if the preceding expression allows an object argument
-            expr match {
-              case id: Identifier =>
-                val funcCall = FunctionCall(
-                  id,
-                  Tuple(Vector(objExpr), createMeta(None, None)), // Wrap object in a Tuple
-                  createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
-                )
-                // parseObject advanced state, now continue parsing after the object
-                parseRest(funcCall, context = context) // Recurse with the new FunctionCall
-              case funcCall: FunctionCall =>
-                // This assumes the object is an additional argument group like f(a){b=1}
-                val newFuncCall = FunctionCall(
-                  funcCall,
-                  Tuple(Vector(objExpr), createMeta(None, None)),
-                  createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
-                )
-                // parseObject advanced state, now continue parsing after the object
-                parseRest(newFuncCall, context = context) // Recurse with the new FunctionCall
-              case _ =>
-                this.state = originalState // Restore state
-                handleBlockArgument(expr, localTerms, braceSourcePos) // Treat as block
-            }
+
+            val funcCall = FunctionCall(
+              expr,
+              Tuple(Vector(objExpr), createMeta(None, None)), // Wrap object in a Tuple
+              createMeta(Some(expr.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+            )
+            // parseObject advanced state, now continue parsing after the object
+            parseRest(funcCall, context = context) // Recurse with the new FunctionCall
 
           case Left(_) => // Failed to parse as object
             this.state = originalState // Restore state before trying block parse
@@ -1301,7 +1286,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   private def parseBlock(context0: ReaderContext = ReaderContext()): Either[ParseError, Block] = {
     val context = context0.copy(newLineAfterBlockMeansEnds = true)
-    () // State is already modified here
 
     this.state.current match {
       case Right(Token.LBrace(startPos)) =>
