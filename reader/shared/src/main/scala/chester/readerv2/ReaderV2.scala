@@ -1775,22 +1775,4 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Left(err) => Left(err)
     }
 
-  // Restore public API for parsing expression lists, calling the new helper
-  def parseExprList(context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ParsedExpr]] = {
-    // Skip any comments at the start *first*
-    skipComments()
-    // Now, determine the starting position from the current token
-    val startPos = this.state.current match {
-      case Right(token) => token.sourcePos
-      case Left(err)    => return Left(err)
-    }
-    // The state is already past leading comments, proceed to parse sequence
-    parseElementSequence(
-      closingTokenPredicate = _.isInstanceOf[Token.EOF],
-      allowSemicolon = true,
-      startPosForError = startPos,
-      contextDescription = "expression list"
-    )
-  }
-
 }

@@ -19,11 +19,6 @@ object ChesterReaderV2 {
     lexer.parseExpr()
   }
 
-  def parseExprList(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, Vector[ParsedExpr]] = {
-    val lexer = setupLexer(Source(source), ignoreLocation)
-    lexer.parseExprList()
-  }
-
   def parseTopLevel(source: ParserSource, ignoreLocation: Boolean = false): Either[ParseError, ParsedExpr] = {
     val lexer = setupLexer(Source(source), ignoreLocation)
     lexer.parseTopLevel()
