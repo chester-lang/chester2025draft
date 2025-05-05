@@ -745,7 +745,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case Right(ws: Token.Whitespace) => unreachableOr(isNewlineWhitespace(ws))
       case Right(_: Token.EOF)         => true
       case Right(_: Token.Semicolon)   => true // Also treat semicolons as terminators
-      // For match expressions, always treat a case keyword as a terminator
       case _ => false
     }) || (stateWithoutComments.previousToken match {
       case Some(ws: Token.Whitespace) => isNewlineWhitespace(ws)
