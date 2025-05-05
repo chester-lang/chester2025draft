@@ -1704,9 +1704,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   private def withCommentsCore[T <: ParsedExpr](
       parser: => Either[ParseError, T]
   ): Either[ParseError, T] = {
-    // Save original state
-    val originalState = this.state
-
     // Skip comments at the start
     skipComments()
 
@@ -1733,14 +1730,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
       Right(updatedExpr.asInstanceOf[T])
     }
-
-    // Restore original state in case of error
-    result match {
-      case Left(err) =>
-        this.state = originalState
-        Left(err)
-      case right => right
-    }
+    result
   }
 
   /** Generic parser combinator that adds comment handling to any parse method */
