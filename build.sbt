@@ -1,6 +1,6 @@
 // reads env: NATIVE_IMAGE_OPTIONS, VERSION
 
-val scala3Nightly = "3.7.1-RC1-bin-20250429-57807c6-NIGHTLY"
+val scala3Nightly = "3.7.1-RC1-bin-20250501-83ffe00-NIGHTLY"
 val scala3Version = "3.7.0-RC4"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
@@ -551,6 +551,7 @@ lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(commonJvmSettings)
 
 val AIRFRAME_VERSION = "2025.1.10"
+val ironVersion = "3.0.1"
 
 // split modules trying to increase incremental compilation speed
 lazy val utils = useSpire(
@@ -561,9 +562,9 @@ lazy val utils = useSpire(
     .settings(
       commonLibSettings,
       libraryDependencies ++= Seq(
-        "io.github.iltotore" %%% "iron" % "3.0.0",
-        "io.github.iltotore" %%% "iron-cats" % "3.0.0",
-        "io.github.iltotore" %%% "iron-upickle" % "3.0.0" exclude ("com.lihaoyi", "upickle_3"),
+        "io.github.iltotore" %%% "iron" % ironVersion,
+        "io.github.iltotore" %%% "iron-cats" % ironVersion,
+        "io.github.iltotore" %%% "iron-upickle" % ironVersion exclude ("com.lihaoyi", "upickle_3"),
         "org.typelevel" %%% "cats-core" % "2.13.0",
         "org.typelevel" %%% "cats-free" % "2.13.0",
         "com.lihaoyi" %%% "pprint" % "0.9.0",
