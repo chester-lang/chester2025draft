@@ -31,6 +31,7 @@ case class ReaderContext(
     dontAllowBlockApply: Boolean = false
 ) {
   def opSeq: Boolean = !inOpSeq && !dontallowOpSeq
+  def noOpSeq: Boolean = inOpSeq || dontallowOpSeq
 
   def blockCall: Boolean = !inOpSeq && !dontAllowBlockApply
 }
@@ -176,6 +177,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   /** Main expression continuation parser. Uses skipComments() and pullComments() internally to handle comments without passing them around.
     */
   private def parseRest(expr: ParsedExpr, context: ReaderContext = ReaderContext()): Either[ParseError, ParsedExpr] = {
+    if(context.noOpSeq) return Right(expr)
     var localTerms = Vector(expr)
 
     // Handle special closing brace + newline pattern
