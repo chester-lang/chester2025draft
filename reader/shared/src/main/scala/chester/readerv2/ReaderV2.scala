@@ -100,7 +100,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       case _: Token.RBrace          => "right brace '}'"
       case _: Token.LBracket        => "left bracket '['"
       case _: Token.RBracket        => "right bracket ']'"
-      case _: Token.Colon           => "colon ':'"
       case _: Token.Comma           => "comma ','"
       case _: Token.Dot             => "dot '.'"
       case _: Token.Semicolon       => "semicolon"
@@ -214,27 +213,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           case Left(_) => // Failed to parse as object
             this.state = originalState // Restore state before trying block parse
             handleBlockArgument(expr, localTerms, braceSourcePos, context = context) // Treat as block
-        }
-
-      // Colon handling (type annotations, etc)
-      case Right(Token.Colon(sourcePos)) =>
-        // this.state is already set to the current state
-        {
-          // Advance past the colon
-          advance()
-          val updatedTerms = localTerms :+ Identifier(":", createMeta(Some(sourcePos), None))
-
-          withComments(() => parseAtom(context = context)).flatMap { next =>
-            val newTerms = updatedTerms :+ next
-
-            // withComments has updated this.state already
-            parseRest(next, context = context).map {
-              case opSeq: OpSeq =>
-                OpSeq(newTerms.dropRight(1) ++ opSeq.seq, None)
-              case _ =>
-                OpSeq(newTerms, None)
-            }
-          }
         }
 
       // Dot call handling

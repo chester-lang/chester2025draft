@@ -23,7 +23,6 @@ object Lexer {
     '}' -> Token.RBrace.apply,
     ',' -> Token.Comma.apply,
     ';' -> Token.Semicolon.apply,
-    ':' -> Token.Colon.apply,
     '.' -> Token.Dot.apply,
     '@' -> Token.At.apply
   )
