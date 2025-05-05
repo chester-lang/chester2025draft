@@ -1,21 +1,8 @@
 package chester.readerv2
 import chester.i18n.*
-import chester.error.{Pos, RangeInFile, SourcePos}
+import chester.error.{Pos, RangeInFile, SourcePos, unreachableOr}
 import chester.reader.{ParseError, Source}
-import chester.syntax.concrete.{
-  Block,
-  DotCall,
-  ExprMeta,
-  FunctionCall,
-  ListExpr,
-  ObjectClause,
-  ObjectExpr,
-  ObjectExprClause,
-  ObjectExprClauseOnValue,
-  OpSeq,
-  ParsedExpr,
-  Tuple
-}
+import chester.syntax.concrete.{Block, DotCall, ExprMeta, FunctionCall, ListExpr, ObjectClause, ObjectExpr, ObjectExprClause, ObjectExprClauseOnValue, OpSeq, ParsedExpr, Tuple}
 import chester.reader.FileNameAndContent
 import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
@@ -755,7 +742,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
     // Check if current token contains a newline or is EOF
     val hasNewline = (stateWithoutComments.current match {
-      case Right(ws: Token.Whitespace) => isNewlineWhitespace(ws)
+      case Right(ws: Token.Whitespace) => unreachableOr(isNewlineWhitespace(ws))
       case Right(_: Token.EOF)         => true
       case Right(_: Token.Semicolon)   => true // Also treat semicolons as terminators
       // For match expressions, always treat a case keyword as a terminator
