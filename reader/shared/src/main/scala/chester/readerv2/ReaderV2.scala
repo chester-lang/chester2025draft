@@ -1758,8 +1758,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   private def parseLiteral[T <: ParsedExpr](
       extract: Token => Option[(String, SourcePos)],
       create: (String, Option[ExprMeta]) => T,
-      errorMsg: String,
-      context: ReaderContext = ReaderContext()
+      errorMsg: String
   ): Either[ParseError, T] =
     this.state.current match {
       case Right(token) =>
