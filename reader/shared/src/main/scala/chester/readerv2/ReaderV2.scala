@@ -312,7 +312,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                       )
                       val funcCall = FunctionCall(
                         typeCall,
-                        tuple.asInstanceOf[Tuple],
+                        tuple,
                         createMeta(Some(sourcePos), Some(this.state.sourcePos))
                       )
                       val updatedTerms = localTerms :+ funcCall
@@ -817,7 +817,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                     )
                     FunctionCall(
                       typeCall,
-                      tuple.asInstanceOf[Tuple],
+                      tuple,
                       createMeta(Some(sourcePos), Some(this.state.sourcePos))
                     )
                   }
@@ -843,7 +843,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
                   FunctionCall(
                     identifier,
-                    args.asInstanceOf[Tuple],
+                    args,
                     createMeta(funcSourcePos, Some(this.state.sourcePos))
                   )
                 }
