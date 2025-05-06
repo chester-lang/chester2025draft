@@ -7,12 +7,11 @@ import chester.utils.doc.{Doc, PrettierOptions}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
 
-case class ParseError(message: String, pos: Pos) extends Problem {
+case class ParseError(message: String, sourcePos: Option[SourcePos] = None) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
   override def stage: Problem.Stage = Problem.Stage.PARSE
 
   override def toDoc(using PrettierOptions): Doc = Doc.text(message)
-  def sourcePos: Option[SourcePos] = None // TODO
 }
 
 sealed trait ParserSource extends Product with Serializable derives ReadWriter {
@@ -43,7 +42,7 @@ object FilePath {
 case class FilePath private (fileName: String) extends ParserSource {
   private[chester] var impl: FilePathImpl = scala.compiletime.uninitialized
   override lazy val readContent: Either[ParseError, String] =
-    if (impl == null) Left(ParseError("No FilePathImpl provided", Pos.zero))
+    if (impl == null) Left(ParseError("No FilePathImpl provided"))
     else impl.readContent(fileName)
 }
 

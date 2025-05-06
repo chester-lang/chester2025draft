@@ -1,6 +1,5 @@
 package chester.reader
 
-import chester.error.*
 import chester.utils.*
 import chester.i18n.*
 
@@ -14,7 +13,7 @@ object FilePathImplJVM extends FilePathImpl {
         Right(content)
       case Failure(exception) =>
         Left(
-          ParseError(t"Failed to read file: ${exception.getMessage}", Pos.zero)
+          ParseError(t"Failed to read file: ${exception.getMessage}")
         )
     }
 

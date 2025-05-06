@@ -56,7 +56,8 @@ case class ReaderState(
       copy(index = index + 1)
   }
   def sourcePos: SourcePos = current.orelse(previousToken) match {
-    case Left(err) => err.sourcePos.getOrElse(SourcePos(Source(FileNameAndContent("", "")), RangeInFile(Pos.zero, Pos.zero)))
+    // ParseError produced by Tokenizer should all be Some(xx) so unreachable
+    case Left(err) => err.sourcePos.getOrElse(unreachableOr(SourcePos(Source(FileNameAndContent(t"", "")), RangeInFile(Pos.zero, Pos.zero))))
     case Right(t)  => t.sourcePos
   }
 
@@ -93,7 +94,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       t =>
         ParseError(
           f"Expected $expected but found ${t.tokenType} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
-          t.sourcePos.range.start
+          Some(t.sourcePos)
         )
     )
 
@@ -110,9 +111,6 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           ExprMeta.maybe(Some(pos))
         case _ => None
       }
-
-  private def getStartPos(token: Either[ParseError, Token]): Pos =
-    token.fold(_.pos, _.sourcePos.range.start)
 
   private def mergeMeta(existing: Option[ExprMeta], newMeta: Option[ExprMeta]): Option[ExprMeta] =
     (existing, newMeta) match {
@@ -143,7 +141,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     val comments = pullComments()
 
     terms match {
-      case Vector() => Left(ParseError("Empty operator sequence", getStartPos(this.state.current)))
+      case Vector() => Left(ParseError(t"Empty operator sequence", Some(this.state.sourcePos)))
       case Vector(expr) if comments.nonEmpty =>
         Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), comments))))
       case Vector(expr) => Right(expr)
@@ -661,7 +659,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               )
             )
         }
-      case Right(t)  => Left(expectedError("identifier or operator after '.'", Right(t)))
+      case Right(t)  => Left(expectedError(t"identifier or operator after '.'", Right(t)))
       case Left(err) => Left(err)
     }
   }
@@ -714,7 +712,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseKeywordArguments().map(finalTelescope => Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos))))
 
           case Right(token) =>
-            Left(ParseError("Expected identifier after '#'", token.sourcePos.range.start))
+            Left(expectedError(t"identifier",this.state.current))
 
           case Left(err) => Left(err)
         }
@@ -803,7 +801,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   )
                 }
               case _ =>
-                Left(ParseError("Expected left parenthesis for function call", this.state.sourcePos.range.start))
+                Left(expectedError(t"left parenthesis for function call", this.state.current))
             }
           case _ =>
             // Plain identifier
@@ -819,8 +817,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               case Token.IntegerLiteral(value, sourcePos) =>
                 // Handle different bases
                 val (numStr, base) =
-                  if (value.startsWith("0x")) (value.drop(2), 16)
-                  else if (value.startsWith("0b")) (value.drop(2), 2)
+                  if (value.startsWith(t"0x")) (value.drop(2), 16)
+                  else if (value.startsWith(t"0b")) (value.drop(2), 2)
                   else (value, 10)
                 try
                   Some((BigInt(numStr, base).toString, sourcePos))
@@ -884,7 +882,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         parseList()
 
       case Right(token) =>
-        Left(ParseError(t"Unexpected token: $token", token.sourcePos.range.start))
+        Left(expectedError(t"an atom", this.state.current))
     }
   }
 
@@ -922,7 +920,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       // Handle separators (comma and optionally semicolon)
       case Right(token @ (_: Token.Comma | _: Token.Semicolon)) =>
         if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
-          Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", token.sourcePos.range.start))
+          Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", Some(token.sourcePos)))
         } else {
           advance() // Skip the separator
           // Continue parsing elements recursively
@@ -930,7 +928,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
 
       // End of file or unexpected error
-      case Right(_: Token.EOF) => Left(ParseError(t"Unexpected end of file in $contextDescription", this.state.sourcePos.range.start))
+      case Right(_: Token.EOF) => Left(ParseError(t"Unexpected end of file in $contextDescription", Some(this.state.sourcePos)))
       case Left(err)           => Left(err)
 
       // Otherwise, parse an expression
@@ -964,7 +962,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               // Found a separator after the expression
               case Right(token @ (_: Token.Comma | _: Token.Semicolon)) =>
                 if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
-                  Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", token.sourcePos.range.start))
+                  Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", Some(token.sourcePos)))
                 } else {
                   // Pull comments collected *after* the expression, before the separator
                   val trailingComments = pullComments().collect { case c: Comment => c }
@@ -993,7 +991,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               // Unexpected token after expression
               case Right(other) =>
                 val separatorDesc = if (allowSemicolon) "',' or ';'" else "','"
-                Left(ParseError(t"Expected $separatorDesc or closing token for $contextDescription, but found $other", other.sourcePos.range.start))
+                Left(ParseError(t"Expected $separatorDesc or closing token for $contextDescription, but found $other", Some(other.sourcePos)))
               case Left(err) => Left(err)
             }
         }
@@ -1260,13 +1258,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               val meta = createMeta(Some(startPosForMeta), Some(endPos))
               advance() // Consume the closing brace
               Right(Block(statements, result, meta))
-            case Right(t)  => Left(ParseError("Expected '}' at end of block", t.sourcePos.range.start))
+            case Right(t)  => Left(expectedError(t"'}' at end of block", this.state.current))
             case Left(err) => Left(err)
           }
         }
 
       case Right(t) =>
-        Left(ParseError("Expected '{' at start of block", t.sourcePos.range.start))
+        Left(expectedError(t"'{' at start of block", this.state.current))
       case Left(err) =>
         Left(err)
     }
@@ -1308,7 +1306,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         skipComments()
         parseField(symbolLiteral, symSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
       case Right(t) =>
-        Left(ParseError("Expected identifier, string literal, symbol literal or '}' in object", t.sourcePos.range.start))
+        Left(expectedError(t"identifier, string literal, symbol literal or '}' in object", this.state.current))
       case Left(err) => Left(err)
     }
 
@@ -1329,13 +1327,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 val idKey = Identifier(stringLit.value, createMeta(Some(keySourcePos), Some(keySourcePos)))
                 Right(ObjectExprClause(idKey, value))
               case other =>
-                Left(ParseError(t"Expected identifier, qualified name, or dot expression for key with = operator: $other", keySourcePos.range.start))
+                Left(expectedError(t"identifier, qualified name, or dot expression for key with = operator: $other", this.state.current))
             }
           } else {
-            Left(ParseError(t"Unexpected operator in object field: $op", keySourcePos.range.start))
+            Left(ParseError(t"Unexpected operator in object field: $op", Some(keySourcePos)))
           }
         }
-      case Right(t)  => Left(ParseError("Expected operator in object field", t.sourcePos.range.start))
+      case Right(t)  => Left(expectedError(t"operator in object field", this.state.current))
       case Left(err) => Left(err)
     }
 
@@ -1346,7 +1344,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         skipComments()
         Right(())
       case Right(Token.RBrace(_)) => Right(())
-      case Right(t)               => Left(ParseError("Expected ',' or '}' after object field", t.sourcePos.range.start))
+      case Right(t)               => Left(expectedError(t"',' or '}' after object field", this.state.current))
       case Left(err)              => Left(err)
     }
 
@@ -1376,13 +1374,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               advance()
               Right(ObjectExpr(clauses, objectMeta))
             case Right(t) =>
-              Left(ParseError("Expected '}' at end of object", t.sourcePos.range.start))
+              Left(expectedError(t"'}' at end of object", this.state.current))
             case Left(err) =>
               Left(err)
           }
         }
       case Right(t) =>
-        Left(ParseError("Expected '{' at start of object", t.sourcePos.range.start))
+        Left(expectedError(t"'{' at start of object", this.state.current))
       case Left(err) =>
         Left(err)
     }
@@ -1426,7 +1424,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Convert and return the tokens
     pendingTokens.map {
       case c: Token.Comment =>
-        val commentType = if (c.text.trim.startsWith("//")) {
+        val commentType = if (c.text.trim.startsWith(t"//")) {
           CommentType.OneLine
         } else {
           CommentType.MultiLine
@@ -1480,7 +1478,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
       errorMsg: String
   ): Either[ParseError, T] =
     parser match {
-      case Left(err) => Left(ParseError(t"$errorMsg: ${err.message}", err.pos))
+      case Left(err) => Left(ParseError(t"$errorMsg: ${err.message}", err.sourcePos))
       case right     => right
     }
 
@@ -1543,7 +1541,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             advance()
             Right(create(value, meta))
           case None =>
-            Left(ParseError(errorMsg, this.state.sourcePos.range.start))
+            Left(ParseError(errorMsg, Some(token.sourcePos)))
         }
       case Left(err) => Left(err)
     }

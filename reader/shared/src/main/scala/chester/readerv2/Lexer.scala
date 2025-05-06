@@ -58,7 +58,7 @@ class Lexer(source: Source) {
     )
   )
 
-  private def err(msg: String, p: Int) = Left(ParseError(msg, mkPos(p, p).range.start))
+  private def err(msg: String, p: Int) = Left(ParseError(msg, Some(mkPos(p))))
   private def tok[T <: Token](f: SourcePos => T, start: Int) = Right(f(mkPos(start)))
 
   private def consume(pred: Char => Boolean = _ => true): String = {
@@ -113,14 +113,14 @@ class Lexer(source: Source) {
             .map(cp => (new String(Character.toChars(cp)), start + 5))
             .toEither
             .left
-            .map(_ => ParseError(t"Invalid Unicode escape \\u$hex", mkPos(start - 1, start + 5).range.start))
+            .map(_ => ParseError(t"Invalid Unicode escape \\u$hex", Some(mkPos(start - 1, start + 5))))
         case 'x' if start + 2 < text.length =>
           val hex = text.substring(start + 1, start + 3)
           Try(Integer.parseInt(hex, 16))
             .map(v => (v.toChar.toString, start + 3))
             .toEither
             .left
-            .map(_ => ParseError(t"Invalid hex escape \\x$hex", mkPos(start - 1, start + 3).range.start))
+            .map(_ => ParseError(t"Invalid hex escape \\x$hex",  Some(mkPos(start - 1, start + 3))))
         case c if c >= '0' && c <= '7' =>
           val end = (start + 1 to Math.min(start + 3, text.length))
             .takeWhile(i => i < text.length && text(i) >= '0' && text(i) <= '7')
@@ -131,7 +131,7 @@ class Lexer(source: Source) {
             .map(v => (v.toChar.toString, end))
             .toEither
             .left
-            .map(_ => ParseError(t"Invalid octal escape \\${text.substring(start, end)}", mkPos(start - 1, end).range.start))
+            .map(_ => ParseError(t"Invalid octal escape \\${text.substring(start, end)}", Some(mkPos(start - 1, end))))
         case c => Right((c.toString, start + 1))
       }
 

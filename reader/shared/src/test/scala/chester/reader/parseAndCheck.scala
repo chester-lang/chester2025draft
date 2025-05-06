@@ -44,7 +44,7 @@ def parseV1(input: String): Expr =
   ChesterReaderV1
     .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
-      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
+      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.sourcePos}"),
       value => value
     )
 
@@ -56,7 +56,7 @@ def parseV2(input: String): Expr = {
     .parseExpr(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = error.pos.index.utf16.asInt
+        val errorIndex = try{error.sourcePos.get.range.start.index.utf16.asInt}catch{case e:NoSuchElementException=>0}
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length
@@ -67,7 +67,7 @@ def parseV2(input: String): Expr = {
 
         fail(t"""V2 parsing failed for input: $input
              |Error: ${error.message}
-             |At position ${error.pos}:
+             |At position ${error.sourcePos}:
              |$line
              |$pointer""".stripMargin)
       },
@@ -80,7 +80,7 @@ def parseTopLevelV1(input: String): Expr =
   ChesterReaderV1
     .parseTopLevel(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
-      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.pos}"),
+      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.sourcePos}"),
       value => value
     )
 
@@ -92,7 +92,7 @@ def parseTopLevelV2(input: String): Expr = {
     .parseTopLevel(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = error.pos.index.utf16.asInt
+        val errorIndex = try{error.sourcePos.get.range.start.index.utf16.asInt}catch{case e:NoSuchElementException=>0}
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length
@@ -103,7 +103,7 @@ def parseTopLevelV2(input: String): Expr = {
 
         fail(t"""V2 parsing failed for input: $input
              |Error: ${error.message}
-             |At position ${error.pos}:
+             |At position ${error.sourcePos}:
              |$line
              |$pointer""".stripMargin)
       },
