@@ -24,7 +24,7 @@ trait Tree[A <: Tree[A]] extends Any {
   )
   final def descent2(f: TreeMap[A]): ThisTree = descent(
     { x =>
-      implicit val ev33: x.ThisTree <:< A = ev3(using x)
+      //implicit val ev33: x.ThisTree <:< A = ev3(using x)
       f.use(x)
     },
     f
@@ -38,7 +38,6 @@ trait Tree[A <: Tree[A]] extends Any {
     val _ = descent2(new TreeMap[A] {
       def use[T <: A](x: T): x.ThisTree = { f(x); x.asInstanceOf[x.ThisTree] }
     })
-    ()
   }
 
   def inspectRecursive(operator: A => Unit): Unit = {
