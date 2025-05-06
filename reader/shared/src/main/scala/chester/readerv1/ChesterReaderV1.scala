@@ -38,7 +38,7 @@ object ChesterReaderV1 {
               pos.line,
               pos.column
             )
-            Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(SourcePos(Source(source), RangeInFile(p,p)))))
+            Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(SourcePos(Source(source), RangeInFile(p, p)))))
         }
       }
     )
@@ -108,7 +108,7 @@ object ChesterReaderV1 {
           // Revisit if column reporting seems off in multi-line REPL inputs.
           pos.column
         )
-        Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(SourcePos(source, RangeInFile(finalPos,finalPos)))))
+        Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(SourcePos(source, RangeInFile(finalPos, finalPos)))))
     }
   }
 

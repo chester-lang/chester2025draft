@@ -712,7 +712,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseKeywordArguments().map(finalTelescope => Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos))))
 
           case Right(token) =>
-            Left(expectedError(t"identifier",this.state.current))
+            Left(expectedError(t"identifier", this.state.current))
 
           case Left(err) => Left(err)
         }

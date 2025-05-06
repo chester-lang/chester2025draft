@@ -13,4 +13,4 @@ inline def unreachable(message: String | ToDoc = ""): Nothing = {
 }
 
 inline def unreachableOr[T](canBe: => T): T =
-  unreachable(s"unreachable, but can be ${canBe}")
+  unreachable(s"unreachable, but can be $canBe")

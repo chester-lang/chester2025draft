@@ -56,7 +56,9 @@ def parseV2(input: String): Expr = {
     .parseExpr(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = try{error.sourcePos.get.range.start.index.utf16.asInt}catch{case e:NoSuchElementException=>0}
+        val errorIndex =
+          try error.sourcePos.get.range.start.index.utf16.asInt
+          catch { case e: NoSuchElementException => 0 }
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length
@@ -92,7 +94,9 @@ def parseTopLevelV2(input: String): Expr = {
     .parseTopLevel(source, ignoreLocation = true)
     .fold(
       error => {
-        val errorIndex = try{error.sourcePos.get.range.start.index.utf16.asInt}catch{case e:NoSuchElementException=>0}
+        val errorIndex =
+          try error.sourcePos.get.range.start.index.utf16.asInt
+          catch { case e: NoSuchElementException => 0 }
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
           case -1 => input.length

@@ -120,7 +120,7 @@ class Lexer(source: Source) {
             .map(v => (v.toChar.toString, start + 3))
             .toEither
             .left
-            .map(_ => ParseError(t"Invalid hex escape \\x$hex",  Some(mkPos(start - 1, start + 3))))
+            .map(_ => ParseError(t"Invalid hex escape \\x$hex", Some(mkPos(start - 1, start + 3))))
         case c if c >= '0' && c <= '7' =>
           val end = (start + 1 to Math.min(start + 3, text.length))
             .takeWhile(i => i < text.length && text(i) >= '0' && text(i) <= '7')
