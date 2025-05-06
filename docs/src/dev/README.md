@@ -2,6 +2,8 @@
 
 This section contains technical documentation for Chester's implementation details and development notes.
 
+These documents are made for both llm and human.
+
 ## Documentation Structure
 
 We use [mdBook](https://rust-lang.github.io/mdBook/) for organizing and presenting our documentation. The documentation is structured as follows:
