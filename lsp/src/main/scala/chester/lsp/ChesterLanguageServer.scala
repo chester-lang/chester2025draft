@@ -178,7 +178,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       text: String
   ): (TyckResult[Unit, Judge], Vector[CollectedSymbol], List[Diagnostic]) = {
     val parseResult = ChesterReaderV2.parseTopLevel(FileNameAndContent(uri, text))
-    val collecter = new VectorSemanticCollector()
+    val collector = new VectorSemanticCollector()
 
     parseResult.fold(
       { parseError =>
@@ -204,62 +204,39 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         (tyckResult, Vector(), List(diagnostic))
       },
       { parsedExpr =>
-        val tyckResult = Tycker.check(parsedExpr, sementicCollector = collecter)
+        val tyckResult = Tycker.check(parsedExpr, sementicCollector = collector)
 
         // Generate diagnostics from the TyckResult
         val diagnostics = if (tyckResult.errorsEmpty) {
           // This is equivalent to TyckResult.Success case
           // Process warnings
           val warnings = tyckResult.problems.collect { case w: TyckWarning => w }
-          warnings.map { warning =>
-            val range = warning.sourcePos
-              .map(rangeFromSourcePos)
-              .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
-
-            new Diagnostic(
-              range,
-              warning.getMessage,
-              DiagnosticSeverity.Warning,
-              "ChesterLanguageServer"
-            )
-          }.toList
+          warnings.map(convertProblem).toList
         } else {
           // This is equivalent to TyckResult.Failure case
           // Combine errors and warnings into diagnostics
-          val errors = tyckResult.problems.collect { case e: TyckError => e }
-          val warnings = tyckResult.problems.collect { case w: TyckWarning => w }
-
-          val errorDiagnostics = errors.map { error =>
-            val range = error.sourcePos
-              .map(rangeFromSourcePos)
-              .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
-
-            new Diagnostic(
-              range,
-              error.getMessage,
-              DiagnosticSeverity.Error,
-              "ChesterLanguageServer"
-            )
-          }
-
-          val warningDiagnostics = warnings.map { warning =>
-            val range = warning.sourcePos
-              .map(rangeFromSourcePos)
-              .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
-
-            new Diagnostic(
-              range,
-              warning.getMessage,
-              DiagnosticSeverity.Warning,
-              "ChesterLanguageServer"
-            )
-          }
-
-          (errorDiagnostics ++ warningDiagnostics).toList
+          tyckResult.problems.map(convertProblem).toList
         }
 
-        (tyckResult, collecter.get, diagnostics)
+        (tyckResult, collector.get, diagnostics)
       }
+    )
+  }
+  private def convertProblem(problem: TyckProblem): Diagnostic = {
+    val range = problem.sourcePos
+      .map(rangeFromSourcePos)
+      .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
+    val severity = problem match {
+      case _: TyckWarning => DiagnosticSeverity.Warning
+      case _: TyckError => DiagnosticSeverity.Error
+      case _ => ???
+    }
+
+    new Diagnostic(
+      range,
+      problem.getMessage,
+      severity, 
+      "ChesterLanguageServer"
     )
   }
 
