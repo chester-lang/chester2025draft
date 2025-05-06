@@ -17,7 +17,6 @@ import chester.syntax.concrete.{
   Tuple
 }
 import chester.reader.FileNameAndContent
-import chester.syntax.IdentifierRules.strIsOperator
 import chester.syntax.*
 import chester.syntax.concrete.*
 import chester.utils.*
@@ -238,8 +237,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
 
       // Identifier handling
-      case Right(Token.Identifier(chars, sourcePos)) =>
-        val text = charsToString(chars)
+      case Right(id @ Token.Identifier(_, sourcePos)) =>
+        val text = id.toStr
         // this.state is already set to the current state
         {
           // Advance past the identifier
@@ -531,10 +530,10 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
 
       // Keyword operator handling
-      case Right(Token.Identifier(chars, sourcePos)) if strIsOperator(charsToString(chars)) =>
+      case Right(id @ Token.Identifier(_, sourcePos)) if id.isOperator =>
         // Advance past the keyword operator
         advance()
-        terms = Vector(Identifier(charsToString(chars), createMeta(Some(sourcePos), None)))
+        terms = Vector(Identifier(id.toStr, createMeta(Some(sourcePos), None)))
         withComments(() => parseAtom()).flatMap { expr =>
           terms = terms :+ expr
 
@@ -595,9 +594,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     advance()
 
     this.state.current match {
-      case Right(id @ Token.Identifier(chars1, idSourcePos1)) if !id.isOperator =>
+      case Right(id @ Token.Identifier(_, idSourcePos1)) if !id.isOperator =>
         // Save identifier and advance
-        val field = Identifier(charsToString(chars1), createMeta(Some(idSourcePos1), None))
+        val field = Identifier(id.toStr, createMeta(Some(idSourcePos1), None))
         advance()
         var telescope = Vector.empty[Tuple]
 
@@ -677,8 +676,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
         // We expect an identifier to follow the hash
         this.state.current match {
-          case Right(Token.Identifier(chars, idSourcePos)) =>
-            val keyName = charsToString(chars)
+          case Right(id @ Token.Identifier(_, idSourcePos)) =>
+            val keyName = id.toStr
 
             // Advance past the identifier
             advance()
@@ -748,12 +747,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         // this.state is already set to current
         parseTuple()
 
-      case Right(Token.Identifier(chars, sourcePos)) =>
+      case Right(id @ Token.Identifier(_, sourcePos)) =>
         val afterId = this.state.advance()
         afterId.current match {
           case Right(Token.LBracket(_)) =>
             // Generic type parameters
-            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), None))
+            val identifier = Identifier(id.toStr, createMeta(Some(sourcePos), None))
             this.state = afterId
             parseList().flatMap { typeParams =>
               val afterTypeParams = this.state
@@ -788,7 +787,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             }
           case Right(Token.LParen(_)) =>
             // Regular function call
-            val identifier = Identifier(charsToString(chars), createMeta(Some(sourcePos), None))
+            val identifier = Identifier(id.toStr, createMeta(Some(sourcePos), None))
             this.state = afterId
             this.state.current match {
               case Right(Token.LParen(_)) =>
@@ -806,7 +805,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           case _ =>
             // Plain identifier
             this.state = afterId
-            Right(Identifier(charsToString(chars), createMeta(Some(sourcePos), None)))
+            Right(Identifier(id.toStr, createMeta(Some(sourcePos), None)))
         }
 
       case Right(Token.IntegerLiteral(value, _)) =>
@@ -1282,8 +1281,8 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
   private def parseFields(clauses: Vector[ObjectClause], context: ReaderContext = ReaderContext()): Either[ParseError, Vector[ObjectClause]] =
     this.state.current match {
       case Right(Token.RBrace(_)) => Right(clauses)
-      case Right(Token.Identifier(chars, idSourcePos)) =>
-        val identifier = Identifier(charsToString(chars), createMeta(Some(idSourcePos), Some(idSourcePos)))
+      case Right(id @ Token.Identifier(_, idSourcePos)) =>
+        val identifier = Identifier(id.toStr, createMeta(Some(idSourcePos), Some(idSourcePos)))
         advance()
         this.state.current match {
           case Right(Token.Dot(_)) =>
