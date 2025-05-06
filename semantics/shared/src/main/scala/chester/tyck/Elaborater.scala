@@ -27,9 +27,8 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       state: StateAbility[TyckSession],
       ctx: Context,
       ck: TyckSession
-  ): Unit = {
+  ): Unit =
     state.addPropagator(UnionOf(unionCell, componentIds, cause))
-  }
 
   def checkType(expr: Expr)(using
       Context,

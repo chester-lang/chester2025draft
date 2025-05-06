@@ -182,10 +182,15 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
 
     parseResult.fold(
       { parseError =>
-        val range = new Range(
-          new Position(parseError.pos.line.asInt, parseError.pos.column.utf16.asInt),
-          new Position(parseError.pos.line.asInt, parseError.pos.column.utf16.asInt)
-        )
+        val range =
+          try
+            new Range(
+              new Position(parseError.sourcePos.get.range.start.line.asInt, parseError.sourcePos.get.range.start.column.utf16.asInt),
+              new Position(parseError.sourcePos.get.range.end.line.asInt, parseError.sourcePos.get.range.end.column.utf16.asInt)
+            )
+          catch {
+            case e: NoSuchElementException => ???
+          }
         val diagnostic = new Diagnostic(
           range,
           parseError.message,

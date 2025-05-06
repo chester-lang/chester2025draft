@@ -39,7 +39,7 @@ object DefaultReducer extends Reducer {
 
   /** Helper method for proper reduction of type structures. This ensures consistent handling of types, especially for dependent type systems.
     */
-  private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
+  private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term =
     term match {
       case Union(types, meta) =>
         val reducedTypes = types.map(ty => reduceTypeStructure(r.reduce(ty)))
@@ -52,27 +52,25 @@ object DefaultReducer extends Reducer {
       case fcall: FCallTerm if isTypeLevel(fcall) =>
         // First reduce normally
         val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
-        
 
         // Then check if the result needs further type structure handling
         reduced match {
           // If still a complex type after reduction, process it recursively
           case Union(_, _) | Intersection(_, _) =>
-            
+
             val result = reduceTypeStructure(reduced)
-            
+
             result
           case _ =>
-            
+
             reduced
         }
 
       // Other terms are handled by standard reduction
       case _ =>
-        
+
         term
     }
-  }
 
   /** Standard reduction logic for terms */
   private def reduceStandard(term: Term, _mode: ReduceMode)(using ctx: ReduceContext, r: Reducer): Term = term match {
