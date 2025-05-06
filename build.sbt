@@ -326,7 +326,9 @@ def commonJvmSettings = Seq(
   scalacOptions ++= (if (jdk17) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk17") else Seq()),
   scalacOptions ++= (if (jdk21) Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:jdk21") else Seq()),
   Compile / scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
-  Test / scalacOptions ++= Seq("-java-output-version", testJavaOutputVersion)
+  Test / scalacOptions ~= { opts =>
+    opts.filterNot(_ == "-java-output-version").filterNot(_ == javaOutputVersion) ++ Seq("-java-output-version", testJavaOutputVersion)
+  }
 )
 def jvmScala3Settings = Seq(
   scalaVersion := scala3Nightly
