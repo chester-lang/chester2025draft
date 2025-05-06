@@ -10,8 +10,6 @@ import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
 import cats.data.NonEmptyVector
-import chester.utils.Debug.DebugCategory.*
-import chester.i18n.*
 
 import scala.collection.immutable.Vector as _
 import scala.language.implicitConversions
@@ -30,9 +28,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
       ctx: Context,
       ck: TyckSession
   ): Unit = {
-    if (Debug.isEnabled(UnionSubtyping)) {
-      Debug.debugPrint(UnionSubtyping, t"Creating UnionOf propagator: union cell $unionCell connected to components: ${componentIds.mkString(", ")}")
-    }
     state.addPropagator(UnionOf(unionCell, componentIds, cause))
   }
 
@@ -111,20 +106,12 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
       // Union-to-Union subtyping - use a guard to ensure specificity
       case (Union(types1, _), Union(types2, _)) if types1.nonEmpty && types2.nonEmpty =>
-        if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, "=== UNION-UNION SUBTYPING ===")
-          Debug.debugPrint(UnionSubtyping, t"LHS Union: $lhs (${lhs.getClass.getSimpleName}) with cell ID: ${toId(lhs)}")
-          Debug.debugPrint(UnionSubtyping, t"RHS Union: $rhs (${rhs.getClass.getSimpleName}) with cell ID: ${toId(rhs)}")
-          Debug.debugPrint(UnionSubtyping, t"LHS Component Types: ${types1.mkString(", ")}")
-          Debug.debugPrint(UnionSubtyping, t"RHS Component Types: ${types2.mkString(", ")}")
-        }
 
         // For each type in the RHS union, at least one type in LHS union must accept it
         val lhsCell = toId(lhs)
         val rhsCell = toId(rhs)
 
         // Create a direct unify connection between the two union types
-        if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Creating Unify propagator between $lhsCell and $rhsCell")
         state.addPropagator(Unify(lhsCell, rhsCell, cause))
 
         // Get component cells and create necessary structural relationships
@@ -143,21 +130,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           if (tryUnify(t1, t2)) {
             val t1Cell = toId(t1)
             val t2Cell = toId(t2)
-            if (Debug.isEnabled(UnionSubtyping)) {
-              Debug.debugPrint(UnionSubtyping, t"Creating connection between component types: $t1 and $t2")
-              Debug.debugPrint(UnionSubtyping, t"  Cell IDs: $t1Cell <-> $t2Cell")
-            }
             state.addPropagator(Unify(t1Cell, t2Cell, cause))
           }
 
       // Specific-to-Union subtyping (function parameter case in test)
       case (specificType, union @ Union(unionTypes, _)) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
-        if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, "=== SPECIFIC-TO-UNION SUBTYPING ===")
-          Debug.debugPrint(UnionSubtyping, t"Specific Type: $specificType with cell ID: ${toId(specificType)}")
-          Debug.debugPrint(UnionSubtyping, t"Union Type: $union with cell ID: ${toId(union)}")
-          Debug.debugPrint(UnionSubtyping, t"Union Component Types: ${unionTypes.mkString(", ")}")
-        }
 
         // Get cell IDs for both types
         val specificCellId = toId(specificType)
@@ -167,9 +144,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         val compatibleComponent = unionTypes.find(unionType => tryUnify(specificType, unionType))
 
         if (compatibleComponent.isDefined) {
-          if (Debug.isEnabled(UnionSubtyping)) {
-            Debug.debugPrint(UnionSubtyping, t"Found compatible component: ${compatibleComponent.get}")
-          }
 
           // Connect to the component directly
           val componentId = toId(compatibleComponent.get)
@@ -180,20 +154,11 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
           connectUnionToComponents(unionCellId, componentIds, cause)
         } else {
           // If no compatible component is found, report a type mismatch
-          if (Debug.isEnabled(UnionSubtyping)) {
-            Debug.debugPrint(UnionSubtyping, t"No compatible union component found for $specificType")
-          }
           ck.reporter.apply(TypeMismatch(specificType, Union(unionTypes, None), cause))
         }
 
       // Union-to-Specific subtyping (function return case in test)
       case (union @ Union(unionTypes, _), specificType) if !specificType.isInstanceOf[Union] && unionTypes.nonEmpty =>
-        if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, "=== UNION-TO-SPECIFIC SUBTYPING ===")
-          Debug.debugPrint(UnionSubtyping, t"Union Type: $union with cell ID: ${toId(union)}")
-          Debug.debugPrint(UnionSubtyping, t"Specific Type: $specificType with cell ID: ${toId(specificType)}")
-          Debug.debugPrint(UnionSubtyping, t"Union Component Types: ${unionTypes.mkString(", ")}")
-        }
 
         // A union can be used where a specific type is expected if all components match it
         unionToSpecific(union, unionTypes, specificType, cause)
@@ -208,14 +173,12 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
 
       // Add cases for function calls after the specific union cases
       case (fcall: FCallTerm, _) =>
-        if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing function call in unify: $fcall")
         // Connect function call components directly
         connectFunctionCallComponents(fcall, cause)
 
         // Continue with normal unification
         ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
       case (_, fcall: FCallTerm) =>
-        if (Debug.isEnabled(UnionSubtyping)) Debug.debugPrint(UnionSubtyping, t"Processing function call in unify (RHS): $fcall")
         // Connect function call components directly
         connectFunctionCallComponents(fcall, cause)
 
@@ -277,11 +240,6 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
         val unionTypeCell = toId(unionType)
         val specificTypeCell = toId(specificType)
 
-        if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, t"Creating propagator for union-to-specific: $unionType -> $specificType")
-          Debug.debugPrint(UnionSubtyping, t"  Cell IDs: $unionTypeCell -> $specificTypeCell")
-        }
-
         // Create a propagator from the union component to the specific type
         state.addPropagator(Unify(unionTypeCell, specificTypeCell, cause))
       } else {
@@ -340,27 +298,20 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
     val ty = toId(readMetaVar(toTerm(ty0)))
     resolve(expr) match {
       case expr @ Identifier(name, _) =>
-        if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Processing identifier $name")
 
         // Get the expected type (if already specified)
         val expectedType = state.readStable(ty)
-        if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Expected type: ${expectedType.getOrElse("unknown")}")
 
         // Special handling for assigning a variable to a union type
         expectedType match {
           case Some(Union(unionTypes, _)) =>
-            if (Debug.isEnabled(Identifiers))
-              Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
 
             // Look up the identifier in context
             localCtx.get(name) match {
               case Some(c: ContextItem) =>
-                if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Found identifier $name in context")
 
                 // Get the source type of the identifier
                 val sourceTypeOpt = state.readStable(c.tyId)
-                if (Debug.isEnabled(Identifiers))
-                  Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Source type: ${sourceTypeOpt.getOrElse("unknown")}")
 
                 sourceTypeOpt match {
                   case Some(sourceType) =>
@@ -373,15 +324,11 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                     // Check if source is compatible with any union component
                     val compatibleComponent = unionTypes.find { unionType =>
                       val reducedUnionType = DefaultReducer.reduce(unionType, ReduceMode.TypeLevel)
-                      if (Debug.isEnabled(Identifiers))
-                        Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Checking union component: $unionType (reduced: $reducedUnionType)")
 
                       tryUnify(reducedSourceType, reducedUnionType)(using state, localCtx)
                     }
 
                     if (compatibleComponent.isDefined) {
-                      if (Debug.isEnabled(Identifiers))
-                        Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Found compatible union component: ${compatibleComponent.get}")
 
                       // Connect to the specific component
                       val componentId = toId(compatibleComponent.get)
@@ -390,21 +337,16 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       // Return the reference
                       c.ref
                     } else {
-                      if (Debug.isEnabled(Identifiers))
-                        Debug.debugPrint(Identifiers, "[IDENTIFIER DEBUG] No compatible union component found, using regular unification")
                       // Fall back to regular unification
                       state.addPropagator(Unify(ty, c.tyId, expr))
                       c.ref
                     }
                   case None =>
-                    if (Debug.isEnabled(Identifiers))
-                      Debug.debugPrint(Identifiers, "[IDENTIFIER DEBUG] No source type yet, using regular unification")
                     // No source type yet, fall back to normal handling
                     state.addPropagator(Unify(ty, c.tyId, expr))
                     c.ref
                 }
               case None =>
-                if (Debug.isEnabled(Identifiers)) Debug.debugPrint(Identifiers, t"[IDENTIFIER DEBUG] Identifier $name not found in context")
                 // Regular handling for unbound identifiers
                 localCtx.getTypeDefinition(name) match {
                   case Some(objectDef: ObjectStmtTerm) =>
@@ -427,8 +369,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                 }
             }
           case _ =>
-            if (Debug.isEnabled(Identifiers))
-              Debug.debugPrint(Identifiers, "[IDENTIFIER DEBUG] Expected type is not a union, using regular unification")
             // Regular identifier handling (no union type involved)
             localCtx.get(name) match {
               case Some(c: ContextItem) =>
@@ -461,23 +401,14 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         // Get the expected type (if already specified)
         val expectedType = state.readStable(ty)
 
-        if (Debug.isEnabled(Literals))
-          Debug.debugPrint(Literals, t"[LITERAL DEBUG] Processing integer literal $value with expected type ${expectedType.getOrElse("unknown")}")
-
         expectedType match {
           // If the expected type is a union type, we need special handling
           case Some(Union(unionTypes, _)) =>
-            if (Debug.isEnabled(Literals)) Debug.debugPrint(Literals, t"[LITERAL DEBUG] Expected type is a union: ${unionTypes.mkString(", ")}")
-
             // Check if any union component is compatible with Integer
             val integerTypeComponent = unionTypes.find { unionType =>
-              if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[LITERAL DEBUG] Checking union component: $unionType")
-
               given ReduceContext = localCtx.toReduceContext
               given Reducer = localCtx.given_Reducer
               val reduced = DefaultReducer.reduce(unionType, ReduceMode.TypeLevel)
-              if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[LITERAL DEBUG] Reduced union component: $reduced")
-
               reduced match {
                 case IntegerType(_) => true
                 case _              => false
@@ -485,9 +416,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
             }
 
             if (integerTypeComponent.isDefined) {
-              if (Debug.isEnabled(Literals))
-                Debug.debugPrint(Literals, t"[LITERAL DEBUG] Found compatible integer component in union: ${integerTypeComponent.get}")
-
               // Create the integer term with Integer type
               val integerTerm = AbstractIntTerm_.from(value, convertMeta(meta))
 
@@ -498,7 +426,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
               integerTerm
             } else {
               // If no Integer type found in the union, default to normal handling
-              if (Debug.isEnabled(Literals)) Debug.debugPrint(Literals, "[LITERAL DEBUG] No compatible Integer component found in union")
               state.addPropagator(LiteralType(expr, ty))
               AbstractIntTerm_.from(value, convertMeta(meta))
             }
@@ -555,18 +482,10 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
       case expr @ UnionTypeExpr(types, meta) =>
         // Handle union type expressions
 
-        if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, t"Elaborating union type expression: $expr")
-          Debug.debugPrint(UnionSubtyping, t"Component types: ${types.mkString(", ")}")
-        }
-
         // Elaborate each type in the union
         val elaboratedTypes = types.map { typeExpr =>
           // Each component should be a type
           val componentTy = elab(typeExpr, Typeω, effects)
-          if (Debug.isEnabled(UnionSubtyping)) {
-            Debug.debugPrint(UnionSubtyping, t"Elaborated component type: $componentTy")
-          }
           componentTy
         }
 
@@ -581,10 +500,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           val unionTypes = NonEmptyVector.fromVectorUnsafe(elaboratedTypes)
           val unionTerm = Union(unionTypes, convertMeta(meta))
 
-          if (Debug.isEnabled(UnionSubtyping)) {
-            Debug.debugPrint(UnionSubtyping, t"Created union term: $unionTerm")
-          }
-
           // This is a type, so it should be in the Type universe
           unify(ty, Type0, expr)
 
@@ -594,10 +509,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
 
           // Connect the union to its components directly
           state.addPropagator(UnionOf(unionCellId, componentCellIds, expr))
-
-          if (Debug.isEnabled(UnionSubtyping)) {
-            Debug.debugPrint(UnionSubtyping, t"Finished elaborating union type: $unionTerm")
-          }
 
           // Return the union term
           unionTerm
@@ -609,11 +520,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
         given ReduceContext = localCtx.toReduceContext
         given Reducer = localCtx.given_Reducer
         val reducedRecordTy = DefaultReducer.reduce(toTerm(recordTy), ReduceMode.TypeLevel)
-
-        if (Debug.isEnabled(MethodCalls)) {
-          Debug.debugPrint(MethodCalls, t"[METHOD CALL DEBUG] Processing method call: ${field.name}")
-          Debug.debugPrint(MethodCalls, t"[METHOD CALL DEBUG] Record type: $reducedRecordTy")
-        }
 
         // Special case for Integer.+ method with a string argument
         if (field.name == "+" && args.nonEmpty) {
@@ -637,7 +543,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           // Normal field access or method call handling
           reducedRecordTy match {
             case IntegerType(_) if field.name == "+" =>
-              if (Debug.isEnabled(MethodCalls)) Debug.debugPrint(MethodCalls, "[METHOD CALL DEBUG] Found Integer.+ method call")
               args.headOption match {
                 case Some(arg) =>
                   if (args.length >= 2) {
@@ -645,19 +550,14 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                   }
                   val argTy = newType
                   val argTerm = elab(arg, argTy, effects)
-                  if (Debug.isEnabled(MethodCalls)) Debug.debugPrint(MethodCalls, t"[METHOD CALL DEBUG] Argument term: $argTerm")
 
                   // Check if the argument type is compatible with Integer
                   given ReduceContext = localCtx.toReduceContext
                   given Reducer = localCtx.given_Reducer
                   val reducedArgType = DefaultReducer.reduce(toTerm(argTy), ReduceMode.TypeLevel)
 
-                  Debug.debugPrint(MethodCalls, t"[CRITICAL DEBUG] Integer.+ argument type: $reducedArgType")
-                  Debug.debugPrint(MethodCalls, t"[CRITICAL DEBUG] Argument expression: $arg")
-
                   reducedArgType match {
                     case IntegerType(_) | IntType(_) =>
-                      Debug.debugPrint(MethodCalls, "[CRITICAL DEBUG] Argument is an integer type - VALID")
                       // If it's an Integer or Int, it's valid
                       state.addPropagator(Unify(ty, toId(IntegerType(None)), expr))
 
@@ -666,14 +566,12 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
                       DotCallTerm(recordTerm, field.name, Vector(calling), toTerm(ty), convertMeta(meta))
 
                     case _ =>
-                      Debug.debugPrint(MethodCalls, t"[CRITICAL DEBUG] Argument is another type: $reducedArgType - INVALID")
                       // If it's not an Integer, report a type error
                       val problem = TypeMismatch(IntegerType(None), toTerm(argTy), arg)
                       ck.reporter.apply(problem)
                       ErrorTerm(problem, convertMeta(meta))
                   }
                 case None =>
-                  if (Debug.isEnabled(MethodCalls)) Debug.debugPrint(MethodCalls, "[METHOD CALL DEBUG] Missing method call argument")
                   val problem = NotImplementedFeature("Missing method call argument", expr)
                   ck.reporter.apply(problem)
                   ErrorTerm(problem, convertMeta(meta))
@@ -706,10 +604,6 @@ trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFuncti
           }
         }
       case _ @InfixExpr(left, op, right, associativity, meta) =>
-        if (Debug.isEnabled(MethodCalls)) {
-          Debug.debugPrint(MethodCalls, t"[INFIX DEBUG] Processing infix expression: ${op.name}")
-          Debug.debugPrint(MethodCalls, t"[INFIX DEBUG] Left: $left, Right: $right")
-        }
 
         // Create a synthetic DotCall and process it
         val argsTuple = Tuple(Vector(right), right.meta)
@@ -823,9 +717,6 @@ trait DefaultImpl
       able: StateAbility[TyckSession],
       recording: SemanticCollector
   ): Judge = {
-    if (Debug.isEnabled(UnionSubtyping)) {
-      Debug.debugPrint(UnionSubtyping, "\n=== STARTING FINALIZE JUDGE ===")
-    }
 
     var judge = judge0
     try {
@@ -834,31 +725,10 @@ trait DefaultImpl
           val metas = judge.collectMeta
           if (metas.isEmpty) break()
 
-          if (Debug.isEnabled(UnionSubtyping)) {
-            Debug.debugPrint(UnionSubtyping, t"Zonking ${metas.size} meta cells")
-            metas.foreach { meta =>
-              val cellId = meta.unsafeRead[CellId[Term]]
-              Debug.debugPrint(UnionSubtyping, t"Meta cell: $cellId")
-            }
-          }
-
           try
             able.zonk(metas.map(x => x.unsafeRead[CellId[Term]]))
           catch {
             case e: IllegalStateException if e.getMessage.contains("not covered by any propagator") =>
-              if (Debug.isEnabled(UnionSubtyping)) {
-                Debug.debugPrint(UnionSubtyping, "\n=== ERROR: CELLS NOT COVERED BY PROPAGATOR ===")
-                Debug.debugPrint(UnionSubtyping, e.getMessage)
-                val problemCells = e.getMessage.split("Cells ")(1).split(" are not covered")(0)
-                Debug.debugPrint(UnionSubtyping, t"Problem cells: $problemCells")
-
-                // Print information about each propagator for debugging
-                Debug.debugPrint(UnionSubtyping, "\n=== PROPAGATOR INFORMATION ===")
-                // Just print the problem cells information without trying to access internal state
-                Debug.debugPrint(UnionSubtyping, "Could not access all cells due to API limitations")
-
-                // Continue with standard error handling
-              }
               throw e
           }
 
@@ -869,10 +739,6 @@ trait DefaultImpl
       judge
     } catch {
       case e: Exception =>
-        if (Debug.isEnabled(UnionSubtyping)) {
-          Debug.debugPrint(UnionSubtyping, t"Exception in finalizeJudge: ${e.getMessage}")
-          e.printStackTrace()
-        }
         throw e
     }
   }

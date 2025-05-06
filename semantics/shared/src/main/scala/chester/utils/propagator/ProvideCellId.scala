@@ -75,13 +75,6 @@ trait ProvideCellId {
     override def readStable: Option[T] = value
 
     override def fill(newValue: T): OnceCell[T] = {
-      import chester.utils.Debug
-      import chester.utils.Debug.DebugCategory
-
-      Debug.debugPrint(DebugCategory.Cell, t"Attempting to fill OnceCell: ${this.hashCode()}")
-      Debug.debugPrint(DebugCategory.Cell, t"Current value: $value")
-      Debug.debugPrint(DebugCategory.Cell, t"New value: $newValue")
-      Debug.printCallStack(DebugCategory.Cell)
 
       require(value.isEmpty)
       copy(value = Some(newValue))

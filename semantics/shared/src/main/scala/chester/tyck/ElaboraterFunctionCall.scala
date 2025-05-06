@@ -4,7 +4,6 @@ import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
-import chester.utils.Debug
 import chester.i18n.*
 
 trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
@@ -24,8 +23,7 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
     */
   protected def safelyFillCell[T](
       cell: CellId[T],
-      value: T,
-      debugCategory: Debug.DebugCategory = Debug.DebugCategory.Tyck
+      value: T
   )(using
       state: StateAbility[TyckSession],
       _more: TyckSession
@@ -34,9 +32,6 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
     val existingValue = state.readUnstable(cell)
     if (existingValue.isEmpty) {
       state.fill(cell, value)
-    } else if (existingValue.get != value && Debug.isEnabled(debugCategory)) {
-      // Only log a warning when debug is enabled and values differ
-      Debug.debugPrint(debugCategory, t"WARNING: Cell already has different value: ${existingValue.get} vs new: $value")
     }
   }
 }
@@ -147,35 +142,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     override val zonkingCells: Set[CellIdAny] = Set(resultTy, functionCallTerm)
 
     override def run(using state: StateAbility[TyckSession], ck: TyckSession): Boolean = {
-      import Debug.DebugCategory
-
-      val debugTyck = Debug.isEnabled(DebugCategory.Tyck)
-      if (debugTyck) {
-        Debug.debugPrint(
-          DebugCategory.Tyck,
-          t"""UnifyFunctionCall.run: 
-             |  Function term: $functionTerm
-             |  Function type cell: $functionTy
-             |  Result type cell: $resultTy
-             |  Call effects: $callEffects
-             |  Outer effects: $outerEffects""".stripMargin
-        )
-      }
 
       val readFunctionTy = state.readStable(functionTy)
-      if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, t"Read function type: $readFunctionTy")
 
       readFunctionTy match {
         case Some(ft @ FunctionType(telescopes, retTy, functionEffects, _)) =>
-          if (debugTyck)
-            Debug.debugPrint(
-              DebugCategory.Tyck,
-              t"Matched FunctionType with telescopes: ${telescopes.mkString("Array(", ", ", ")")}, retTy: $retTy, effects: $functionEffects"
-            )
 
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(ft.telescopes, callings, cause)
-          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, t"Adjusted callings: $adjustedCallings")
 
           // Unify the result type
           unify(resultTy, retTy, cause)
@@ -185,10 +159,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
           // Construct the function call term with adjusted callings
           val fCallTerm = FCallTerm(functionTerm, adjustedCallings, meta = None)
-          if (debugTyck) Debug.debugPrint(DebugCategory.Tyck, t"Created function call term: $fCallTerm")
 
           // Use the helper method to safely fill the cell
-          safelyFillCell(functionCallTerm, fCallTerm, DebugCategory.Tyck)
+          safelyFillCell(functionCallTerm, fCallTerm)
 
           true
         case Some(Meta(id)) =>

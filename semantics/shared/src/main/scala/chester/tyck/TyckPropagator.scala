@@ -7,8 +7,6 @@ import chester.syntax.core.*
 import chester.utils.*
 import chester.reduce.{DefaultReducer, ReduceContext, ReduceMode, Reducer}
 import cats.data.NonEmptyVector
-import chester.utils.Debug.DebugCategory.*
-import chester.i18n.*
 
 import scala.language.implicitConversions
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,8 +50,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     def addUnificationPropagator(lhsId: CellId[Term], rhsId: CellId[Term]): Unit =
       state.addPropagator(Unify(lhsId, rhsId, cause))
 
-    if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying $lhs with $rhs")
-
     // Handle meta variables
     (toTerm(lhs), toTerm(rhs)) match {
       case (Meta(cellId), rhs) =>
@@ -72,8 +68,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         (lhsResolved, rhsResolved) match {
           // Handle Union types - rhs must be a subtype of lhs
           case (lhsType, Union(types2, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying lhsType $lhsType with union type ${types2.mkString(", ")}")
             // For a union on the right (like Integer | String),
             // the left side type (like Integer) just needs to match ONE component
             val lhsTypeId = toId(lhsType)
@@ -92,8 +86,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             }
 
           case (Union(types1, _), rhsType) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying union type ${types1.mkString(", ")} with rhsType $rhsType")
             // For a union on the left, ANY type in the union must be compatible with rhs
             // We need to check if at least one component is compatible
             val rhsTypeId = toId(rhsType)
@@ -114,51 +106,35 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
           // Record implementing trait (structural subtyping)
           case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying record type ${recordDef.name} with trait type ${traitDef.name}")
             if (!checkTraitImplementation(recordDef, traitDef, cause)) {
-              if (Debug.isEnabled(TraitMatching))
-                Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Record ${recordDef.name} does not implement trait ${traitDef.name}")
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
 
           // Record type implementing trait type (structural subtyping)
           case (lhsType @ RecordStmtTerm(name, _, fields, _, extendsClause, _), rhsType @ TraitStmtTerm(traitName, _, _, _, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying record type $name with trait type $traitName")
             if (!checkTraitImplementation(lhsType, rhsType, cause)) {
-              if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Record $name does not implement trait $traitName")
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
 
           // Trait extending trait (structural subtyping)
           case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying child trait ${childTraitDef.name} with parent trait ${parentTraitDef.name}")
             if (!checkTraitExtends(childTraitDef, parentTraitDef, cause)) {
-              if (Debug.isEnabled(TraitMatching))
-                Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Trait ${childTraitDef.name} does not extend trait ${parentTraitDef.name}")
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
 
           // Handle Intersection types
           case (Intersection(types1, _), rhsType) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying intersection type ${types1.mkString(", ")} with rhsType $rhsType")
             if (!types1.exists(t1 => tryUnify(t1, rhsType))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
 
           case (lhsType, Intersection(types2, _)) =>
-            if (Debug.isEnabled(TraitMatching))
-              Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying lhsType $lhsType with intersection type ${types2.mkString(", ")}")
             if (!types2.forall(t2 => tryUnify(lhsType, t2))) {
               ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
             }
 
           // For other cases, add a direct unification propagator
           case (lhsType, rhsType) =>
-            if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Unifying lhsType $lhsType with rhsType $rhsType")
             // If terms are not identical after reduction, add a propagator
             val lhsId = toId(lhsType)
             val rhsId = toId(rhsType)
@@ -485,7 +461,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
     def tryUnifyInternal(lhs: Term, rhs: Term, depth: Int): Boolean = {
       val indent = " " * depth
-      if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG] Trying to unify: $lhs with $rhs")
 
       // Helper function to fully resolve references in terms
       @tailrec
@@ -508,7 +483,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       }
 
       if (lhs == rhs) {
-        if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Terms are equal, returning true")
         true
       } else {
         // Use TypeLevel reduction for type equality checking
@@ -519,58 +493,36 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         val lhsResolved = fullyResolveReference(DefaultReducer.reduce(lhs, ReduceMode.TypeLevel))
         val rhsResolved = fullyResolveReference(DefaultReducer.reduce(rhs, ReduceMode.TypeLevel))
 
-        if (Debug.isEnabled(UnionMatching))
-          Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   After reduction and resolution: $lhsResolved with $rhsResolved")
-
         if (lhsResolved == rhsResolved) {
-          if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Reduced terms are equal, returning true")
           true
         } else {
           // If structural equality check fails, try alpha-equivalence
           // which is crucial for dependent type systems
           if (areAlphaEquivalent(lhsResolved, rhsResolved)) {
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Terms are alpha-equivalent, returning true")
             true
           } else {
             (lhsResolved, rhsResolved) match {
               case (Type(level1, _), Type(level2, _)) =>
                 val result = isLevelCompatible(level1, level2)(using state, localCtx)
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Type level check: $level1 compatible with $level2? $result")
                 result
 
               case (ListType(elem1, _), ListType(elem2, _)) =>
                 val result = tryUnifyInternal(elem1, elem2, depth + 1)
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   List element check: $result")
                 result
 
               case (lhsType, Union(types2, _)) =>
                 // For a specific type and a union type, check if the specific type
                 // is compatible with at least one union component
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(
-                    UnionMatching,
-                    t"$indent[UNIFY DEBUG]   Checking specific type against union: $lhsType with ${types2.mkString(", ")}"
-                  )
                 val result = types2.exists(t2 => tryUnifyInternal(lhsType, t2, depth + 1))
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Specific-to-union check: $result")
                 result
 
               case (Union(types1, _), rhsType) =>
                 // For a union type and a specific type, check if at least one union component
                 // is compatible with the specific type (NOT all components need to be compatible)
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(
-                    UnionMatching,
-                    t"$indent[UNIFY DEBUG]   Checking union type against specific: ${types1.mkString(", ")} with $rhsType"
-                  )
                 val result = types1.exists(t1 => tryUnifyInternal(t1, rhsType, depth + 1))
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   Union-to-specific check: $result")
                 result
 
               case _ =>
-                if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"$indent[UNIFY DEBUG]   No match found, returning false")
                 false
             }
           }
@@ -580,7 +532,6 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
 
     // Start the recursion
     val result = tryUnifyInternal(lhs, rhs, 0)
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNIFY DEBUG] Final result for unifying $lhs with $rhs: $result")
     result
   }
 
@@ -610,14 +561,10 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
           case _ =>
             x match {
               case IntegerLiteral(value, _) =>
-                if (Debug.isEnabled(UnionMatching))
-                  Debug.debugPrint(UnionMatching, t"[LITERAL DEBUG] Processing integer literal $value with expected type $ty_")
                 // Try to handle union types
                 ty_ match {
                   case Union(types, _) =>
                     // Check if any of the union types is compatible with this integer literal
-                    if (Debug.isEnabled(UnionMatching))
-                      Debug.debugPrint(UnionMatching, t"[LITERAL DEBUG] Checking integer literal $value with union type $ty_")
                     val compatibleTypes = types.filter {
                       case IntegerType(_) => true
                       case unionType =>
@@ -630,13 +577,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
                     }
 
                     if (compatibleTypes.nonEmpty) {
-                      if (Debug.isEnabled(UnionMatching))
-                        Debug.debugPrint(UnionMatching, t"[LITERAL DEBUG] Found compatible types in union: ${compatibleTypes.mkString(", ")}")
                       // Found at least one compatible type in the union
                       true
                     } else {
-                      if (Debug.isEnabled(UnionMatching))
-                        Debug.debugPrint(UnionMatching, t"[LITERAL DEBUG] No compatible types found in union for integer literal $value")
                       more.reporter.apply(TypeMismatch(IntegerType(None), ty_, x))
                       true
                     }
@@ -679,20 +622,14 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         existingValue.get match {
           case Union(types, _) =>
             // If we have a union type, we need to make sure the literal is compatible with at least one component
-            if (Debug.isEnabled(UnionMatching))
-              Debug.debugPrint(UnionMatching, t"[LITERAL ZONK DEBUG] Handling union type during zonk: $existingValue")
             val literalType = getLiteralType(x)
 
             // Find compatible types
             val compatibleTypes = types.filter(unionType => tryUnify(literalType, unionType)(using state, summon[Context]))
 
             if (compatibleTypes.nonEmpty) {
-              if (Debug.isEnabled(UnionMatching))
-                Debug.debugPrint(UnionMatching, t"[LITERAL ZONK DEBUG] Found compatible union components: ${compatibleTypes.mkString(", ")}")
               ZonkResult.Done // Leave the union type as is
             } else {
-              if (Debug.isEnabled(UnionMatching))
-                Debug.debugPrint(UnionMatching, t"[LITERAL ZONK DEBUG] No compatible union components found for literal type $literalType")
               state.fill(
                 tyLhs,
                 getLiteralType(x)
@@ -873,24 +810,17 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       ck: TyckSession,
       state: StateAbility[TyckSession]
   ): Boolean = {
-    if (Debug.isEnabled(TraitMatching))
-      Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Checking if record ${recordDef.name} implements trait ${traitDef.name}")
 
     // First check for direct extension relationship
     val hasExtendsClause = recordDef.extendsClause.exists {
       case traitCall: TraitTypeTerm =>
         val matches = traitCall.traitDef.uniqId == traitDef.uniqId
-        if (Debug.isEnabled(TraitMatching))
-          Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Found extends clause: ${traitCall.traitDef.name}, matches target trait? $matches")
         matches
       case other =>
-        if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Found non-trait extends clause: $other")
         false
     }
 
     if (!hasExtendsClause) {
-      if (Debug.isEnabled(TraitMatching))
-        Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Record ${recordDef.name} does not extend trait ${traitDef.name}")
       ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
       false
     } else {
@@ -900,34 +830,20 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         case DefStmtTerm(localv, _, ty, _)                     => (localv.name, ty)
       }
 
-      if (Debug.isEnabled(TraitMatching)) {
-        Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Trait ${traitDef.name} fields:")
-        traitFields.foreach { case (name, ty) => Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG]   - $name: $ty") }
-      }
-
       val recordFields = recordDef.fields.map(field => (field.name, field.ty)).toMap
-
-      if (Debug.isEnabled(TraitMatching)) {
-        Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Record ${recordDef.name} fields:")
-        recordFields.foreach { case (name, ty) => Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG]   - $name: $ty") }
-      }
 
       // Check each trait field
       val allFieldsPresent = traitFields.forall { case (fieldName, fieldTy) =>
         recordFields.get(fieldName) match {
           case None =>
-            if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Missing field $fieldName in record ${recordDef.name}")
             ck.reporter.apply(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
             false
           case Some(recordFieldTy) =>
-            if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] Checking type compatibility for field $fieldName")
             // Add type compatibility check
             state.addPropagator(Unify(toId(recordFieldTy), toId(fieldTy), cause))
             true
         }
       }
-
-      if (Debug.isEnabled(TraitMatching)) Debug.debugPrint(TraitMatching, t"[TRAIT DEBUG] All fields present and compatible? $allFieldsPresent")
       allFieldsPresent
     }
   }
@@ -973,18 +889,10 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     // the specific type must be compatible with at least one of the union components
     // This is for cases like: let y: Integer | String = x
     // where x: Integer
-    if (Debug.isEnabled(UnionMatching))
-      Debug.debugPrint(
-        UnionMatching,
-        t"[UNION DEBUG] Checking if $specificType is compatible with at least one of union components: ${unionTypes.mkString(", ")}"
-      )
     val result = unionTypes.exists { unionType =>
       val compatible = tryUnify(specificType, unionType)
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Component check: $specificType compatible with $unionType? $compatible")
       compatible
     }
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Final result: $result")
     result
   }
 
@@ -996,15 +904,10 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     // at least one type in the union must be compatible with the specific type
     // This is for cases like: let x: Integer | String; let y: SomeType = x;
     // where y: SomeType must accept at least one of Integer or String
-    if (Debug.isEnabled(UnionMatching))
-      Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Checking if any union component ${unionTypes.mkString(", ")} is compatible with $specificType")
     val result = unionTypes.exists { unionType =>
       val compatible = tryUnify(unionType, specificType)
-      if (Debug.isEnabled(UnionMatching))
-        Debug.debugPrint(UnionMatching, t"[UNION DEBUG]   Component check: $unionType compatible with $specificType? $compatible")
       compatible
     }
-    if (Debug.isEnabled(UnionMatching)) Debug.debugPrint(UnionMatching, t"[UNION DEBUG] Final result: $result")
     result
   }
 

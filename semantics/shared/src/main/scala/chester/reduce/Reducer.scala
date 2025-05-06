@@ -1,8 +1,6 @@
 package chester.reduce
 
 import chester.syntax.core.*
-import chester.utils.Debug
-import chester.i18n.*
 
 /** A reducer that can reduce terms to their normal forms.
   *
@@ -42,45 +40,36 @@ object DefaultReducer extends Reducer {
   /** Helper method for proper reduction of type structures. This ensures consistent handling of types, especially for dependent type systems.
     */
   private def reduceTypeStructure(term: Term)(using ctx: ReduceContext, r: Reducer): Term = {
-    import Debug.DebugCategory
-
-    Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Processing term: $term")
-
     term match {
       case Union(types, meta) =>
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Processing Union with types: $types")
         val reducedTypes = types.map(ty => reduceTypeStructure(r.reduce(ty)))
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Reduced Union types: $reducedTypes")
         Union(reducedTypes, meta)
 
       case Intersection(types, meta) =>
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Processing Intersection with types: $types")
         val reducedTypes = types.map(ty => reduceTypeStructure(r.reduce(ty)))
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Reduced Intersection types: $reducedTypes")
         Intersection(reducedTypes, meta)
 
       case fcall: FCallTerm if isTypeLevel(fcall) =>
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Processing type-level function call: $fcall")
         // First reduce normally
         val reduced = reduceStandard(fcall, ReduceMode.TypeLevel)
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Standard reduced result: $reduced")
+        
 
         // Then check if the result needs further type structure handling
         reduced match {
           // If still a complex type after reduction, process it recursively
           case Union(_, _) | Intersection(_, _) =>
-            Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Further reducing complex type: $reduced")
+            
             val result = reduceTypeStructure(reduced)
-            Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Final result: $result")
+            
             result
           case _ =>
-            Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: Final result: $reduced")
+            
             reduced
         }
 
       // Other terms are handled by standard reduction
       case _ =>
-        Debug.debugPrint(DebugCategory.Reducer, t"reduceTypeStructure: No special handling for term: $term")
+        
         term
     }
   }

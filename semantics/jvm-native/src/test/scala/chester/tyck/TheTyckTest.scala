@@ -9,8 +9,6 @@ import chester.syntax.core.Judge
 import chester.utils.doc.*
 import munit.FunSuite
 import upickle.default.*
-import chester.utils.Debug
-import chester.utils.Debug.DebugCategory
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
@@ -34,7 +32,7 @@ class TheTyckTest extends FunSuite {
           { parsedBlock =>
             assertEquals(read[Expr](write[Expr](parsedBlock)), parsedBlock)
             assertEquals(readBinary[Expr](writeBinary[Expr](parsedBlock)), parsedBlock)
-            Debug.withCategoriesEnabled(DebugCategory.values.toSet) {
+            TyckDebug.withValue(true) {
               val tyckResult = Tycker.check(parsedBlock)
               if (tyckResult.errorsEmpty) {
                 // This is equivalent to TyckResult.Success case
