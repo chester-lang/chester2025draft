@@ -92,10 +92,7 @@ object DefaultReducer extends Reducer {
       val reducedTerm = r.reduce(term)
       val reducedTy = ty.map(r.reduce)
       val reducedEffects = effects // Effects don't need reduction
-      reducedTerm match {
-        case t: WHNF => t // If the term is already in WHNF, return it
-        case _       => Annotation(reducedTerm, reducedTy, reducedEffects, meta)
-      }
+      Annotation(reducedTerm, reducedTy, reducedEffects, meta)
 
     // For other cases, leave as is for now
     case other => other
