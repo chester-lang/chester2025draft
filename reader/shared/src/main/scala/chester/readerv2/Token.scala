@@ -69,10 +69,16 @@ object Token {
   }
   case class Identifier(parts: Vector[StringChar], sourcePos: SourcePos) extends Token {
     override def tokenType: String = t"identifier"
-  }
-  // TODO: Operator merge with Identifier
-  case class Operator(value: String, sourcePos: SourcePos) extends Token {
-    override def tokenType: String = t"operator"
+    
+    /** Returns true if this identifier represents an operator according to the language rules */
+    def isOperator: Boolean = {
+      if (parts.isEmpty) return false
+      val text = parts.map(_.text).mkString
+      chester.syntax.IdentifierRules.strIsOperator(text)
+    }
+    
+    /** Returns the text representation of this identifier */
+    def text: String = parts.map(_.text).mkString
   }
   case class Hash(sourcePos: SourcePos) extends Token {
     override def tokenType: String = t"hash '#' "

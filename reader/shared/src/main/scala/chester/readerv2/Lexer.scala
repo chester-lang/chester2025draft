@@ -231,6 +231,7 @@ class Lexer(source: Source) {
       pos += 1; col += 1; utf16Pos += 1
       return tok(Token.Comment(consume(_ != '\n'), _), start)
     }
-    tok(Token.Operator(initial + consume(c => isOperatorSymbol(c.asInt)), _), start)
+    val opText = initial + consume(c => isOperatorSymbol(c.asInt))
+    tok(Token.Identifier(Vector(StringChar(opText, mkPos(start, pos))), _), start)
   }
 }

@@ -202,13 +202,13 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
         }
 
       // Operator handling
-      case Right(Token.Operator(op, sourcePos)) =>
+      case Right(id: Token.Identifier) if id.isOperator =>
         // this.state is already set to the current state
         // Advance past the operator
         advance()
 
         // Add operator to terms
-        val updatedTerms = localTerms :+ Identifier(op, createMeta(Some(sourcePos), None))
+        val updatedTerms = localTerms :+ Identifier(id.text, createMeta(Some(id.sourcePos), None))
 
         // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
         if (
@@ -367,9 +367,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                   }
               }
 
-            case Right(Token.Operator(op, opSourcePos)) =>
+            case Right(opToken: Token.Identifier) if opToken.isOperator =>
               val id = Identifier(text, createMeta(Some(sourcePos), None))
-              val opId = Identifier(op, createMeta(Some(opSourcePos), None))
+              val opId = Identifier(opToken.text, createMeta(Some(opToken.sourcePos), None))
               val updatedTerms = localTerms :+ id :+ opId
 
               // Advance past the operator
@@ -498,7 +498,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     // Main parsing logic - handle different token types
     this.state.current match {
       // Prefix operator
-      case Right(Token.Operator(op, sourcePos)) =>
+      case Right(id: Token.Identifier) if id.isOperator =>
         // Advance past the operator
         advance()
 
@@ -509,14 +509,14 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
             parseTuple().map { tuple =>
               // parseTuple has already updated this.state
               FunctionCall(
-                Identifier(op, createMeta(Some(sourcePos), None)),
+                Identifier(id.text, createMeta(Some(id.sourcePos), None)),
                 tuple,
-                createMeta(Some(sourcePos), None)
+                createMeta(Some(id.sourcePos), None)
               )
             }
           // Prefix form: op expr
           case _ =>
-            terms = Vector(Identifier(op, createMeta(Some(sourcePos), None)))
+            terms = Vector(Identifier(id.text, createMeta(Some(id.sourcePos), None)))
             withComments(() => parseAtom()).flatMap { expr =>
               terms = terms :+ expr
 
@@ -595,7 +595,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
     advance()
 
     this.state.current match {
-      case Right(Token.Identifier(chars1, idSourcePos1)) =>
+      case Right(id @ Token.Identifier(chars1, idSourcePos1)) if !id.isOperator =>
         // Save identifier and advance
         val field = Identifier(charsToString(chars1), createMeta(Some(idSourcePos1), None))
         advance()
@@ -632,9 +632,9 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
           }
 
         parseNextTelescope()
-      case Right(Token.Operator(op, idSourcePos)) =>
+      case Right(id: Token.Identifier) if id.isOperator =>
         // Save operator, advance, and process
-        val field = Identifier(op, createMeta(Some(idSourcePos), None))
+        val field = Identifier(id.text, createMeta(Some(id.sourcePos), None))
         advance()
 
         this.state.current match {
@@ -655,7 +655,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 terms.last,
                 field,
                 Vector.empty,
-                createMeta(Some(dotSourcePos), Some(idSourcePos))
+                createMeta(Some(dotSourcePos), Some(id.sourcePos))
               )
             )
         }
@@ -1312,12 +1312,12 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
 
   private def parseField(key: ParsedExpr, keySourcePos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
     this.state.current match {
-      case Right(Token.Operator(op, _)) =>
+      case Right(id: Token.Identifier) if id.isOperator =>
         advance()
         parseExpr().flatMap { value =>
-          if (op == "=>") {
+          if (id.text == "=>") {
             Right(ObjectExprClauseOnValue(key, value))
-          } else if (op == "=") {
+          } else if (id.text == "=") {
             key match {
               case id: Identifier =>
                 Right(ObjectExprClause(id, value))
@@ -1330,7 +1330,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
                 Left(expectedError(t"identifier, qualified name, or dot expression for key with = operator: $other", this.state.current))
             }
           } else {
-            Left(ParseError(t"Unexpected operator in object field: $op", Some(keySourcePos)))
+            Left(ParseError(t"Unexpected operator in object field: ${id.text}", Some(keySourcePos)))
           }
         }
       case Right(t)  => Left(expectedError(t"operator in object field", this.state.current))
