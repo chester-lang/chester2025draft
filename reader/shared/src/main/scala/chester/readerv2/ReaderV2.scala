@@ -661,7 +661,7 @@ class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) 
               )
             )
         }
-      case Right(t)  => Left(ParseError("Expected identifier or operator after '.'", t.sourcePos.range.start))
+      case Right(t)  => Left(expectedError("identifier or operator after '.'", Right(t)))
       case Left(err) => Left(err)
     }
   }
