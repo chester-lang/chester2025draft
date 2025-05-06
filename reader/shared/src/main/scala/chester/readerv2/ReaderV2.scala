@@ -78,7 +78,7 @@ object ReaderV2 {
   val DEBUG: Parameter[Boolean] = Parameter.withDefault(false)
 }
 
-class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) {
+final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boolean) {
 
   var state: ReaderState = initState
 
