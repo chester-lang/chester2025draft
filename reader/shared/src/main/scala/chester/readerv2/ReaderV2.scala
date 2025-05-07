@@ -366,7 +366,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
                   }
               }
 
-            case Right(opToken: Token.Identifier) if opToken.isOperator =>
+            case Right(opToken: Token.Identifier) =>
               val id = Identifier(text, createMeta(Some(sourcePos), None))
               val opId = Identifier(opToken.text, createMeta(Some(opToken.sourcePos), None))
               val updatedTerms = localTerms :+ id :+ opId
@@ -594,7 +594,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
     advance()
 
     this.state.current match {
-      case Right(id @ Token.Identifier(_, idSourcePos1)) if !id.isOperator =>
+      case Right(id @ Token.Identifier(_, idSourcePos1)) =>
         // Save identifier and advance
         val field = Identifier(id.toStr, createMeta(Some(idSourcePos1), None))
         advance()
@@ -631,33 +631,6 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
           }
 
         parseNextTelescope()
-      case Right(id: Token.Identifier) if id.isOperator =>
-        // Save operator, advance, and process
-        val field = Identifier(id.text, createMeta(Some(id.sourcePos), None))
-        advance()
-
-        this.state.current match {
-          case Right(Token.LParen(_)) =>
-            // this.state is already at the correct position
-            parseTuple().map { args =>
-              // parseTuple has updated this.state
-              DotCall(
-                terms.last,
-                field,
-                Vector(args),
-                createMeta(Some(dotSourcePos), Some(this.state.sourcePos))
-              )
-            }
-          case _ =>
-            Right(
-              DotCall(
-                terms.last,
-                field,
-                Vector.empty,
-                createMeta(Some(dotSourcePos), Some(id.sourcePos))
-              )
-            )
-        }
       case Right(t)  => Left(expectedError(t"identifier or operator after '.'", Right(t)))
       case Left(err) => Left(err)
     }
@@ -1311,7 +1284,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
 
   private def parseField(key: ParsedExpr, keySourcePos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
     this.state.current match {
-      case Right(id: Token.Identifier) if id.isOperator =>
+      case Right(id: Token.Identifier) =>
         advance()
         parseExpr().flatMap { value =>
           if (id.text == "=>") {
