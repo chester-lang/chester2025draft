@@ -152,11 +152,11 @@ trait ProvideCellId {
 
     def identify: Option[Any] = None
 
-    def readingCells: Set[CIdOf[Cell[?]]] = Set.empty
+    def readingCells(using StateOps[Ability], Ability): Set[CIdOf[Cell[?]]] = Set.empty
 
-    def writingCells: Set[CIdOf[Cell[?]]] = Set.empty
+    def writingCells(using StateOps[Ability], Ability): Set[CIdOf[Cell[?]]] = Set.empty
 
-    def zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
+    def zonkingCells(using StateOps[Ability], Ability): Set[CIdOf[Cell[?]]] = Set.empty
 
     /** @return
       *   true if the propagator finished its work
@@ -219,7 +219,7 @@ trait ProvideCellId {
       val _ = addPropagatorGetPid(propagator)
     }
 
-    def tick(using more: Ability): Unit
+    def tick(using Ability): Unit
 
     def stable: Boolean
 

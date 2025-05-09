@@ -170,9 +170,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   case class Unify(lhs: CellId[Term], rhs: CellId[Term], cause: Expr)(using
       Context
   ) extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs, rhs)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean = {
       val lhs = state.readStable(this.lhs)
@@ -309,9 +309,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       cause: Expr
   )(using Context)
       extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs)
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean = {
       val lhsValueOpt = state.readStable(lhs)
@@ -374,9 +374,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       cause: Expr
   )(using Context)
       extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(lhs)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs)
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(lhs) ++ rhs.toSet
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean = {
       val lhsValueOpt = state.readStable(lhs)
@@ -546,9 +546,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   case class LiteralType(x: Literals, tyLhs: CellId[Term])(using
       Context
   ) extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(tyLhs)
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(tyLhs)
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(tyLhs)
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(tyLhs)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean =
       if (state.noStableValue(tyLhs)) false
@@ -660,9 +660,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       ck: TyckSession,
       localCtx: Context
   ) extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(listTLhs)
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(tRhs, listTLhs)
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(listTLhs)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean = {
       val t1 = state.readStable(this.tRhs)
@@ -726,9 +726,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       cause: Expr
   )(using Context)
       extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set(recordTy)
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set(expectedTy)
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set(recordTy, expectedTy)
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(recordTy)
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(expectedTy)
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(recordTy, expectedTy)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean =
       state.readStable(recordTy) match {
@@ -924,9 +924,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       cause: Expr
   )(using Context)
       extends Propagator[TyckSession] {
-    override val readingCells: Set[CIdOf[Cell[?]]] = Set.empty
-    override val writingCells: Set[CIdOf[Cell[?]]] = Set.empty
-    override val zonkingCells: Set[CIdOf[Cell[?]]] = Set.empty
+    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set.empty
+    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set.empty
+    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set.empty
 
     override def run(using StateOps[TyckSession], TyckSession): Boolean = {
       // Delegate to the checkTraitImplementation method

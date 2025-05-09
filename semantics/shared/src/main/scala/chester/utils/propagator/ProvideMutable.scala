@@ -69,6 +69,7 @@ trait ProvideMutable extends ProvideImpl {
     override def addPropagatorGetPid[T <: Propagator[Ability]](
         propagator: T
     )(using more: Ability): PIdOf[T] = {
+      given StateOps[Ability] = this
       didSomething = true
       val id = new HoldPropagator[T](uniqId, propagator)
       for (cell <- propagator.zonkingCells)

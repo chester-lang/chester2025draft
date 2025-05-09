@@ -67,6 +67,7 @@ trait ProvideImmutable extends ProvideImpl {
     }
 
     override def tick(using more: Ability): Unit = {
+      given StateOps[Ability] = this
       val didChanged = state.didChanged
       state = state.copy(didChanged = Vector.empty)
       state.propagators
@@ -84,6 +85,7 @@ trait ProvideImmutable extends ProvideImpl {
     override def zonk(
         cells: Vector[CIdOf[Cell[?]]]
     )(using more: Ability): Unit = {
+      given StateOps[Ability] = this
       var cellsNeeded = Vector.empty[CIdOf[Cell[?]]]
       while (true) {
         tickAll

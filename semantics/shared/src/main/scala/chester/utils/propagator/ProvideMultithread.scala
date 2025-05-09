@@ -185,6 +185,7 @@ trait ProvideMultithread extends ProvideImpl {
     override def addPropagatorGetPid[T <: Propagator[Ability]](
         propagator: T
     )(using Ability): PIdOf[T] = {
+      given StateOps[Ability] = this
       val id = new HoldPropagator[T](uniqId, propagator)
       propagators.add(id.asInstanceOf[PIdOf[Propagator[Ability]]])
 
