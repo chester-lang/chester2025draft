@@ -16,7 +16,7 @@ import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
 
-trait Elaborater extends ProvideCtx with TyckPropagator {
+trait Elaborater extends ProvideContextOps with TyckPropagator {
 
   // Function to directly connect union cell to its components
   private def connectUnionToComponents(
@@ -262,7 +262,7 @@ trait Elaborater extends ProvideCtx with TyckPropagator {
   }
 }
 
-trait ProvideElaborater extends ProvideCtx with Elaborater with ElaboraterFunction with ElaboraterFunctionCall with ElaboraterBlock {
+trait ProvideElaborater extends ProvideContextOps with Elaborater with ElaboraterFunction with ElaboraterFunctionCall with ElaboraterBlock {
 
   // TODO: add something for implicit conversion
 

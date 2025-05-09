@@ -13,7 +13,7 @@ import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
 
-trait ElaboraterCommon extends ProvideCtx with ElaboraterBase with CommonPropagator[TyckSession] {
+trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckSession] {
 
   trait EffectsCell extends Cell[Effects] {
     def requireEffect(

@@ -6,7 +6,7 @@ import chester.tyck.PreludeBuiltin.BuiltinItem
 import chester.uniqid.*
 import chester.utils.propagator.*
 
-trait ProvideCtx extends ProvideCellId with ElaboraterBase {
+trait ProvideContextOps extends ProvideCellId with ElaboraterBase {
 
   implicit class TyAndValnuoOpsss(ignored: TyAndVal.type) {
     def create(ty: Term, value: Term)(using
