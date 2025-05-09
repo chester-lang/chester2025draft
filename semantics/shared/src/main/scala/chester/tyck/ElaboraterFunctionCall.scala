@@ -12,10 +12,10 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      ctx: Context,
-      parameter: SemanticCollector,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+    ctx: Context,
+    parameter: SemanticCollector,
+    ck: TyckOps,
+    state: StateOps[TyckOps]
   ): Term
 
   /** Safely fills a cell with a value, handling the case where the cell already has a value. This prevents "requirement failed" exceptions when
@@ -25,8 +25,8 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       cell: CellId[T],
       value: T
   )(using
-    state: StateOps[TyckSession],
-    _more: TyckSession
+    state: StateOps[TyckOps],
+    _more: TyckOps
   ): Unit = {
     // Check if the cell already has a value before attempting to fill it
     val existingValue = state.readUnstable(cell)
@@ -42,10 +42,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      ctx: Context,
-      parameter: SemanticCollector,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+    ctx: Context,
+    parameter: SemanticCollector,
+    ck: TyckOps,
+    state: StateOps[TyckOps]
   ): Term = {
     // Check if the function refers to a record definition
     val functionExpr = expr.function
@@ -77,10 +77,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      ctx: Context,
-      _parameter: SemanticCollector,
-      _ck: TyckSession,
-      state: StateOps[TyckSession]
+    ctx: Context,
+    _parameter: SemanticCollector,
+    _ck: TyckOps,
+    state: StateOps[TyckOps]
   ): Term = {
     // Elaborate the function expression to get its term and type
     val functionTy = newType
@@ -135,13 +135,13 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       callEffects: CIdOf[EffectsCell],
       outerEffects: CIdOf[EffectsCell]
   )(using Context)
-      extends Propagator[TyckSession] {
+      extends Propagator[TyckOps] {
 
-    override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(functionTy)
-    override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(resultTy, functionCallTerm)
-    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(resultTy, functionCallTerm)
+    override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(functionTy)
+    override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(resultTy, functionCallTerm)
+    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(resultTy, functionCallTerm)
 
-    override def run(using state: StateOps[TyckSession], ck: TyckSession): Boolean = {
+    override def run(using state: StateOps[TyckOps], ck: TyckOps): Boolean = {
 
       val readFunctionTy = state.readStable(functionTy)
 
@@ -195,7 +195,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         functionEffects: Term,
         outerEffects: CIdOf[EffectsCell],
         cause: Expr
-    )(using state: StateOps[TyckSession], _ck: TyckSession): Unit =
+    )(using state: StateOps[TyckOps], _ck: TyckOps): Unit =
       functionEffects match {
         case Effects(effects, _) =>
           // Add each effect from the function to the outer effects
@@ -215,8 +215,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         actual: Vector[Calling],
         cause: Expr
     )(using
-      state: StateOps[TyckSession],
-      ck: TyckSession
+      state: StateOps[TyckOps],
+      ck: TyckOps
     ): Vector[Calling] = {
       var actualIndex = 0
       var adjustedCallings: Vector[Calling] = Vector.empty
@@ -261,8 +261,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         actualArgs: Seq[CallingArgTerm],
         cause: Expr
     )(using
-      state: StateOps[TyckSession],
-      ck: TyckSession
+      state: StateOps[TyckOps],
+      ck: TyckOps
     ): Unit = {
       // Check that the number of arguments matches
       if (expectedArgs.length != actualArgs.length) {
@@ -282,7 +282,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     override def zonk(
         needed: Vector[CellIdAny]
-    )(using StateOps[TyckSession], TyckSession): ZonkResult =
+    )(using StateOps[TyckOps], TyckOps): ZonkResult =
       ZonkResult.Require(Vector(functionTy))
   }
 
@@ -291,12 +291,12 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       effectsCell: CellId[Term],
       callerEffects: CIdOf[EffectsCell],
       expr: Expr
-  ) extends Propagator[TyckSession] {
-    override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(effectsCell)
-    override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(callerEffects)
-    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set.empty
+  ) extends Propagator[TyckOps] {
+    override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(effectsCell)
+    override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(callerEffects)
+    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
 
-    override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean =
+    override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean =
       state.readStable(effectsCell) match {
         case Some(Effects(effects, _)) =>
           // Add each effect from the callee to the caller's effects
@@ -311,7 +311,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     override def zonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using StateOps[TyckSession], TyckSession): ZonkResult =
+    )(using StateOps[TyckOps], TyckOps): ZonkResult =
       ZonkResult.Require(Vector(effectsCell))
   }
 

@@ -24,17 +24,17 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
       componentIds: Vector[CellId[Term]],
       cause: Expr
   )(using
-    state: StateOps[TyckSession],
+    state: StateOps[TyckOps],
     ctx: Context,
-    ck: TyckSession
+    ck: TyckOps
   ): Unit =
     state.addPropagator(UnionOf(unionCell, componentIds, cause))
 
   def checkType(expr: Expr)(using
                             Context,
                             SemanticCollector,
-                            TyckSession,
-                            StateOps[TyckSession]
+                            TyckOps,
+                            StateOps[TyckOps]
   ): Term = {
     // Create a new type cell representing the kind Typeω (the type of types)
     val kindType = literal(Typeω: Term)
@@ -45,16 +45,16 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
   def checkTypeId(expr: Expr)(using
                               Context,
                               SemanticCollector,
-                              TyckSession,
-                              StateOps[TyckSession]
+                              TyckOps,
+                              StateOps[TyckOps]
   ): CellId[Term] =
     toId(checkType(expr))
 
   def elabTy(expr: Option[Expr])(using
                                  Context,
                                  SemanticCollector,
-                                 TyckSession,
-                                 StateOps[TyckSession]
+                                 TyckOps,
+                                 StateOps[TyckOps]
   ): Term =
     expr match {
       case Some(expr) => checkType(expr)
@@ -62,26 +62,26 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
     }
 
   def elab(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+                                                                        localCtx: Context,
+                                                                        parameter: SemanticCollector,
+                                                                        ck: TyckOps,
+                                                                        state: StateOps[TyckOps]
   ): Term
 
   def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
                                                                           Context,
                                                                           SemanticCollector,
-                                                                          TyckSession,
-                                                                          StateOps[TyckSession]
+                                                                          TyckOps,
+                                                                          StateOps[TyckOps]
   ): CellId[Term] = {
     val term = elab(expr, ty, effects)
     toId(term)
   }
 
   override def unify(lhs: Term, rhs: Term, cause: Expr)(using
-      localCtx: Context,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+                                                        localCtx: Context,
+                                                        ck: TyckOps,
+                                                        state: StateOps[TyckOps]
   ): Unit = {
     if (lhs == rhs) return
     // Use TypeLevel reduction for type equality checking
@@ -190,9 +190,9 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
 
   // Helper function to directly connect function call components
   private def connectFunctionCallComponents(fcall: FCallTerm, cause: Expr)(using
-                                                                           state: StateOps[TyckSession],
+                                                                           state: StateOps[TyckOps],
                                                                            ctx: Context,
-                                                                           ck: TyckSession
+                                                                           ck: TyckOps
   ): Unit =
 
     // Connect all arguments
@@ -223,9 +223,9 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
       specificType: Term,
       cause: Expr
   )(using
-      localCtx: Context,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+    localCtx: Context,
+    ck: TyckOps,
+    state: StateOps[TyckOps]
   ): Unit = {
     // Check if any union component can be used where specificType is expected
     // Only one component needs to be compatible for the union to be valid in this position
@@ -267,9 +267,9 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
   // TODO: add something for implicit conversion
 
   def newSubtype(ty: CellIdOr[Term], cause: Expr)(using
-      localCtx: Context,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+                                                  localCtx: Context,
+                                                  ck: TyckOps,
+                                                  state: StateOps[TyckOps]
   ): CellId[Term] = {
     val cell = newType
     state.addPropagator(Unify(toId(ty), cell, cause))
@@ -289,10 +289,10 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
       ty0: CellIdOr[Term],
       effects: CIdOf[EffectsCell]
   )(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: TyckSession,
-      state: StateOps[TyckSession]
+    localCtx: Context,
+    parameter: SemanticCollector,
+    ck: TyckOps,
+    state: StateOps[TyckOps]
   ): Term = toTerm {
     val ty = toId(readMetaVar(toTerm(ty0)))
     resolve(expr) match {
@@ -627,8 +627,8 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
   )(using
     Context,
     SemanticCollector,
-    TyckSession,
-    StateOps[TyckSession]
+    TyckOps,
+    StateOps[TyckOps]
   ): Term = {
     // Create collections to store field keys and types
     val fieldTypeVars = scala.collection.mutable.Map[Term, CellId[Term]]()
@@ -678,8 +678,8 @@ trait DefaultImpl
     implicit val collecter: UnusedVariableWarningWrapper =
       new UnusedVariableWarningWrapper(sementicCollector)
     val reporter = new VectorReporter[TyckProblem]
-    implicit val get: TyckSession = new StateReporter(reporter, new MutBox(()))
-    implicit val able: StateOps[TyckSession] = stateAbilityImpl
+    implicit val get: TyckOps = new StateReporter(reporter, new MutBox(()))
+    implicit val able: StateOps[TyckOps] = stateAbilityImpl
     val ty1: CellId[Term] = ty match {
       case Some(ty) =>
         val cell = literal[Term](ty)
@@ -712,8 +712,8 @@ trait DefaultImpl
   private def finalizeJudge(
       judge0: Judge
   )(using
-    ck: TyckSession,
-    able: StateOps[TyckSession],
+    ck: TyckOps,
+    able: StateOps[TyckOps],
     recording: SemanticCollector
   ): Judge = {
 
@@ -754,8 +754,8 @@ trait DefaultImpl
     implicit val reporter: ReporterTrackError[Problem] = new ReporterTrackError(
       reporter0
     )
-    implicit val get: TyckSession = new StateReporter(reporter, new MutBox(()))
-    implicit val able: StateOps[TyckSession] = stateAbilityImpl
+    implicit val get: TyckOps = new StateReporter(reporter, new MutBox(()))
+    implicit val able: StateOps[TyckOps] = stateAbilityImpl
     implicit var ctx: Context = Context.default.copy(loadedModules = loadedModules)
     val (module, block): (ModuleRef, Block) = resolve(expr) match {
       case b @ Block(head +: heads, tail, _) =>

@@ -29,7 +29,7 @@ trait Alpha extends ElaboraterCommon {
       rhs: Term,
       boundVars: Map[LocalV, LocalV] = Map.empty
   )(using
-    StateOps[TyckSession],
+    StateOps[TyckOps],
     Context
   ): Boolean =
     // For alpha-equivalence, we need to check if terms are convertible
@@ -108,7 +108,7 @@ trait Alpha extends ElaboraterCommon {
       types2: Vector[Term],
       boundVars: Map[LocalV, LocalV] = Map.empty
   )(using
-    StateOps[TyckSession],
+    StateOps[TyckOps],
     Context
   ): Boolean = {
     // For union/intersection types, each type in one collection

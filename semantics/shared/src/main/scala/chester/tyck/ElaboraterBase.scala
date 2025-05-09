@@ -7,15 +7,15 @@ import chester.uniqid.*
 import chester.utils.*
 import chester.utils.propagator.CommonPropagator
 
-trait ElaboraterBase extends CommonPropagator[TyckSession] {
+trait ElaboraterBase extends CommonPropagator[TyckOps] {
 
   object Meta {
     def rec(x: CellId[Term], default: Term)(using
-        state: StateOps[TyckSession]
+        state: StateOps[TyckOps]
     ): Term =
       state.readStable(x).getOrElse(default)
 
-    def apply[T <: Term](x: CellId[T])(using state: StateOps[TyckSession]): T | MetaTerm =
+    def apply[T <: Term](x: CellId[T])(using state: StateOps[TyckOps]): T | MetaTerm =
       state.readUnstable(x) match {
         case Some(x @ Meta(id)) => rec(id, x).asInstanceOf[T | MetaTerm]
         case Some(x)            => x
@@ -24,7 +24,7 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
 
     def unapply(
         x: Term
-    )(using state: StateOps[TyckSession]): Option[CellId[Term]] = x match {
+    )(using state: StateOps[TyckOps]): Option[CellId[Term]] = x match {
       case m: MetaTerm =>
         var result: CellId[Term] = m.unsafeRead[CellId[Term]]
         while (true)
@@ -55,7 +55,7 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
       ty: CellIdOr[Term],
       id: UniqidOf[LocalV],
       meta: Option[ExprMeta]
-  )(using TyckSession, StateOps[TyckSession]): LocalV = {
+  )(using TyckOps, StateOps[TyckOps]): LocalV = {
     val m = convertMeta(meta)
     LocalV(name, toTerm(ty), id, m)
   }
@@ -67,7 +67,7 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     * @return
     *   Either the original term or a MetaTerm
     */
-  def toTerm[T <: Term](x: CellIdOr[T])(using StateOps[TyckSession]): T | MetaTerm = x match {
+  def toTerm[T <: Term](x: CellIdOr[T])(using StateOps[TyckOps]): T | MetaTerm = x match {
     case x: Term =>
       x match {
         case Meta(x) => Meta(x).asInstanceOf[T | MetaTerm]
@@ -85,7 +85,7 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     */
   def toId[T <: Term](
       x: CellIdOr[T]
-  )(using state: StateOps[TyckSession]): CellId[T] = x match {
+  )(using state: StateOps[TyckOps]): CellId[T] = x match {
     case Meta(id) => id.asInstanceOf[CellId[T]]
     case x        => state.toId(x)
   }
@@ -98,8 +98,8 @@ trait ElaboraterBase extends CommonPropagator[TyckSession] {
     *   The second term to merge
     */
   def merge(a: CellIdOr[Term], b: CellIdOr[Term])(using
-                                                  state: StateOps[TyckSession],
-                                                  ab: TyckSession
+                                                  state: StateOps[TyckOps],
+                                                  ab: TyckOps
   ): Unit = {
     if (a == b) return
     val t1 = toTerm(a)

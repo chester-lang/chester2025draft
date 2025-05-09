@@ -40,9 +40,9 @@ trait ProvideMutable extends ProvideImpl {
   override def stateAbilityImpl[Ability]: StateOps[Ability] =
     Impl[Ability]()
 
-  class Impl[Ability](
-      val uniqId: UniqidOf[Impl[Ability]] = Uniqid.generate[Impl[Ability]]
-  ) extends StateOps[Ability] {
+  class Impl[Ops](
+      val uniqId: UniqidOf[Impl[Ops]] = Uniqid.generate[Impl[Ops]]
+  ) extends StateOps[Ops] {
     var didChanged: mutable.ArrayDeque[CIdOf[?]] = mutable.ArrayDeque.empty
 
     override def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T] = {
@@ -51,7 +51,7 @@ trait ProvideMutable extends ProvideImpl {
     }
 
     override def update[T <: Cell[?]](id: CIdOf[T], f: T => T)(using
-        Ability
+                                                               Ops
     ): Unit = {
       didSomething = true
       require(id.uniqId == uniqId)
@@ -66,10 +66,10 @@ trait ProvideMutable extends ProvideImpl {
       id
     }
 
-    override def addPropagatorGetPid[T <: Propagator[Ability]](
+    override def addPropagatorGetPid[T <: Propagator[Ops]](
         propagator: T
-    )(using more: Ability): PIdOf[T] = {
-      given StateOps[Ability] = this
+    )(using more: Ops): PIdOf[T] = {
+      given StateOps[Ops] = this
       didSomething = true
       val id = new HoldPropagator[T](uniqId, propagator)
       for (cell <- propagator.zonkingCells)
@@ -84,7 +84,7 @@ trait ProvideMutable extends ProvideImpl {
 
     override def stable: Boolean = didChanged.isEmpty
 
-    override def tick(using more: Ability): Unit =
+    override def tick(using more: Ops): Unit =
       while (didChanged.nonEmpty) {
         val id = didChanged.removeHead()
         if (id.didChange) {
@@ -92,7 +92,7 @@ trait ProvideMutable extends ProvideImpl {
           for (p <- id.readingPropagators) {
             require(p.uniqId == uniqId)
             if (p.alive) {
-              if (p.store.asInstanceOf[Propagator[Ability]].run(using this, more)) {
+              if (p.store.asInstanceOf[Propagator[Ops]].run(using this, more)) {
                 didSomething = true
                 p.alive = false
               }
@@ -105,7 +105,7 @@ trait ProvideMutable extends ProvideImpl {
 
     override def zonk(
         cells: Vector[CIdOf[Cell[?]]]
-    )(using more: Ability): Unit = {
+    )(using more: Ops): Unit = {
       var cellsNeeded = cells
       var tryFallback: Int = 0
       while (true) {
@@ -130,7 +130,7 @@ trait ProvideMutable extends ProvideImpl {
               require(p.uniqId == uniqId)
               tickAll
               if (c.noAnyValue && p.alive) {
-                val store = p.store.asInstanceOf[Propagator[Ability]]
+                val store = p.store.asInstanceOf[Propagator[Ops]]
                 if (store.run(using this, more)) {
                   p.alive = false
                   didSomething = true
@@ -158,7 +158,7 @@ trait ProvideMutable extends ProvideImpl {
                 require(p.uniqId == uniqId)
                 tickAll
                 if (c.noAnyValue && p.alive) {
-                  val store = p.store.asInstanceOf[Propagator[Ability]]
+                  val store = p.store.asInstanceOf[Propagator[Ops]]
                   if (store.run(using this, more)) {
                     p.alive = false
                     didSomething = true
