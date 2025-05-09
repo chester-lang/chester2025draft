@@ -71,12 +71,12 @@ trait ProvideMultithread extends ProvideImpl {
       aliveRef.set(value)
   }
 
-  override def stateAbilityImpl[Ability]: StateAbility[Ability] =
+  override def stateAbilityImpl[Ability]: StateWith[Ability] =
     Impl[Ability]()
 
   class Impl[Ability](
       val uniqId: UniqidOf[Impl[Ability]] = Uniqid.generate[Impl[Ability]]
-  ) extends StateAbility[Ability] {
+  ) extends StateWith[Ability] {
 
     private val propagators =
       new ConcurrentLinkedQueue[PIdOf[Propagator[Ability]]]()

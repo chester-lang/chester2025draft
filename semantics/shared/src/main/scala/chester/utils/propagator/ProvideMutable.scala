@@ -37,12 +37,12 @@ trait ProvideMutable extends ProvideImpl {
     x.asInstanceOf[CIdOf[Cell[?]]]
   }
 
-  override def stateAbilityImpl[Ability]: StateAbility[Ability] =
+  override def stateAbilityImpl[Ability]: StateWith[Ability] =
     Impl[Ability]()
 
   class Impl[Ability](
       val uniqId: UniqidOf[Impl[Ability]] = Uniqid.generate[Impl[Ability]]
-  ) extends StateAbility[Ability] {
+  ) extends StateWith[Ability] {
     var didChanged: mutable.ArrayDeque[CIdOf[?]] = mutable.ArrayDeque.empty
 
     override def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T] = {

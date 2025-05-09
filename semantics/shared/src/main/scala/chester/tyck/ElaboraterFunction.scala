@@ -15,7 +15,7 @@ trait ElaboraterFunction { this: ElaboraterBase & ElaboraterCommon =>
       ctx: Context,
       parameter: SemanticCollector,
       ck: TyckSession,
-      state: StateAbility[TyckSession]
+      state: StateWith[TyckSession]
   ): Term
 }
 
@@ -27,7 +27,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       localCtx: MutableContext,
       parameter: SemanticCollector,
       ck: TyckSession,
-      state: StateAbility[TyckSession]
+      state: StateWith[TyckSession]
   ): ArgTerm = {
     require(arg.decorations.isEmpty, "decorations are not supported yet")
     val ty = elabTy(arg.ty)
@@ -45,10 +45,10 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
   }
 
   private def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
-      MutableContext,
-      SemanticCollector,
-      TyckSession,
-      StateAbility[TyckSession]
+                                                                                  MutableContext,
+                                                                                  SemanticCollector,
+                                                                                  TyckSession,
+                                                                                  StateWith[TyckSession]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
     val argTerms = telescope.args.map(arg => elabArg(arg, effects))
@@ -64,7 +64,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       ctx: Context,
       parameter: SemanticCollector,
       ck: TyckSession,
-      state: StateAbility[TyckSession]
+      state: StateWith[TyckSession]
   ): Term = {
     // Start with a mutable local context based on the current context
     val mutableCtx = new MutableContext(ctx)
@@ -126,8 +126,8 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       term: Term,
       functionNameOpt: Option[String]
   )(using
-      TyckSession,
-      StateAbility[TyckSession]
+    TyckSession,
+    StateWith[TyckSession]
   ): Boolean = {
     // Collect function calls within the term
     val functionCalls = collectFunctionCalls(term)

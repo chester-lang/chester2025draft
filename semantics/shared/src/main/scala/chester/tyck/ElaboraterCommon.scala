@@ -18,7 +18,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
   trait EffectsCell extends Cell[Effects] {
     def requireEffect(
         effect: Term
-    )(using ck: TyckSession, state: StateAbility[TyckSession]): LocalV = {
+    )(using ck: TyckSession, state: StateWith[TyckSession]): LocalV = {
       // Check if this effect already exists in the cell
       val currentEffects = this.readUnstable.map(_.effects).getOrElse(Map.empty)
 
@@ -53,7 +53,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
 
   def toEffectsM(
       x: CellIdOr[Effects]
-  )(using StateAbility[TyckSession]): EffectsM = x match {
+  )(using StateWith[TyckSession]): EffectsM = x match {
     case x: Effects     => x
     case x: EffectsCell => Meta(x.asInstanceOf[CellId[Effects]])
     case _              => unreachable()
@@ -61,7 +61,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
 
   def toEffectsCell(
       x: EffectsM
-  )(using state: StateAbility[TyckSession]): CIdOf[EffectsCell] = x match {
+  )(using state: StateWith[TyckSession]): CIdOf[EffectsCell] = x match {
     case x: Effects => state.addCell(FixedEffectsCell(x))
     case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCell]]
     case _          => unreachable()
@@ -96,33 +96,33 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
     reuse(expr, result)
   }
 
-  def newMeta(using _ck: TyckSession, state: StateAbility[TyckSession]): CellId[Term] = {
+  def newMeta(using _ck: TyckSession, state: StateWith[TyckSession]): CellId[Term] = {
     val cell = state.addCell(OnceCell[Term]())
     cell
   }
 
-  def newType(using ck: TyckSession, state: StateAbility[TyckSession]): CellId[Term] = {
+  def newType(using ck: TyckSession, state: StateWith[TyckSession]): CellId[Term] = {
     val cell = state.addCell(OnceCell[Term](default = Some(AnyType0)))
     cell
   }
 
-  def newTypeTerm(using TyckSession, StateAbility[TyckSession]): Term =
+  def newTypeTerm(using TyckSession, StateWith[TyckSession]): Term =
     Meta(newType)
 
   def newEffects(using
       _ck: TyckSession,
-      state: StateAbility[TyckSession]
+      state: StateWith[TyckSession]
   ): CIdOf[EffectsCell] = {
     val cell = state.addCell(DynamicEffectsCell())
     cell
   }
 
-  def newEffectsTerm(using TyckSession, StateAbility[TyckSession]): Effects | MetaTerm =
+  def newEffectsTerm(using TyckSession, StateWith[TyckSession]): Effects | MetaTerm =
     Meta(newEffects)
 
   def readVar(
       x: Term
-  )(using localCtx: Context, _ck: TyckSession, state: StateAbility[TyckSession]): Term =
+  )(using localCtx: Context, _ck: TyckSession, state: StateWith[TyckSession]): Term =
     boundary {
       var result = x
       while (true)
@@ -143,7 +143,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
 
   def readMetaVar(
       x: Term
-  )(using localCtx: Context, _ck: TyckSession, state: StateAbility[TyckSession]): Term =
+  )(using localCtx: Context, _ck: TyckSession, state: StateWith[TyckSession]): Term =
     boundary {
       var result = x
       while (true)
