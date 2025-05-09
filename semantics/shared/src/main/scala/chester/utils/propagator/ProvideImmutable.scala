@@ -24,10 +24,10 @@ trait ProvideImmutable extends ProvideImpl {
     def stable: Boolean = didChanged.isEmpty
   }
 
-  override def stateAbilityImpl[Ability]: StateWith[Ability] =
+  override def stateAbilityImpl[Ability]: StateOps[Ability] =
     StateCells[Ability]()
 
-  class StateCells[Ability](var state: State[Ability] = State[Ability]()) extends StateWith[Ability] {
+  class StateCells[Ability](var state: State[Ability] = State[Ability]()) extends StateOps[Ability] {
     override def stable: Boolean = state.stable
 
     override def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T] =

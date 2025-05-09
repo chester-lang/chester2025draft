@@ -1,5 +1,5 @@
 package chester.utils.propagator
 
 trait ProvideImpl extends ProvideCellId {
-  def stateAbilityImpl[Ability]: StateWith[Ability]
+  def stateAbilityImpl[Ability]: StateOps[Ability]
 }

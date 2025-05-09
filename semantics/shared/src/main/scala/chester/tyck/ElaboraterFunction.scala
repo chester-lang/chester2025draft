@@ -15,7 +15,7 @@ trait ElaboraterFunction { this: ElaboraterBase & ElaboraterCommon =>
       ctx: Context,
       parameter: SemanticCollector,
       ck: TyckSession,
-      state: StateWith[TyckSession]
+      state: StateOps[TyckSession]
   ): Term
 }
 
@@ -27,7 +27,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       localCtx: MutableContext,
       parameter: SemanticCollector,
       ck: TyckSession,
-      state: StateWith[TyckSession]
+      state: StateOps[TyckSession]
   ): ArgTerm = {
     require(arg.decorations.isEmpty, "decorations are not supported yet")
     val ty = elabTy(arg.ty)
@@ -48,7 +48,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
                                                                                   MutableContext,
                                                                                   SemanticCollector,
                                                                                   TyckSession,
-                                                                                  StateWith[TyckSession]
+                                                                                  StateOps[TyckSession]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
     val argTerms = telescope.args.map(arg => elabArg(arg, effects))
@@ -64,7 +64,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       ctx: Context,
       parameter: SemanticCollector,
       ck: TyckSession,
-      state: StateWith[TyckSession]
+      state: StateOps[TyckSession]
   ): Term = {
     // Start with a mutable local context based on the current context
     val mutableCtx = new MutableContext(ctx)
@@ -127,7 +127,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       functionNameOpt: Option[String]
   )(using
     TyckSession,
-    StateWith[TyckSession]
+    StateOps[TyckSession]
   ): Boolean = {
     // Collect function calls within the term
     val functionCalls = collectFunctionCalls(term)

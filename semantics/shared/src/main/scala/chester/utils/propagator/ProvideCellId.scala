@@ -131,7 +131,7 @@ trait ProvideCellId {
       copy(value = Some(newValue))
   }
 
-  def literal[T](t: T)(using state: StateWith[?]): CellId[T] = {
+  def literal[T](t: T)(using state: StateOps[?]): CellId[T] = {
     val cell = state.addCell(LiteralCell[T](t))
     cell
   }
@@ -139,7 +139,7 @@ trait ProvideCellId {
   /** Create a cell with a default value that will be used if no other propagator fills it. This is particularly useful for type variables that might
     * not be otherwise constrained.
     */
-  def withDefault[T](defaultValue: T)(using state: StateWith[?]): CellId[T] = {
+  def withDefault[T](defaultValue: T)(using state: StateOps[?]): CellId[T] = {
     val cell = state.addCell(DefaultValueCell[T](defaultValue))
     cell
   }
@@ -161,20 +161,20 @@ trait ProvideCellId {
     /** @return
       *   true if the propagator finished its work
       */
-    def run(using state: StateWith[Ability], more: Ability): Boolean
+    def run(using  StateOps[Ability], Ability): Boolean
 
     /** make a best guess for zonkingCells */
     def zonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using state: StateWith[Ability], more: Ability): ZonkResult
+    )(using StateOps[Ability], Ability): ZonkResult
 
     def naiveFallbackZonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using StateWith[Ability], Ability): ZonkResult =
+    )(using StateOps[Ability], Ability): ZonkResult =
       zonk(needed)
   }
 
-  trait StateWith[Ability] {
+  trait StateOps[Ability] {
     def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T]
 
     def readStable[U](id: CellId[U]): Option[U] =
