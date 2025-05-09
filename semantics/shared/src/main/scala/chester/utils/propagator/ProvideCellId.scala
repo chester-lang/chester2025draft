@@ -147,57 +147,40 @@ trait ProvideCellId {
   private val NormalScore: Int = 8
   val NoScore: Int = 0
 
-  trait Propagator[Ability] {
+  trait Propagator[Ops] {
     def score: Int = NormalScore
 
     def identify: Option[Any] = None
 
-    def readingCells(using StateOps[Ability], Ability): Set[CIdOf[Cell[?]]] = Set.empty
+    def readingCells(using StateRead[Ops], Ops): Set[CellIdAny] = Set.empty
 
-    def writingCells(using StateOps[Ability], Ability): Set[CIdOf[Cell[?]]] = Set.empty
+    def writingCells(using StateRead[Ops], Ops): Set[CellIdAny] = Set.empty
 
-    def zonkingCells(using StateOps[Ability], Ability): Set[CIdOf[Cell[?]]] = Set.empty
+    def zonkingCells(using StateRead[Ops], Ops): Set[CellIdAny] = Set.empty
 
     /** @return
       *   true if the propagator finished its work
       */
-    def run(using  StateOps[Ability], Ability): Boolean
+    def run(using StateOps[Ops], Ops): Boolean
 
     /** make a best guess for zonkingCells */
     def zonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using StateOps[Ability], Ability): ZonkResult
+    )(using StateOps[Ops], Ops): ZonkResult
 
     def naiveFallbackZonk(
         needed: Vector[CIdOf[Cell[?]]]
-    )(using StateOps[Ability], Ability): ZonkResult =
+    )(using StateOps[Ops], Ops): ZonkResult =
       zonk(needed)
   }
 
-  trait StateOps[Ability] {
+  trait StateRead[Ops] {
     def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T]
 
     def readStable[U](id: CellId[U]): Option[U] =
       readCell[Cell[U]](id).get.readStable
     def readUnstable[U](id: CellId[U]): Option[U] =
       readCell[Cell[U]](id).get.readUnstable
-
-    protected def update[T <: Cell[?]](id: CIdOf[T], f: T => T)(using
-        Ability
-    ): Unit
-
-    def fill[T <: Cell[U], U](id: CIdOf[T], f: U)(using Ability): Unit =
-      update[T](id, _.fill(f).asInstanceOf[T])
-
-    def add[T <: SeqCell[U], U](id: CIdOf[T], f: U)(using Ability): Unit =
-      update[T](id, _.add(f).asInstanceOf[T])
-
-    def add[T <: MapCell[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
-        Ability
-    ): Unit =
-      update[T](id, _.add(key, value).asInstanceOf[T])
-
-    def addCell[T <: Cell[?]](cell: T): CIdOf[T]
 
     def hasStableValue[T <: Cell[?]](id: CIdOf[T]): Boolean =
       readCell(id).exists((x: T) => x.hasStableValue)
@@ -209,26 +192,46 @@ trait ProvideCellId {
 
     def noAnyValue[T <: Cell[?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
 
-    def addPropagatorGetPid[T <: Propagator[Ability]](propagator: T)(using
-        more: Ability
+    def stable: Boolean
+
+  }
+
+  trait StateOps[Session] extends StateRead[Session] {
+    protected def update[T <: Cell[?]](id: CIdOf[T], f: T => T)(using
+        Session
+    ): Unit
+
+    def fill[T <: Cell[U], U](id: CIdOf[T], f: U)(using Session): Unit =
+      update[T](id, _.fill(f).asInstanceOf[T])
+
+    def add[T <: SeqCell[U], U](id: CIdOf[T], f: U)(using Session): Unit =
+      update[T](id, _.add(f).asInstanceOf[T])
+
+    def add[T <: MapCell[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
+        Session
+    ): Unit =
+      update[T](id, _.add(key, value).asInstanceOf[T])
+
+    def addCell[T <: Cell[?]](cell: T): CIdOf[T]
+
+    def addPropagatorGetPid[T <: Propagator[Session]](propagator: T)(using
+        more: Session
     ): PIdOf[T]
 
-    final def addPropagator[T <: Propagator[Ability]](propagator: T)(using
-        Ability
+    final def addPropagator[T <: Propagator[Session]](propagator: T)(using
+        Session
     ): Unit = {
       val _ = addPropagatorGetPid(propagator)
     }
 
-    def tick(using Ability): Unit
+    def tick(using Session): Unit
 
-    def stable: Boolean
-
-    def tickAll(using more: Ability): Unit =
+    def tickAll(using more: Session): Unit =
       while (!stable)
         tick(using more)
 
     /** make a best guess for those cells */
-    def zonk(cells: Vector[CIdOf[Cell[?]]])(using more: Ability): Unit
+    def zonk(cells: Vector[CIdOf[Cell[?]]])(using more: Session): Unit
 
     def toId[T](x: CellIdOr[T]): CIdOf[Cell[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[Cell[T]]]

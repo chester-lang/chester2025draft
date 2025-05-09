@@ -137,9 +137,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   )(using Context)
       extends Propagator[TyckSession] {
 
-    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CellIdAny] = Set(functionTy)
-    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CellIdAny] = Set(resultTy, functionCallTerm)
-    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CellIdAny] = Set(resultTy, functionCallTerm)
+    override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(functionTy)
+    override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(resultTy, functionCallTerm)
+    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(resultTy, functionCallTerm)
 
     override def run(using state: StateOps[TyckSession], ck: TyckSession): Boolean = {
 
@@ -292,9 +292,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       callerEffects: CIdOf[EffectsCell],
       expr: Expr
   ) extends Propagator[TyckSession] {
-    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(effectsCell)
-    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(callerEffects)
-    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set.empty
+    override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(effectsCell)
+    override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(callerEffects)
+    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set.empty
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean =
       state.readStable(effectsCell) match {

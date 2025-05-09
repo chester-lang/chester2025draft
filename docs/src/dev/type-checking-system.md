@@ -66,9 +66,9 @@ This reactive network allows complex type relationships (like union types) to be
    - Base trait defining propagator behavior:
      ```scala
      trait Propagator[Ability] {
-       def readingCells: Set[CIdOf[Cell[?]]]
-       def writingCells: Set[CIdOf[Cell[?]]]
-       def zonkingCells: Set[CIdOf[Cell[?]]]
+       def readingCells: Set[CellIdAny]
+       def writingCells: Set[CellIdAny]
+       def zonkingCells: Set[CellIdAny]
        def run(using state: StateAbility[Ability], more: Ability): Boolean
        def naiveZonk(needed: Vector[CellIdAny]): ZonkResult
      }

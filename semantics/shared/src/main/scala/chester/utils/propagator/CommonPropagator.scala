@@ -4,9 +4,9 @@ import cats.implicits.*
 trait CommonPropagator[TyckSession] extends ProvideCellId {
 
   case class MergeSimple[T](a: CellId[T], b: CellId[T]) extends Propagator[TyckSession] {
-    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(a, b)
-    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(a, b)
-    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(a, b)
+    override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
+    override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
+    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean = {
       val aVal = state.readStable(a)
@@ -56,9 +56,9 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
       f: Seq[T] => U,
       result: CellId[U]
   ) extends Propagator[TyckSession] {
-    override def readingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = xs.toSet
-    override def writingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(result)
-    override def zonkingCells(using StateOps[TyckSession], TyckSession): Set[CIdOf[Cell[?]]] = Set(result)
+    override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = xs.toSet
+    override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(result)
+    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(result)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean =
       xs.traverse(state.readStable).map(f).exists { result =>
