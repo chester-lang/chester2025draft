@@ -189,7 +189,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
               new Position(parseError.sourcePos.get.range.end.line.asInt, parseError.sourcePos.get.range.end.column.utf16.asInt)
             )
           catch {
-            case e: NoSuchElementException => ???
+            case _: NoSuchElementException => ???
           }
         val diagnostic = new Diagnostic(
           range,
@@ -228,14 +228,14 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
     val severity = problem match {
       case _: TyckWarning => DiagnosticSeverity.Warning
-      case _: TyckError => DiagnosticSeverity.Error
-      case _ => ???
+      case _: TyckError   => DiagnosticSeverity.Error
+      case _              => ???
     }
 
     new Diagnostic(
       range,
       problem.getMessage,
-      severity, 
+      severity,
       "ChesterLanguageServer"
     )
   }

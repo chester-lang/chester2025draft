@@ -683,7 +683,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
 
             parseKeywordArguments().map(finalTelescope => Keyword(keyName, finalTelescope, createMeta(Some(sourcePos), Some(idSourcePos))))
 
-          case Right(token) =>
+          case Right(_) =>
             Left(expectedError(t"identifier", this.state.current))
 
           case Left(err) => Left(err)
@@ -853,7 +853,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
         // this.state is already set to current
         parseList()
 
-      case Right(token) =>
+      case Right(_) =>
         Left(expectedError(t"an atom", this.state.current))
     }
   }
@@ -1230,12 +1230,12 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
               val meta = createMeta(Some(startPosForMeta), Some(endPos))
               advance() // Consume the closing brace
               Right(Block(statements, result, meta))
-            case Right(t)  => Left(expectedError(t"'}' at end of block", this.state.current))
+            case Right(_)  => Left(expectedError(t"'}' at end of block", this.state.current))
             case Left(err) => Left(err)
           }
         }
 
-      case Right(t) =>
+      case Right(_) =>
         Left(expectedError(t"'{' at start of block", this.state.current))
       case Left(err) =>
         Left(err)
@@ -1277,7 +1277,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
         advance()
         skipComments()
         parseField(symbolLiteral, symSourcePos).flatMap(clause => checkAfterField().flatMap(_ => parseFields(clauses :+ clause)))
-      case Right(t) =>
+      case Right(_) =>
         Left(expectedError(t"identifier, string literal, symbol literal or '}' in object", this.state.current))
       case Left(err) => Left(err)
     }
@@ -1305,7 +1305,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             Left(ParseError(t"Unexpected operator in object field: ${id.text}", Some(keySourcePos)))
           }
         }
-      case Right(t)  => Left(expectedError(t"operator in object field", this.state.current))
+      case Right(_)  => Left(expectedError(t"operator in object field", this.state.current))
       case Left(err) => Left(err)
     }
 
@@ -1316,7 +1316,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
         skipComments()
         Right(())
       case Right(Token.RBrace(_)) => Right(())
-      case Right(t)               => Left(expectedError(t"',' or '}' after object field", this.state.current))
+      case Right(_)               => Left(expectedError(t"',' or '}' after object field", this.state.current))
       case Left(err)              => Left(err)
     }
 
@@ -1345,13 +1345,13 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
               // Advance past the closing brace
               advance()
               Right(ObjectExpr(clauses, objectMeta))
-            case Right(t) =>
+            case Right(_) =>
               Left(expectedError(t"'}' at end of object", this.state.current))
             case Left(err) =>
               Left(err)
           }
         }
-      case Right(t) =>
+      case Right(_) =>
         Left(expectedError(t"'{' at start of object", this.state.current))
       case Left(err) =>
         Left(err)

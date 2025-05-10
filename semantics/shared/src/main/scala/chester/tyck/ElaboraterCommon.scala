@@ -110,8 +110,8 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
     Meta(newType)
 
   def newEffects(using
-                 _ck: TyckOps,
-                 state: StateOps[TyckOps]
+      _ck: TyckOps,
+      state: StateOps[TyckOps]
   ): CIdOf[EffectsCell] = {
     val cell = state.addCell(DynamicEffectsCell())
     cell

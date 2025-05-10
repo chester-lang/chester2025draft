@@ -23,10 +23,9 @@ trait Tree[A <: Tree[A]] extends Any {
     }
   )
   final def descent2(f: TreeMap[A]): ThisTree = descent(
-    { x =>
-      //implicit val ev33: x.ThisTree <:< A = ev3(using x)
-      f.use(x)
-    },
+    x =>
+      // implicit val ev33: x.ThisTree <:< A = ev3(using x)
+      f.use(x),
     f
   ).asInstanceOf[ThisTree]
 

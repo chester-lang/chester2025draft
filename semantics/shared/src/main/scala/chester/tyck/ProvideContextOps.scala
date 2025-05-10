@@ -10,7 +10,7 @@ trait ProvideContextOps extends ProvideCellId with ElaboraterBase {
 
   implicit class TyAndValnuoOpsss(ignored: TyAndVal.type) {
     def create(ty: Term, value: Term)(using
-                                      StateOps[TyckOps]
+        StateOps[TyckOps]
     ): TyAndVal =
       new TyAndVal(toTerm(literal(ty)), toTerm(literal(value)))
 

@@ -12,10 +12,10 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-    ctx: Context,
-    parameter: SemanticCollector,
-    ck: TyckOps,
-    state: StateOps[TyckOps]
+      ctx: Context,
+      parameter: SemanticCollector,
+      ck: TyckOps,
+      state: StateOps[TyckOps]
   ): Term
 
   /** Safely fills a cell with a value, handling the case where the cell already has a value. This prevents "requirement failed" exceptions when
@@ -25,8 +25,8 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
       cell: CellId[T],
       value: T
   )(using
-    state: StateOps[TyckOps],
-    _more: TyckOps
+      state: StateOps[TyckOps],
+      _more: TyckOps
   ): Unit = {
     // Check if the cell already has a value before attempting to fill it
     val existingValue = state.readUnstable(cell)
@@ -42,10 +42,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-    ctx: Context,
-    parameter: SemanticCollector,
-    ck: TyckOps,
-    state: StateOps[TyckOps]
+      ctx: Context,
+      parameter: SemanticCollector,
+      ck: TyckOps,
+      state: StateOps[TyckOps]
   ): Term = {
     // Check if the function refers to a record definition
     val functionExpr = expr.function
@@ -77,10 +77,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       ty: CellId[Term],
       effects: CIdOf[EffectsCell]
   )(using
-    ctx: Context,
-    _parameter: SemanticCollector,
-    _ck: TyckOps,
-    state: StateOps[TyckOps]
+      ctx: Context,
+      _parameter: SemanticCollector,
+      _ck: TyckOps,
+      state: StateOps[TyckOps]
   ): Term = {
     // Elaborate the function expression to get its term and type
     val functionTy = newType
@@ -146,7 +146,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       val readFunctionTy = state.readStable(functionTy)
 
       readFunctionTy match {
-        case Some(ft @ FunctionType(telescopes, retTy, functionEffects, _)) =>
+        case Some(ft @ FunctionType(_, retTy, functionEffects, _)) =>
 
           // Unify the telescopes, handling implicit parameters
           val adjustedCallings = unifyTelescopes(ft.telescopes, callings, cause)
@@ -215,8 +215,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         actual: Vector[Calling],
         cause: Expr
     )(using
-      state: StateOps[TyckOps],
-      ck: TyckOps
+        state: StateOps[TyckOps],
+        ck: TyckOps
     ): Vector[Calling] = {
       var actualIndex = 0
       var adjustedCallings: Vector[Calling] = Vector.empty
@@ -261,8 +261,8 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         actualArgs: Seq[CallingArgTerm],
         cause: Expr
     )(using
-      state: StateOps[TyckOps],
-      ck: TyckOps
+        state: StateOps[TyckOps],
+        ck: TyckOps
     ): Unit = {
       // Check that the number of arguments matches
       if (expectedArgs.length != actualArgs.length) {

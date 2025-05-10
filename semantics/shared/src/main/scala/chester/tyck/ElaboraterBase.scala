@@ -98,8 +98,8 @@ trait ElaboraterBase extends CommonPropagator[TyckOps] {
     *   The second term to merge
     */
   def merge(a: CellIdOr[Term], b: CellIdOr[Term])(using
-                                                  state: StateOps[TyckOps],
-                                                  ab: TyckOps
+      state: StateOps[TyckOps],
+      ab: TyckOps
   ): Unit = {
     if (a == b) return
     val t1 = toTerm(a)

@@ -1,7 +1,7 @@
 package chester.readerv2
 
 import chester.error.SourcePos
-import chester.i18n._
+import chester.i18n.*
 
 case class StringChar(text: String, sourcePos: SourcePos)
 
@@ -69,16 +69,16 @@ object Token {
   }
   case class Identifier(parts: Vector[StringChar], sourcePos: SourcePos) extends Token {
     override def tokenType: String = t"identifier"
-    
+
     /** Returns the text representation of this identifier */
     def toStr: String = parts.map(_.text).mkString
-    
+
     /** Returns true if this identifier represents an operator according to the language rules */
     def isOperator: Boolean = {
       if (parts.isEmpty) return false
       chester.syntax.IdentifierRules.strIsOperator(toStr)
     }
-    
+
     /** Returns the text representation of this identifier */
     def text: String = toStr
   }
