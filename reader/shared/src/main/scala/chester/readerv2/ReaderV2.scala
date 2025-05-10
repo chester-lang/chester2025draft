@@ -704,16 +704,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             this.state = originalState // Restore the state from the beginning of parseAtom
 
             // Now, try parsing as a block. parseBlock also expects to start *at* the LBrace.
-            parseBlock() match {
-              case Right(blockExpr) =>
-                // Block parsing consumes tokens and advances state.
-                Right(blockExpr) // Return the successfully parsed block
-              case Left(blockError) =>
-                // If both fail, report the block parsing error as it's the fallback.
-                // Alternatively, could try to report a more generic error or the object error?
-                // Reporting block error seems more consistent with fallback logic.
-                Left(blockError)
-            }
+            parseBlock()
         }
 
       case Right(Token.LParen(_)) =>
