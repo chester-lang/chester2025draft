@@ -1,12 +1,9 @@
 package chester.utils
 
-import java.util.Objects
-
-class Parameter[T](default: Option[T] = None) {
+final class Parameter[T](default: Option[T] = None) {
   private var tl: Option[T] = default
 
   def withValue[U](value: T)(block: => U): U = {
-    Objects.requireNonNull(value)
     val previousValue = tl
     try {
       tl = Some(value)
@@ -17,14 +14,6 @@ class Parameter[T](default: Option[T] = None) {
   /** Gets the current value, throwing if none is set (neither scoped nor default).
     */
   def get: T = tl.getOrElse(throw new IllegalStateException("No value set for Parameter"))
-
-  /** Gets the current value, or returns the provided default if none is set.
-    */
-  def getOrElse(defaultVal: => T): T = tl.getOrElse(defaultVal)
-
-  /** Gets the current value as an Option.
-    */
-  def getOption: Option[T] = tl
 }
 
 object Parameter {
