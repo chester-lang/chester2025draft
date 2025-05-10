@@ -13,8 +13,6 @@ open trait Constrain(val kind: Kind) {
   def show: Vector[Term]
 }
 
-case class CellId[T <: Term]()
-
 open trait Handler(val kind: Kind) {
   def run: Unit
   def zonk(level: ZonkLevel): Unit
