@@ -51,6 +51,7 @@ case class WaitingConstraint(vars: Vector[CellId[?]], x: Constraint) {
 }
 
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
+  given SolverOps = this
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
   private val failedConstraints = new AtomicReference(Vector[Constraint]())

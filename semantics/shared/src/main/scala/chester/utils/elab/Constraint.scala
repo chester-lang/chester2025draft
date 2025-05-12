@@ -21,8 +21,8 @@ enum Result {
 
 
 open trait Handler[Ops](val kind: Kind) {
-  def run(constant: kind.ConstraintType)(using Ops): Result = ???
-  def zonk(constant: kind.ConstraintType, level: ZonkLevel)(using Ops): Unit = ()
+  def run(constant: kind.ConstraintType)(using Ops, SolverOps): Result = ???
+  def zonk(constant: kind.ConstraintType, level: ZonkLevel)(using Ops, SolverOps): Unit = ()
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
