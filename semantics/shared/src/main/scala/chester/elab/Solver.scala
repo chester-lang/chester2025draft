@@ -69,6 +69,13 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
     return false
   }
 
+  // normally run when quiescent and need to be safe run at any time
+  def tick(): Unit = {
+    // in case of race condition
+    val resubmitDelayed = delayedConstraints.getAndSet(Vector.empty)
+    addConstraints(resubmitDelayed.map(_.x))
+  }
+
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
