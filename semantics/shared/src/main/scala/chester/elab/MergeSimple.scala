@@ -7,6 +7,9 @@ case object MergeSimple extends Kind {
 }
 
 case class MergeSimple[T](a: CellId[T], b: CellId[T]) extends Constrain(MergeSimple) {
-
   override def show: Vector[Term] = ???
+}
+
+case object MergeSimpleHandler extends Handler(MergeSimple) {
+  
 }

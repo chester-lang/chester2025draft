@@ -14,8 +14,8 @@ open trait Constrain(val kind: Kind) {
 }
 
 open trait Handler(val kind: Kind) {
-  def run: Unit
-  def zonk(level: ZonkLevel): Unit
+  def run: Unit = ???
+  def zonk(level: ZonkLevel): Unit = ???
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
