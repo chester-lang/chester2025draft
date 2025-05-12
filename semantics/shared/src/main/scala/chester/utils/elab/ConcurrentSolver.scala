@@ -18,7 +18,7 @@ class ConcurrentCellId[T](
 
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
 
-  implicit inline def thereAreAllConcurrent[T](x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
+  implicit inline def thereAreAllConcurrent[T](inline x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
   override def hasStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasStableValue
 
   override def noStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().noStableValue
