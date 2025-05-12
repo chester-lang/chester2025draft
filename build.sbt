@@ -575,10 +575,10 @@ lazy val utils = useSpire(
         "com.lihaoyi" %%% "fastparse" % "3.1.1",
         // "com.lihaoyi" %%% "scalatags" % "0.13.1",
         // "com.github.rssh" %%% "dotty-cps-async" % "0.9.23",
-        "io.getkyo" %%% "kyo-prelude" % "0.18.0",
-        "io.getkyo" %%% "kyo-core" % "0.18.0",
-        "io.getkyo" %%% "kyo-direct" % "0.18.0",
-        "io.getkyo" %%% "kyo-data" % "0.18.0",
+        "io.getkyo" %%% "kyo-prelude" % "0.19.0",
+        "io.getkyo" %%% "kyo-core" % "0.19.0",
+        "io.getkyo" %%% "kyo-direct" % "0.19.0",
+        "io.getkyo" %%% "kyo-data" % "0.19.0",
         "org.scala-graph" %%% "graph-core" % "2.0.3",
         "com.outr" %%% "scribe" % "3.16.1",
         "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.35.3",
@@ -869,7 +869,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.29.0"
+val jlineVersion = "3.30.0"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
