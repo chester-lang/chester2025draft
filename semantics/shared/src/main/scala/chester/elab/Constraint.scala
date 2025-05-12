@@ -16,7 +16,7 @@ open trait Constraint(val kind: Kind) {
 enum Result {
   case Done
   case Failed
-  case Waiting(vars: Seq[CellId[?]])
+  case Waiting(vars: Vector[CellId[?]])
 }
 
 

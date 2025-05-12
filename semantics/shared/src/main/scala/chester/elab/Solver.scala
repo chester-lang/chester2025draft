@@ -23,15 +23,12 @@ final class MutHandlerConf(hs: Handler*) extends HandlerConf {
 
 val DefaultSolverConf = new MutHandlerConf(MergeSimpleHandler)
 
-class CellHere[T](
+class CellId[T](
     val uniqId: Uniqid,
     initialValue: Cell[T]
 ) {
   val storeRef = new AtomicReference[Cell[T]](initialValue)
 }
-opaque type CellId[T] = CellHere[T]
-
-private implicit inline def notOpaque[T](inline x: CellId[T]): CellHere[T] = x.asInstanceOf[CellHere[T]]
 
 private trait BasicSolverOps extends SolverOps {
 
@@ -49,9 +46,12 @@ private trait BasicSolverOps extends SolverOps {
 
 }
 
+case class WaitingConstraint(vars: Vector[CellId[?]],x: Constraint)
+
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicSolverOps {
   private val pool = new ForkJoinPool()
-  private val delayedConstraints = new AtomicReference(Vector[Constraint]())
+  private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
+  private val failedConstraints = new AtomicReference(Vector[Constraint]())
   //implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
   override def stable: Boolean = {
@@ -69,7 +69,15 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
     pool.execute(() => {
       val handler = conf.getHandler(x.kind).getOrElse{throw new IllegalStateException("no handler")}
       val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
-      // TODO: more logic
+      result match {
+        case Result.Done => ()
+        case Result.Failed => {
+          val _ = failedConstraints.getAndUpdate(_.appended(x))}
+        case Result.Waiting(vars) => {
+          val delayed = WaitingConstraint(vars,x)
+          val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+        }
+      }
     })
   }
 }
