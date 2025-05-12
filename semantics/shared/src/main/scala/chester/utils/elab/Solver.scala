@@ -61,11 +61,19 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
     if (delayedConstraints.get().nonEmpty) return false
     if (pool.isShutdown) return true
     if (pool.isQuiescent) {
-      val tasks = pool.shutdownNow()
-      assume(tasks.isEmpty)
+      finish()
       return true
     }
     return false
+  }
+
+  private def finish(): Unit = {
+    assume(pool.isQuiescent)
+    assume(delayedConstraints.get().isEmpty)
+    assume(pool.isQuiescent)
+    assume(delayedConstraints.get().isEmpty)
+    val tasks = pool.shutdownNow()
+    assume(tasks.isEmpty)
   }
 
   // normally run when quiescent and need to be safe run at any time
@@ -87,7 +95,9 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
     }
     val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
     assume(pool.isQuiescent)
-    if(delayedConstraints.get().isEmpty) return
+    if(delayedConstraints.get().isEmpty) {
+      return finish()
+    }
     for(level <- ZonkLevel.Values) {
       ???
     }
