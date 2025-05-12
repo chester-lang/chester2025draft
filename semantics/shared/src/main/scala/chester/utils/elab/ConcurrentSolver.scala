@@ -14,8 +14,6 @@ class ConcurrentCellId[T](
                            initialValue: Cell[T]
                          ) extends CellId[T] {
   val storeRef = new AtomicReference[Cell[T]](initialValue)
-
-  override def tag: String = Integer.toHexString(hashCode)
 }
 
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {

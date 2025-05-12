@@ -1,7 +1,9 @@
 package chester.utils.elab
 
 open trait CellId[T] {
-  def tag: String
+  def tag: String = Integer.toHexString(hashCode)
+
+  final override def toString: String = s"CellId@${tag}" 
 }
 
 // Note that commit is equal or lower than actual commit
