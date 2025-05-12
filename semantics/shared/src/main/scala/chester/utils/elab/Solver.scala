@@ -6,6 +6,7 @@ import java.util.concurrent.{ForkJoinPool, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import scala.collection.concurrent.TrieMap
+import scala.util.boundary
 
 trait HandlerConf[Ops] {
   def getHandler(kind: Kind): Option[Handler[Ops]]
@@ -57,6 +58,8 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
   private val failedConstraints = new AtomicReference(Vector[Constraint]())
   // implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
+  private def entropy(): Int = delayedConstraints.get().size
+
   override def stable: Boolean = {
     if (delayedConstraints.get().nonEmpty) return false
     if (pool.isShutdown) return true
@@ -84,26 +87,37 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
   }
   private def inPoolTickStage1(zonkLevel: ZonkLevel): Unit = {
     val delayed = delayedConstraints.getAndSet(Vector.empty)
-    delayed.foreach(x=>doZonk(x.x, zonkLevel))
+    delayed.foreach(x => doZonk(x.x, zonkLevel))
   }
-  def run(): Unit = {
-    assume(!pool.isShutdown)
-    assume(pool.isQuiescent)
-    pool.execute {
-      () =>
-        inPoolTickStage0()
-    }
-    val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
-    assume(pool.isQuiescent)
-    if(delayedConstraints.get().isEmpty) {
-      return finish()
-    }
-    for(level <- ZonkLevel.Values) {
-      ???
+  def run(): Unit = boundary[Unit] { outer ?=>
+    while (true) boundary[Unit] { inner ?=>
+      assume(!pool.isShutdown)
+      assume(pool.isQuiescent)
+      pool.execute(() => inPoolTickStage0())
+      val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
+      assume(pool.isQuiescent)
+      if (delayedConstraints.get().isEmpty) {
+        finish()
+        boundary.break()(using outer)
+      }
+      for (level <- ZonkLevel.Values) {
+        val entropyBefore = entropy()
+        assume(!pool.isShutdown)
+        assume(pool.isQuiescent)
+        pool.execute(() => inPoolTickStage1(level))
+        val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
+        assume(pool.isQuiescent)
+        if (delayedConstraints.get().isEmpty) {
+          finish()
+          boundary.break()(using outer)
+        }
+        if (entropy() != entropyBefore) boundary.break()(using inner)
+      }
+      throw new IllegalStateException("cannot finish")
     }
   }
 
-  private def  doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =
+  private def doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
       handler.zonk(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
@@ -140,7 +154,7 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
       if (value == read.get) return
       throw new IllegalStateException("cannot overwrite stable value")
     }
-    if(!id.storeRef.compareAndSet(current, current.fill(value))) {
+    if (!id.storeRef.compareAndSet(current, current.fill(value))) {
       return fill(id, value)
     }
     // Note that here is a possible race condition that delayed constraints might haven't been added to delayedConstraints
