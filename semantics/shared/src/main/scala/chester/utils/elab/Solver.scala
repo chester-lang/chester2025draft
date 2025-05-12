@@ -58,7 +58,7 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
   private val failedConstraints = new AtomicReference(Vector[Constraint]())
   // implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-  private def entropy(): Int = delayedConstraints.get().size
+  private def entropy() = delayedConstraints.get().map(_.toString).sorted.toVector
 
   override def stable: Boolean = {
     if (delayedConstraints.get().nonEmpty) return false
