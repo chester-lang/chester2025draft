@@ -2,6 +2,7 @@ package chester.elab
 
 import chester.uniqid.Uniqid
 
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.concurrent.TrieMap
 
@@ -48,11 +49,29 @@ private trait BasicSolverOps extends SolverOps {
 
 }
 
-final class ConcurrentSolver[Ops](val conf: HandlerConf) extends BasicSolverOps {
+final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicSolverOps {
+  private val pool = new ForkJoinPool()
+  private val delayedConstraints = new AtomicReference(Vector[Constraint]())
+  //implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-  override def stable: Boolean = ???
+  override def stable: Boolean = {
+    if(delayedConstraints.get().nonEmpty) return false
+    if(pool.isShutdown) return true
+    if(pool.isQuiescent) {
+      val tasks = pool.shutdownNow()
+      assume(tasks.isEmpty)
+      return true
+    }
+    return false
+  }
 
-  override def addConstraint(x: Constraint): Unit = ???
+  override def addConstraint(x: Constraint): Unit = {
+    pool.execute(() => {
+      val handler = conf.getHandler(x.kind).getOrElse{throw new IllegalStateException("no handler")}
+      handler.run(x.asInstanceOf[handler.kind.ConstraintType])
+      // TODO: more logic
+    })
+  }
 }
 
 final class SinglethreadSolver[Ops] {
@@ -68,6 +87,6 @@ trait SolverOps {
   def readUnstable[U](id: CellId[U]): Option[U]
 
   def stable: Boolean
-  
+
   def addConstraint(x: Constraint): Unit
 }

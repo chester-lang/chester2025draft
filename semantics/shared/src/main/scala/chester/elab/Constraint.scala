@@ -14,7 +14,7 @@ open trait Constraint(val kind: Kind) {
 }
 
 open trait Handler(val kind: Kind) {
-  def run: Unit = ???
+  def run(constant: kind.ConstraintType): Unit = ???
   def zonk(level: ZonkLevel): Unit = ???
 }
 
