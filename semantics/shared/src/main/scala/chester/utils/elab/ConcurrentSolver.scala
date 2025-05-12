@@ -19,21 +19,12 @@ object ConcurrentSolver extends SolverFactory {
   override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ConcurrentSolver(conf)
 }
 
-final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
+final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
   implicit inline def thereAreAllConcurrent[T](inline x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
-  override def hasStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasStableValue
 
-  override def noStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().noStableValue
-
-  override def readStable[U](id: CellId[U]): Option[U] = id.storeRef.get().readStable
-
-  override def hasSomeValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasSomeValue
-
-  override def noAnyValue[T](id: CellId[T]): Boolean = id.storeRef.get().noAnyValue
-
-  override def readUnstable[U](id: CellId[U]): Option[U] = id.storeRef.get().readUnstable
-
+  override protected def peakCell[T](id: CellId[T]): Cell[T] = id.storeRef.get()
+  
   given SolverOps = this
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
@@ -129,15 +120,14 @@ final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extend
     }
 
   @tailrec
-  override def fill[T](id: CellId[T], value: T): Unit = {
+  override protected def updateCell[T](id: CellId[T], f: Cell[T] => Cell[T]): Unit  = {
     val current = id.storeRef.get()
-    val read = current.readStable
-    if (read.isDefined) {
-      if (value == read.get) return
-      throw new IllegalStateException("cannot overwrite stable value")
+    val updated = f(current)
+    if (current == updated) {
+      return
     }
-    if (!id.storeRef.compareAndSet(current, current.fill(value))) {
-      return fill(id, value)
+    if (!id.storeRef.compareAndSet(current, updated)) {
+      return updateCell(id, f)
     }
     // Note that here is a possible race condition that delayed constraints might haven't been added to delayedConstraints
     val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))

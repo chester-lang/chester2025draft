@@ -1,5 +1,7 @@
 package chester.utils.elab
 
+import chester.utils.cell.Cell
+
 open trait CellId[T] {
   def tag: String = Integer.toHexString(hashCode)
 
@@ -26,6 +28,27 @@ trait SolverOps {
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
 
   def fill[T](id: CellId[T], value: T): Unit
+}
+
+trait BasicSolverOps extends SolverOps {
+  protected def peakCell[T](id: CellId[T]): Cell[T]
+  protected def updateCell[T](id: CellId[T], f: Cell[T]=>Cell[T]):Unit
+
+
+  override def hasStableValue[T](id: CellId[T]): Boolean = peakCell(id).hasStableValue
+
+  override def noStableValue[T](id: CellId[T]): Boolean = peakCell(id).noStableValue
+
+  override def readStable[U](id: CellId[U]): Option[U] = peakCell(id).readStable
+
+  override def hasSomeValue[T](id: CellId[T]): Boolean = peakCell(id).hasSomeValue
+
+  override def noAnyValue[T](id: CellId[T]): Boolean = peakCell(id).noAnyValue
+
+  override def readUnstable[U](id: CellId[U]): Option[U] = peakCell(id).readUnstable
+
+
+  override def fill[T](id: CellId[T], value: T): Unit = updateCell(id, _.fill(value))
 }
 
 
