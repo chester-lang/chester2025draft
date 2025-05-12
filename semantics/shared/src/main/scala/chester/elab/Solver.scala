@@ -22,7 +22,7 @@ final class MutHandlerConf(hs: Handler*) extends HandlerConf {
 
 val DefaultSolverConf = new MutHandlerConf(MergeSimpleHandler)
 
-class CellHere[+T](
+class CellHere[T](
     val uniqId: Uniqid,
     initialValue: Cell[T]
 ) {
@@ -30,7 +30,7 @@ class CellHere[+T](
 }
 opaque type CellId[T] = CellHere[T]
 
-private implicit inline def notOpaque[T](inline x: CellId[T]): CellHere[T] = x.asInstanceOf[CellHere[Cell[T]]]
+private implicit inline def notOpaque[T](inline x: CellId[T]): CellHere[T] = x.asInstanceOf[CellHere[T]]
 
 private trait BasicSolverOps extends SolverOps {
 
