@@ -3,7 +3,7 @@ package chester.elab
 import chester.uniqid.Uniqid
 
 import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
+import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import scala.collection.concurrent.TrieMap
 
@@ -48,16 +48,14 @@ private trait BasicSolverOps extends SolverOps {
 }
 
 // Note that commit is equal or lower than actual commit
-case class WaitingConstraint(commit: Int, vars: Vector[CellId[?]], x: Constraint) {
+case class WaitingConstraint(vars: Vector[CellId[?]], x: Constraint) {
   def related(x: CellId[?]): Boolean = vars.contains(x)
-  def needRun(c: Int, x: CellId[?]): Boolean = commit < c || related(x)
 }
 
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicSolverOps {
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
   private val failedConstraints = new AtomicReference(Vector[Constraint]())
-  private val commit = new AtomicInteger(0)
   // implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
   override def stable: Boolean = {
@@ -74,14 +72,13 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      val c = commit.get()
       val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
       result match {
         case Result.Done => ()
         case Result.Failed =>
           val _ = failedConstraints.getAndUpdate(_.appended(x))
         case Result.Waiting(vars) =>
-          val delayed = WaitingConstraint(c, vars, x)
+          val delayed = WaitingConstraint(vars, x)
           val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
       }
     }
@@ -97,9 +94,8 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
     if(!id.storeRef.compareAndSet(current, current.fill(value))) {
       return fill(id, value)
     }
-    val c = commit.incrementAndGet()
-    val prev = delayedConstraints.getAndUpdate(_.filterNot(_.needRun(c, id)))
-    val related = prev.filter(_.needRun(c, id)).map(_.x)
+    val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))
+    val related = prev.filter(_.related(id)).map(_.x)
     addConstraints(related)
   }
 }
