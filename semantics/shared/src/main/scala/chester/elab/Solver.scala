@@ -48,9 +48,11 @@ private trait BasicSolverOps extends SolverOps {
 
 }
 
-final class ConcurrentSolver[Ops](val conf: HandlerConf,  initConstrains: Vector[Constrain] = Vector()) extends BasicSolverOps {
+final class ConcurrentSolver[Ops](val conf: HandlerConf) extends BasicSolverOps {
 
   override def stable: Boolean = ???
+
+  override def addConstraint(x: Constraint): Unit = ???
 }
 
 final class SinglethreadSolver[Ops] {
@@ -66,4 +68,6 @@ trait SolverOps {
   def readUnstable[U](id: CellId[U]): Option[U]
 
   def stable: Boolean
+  
+  def addConstraint(x: Constraint): Unit
 }

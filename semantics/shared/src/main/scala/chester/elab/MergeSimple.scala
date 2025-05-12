@@ -3,10 +3,10 @@ package chester.elab
 import chester.syntax.core.Term
 
 case object MergeSimple extends Kind {
-  type ConstrainType = MergeSimple[?]
+  type ConstraintType = MergeSimple[?]
 }
 
-case class MergeSimple[T](a: CellId[T], b: CellId[T]) extends Constrain(MergeSimple) {
+case class MergeSimple[T](a: CellId[T], b: CellId[T]) extends Constraint(MergeSimple) {
   override def show: Vector[Term] = ???
 }
 

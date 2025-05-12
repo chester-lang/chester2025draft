@@ -5,11 +5,11 @@ import chester.syntax.core.Term
 /** implementations should be case object */
 open trait Kind {
   override def toString: String = super.toString
-  type ConstrainType <: Constrain
+  type ConstraintType <: Constraint
 }
 
 
-open trait Constrain(val kind: Kind) {
+open trait Constraint(val kind: Kind) {
   def show: Vector[Term]
 }
 
