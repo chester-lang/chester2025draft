@@ -70,11 +70,29 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
   }
 
   // normally run when quiescent and need to be safe run at any time
-  def tickStage0(): Unit = {
+  private def inPoolTickStage0(): Unit = {
     // in case of race condition
     val resubmitDelayed = delayedConstraints.getAndSet(Vector.empty)
     addConstraints(resubmitDelayed.map(_.x))
   }
+  private def inPoolTickStage1(): Unit = {
+    val delayed = delayedConstraints.getAndSet(Vector.empty)
+    
+  }
+
+  private def  doZonk(x: Constraint): Unit =
+    pool.execute { () =>
+      val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
+      val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
+      result match {
+        case Result.Done => ()
+        case Result.Failed =>
+          val _ = failedConstraints.getAndUpdate(_.appended(x))
+        case Result.Waiting(vars) =>
+          val delayed = WaitingConstraint(vars, x)
+          val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+      }
+    }
 
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
