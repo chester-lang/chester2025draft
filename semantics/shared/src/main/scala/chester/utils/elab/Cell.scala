@@ -1,4 +1,4 @@
-package chester.elab
+package chester.utils.elab
 
 trait Cell[T] {
   def default: Option[T] = None

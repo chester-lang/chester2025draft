@@ -1,4 +1,4 @@
-package chester.elab
+package chester.utils.elab
 
 import chester.uniqid.Uniqid
 
@@ -7,22 +7,20 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import scala.collection.concurrent.TrieMap
 
-trait HandlerConf {
-  def getHandler(kind: Kind): Option[Handler]
+trait HandlerConf[Ops] {
+  def getHandler(kind: Kind): Option[Handler[Ops]]
 }
 
-final class MutHandlerConf(hs: Handler*) extends HandlerConf {
-  private val store = TrieMap[Kind, Handler](hs.map(h => (h.kind, h))*)
+final class MutHandlerConf[Ops](hs: Handler[Ops]*) extends HandlerConf[Ops] {
+  private val store = TrieMap[Kind, Handler[Ops]](hs.map(h => (h.kind, h))*)
 
-  override def getHandler(kind: Kind): Option[Handler] = store.get(kind)
+  override def getHandler(kind: Kind): Option[Handler[Ops]] = store.get(kind)
 
-  def register(handler: Handler): Unit = {
+  def register(handler: Handler[Ops]): Unit = {
     val oldValue = store.putIfAbsent(handler.kind, handler)
     if (oldValue.isDefined) throw new IllegalStateException("already")
   }
 }
-
-val DefaultSolverConf = new MutHandlerConf(MergeSimpleHandler)
 
 class CellId[T](
     val uniqId: Uniqid,
@@ -52,7 +50,7 @@ case class WaitingConstraint(vars: Vector[CellId[?]], x: Constraint) {
   def related(x: CellId[?]): Boolean = vars.contains(x)
 }
 
-final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicSolverOps {
+final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
   private val failedConstraints = new AtomicReference(Vector[Constraint]())
@@ -78,6 +76,9 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
   private def inPoolTickStage1(zonkLevel: ZonkLevel): Unit = {
     val delayed = delayedConstraints.getAndSet(Vector.empty)
     delayed.foreach(x=>doZonk(x.x, zonkLevel))
+  }
+  def run(): Unit = {
+    ???
   }
 
   private def  doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =

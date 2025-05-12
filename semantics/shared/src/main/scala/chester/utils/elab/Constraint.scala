@@ -1,4 +1,4 @@
-package chester.elab
+package chester.utils.elab
 
 import chester.syntax.core.Term
 
@@ -20,9 +20,9 @@ enum Result {
 }
 
 
-open trait Handler(val kind: Kind) {
-  def run(constant: kind.ConstraintType): Result = ???
-  def zonk(constant: kind.ConstraintType, level: ZonkLevel): Unit = ()
+open trait Handler[Ops](val kind: Kind) {
+  def run(constant: kind.ConstraintType)(using Ops): Result = ???
+  def zonk(constant: kind.ConstraintType, level: ZonkLevel)(using Ops): Unit = ()
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
