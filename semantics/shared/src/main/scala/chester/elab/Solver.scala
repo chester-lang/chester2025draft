@@ -5,11 +5,11 @@ import chester.uniqid.Uniqid
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.concurrent.TrieMap
 
-trait SolverConf {
+trait HandlerConf {
   def getHandler(kind: Kind): Option[Handler]
 }
 
-final class MutSolverConf(hs: Handler*) extends SolverConf {
+final class MutHandlerConf(hs: Handler*) extends HandlerConf {
   private val store = TrieMap[Kind, Handler](hs.map(h => (h.kind, h))*)
 
   override def getHandler(kind: Kind): Option[Handler] = store.get(kind)
@@ -20,31 +20,49 @@ final class MutSolverConf(hs: Handler*) extends SolverConf {
   }
 }
 
-val DefaultSolverConf = new MutSolverConf(MergeSimpleHandler)
+val DefaultSolverConf = new MutHandlerConf(MergeSimpleHandler)
 
-class HoldCell[+T <: Cell[?]](
+class CellHere[+T](
     val uniqId: Uniqid,
-    initialValue: T
+    initialValue: Cell[T]
 ) {
-  val storeRef = new AtomicReference[Cell[?]](initialValue)
+  val storeRef = new AtomicReference[Cell[T]](initialValue)
 }
-type CellId[T] = HoldCell[Cell[T]]
+opaque type CellId[T] = CellHere[T]
 
-trait Solver {
+private implicit inline def notOpaque[T](inline x: CellId[T]): CellHere[T] = x.asInstanceOf[CellHere[Cell[T]]]
+
+private trait BasicSolverOps extends SolverOps {
+
+  override def hasStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasStableValue
+
+  override def noStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().noStableValue
+
+  override def readStable[U](id: CellId[U]): Option[U] = id.storeRef.get().readStable
+
+  override def hasSomeValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasSomeValue
+
+  override def noAnyValue[T](id: CellId[T]): Boolean = id.storeRef.get().noAnyValue
+
+  override def readUnstable[U](id: CellId[U]): Option[U] = id.storeRef.get().readUnstable
 
 }
 
-class DefaultSolver(val conf: MutSolverConf) extends Solver {
-  var constrains: Vector[Constrain] = Vector()
+final class ConcurrentSolver[Ops](val conf: HandlerConf,  initConstrains: Vector[Constrain] = Vector()) extends BasicSolverOps {
+
+  override def stable: Boolean = ???
+}
+
+final class SinglethreadSolver[Ops] {
 
 }
 
-trait SolverState {
+trait SolverOps {
   def hasStableValue[T](id: CellId[T]): Boolean
   def noStableValue[T](id: CellId[T]): Boolean
   def readStable[U](id: CellId[U]): Option[U]
-  def hasUnstableValue[T](id: CellId[T]): Boolean
-  def noUnstableValue[T](id: CellId[T]): Boolean
+  def hasSomeValue[T](id: CellId[T]): Boolean
+  def noAnyValue[T](id: CellId[T]): Boolean
   def readUnstable[U](id: CellId[U]): Option[U]
 
   def stable: Boolean
