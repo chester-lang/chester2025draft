@@ -47,7 +47,9 @@ private trait BasicSolverOps extends SolverOps {
 
 }
 
-case class WaitingConstraint(vars: Vector[CellId[?]], x: Constraint)
+case class WaitingConstraint(vars: Vector[CellId[?]], x: Constraint) {
+  def related(x: CellId[?]): Boolean = vars.contains(x)
+}
 
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicSolverOps {
   private val pool = new ForkJoinPool()
@@ -91,7 +93,9 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
     if(!id.storeRef.compareAndSet(current, current.fill(value))) {
       return fill(id, value)
     }
-    // TODO: trigger some delayed contrains
+    val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))
+    val related = prev.filter(_.related(id)).map(_.x)
+    addConstraints(related)
   }
 }
 
@@ -108,6 +112,7 @@ trait SolverOps {
   def stable: Boolean
 
   def addConstraint(x: Constraint): Unit
+  def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
 
   def fill[T](id: CellId[T], value: T): Unit
 }
