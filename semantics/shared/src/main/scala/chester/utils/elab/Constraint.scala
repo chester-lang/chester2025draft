@@ -26,8 +26,11 @@ open trait Handler[Ops](val kind: Kind) {
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
-  case Least
-  case Upper
+  case First
+  case ZonkEverything
+}
+object ZonkLevel {
+  val Values: Vector[ZonkLevel] = ZonkLevel.values.toVector.sortBy(_.precedence)
 }
 extension (x: ZonkLevel) {
   // depend on this assumption: the first one should be 0

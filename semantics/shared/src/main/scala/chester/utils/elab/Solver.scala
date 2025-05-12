@@ -2,7 +2,7 @@ package chester.utils.elab
 
 import chester.uniqid.Uniqid
 
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.{ForkJoinPool, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import scala.collection.concurrent.TrieMap
@@ -79,7 +79,18 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
     delayed.foreach(x=>doZonk(x.x, zonkLevel))
   }
   def run(): Unit = {
-    ???
+    assume(!pool.isShutdown)
+    assume(pool.isQuiescent)
+    pool.execute {
+      () =>
+        inPoolTickStage0()
+    }
+    val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
+    assume(pool.isQuiescent)
+    if(delayedConstraints.get().isEmpty) return
+    for(level <- ZonkLevel.Values) {
+      ???
+    }
   }
 
   private def  doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =
