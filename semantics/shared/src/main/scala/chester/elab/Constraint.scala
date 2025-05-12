@@ -13,9 +13,16 @@ open trait Constraint(val kind: Kind) {
   def show: Vector[Term]
 }
 
+enum Result {
+  case Done
+  case Failed
+  case Waiting(vars: Seq[CellId[?]])
+}
+
+
 open trait Handler(val kind: Kind) {
-  def run(constant: kind.ConstraintType): Unit = ???
-  def zonk(level: ZonkLevel): Unit = ???
+  def run(constant: kind.ConstraintType): Result = ???
+  def zonk(level: ZonkLevel): Result = ???
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
