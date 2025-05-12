@@ -14,7 +14,7 @@ open trait CellRepr[T, +U <: Cell[T]] extends CellIdAny {
 
 type CellId[T] = CellRepr[T, Cell[T]]
 
-// Note that commit is equal or lower than actual commit
+// Note that the commit is equal or lower than the actual commit
 case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
   def related(x: CellIdAny): Boolean = vars.contains(x)
 }
