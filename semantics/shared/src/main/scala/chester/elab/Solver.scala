@@ -68,7 +68,7 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
   override def addConstraint(x: Constraint): Unit = {
     pool.execute(() => {
       val handler = conf.getHandler(x.kind).getOrElse{throw new IllegalStateException("no handler")}
-      handler.run(x.asInstanceOf[handler.kind.ConstraintType])
+      val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
       // TODO: more logic
     })
   }
