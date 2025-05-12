@@ -8,7 +8,6 @@ open trait Kind {
   type ConstraintType <: Constraint
 }
 
-
 open trait Constraint(val kind: Kind) {
   def show: Vector[Term]
 }
@@ -19,10 +18,26 @@ enum Result {
   case Waiting(vars: Vector[CellId[?]])
 }
 
-
 open trait Handler[Ops](val kind: Kind) {
   def run(constant: kind.ConstraintType)(using Ops, SolverOps): Result = ???
   def zonk(constant: kind.ConstraintType, level: ZonkLevel)(using Ops, SolverOps): Unit = ()
+}
+
+import scala.collection.concurrent.TrieMap
+
+trait HandlerConf[Ops] {
+  def getHandler(kind: Kind): Option[Handler[Ops]]
+}
+
+final class MutHandlerConf[Ops](hs: Handler[Ops]*) extends HandlerConf[Ops] {
+  private val store = TrieMap[Kind, Handler[Ops]](hs.map(h => (h.kind, h))*)
+
+  override def getHandler(kind: Kind): Option[Handler[Ops]] = store.get(kind)
+
+  def register(handler: Handler[Ops]): Unit = {
+    val oldValue = store.putIfAbsent(handler.kind, handler)
+    if (oldValue.isDefined) throw new IllegalStateException("already")
+  }
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
