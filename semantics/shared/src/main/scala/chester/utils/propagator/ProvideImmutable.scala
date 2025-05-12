@@ -5,11 +5,11 @@ import chester.i18n.*
 import chester.utils.cell.*
 
 trait ProvideImmutable extends ProvideImpl {
-  type CIdOf[+T <: Cell[?]] = UniqidOf[T]
+  type CIdOf[+T <: CellRW[?,?]] = UniqidOf[T]
   type PIdOf[+T <: Propagator[?]] = UniqidOf[T]
   override def isCId(x: Any): Boolean = Uniqid.is(x)
 
-  type CellsState = Map[CIdOf[Cell[?]], Cell[?]]
+  type CellsState = Map[CIdOf[CellRW[?,?]], CellRW[?,?]]
   private val CellsStateEmpty: CellsState = Map.empty
   type PropagatorsState[Ability] =
     Map[PIdOf[Propagator[Ability]], Propagator[Ability]]
@@ -20,7 +20,7 @@ trait ProvideImmutable extends ProvideImpl {
   case class State[Ability](
       cells: CellsState = CellsStateEmpty,
       propagators: PropagatorsState[Ability] = PropagatorsStateEmpty[Ability],
-      didChanged: Vector[CIdOf[Cell[?]]] = Vector.empty
+      didChanged: Vector[CIdOf[CellRW[?,?]]] = Vector.empty
   ) {
     def stable: Boolean = didChanged.isEmpty
   }
@@ -31,10 +31,10 @@ trait ProvideImmutable extends ProvideImpl {
   class StateCells[Ability](var state: State[Ability] = State[Ability]()) extends StateOps[Ability] {
     override def stable: Boolean = state.stable
 
-    override def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T] =
+    override def readCell[T <: CellRW[?,?]](id: CIdOf[T]): Option[T] =
       state.cells.get(id).asInstanceOf[Option[T]]
 
-    override def update[T <: Cell[?]](id: CIdOf[T], f: T => T)(using
+    override def update[T <: CellRW[?,?]](id: CIdOf[T], f: T => T)(using
         Ability
     ): Unit =
       state.cells.get(id) match {
@@ -50,7 +50,7 @@ trait ProvideImmutable extends ProvideImpl {
           throw new IllegalArgumentException(t"Cell with id $id not found")
       }
 
-    override def addCell[T <: Cell[?]](cell: T): CIdOf[T] = {
+    override def addCell[T <: CellRW[?,?]](cell: T): CIdOf[T] = {
       val id = Uniqid.generate[T]
       state = state.copy(cells = state.cells.updated(id, cell))
       id
@@ -84,10 +84,10 @@ trait ProvideImmutable extends ProvideImpl {
     }
 
     override def zonk(
-        cells: Vector[CIdOf[Cell[?]]]
+        cells: Vector[CIdOf[CellRW[?,?]]]
     )(using more: Ability): Unit = {
       given StateOps[Ability] = this
-      var cellsNeeded = Vector.empty[CIdOf[Cell[?]]]
+      var cellsNeeded = Vector.empty[CIdOf[CellRW[?,?]]]
       while (true) {
         tickAll
         val cellsToZonk = if (cellsNeeded.nonEmpty) {

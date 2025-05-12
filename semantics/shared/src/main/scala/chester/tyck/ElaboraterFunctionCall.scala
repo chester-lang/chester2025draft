@@ -311,7 +311,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       }
 
     override def zonk(
-        needed: Vector[CIdOf[Cell[?]]]
+        needed: Vector[CIdOf[CellRW[?,?]]]
     )(using StateOps[TyckOps], TyckOps): ZonkResult =
       ZonkResult.Require(Vector(effectsCell))
   }

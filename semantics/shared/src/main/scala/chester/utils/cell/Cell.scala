@@ -1,14 +1,14 @@
 package chester.utils.cell
 
 import chester.i18n.*
-trait Cell[T] {
-  def default: Option[T] = None
+trait CellRW[+A,-B] {
+  def default: Option[A] = None
 
   /** stable means can only change once from None to a fixed Some value or always be a fixed value
    */
-  def readStable: Option[T]
+  def readStable: Option[A]
 
-  def readUnstable: Option[T] = readStable
+  def readUnstable: Option[A] = readStable
 
   def hasStableValue: Boolean = readStable.isDefined
 
@@ -19,8 +19,9 @@ trait Cell[T] {
   def noAnyValue: Boolean = !hasSomeValue
 
   /** fill an unstable cell */
-  def fill(newValue: T): Cell[T]
+  def fill(newValue: B): CellRW[A,B]
 }
+type Cell[A] = CellRW[A,A]
 
 trait SeqCell[T] extends UnstableCell[Seq[T]] with NoFill[Seq[T]] {
   def add(newValue: T): SeqCell[T]

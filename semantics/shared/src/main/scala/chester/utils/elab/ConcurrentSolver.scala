@@ -20,7 +20,7 @@ object ConcurrentSolver extends SolverFactory {
 
 final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
-  implicit inline def thereAreAllConcurrent[T, U <: Cell[T]](inline x: CellRepr[T,U]): ConcurrentCellRepr[T,U] = x.asInstanceOf[ConcurrentCellRepr[T,U]]
+  implicit inline def thereAreAllConcurrent[T, U <: CellRW[T,T]](inline x: CellRepr[T,U]): ConcurrentCellRepr[T,U] = x.asInstanceOf[ConcurrentCellRepr[T,U]]
 
   override protected def peakCell[T](id: CellId[T]): Cell[T] = id.storeRef.get()
 

@@ -54,8 +54,8 @@ This reactive network allows complex type relationships (like union types) to be
    - Hold type information and state
    - Track propagator connections:
      ```scala
-     class HoldCell[+T <: Cell[?]] {
-       var store: Cell[?]              // Current value
+     class HoldCell[+T <: CellRW[?,?]] {
+       var store: CellRW[?,?]              // Current value
        var didChange: Boolean          // Change tracking
        var readingPropagators: Vector[PIdOf[Propagator[?]]]
        var zonkingPropagators: Vector[PIdOf[Propagator[?]]]

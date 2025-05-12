@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.Cell
+import chester.utils.cell.{Cell, CellRW}
 
 sealed trait CellIdAny {
 
@@ -12,7 +12,7 @@ open trait CellRepr[T, +U <: Cell[T]] extends CellIdAny {
   final override def toString: String = s"CellId@${tag}" 
 }
 
-type CellId[T] = CellRepr[T, Cell[T]]
+type CellId[T] = CellRepr[T, CellRW[T,T]]
 
 // Note that the commit is equal or lower than the actual commit
 case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {

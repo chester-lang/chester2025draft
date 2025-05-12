@@ -10,11 +10,11 @@ import chester.utils.cell.*
 
 trait ProvideMultithread extends ProvideImpl {
 
-  class HoldCell[+T <: Cell[?]](
+  class HoldCell[+T <: CellRW[?,?]](
       val uniqId: UniqidOf[Impl[?]],
       initialValue: T
   ) {
-    private val storeRef = new AtomicReference[Cell[?]](initialValue)
+    private val storeRef = new AtomicReference[CellRW[?,?]](initialValue)
     val readingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
     val zonkingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
     private val didChangeRef = new AtomicBoolean(false)
@@ -23,8 +23,8 @@ trait ProvideMultithread extends ProvideImpl {
 
     /** Atomically updates the store */
     def compareAndSetStore(
-        expectedValue: Cell[?],
-        newValue: Cell[?]
+        expectedValue: CellRW[?,?],
+        newValue: CellRW[?,?]
     ): Boolean = {
       val result = storeRef.compareAndSet(expectedValue, newValue)
       if (result) {
@@ -40,15 +40,15 @@ trait ProvideMultithread extends ProvideImpl {
     def noStableValue: Boolean = store.noStableValue
   }
 
-  type CIdOf[+T <: Cell[?]] = HoldCell[T]
+  type CIdOf[+T <: CellRW[?,?]] = HoldCell[T]
   type PIdOf[+T <: Propagator[?]] = HoldPropagator[T]
   type CellId[T] = CIdOf[Cell[T]]
   type SeqId[T] = CIdOf[SeqCell[T]]
 
   def isCId(x: Any): Boolean = x.isInstanceOf[HoldCell[?]]
 
-  override def assumeCId(x: Any): CIdOf[Cell[?]] =
-    x.asInstanceOf[CIdOf[Cell[?]]]
+  override def assumeCId(x: Any): CIdOf[CellRW[?,?]] =
+    x.asInstanceOf[CIdOf[CellRW[?,?]]]
 
   class HoldPropagator[+T <: Propagator[?]](
       val uniqId: UniqidOf[Impl[?]],
@@ -124,12 +124,12 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def readCell[T <: Cell[?]](id: CIdOf[T]): Option[T] = {
+    override def readCell[T <: CellRW[?,?]](id: CIdOf[T]): Option[T] = {
       require(id.uniqId == uniqId)
       Some(id.store)
     }
 
-    override def update[T <: Cell[?]](id: CIdOf[T], f: T => T)(using
+    override def update[T <: CellRW[?,?]](id: CIdOf[T], f: T => T)(using
         Ability
     ): Unit = {
       require(id.uniqId == uniqId)
@@ -180,7 +180,7 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def addCell[T <: Cell[?]](cell: T): CIdOf[T] =
+    override def addCell[T <: CellRW[?,?]](cell: T): CIdOf[T] =
       new HoldCell[T](uniqId, cell)
 
     override def addPropagatorGetPid[T <: Propagator[Ability]](
@@ -228,7 +228,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def zonk(
-        cells: Vector[CIdOf[Cell[?]]]
+        cells: Vector[CIdOf[CellRW[?,?]]]
     )(using Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
       try {
@@ -414,7 +414,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class ZonkTask(
-        c: CIdOf[Cell[?]],
+        c: CIdOf[CellRW[?,?]],
         p: PIdOf[Propagator[Ability]],
         firstFallback: Boolean,
         state: Impl[Ability],
@@ -478,7 +478,7 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    private class DefaultValueTask(c: CIdOf[Cell[?]], state: Impl[Ability])(using
+    private class DefaultValueTask(c: CIdOf[CellRW[?,?]], state: Impl[Ability])(using
         Ability
     ) extends RecursiveAction {
       override def compute(): Unit =
