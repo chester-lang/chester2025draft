@@ -75,14 +75,15 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
     val resubmitDelayed = delayedConstraints.getAndSet(Vector.empty)
     addConstraints(resubmitDelayed.map(_.x))
   }
-  private def inPoolTickStage1(): Unit = {
+  private def inPoolTickStage1(zonkLevel: ZonkLevel): Unit = {
     val delayed = delayedConstraints.getAndSet(Vector.empty)
-    
+    delayed.foreach(x=>doZonk(x.x, zonkLevel))
   }
 
-  private def  doZonk(x: Constraint): Unit =
+  private def  doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
+      handler.zonk(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
       val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
       result match {
         case Result.Done => ()
@@ -119,6 +120,7 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
     if(!id.storeRef.compareAndSet(current, current.fill(value))) {
       return fill(id, value)
     }
+    // Note that here is a possible race condition that delayed constraints might haven't been added to delayedConstraints
     val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))
     val related = prev.filter(_.related(id)).map(_.x)
     addConstraints(related)

@@ -22,7 +22,7 @@ enum Result {
 
 open trait Handler(val kind: Kind) {
   def run(constant: kind.ConstraintType): Result = ???
-  def zonk(level: ZonkLevel): Result = ???
+  def zonk(constant: kind.ConstraintType, level: ZonkLevel): Unit = ()
 }
 
 enum ZonkLevel extends Enum[ZonkLevel] {
