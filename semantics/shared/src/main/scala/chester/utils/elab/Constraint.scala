@@ -4,12 +4,12 @@ import chester.syntax.core.Term
 
 /** implementations should be case object */
 open trait Kind {
-  override def toString: String = super.toString
+  def name: String = toString
   type ConstraintType <: Constraint
 }
 
 open trait Constraint(val kind: Kind) {
-  def show: Vector[Term]
+  def show: Vector[Term] = ???
 }
 
 enum Result {
