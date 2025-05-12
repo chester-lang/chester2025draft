@@ -30,7 +30,14 @@ class HoldCell[+T <: Cell[?]](
 }
 type CellId[T] = HoldCell[Cell[T]]
 
-class Solver(val conf: MutSolverConf) {}
+trait Solver {
+
+}
+
+class DefaultSolver(val conf: MutSolverConf) extends Solver {
+  var constrains: Vector[Constrain] = Vector()
+
+}
 
 trait SolverState {
   def hasStableValue[T](id: CellId[T]): Boolean
