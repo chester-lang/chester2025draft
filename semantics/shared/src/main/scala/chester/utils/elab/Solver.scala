@@ -2,15 +2,21 @@ package chester.utils.elab
 
 import chester.utils.cell.Cell
 
-open trait CellId[T] {
+sealed trait CellIdAny {
+
+}
+
+open trait CellRepr[T, +U <: Cell[T]] extends CellIdAny {
   def tag: String = Integer.toHexString(hashCode)
 
   final override def toString: String = s"CellId@${tag}" 
 }
 
+type CellId[T] = CellRepr[T, Cell[T]]
+
 // Note that commit is equal or lower than actual commit
-case class WaitingConstraint(vars: Vector[CellId[?]], x: Constraint) {
-  def related(x: CellId[?]): Boolean = vars.contains(x)
+case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
+  def related(x: CellIdAny): Boolean = vars.contains(x)
 }
 
 trait SolverOps {

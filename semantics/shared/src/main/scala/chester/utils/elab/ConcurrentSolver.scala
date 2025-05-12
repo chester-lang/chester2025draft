@@ -1,6 +1,5 @@
 package chester.utils.elab
 
-
 import chester.utils.cell.*
 
 import java.util.concurrent.{ForkJoinPool, TimeUnit}
@@ -9,29 +8,29 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.util.boundary
 
-final class ConcurrentCellId[T](
-                           initialValue: Cell[T]
-                         ) extends CellId[T] {
-  val storeRef = new AtomicReference[Cell[T]](initialValue)
+final class ConcurrentCellRepr[T, U <: Cell[T]](
+    initialValue: U
+) extends CellRepr[T, U] {
+  val storeRef = new AtomicReference[U](initialValue)
 }
 
 object ConcurrentSolver extends SolverFactory {
   override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ConcurrentSolver(conf)
 }
 
-final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
+final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
-  implicit inline def thereAreAllConcurrent[T](inline x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
+  implicit inline def thereAreAllConcurrent[T, U <: Cell[T]](inline x: CellRepr[T,U]): ConcurrentCellRepr[T,U] = x.asInstanceOf[ConcurrentCellRepr[T,U]]
 
   override protected def peakCell[T](id: CellId[T]): Cell[T] = id.storeRef.get()
-  
+
   given SolverOps = this
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
   private val failedConstraints = new AtomicReference(Vector[Constraint]())
   // implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
-  private def entropy() = delayedConstraints.get().map(c=>c.x.kind.hashCode()<<8+c.x.hashCode()).sorted.toVector
+  private def entropy() = delayedConstraints.get().map(c => c.x.kind.hashCode() << 8 + c.x.hashCode()).sorted.toVector
 
   override def stable: Boolean = {
     if (delayedConstraints.get().nonEmpty) return false
@@ -120,7 +119,7 @@ final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extend
     }
 
   @tailrec
-  override protected def updateCell[T](id: CellId[T], f: Cell[T] => Cell[T]): Unit  = {
+  override protected def updateCell[T](id: CellId[T], f: Cell[T] => Cell[T]): Unit = {
     val current = id.storeRef.get()
     val updated = f(current)
     if (current == updated) {

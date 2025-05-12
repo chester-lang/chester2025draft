@@ -15,7 +15,7 @@ open trait Constraint(val kind: Kind) {
 enum Result {
   case Done
   case Failed
-  case Waiting(vars: Vector[CellId[?]])
+  case Waiting(vars: Vector[CellIdAny])
 }
 
 open trait Handler[Ops](val kind: Kind) {
