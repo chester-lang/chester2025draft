@@ -72,7 +72,7 @@ final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extend
     val delayed = delayedConstraints.getAndSet(Vector.empty)
     delayed.foreach(x => doZonk(x.x, zonkLevel))
   }
-  def run(): Unit = boundary[Unit] { outer ?=>
+  override def run(): Unit = boundary[Unit] { outer ?=>
     while (true) boundary[Unit] { inner ?=>
       assume(!pool.isShutdown)
       assume(pool.isQuiescent)

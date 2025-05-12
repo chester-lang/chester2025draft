@@ -19,6 +19,7 @@ trait SolverOps {
   def noAnyValue[T](id: CellId[T]): Boolean
   def readUnstable[U](id: CellId[U]): Option[U]
 
+  def run(): Unit
   def stable: Boolean
 
   def addConstraint(x: Constraint): Unit
