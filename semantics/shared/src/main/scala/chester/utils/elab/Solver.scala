@@ -26,3 +26,8 @@ trait SolverOps {
 
   def fill[T](id: CellId[T], value: T): Unit
 }
+
+
+trait SolverFactory {
+  def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps
+}

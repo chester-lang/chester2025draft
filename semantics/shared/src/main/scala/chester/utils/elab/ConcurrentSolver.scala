@@ -16,7 +16,11 @@ class ConcurrentCellId[T](
   val storeRef = new AtomicReference[Cell[T]](initialValue)
 }
 
-final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
+object ConcurrentSolver extends SolverFactory {
+  override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ConcurrentSolver(conf)
+}
+
+final class ConcurrentSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
 
   implicit inline def thereAreAllConcurrent[T](inline x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
   override def hasStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasStableValue
