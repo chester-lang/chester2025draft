@@ -70,7 +70,7 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf) extends BasicS
   }
 
   // normally run when quiescent and need to be safe run at any time
-  def tick(): Unit = {
+  def tickStage0(): Unit = {
     // in case of race condition
     val resubmitDelayed = delayedConstraints.getAndSet(Vector.empty)
     addConstraints(resubmitDelayed.map(_.x))
