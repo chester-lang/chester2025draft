@@ -1,7 +1,6 @@
 package chester.utils.elab
 
 
-import chester.uniqid.Uniqid
 import chester.utils.cell.*
 
 import java.util.concurrent.{ForkJoinPool, TimeUnit}
@@ -10,8 +9,7 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.util.boundary
 
-class ConcurrentCellId[T](
-                           val uniqId: Uniqid,
+final class ConcurrentCellId[T](
                            initialValue: Cell[T]
                          ) extends CellId[T] {
   val storeRef = new AtomicReference[Cell[T]](initialValue)
