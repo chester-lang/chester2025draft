@@ -6,6 +6,7 @@ import chester.uniqid.Uniqid
 import java.util.concurrent.{ForkJoinPool, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import scala.language.implicitConversions
 import scala.util.boundary
 
 class ConcurrentCellId[T](
@@ -19,6 +20,7 @@ class ConcurrentCellId[T](
 
 final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
 
+  implicit inline def thereAreAllConcurrent[T](x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
   override def hasStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().hasStableValue
 
   override def noStableValue[T](id: CellId[T]): Boolean = id.storeRef.get().noStableValue
@@ -31,7 +33,6 @@ final class ConcurrentSolver[Ops] private (val conf: HandlerConf[Ops])(using Ops
 
   override def readUnstable[U](id: CellId[U]): Option[U] = id.storeRef.get().readUnstable
 
-  implicit inline def thereAreAllConcurrent[T](x: CellId[T]): ConcurrentCellId[T] = x.asInstanceOf[ConcurrentCellId[T]]
   given SolverOps = this
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
