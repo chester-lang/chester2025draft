@@ -22,6 +22,8 @@ trait CellRW[+A,-B] {
   def fill(newValue: B): CellRW[A,B]
 }
 type Cell[A] = CellRW[A,A]
+type CellR[A] = CellRW[A,?]
+type CellW[A] = CellRW[?,A]
 
 trait SeqCell[T] extends UnstableCell[Seq[T]] with NoFill[Seq[T]] {
   def add(newValue: T): SeqCell[T]
