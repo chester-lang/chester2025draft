@@ -1,6 +1,8 @@
 package chester.utils.propagator
 import cats.implicits.*
 
+import chester.utils.cell.*
+
 trait CommonPropagator[TyckSession] extends ProvideCellId {
 
   case class MergeSimple[T](a: CellId[T], b: CellId[T]) extends Propagator[TyckSession] {

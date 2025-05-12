@@ -12,6 +12,7 @@ import chester.utils.propagator.*
 import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
+import chester.utils.cell.*
 
 trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckOps] {
 

@@ -5,6 +5,7 @@ import chester.syntax.core.*
 import chester.tyck.PreludeBuiltin.BuiltinItem
 import chester.uniqid.*
 import chester.utils.propagator.*
+import chester.utils.cell.*
 
 trait ProvideContextOps extends ProvideCellId with ElaboraterBase {
 

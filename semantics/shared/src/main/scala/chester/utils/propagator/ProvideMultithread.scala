@@ -6,6 +6,7 @@ import chester.i18n.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
+import chester.utils.cell.*
 
 trait ProvideMultithread extends ProvideImpl {
 

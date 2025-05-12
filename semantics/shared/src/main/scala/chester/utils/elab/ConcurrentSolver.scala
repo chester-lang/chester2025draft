@@ -2,6 +2,7 @@ package chester.utils.elab
 
 
 import chester.uniqid.Uniqid
+import chester.utils.cell.*
 
 import java.util.concurrent.{ForkJoinPool, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
