@@ -16,7 +16,7 @@ import chester.utils.cell.*
 
 trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckOps] {
 
-  trait EffectsCell extends Cell[Effects] {
+  trait EffectsCell extends CellRW[Effects] {
     def requireEffect(
         effect: Term
     )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
