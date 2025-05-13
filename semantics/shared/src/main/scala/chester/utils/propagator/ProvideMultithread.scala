@@ -43,7 +43,7 @@ trait ProvideMultithread extends ProvideImpl {
   type CIdOf[+T <: Cell[?, ?]] = HoldCell[T]
   type PIdOf[+T <: Propagator[?]] = HoldPropagator[T]
   type CellId[T] = CIdOf[CellRW[T]]
-  type SeqId[T] = CIdOf[SeqCell[T]]
+  type SeqId[T] = CIdOf[SeqCell[T,T]]
 
   def isCId(x: Any): Boolean = x.isInstanceOf[HoldCell[?]]
 
