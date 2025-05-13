@@ -2,7 +2,7 @@ package chester.utils.elab
 
 import chester.utils.cell.{CellRW, CellR, Cell}
 
-final class ProceduralCellId[T](
+final class ProceduralCellRepr[T](
     initialValue: CellRW[T]
 ) extends CellReprOfRW[T] {
   var store = initialValue

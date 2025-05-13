@@ -2,23 +2,9 @@ package chester.utils.elab
 
 import chester.utils.cell.{CellR, Cell}
 
-sealed trait CellIdAny {}
-
-open trait CellRepr[+A, -B, +C <: Cell[A, B]] extends CellIdAny {
-  def tag: String = Integer.toHexString(hashCode)
-
-  override final def toString: String = s"CellId@$tag"
-}
-
-type CellReprOf[A,B] = CellRepr[A, B, Cell[A, B]]
-type CellReprOfRW[T] = CellRepr[T, T, Cell[T, T]]
-type CellReprOfAny = CellRepr[Any, Nothing, Cell[Any, Nothing]]
-type CellReprOfR[+T] = CellRepr[T, Nothing, Cell[T, Nothing]]
-type CellReprOfW[-T] = CellRepr[Any, T, Cell[Any, T]]
-
 // Note that the commit is equal or lower than the actual commit
-case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
-  def related(x: CellIdAny): Boolean = vars.contains(x)
+case class WaitingConstraint(vars: Vector[CellReprAny], x: Constraint) {
+  def related(x: CellReprAny): Boolean = vars.contains(x)
 }
 
 trait SolverOps {
