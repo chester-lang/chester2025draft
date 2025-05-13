@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.{Cell, CellR, CellRW}
+import chester.utils.cell.{CellR, CellRW}
 
 sealed trait CellIdAny {}
 
@@ -40,7 +40,7 @@ trait SolverOps {
 
 trait BasicSolverOps extends SolverOps {
   protected def peakCell[T](id: CellReprOfR[T]): CellR[T]
-  protected def updateCell[T](id: CellReprOfRW[T], f: Cell[T] => Cell[T]): Unit
+  protected def updateCell[A,B](id: CellReprOf[A,B], f: CellRW[A,B] => CellRW[A,B]): Unit
 
   override def hasStableValue(id: CellReprOfAny): Boolean = peakCell(id).hasStableValue
 

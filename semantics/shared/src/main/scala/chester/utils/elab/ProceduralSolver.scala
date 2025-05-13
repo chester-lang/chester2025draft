@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.{Cell, CellR}
+import chester.utils.cell.{Cell, CellR, CellRW}
 
 final class ProceduralCellId[T](
     initialValue: Cell[T]
@@ -16,7 +16,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   override protected def peakCell[T](id: CellReprOfR[T]): CellR[T] = ???
 
-  override protected def updateCell[T](id: CellReprOfRW[T], f: Cell[T] => Cell[T]): Unit = ???
+  override protected def updateCell[A,B](id: CellReprOf[A,B], f: CellRW[A,B] => CellRW[A,B]): Unit = ???
 
   override def run(): Unit = ???
 
