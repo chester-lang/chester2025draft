@@ -9,6 +9,7 @@ import chester.tyck.api.SemanticCollector
 import chester.uniqid.*
 
 import scala.language.implicitConversions
+import chester.cell.*
 
 object ElaboraterBlock {
   // Sealed trait for declaration information, for forwarding references

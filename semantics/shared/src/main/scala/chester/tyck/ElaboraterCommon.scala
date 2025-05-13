@@ -1,5 +1,6 @@
 package chester.tyck
 
+import chester.cell.*
 import chester.error.*
 import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.syntax.concrete.*
@@ -16,12 +17,13 @@ import chester.utils.cell.*
 
 trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckOps] {
 
-  trait EffectsCell extends CellRW[Effects] {
+  extension (eff: EffectsCell) {
+
     def requireEffect(
-        effect: Term
-    )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
+                       effect: Term
+                     )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
       // Check if this effect already exists in the cell
-      val currentEffects = this.readUnstable.map(_.effects).getOrElse(Map.empty)
+      val currentEffects = eff.readUnstable.map(_.effects).getOrElse(Map.empty)
 
       // Try to find an existing entry for this effect
       val existingKey = currentEffects
@@ -38,10 +40,10 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
         val newKey = LocalV(Name("effect"), AnyType0, id, None)
 
         // Add the effect to the cell
-        this match {
+        eff match {
           case cell: DynamicEffectsCell =>
             val updatedCell = cell.add(newKey, effect)
-            state.fill(this.asInstanceOf[CellId[Effects]], updatedCell.asInstanceOf[Effects])
+            state.fill(eff.asInstanceOf[CellId[Effects]], updatedCell.asInstanceOf[Effects])
           case _ =>
             // For other cell types, we may need different handling
             ck.reporter(CannotAddEffectError(effect))
@@ -66,23 +68,6 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
     case x: Effects => state.addCell(FixedEffectsCell(x))
     case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCell]]
     case _          => unreachable()
-  }
-
-  case class DynamicEffectsCell(effects: Map[LocalV, Term] = Map.empty)
-      extends BaseMapCell[LocalV, Term]
-      with EffectsCell
-      with UnstableCell[Effects,Effects]
-      with NoFill[Effects,Effects] {
-    override def add(key: LocalV, value: Term): DynamicEffectsCell = {
-      require(!effects.contains(key))
-      copy(effects = effects.updated(key, value))
-    }
-
-    override def readUnstable: Option[Effects] = Some(Effects(effects, None))
-  }
-
-  private case class FixedEffectsCell(effects: Effects) extends EffectsCell with NoFill[Effects,Effects] {
-    override def readStable: Option[Effects] = Some(effects)
   }
 
   def resolve(

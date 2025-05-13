@@ -15,6 +15,7 @@ import scala.collection.immutable.Vector as _
 import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
+import chester.cell.*
 
 trait Elaborater extends ProvideContextOps with TyckPropagator {
 

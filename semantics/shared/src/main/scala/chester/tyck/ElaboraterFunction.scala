@@ -5,6 +5,7 @@ import chester.syntax.core.*
 import chester.tyck.api.SemanticCollector
 import chester.error.*
 import chester.uniqid.*
+import chester.cell.*
 
 trait ElaboraterFunction { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunction(
