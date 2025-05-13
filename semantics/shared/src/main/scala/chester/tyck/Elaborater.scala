@@ -698,7 +698,7 @@ trait DefaultImpl
     }
     implicit val ctx: Context = Context.default
     val wellTyped = elabId(expr, ty1, effects1)
-    able.zonk(Vector(ty1, effects1, wellTyped))
+    able.defaulting(Vector(ty1, effects1, wellTyped))
     val judge = Judge(
       able.readStable(wellTyped).get,
       able.readStable(ty1).get,
@@ -726,7 +726,7 @@ trait DefaultImpl
           if (metas.isEmpty) break()
 
           try
-            able.zonk(metas.map(x => x.unsafeRead[CellId[Term]]))
+            able.defaulting(metas.map(x => x.unsafeRead[CellId[Term]]))
           catch {
             case e: IllegalStateException if e.getMessage.contains("not covered by any propagator") =>
               throw e
@@ -770,7 +770,7 @@ trait DefaultImpl
     val ty = newType
     val effects = newEffects
     val wellTyped = elabBlock(block, ty, effects)
-    able.zonk(Vector(ty, effects))
+    able.defaulting(Vector(ty, effects))
     val judge =
       Judge(wellTyped, able.readStable(ty).get, able.readUnstable(effects).get)
     val finalJudge = finalizeJudge(judge)

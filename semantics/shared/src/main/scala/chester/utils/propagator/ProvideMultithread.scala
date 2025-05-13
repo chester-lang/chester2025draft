@@ -190,7 +190,7 @@ trait ProvideMultithread extends ProvideImpl {
       val id = new HoldPropagator[T](uniqId, propagator)
       propagators.add(id.asInstanceOf[PIdOf[Propagator[Ability]]])
 
-      for (cell <- propagator.zonkingCells)
+      for (cell <- propagator.defaultingCells)
         cell.zonkingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
       for (cell <- propagator.readingCells)
         cell.readingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
@@ -227,7 +227,7 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def zonk(
+    override def defaulting(
         cells: Vector[CIdOf[Cell[?, ?]]]
     )(using Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
@@ -436,22 +436,22 @@ trait ProvideMultithread extends ProvideImpl {
           val zonkResult =
             try
               if (firstFallback) {
-                propagator.zonk(Vector(c))(using state, more)
+                propagator.defaulting(Vector(c))(using state, more)
               } else {
                 propagator.naiveFallbackZonk(Vector(c))(using state, more)
               }
             catch {
               case _: Exception =>
                 // Continue with NotYet result on exception
-                ZonkResult.NotYet
+                DefaultingResult.NotYet
             }
 
           zonkResult match {
-            case ZonkResult.Done =>
+            case DefaultingResult.Done =>
               p.setAlive(false)
               val _ = propagators.remove(p)
               setDidSomething(true)
-            case ZonkResult.Require(needed) =>
+            case DefaultingResult.Require(needed) =>
               // Filter out cells we've already seen to prevent cycles
               val newNeeded = needed.toVector
                 .filter(n => n.noStableValue)
@@ -463,7 +463,7 @@ trait ProvideMultithread extends ProvideImpl {
                 newNeeded.foreach(n => processedCellIds.add(n.toString))
                 // Process the newly needed cells
                 try {
-                  state.zonk(newNeeded)
+                  state.defaulting(newNeeded)
                   setDidSomething(true)
                 } catch {
                   case _: Exception =>
@@ -471,7 +471,7 @@ trait ProvideMultithread extends ProvideImpl {
                     setDidSomething(true)
                 }
               }
-            case ZonkResult.NotYet =>
+            case DefaultingResult.NotYet =>
             // No action needed
           }
         }

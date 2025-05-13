@@ -14,25 +14,25 @@ import scala.annotation.tailrec
 
 trait TyckPropagator extends ElaboraterCommon with Alpha {
 
-  // Helper method to handle common zonk setup for cells with left-hand side and right-hand side values
-  private def setupZonk[T](
+  // Helper method to handle common defaulting setup for cells with left-hand side and right-hand side values
+  private def setupDefaulting[T](
       lhs: CellId[T],
       rhs: Vector[CellId[T]],
       needed: Vector[CellIdAny]
-  )(using state: StateOps[TyckOps]): Either[ZonkResult, (Option[T], Vector[T])] = {
+  )(using state: StateOps[TyckOps]): Either[DefaultingResult, (Option[T], Vector[T])] = {
     val lhsValueOpt = state.readStable(lhs)
     val rhsValuesOpt = rhs.map(state.readStable)
 
     // First check if any of our cells are in the needed list
     val ourNeededCells = (Vector(lhs) ++ rhs).filter(needed.contains)
     if (ourNeededCells.isEmpty) {
-      return Left(ZonkResult.Done) // None of our cells are needed
+      return Left(DefaultingResult.Done) // None of our cells are needed
     }
 
     // Check if we're waiting for rhs values
     val unknownRhs = rhs.zip(rhsValuesOpt).collect { case (id, None) => id }
     if (unknownRhs.nonEmpty) {
-      return Left(ZonkResult.Require(unknownRhs))
+      return Left(DefaultingResult.Require(unknownRhs))
     }
 
     // Get all rhs values - we know they're all defined at this point
@@ -172,7 +172,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   ) extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs, rhs)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs, rhs)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs, rhs)
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs, rhs)
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean = {
       val lhs = state.readStable(this.lhs)
@@ -192,25 +192,25 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       }
     }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult = {
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult = {
       // Only process if one of our cells is needed
       if (!needed.contains(this.lhs) && !needed.contains(this.rhs)) {
-        return ZonkResult.Done
+        return DefaultingResult.Done
       }
 
       val lhs = state.readStable(this.lhs)
       val rhs = state.readStable(this.rhs)
 
       (lhs, rhs) match {
-        case (Some(l), Some(r)) if l == r => ZonkResult.Done
+        case (Some(l), Some(r)) if l == r => DefaultingResult.Done
         case (Some(l), None) =>
           state.fill(this.rhs, l)
-          ZonkResult.Done
+          DefaultingResult.Done
         case (None, Some(r)) =>
           state.fill(this.lhs, r)
-          ZonkResult.Done
+          DefaultingResult.Done
         case (Some(Union(types1, _)), Some(Union(types2, _))) =>
           // For union-to-union, handle properly
           handleUnionUnion(types1, types2)
@@ -223,27 +223,27 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         case (Some(Intersection(types1, _)), Some(Intersection(types2, _))) =>
           // For intersection-to-intersection
           if (types1.forall(t1 => types2.exists(t2 => tryUnify(t1, t2)))) {
-            ZonkResult.Done
+            DefaultingResult.Done
           } else {
-            ZonkResult.NotYet
+            DefaultingResult.NotYet
           }
         case (Some(lhsType), Some(Intersection(types2, _))) =>
           // For specific-to-intersection
           if (types2.exists(t2 => tryUnify(lhsType, t2))) {
-            ZonkResult.Done
+            DefaultingResult.Done
           } else {
-            ZonkResult.NotYet
+            DefaultingResult.NotYet
           }
         case (Some(Intersection(types1, _)), Some(rhsType)) =>
           // For intersection-to-specific
           if (types1.forall(t1 => tryUnify(t1, rhsType))) {
-            ZonkResult.Done
+            DefaultingResult.Done
           } else {
-            ZonkResult.NotYet
+            DefaultingResult.NotYet
           }
         case _ =>
           // Need both values to continue
-          ZonkResult.Require(Vector(this.lhs, this.rhs))
+          DefaultingResult.Require(Vector(this.lhs, this.rhs))
       }
     }
 
@@ -251,7 +251,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     private def handleUnionUnion(
         types1: NonEmptyVector[Term],
         types2: NonEmptyVector[Term]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult =
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult =
       // For each type in RHS union, at least one type in LHS union must accept it
       if (unionUnionCompatible(types1, types2)) {
         // Create proper unification between component types directly
@@ -262,16 +262,16 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             state.addPropagator(Unify(toId(compatibleType), toId(t2), cause))
           }
         }
-        ZonkResult.Done
+        DefaultingResult.Done
       } else {
-        ZonkResult.NotYet
+        DefaultingResult.NotYet
       }
 
     // Handle specific-to-union case properly
     private def handleSpecificUnion(
         lhsType: Term,
         types2: NonEmptyVector[Term]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult =
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult =
       // For a specific type to be compatible with a union type,
       // the specific type must be compatible with at least one of the union components
       if (specificUnionCompatible(lhsType, types2)) {
@@ -280,16 +280,16 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
           // Create direct link between specific type and compatible component
           state.addPropagator(Unify(toId(lhsType), toId(compatibleType), cause))
         }
-        ZonkResult.Done
+        DefaultingResult.Done
       } else {
-        ZonkResult.NotYet
+        DefaultingResult.NotYet
       }
 
     // Handle union-to-specific case properly
     private def handleUnionSpecific(
         types1: NonEmptyVector[Term],
         rhsType: Term
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult =
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult =
       // For a union type to be compatible with a specific type,
       // at least one component must be compatible
       if (unionSpecificCompatible(types1, rhsType)) {
@@ -297,9 +297,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         types1.withFilter(t1 => tryUnify(t1, rhsType)).foreach { compatibleType =>
           state.addPropagator(Unify(toId(compatibleType), toId(rhsType), cause))
         }
-        ZonkResult.Done
+        DefaultingResult.Done
       } else {
-        ZonkResult.NotYet
+        DefaultingResult.NotYet
       }
   }
 
@@ -311,7 +311,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs) ++ rhs.toSet
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs) ++ rhs.toSet
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs) ++ rhs.toSet
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean = {
       val lhsValueOpt = state.readStable(lhs)
@@ -340,10 +340,10 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       }
     }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult =
-      setupZonk(lhs, rhs, needed) match {
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult =
+      setupDefaulting(lhs, rhs, needed) match {
         case Left(result) => result
         case Right((lhsValueOpt, rhsValues)) =>
           lhsValueOpt match {
@@ -351,19 +351,19 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               // Create union type and unify with meta variable
               val unionType = Union(rhsValues.assumeNonEmpty, None)
               unify(lhsId, unionType, cause)
-              ZonkResult.Done
+              DefaultingResult.Done
             case Some(lhsValue) =>
               // LHS is known, check if it's compatible with all RHS values
               if (rhsValues.forall(rhsValue => tryUnify(lhsValue, rhsValue))) {
-                ZonkResult.Done
+                DefaultingResult.Done
               } else {
-                ZonkResult.NotYet
+                DefaultingResult.NotYet
               }
             case None =>
               // LHS is unknown, create UnionType from RHS values
               val unionType = Union(rhsValues.assumeNonEmpty, None)
               state.fill(lhs, unionType)
-              ZonkResult.Done
+              DefaultingResult.Done
           }
       }
   }
@@ -376,7 +376,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs) ++ rhs.toSet
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs) ++ rhs.toSet
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(lhs) ++ rhs.toSet
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean = {
       val lhsValueOpt = state.readStable(lhs)
@@ -405,10 +405,10 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       }
     }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult =
-      setupZonk(lhs, rhs, needed) match {
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult =
+      setupDefaulting(lhs, rhs, needed) match {
         case Left(result) => result
         case Right((lhsValueOpt, rhsValues)) =>
           lhsValueOpt match {
@@ -416,19 +416,19 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               // Create intersection type and unify with meta variable
               val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
               unify(lhsId, intersectionType, cause)
-              ZonkResult.Done
+              DefaultingResult.Done
             case Some(lhsValue) =>
               // LHS is known, check if it's compatible with all RHS values
               if (rhsValues.forall(rhsValue => tryUnify(rhsValue, lhsValue))) {
-                ZonkResult.Done
+                DefaultingResult.Done
               } else {
-                ZonkResult.NotYet
+                DefaultingResult.NotYet
               }
             case None =>
               // LHS is unknown, create IntersectionType from RHS values
               val intersectionType = Intersection(rhsValues.assumeNonEmpty, None)
               state.fill(lhs, intersectionType)
-              ZonkResult.Done
+              DefaultingResult.Done
           }
       }
   }
@@ -548,7 +548,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   ) extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(tyLhs)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(tyLhs)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(tyLhs)
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(tyLhs)
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean =
       if (state.noStableValue(tyLhs)) false
@@ -613,9 +613,9 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         }
       }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult = {
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult = {
       // First, check if we already have a value for this cell
       val existingValue = state.readStable(tyLhs)
       if (existingValue.isDefined) {
@@ -628,13 +628,13 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
             val compatibleTypes = types.filter(unionType => tryUnify(literalType, unionType)(using state, summon[Context]))
 
             if (compatibleTypes.nonEmpty) {
-              ZonkResult.Done // Leave the union type as is
+              DefaultingResult.Done // Leave the union type as is
             } else {
               state.fill(
                 tyLhs,
                 getLiteralType(x)
               )
-              ZonkResult.Done
+              DefaultingResult.Done
             }
           case _ =>
             // Not a union type, fill with default literal type
@@ -642,7 +642,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               tyLhs,
               getLiteralType(x)
             )
-            ZonkResult.Done
+            DefaultingResult.Done
         }
       } else {
         // No existing value, fill with default literal type
@@ -650,7 +650,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
           tyLhs,
           getLiteralType(x)
         )
-        ZonkResult.Done
+        DefaultingResult.Done
       }
     }
   }
@@ -662,7 +662,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
   ) extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(tRhs, listTLhs)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(tRhs, listTLhs)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(listTLhs)
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(listTLhs)
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean = {
       val t1 = state.readStable(this.tRhs)
@@ -690,16 +690,16 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       }
     }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckOps], more: TyckOps): ZonkResult = {
+    )(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult = {
       val t1 = state.readStable(this.tRhs)
       val listT1 = state.readStable(this.listTLhs)
-      if (t1.isEmpty) return ZonkResult.Require(Vector(this.tRhs))
+      if (t1.isEmpty) return DefaultingResult.Require(Vector(this.tRhs))
       val ty = t1.get
       assert(listT1.isEmpty)
       state.fill(this.listTLhs, ListType(ty, meta = None))
-      ZonkResult.Done
+      DefaultingResult.Done
     }
   }
 
@@ -728,7 +728,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(recordTy)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(expectedTy)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(recordTy, expectedTy)
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(recordTy, expectedTy)
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean =
       state.readStable(recordTy) match {
@@ -768,10 +768,10 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
         case None => false
       }
 
-    override def zonk(needed: Vector[CellIdAny])(using state: StateOps[TyckOps], more: TyckOps): ZonkResult =
+    override def defaulting(needed: Vector[CellIdAny])(using state: StateOps[TyckOps], more: TyckOps): DefaultingResult =
       state.readStable(recordTy) match {
-        case None => ZonkResult.Require(Vector(recordTy))
-        case _    => ZonkResult.Done
+        case None => DefaultingResult.Require(Vector(recordTy))
+        case _    => DefaultingResult.Done
       }
   }
 
@@ -926,7 +926,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
 
     override def run(using StateOps[TyckOps], TyckOps): Boolean = {
       // Delegate to the checkTraitImplementation method
@@ -936,7 +936,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       true
     }
 
-    override def zonk(needed: Vector[CellIdAny])(using StateOps[TyckOps], TyckOps): ZonkResult =
-      ZonkResult.Done
+    override def defaulting(needed: Vector[CellIdAny])(using StateOps[TyckOps], TyckOps): DefaultingResult =
+      DefaultingResult.Done
   }
 }

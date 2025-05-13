@@ -73,7 +73,7 @@ trait ProvideMutable extends ProvideImpl {
       given StateOps[Ops] = this
       didSomething = true
       val id = new HoldPropagator[T](uniqId, propagator)
-      for (cell <- propagator.zonkingCells)
+      for (cell <- propagator.defaultingCells)
         cell.zonkingPropagators = cell.zonkingPropagators :+ id.asInstanceOf[PIdOf[Propagator[?]]]
       for (cell <- propagator.readingCells)
         cell.readingPropagators = cell.readingPropagators :+ id.asInstanceOf[PIdOf[Propagator[?]]]
@@ -104,7 +104,7 @@ trait ProvideMutable extends ProvideImpl {
 
     var didSomething = false
 
-    override def zonk(
+    override def defaulting(
         cells: Vector[CIdOf[Cell[?, ?]]]
     )(using more: Ops): Unit = {
       var cellsNeeded = cells
@@ -136,12 +136,12 @@ trait ProvideMutable extends ProvideImpl {
                   p.alive = false
                   didSomething = true
                 } else {
-                  val on = store.zonk(cellsNeeded)(using this, more)
+                  val on = store.defaulting(cellsNeeded)(using this, more)
                   on match {
-                    case ZonkResult.Done =>
+                    case DefaultingResult.Done =>
                       p.alive = false
                       didSomething = true
-                    case ZonkResult.Require(needed) =>
+                    case DefaultingResult.Require(needed) =>
                       val needed1 = needed
                         .filter(this.noStableValue)
                         .filterNot(cellsNeeded.contains)
@@ -149,7 +149,7 @@ trait ProvideMutable extends ProvideImpl {
                         cellsNeeded = cellsNeeded ++ needed1
                         didSomething = true
                       }
-                    case ZonkResult.NotYet =>
+                    case DefaultingResult.NotYet =>
                   }
                 }
               }
@@ -167,10 +167,10 @@ trait ProvideMutable extends ProvideImpl {
                     val on =
                       store.naiveFallbackZonk(cellsNeeded)(using this, more)
                     on match {
-                      case ZonkResult.Done =>
+                      case DefaultingResult.Done =>
                         p.alive = false
                         didSomething = true
-                      case ZonkResult.Require(needed) =>
+                      case DefaultingResult.Require(needed) =>
                         val needed1 = needed
                           .filter(this.noStableValue)
                           .filterNot(cellsNeeded.contains)
@@ -178,7 +178,7 @@ trait ProvideMutable extends ProvideImpl {
                           cellsNeeded = cellsNeeded ++ needed1
                           didSomething = true
                         }
-                      case ZonkResult.NotYet =>
+                      case DefaultingResult.NotYet =>
                     }
                   }
                 }

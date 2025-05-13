@@ -58,9 +58,9 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     val resubmitDelayed = delayedConstraints.getAndSet(Vector.empty)
     addConstraints(resubmitDelayed.map(_.x))
   }
-  private def inPoolTickStage1(zonkLevel: ZonkLevel): Unit = {
+  private def inPoolTickStage1(zonkLevel: DefaultingLevel): Unit = {
     val delayed = delayedConstraints.getAndSet(Vector.empty)
-    delayed.foreach(x => doZonk(x.x, zonkLevel))
+    delayed.foreach(x => doDefaulting(x.x, zonkLevel))
   }
   override def run(): Unit = boundary[Unit] { outer ?=>
     while (true) boundary[Unit] { inner ?=>
@@ -73,7 +73,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         finish()
         boundary.break()(using outer)
       }
-      for (level <- ZonkLevel.Values) {
+      for (level <- DefaultingLevel.Values) {
         val entropyBefore = entropy()
         assume(!pool.isShutdown)
         assume(pool.isQuiescent)
@@ -90,10 +90,10 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
   }
 
-  private def doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =
+  private def doDefaulting(x: Constraint, zonkLevel: DefaultingLevel): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      handler.zonk(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
+      handler.defaulting(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
       val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
       result match {
         case Result.Done => ()

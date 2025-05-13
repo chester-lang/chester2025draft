@@ -8,7 +8,7 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
   case class MergeSimple[T](a: CellId[T], b: CellId[T]) extends Propagator[TyckSession] {
     override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
     override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
-    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
+    override def defaultingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(a, b)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean = {
       val aVal = state.readStable(a)
@@ -30,26 +30,26 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
       false
     }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckSession], more: TyckSession): ZonkResult = {
+    )(using state: StateOps[TyckSession], more: TyckSession): DefaultingResult = {
       val aVal = state.readStable(a)
       val bVal = state.readStable(b)
       if (aVal.isDefined && bVal.isDefined) {
-        if (aVal.get == bVal.get) return ZonkResult.Done
+        if (aVal.get == bVal.get) return DefaultingResult.Done
         throw new IllegalStateException(
           "Merge propagator should not be used if the values are different"
         )
       }
       if (aVal.isDefined) {
         state.fill(b, aVal.get)
-        return ZonkResult.Done
+        return DefaultingResult.Done
       }
       if (bVal.isDefined) {
         state.fill(a, bVal.get)
-        return ZonkResult.Done
+        return DefaultingResult.Done
       }
-      ZonkResult.NotYet
+      DefaultingResult.NotYet
     }
   }
 
@@ -60,7 +60,7 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
   ) extends Propagator[TyckSession] {
     override def readingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = xs.toSet
     override def writingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(result)
-    override def zonkingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(result)
+    override def defaultingCells(using StateRead[TyckSession], TyckSession): Set[CellIdAny] = Set(result)
 
     override def run(using state: StateOps[TyckSession], more: TyckSession): Boolean =
       xs.traverse(state.readStable).map(f).exists { result =>
@@ -68,14 +68,14 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
         true
       }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using state: StateOps[TyckSession], more: TyckSession): ZonkResult = {
+    )(using state: StateOps[TyckSession], more: TyckSession): DefaultingResult = {
       val needed = xs.filter(state.noStableValue(_))
-      if (needed.nonEmpty) return ZonkResult.Require(needed)
+      if (needed.nonEmpty) return DefaultingResult.Require(needed)
       val done = run
       require(done)
-      ZonkResult.Done
+      DefaultingResult.Done
     }
   }
 

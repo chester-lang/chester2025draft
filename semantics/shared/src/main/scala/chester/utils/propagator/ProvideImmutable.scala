@@ -83,7 +83,7 @@ trait ProvideImmutable extends ProvideImpl {
         }
     }
 
-    override def zonk(
+    override def defaulting(
         cells: Vector[CIdOf[Cell[?, ?]]]
     )(using more: Ability): Unit = {
       given StateOps[Ability] = this
@@ -97,8 +97,8 @@ trait ProvideImmutable extends ProvideImpl {
         } else {
           cells.filterNot(id => state.cells(id).hasStableValue)
         }
-        val xs = state.propagators.filter((_, propagator) => propagator.zonkingCells.exists(cellsToZonk.contains))
-        val uncorvedCells = cellsToZonk.filterNot(id => xs.values.exists(_.zonkingCells.contains(id)))
+        val xs = state.propagators.filter((_, propagator) => propagator.defaultingCells.exists(cellsToZonk.contains))
+        val uncorvedCells = cellsToZonk.filterNot(id => xs.values.exists(_.defaultingCells.contains(id)))
         if (uncorvedCells.nonEmpty) {
           throw new IllegalStateException(
             t"Cells $uncorvedCells are not covered by any propagator"
@@ -107,13 +107,13 @@ trait ProvideImmutable extends ProvideImpl {
         xs.foreach { case (pid, propagator) =>
           tickAll
           if (state.propagators.contains(pid)) {
-            val result = propagator.zonk(cells)(using this, more)
+            val result = propagator.defaulting(cells)(using this, more)
             result match {
-              case ZonkResult.Done =>
+              case DefaultingResult.Done =>
                 state = state.copy(propagators = state.propagators.removed(pid))
-              case ZonkResult.Require(needed) =>
+              case DefaultingResult.Require(needed) =>
                 cellsNeeded = cellsNeeded ++ needed
-              case ZonkResult.NotYet =>
+              case DefaultingResult.NotYet =>
             }
           }
         }
