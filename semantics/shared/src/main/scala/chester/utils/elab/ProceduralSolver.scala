@@ -4,7 +4,7 @@ import chester.utils.cell.Cell
 
 final class ProceduralCellId[T](
     initialValue: Cell[T]
-) extends CellReprOf[T] {
+) extends CellReprOfRW[T] {
   var store = initialValue
 }
 
@@ -14,9 +14,9 @@ object ProceduralSolver extends SolverFactory {
 
 final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
 
-  override def readStable[U](id: CellReprOf[U]): Option[U] = ???
+  override def readStable[U](id: CellReprOfRW[U]): Option[U] = ???
 
-  override def readUnstable[U](id: CellReprOf[U]): Option[U] = ???
+  override def readUnstable[U](id: CellReprOfRW[U]): Option[U] = ???
 
   override def run(): Unit = ???
 
@@ -24,7 +24,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   override def addConstraint(x: Constraint): Unit = ???
 
-  override def fill[T](id: CellReprOf[T], value: T): Unit = ???
+  override def fill[T](id: CellReprOfRW[T], value: T): Unit = ???
 
   override def hasStableValue(id: CellReprOfAny): Boolean = ???
 

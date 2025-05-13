@@ -120,7 +120,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
 
   @tailrec
-  override protected def updateCell[T](id: CellReprOf[T], f: Cell[T] => Cell[T]): Unit = {
+  override protected def updateCell[T](id: CellReprOfRW[T], f: Cell[T] => Cell[T]): Unit = {
     val current = id.storeRef.get()
     val updated = f(current)
     if (current == updated) {
