@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.Cell
+import chester.utils.cell.{Cell, CellR}
 
 final class ProceduralCellId[T](
     initialValue: Cell[T]
