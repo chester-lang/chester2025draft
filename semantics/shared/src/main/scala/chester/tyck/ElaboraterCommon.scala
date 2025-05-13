@@ -20,8 +20,8 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
   extension (eff: EffectsCell) {
 
     def requireEffect(
-                       effect: Term
-                     )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
+        effect: Term
+    )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
       // Check if this effect already exists in the cell
       val currentEffects = eff.readUnstable.map(_.effects).getOrElse(Map.empty)
 

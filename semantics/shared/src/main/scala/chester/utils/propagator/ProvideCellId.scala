@@ -7,7 +7,7 @@ trait ProvideCellId {
   type PIdOf[+T <: Propagator[?]]
   type CellId[T] = CIdOf[CellRW[T]]
   type CellIdAny = CIdOf[Cell[?, ?]]
-  type SeqId[T] = CIdOf[SeqCell[T,T]]
+  type SeqId[T] = CIdOf[SeqCell[T, T]]
   type CellIdOr[T] = CellId[T] | T
 
   def isCId(x: Any): Boolean
@@ -81,13 +81,13 @@ trait ProvideCellId {
 
   trait StateOps[Session] extends StateRead[Session] {
     protected def update[T <: Cell[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                   Session
+        Session
     ): Unit
 
     def fill[T <: CellRW[U], U](id: CIdOf[T], f: U)(using Session): Unit =
       update[T](id, _.fill(f).asInstanceOf[T])
 
-    def add[T <: SeqCell[U,U], U](id: CIdOf[T], f: U)(using Session): Unit =
+    def add[T <: SeqCell[U, U], U](id: CIdOf[T], f: U)(using Session): Unit =
       update[T](id, _.add(f).asInstanceOf[T])
 
     def add[T <: MapCell[A, B], A, B](id: CIdOf[T], key: A, value: B)(using

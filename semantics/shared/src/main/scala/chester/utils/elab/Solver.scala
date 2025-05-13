@@ -16,13 +16,13 @@ trait SolverOps {
   def addConstraint(x: Constraint): Unit
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
 
-  def addCell[A,B,C <: Cell[A,B]](cell: C): CellRepr[A,B,C] = ???
+  def addCell[A, B, C <: Cell[A, B]](cell: C): CellRepr[A, B, C] = ???
   def fill[T](id: CellReprOfW[T], value: T): Unit
 }
 
 trait BasicSolverOps extends SolverOps {
   protected def peakCell[T](id: CellReprOfR[T]): CellR[T]
-  protected def updateCell[A,B](id: CellReprOf[A,B], f: Cell[A,B] => Cell[A,B]): Unit
+  protected def updateCell[A, B](id: CellReprOf[A, B], f: Cell[A, B] => Cell[A, B]): Unit
 
   override def hasStableValue(id: CellReprOfAny): Boolean = peakCell(id).hasStableValue
 

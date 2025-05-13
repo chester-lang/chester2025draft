@@ -10,10 +10,10 @@ import chester.utils.elab.*
 trait Elab {
 
   def elab(expr: Expr, ty: CellReprOfRWOr[Term], effects: CellReprOfRW[EffectsCell])(using
-                                                                        localCtx: Context,
-                                                                        parameter: SemanticCollector,
-                                                                        ck: TyckOps,
-                                                                        state: SolverOps
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: TyckOps,
+      state: SolverOps
   ): Term
 
 }
