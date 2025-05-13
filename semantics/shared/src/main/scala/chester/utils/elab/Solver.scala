@@ -12,7 +12,7 @@ open trait CellRepr[+A,-B, +C <: CellRW[A,B]] extends CellIdAny {
   final override def toString: String = s"CellId@${tag}" 
 }
 
-type CellId[T] = CellRepr[T, T, CellRW[T,T]]
+type CellReprOf[T] = CellRepr[T, T, CellRW[T,T]]
 
 // Note that the commit is equal or lower than the actual commit
 case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
@@ -20,12 +20,12 @@ case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
 }
 
 trait SolverOps {
-  def hasStableValue[T](id: CellId[T]): Boolean
-  def noStableValue[T](id: CellId[T]): Boolean
-  def readStable[U](id: CellId[U]): Option[U]
-  def hasSomeValue[T](id: CellId[T]): Boolean
-  def noAnyValue[T](id: CellId[T]): Boolean
-  def readUnstable[U](id: CellId[U]): Option[U]
+  def hasStableValue[T](id: CellReprOf[T]): Boolean
+  def noStableValue[T](id: CellReprOf[T]): Boolean
+  def readStable[U](id: CellReprOf[U]): Option[U]
+  def hasSomeValue[T](id: CellReprOf[T]): Boolean
+  def noAnyValue[T](id: CellReprOf[T]): Boolean
+  def readUnstable[U](id: CellReprOf[U]): Option[U]
 
   def run(): Unit
   def stable: Boolean
@@ -33,28 +33,28 @@ trait SolverOps {
   def addConstraint(x: Constraint): Unit
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
 
-  def fill[T](id: CellId[T], value: T): Unit
+  def fill[T](id: CellReprOf[T], value: T): Unit
 }
 
 trait BasicSolverOps extends SolverOps {
-  protected def peakCell[T](id: CellId[T]): Cell[T]
-  protected def updateCell[T](id: CellId[T], f: Cell[T]=>Cell[T]):Unit
+  protected def peakCell[T](id: CellReprOf[T]): Cell[T]
+  protected def updateCell[T](id: CellReprOf[T], f: Cell[T]=>Cell[T]):Unit
 
 
-  override def hasStableValue[T](id: CellId[T]): Boolean = peakCell(id).hasStableValue
+  override def hasStableValue[T](id: CellReprOf[T]): Boolean = peakCell(id).hasStableValue
 
-  override def noStableValue[T](id: CellId[T]): Boolean = peakCell(id).noStableValue
+  override def noStableValue[T](id: CellReprOf[T]): Boolean = peakCell(id).noStableValue
 
-  override def readStable[U](id: CellId[U]): Option[U] = peakCell(id).readStable
+  override def readStable[U](id: CellReprOf[U]): Option[U] = peakCell(id).readStable
 
-  override def hasSomeValue[T](id: CellId[T]): Boolean = peakCell(id).hasSomeValue
+  override def hasSomeValue[T](id: CellReprOf[T]): Boolean = peakCell(id).hasSomeValue
 
-  override def noAnyValue[T](id: CellId[T]): Boolean = peakCell(id).noAnyValue
+  override def noAnyValue[T](id: CellReprOf[T]): Boolean = peakCell(id).noAnyValue
 
-  override def readUnstable[U](id: CellId[U]): Option[U] = peakCell(id).readUnstable
+  override def readUnstable[U](id: CellReprOf[U]): Option[U] = peakCell(id).readUnstable
 
 
-  override def fill[T](id: CellId[T], value: T): Unit = updateCell(id, _.fill(value))
+  override def fill[T](id: CellReprOf[T], value: T): Unit = updateCell(id, _.fill(value))
 }
 
 
