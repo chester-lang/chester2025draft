@@ -9,11 +9,11 @@ import chester.syntax.Name
 import chester.uniqid.Uniqid
 import chester.utils.*
 import chester.utils.propagator.*
+import chester.utils.cell.*
 
 import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
-import chester.utils.cell.*
 
 trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckOps] {
 

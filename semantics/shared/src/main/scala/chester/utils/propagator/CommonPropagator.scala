@@ -1,6 +1,5 @@
 package chester.utils.propagator
 import cats.implicits.*
-
 import chester.utils.cell.*
 
 trait CommonPropagator[TyckSession] extends ProvideCellId {

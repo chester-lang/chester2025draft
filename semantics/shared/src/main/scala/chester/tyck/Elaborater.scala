@@ -10,12 +10,12 @@ import chester.utils.propagator.*
 import chester.syntax.*
 import chester.tyck.api.{NoopSemanticCollector, SemanticCollector, UnusedVariableWarningWrapper}
 import cats.data.NonEmptyVector
+import chester.cell.*
 
 import scala.collection.immutable.Vector as _
 import scala.language.implicitConversions
 import scala.util.boundary
 import scala.util.boundary.break
-import chester.cell.*
 
 trait Elaborater extends ProvideContextOps with TyckPropagator {
 

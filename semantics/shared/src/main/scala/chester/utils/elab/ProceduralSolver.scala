@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.{CellRW, CellR, Cell}
+import chester.utils.cell.{Cell, CellR, CellRW}
 
 final class ProceduralCellRepr[T](
     initialValue: CellRW[T]

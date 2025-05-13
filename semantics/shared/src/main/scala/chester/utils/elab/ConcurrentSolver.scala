@@ -131,7 +131,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
     // Note that here is a possible race condition that delayed constraints might haven't been added to delayedConstraints
     val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))
-    val related = prev.filter(_.related(id)).map(_.x)
+    val related = prev.withFilter(_.related(id)).map(_.x)
     addConstraints(related)
   }
 }

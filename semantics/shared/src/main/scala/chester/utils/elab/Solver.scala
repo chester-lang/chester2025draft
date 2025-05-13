@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.{CellR, Cell}
+import chester.utils.cell.{Cell, CellR}
 
 trait SolverOps {
   def hasStableValue(id: CellReprOfAny): Boolean
