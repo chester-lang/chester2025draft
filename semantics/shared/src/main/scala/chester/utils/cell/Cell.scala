@@ -1,11 +1,11 @@
 package chester.utils.cell
 
 import chester.i18n.*
-trait CellRW[+A,-B] {
+trait CellRW[+A, -B] {
   def default: Option[A] = None
 
   /** stable means can only change once from None to a fixed Some value or always be a fixed value
-   */
+    */
   def readStable: Option[A]
 
   def readUnstable: Option[A] = readStable
@@ -19,11 +19,11 @@ trait CellRW[+A,-B] {
   def noAnyValue: Boolean = !hasSomeValue
 
   /** fill an unstable cell */
-  def fill(newValue: B): CellRW[A,B]
+  def fill(newValue: B): CellRW[A, B]
 }
-type Cell[A] = CellRW[A,A]
-type CellR[+A] = CellRW[A,Nothing]
-type CellW[-A] = CellRW[Any,A]
+type Cell[A] = CellRW[A, A]
+type CellR[+A] = CellRW[A, Nothing]
+type CellW[-A] = CellRW[Any, A]
 
 trait SeqCell[T] extends UnstableCell[Seq[T]] with NoFill[Seq[T]] {
   def add(newValue: T): SeqCell[T]
@@ -60,9 +60,9 @@ trait NoFill[T] extends Cell[T] {
 trait MapCell[A, B] extends UnstableCell[Map[A, B]] with BaseMapCell[A, B] with NoFill[Map[A, B]] {}
 
 case class OnceCell[T](
-                        value: Option[T] = None,
-                        override val default: Option[T] = None
-                      ) extends Cell[T] {
+    value: Option[T] = None,
+    override val default: Option[T] = None
+) extends Cell[T] {
   override def readStable: Option[T] = value
 
   override def fill(newValue: T): OnceCell[T] = {
@@ -103,17 +103,17 @@ case class LiteralCell[T](value: T) extends Cell[T] {
 }
 
 /** A cell that automatically provides a default value during zonking if no other propagator fills it. This is used to avoid "not covered by any
- * propagator" errors for cells that are allowed to have default values.
- *
- * @param defaultValue
- * The default value to use if no other propagator fills this cell
- * @param value
- * The current value (if any)
- */
+  * propagator" errors for cells that are allowed to have default values.
+  *
+  * @param defaultValue
+  *   The default value to use if no other propagator fills this cell
+  * @param value
+  *   The current value (if any)
+  */
 case class DefaultValueCell[T](
-                                defaultValue: T,
-                                value: Option[T] = None
-                              ) extends Cell[T] {
+    defaultValue: T,
+    value: Option[T] = None
+) extends Cell[T] {
   override def readStable: Option[T] = value
 
   override val default: Option[T] = Some(defaultValue)

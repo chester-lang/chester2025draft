@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.util.boundary
 
-final class ConcurrentCellRepr[+A, -B,C <: CellRW[A,B]](
+final class ConcurrentCellRepr[+A, -B, C <: CellRW[A, B]](
     initialValue: C
 ) extends CellRepr[A, B, C] {
   val storeRef = new AtomicReference[C](initialValue)
@@ -20,7 +20,8 @@ object ConcurrentSolver extends SolverFactory {
 
 final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
-  implicit inline def thereAreAllConcurrent[A,B, C <: CellRW[A,B]](inline x: CellRepr[A,B,C]): ConcurrentCellRepr[A,B,C] = x.asInstanceOf[ConcurrentCellRepr[A,B,C]]
+  implicit inline def thereAreAllConcurrent[A, B, C <: CellRW[A, B]](inline x: CellRepr[A, B, C]): ConcurrentCellRepr[A, B, C] =
+    x.asInstanceOf[ConcurrentCellRepr[A, B, C]]
 
   override protected def peakCell[T](id: CellReprOfR[T]): CellR[T] = id.storeRef.get()
 

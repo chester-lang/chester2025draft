@@ -2,10 +2,9 @@ package chester.utils.elab
 
 import chester.utils.cell.Cell
 
-
 final class ProceduralCellId[T](
-                           initialValue: Cell[T]
-                         ) extends CellReprOf[T] {
+    initialValue: Cell[T]
+) extends CellReprOf[T] {
   var store = initialValue
 }
 
@@ -13,8 +12,7 @@ object ProceduralSolver extends SolverFactory {
   override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ProceduralSolver(conf)
 }
 
-
-final class ProceduralSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
+final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
 
   override def readStable[U](id: CellReprOf[U]): Option[U] = ???
 

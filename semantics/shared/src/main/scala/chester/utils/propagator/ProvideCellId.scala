@@ -3,16 +3,16 @@ import chester.utils.cell.*
 
 // TODO: maybe distinguish between read and fill to have more sound Scala types and functions. One is +T and one is -T
 trait ProvideCellId {
-  type CIdOf[+T <: CellRW[?,?]]
+  type CIdOf[+T <: CellRW[?, ?]]
   type PIdOf[+T <: Propagator[?]]
   type CellId[T] = CIdOf[Cell[T]]
-  type CellIdAny = CIdOf[CellRW[?,?]]
+  type CellIdAny = CIdOf[CellRW[?, ?]]
   type SeqId[T] = CIdOf[SeqCell[T]]
   type CellIdOr[T] = CellId[T] | T
 
   def isCId(x: Any): Boolean
 
-  def assumeCId(x: Any): CellIdAny = x.asInstanceOf[CIdOf[CellRW[?,?]]]
+  def assumeCId(x: Any): CellIdAny = x.asInstanceOf[CIdOf[CellRW[?, ?]]]
 
   def literal[T](t: T)(using state: StateOps[?]): CellId[T] = {
     val cell = state.addCell(LiteralCell[T](t))
@@ -48,39 +48,39 @@ trait ProvideCellId {
 
     /** make a best guess for zonkingCells */
     def zonk(
-        needed: Vector[CIdOf[CellRW[?,?]]]
+        needed: Vector[CIdOf[CellRW[?, ?]]]
     )(using StateOps[Ops], Ops): ZonkResult
 
     def naiveFallbackZonk(
-        needed: Vector[CIdOf[CellRW[?,?]]]
+        needed: Vector[CIdOf[CellRW[?, ?]]]
     )(using StateOps[Ops], Ops): ZonkResult =
       zonk(needed)
   }
 
   trait StateRead[Ops] {
-    def readCell[T <: CellRW[?,?]](id: CIdOf[T]): Option[T]
+    def readCell[T <: CellRW[?, ?]](id: CIdOf[T]): Option[T]
 
     def readStable[U](id: CellId[U]): Option[U] =
       readCell[Cell[U]](id).get.readStable
     def readUnstable[U](id: CellId[U]): Option[U] =
       readCell[Cell[U]](id).get.readUnstable
 
-    def hasStableValue[T <: CellRW[?,?]](id: CIdOf[T]): Boolean =
+    def hasStableValue[T <: CellRW[?, ?]](id: CIdOf[T]): Boolean =
       readCell(id).exists((x: T) => x.hasStableValue)
 
-    def noStableValue[T <: CellRW[?,?]](id: CIdOf[T]): Boolean = !hasStableValue(id)
+    def noStableValue[T <: CellRW[?, ?]](id: CIdOf[T]): Boolean = !hasStableValue(id)
 
-    private def hasSomeValue[T <: CellRW[?,?]](id: CIdOf[T]): Boolean =
+    private def hasSomeValue[T <: CellRW[?, ?]](id: CIdOf[T]): Boolean =
       readCell(id).exists((x: T) => x.hasSomeValue)
 
-    def noAnyValue[T <: CellRW[?,?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
+    def noAnyValue[T <: CellRW[?, ?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
 
     def stable: Boolean
 
   }
 
   trait StateOps[Session] extends StateRead[Session] {
-    protected def update[T <: CellRW[?,?]](id: CIdOf[T], f: T => T)(using
+    protected def update[T <: CellRW[?, ?]](id: CIdOf[T], f: T => T)(using
         Session
     ): Unit
 
@@ -95,7 +95,7 @@ trait ProvideCellId {
     ): Unit =
       update[T](id, _.add(key, value).asInstanceOf[T])
 
-    def addCell[T <: CellRW[?,?]](cell: T): CIdOf[T]
+    def addCell[T <: CellRW[?, ?]](cell: T): CIdOf[T]
 
     def addPropagatorGetPid[T <: Propagator[Session]](propagator: T)(using
         more: Session
@@ -114,7 +114,7 @@ trait ProvideCellId {
         tick(using more)
 
     /** make a best guess for those cells */
-    def zonk(cells: Vector[CIdOf[CellRW[?,?]]])(using more: Session): Unit
+    def zonk(cells: Vector[CIdOf[CellRW[?, ?]]])(using more: Session): Unit
 
     def toId[T](x: CellIdOr[T]): CIdOf[Cell[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[Cell[T]]]
@@ -127,7 +127,7 @@ trait ProvideCellId {
 
   enum ZonkResult {
     case Done extends ZonkResult
-    case Require(needed: Seq[CIdOf[CellRW[?,?]]]) extends ZonkResult
+    case Require(needed: Seq[CIdOf[CellRW[?, ?]]]) extends ZonkResult
     case NotYet extends ZonkResult
   }
 }
