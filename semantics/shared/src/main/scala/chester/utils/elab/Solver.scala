@@ -2,11 +2,6 @@ package chester.utils.elab
 
 import chester.utils.cell.{CellR, Cell}
 
-// Note that the commit is equal or lower than the actual commit
-case class WaitingConstraint(vars: Vector[CellReprAny], x: Constraint) {
-  def related(x: CellReprAny): Boolean = vars.contains(x)
-}
-
 trait SolverOps {
   def hasStableValue(id: CellReprOfAny): Boolean
   def noStableValue(id: CellReprOfAny): Boolean
