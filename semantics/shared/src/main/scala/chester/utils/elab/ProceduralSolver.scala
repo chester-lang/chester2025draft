@@ -12,25 +12,15 @@ object ProceduralSolver extends SolverFactory {
   override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ProceduralSolver(conf)
 }
 
-final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
+final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
-  override def readStable[U](id: CellReprOfRW[U]): Option[U] = ???
+  override protected def peakCell[T](id: CellReprOfR[T]): CellR[T] = ???
 
-  override def readUnstable[U](id: CellReprOfRW[U]): Option[U] = ???
+  override protected def updateCell[T](id: CellReprOfRW[T], f: Cell[T] => Cell[T]): Unit = ???
 
   override def run(): Unit = ???
 
   override def stable: Boolean = ???
 
   override def addConstraint(x: Constraint): Unit = ???
-
-  override def fill[T](id: CellReprOfRW[T], value: T): Unit = ???
-
-  override def hasStableValue(id: CellReprOfAny): Boolean = ???
-
-  override def noStableValue(id: CellReprOfAny): Boolean = ???
-
-  override def hasSomeValue(id: CellReprOfAny): Boolean = ???
-
-  override def noAnyValue(id: CellReprOfAny): Boolean = ???
 }
