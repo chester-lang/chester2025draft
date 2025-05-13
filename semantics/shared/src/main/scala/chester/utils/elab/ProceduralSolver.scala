@@ -16,15 +16,7 @@ object ProceduralSolver extends SolverFactory {
 
 final class ProceduralSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extends SolverOps {
 
-  override def hasStableValue[T](id: CellReprOf[T]): Boolean = ???
-
-  override def noStableValue[T](id: CellReprOf[T]): Boolean = ???
-
   override def readStable[U](id: CellReprOf[U]): Option[U] = ???
-
-  override def hasSomeValue[T](id: CellReprOf[T]): Boolean = ???
-
-  override def noAnyValue[T](id: CellReprOf[T]): Boolean = ???
 
   override def readUnstable[U](id: CellReprOf[U]): Option[U] = ???
 
@@ -35,4 +27,12 @@ final class ProceduralSolver[Ops] (val conf: HandlerConf[Ops])(using Ops) extend
   override def addConstraint(x: Constraint): Unit = ???
 
   override def fill[T](id: CellReprOf[T], value: T): Unit = ???
+
+  override def hasStableValue(id: CellReprOfAny): Boolean = ???
+
+  override def noStableValue(id: CellReprOfAny): Boolean = ???
+
+  override def hasSomeValue(id: CellReprOfAny): Boolean = ???
+
+  override def noAnyValue(id: CellReprOfAny): Boolean = ???
 }

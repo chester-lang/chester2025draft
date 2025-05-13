@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.{Cell, CellRW}
+import chester.utils.cell.{Cell, CellR, CellRW}
 
 sealed trait CellIdAny {
 
@@ -13,6 +13,8 @@ open trait CellRepr[+A,-B, +C <: CellRW[A,B]] extends CellIdAny {
 }
 
 type CellReprOf[T] = CellRepr[T, T, CellRW[T,T]]
+type CellReprOfAny = CellRepr[Any,Nothing,CellRW[Any, Nothing]]
+type CellReprOfR[+T] = CellRepr[T,Nothing,CellRW[T,Nothing]]
 
 // Note that the commit is equal or lower than the actual commit
 case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
@@ -20,11 +22,11 @@ case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
 }
 
 trait SolverOps {
-  def hasStableValue[T](id: CellReprOf[T]): Boolean
-  def noStableValue[T](id: CellReprOf[T]): Boolean
+  def hasStableValue(id: CellReprOfAny): Boolean
+  def noStableValue(id: CellReprOfAny): Boolean
   def readStable[U](id: CellReprOf[U]): Option[U]
-  def hasSomeValue[T](id: CellReprOf[T]): Boolean
-  def noAnyValue[T](id: CellReprOf[T]): Boolean
+  def hasSomeValue(id:CellReprOfAny): Boolean
+  def noAnyValue(id: CellReprOfAny): Boolean
   def readUnstable[U](id: CellReprOf[U]): Option[U]
 
   def run(): Unit
@@ -37,19 +39,19 @@ trait SolverOps {
 }
 
 trait BasicSolverOps extends SolverOps {
-  protected def peakCell[T](id: CellReprOf[T]): Cell[T]
+  protected def peakCell[T](id: CellReprOfR[T]): CellR[T]
   protected def updateCell[T](id: CellReprOf[T], f: Cell[T]=>Cell[T]):Unit
 
 
-  override def hasStableValue[T](id: CellReprOf[T]): Boolean = peakCell(id).hasStableValue
+  override def hasStableValue(id: CellReprOfAny): Boolean = peakCell(id).hasStableValue
 
-  override def noStableValue[T](id: CellReprOf[T]): Boolean = peakCell(id).noStableValue
+  override def noStableValue(id: CellReprOfAny): Boolean = peakCell(id).noStableValue
 
   override def readStable[U](id: CellReprOf[U]): Option[U] = peakCell(id).readStable
 
-  override def hasSomeValue[T](id: CellReprOf[T]): Boolean = peakCell(id).hasSomeValue
+  override def hasSomeValue(id: CellReprOfAny): Boolean = peakCell(id).hasSomeValue
 
-  override def noAnyValue[T](id: CellReprOf[T]): Boolean = peakCell(id).noAnyValue
+  override def noAnyValue(id: CellReprOfAny): Boolean = peakCell(id).noAnyValue
 
   override def readUnstable[U](id: CellReprOf[U]): Option[U] = peakCell(id).readUnstable
 

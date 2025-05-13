@@ -22,7 +22,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   implicit inline def thereAreAllConcurrent[A,B, C <: CellRW[A,B]](inline x: CellRepr[A,B,C]): ConcurrentCellRepr[A,B,C] = x.asInstanceOf[ConcurrentCellRepr[A,B,C]]
 
-  override protected def peakCell[T](id: CellReprOf[T]): Cell[T] = id.storeRef.get()
+  override protected def peakCell[T](id: CellReprOfR[T]): CellR[T] = id.storeRef.get()
 
   given SolverOps = this
   private val pool = new ForkJoinPool()
