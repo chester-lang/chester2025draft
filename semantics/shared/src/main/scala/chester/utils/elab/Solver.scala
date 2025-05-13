@@ -6,13 +6,13 @@ sealed trait CellIdAny {
 
 }
 
-open trait CellRepr[T, +U <: Cell[T]] extends CellIdAny {
+open trait CellRepr[+A,-B, +C <: CellRW[A,B]] extends CellIdAny {
   def tag: String = Integer.toHexString(hashCode)
 
   final override def toString: String = s"CellId@${tag}" 
 }
 
-type CellId[T] = CellRepr[T, CellRW[T,T]]
+type CellId[T] = CellRepr[T, T, CellRW[T,T]]
 
 // Note that the commit is equal or lower than the actual commit
 case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
