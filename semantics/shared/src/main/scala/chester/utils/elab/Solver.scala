@@ -13,6 +13,7 @@ open trait CellRepr[+A, -B, +C <: CellRW[A, B]] extends CellIdAny {
 type CellReprOf[T] = CellRepr[T, T, CellRW[T, T]]
 type CellReprOfAny = CellRepr[Any, Nothing, CellRW[Any, Nothing]]
 type CellReprOfR[+T] = CellRepr[T, Nothing, CellRW[T, Nothing]]
+type CellReprOfW[-T] = CellRepr[Any, T, CellRW[Any, T]]
 
 // Note that the commit is equal or lower than the actual commit
 case class WaitingConstraint(vars: Vector[CellIdAny], x: Constraint) {
