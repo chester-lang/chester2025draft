@@ -40,7 +40,7 @@ class FileParserTestV1 extends FunSuite {
                 Files.write(expectedFile, actual.getBytes)
                 println(t"Created expected file: $expectedFile")
               } else {
-                Files
+                val expected = Files
                   .readString(expectedFile, StandardCharsets.UTF_8)
                   .replace("\r\n", "\n")
                 // assertEquals(actual, expected)
