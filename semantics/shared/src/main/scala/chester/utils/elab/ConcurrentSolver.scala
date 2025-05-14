@@ -65,7 +65,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   override def run(): Unit = boundary[Unit] { outer ?=>
     while (true) boundary[Unit] { inner ?=>
       assume(!pool.isShutdown)
-      assume(pool.isQuiescent)
+      val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
       pool.execute(() => inPoolTickStage0())
       val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
       assume(pool.isQuiescent)
