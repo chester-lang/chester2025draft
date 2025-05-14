@@ -33,6 +33,17 @@ def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): C
   case x: Term                                            => SolverOps.addCell(LiteralCellContent(x))
 }
 
+@tailrec
+def assumeCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): CellRW[Term] = x match {
+  case c: CellRW[Term @unchecked] =>
+    SolverOps.readStable(c) match {
+      case Some(v: MetaTerm) => assumeCell(v, meta)
+      case _ => c
+    }
+  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) => assumeCell(c.inner, meta)
+  case x: Term => throw new IllegalArgumentException("Not a cell?")
+}
+
 def newHole(using SolverOps): CellRW[Term] = SolverOps.addCell(OnceCellContent[Term]())
 
 trait Elab {

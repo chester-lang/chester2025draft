@@ -7,5 +7,6 @@ implicit val DefaultSolverConf: HandlerConf[ElabOps] = new MutHandlerConf[ElabOp
   IntegerLitHandler,
   StringLitHandler,
   SymbolLitHandler,
-  PureHandler
+  PureHandler,
+  UnifyHandler
 )

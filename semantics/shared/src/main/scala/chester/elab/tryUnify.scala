@@ -54,6 +54,12 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     if (rhs <:? lhs isTrue) return Result.Done
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
+    if(lhsV.isInstanceOf[MetaTerm]) {
+      return Result.Waiting(assumeCell(lhs))
+    }
+    if(rhsV.isInstanceOf[MetaTerm]) {
+      return Result.Waiting(assumeCell(rhs))
+    }
     ???
   }
 
