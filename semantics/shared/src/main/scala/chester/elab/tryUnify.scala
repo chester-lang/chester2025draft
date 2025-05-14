@@ -2,7 +2,7 @@ package chester.elab
 
 import chester.syntax.core.*
 import chester.tyck.Context
-import chester.utils.InMeta
+import chester.utils.*
 import chester.utils.elab.*
 import spire.math.Trilean
 
@@ -87,6 +87,10 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
           return Result.Done
         }
         ???
+      }
+      case (lhs, Union(rhs, _)) => {
+        rhs.foreach(rhs=>SolverOps.addConstraint(Unify(lhs, rhs)))
+        Result.Done
       }
       case _ => ???
     }
