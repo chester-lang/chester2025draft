@@ -7,8 +7,8 @@ import chester.utils.cell.*
 import scala.collection.mutable
 
 trait ProvideMutable extends ProvideImpl {
-  class HoldCell[+T <: Cell[?, ?]](val uniqId: UniqidOf[Impl[?]], value: T) {
-    var store: Cell[?, ?] = value
+  class HoldCell[+T <: CellContent[?, ?]](val uniqId: UniqidOf[Impl[?]], value: T) {
+    var store: CellContent[?, ?] = value
     var didChange: Boolean = false
     var readingPropagators: Vector[PIdOf[Propagator[?]]] = Vector.empty
     var zonkingPropagators: Vector[PIdOf[Propagator[?]]] = Vector.empty
@@ -16,7 +16,7 @@ trait ProvideMutable extends ProvideImpl {
     inline def noAnyValue: Boolean = store.noAnyValue
   }
 
-  type CIdOf[+T <: Cell[?, ?]] = HoldCell[T]
+  type CIdOf[+T <: CellContent[?, ?]] = HoldCell[T]
 
   class HoldPropagator[+T <: Propagator[?]](
       val uniqId: UniqidOf[Impl[?]],
@@ -33,9 +33,9 @@ trait ProvideMutable extends ProvideImpl {
     result
   }
 
-  override def assumeCId(x: Any): CIdOf[Cell[?, ?]] = {
+  override def assumeCId(x: Any): CIdOf[CellContent[?, ?]] = {
     require(isCId(x))
-    x.asInstanceOf[CIdOf[Cell[?, ?]]]
+    x.asInstanceOf[CIdOf[CellContent[?, ?]]]
   }
 
   override def stateAbilityImpl[Ability]: StateOps[Ability] =
@@ -46,13 +46,13 @@ trait ProvideMutable extends ProvideImpl {
   ) extends StateOps[Ops] {
     var didChanged: mutable.ArrayDeque[CIdOf[?]] = mutable.ArrayDeque.empty
 
-    override def readCell[T <: Cell[?, ?]](id: CIdOf[T]): Option[T] = {
+    override def readCell[T <: CellContent[?, ?]](id: CIdOf[T]): Option[T] = {
       require(id.uniqId == uniqId)
       Some(id.store.asInstanceOf[T])
     }
 
-    override def update[T <: Cell[?, ?]](id: CIdOf[T], f: T => T)(using
-        Ops
+    override def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
+                                                                         Ops
     ): Unit = {
       didSomething = true
       require(id.uniqId == uniqId)
@@ -61,7 +61,7 @@ trait ProvideMutable extends ProvideImpl {
       didChanged.append(id)
     }
 
-    override def addCell[T <: Cell[?, ?]](cell: T): CIdOf[T] = {
+    override def addCell[T <: CellContent[?, ?]](cell: T): CIdOf[T] = {
       didSomething = true
       val id = new HoldCell[T](uniqId, cell)
       id
@@ -105,7 +105,7 @@ trait ProvideMutable extends ProvideImpl {
     var didSomething = false
 
     override def defaulting(
-        cells: Vector[CIdOf[Cell[?, ?]]]
+        cells: Vector[CIdOf[CellContent[?, ?]]]
     )(using more: Ops): Unit = {
       var cellsNeeded = cells
       var tryFallback: Int = 0

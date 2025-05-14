@@ -81,7 +81,7 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
   private def FlatMap[T, U](
       xs: Seq[CellId[T]]
   )(f: Seq[T] => U)(using ck: TyckSession, state: StateOps[TyckSession]): CellId[U] = {
-    val cell = state.addCell(OnceCell[U]())
+    val cell = state.addCell(OnceCellContent[U]())
     state.addPropagator(FlatMaping(xs, f, cell))
     cell
   }
@@ -89,7 +89,7 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
   def Map1[T, U](
       x: CellId[T]
   )(f: T => U)(using ck: TyckSession, state: StateOps[TyckSession]): CellId[U] = {
-    val cell = state.addCell(OnceCell[U]())
+    val cell = state.addCell(OnceCellContent[U]())
     state.addPropagator(FlatMaping(Vector(x), (xs: Seq[T]) => f(xs.head), cell))
     cell
   }
@@ -97,7 +97,7 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
   def Map2[A, B, C](x: CellId[A], y: CellId[B])(
       f: (A, B) => C
   )(using ck: TyckSession, state: StateOps[TyckSession]): CellId[C] = {
-    val cell = state.addCell(OnceCell[C]())
+    val cell = state.addCell(OnceCellContent[C]())
     state.addPropagator(
       FlatMaping(
         Vector[CellId[Any]](
@@ -114,7 +114,7 @@ trait CommonPropagator[TyckSession] extends ProvideCellId {
   def Map3[A, B, C, D](x: CellId[A], y: CellId[B], z: CellId[C])(
       f: (A, B, C) => D
   )(using ck: TyckSession, state: StateOps[TyckSession]): CellId[D] = {
-    val cell = state.addCell(OnceCell[D]())
+    val cell = state.addCell(OnceCellContent[D]())
     state.addPropagator(
       FlatMaping(
         Vector[CellId[Any]](

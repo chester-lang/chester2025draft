@@ -10,11 +10,11 @@ import scala.jdk.CollectionConverters.*
 
 trait ProvideMultithread extends ProvideImpl {
 
-  class HoldCell[+T <: Cell[?, ?]](
+  class HoldCell[+T <: CellContent[?, ?]](
       val uniqId: UniqidOf[Impl[?]],
       initialValue: T
   ) {
-    private val storeRef = new AtomicReference[Cell[?, ?]](initialValue)
+    private val storeRef = new AtomicReference[CellContent[?, ?]](initialValue)
     val readingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
     val zonkingPropagators = new ConcurrentLinkedQueue[PIdOf[Propagator[?]]]()
     private val didChangeRef = new AtomicBoolean(false)
@@ -23,8 +23,8 @@ trait ProvideMultithread extends ProvideImpl {
 
     /** Atomically updates the store */
     def compareAndSetStore(
-        expectedValue: Cell[?, ?],
-        newValue: Cell[?, ?]
+                            expectedValue: CellContent[?, ?],
+                            newValue: CellContent[?, ?]
     ): Boolean = {
       val result = storeRef.compareAndSet(expectedValue, newValue)
       if (result) {
@@ -40,15 +40,15 @@ trait ProvideMultithread extends ProvideImpl {
     def noStableValue: Boolean = store.noStableValue
   }
 
-  type CIdOf[+T <: Cell[?, ?]] = HoldCell[T]
+  type CIdOf[+T <: CellContent[?, ?]] = HoldCell[T]
   type PIdOf[+T <: Propagator[?]] = HoldPropagator[T]
   type CellId[T] = CIdOf[CellRW[T]]
-  type SeqId[T] = CIdOf[SeqCell[T, T]]
+  type SeqId[T] = CIdOf[SeqCellContent[T, T]]
 
   def isCId(x: Any): Boolean = x.isInstanceOf[HoldCell[?]]
 
-  override def assumeCId(x: Any): CIdOf[Cell[?, ?]] =
-    x.asInstanceOf[CIdOf[Cell[?, ?]]]
+  override def assumeCId(x: Any): CIdOf[CellContent[?, ?]] =
+    x.asInstanceOf[CIdOf[CellContent[?, ?]]]
 
   class HoldPropagator[+T <: Propagator[?]](
       val uniqId: UniqidOf[Impl[?]],
@@ -124,13 +124,13 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def readCell[T <: Cell[?, ?]](id: CIdOf[T]): Option[T] = {
+    override def readCell[T <: CellContent[?, ?]](id: CIdOf[T]): Option[T] = {
       require(id.uniqId == uniqId)
       Some(id.store)
     }
 
-    override def update[T <: Cell[?, ?]](id: CIdOf[T], f: T => T)(using
-        Ability
+    override def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
+                                                                         Ability
     ): Unit = {
       require(id.uniqId == uniqId)
       var updated = false
@@ -180,7 +180,7 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def addCell[T <: Cell[?, ?]](cell: T): CIdOf[T] =
+    override def addCell[T <: CellContent[?, ?]](cell: T): CIdOf[T] =
       new HoldCell[T](uniqId, cell)
 
     override def addPropagatorGetPid[T <: Propagator[Ability]](
@@ -228,7 +228,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def defaulting(
-        cells: Vector[CIdOf[Cell[?, ?]]]
+        cells: Vector[CIdOf[CellContent[?, ?]]]
     )(using Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
       try {
@@ -414,12 +414,12 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class ZonkTask(
-        c: CIdOf[Cell[?, ?]],
-        p: PIdOf[Propagator[Ability]],
-        firstFallback: Boolean,
-        state: Impl[Ability],
-        parentRecursionDepth: Int = 0,
-        processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
+                            c: CIdOf[CellContent[?, ?]],
+                            p: PIdOf[Propagator[Ability]],
+                            firstFallback: Boolean,
+                            state: Impl[Ability],
+                            parentRecursionDepth: Int = 0,
+                            processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
     )(using more: Ability)
         extends RecursiveAction {
       override def compute(): Unit = {
@@ -478,8 +478,8 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    private class DefaultValueTask(c: CIdOf[Cell[?, ?]], state: Impl[Ability])(using
-        Ability
+    private class DefaultValueTask(c: CIdOf[CellContent[?, ?]], state: Impl[Ability])(using
+                                                                                      Ability
     ) extends RecursiveAction {
       override def compute(): Unit =
         if (c.noAnyValue && c.store.default.isDefined) {

@@ -3,19 +3,19 @@ import chester.utils.cell.*
 
 // TODO: maybe distinguish between read and fill to have more sound Scala types and functions. One is +T and one is -T
 trait ProvideCellId {
-  type CIdOf[+T <: Cell[?, ?]]
+  type CIdOf[+T <: CellContent[?, ?]]
   type PIdOf[+T <: Propagator[?]]
   type CellId[T] = CIdOf[CellRW[T]]
-  type CellIdAny = CIdOf[Cell[?, ?]]
-  type SeqId[T] = CIdOf[SeqCell[T, T]]
+  type CellIdAny = CIdOf[CellContent[?, ?]]
+  type SeqId[T] = CIdOf[SeqCellContent[T, T]]
   type CellIdOr[T] = CellId[T] | T
 
   def isCId(x: Any): Boolean
 
-  def assumeCId(x: Any): CellIdAny = x.asInstanceOf[CIdOf[Cell[?, ?]]]
+  def assumeCId(x: Any): CellIdAny = x.asInstanceOf[CIdOf[CellContent[?, ?]]]
 
   def literal[T](t: T)(using state: StateOps[?]): CellId[T] = {
-    val cell = state.addCell(LiteralCell[T](t))
+    val cell = state.addCell(LiteralCellContent[T](t))
     cell
   }
 
@@ -23,7 +23,7 @@ trait ProvideCellId {
     * not be otherwise constrained.
     */
   def withDefault[T](defaultValue: T)(using state: StateOps[?]): CellId[T] = {
-    val cell = state.addCell(DefaultValueCell[T](defaultValue))
+    val cell = state.addCell(DefaultValueCellContent[T](defaultValue))
     cell
   }
 
@@ -48,54 +48,54 @@ trait ProvideCellId {
 
     /** make a best guess for defaultingCells */
     def defaulting(
-        needed: Vector[CIdOf[Cell[?, ?]]]
+        needed: Vector[CIdOf[CellContent[?, ?]]]
     )(using StateOps[Ops], Ops): DefaultingResult
 
     def naiveFallbackZonk(
-        needed: Vector[CIdOf[Cell[?, ?]]]
+        needed: Vector[CIdOf[CellContent[?, ?]]]
     )(using StateOps[Ops], Ops): DefaultingResult =
       defaulting(needed)
   }
 
   trait StateRead[Ops] {
-    def readCell[T <: Cell[?, ?]](id: CIdOf[T]): Option[T]
+    def readCell[T <: CellContent[?, ?]](id: CIdOf[T]): Option[T]
 
     def readStable[U](id: CellId[U]): Option[U] =
       readCell[CellRW[U]](id).get.readStable
     def readUnstable[U](id: CellId[U]): Option[U] =
       readCell[CellRW[U]](id).get.readUnstable
 
-    def hasStableValue[T <: Cell[?, ?]](id: CIdOf[T]): Boolean =
+    def hasStableValue[T <: CellContent[?, ?]](id: CIdOf[T]): Boolean =
       readCell(id).exists((x: T) => x.hasStableValue)
 
-    def noStableValue[T <: Cell[?, ?]](id: CIdOf[T]): Boolean = !hasStableValue(id)
+    def noStableValue[T <: CellContent[?, ?]](id: CIdOf[T]): Boolean = !hasStableValue(id)
 
-    private def hasSomeValue[T <: Cell[?, ?]](id: CIdOf[T]): Boolean =
+    private def hasSomeValue[T <: CellContent[?, ?]](id: CIdOf[T]): Boolean =
       readCell(id).exists((x: T) => x.hasSomeValue)
 
-    def noAnyValue[T <: Cell[?, ?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
+    def noAnyValue[T <: CellContent[?, ?]](id: CIdOf[T]): Boolean = !hasSomeValue(id)
 
     def stable: Boolean
 
   }
 
   trait StateOps[Session] extends StateRead[Session] {
-    protected def update[T <: Cell[?, ?]](id: CIdOf[T], f: T => T)(using
-        Session
+    protected def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
+                                                                          Session
     ): Unit
 
     def fill[T <: CellRW[U], U](id: CIdOf[T], f: U)(using Session): Unit =
       update[T](id, _.fill(f).asInstanceOf[T])
 
-    def add[T <: SeqCell[U, U], U](id: CIdOf[T], f: U)(using Session): Unit =
+    def add[T <: SeqCellContent[U, U], U](id: CIdOf[T], f: U)(using Session): Unit =
       update[T](id, _.add(f).asInstanceOf[T])
 
-    def add[T <: MapCell[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
-        Session
+    def add[T <: MapCellContent[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
+                                                                             Session
     ): Unit =
       update[T](id, _.add(key, value).asInstanceOf[T])
 
-    def addCell[T <: Cell[?, ?]](cell: T): CIdOf[T]
+    def addCell[T <: CellContent[?, ?]](cell: T): CIdOf[T]
 
     def addPropagatorGetPid[T <: Propagator[Session]](propagator: T)(using
         more: Session
@@ -114,20 +114,20 @@ trait ProvideCellId {
         tick(using more)
 
     /** make a best guess for those cells */
-    def defaulting(cells: Vector[CIdOf[Cell[?, ?]]])(using more: Session): Unit
+    def defaulting(cells: Vector[CIdOf[CellContent[?, ?]]])(using more: Session): Unit
 
     def toId[T](x: CellIdOr[T]): CIdOf[CellRW[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[CellRW[T]]]
       case x =>
         val t = x.asInstanceOf[T]
-        val cell = addCell(LiteralCell[T](t))
+        val cell = addCell(LiteralCellContent[T](t))
         cell.asInstanceOf[CIdOf[CellRW[T]]]
     }
   }
 
   enum DefaultingResult {
     case Done extends DefaultingResult
-    case Require(needed: Seq[CIdOf[Cell[?, ?]]]) extends DefaultingResult
+    case Require(needed: Seq[CIdOf[CellContent[?, ?]]]) extends DefaultingResult
     case NotYet extends DefaultingResult
   }
 }

@@ -11,7 +11,7 @@ trait ElaboraterFunction { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunction(
       expr: FunctionExpr,
       ty: CellId[Term],
-      outerEffects: CIdOf[EffectsCell]
+      outerEffects: CIdOf[EffectsCellContent]
   )(using
       ctx: Context,
       parameter: SemanticCollector,
@@ -24,11 +24,11 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
   // Flag to enable or disable termination checking
   private val terminationCheckEnabled: Boolean = true // Set to false to disable termination checking
 
-  private def elabArg(arg: Arg, effects: CIdOf[EffectsCell])(using
-      localCtx: MutableContext,
-      parameter: SemanticCollector,
-      ck: TyckOps,
-      state: StateOps[TyckOps]
+  private def elabArg(arg: Arg, effects: CIdOf[EffectsCellContent])(using
+                                                                    localCtx: MutableContext,
+                                                                    parameter: SemanticCollector,
+                                                                    ck: TyckOps,
+                                                                    state: StateOps[TyckOps]
   ): ArgTerm = {
     require(arg.decorations.isEmpty, "decorations are not supported yet")
     val ty = elabTy(arg.ty)
@@ -45,11 +45,11 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
     }
   }
 
-  private def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCell])(using
-      MutableContext,
-      SemanticCollector,
-      TyckOps,
-      StateOps[TyckOps]
+  private def elabTelescope(telescope: DefTelescope, effects: CIdOf[EffectsCellContent])(using
+                                                                                         MutableContext,
+                                                                                         SemanticCollector,
+                                                                                         TyckOps,
+                                                                                         StateOps[TyckOps]
   ): TelescopeTerm = {
     // Process each argument in the telescope, updating the context
     val argTerms = telescope.args.map(arg => elabArg(arg, effects))
@@ -60,7 +60,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
   def elabFunction(
       expr: FunctionExpr,
       ty: CellId[Term],
-      outerEffects: CIdOf[EffectsCell]
+      outerEffects: CIdOf[EffectsCellContent]
   )(using
       ctx: Context,
       parameter: SemanticCollector,

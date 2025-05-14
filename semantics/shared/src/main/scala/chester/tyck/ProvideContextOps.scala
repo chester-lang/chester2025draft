@@ -16,7 +16,7 @@ trait ProvideContextOps extends ProvideCellId with ElaboraterBase {
       new TyAndVal(toTerm(literal(ty)), toTerm(literal(value)))
 
     def create()(using state: StateOps[TyckOps]): TyAndVal =
-      new TyAndVal(toTerm(state.addCell(OnceCell[Term]())), toTerm(state.addCell(OnceCell[Term]())))
+      new TyAndVal(toTerm(state.addCell(OnceCellContent[Term]())), toTerm(state.addCell(OnceCellContent[Term]())))
   }
 
   extension (context: ContextItem) {

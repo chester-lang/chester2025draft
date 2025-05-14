@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.utils.cell.{Cell, CellR}
+import chester.utils.cell.{CellContent, CellR}
 
 trait SolverOps {
   def hasStableValue(id: ReprAny): Boolean
@@ -16,13 +16,13 @@ trait SolverOps {
   def addConstraint(x: Constraint): Unit
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
 
-  def addCell[A, B, C <: Cell[A, B]](cell: C): CellRepr[A, B, C] = ???
+  def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C] = ???
   def fill[T](id: ReprW[T], value: T): Unit
 }
 
 trait BasicSolverOps extends SolverOps {
   protected def peakCell[T](id: ReprR[T]): CellR[T]
-  protected def updateCell[A, B](id: Repr[A, B], f: Cell[A, B] => Cell[A, B]): Unit
+  protected def updateCell[A, B](id: Repr[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit
 
   override def hasStableValue(id: ReprAny): Boolean = peakCell(id).hasStableValue
 

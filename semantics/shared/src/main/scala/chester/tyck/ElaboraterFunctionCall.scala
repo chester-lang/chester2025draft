@@ -12,7 +12,7 @@ trait ElaboraterFunctionCall { this: ElaboraterBase & ElaboraterCommon =>
   def elabFunctionCall(
       expr: DesaltFunctionCall,
       ty: CellId[Term],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       ctx: Context,
       parameter: SemanticCollector,
@@ -42,7 +42,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   override def elabFunctionCall(
       expr: DesaltFunctionCall,
       ty: CellId[Term],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       ctx: Context,
       parameter: SemanticCollector,
@@ -77,7 +77,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   private def defaultElabFunctionCall(
       expr: DesaltFunctionCall,
       ty: CellId[Term],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       ctx: Context,
       _parameter: SemanticCollector,
@@ -128,14 +128,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   }
 
   private case class UnifyFunctionCall(
-      functionTy: CellId[Term],
-      callings: Vector[Calling],
-      resultTy: CellId[Term],
-      cause: Expr,
-      functionTerm: Term,
-      functionCallTerm: CellId[Term],
-      callEffects: CIdOf[EffectsCell],
-      outerEffects: CIdOf[EffectsCell]
+                                        functionTy: CellId[Term],
+                                        callings: Vector[Calling],
+                                        resultTy: CellId[Term],
+                                        cause: Expr,
+                                        functionTerm: Term,
+                                        functionCallTerm: CellId[Term],
+                                        callEffects: CIdOf[EffectsCellContent],
+                                        outerEffects: CIdOf[EffectsCellContent]
   )(using Context)
       extends Propagator[TyckOps] {
 
@@ -194,15 +194,15 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     // Propagate effects from function call to outer effects
     private def propagateEffects(
-        functionEffects: Term,
-        outerEffects: CIdOf[EffectsCell],
-        cause: Expr
+                                  functionEffects: Term,
+                                  outerEffects: CIdOf[EffectsCellContent],
+                                  cause: Expr
     )(using state: StateOps[TyckOps], _ck: TyckOps): Unit =
       functionEffects match {
         case Effects(effects, _) =>
           // Add each effect from the function to the outer effects
           effects.foreach { (_, effect) =>
-            val effectsCell = state.readCell(outerEffects).asInstanceOf[EffectsCell]
+            val effectsCell = state.readCell(outerEffects).asInstanceOf[EffectsCellContent]
             effectsCell.requireEffect(effect)
           }
         case Meta(id) =>
@@ -290,9 +290,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
   // Helper case class for effect propagation
   private case class PropagateEffects(
-      effectsCell: CellId[Term],
-      callerEffects: CIdOf[EffectsCell],
-      expr: Expr
+                                       effectsCell: CellId[Term],
+                                       callerEffects: CIdOf[EffectsCellContent],
+                                       expr: Expr
   ) extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(effectsCell)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(callerEffects)
@@ -303,7 +303,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         case Some(Effects(effects, _)) =>
           // Add each effect from the callee to the caller's effects
           effects.foreach { (_, effect) =>
-            val effectsCell = state.readCell(callerEffects).asInstanceOf[EffectsCell]
+            val effectsCell = state.readCell(callerEffects).asInstanceOf[EffectsCellContent]
             effectsCell.requireEffect(effect)
           }
           true
@@ -312,7 +312,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       }
 
     override def defaulting(
-        needed: Vector[CIdOf[Cell[?, ?]]]
+        needed: Vector[CIdOf[CellContent[?, ?]]]
     )(using StateOps[TyckOps], TyckOps): DefaultingResult =
       DefaultingResult.Require(Vector(effectsCell))
   }

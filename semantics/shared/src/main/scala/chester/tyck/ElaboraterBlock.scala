@@ -58,22 +58,22 @@ object ElaboraterBlock {
 
 trait ElaboraterBlock { this: ElaboraterBase & ElaboraterCommon =>
 
-  def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: TyckOps,
-      state: StateOps[TyckOps]
+  def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
+                                                                                      localCtx: Context,
+                                                                                      parameter: SemanticCollector,
+                                                                                      ck: TyckOps,
+                                                                                      state: StateOps[TyckOps]
   ): BlockTerm
 }
 
 trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & ElaboraterBase & ElaboraterCommon =>
   import ElaboraterBlock.*
 
-  def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: TyckOps,
-      state: StateOps[TyckOps]
+  def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
+                                                                                      localCtx: Context,
+                                                                                      parameter: SemanticCollector,
+                                                                                      ck: TyckOps,
+                                                                                      state: StateOps[TyckOps]
   ): BlockTerm = {
     val ty = toId(readMetaVar(toTerm(ty0)))
     val Block(heads0, tail, meta) = expr
@@ -221,7 +221,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       expr: LetDefStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       SemanticCollector,
       TyckOps,
@@ -249,7 +249,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       expr: RecordStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       parameter: SemanticCollector,
       ck: TyckOps,
@@ -314,10 +314,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   }
 
   private def processLetLetDefStmt(
-      expr: LetDefStmt,
-      ctx: Context,
-      effects: CIdOf[EffectsCell],
-      meta: Option[ExprMeta]
+                                    expr: LetDefStmt,
+                                    ctx: Context,
+                                    effects: CIdOf[EffectsCellContent],
+                                    meta: Option[ExprMeta]
   )(using
       parameter: SemanticCollector,
       ck: TyckOps,
@@ -350,7 +350,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       expr: TraitStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       parameter: SemanticCollector,
       ck: TyckOps,
@@ -396,7 +396,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       expr: InterfaceStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       parameter: SemanticCollector,
       ck: TyckOps,
@@ -432,7 +432,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
       expr: ObjectStmt,
       ctx: Context,
       declarationsMap: Map[Expr, DeclarationInfo],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       SemanticCollector,
       TyckOps,

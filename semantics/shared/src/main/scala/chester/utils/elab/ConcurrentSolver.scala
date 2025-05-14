@@ -8,9 +8,9 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.util.boundary
 
-final class ConcurrentCellRepr[+A, -B, C <: Cell[A, B]](
+final class ConcurrentCell[+A, -B, C <: CellContent[A, B]](
     initialValue: C
-) extends CellRepr[A, B, C] {
+) extends Cell[A, B, C] {
   val storeRef = new AtomicReference[C](initialValue)
 }
 
@@ -20,8 +20,8 @@ object ConcurrentSolver extends SolverFactory {
 
 final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
-  implicit inline def thereAreAllConcurrent[A, B, C <: Cell[A, B]](inline x: CellRepr[A, B, C]): ConcurrentCellRepr[A, B, C] =
-    x.asInstanceOf[ConcurrentCellRepr[A, B, C]]
+  implicit inline def thereAreAllConcurrent[A, B, C <: CellContent[A, B]](inline x: Cell[A, B, C]): ConcurrentCell[A, B, C] =
+    x.asInstanceOf[ConcurrentCell[A, B, C]]
 
   override protected def peakCell[T](id: ReprR[T]): CellR[T] = id.storeRef.get()
 
@@ -120,7 +120,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
 
   @tailrec
-  override protected def updateCell[A, B](id: Repr[A, B], f: Cell[A, B] => Cell[A, B]): Unit = {
+  override protected def updateCell[A, B](id: Repr[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit = {
     val current = id.storeRef.get()
     val updated = f(current)
     if (current == updated) {

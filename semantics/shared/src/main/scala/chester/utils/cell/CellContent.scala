@@ -1,7 +1,7 @@
 package chester.utils.cell
 
 import chester.i18n.*
-trait Cell[+A, -B] {
+trait CellContent[+A, -B] {
   def default: Option[A] = None
 
   /** stable means can only change once from None to a fixed Some value or always be a fixed value
@@ -19,21 +19,21 @@ trait Cell[+A, -B] {
   def noAnyValue: Boolean = !hasSomeValue
 
   /** fill an unstable cell */
-  def fill(newValue: B): Cell[A, B]
+  def fill(newValue: B): CellContent[A, B]
 }
-type CellRW[A] = Cell[A, A]
-type CellR[+A] = Cell[A, Nothing]
-type CellW[-A] = Cell[Any, A]
+type CellRW[A] = CellContent[A, A]
+type CellR[+A] = CellContent[A, Nothing]
+type CellW[-A] = CellContent[Any, A]
 
-trait SeqCell[+A, -B] extends UnstableCell[Seq[A], Seq[B]] with NoFill[Seq[A], Seq[B]] {
-  def add(newValue: B): SeqCell[A, B]
+trait SeqCellContent[+A, -B] extends UnstableCellContent[Seq[A], Seq[B]] with NoFill[Seq[A], Seq[B]] {
+  def add(newValue: B): SeqCellContent[A, B]
 }
 
 trait BaseMapCell[A, B] {
   def add(key: A, value: B): BaseMapCell[A, B]
 }
 
-trait UnstableCell[+A, -B] extends Cell[A, B] {
+trait UnstableCellContent[+A, -B] extends CellContent[A, B] {
   override def readStable: Option[A] =
     throw new UnsupportedOperationException(
       t"${getClass.getName} is not stable"
@@ -50,55 +50,55 @@ trait UnstableCell[+A, -B] extends Cell[A, B] {
     )
 }
 
-trait NoFill[+A, -B] extends Cell[A, B] {
+trait NoFill[+A, -B] extends CellContent[A, B] {
   override def fill(newValue: B): NoFill[A, B] =
     throw new UnsupportedOperationException(
       t"${getClass.getName} cannot be filled"
     )
 }
 
-trait MapCell[A, B] extends UnstableCell[Map[A, B], Map[A, B]] with BaseMapCell[A, B] with NoFill[Map[A, B], Map[A, B]] {}
+trait MapCellContent[A, B] extends UnstableCellContent[Map[A, B], Map[A, B]] with BaseMapCell[A, B] with NoFill[Map[A, B], Map[A, B]] {}
 
-case class OnceCell[T](
+case class OnceCellContent[T](
     value: Option[T] = None,
     override val default: Option[T] = None
 ) extends CellRW[T] {
   override def readStable: Option[T] = value
 
-  override def fill(newValue: T): OnceCell[T] = {
+  override def fill(newValue: T): OnceCellContent[T] = {
 
     require(value.isEmpty)
     copy(value = Some(newValue))
   }
 }
 
-case class MutableCell[T](value: Option[T]) extends CellRW[T] {
+case class MutableCellContent[T](value: Option[T]) extends CellRW[T] {
   override def readStable: Option[T] = value
 
-  override def fill(newValue: T): MutableCell[T] =
+  override def fill(newValue: T): MutableCellContent[T] =
     copy(value = Some(newValue))
 }
 
-case class CollectionCell[+A, -B <: A](value: Vector[A] = Vector.empty) extends SeqCell[A, B] {
+case class CollectionCellContent[+A, -B <: A](value: Vector[A] = Vector.empty) extends SeqCellContent[A, B] {
   override def readUnstable: Option[Vector[A]] = Some(value)
 
-  override def add(newValue: B): CollectionCell[A, B] =
+  override def add(newValue: B): CollectionCellContent[A, B] =
     copy(value = value :+ newValue)
 }
 
-case class MappingCell[A, B](value: Map[A, B] = Map.empty[A, B]) extends MapCell[A, B] {
+case class MappingCellContent[A, B](value: Map[A, B] = Map.empty[A, B]) extends MapCellContent[A, B] {
   override def readStable: Option[Map[A, B]] = Some(value)
 
-  override def add(key: A, newValue: B): MappingCell[A, B] =
+  override def add(key: A, newValue: B): MappingCellContent[A, B] =
     copy(value = value + (key -> newValue))
 }
 
-case class LiteralCell[T](value: T) extends CellRW[T] {
+case class LiteralCellContent[T](value: T) extends CellRW[T] {
   override def readStable: Option[T] = Some(value)
 
   override def hasStableValue: Boolean = true
 
-  override def fill(newValue: T): LiteralCell[T] =
+  override def fill(newValue: T): LiteralCellContent[T] =
     throw new UnsupportedOperationException("LiteralCell cannot be filled")
 }
 
@@ -110,7 +110,7 @@ case class LiteralCell[T](value: T) extends CellRW[T] {
   * @param value
   *   The current value (if any)
   */
-case class DefaultValueCell[T](
+case class DefaultValueCellContent[T](
     defaultValue: T,
     value: Option[T] = None
 ) extends CellRW[T] {
@@ -118,6 +118,6 @@ case class DefaultValueCell[T](
 
   override val default: Option[T] = Some(defaultValue)
 
-  override def fill(newValue: T): DefaultValueCell[T] =
+  override def fill(newValue: T): DefaultValueCellContent[T] =
     copy(value = Some(newValue))
 }

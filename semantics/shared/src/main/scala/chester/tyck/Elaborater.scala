@@ -62,18 +62,18 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
       case None       => Meta(newType)
     }
 
-  def elab(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      localCtx: Context,
-      parameter: SemanticCollector,
-      ck: TyckOps,
-      state: StateOps[TyckOps]
+  def elab(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
+                                                                               localCtx: Context,
+                                                                               parameter: SemanticCollector,
+                                                                               ck: TyckOps,
+                                                                               state: StateOps[TyckOps]
   ): Term
 
-  def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCell])(using
-      Context,
-      SemanticCollector,
-      TyckOps,
-      StateOps[TyckOps]
+  def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
+                                                                                 Context,
+                                                                                 SemanticCollector,
+                                                                                 TyckOps,
+                                                                                 StateOps[TyckOps]
   ): CellId[Term] = {
     val term = elab(expr, ty, effects)
     toId(term)
@@ -288,7 +288,7 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
   override def elab(
       expr: Expr,
       ty0: CellIdOr[Term],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       localCtx: Context,
       parameter: SemanticCollector,
@@ -624,7 +624,7 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
       expr: ObjectExpr,
       fields: Vector[ObjectClause],
       ty: CellId[Term],
-      effects: CIdOf[EffectsCell]
+      effects: CIdOf[EffectsCellContent]
   )(using
       Context,
       SemanticCollector,
@@ -689,7 +689,7 @@ trait DefaultImpl
         val cell = newType
         cell
     }
-    val effects1: CIdOf[EffectsCell] = effects match {
+    val effects1: CIdOf[EffectsCellContent] = effects match {
       case Some(effects) =>
         val cell = toEffectsCell(effects)
         cell

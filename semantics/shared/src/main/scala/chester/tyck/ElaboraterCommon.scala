@@ -17,7 +17,7 @@ import scala.language.implicitConversions
 
 trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckOps] {
 
-  extension (eff: EffectsCell) {
+  extension (eff: EffectsCellContent) {
 
     def requireEffect(
         effect: Term
@@ -41,7 +41,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
 
         // Add the effect to the cell
         eff match {
-          case cell: DynamicEffectsCell =>
+          case cell: DynamicEffectsCellContent =>
             val updatedCell = cell.add(newKey, effect)
             state.fill(eff.asInstanceOf[CellId[Effects]], updatedCell.asInstanceOf[Effects])
           case _ =>
@@ -58,15 +58,15 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
       x: CellIdOr[Effects]
   )(using StateOps[TyckOps]): EffectsM = x match {
     case x: Effects     => x
-    case x: EffectsCell => Meta(x.asInstanceOf[CellId[Effects]])
+    case x: EffectsCellContent => Meta(x.asInstanceOf[CellId[Effects]])
     case _              => unreachable()
   }
 
   def toEffectsCell(
       x: EffectsM
-  )(using state: StateOps[TyckOps]): CIdOf[EffectsCell] = x match {
-    case x: Effects => state.addCell(FixedEffectsCell(x))
-    case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCell]]
+  )(using state: StateOps[TyckOps]): CIdOf[EffectsCellContent] = x match {
+    case x: Effects => state.addCell(FixedEffectsCellContent(x))
+    case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCellContent]]
     case _          => unreachable()
   }
 
@@ -83,12 +83,12 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
   }
 
   def newMeta(using _ck: TyckOps, state: StateOps[TyckOps]): CellId[Term] = {
-    val cell = state.addCell(OnceCell[Term]())
+    val cell = state.addCell(OnceCellContent[Term]())
     cell
   }
 
   def newType(using ck: TyckOps, state: StateOps[TyckOps]): CellId[Term] = {
-    val cell = state.addCell(OnceCell[Term](default = Some(AnyType0)))
+    val cell = state.addCell(OnceCellContent[Term](default = Some(AnyType0)))
     cell
   }
 
@@ -98,8 +98,8 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
   def newEffects(using
       _ck: TyckOps,
       state: StateOps[TyckOps]
-  ): CIdOf[EffectsCell] = {
-    val cell = state.addCell(DynamicEffectsCell())
+  ): CIdOf[EffectsCellContent] = {
+    val cell = state.addCell(DynamicEffectsCellContent())
     cell
   }
 
