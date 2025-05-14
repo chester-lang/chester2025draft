@@ -12,13 +12,11 @@ import scala.annotation.tailrec
 
 @tailrec
 def toTerm(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
-  case x: Term =>
-    x match {
-      case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasSomeValue(c.inner) => toTerm(c.inner, meta)
-      case x: Term                                                                                        => x
-    }
+  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasStableValue(c.inner) => toTerm(c.inner, meta)
+
+  case x: Term => x
   case c: CellRW[Term @unchecked] =>
-    SolverOps.readUnstable(c) match {
+    SolverOps.readStable(c) match {
       case Some(v) => toTerm(v, meta)
       case None    => MetaTerm(InMeta(c), meta = meta)
     }
@@ -27,12 +25,12 @@ def toTerm(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): T
 @tailrec
 def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): CellRW[Term] = x match {
   case c: CellRW[Term @unchecked] =>
-    SolverOps.readUnstable(c) match {
+    SolverOps.readStable(c) match {
       case Some(v: MetaTerm) => toCell(v, meta)
       case _                 => c
     }
   case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) => toCell(c.inner, meta)
-  case x: Term                                                     => SolverOps.addCell(LiteralCellContent(x))
+  case x: Term                                            => SolverOps.addCell(LiteralCellContent(x))
 }
 
 def newHole(using SolverOps): CellRW[Term] = SolverOps.addCell(OnceCellContent[Term]())

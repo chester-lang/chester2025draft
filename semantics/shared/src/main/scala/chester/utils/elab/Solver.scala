@@ -30,6 +30,8 @@ object SolverOps {
   def addConstraint(x: Constraint)(using ops: SolverOps): Unit = ops.addConstraint(x)
   def hasSomeValue(id: CellAny)(using ops: SolverOps): Boolean = ops.hasSomeValue(id)
   def readUnstable[U](id: CellR[U])(using ops: SolverOps): Option[U] = ops.readUnstable(id)
+  def hasStableValue(id: CellAny)(using ops: SolverOps): Boolean = ops.hasStableValue(id)
+  def readStable[U](id: CellR[U])(using ops: SolverOps): Option[U] = ops.readStable(id)
   def addCell[A, B, C <: CellContent[A, B]](cell: C)(using ops: SolverOps): Cell[A, B, C] = ops.addCell(cell)
   def fill[T](id: CellW[T], value: T)(using ops: SolverOps): Unit = ops.fill(id, value)
 }
