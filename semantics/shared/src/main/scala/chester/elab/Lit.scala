@@ -43,3 +43,23 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
     }
   }
 }
+
+
+case object StringLit extends Lit {
+  type Of = StringLit
+}
+case class StringLit(expr: StringLiteral, ty: CellRWOr[Term], result: CellRW[Term])(using ctx0: Context)
+    extends Constraint(StringLit)
+    with ConstraintTerm {
+  given Context = ctx0
+  def meta = convertMeta(expr.meta)
+}
+case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit) {
+
+  override def run(c: StringLit)(using ElabOps, SolverOps): Result = {
+    import c.{*, given}
+    ty <:! StringType(meta)
+    result.fill(StringTerm(expr.value, meta))
+    Result.Done
+  }
+}
