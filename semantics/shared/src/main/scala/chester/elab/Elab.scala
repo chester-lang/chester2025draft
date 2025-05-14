@@ -36,16 +36,16 @@ def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): C
 
 trait Elab {
 
-  def elab(expr: Expr, ty: CellRW[Term], effects: ReprEffects)(using
-      localCtx: Context,
-      ops: ElabOps,
-      state: SolverOps
-  ): Term
+  def elab(expr: Expr, ty: CellRWOr[Term], effects: CellEffects)(using
+                                                                 localCtx: Context,
+                                                                 ops: ElabOps,
+                                                                 state: SolverOps
+  ): CellRWOr[Term]
 
 }
 
 trait DefaultElab extends Elab {
-  override def elab(expr: Expr, ty: CellRW[Term], effects: ReprEffects)(using localCtx: Context, ops: ElabOps, state: SolverOps): Term = expr match {
+  override def elab(expr: Expr, ty: CellRWOr[Term], effects: CellEffects)(using localCtx: Context, ops: ElabOps, state: SolverOps): CellRWOr[Term] = expr match {
     case IntegerLiteral(i, meta) =>
       SolverOps.addConstraint(???)
       ???
