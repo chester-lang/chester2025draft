@@ -6,6 +6,6 @@ case object MergeSimple extends Kind {
   type ConstraintType = MergeSimple[?]
 }
 
-case class MergeSimple[T](a: CellReprOfRW[T], b: CellReprOfRW[T]) extends Constraint(MergeSimple) {}
+case class MergeSimple[T](a: ReprRW[T], b: ReprRW[T]) extends Constraint(MergeSimple) {}
 
 case object MergeSimpleHandler extends Handler[TyckOps](MergeSimple) {}
