@@ -8,7 +8,7 @@ import chester.utils.elab.*
 
 trait Elab {
 
-  def elab(expr: Expr, ty: ReprRWOr[Term], effects: ReprRW[EffectsCell])(using
+  def elab(expr: Expr, ty: ReprRW[Term], effects: ReprRW[EffectsCell])(using
                                                                          localCtx: Context,
                                                                          ops: ElabOps,
                                                                          state: SolverOps
@@ -17,5 +17,5 @@ trait Elab {
 }
 
 trait DefaultElab extends Elab {
-  override def elab(expr: Expr, ty: ReprRWOr[Term], effects: ReprRW[EffectsCell])(using localCtx: Context, ops: ElabOps, state: SolverOps): Term = ???
+  override def elab(expr: Expr, ty: ReprRW[Term], effects: ReprRW[EffectsCell])(using localCtx: Context, ops: ElabOps, state: SolverOps): Term = ???
 }
