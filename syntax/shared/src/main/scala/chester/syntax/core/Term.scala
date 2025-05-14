@@ -224,6 +224,9 @@ case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]
 sealed trait TypeTerm extends WHNF derives ReadWriter {
   override type ThisTree <: TypeTerm
 }
+sealed trait SimpleType extends WHNF derives ReadWriter {
+  override type ThisTree <: SimpleType
+}
 sealed abstract class Sort extends TypeTerm derives ReadWriter {
   override type ThisTree <: Sort
   def level: Term
@@ -302,7 +305,7 @@ case class NaturalTerm(@const value: BigInt, @const meta: Option[TermMeta]) exte
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-case class IntegerType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class IntegerType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = IntegerType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Integer", ColorProfile.typeColor)
@@ -310,7 +313,7 @@ case class IntegerType(@const meta: Option[TermMeta]) extends TypeTerm derives R
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 // int of 32 bits or more
-case class IntType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class IntType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = IntType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Int", ColorProfile.typeColor)
@@ -318,14 +321,14 @@ case class IntType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadW
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 // unsigned int of 32 bits or more
-case class UIntType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class UIntType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = UIntType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Natural", ColorProfile.typeColor)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class NaturalType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class NaturalType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = NaturalType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Natural", ColorProfile.typeColor)
@@ -345,7 +348,7 @@ case class BooleanTerm(@const value: Boolean, @const meta: Option[TermMeta]) ext
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-case class BooleanType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class BooleanType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = BooleanType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Boolean", ColorProfile.typeColor)
@@ -364,26 +367,26 @@ case class SymbolTerm(@const value: String, @const meta: Option[TermMeta]) exten
     Doc.text("'" + value, ColorProfile.literalColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class RationalType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class RationalType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = RationalType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Rational", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 // float of 32 bits or more
-case class FloatType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class FloatType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = FloatType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Float", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class StringType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class StringType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = StringType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("String", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class SymbolType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
+case class SymbolType(@const meta: Option[TermMeta]) extends SimpleType derives ReadWriter {
   override type ThisTree = SymbolType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Symbol", ColorProfile.typeColor)
