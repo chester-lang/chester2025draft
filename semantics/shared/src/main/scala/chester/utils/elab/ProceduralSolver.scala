@@ -60,6 +60,14 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         updatedCells.clear()
       }
     }
+    if (delayedConstraints.nonEmpty) {
+      val _ = delayedConstraints.filterInPlace { c =>
+        val call = c.vars.exists(updatedCells.contains)
+        if (call) todo.enqueue(c.x)
+        !call
+      }
+      updatedCells.clear()
+    }
     var defaults = DefaultingLevel.Values
     var nothingChanged = true
     while (nothingChanged && defaults.nonEmpty) {
