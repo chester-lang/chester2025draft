@@ -2,6 +2,7 @@ package chester.repl
 
 import cats.implicits.*
 import chester.doc.consts.{Colors, ReplaceBracketsWithWord}
+import chester.elab.{DefaultElaborator, ElabOps}
 import chester.error.*
 import chester.reader.ReaderREPL
 import chester.syntax.concrete.Expr
@@ -13,7 +14,9 @@ import chester.utils.io.*
 import chester.utils.term.*
 import fansi.*
 import chester.i18n.*
+import chester.tyck.api.NoopSemanticCollector
 
+val useNewElab = true
 // could be inline
 def REPLEngine[F[_]](using
     runner: Runner[F],
@@ -201,7 +204,13 @@ def REPLEngine[F[_]](using
   }
 
   def typeCheck(expr: Expr): TyckResult[?, Judge] =
-    Tycker.check(expr)
+    if (useNewElab) {
+      given reporter: VectorReporter[TyckProblem] = new VectorReporter[TyckProblem]()
+      given ElabOps = ElabOps(reporter, NoopSemanticCollector)
+      TyckResult0((), DefaultElaborator.inferPure(expr), reporter.getReports)
+    } else {
+      Tycker.check(expr)
+    }
 
   def printErrors(
       er: Vector[chester.error.TyckError],

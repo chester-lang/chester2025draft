@@ -5,6 +5,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.{SolverFactory, *}
+import chester.tyck.LocalCtxOps
 
 implicit object DefaultElabImpl extends DefaultElab {}
 
@@ -20,11 +21,18 @@ extension (t: Term) {
 }
 
 case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerConf[ElabOps]) {
-  def inferPure(expr: Expr, context: Context )(using ElabOps): Judge = {
+  def inferPure(expr: Expr, context: Context = Context.default)(using ElabOps): Judge = {
     given Context = context
     given solver: SolverOps = fac(handlers)
-    val ty = newHole
-    val term = elab.elab(expr, ty, newPureEffects)
-    ???
+    val ty = toTerm(newHole)
+    val term = toTerm(elab.elab(expr, ty, newPureEffects))
+    Judge(term.zonkAll, ty.zonkAll, Effects.Empty)
   }
+}
+
+val DefaultElaborator = {
+  given Elab = DefaultElabImpl
+  given SolverFactory =  ConcurrentSolver
+  given HandlerConf[ElabOps] = DefaultSolverConf
+  Elaborator()
 }
