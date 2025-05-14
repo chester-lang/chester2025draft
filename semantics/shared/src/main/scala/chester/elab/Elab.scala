@@ -5,6 +5,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.HoldNotReadable
+import chester.utils.cell.LiteralCellContent
 import chester.utils.elab.*
 
 import scala.annotation.tailrec
@@ -18,9 +19,19 @@ def toTerm(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): T
     }
   case c: CellRW[Term @unchecked] =>
     SolverOps.readUnstable(c) match {
-      case Some(v) => toTerm(v)
+      case Some(v) => toTerm(v, meta)
       case None    => MetaTerm(HoldNotReadable(c), meta = meta)
     }
+}
+
+@tailrec
+def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): CellRW[Term] = x match {
+  case c: CellRW[Term @unchecked] => SolverOps.readUnstable(c) match {
+    case Some(v : MetaTerm) => toCell(v, meta)
+    case _    => c
+  }
+  case MetaTerm(c: HoldNotReadable[CellRW[Term] @unchecked], meta) => toCell(c.inner, meta)
+  case x: Term => SolverOps.addCell(LiteralCellContent(x))
 }
 
 trait Elab {
