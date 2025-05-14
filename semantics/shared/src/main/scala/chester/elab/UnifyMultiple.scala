@@ -23,13 +23,7 @@ case object UnifyMultipleHandler
     import c.{*, given}
     val lhsV = toTerm(lhs)
     val rhsV = rhs.map(toTerm(_))
-    if (lhsV.isInstanceOf[MetaTerm]) {
-      return Result.Waiting(assumeCell(lhs))
-    }
-    if (rhsV.exists(_.isInstanceOf[MetaTerm])) {
-      return Result.Waiting(assumeCell(rhsV.find(_.isInstanceOf[MetaTerm]).get))
-    }
-    val rhs1 = rhsV.filterNot(x => eqType(lhsV, x))
+    val rhs1 = rhsV.filterNot(x => eqType(lhsV, x)).distinctByEq(eqType)
     if (rhs1.isEmpty) {
       return Result.Done
     }
