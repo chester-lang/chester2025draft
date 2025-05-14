@@ -5,7 +5,7 @@ import chester.utils.cell.CellContent
 open trait Cell[+A, -B, +C <: CellContent[A, B]] {
   def tag: String = Integer.toHexString(hashCode)
 
-  override final def toString: String = s"Cell@$tag"
+  override def toString: String = s"Cell@$tag"
 }
 
 type CellOf[A, B] = Cell[A, B, CellContent[A, B]]
