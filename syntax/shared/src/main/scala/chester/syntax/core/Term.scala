@@ -20,6 +20,7 @@ import spire.math.*
 import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq
+import chester.utils.impls.uintRW
 
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
@@ -289,6 +290,12 @@ sealed abstract class AbstractIntTerm extends LiteralTerm derives ReadWriter {
 }
 case class IntTerm(@const value: Int, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
   override type ThisTree = IntTerm
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  override def toDoc(using PrettierOptions): Doc =
+    Doc.text(value.toString, ColorProfile.literalColor)
+}
+case class UIntTerm(@const value: UInt, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
+  override type ThisTree = UIntTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)

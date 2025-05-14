@@ -4,6 +4,8 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, convertMeta}
 import chester.utils.elab.*
+import chester.utils.elab.Result.Failed
+import spire.math.UInt
 
 import scala.language.postfixOps
 
@@ -33,19 +35,30 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       result.fill(NaturalTerm(expr.value, meta))
       return Result.Done
     }
-    if (expr.value.isValidInt) {
+    if (expr.value.isValidInt && (ty <:? IntType(meta) isTrue)) {
       result.fill(IntTerm(expr.value.toInt, meta))
-      ty <:! IntType(meta)
-      Result.Done
-    } else {
-      result.fill(IntegerTerm(expr.value, meta))
-      ty <:! IntegerType(meta)
-      Result.Done
+      return Result.Done
+    }
+    if (expr.value >= 0 && expr.value.isValidLong && expr.value.toLong <= UInt.MaxValue.toLong && (ty <:? UIntType(meta) isTrue)) {
+      result.fill(UIntTerm(UInt(expr.value.toLong), meta))
+      return Result.Done
+    }
+    toTerm(ty) match {
+      case ty: MetaTerm => Result.Waiting(assumeCell(ty))
+      case _            => {
+        result.fill(IntegerTerm(expr.value, meta))
+        Failed
+      }
     }
   }
 
-  override def defaulting(constant: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    
+  override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+    import c.{*, given}
+    if (expr.value.isValidInt) {
+      ty <:! IntType(meta)
+    } else {
+      ty <:! IntegerType(meta)
+    }
   }
 }
 
