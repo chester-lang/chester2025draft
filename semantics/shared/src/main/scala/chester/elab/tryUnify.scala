@@ -73,6 +73,21 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         Result.Done
       case (lhs: MetaTerm, rhs) => Result.Waiting(assumeCell(lhs))
       case (lhs, rhs: MetaTerm) => Result.Waiting(assumeCell(rhs))
+      case (Union(lhs,_),Union(rhs,_)) => {
+        val lhs1 = lhs.map(toTerm(_))
+        val rhs1 = rhs.map(toTerm(_))
+        val common = lhs1.filter(x=>rhs1.exists(y=>eqType(x,y)))
+        val lhs2 = lhs1.filter(x=> !common.exists(y=>eqType(x,y)))
+        val rhs2 = rhs1.filter(x=> !common.exists(y=>eqType(x,y)))
+        if(lhs2.isEmpty && rhs2.isEmpty) {
+          return Result.Done
+        }
+        if(lhs2.length == 1 && rhs2.length == 1) {
+          SolverOps.addConstraint(Unify(lhs2.head, rhs2.head))
+          return Result.Done
+        }
+        ???
+      }
       case _ => ???
     }
   }
