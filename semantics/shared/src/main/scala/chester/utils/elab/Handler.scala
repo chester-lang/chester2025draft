@@ -7,8 +7,8 @@ enum Result {
 }
 
 open trait Handler[Ops](val kind: Kind) {
-  def run(constant: kind.ConstraintType)(using Ops, SolverOps): Result = ???
-  def defaulting(constant: kind.ConstraintType, level: DefaultingLevel)(using Ops, SolverOps): Unit = ()
+  def run(constant: kind.Of)(using Ops, SolverOps): Result = ???
+  def defaulting(constant: kind.Of, level: DefaultingLevel)(using Ops, SolverOps): Unit = ()
 }
 
 import scala.collection.concurrent.TrieMap
