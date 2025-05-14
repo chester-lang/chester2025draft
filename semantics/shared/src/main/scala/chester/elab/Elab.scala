@@ -50,7 +50,7 @@ trait Elab {
 trait DefaultElab extends Elab {
   override def elab(expr: Expr, ty: CellRWOr[Term], effects: CellEffects)(using localCtx: Context, ops: ElabOps, state: SolverOps): CellROr[Term] =
     expr match {
-      case _: IntegerLiteral =>
+      case expr: IntegerLiteral =>
         SolverOps.addConstraint(Pure(effects))
         SolverOps.useConstraint(IntegerLit(expr, ty, newHole))
       case _ => ???

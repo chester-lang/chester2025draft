@@ -296,6 +296,12 @@ case class IntegerTerm(@const value: BigInt, @const meta: Option[TermMeta]) exte
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
+case class NaturalTerm(@const value: BigInt, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
+  override type ThisTree = NaturalTerm
+  override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+  override def toDoc(using PrettierOptions): Doc =
+    Doc.text(value.toString, ColorProfile.literalColor)
+}
 case class IntegerType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = IntegerType
   override def toDoc(using PrettierOptions): Doc =

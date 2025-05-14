@@ -34,12 +34,6 @@ object AbstractIntTerm_ {
   }
 }
 
-object NaturalTerm {
-
-  @deprecated("meta")
-  def apply(value: BigInt): AbstractIntTerm = AbstractIntTerm_.from(value, meta = None)
-}
-
 object Bind_ {
   @deprecated("meta")
   def from(bind: LocalV): Bind = Bind(bind, bind.ty, None)

@@ -7,4 +7,5 @@ import spire.math.Trilean
 
 extension (sub: CellRWOr[Term]) {
   def `<:?`(supertype: CellRWOr[Term])(using ElabOps, SolverOps, Context): Trilean = ???
+  def `<:!`(supertype: CellRWOr[Term])(using ElabOps, SolverOps, Context): Unit = ??? // TODO: add a constraint
 }

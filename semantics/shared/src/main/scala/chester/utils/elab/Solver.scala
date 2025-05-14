@@ -34,6 +34,10 @@ object SolverOps {
   def fill[T](id: CellW[T], value: T)(using ops: SolverOps): Unit = ops.fill(id, value)
 }
 
+extension [T](id: CellW[T]) {
+  def fill(value: T)(using ops: SolverOps): Unit = ops.fill(id, value)
+}
+
 trait BasicSolverOps extends SolverOps {
   protected def peakCell[T](id: CellR[T]): CellContentR[T]
   protected def updateCell[A, B](id: CellOf[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit
