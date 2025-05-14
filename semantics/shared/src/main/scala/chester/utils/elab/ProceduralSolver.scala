@@ -4,6 +4,7 @@ import chester.utils.cell.{CellContent, CellContentR}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.language.implicitConversions
 
 final class ProceduralCell[+A, -B, C <: CellContent[A, B]](
     initialValue: C
