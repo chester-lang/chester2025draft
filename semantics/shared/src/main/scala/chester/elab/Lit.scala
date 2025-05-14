@@ -5,6 +5,8 @@ import chester.syntax.core.{IntegerType, Term}
 import chester.tyck.{Context, convertMeta}
 import chester.utils.elab.*
 
+import scala.language.postfixOps
+
 trait Lit extends Kind
 
 case object IntegerLit extends Lit {
@@ -20,7 +22,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
 
   override def run(c: IntegerLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    if ((ty <:? IntegerType(meta)).isTrue) {
+    if (ty <:? IntegerType(meta) isTrue) {
       return Result.Done
     }
     ???
