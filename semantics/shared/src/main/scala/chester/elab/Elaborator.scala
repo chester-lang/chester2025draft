@@ -26,6 +26,7 @@ case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerC
     given solver: SolverOps = fac(handlers)
     val ty = toTerm(newHole)
     val term = toTerm(elab.elab(expr, ty, newPureEffects))
+    solver.run()
     Judge(term.zonkAll, ty.zonkAll, Effects.Empty)
   }
 }
