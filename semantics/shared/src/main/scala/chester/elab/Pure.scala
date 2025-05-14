@@ -1,11 +1,7 @@
 package chester.elab
 
-import chester.utils.elab.{Constraint, Kind}
+import chester.utils.elab.Kind
 
-case object Pure extends Kind {
-  type Of = Pure
-}
+case object Pure extends Kind
 
-case class Pure() extends Constraint(Pure) {
-  
-}
+case class Pure()

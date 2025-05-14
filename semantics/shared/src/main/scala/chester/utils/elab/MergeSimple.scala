@@ -3,7 +3,7 @@ package chester.utils.elab
 import chester.tyck.TyckOps
 
 case object MergeSimple extends Kind {
-  type Of = MergeSimple[?]
+  type ConstraintType = MergeSimple[?]
 }
 
 case class MergeSimple[T](a: CellRW[T], b: CellRW[T]) extends Constraint(MergeSimple) {}

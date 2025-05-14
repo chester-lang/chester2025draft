@@ -1,7 +1,6 @@
 package chester.utils.elab
 
 import chester.utils.cell.{CellContent, CellContentR}
-import scala.language.implicitConversions
 
 trait SolverOps {
   def hasStableValue(id: CellAny): Boolean
@@ -19,10 +18,6 @@ trait SolverOps {
 
   def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C] = ???
   def fill[T](id: CellW[T], value: T): Unit
-}
-
-object SolverOps {
-  def addConstraint(x: Constraint)(using ops: SolverOps): Unit = ops.addConstraint(x)
 }
 
 trait BasicSolverOps extends SolverOps {

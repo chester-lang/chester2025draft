@@ -5,7 +5,7 @@ import chester.syntax.core.Term
 /** implementations should be case object */
 open trait Kind {
   def name: String = toString
-  type Of <: Constraint
+  type ConstraintType <: Constraint
 }
 
 open trait Constraint(val kind: Kind) {
