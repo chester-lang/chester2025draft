@@ -17,12 +17,12 @@ trait HandlerConf[Ops] {
   def getHandler(kind: Kind): Option[Handler[Ops, Kind]]
 }
 
-final class MutHandlerConf[Ops](hs: Handler[Ops,Kind]*) extends HandlerConf[Ops] {
-  private val store = TrieMap[Kind, Handler[Ops,Kind]](hs.map(h => (h.kind, h))*)
+final class MutHandlerConf[Ops](hs: Handler[Ops, Kind]*) extends HandlerConf[Ops] {
+  private val store = TrieMap[Kind, Handler[Ops, Kind]](hs.map(h => (h.kind, h))*)
 
-  override def getHandler(kind: Kind): Option[Handler[Ops,Kind]] = store.get(kind)
+  override def getHandler(kind: Kind): Option[Handler[Ops, Kind]] = store.get(kind)
 
-  def register(handler: Handler[Ops,Kind]): Unit = {
+  def register(handler: Handler[Ops, Kind]): Unit = {
     val oldValue = store.putIfAbsent(handler.kind, handler)
     if (oldValue.isDefined) throw new IllegalStateException("already")
   }
