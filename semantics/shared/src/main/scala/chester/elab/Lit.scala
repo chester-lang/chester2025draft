@@ -43,6 +43,10 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       Result.Done
     }
   }
+
+  override def defaulting(constant: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+    
+  }
 }
 
 case object StringLit extends Lit {

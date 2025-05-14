@@ -93,15 +93,22 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   private def doDefaulting(x: Constraint, zonkLevel: DefaultingLevel): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)
       val result = handler.run(x.asInstanceOf[handler.kind.Of])
       result match {
         case Result.Done => ()
         case Result.Failed =>
           val _ = failedConstraints.getAndUpdate(_.appended(x))
         case Result.Waiting(vars*) =>
-          val delayed = WaitingConstraint(vars.toVector, x)
-          val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+          handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)
+          val result = handler.run(x.asInstanceOf[handler.kind.Of])
+          result match {
+            case Result.Done => ()
+            case Result.Failed =>
+              val _ = failedConstraints.getAndUpdate(_.appended(x))
+            case Result.Waiting(vars*) =>
+              val delayed = WaitingConstraint(vars.toVector, x)
+              val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+          }
       }
     }
 
