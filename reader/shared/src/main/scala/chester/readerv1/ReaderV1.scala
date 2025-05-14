@@ -5,7 +5,7 @@ import chester.reader.Source
 import chester.syntax.IdentifierRules.*
 import chester.syntax.concrete.*
 import chester.utils.parse.*
-import chester.utils.{Nat, StringIndex, WithUTF16, asInt}
+import chester.utils.{Nat, StringIndex, WithUTF16, asInt, silentDeprecated}
 import fastparse.*
 import fastparse.NoWhitespace.*
 import spire.math.Natural
@@ -21,7 +21,7 @@ case class ReaderV1(
 
   private def nEnd: P[Unit] = P("\n" | End)
 
-  @deprecated("comment is lost")
+  @silentDeprecated("comment is lost")
   def comment: P[Unit] = P("//" ~ CharPred(_ != '\n').rep ~ nEnd)
 
   private def commentOneLine: P[Comment] =
@@ -33,14 +33,14 @@ case class ReaderV1(
 
   private def simpleDelimiter: P[Unit] = P(CharsWhileIn(" \t\r\n"))
 
-  @deprecated("comment is lost")
+  @silentDeprecated("comment is lost")
   def delimiter: P[Unit] = P((simpleDelimiter | comment).rep)
 
   private def delimiter1: P[Vector[Comment]] = P(
     (simpleDelimiter.map(x => Vector()) | allComment.map(Vector(_))).rep
   ).map(_.flatten.toVector)
 
-  @deprecated("comment is lost")
+  @silentDeprecated("comment is lost")
   def lineEnding: P[Unit] = P(
     comment | (CharsWhileIn(" \t\r").? ~ ("\n" | End))
   )
@@ -51,7 +51,7 @@ case class ReaderV1(
 
   private def lineNonEndingSpace: P[Unit] = P(CharsWhileIn(" \t\r"))
 
-  @deprecated("comment is lost")
+  @silentDeprecated("comment is lost")
   def maybeSpace: P[Unit] = P(delimiter.?)
 
   private def maybeSpace1: P[Vector[Comment]] = P(delimiter1.?.map(_.toVector.flatten))
@@ -151,7 +151,7 @@ case class ReaderV1(
   }
 
   extension [T](inline parse0: P[T]) {
-    @deprecated("I forgot what is this doing seemingly wrong logic")
+    @silentDeprecated("I forgot what is this doing seemingly wrong logic")
     inline def withMeta[R](using
         s: fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
     ): P[R] = (begin ~ parse0 ~ end).map { case (b, x, e) =>
@@ -266,7 +266,7 @@ case class ReaderV1(
 
   def simpleAnnotation: P[Identifier] = "@" ~ identifier
 
-  @deprecated
+  @silentDeprecated
   def comma: P[Unit] = P(maybeSpace ~ "," ~ maybeSpace)
 
   private def comma1: P[Unit] = ","
