@@ -14,6 +14,7 @@ final class ConcurrentCell[+A, -B, C <: CellContent[A, B]](
   val storeRef = new AtomicReference[C](initialValue)
 }
 
+@deprecated("highly experimental solver implementation that will cause a lot of race conditions and headache. We need software transactional memory")
 object ConcurrentSolver extends SolverFactory {
   override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ConcurrentSolver(conf)
 }
