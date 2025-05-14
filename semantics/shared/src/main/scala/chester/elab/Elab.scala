@@ -64,7 +64,7 @@ trait Elab {
        Context,
        ElabOps,
        SolverOps
-  ): (wellTyped: CellROr[Term], ty: CellROr[Term]) = {
+  ): (wellTyped: CellROr[Term], ty: CellRWOr[Term]) = {
     val ty = SolverOps.useConstraint(IsType(newHole))
     val result = elab(expr, ty)
     (result, ty)

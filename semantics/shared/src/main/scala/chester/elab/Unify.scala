@@ -17,13 +17,11 @@ case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term], next: Option[Constrai
 
 case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
   private def failed(c: Unify)(using SolverOps): Result = c.next match {
-    case Some(next) => {
+    case Some(next) =>
       SolverOps.addConstraint(next)
       Result.Done
-    }
-    case None => {
+    case None =>
       Result.Failed
-    }
   }
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
@@ -41,6 +39,8 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       return Result.Waiting(assumeCell(rhs))
     }
     (lhsV, rhsV) match {
+      case (AnyType(level, _), _)                  => Result.Done // TODO: check for level
+      case (_, NothingType(_))                     => Result.Done
       case (ListType(lhs, meta), ListType(rhs, _)) =>
         // For debug lhs1 and rhs1
         val lhs1 = toTerm(lhs)
@@ -48,8 +48,8 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         SolverOps.addConstraint(Unify(lhs1, rhs1, next = next))
         Result.Done
       case (ListType(_, meta), _: SimpleType) => failed(c)
-      case (lhs: MetaTerm, _) => Result.Waiting(assumeCell(lhs))
-      case (_, rhs: MetaTerm) => Result.Waiting(assumeCell(rhs))
+      case (lhs: MetaTerm, _)                 => Result.Waiting(assumeCell(lhs))
+      case (_, rhs: MetaTerm)                 => Result.Waiting(assumeCell(rhs))
       case (Union(lhs, lhsMeta), Union(rhs, rhsMeta)) =>
         val lhs1 = lhs.map(toTerm(_))
         val rhs1 = rhs.map(toTerm(_))
@@ -59,14 +59,14 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         if (rhs2.isEmpty) {
           return Result.Done
         }
-        if(lhs2.isEmpty) {
+        if (lhs2.isEmpty) {
           return failed(c)
         }
         if (lhs2.length == 1 && rhs2.length == 1) {
           SolverOps.addConstraint(Unify(lhs2.head, rhs2.head, next = next))
           return Result.Done
         }
-        if(lhs2.length == 1) {
+        if (lhs2.length == 1) {
           SolverOps.addConstraint(Unify(lhs2.head, Union(rhs2.assumeNonEmpty, rhsMeta), next = next))
           return Result.Done
         }
@@ -79,7 +79,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
   }
 
   override def defaulting(c: Unify, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if(level != DefaultingLevel.UnifyMerge) return
+    if (level != DefaultingLevel.UnifyMerge) return
     import c.*
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)

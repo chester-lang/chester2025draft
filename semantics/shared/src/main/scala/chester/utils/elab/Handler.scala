@@ -39,6 +39,7 @@ final class MutHandlerConf[Ops](hs: Handler[Ops, Kind]*) extends HandlerConf[Ops
 }
 
 enum DefaultingLevel extends Enum[DefaultingLevel] {
+  case UnifyMultipleMerge
   case ListOfSetListType
   case UnifyMerge
   case IsType
