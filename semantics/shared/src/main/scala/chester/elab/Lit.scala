@@ -13,10 +13,11 @@ case object IntegerLit extends Lit {
   type Of = IntegerLit
 }
 
-case class IntegerLit(expr: IntegerLiteral, ty: CellRWOr[Term], result: CellRW[Term])(using ctx0: Context)
+case class IntegerLit(expr: IntegerLiteral, ty: CellRWOr[Term])(using ctx: Context, ops: SolverOps)
     extends Constraint(IntegerLit)
     with ConstraintTerm {
-  given Context = ctx0
+  val result: CellRW[Term] = newHole
+  given Context = ctx
   def meta = convertMeta(expr.meta)
 }
 
@@ -44,14 +45,14 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
   }
 }
 
-
 case object StringLit extends Lit {
   type Of = StringLit
 }
-case class StringLit(expr: StringLiteral, ty: CellRWOr[Term], result: CellRW[Term])(using ctx0: Context)
+case class StringLit(expr: StringLiteral, ty: CellRWOr[Term])(using ctx: Context, solverOps: SolverOps)
     extends Constraint(StringLit)
     with ConstraintTerm {
-  given Context = ctx0
+  val result: CellRW[Term] = newHole
+  given Context = ctx
   def meta = convertMeta(expr.meta)
 }
 case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit) {
@@ -67,10 +68,11 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
 case object SymbolLit extends Lit {
   type Of = SymbolLit
 }
-case class SymbolLit(expr: SymbolLiteral, ty: CellRWOr[Term], result: CellRW[Term])(using ctx0: Context)
+case class SymbolLit(expr: SymbolLiteral, ty: CellRWOr[Term])(using ctx: Context, solverOps: SolverOps)
     extends Constraint(SymbolLit)
     with ConstraintTerm {
-  given Context = ctx0
+  val result: CellRW[Term] = newHole
+  given Context = ctx
   def meta = convertMeta(expr.meta)
 }
 case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit) {

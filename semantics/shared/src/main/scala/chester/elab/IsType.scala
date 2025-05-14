@@ -8,9 +8,7 @@ case object IsType extends Kind {
   type Of = IsType
 }
 
-case class IsType(result: CellRW[Term])(using ctx: Context)
-    extends Constraint(IsType)
-    with ConstraintTermRW {
+case class IsType(result: CellRW[Term])(using ctx: Context) extends Constraint(IsType) with ConstraintTermRW {
   given Context = ctx
 }
 
@@ -19,20 +17,18 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
     import c.*
     toTerm(result) match {
       case _: MetaTerm => Result.Waiting(assumeCell(result))
-      case _ => Result.Done
+      case _           => Result.Done
     }
   }
 
   override def defaulting(constant: IsType, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if(level != DefaultingLevel.DefaultingEverything) return
+    if (level != DefaultingLevel.DefaultingEverything) return
     import constant.*
     toTerm(result) match {
-      case result: MetaTerm => {
+      case result: MetaTerm =>
         assumeCell(result).fill(AnyType0)
-      }
-      case _ => {
-        // do nothing
-      }
+      case _ =>
+      // do nothing
     }
   }
 }

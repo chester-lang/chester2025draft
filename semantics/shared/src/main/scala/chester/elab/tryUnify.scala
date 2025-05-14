@@ -54,10 +54,10 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     if (rhs <:? lhs isTrue) return Result.Done
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
-    if(lhsV.isInstanceOf[MetaTerm]) {
+    if (lhsV.isInstanceOf[MetaTerm]) {
       return Result.Waiting(assumeCell(lhs))
     }
-    if(rhsV.isInstanceOf[MetaTerm]) {
+    if (rhsV.isInstanceOf[MetaTerm]) {
       return Result.Waiting(assumeCell(rhs))
     }
     ???
@@ -68,9 +68,9 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
     (lhsV, rhsV) match {
-      case (MetaTerm(InMeta[CellRW[Term] @unchecked](lhs),meta),rhs) => lhs.fill(rhs)
-      case (lhs, MetaTerm(InMeta[CellRW[Term] @unchecked](rhs),meta)) => rhs.fill(lhs)
-      case _ => ()
+      case (MetaTerm(InMeta[CellRW[Term] @unchecked](lhs), meta), rhs) => lhs.fill(rhs)
+      case (lhs, MetaTerm(InMeta[CellRW[Term] @unchecked](rhs), meta)) => rhs.fill(lhs)
+      case _                                                           => ()
     }
   }
 }

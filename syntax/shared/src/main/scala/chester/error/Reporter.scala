@@ -17,7 +17,7 @@ extension [T](reporter: Reporter[T]) {
 class VectorReporter[T] extends Reporter[T] {
   private val buffer = scala.collection.mutable.ArrayBuffer[T]()
 
-  def apply(value: T): Unit = this.synchronized(buffer += value) : Unit
+  def apply(value: T): Unit = this.synchronized(buffer += value): Unit
 
   def getReports: Vector[T] = this.synchronized(buffer.toVector)
 }

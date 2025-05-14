@@ -22,8 +22,8 @@ implicit class LocalCtxOps(ignored: Context.type) {
 
 implicit class ContextItemObject(ignored: ContextItem.type) {
   def builtin(
-               item: BuiltinItem
-             ): (TyAndVal, ContextItem) = {
+      item: BuiltinItem
+  ): (TyAndVal, ContextItem) = {
     val varId = Uniqid.generate[ToplevelV]
     val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
     val ty1 = item.ty

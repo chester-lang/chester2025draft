@@ -34,7 +34,7 @@ case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerC
 
 val DefaultElaborator = {
   given Elab = DefaultElabImpl
-  given SolverFactory =  ConcurrentSolver
+  given SolverFactory = ConcurrentSolver
   given HandlerConf[ElabOps] = DefaultSolverConf
   Elaborator()
 }
