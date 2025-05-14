@@ -3,7 +3,7 @@ package chester.utils.elab
 enum Result {
   case Done
   case Failed
-  case Waiting(vars: Vector[CellAny])
+  case Waiting(vars: CellAny*)
 }
 
 open trait Handler[-Ops, +K <: Kind](val kind: K) {

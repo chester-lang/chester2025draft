@@ -31,6 +31,7 @@ object SolverOps {
   def hasSomeValue(id: CellAny)(using ops: SolverOps): Boolean = ops.hasSomeValue(id)
   def readUnstable[U](id: CellR[U])(using ops: SolverOps): Option[U] = ops.readUnstable(id)
   def addCell[A, B, C <: CellContent[A, B]](cell: C)(using ops: SolverOps): Cell[A, B, C] = ops.addCell(cell)
+  def fill[T](id: CellW[T], value: T)(using ops: SolverOps): Unit = ops.fill(id, value)
 }
 
 trait BasicSolverOps extends SolverOps {

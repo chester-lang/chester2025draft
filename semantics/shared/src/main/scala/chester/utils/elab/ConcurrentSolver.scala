@@ -99,8 +99,8 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         case Result.Done => ()
         case Result.Failed =>
           val _ = failedConstraints.getAndUpdate(_.appended(x))
-        case Result.Waiting(vars) =>
-          val delayed = WaitingConstraint(vars, x)
+        case Result.Waiting(vars*) =>
+          val delayed = WaitingConstraint(vars.toVector, x)
           val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
       }
     }
@@ -113,8 +113,8 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         case Result.Done => ()
         case Result.Failed =>
           val _ = failedConstraints.getAndUpdate(_.appended(x))
-        case Result.Waiting(vars) =>
-          val delayed = WaitingConstraint(vars, x)
+        case Result.Waiting(vars*) =>
+          val delayed = WaitingConstraint(vars.toVector, x)
           val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
       }
     }
