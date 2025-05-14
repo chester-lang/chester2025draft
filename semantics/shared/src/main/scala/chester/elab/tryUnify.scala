@@ -60,7 +60,13 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     if (rhsV.isInstanceOf[MetaTerm]) {
       return Result.Waiting(assumeCell(rhs))
     }
-    ???
+    (lhsV, rhsV) match {
+      case (ListType(lhs,meta), ListType(rhs,meta2)) => {
+        SolverOps.addConstraint(Unify(lhs, rhs))
+        return Result.Done
+      }
+      case _ => ???
+    }
   }
 
   override def defaulting(c: Unify, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
