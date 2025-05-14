@@ -10,21 +10,21 @@ import scala.language.implicitConversions
 // Referencing Setω in Agda
 val Typeω: Type = Type(LevelUnrestricted(None), meta = None)
 
-def UnitType(meta: OptionTermMeta): TupleType =
+def UnitType(meta: Option[TermMeta]): TupleType =
   TupleType(Vector.empty, meta = meta)
 
 object UnitTerm_ {
-  def unapply(x: Any): Option[OptionTermMeta] = PartialFunction.condOpt(x) { case TupleTerm(Vector(), meta) =>
+  def unapply(x: Any): Option[Option[TermMeta]] = PartialFunction.condOpt(x) { case TupleTerm(Vector(), meta) =>
     meta
   }
 
-  def apply(meta: OptionTermMeta): TupleTerm =
+  def apply(meta: Option[TermMeta]): TupleTerm =
     TupleTerm(Vector.empty, meta = meta)
 
 }
 
 object AbstractIntTerm_ {
-  def from(value: BigInt, meta: OptionTermMeta): AbstractIntTerm =
+  def from(value: BigInt, meta: Option[TermMeta]): AbstractIntTerm =
     if (value.isValidInt) IntTerm(value.asInt, meta)
     else IntegerTerm(value, meta)
 

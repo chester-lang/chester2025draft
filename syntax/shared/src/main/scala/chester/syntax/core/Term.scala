@@ -23,8 +23,6 @@ import scala.collection.immutable.ArraySeq
 
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 
-type OptionTermMeta = Option[TermMeta]
-
 type ExecuteGeneric = (VirtualFrame, Term) => Object
 val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
 
@@ -34,7 +32,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term
 
-  def meta: OptionTermMeta
+  def meta: Option[TermMeta]
 
   def whnf: Trilean
 
@@ -102,7 +100,7 @@ case class CallingArgTerm(
     @child var ty: Term,
     @const name: Option[Name] = None,
     @const vararg: Boolean = false,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   override type ThisTree = CallingArgTerm
 
@@ -126,7 +124,7 @@ implicit inline def makeArray[T: scala.reflect.ClassTag](xs: Seq[T]): Array[T] =
 case class Calling(
     @children args0: Array[CallingArgTerm],
     @const implicitly: Boolean = false,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
 
   val args: Seq[CallingArgTerm] = ArraySeq.unsafeWrapArray(args0)
@@ -147,7 +145,7 @@ case class Calling(
 case class FCallTerm(
     @child var f: Term,
     @children args0: Array[Calling],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   val args: ArraySeq[Calling] = ArraySeq.unsafeWrapArray(args0)
   override type ThisTree = FCallTerm
@@ -168,7 +166,7 @@ sealed abstract class Pat extends SpecialTerm derives ReadWriter {
 case class Bind(
     @child var bind: LocalV,
     @child var ty: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends Pat derives ReadWriter {
   override type ThisTree = Bind
   override def toDoc(using PrettierOptions): Doc = bind.toDoc <+> Docs.`:` <+> ty.toDoc
@@ -204,7 +202,7 @@ extension (e: EffectsM) {
 sealed abstract class EffectsM extends Term derives ReadWriter {
   override type ThisTree <: EffectsM
 }
-case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta) extends EffectsM with SpecialTerm derives ReadWriter {
+case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: Option[TermMeta]) extends EffectsM with SpecialTerm derives ReadWriter {
   override type ThisTree = MetaTerm
 
   override def toDoc(using PrettierOptions): Doc =
@@ -214,7 +212,7 @@ case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: OptionTermMeta
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class ListTerm(@children terms0: Array[Term], @const meta: OptionTermMeta) extends WHNF derives ReadWriter {
+case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
   val terms: ArraySeq[Term] = ArraySeq.unsafeWrapArray(terms0)
   override final type ThisTree = ListTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
@@ -230,14 +228,14 @@ sealed abstract class Sort extends TypeTerm derives ReadWriter {
   override type ThisTree <: Sort
   def level: Term
 }
-case class Type(@child var level: Term, @const meta: OptionTermMeta) extends Sort derives ReadWriter {
+case class Type(@child var level: Term, @const meta: Option[TermMeta]) extends Sort derives ReadWriter {
   override type ThisTree = Type
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist("Type" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
-case class LevelType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class LevelType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = LevelType
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   override def toDoc(using PrettierOptions): Doc =
@@ -246,13 +244,13 @@ case class LevelType(@const meta: OptionTermMeta) extends TypeTerm derives ReadW
 sealed abstract class Level extends WHNF derives ReadWriter {
   type ThisTree <: Level
 }
-case class LevelFinite(@child var n: Term, @const meta: OptionTermMeta) extends Level derives ReadWriter {
+case class LevelFinite(@child var n: Term, @const meta: Option[TermMeta]) extends Level derives ReadWriter {
   override type ThisTree = LevelFinite
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(n = f(n)))
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Level(") <> n.toDoc <> Doc.text(")")
 }
-case class LevelUnrestricted(@const meta: OptionTermMeta) extends Level derives ReadWriter {
+case class LevelUnrestricted(@const meta: Option[TermMeta]) extends Level derives ReadWriter {
   override type ThisTree = LevelUnrestricted
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   override def toDoc(using PrettierOptions): Doc =
@@ -266,14 +264,14 @@ enum Usage derives ReadWriter {
 enum Coeffect derives ReadWriter {
   case Usage
 }
-case class Prop(@child var level: Term, @const meta: OptionTermMeta) extends Sort derives ReadWriter {
+case class Prop(@child var level: Term, @const meta: Option[TermMeta]) extends Sort derives ReadWriter {
   override type ThisTree = Prop
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist("Prop" <> Docs.`(`, Docs.`)`)(Vector(level))
 }
 // fibrant types
-case class FType(@child var level: Term, @const meta: OptionTermMeta) extends Sort derives ReadWriter {
+case class FType(@child var level: Term, @const meta: Option[TermMeta]) extends Sort derives ReadWriter {
   override type ThisTree = FType
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(level = f(level)))
 
@@ -286,19 +284,19 @@ sealed abstract class LiteralTerm extends WHNF derives ReadWriter {
 sealed abstract class AbstractIntTerm extends LiteralTerm derives ReadWriter {
   override type ThisTree <: AbstractIntTerm
 }
-case class IntTerm(@const value: Int, @const meta: OptionTermMeta) extends AbstractIntTerm derives ReadWriter {
+case class IntTerm(@const value: Int, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
   override type ThisTree = IntTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-case class IntegerTerm(@const value: BigInt, @const meta: OptionTermMeta) extends AbstractIntTerm derives ReadWriter {
+case class IntegerTerm(@const value: BigInt, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
   override type ThisTree = IntegerTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-case class IntegerType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class IntegerType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = IntegerType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Integer", ColorProfile.typeColor)
@@ -306,7 +304,7 @@ case class IntegerType(@const meta: OptionTermMeta) extends TypeTerm derives Rea
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 // int of 32 bits or more
-case class IntType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class IntType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = IntType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Int", ColorProfile.typeColor)
@@ -314,78 +312,78 @@ case class IntType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWri
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 // unsigned int of 32 bits or more
-case class UIntType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class UIntType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = UIntType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Natural", ColorProfile.typeColor)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class NaturalType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class NaturalType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = NaturalType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Natural", ColorProfile.typeColor)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class RationalTerm(@const value: Rational, @const meta: OptionTermMeta) extends LiteralTerm derives ReadWriter {
+case class RationalTerm(@const value: Rational, @const meta: Option[TermMeta]) extends LiteralTerm derives ReadWriter {
   override type ThisTree = RationalTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class BooleanTerm(@const value: Boolean, @const meta: OptionTermMeta) extends LiteralTerm derives ReadWriter {
+case class BooleanTerm(@const value: Boolean, @const meta: Option[TermMeta]) extends LiteralTerm derives ReadWriter {
   override type ThisTree = BooleanTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-case class BooleanType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class BooleanType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = BooleanType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Boolean", ColorProfile.typeColor)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class StringTerm(@const value: String, @const meta: OptionTermMeta) extends LiteralTerm derives ReadWriter {
+case class StringTerm(@const value: String, @const meta: Option[TermMeta]) extends LiteralTerm derives ReadWriter {
   override type ThisTree = StringTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("\"" + encodeString(value) + "\"", ColorProfile.literalColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class SymbolTerm(@const value: String, @const meta: OptionTermMeta) extends LiteralTerm derives ReadWriter {
+case class SymbolTerm(@const value: String, @const meta: Option[TermMeta]) extends LiteralTerm derives ReadWriter {
   override type ThisTree = SymbolTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("'" + value, ColorProfile.literalColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class RationalType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class RationalType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = RationalType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Rational", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
 // float of 32 bits or more
-case class FloatType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class FloatType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = FloatType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Float", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class StringType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class StringType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = StringType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("String", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class SymbolType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class SymbolType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = SymbolType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Symbol", ColorProfile.typeColor)
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-case class AnyType(@child var level: Term, @const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class AnyType(@child var level: Term, @const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = AnyType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Any", ColorProfile.typeColor)
@@ -395,7 +393,7 @@ case class AnyType(@child var level: Term, @const meta: OptionTermMeta) extends 
 val Level0: LevelFinite = LevelFinite(IntegerTerm(0, meta = None), meta = None)
 val Type0: Type = Type(Level0, meta = None)
 val AnyType0: AnyType = AnyType(Level0, meta = None)
-case class NothingType(@const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class NothingType(@const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = NothingType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("Nothing", ColorProfile.typeColor)
@@ -403,7 +401,7 @@ case class NothingType(@const meta: OptionTermMeta) extends TypeTerm derives Rea
 }
 case class LiteralType(
     @child var literal: LiteralTerm,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeTerm derives ReadWriter {
   override type ThisTree = LiteralType
   override def toDoc(using PrettierOptions): Doc =
@@ -415,7 +413,7 @@ case class ArgTerm(
     @child var ty: Term,
     @const default: Option[Term] = None,
     @const vararg: Boolean = false,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   override type ThisTree = ArgTerm
   override def toDoc(using PrettierOptions): Doc = {
@@ -432,7 +430,7 @@ case class ArgTerm(
 case class TelescopeTerm(
     @children args0: Array[ArgTerm],
     @const implicitly: Boolean = false,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   val args: ArraySeq[ArgTerm] = ArraySeq.unsafeWrapArray(args0)
   override type ThisTree = TelescopeTerm
@@ -453,7 +451,7 @@ case class TelescopeTerm(
 case class Function(
     @child var ty: FunctionType,
     @child var body: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   override type ThisTree = Function
   override def toDoc(using PrettierOptions): Doc = {
@@ -473,7 +471,7 @@ case class FunctionType(
     @children telescopes0: Array[TelescopeTerm],
     @child var resultTy: Term,
     @const effects: EffectsM = Effects.Empty,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   val telescopes: ArraySeq[TelescopeTerm] = ArraySeq.unsafeWrapArray(telescopes0)
   override type ThisTree = FunctionType
@@ -498,7 +496,7 @@ case class FunctionType(
 case class ObjectClauseValueTerm(
     @child var key: Term,
     @child var value: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   override type ThisTree = ObjectClauseValueTerm
   override def toDoc(using PrettierOptions): Doc = group(
@@ -511,7 +509,7 @@ case class ObjectClauseValueTerm(
 }
 case class ObjectTerm(
     @children clauses0: Array[ObjectClauseValueTerm],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   val clauses: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(clauses0)
   override type ThisTree = ObjectTerm
@@ -526,7 +524,7 @@ case class ObjectTerm(
 case class ObjectType(
     @children fieldTypes0: Array[ObjectClauseValueTerm],
     @const exactFields: Boolean = false,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   private val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
   override type ThisTree = ObjectType
@@ -538,7 +536,7 @@ case class ObjectType(
     copy(fieldTypes0 = fieldTypes.map(g))
   )
 }
-case class ListF(@const meta: OptionTermMeta) extends Builtin derives ReadWriter {
+case class ListF(@const meta: Option[TermMeta]) extends Builtin derives ReadWriter {
   override type ThisTree = ListF
   override def toDoc(using PrettierOptions): Doc = "List"
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
@@ -546,13 +544,13 @@ case class ListF(@const meta: OptionTermMeta) extends Builtin derives ReadWriter
 sealed abstract class Constructed extends WHNF derives ReadWriter {
   type ThisTree <: Constructed
 }
-case class ListType(@child var ty: Term, @const meta: OptionTermMeta) extends Constructed with TypeTerm derives ReadWriter {
+case class ListType(@child var ty: Term, @const meta: Option[TermMeta]) extends Constructed with TypeTerm derives ReadWriter {
   override type ThisTree = ListType
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("List") <> Docs.`(` <> ty <> Docs.`)`
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(ty = f(ty)))
 }
-case class Union(@const xs: NonEmptyVector[Term], @const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class Union(@const xs: NonEmptyVector[Term], @const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = Union
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`(`, Docs.`)`, "|")(xs)
@@ -561,7 +559,7 @@ case class Union(@const xs: NonEmptyVector[Term], @const meta: OptionTermMeta) e
     copy(xs = xs.map(f))
   )
 }
-case class Intersection(@const xs: NonEmptyVector[Term], @const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class Intersection(@const xs: NonEmptyVector[Term], @const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = Intersection
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`(`, Docs.`)`, "&")(xs)
@@ -574,7 +572,7 @@ sealed abstract class Builtin extends WHNF derives ReadWriter {
 sealed abstract class Effect extends WHNF derives ReadWriter {
   override type ThisTree <: Effect
 }
-case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const meta: OptionTermMeta) extends EffectsM with WHNF derives ReadWriter {
+case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const meta: Option[TermMeta]) extends EffectsM with WHNF derives ReadWriter {
 
   override type ThisTree = Effects
   override def toDoc(using PrettierOptions): Doc =
@@ -601,7 +599,7 @@ object Effects {
 /** Effect needs to have reasonable equals and hashcode for simple comparison, whereas they are not requirements for other Terms
   */
 // may raise an exception
-case class ExceptionEffect(@const meta: OptionTermMeta) extends Effect derives ReadWriter {
+case class ExceptionEffect(@const meta: Option[TermMeta]) extends Effect derives ReadWriter {
   override type ThisTree = ExceptionEffect
   val name = "Exception"
   override def toDoc(using PrettierOptions): Doc = Doc.text(name)
@@ -622,7 +620,7 @@ case class LocalV(
     @const name: Name,
     @child var ty: Term,
     @const uniqId: UniqidOf[LocalV],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends ReferenceCall derives ReadWriter {
   override type ThisTree = LocalV
   override def toDoc(using PrettierOptions): Doc = Doc.text(name)
@@ -634,7 +632,7 @@ case class ToplevelV(
     @const id: AbsoluteRef,
     @child var ty: Term,
     @const uniqId: UniqidOf[ToplevelV],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends ReferenceCall derives ReadWriter {
   override type ThisTree = ToplevelV
   override def toDoc(using PrettierOptions): Doc = group(
@@ -646,7 +644,7 @@ case class ToplevelV(
   @deprecated("dont use")
   def name: Name = id.name
 }
-case class ErrorTerm(@const problem: Problem, @const meta: OptionTermMeta) extends SpecialTerm derives ReadWriter {
+case class ErrorTerm(@const problem: Problem, @const meta: Option[TermMeta]) extends SpecialTerm derives ReadWriter {
   override type ThisTree = ErrorTerm
   override def toDoc(using PrettierOptions): Doc = problem.toDoc
 
@@ -659,7 +657,7 @@ case class LetStmtTerm(
     @child var localv: LocalV,
     @child var value: Term,
     @child var ty: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends StmtTerm derives ReadWriter {
   override type ThisTree = LetStmtTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -677,7 +675,7 @@ case class DefStmtTerm(
     @child var localv: LocalV,
     @child var value: Term,
     @child var ty: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends StmtTerm derives ReadWriter {
   override type ThisTree = DefStmtTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -693,7 +691,7 @@ case class DefStmtTerm(
 case class ExprStmtTerm(
     @child var expr: Term,
     @child var ty: Term = AnyType0,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends StmtTerm derives ReadWriter {
   override type ThisTree = ExprStmtTerm
   override def toDoc(using PrettierOptions): Doc = expr.toDoc
@@ -702,7 +700,7 @@ case class ExprStmtTerm(
     copy(expr = f(expr), ty = f(ty))
   )
 }
-case class NonlocalOrLocalReturn(@child var value: Term, @const meta: OptionTermMeta) extends StmtTerm derives ReadWriter {
+case class NonlocalOrLocalReturn(@child var value: Term, @const meta: Option[TermMeta]) extends StmtTerm derives ReadWriter {
   override type ThisTree = NonlocalOrLocalReturn
   override def toDoc(using PrettierOptions): Doc =
     Doc.text("return") <+> value.toDoc
@@ -711,7 +709,7 @@ case class NonlocalOrLocalReturn(@child var value: Term, @const meta: OptionTerm
     copy(value = f(value))
   )
 }
-case class TupleType(@const types: Vector[Term], @const meta: OptionTermMeta) extends TypeTerm derives ReadWriter {
+case class TupleType(@const types: Vector[Term], @const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = TupleType
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist("Tuple" <> Docs.`[`, Docs.`]`)(types)
@@ -719,7 +717,7 @@ case class TupleType(@const types: Vector[Term], @const meta: OptionTermMeta) ex
     copy(types = types.map(f))
   )
 }
-case class TupleTerm(@const values: Vector[Term], @const meta: OptionTermMeta) extends WHNF derives ReadWriter {
+case class TupleTerm(@const values: Vector[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
   override type ThisTree = TupleTerm
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`(`, Docs.`)`)(values)
@@ -730,7 +728,7 @@ case class TupleTerm(@const values: Vector[Term], @const meta: OptionTermMeta) e
 case class BlockTerm(
     @children statements0: Array[StmtTerm],
     @child var result: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends Uneval derives ReadWriter {
   val statements: ArraySeq[StmtTerm] = ArraySeq.unsafeWrapArray(statements0)
   override type ThisTree = BlockTerm
@@ -749,7 +747,7 @@ case class Annotation(
     @child var term: Term,
     @const ty: Option[Term],
     @const effects: Option[EffectsM],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends Uneval derives ReadWriter {
   require(ty.nonEmpty || effects.nonEmpty)
   override type ThisTree = Annotation
@@ -770,7 +768,7 @@ case class Annotation(
 case class FieldTerm(
     @const name: Name,
     @child var ty: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   override type ThisTree = FieldTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -786,7 +784,7 @@ case class RecordStmtTerm(
     @const fields: Vector[FieldTerm],
     @const body: Option[BlockTerm],
     @const extendsClause: Option[Term] = None,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = RecordStmtTerm
@@ -814,7 +812,7 @@ case class RecordStmtTerm(
 case class RecordConstructTerm(
     @const recordName: Name,
     @const args: Vector[Term],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends Uneval derives ReadWriter {
   override type ThisTree = RecordConstructTerm
   override def toDoc(using PrettierOptions): Doc = {
@@ -830,7 +828,7 @@ case class TraitStmtTerm(
     @const uniqId: UniqidOf[TraitStmtTerm] = Uniqid.generate[TraitStmtTerm],
     @const extendsClause: Option[Term] = None,
     @const body: Option[BlockTerm] = None,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = TraitStmtTerm
@@ -853,7 +851,7 @@ case class InterfaceStmtTerm(
     @const uniqId: UniqidOf[InterfaceStmtTerm] = Uniqid.generate[InterfaceStmtTerm],
     @const extendsClause: Option[Term] = None,
     @const body: Option[BlockTerm] = None,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = InterfaceStmtTerm
@@ -874,7 +872,7 @@ case class InterfaceStmtTerm(
 case class RecordTypeTerm(
     recordDef: RecordStmtTerm,
     telescope: TelescopeTerm,
-    meta: OptionTermMeta
+    meta: Option[TermMeta]
 ) extends TypeTerm derives ReadWriter {
   override type ThisTree = RecordTypeTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -886,7 +884,7 @@ case class RecordTypeTerm(
 }
 case class TraitTypeTerm(
     @child var traitDef: TraitStmtTerm,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeTerm derives ReadWriter {
   override type ThisTree = TraitTypeTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -898,7 +896,7 @@ case class TraitTypeTerm(
 }
 case class ObjectConstructTerm(
     @child var objectRef: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends Uneval derives ReadWriter {
   override type ThisTree = ObjectConstructTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -910,7 +908,7 @@ case class ObjectConstructTerm(
 }
 case class ObjectTypeTerm(
     @child var objectDef: ObjectStmtTerm,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeTerm derives ReadWriter {
   override type ThisTree = ObjectTypeTerm
   override def toDoc(using PrettierOptions): Doc =
@@ -925,7 +923,7 @@ case class ObjectStmtTerm(
     @const uniqId: UniqidOf[ObjectStmtTerm],
     @const extendsClause: Option[Term],
     @const body: Option[BlockTerm],
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = ObjectStmtTerm
@@ -953,7 +951,7 @@ case class DotCallTerm(
     @const fieldName: Name,
     @const args: Vector[Calling] = Vector.empty,
     @child var fieldType: Term,
-    @const meta: OptionTermMeta
+    @const meta: Option[TermMeta]
 ) extends Uneval derives ReadWriter {
   override type ThisTree = DotCallTerm
   override def toDoc(using PrettierOptions): Doc = {
