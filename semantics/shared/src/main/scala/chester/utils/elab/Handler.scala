@@ -6,7 +6,7 @@ enum Result {
   case Waiting(vars: Vector[CellAny])
 }
 
-open trait Handler[Ops](val kind: Kind) {
+open trait Handler[-Ops](val kind: Kind) {
   def run(constant: kind.Of)(using Ops, SolverOps): Result = ???
   def defaulting(constant: kind.Of, level: DefaultingLevel)(using Ops, SolverOps): Unit = ()
 }
