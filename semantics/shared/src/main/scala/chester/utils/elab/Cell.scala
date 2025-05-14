@@ -14,3 +14,4 @@ type CellAny = Cell[Any, Nothing, CellContent[Any, Nothing]]
 type CellR[+T] = Cell[T, Nothing, CellContent[T, Nothing]]
 type CellW[-T] = Cell[Any, T, CellContent[Any, T]]
 type CellRWOr[A] = CellOf[A, A] | A
+type CellROr[A] = CellOf[A, Nothing] | A

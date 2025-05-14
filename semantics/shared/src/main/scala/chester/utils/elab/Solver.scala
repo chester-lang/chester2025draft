@@ -26,6 +26,7 @@ trait SolverOps {
 }
 
 object SolverOps {
+  def useConstraint[A](x: ConstraintResult[A])(using ops: SolverOps): CellR[A] = ops.useConstraint(x)
   def addConstraint(x: Constraint)(using ops: SolverOps): Unit = ops.addConstraint(x)
   def hasSomeValue(id: CellAny)(using ops: SolverOps): Boolean = ops.hasSomeValue(id)
   def readUnstable[U](id: CellR[U])(using ops: SolverOps): Option[U] = ops.readUnstable(id)
