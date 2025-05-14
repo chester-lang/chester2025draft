@@ -1,8 +1,8 @@
 package chester.elab
 
-import chester.utils.elab.{MergeSimpleHandler, MutHandlerConf}
+import chester.utils.elab.{HandlerConf, MergeSimpleHandler, MutHandlerConf}
 
-val DefaultSolverConf = new MutHandlerConf[ElabOps](
+implicit val DefaultSolverConf: HandlerConf[ElabOps] = new MutHandlerConf[ElabOps](
   MergeSimpleHandler,
   IntegerLitHandler,
   StringLitHandler,
