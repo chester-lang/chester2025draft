@@ -62,7 +62,10 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     }
     (lhsV, rhsV) match {
       case (ListType(lhs,meta), ListType(rhs,meta2)) => {
-        SolverOps.addConstraint(Unify(lhs, rhs))
+        // For debug lhs1 and rhs1
+        val lhs1 = toTerm(lhs)
+        val rhs1 = toTerm(rhs)
+        SolverOps.addConstraint(Unify(lhs1, rhs1))
         return Result.Done
       }
       case _ => ???
