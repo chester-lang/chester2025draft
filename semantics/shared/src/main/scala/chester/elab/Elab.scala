@@ -22,6 +22,10 @@ def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(
     }
 }
 
+implicit class ToTermOps (x: CellRW[Term] | CellR[Term] | Term) {
+  def toTerm(meta: Option[TermMeta] = None)(using ops: SolverOps): Term = chester.elab.toTerm(x, meta)
+}
+
 @tailrec
 def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): CellRW[Term] = x match {
   case c: CellRW[Term @unchecked] =>

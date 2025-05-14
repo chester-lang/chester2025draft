@@ -3,6 +3,7 @@ package chester.elab
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.*
+import chester.utils.assumeNonEmpty
 
 case object ListOf extends Kind {
   type Of = ListOf
@@ -15,6 +16,20 @@ case class ListOf(items: Vector[(wellTyped: CellROr[Term], ty: CellROr[Term])], 
 }
 
 case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
-  override def run(c: ListOf)(using ElabOps, SolverOps): Result =
-    ???
+  override def run(c: ListOf)(using ElabOps, SolverOps): Result = {
+    import c.{*, given}
+    toTerm(ty) match {
+      case ty: MetaTerm => Result.Waiting(assumeCell(ty))
+      case ListType(ty, meta) =>
+        SolverOps.addConstraint(IsType(result))
+        if (items.isEmpty) return Result.Done
+        val allTys = items.map(_.ty)
+        val unioned = Union(allTys.map(_.toTerm()).assumeNonEmpty, meta = None)
+        unioned <:! ty
+        result.fill(ListTerm(items.map(_.wellTyped.toTerm()), meta))
+        Result.Done
+    }
+  }
+  override def defaulting(c: ListOf, level: DefaultingLevel)(using ElabOps, SolverOps): Unit =
+    ()
 }
