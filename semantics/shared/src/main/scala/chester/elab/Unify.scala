@@ -79,7 +79,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     }
   }
 
-  override def defaulting(c: Unify, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+  override def defaulting(c: Unify, level: DefaultingLevel)(using elabops: ElabOps, solverOps: SolverOps): Unit = {
     if (level != DefaultingLevel.UnifyMerge) return
     import c.*
     val lhsV = toTerm(lhs)
