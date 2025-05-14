@@ -33,6 +33,15 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     updatedCells.append(id)
   }
 
+  private def handleUpdated(): Unit = {
+      val _ = delayedConstraints.filterInPlace { c =>
+        val call = c.vars.exists(updatedCells.contains)
+        if (call) todo.enqueue(c.x)
+        !call
+      }
+      updatedCells.clear()
+  }
+
   @tailrec
   override def run(): Unit = {
     while (todo.nonEmpty) {
@@ -51,14 +60,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
             failedConstraints.append(c)
         }
       }
-      if (delayedConstraints.nonEmpty) {
-        val _ = delayedConstraints.filterInPlace { c =>
-          val call = c.vars.exists(updatedCells.contains)
-          if (call) todo.enqueue(c.x)
-          !call
-        }
-        updatedCells.clear()
-      }
+      handleUpdated()
     }
     var defaults = DefaultingLevel.Values
     var nothingChanged = true
@@ -98,14 +100,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     if (defaults.isEmpty && nothingChanged) {
       throw new IllegalStateException("cannot finish some constraints")
     }
-    if (delayedConstraints.nonEmpty) {
-      val _ = delayedConstraints.filterInPlace { c =>
-        val call = c.vars.exists(updatedCells.contains)
-        if (call) todo.enqueue(c.x)
-        !call
-      }
-      updatedCells.clear()
-    }
+    handleUpdated()
     if (!stable) return run()
   }
 
