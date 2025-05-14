@@ -2,6 +2,7 @@ package chester.elab
 
 import chester.syntax.core.*
 import chester.tyck.Context
+import chester.utils.HoldNotReadable
 import chester.utils.elab.*
 import spire.math.Trilean
 
@@ -51,6 +52,19 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
     if (rhs <:? lhs isTrue) return Result.Done
+    val lhsV = toTerm(lhs)
+    val rhsV = toTerm(rhs)
     ???
+  }
+
+  override def defaulting(c: Unify, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+    import c.*
+    val lhsV = toTerm(lhs)
+    val rhsV = toTerm(rhs)
+    (lhsV, rhsV) match {
+      case (MetaTerm(HoldNotReadable[CellRW[Term] @unchecked](lhs),meta),rhs) => lhs.fill(rhs)
+      case (lhs, MetaTerm(HoldNotReadable[CellRW[Term] @unchecked](rhs),meta)) => rhs.fill(lhs)
+      case _ => ()
+    }
   }
 }
