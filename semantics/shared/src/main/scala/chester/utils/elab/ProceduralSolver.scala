@@ -2,6 +2,7 @@ package chester.utils.elab
 
 import chester.utils.cell.{CellContent, CellContentR}
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 final class ProceduralCell[+A, -B, C <: CellContent[A, B]](
@@ -17,7 +18,7 @@ object ProceduralSolver extends SolverFactory {
 final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
   given SolverOps = this
   private val todo = mutable.Queue[Constraint]()
-  private var delayedConstraints = mutable.ArrayBuffer[WaitingConstraint]()
+  private val delayedConstraints = mutable.ArrayBuffer[WaitingConstraint]()
   private val failedConstraints = mutable.ArrayBuffer[Constraint]()
   private val updatedCells = mutable.ArrayBuffer[CellAny]()
 
@@ -31,7 +32,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     updatedCells.append(id)
   }
 
-  // @tailrec
+  @tailrec
   override def run(): Unit = {
     while (todo.nonEmpty) {
       var heuristics: Int = 1
@@ -50,7 +51,6 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         }
       }
       if (delayedConstraints.nonEmpty) {
-        // pick those has waiting vars in updatedCells
         val _ = delayedConstraints.filterInPlace { c =>
           val call = c.vars.exists(updatedCells.contains)
           if (call) todo.enqueue(c.x)
@@ -59,9 +59,45 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         updatedCells.clear()
       }
     }
-    while (delayedConstraints.nonEmpty)
-      // TODO: defaulting
-      ???
+    var defaults = DefaultingLevel.Values
+    var nothingChanged = true
+    while (nothingChanged && defaults.nonEmpty) {
+      val default = defaults.head
+      defaults = defaults.tail
+      val _ = delayedConstraints.flatMapInPlace { x =>
+        val c = x.x
+        val handler = conf.getHandler(c.kind).getOrElse(throw new IllegalStateException("no handler"))
+        val result = handler.run(c.asInstanceOf[handler.kind.Of])
+        result match {
+          case Result.Done =>
+            nothingChanged = false
+            Vector()
+          case Result.Failed =>
+            nothingChanged = false
+            failedConstraints.append(c)
+            Vector()
+          case Result.Waiting(vars*) =>
+            handler.defaulting(c.asInstanceOf[handler.kind.Of], default)
+            val result = handler.run(c.asInstanceOf[handler.kind.Of])
+            result match {
+              case Result.Done =>
+                nothingChanged = false
+                Vector()
+              case Result.Failed =>
+                nothingChanged = false
+                failedConstraints.append(c)
+                Vector()
+              case Result.Waiting(vars*) =>
+                Vector(WaitingConstraint(vars.toVector, c))
+            }
+        }
+      }
+      if(updatedCells.nonEmpty)nothingChanged = false
+    }
+    if (defaults.isEmpty && nothingChanged) {
+      throw new IllegalStateException("cannot finish some constraints")
+    }
+    if (!stable) return run()
   }
 
   override def stable: Boolean = delayedConstraints.isEmpty && todo.isEmpty
