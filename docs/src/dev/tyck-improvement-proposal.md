@@ -384,8 +384,8 @@ To solve the "cells not covered by any propagator" errors:
 
 - Created a new `DefaultValuePropagator[T]` case class with:
   - Set `score = 100` to give it high priority
-  - Implemented `run`, `zonk`, and `naiveFallbackZonk` methods
-  - Added proper cell tracking with `readingCells`, `writingCells`, and `zonkingCells`
+  - Implemented `run`, `defaulting`, and `naiveFallbackZonk` methods
+  - Added proper cell tracking with `readingCells`, `writingCells`, and `defaultingCells`
   - Added custom `identify` method returning `Some(id)` to prevent propagator removal
 
 ### 11.3 Infinite Recursion Prevention
@@ -416,7 +416,7 @@ The most significant method and identifier changes were:
 - `handleUnionSpecific`: Rewrote to handle ALL union components
 - `ensureDefaultValue`: Enhanced with propagator creation
 - Added new `DefaultValuePropagator` class
-- Modified `Unify.zonk` case for union handling
+- Modified `Unify.defaulting` case for union handling
 - Updated union component debug logging using `Debug.debugPrint`
 
 These changes collectively represent an approach to fixing union type subtyping that ensures sound type checking while preventing "cells not covered" errors through improved propagator management.

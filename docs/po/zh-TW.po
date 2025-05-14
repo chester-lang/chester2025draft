@@ -9355,13 +9355,13 @@ msgid "Set `score = 100` to give it high priority"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:387
-msgid "Implemented `run`, `zonk`, and `naiveFallbackZonk` methods"
+msgid "Implemented `run`, `defaulting`, and `naiveFallbackZonk` methods"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:388
 msgid ""
 "Added proper cell tracking with `readingCells`, `writingCells`, and "
-"`zonkingCells`"
+"`defaultingCells`"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:389
@@ -9466,7 +9466,7 @@ msgid "Added new `DefaultValuePropagator` class"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:419
-msgid "Modified `Unify.zonk` case for union handling"
+msgid "Modified `Unify.defaulting` case for union handling"
 msgstr ""
 
 #: src/dev/tyck-improvement-proposal.md:420

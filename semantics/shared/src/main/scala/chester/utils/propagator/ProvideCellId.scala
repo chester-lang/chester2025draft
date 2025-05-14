@@ -7,7 +7,7 @@ trait ProvideCellId {
   type PIdOf[+T <: Propagator[?]]
   type CellId[T] = CIdOf[CellRW[T]]
   type CellIdAny = CIdOf[Cell[?, ?]]
-  type SeqId[T] = CIdOf[SeqCell[T,T]]
+  type SeqId[T] = CIdOf[SeqCell[T, T]]
   type CellIdOr[T] = CellId[T] | T
 
   def isCId(x: Any): Boolean
@@ -39,22 +39,22 @@ trait ProvideCellId {
 
     def writingCells(using StateRead[Ops], Ops): Set[CellIdAny] = Set.empty
 
-    def zonkingCells(using StateRead[Ops], Ops): Set[CellIdAny] = Set.empty
+    def defaultingCells(using StateRead[Ops], Ops): Set[CellIdAny] = Set.empty
 
     /** @return
       *   true if the propagator finished its work
       */
     def run(using StateOps[Ops], Ops): Boolean
 
-    /** make a best guess for zonkingCells */
-    def zonk(
+    /** make a best guess for defaultingCells */
+    def defaulting(
         needed: Vector[CIdOf[Cell[?, ?]]]
-    )(using StateOps[Ops], Ops): ZonkResult
+    )(using StateOps[Ops], Ops): DefaultingResult
 
     def naiveFallbackZonk(
         needed: Vector[CIdOf[Cell[?, ?]]]
-    )(using StateOps[Ops], Ops): ZonkResult =
-      zonk(needed)
+    )(using StateOps[Ops], Ops): DefaultingResult =
+      defaulting(needed)
   }
 
   trait StateRead[Ops] {
@@ -81,13 +81,13 @@ trait ProvideCellId {
 
   trait StateOps[Session] extends StateRead[Session] {
     protected def update[T <: Cell[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                   Session
+        Session
     ): Unit
 
     def fill[T <: CellRW[U], U](id: CIdOf[T], f: U)(using Session): Unit =
       update[T](id, _.fill(f).asInstanceOf[T])
 
-    def add[T <: SeqCell[U,U], U](id: CIdOf[T], f: U)(using Session): Unit =
+    def add[T <: SeqCell[U, U], U](id: CIdOf[T], f: U)(using Session): Unit =
       update[T](id, _.add(f).asInstanceOf[T])
 
     def add[T <: MapCell[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
@@ -114,7 +114,7 @@ trait ProvideCellId {
         tick(using more)
 
     /** make a best guess for those cells */
-    def zonk(cells: Vector[CIdOf[Cell[?, ?]]])(using more: Session): Unit
+    def defaulting(cells: Vector[CIdOf[Cell[?, ?]]])(using more: Session): Unit
 
     def toId[T](x: CellIdOr[T]): CIdOf[CellRW[T]] = x match {
       case x if isCId(x) => x.asInstanceOf[CIdOf[CellRW[T]]]
@@ -125,9 +125,9 @@ trait ProvideCellId {
     }
   }
 
-  enum ZonkResult {
-    case Done extends ZonkResult
-    case Require(needed: Seq[CIdOf[Cell[?, ?]]]) extends ZonkResult
-    case NotYet extends ZonkResult
+  enum DefaultingResult {
+    case Done extends DefaultingResult
+    case Require(needed: Seq[CIdOf[Cell[?, ?]]]) extends DefaultingResult
+    case NotYet extends DefaultingResult
   }
 }

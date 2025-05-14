@@ -25,15 +25,15 @@ type CellRW[A] = Cell[A, A]
 type CellR[+A] = Cell[A, Nothing]
 type CellW[-A] = Cell[Any, A]
 
-trait SeqCell[+A,-B] extends UnstableCell[Seq[A],Seq[B]] with NoFill[Seq[A],Seq[B]] {
-  def add(newValue: B): SeqCell[A,B]
+trait SeqCell[+A, -B] extends UnstableCell[Seq[A], Seq[B]] with NoFill[Seq[A], Seq[B]] {
+  def add(newValue: B): SeqCell[A, B]
 }
 
 trait BaseMapCell[A, B] {
   def add(key: A, value: B): BaseMapCell[A, B]
 }
 
-trait UnstableCell[+A,-B] extends Cell[A,B] {
+trait UnstableCell[+A, -B] extends Cell[A, B] {
   override def readStable: Option[A] =
     throw new UnsupportedOperationException(
       t"${getClass.getName} is not stable"
@@ -50,14 +50,14 @@ trait UnstableCell[+A,-B] extends Cell[A,B] {
     )
 }
 
-trait NoFill[+A,-B] extends Cell[A,B] {
-  override def fill(newValue: B): NoFill[A,B] =
+trait NoFill[+A, -B] extends Cell[A, B] {
+  override def fill(newValue: B): NoFill[A, B] =
     throw new UnsupportedOperationException(
       t"${getClass.getName} cannot be filled"
     )
 }
 
-trait MapCell[A, B] extends UnstableCell[Map[A, B],Map[A, B]] with BaseMapCell[A, B] with NoFill[Map[A, B],Map[A, B]] {}
+trait MapCell[A, B] extends UnstableCell[Map[A, B], Map[A, B]] with BaseMapCell[A, B] with NoFill[Map[A, B], Map[A, B]] {}
 
 case class OnceCell[T](
     value: Option[T] = None,
@@ -79,10 +79,10 @@ case class MutableCell[T](value: Option[T]) extends CellRW[T] {
     copy(value = Some(newValue))
 }
 
-case class CollectionCell[+A,-B<:A](value: Vector[A] = Vector.empty) extends SeqCell[A,B] {
+case class CollectionCell[+A, -B <: A](value: Vector[A] = Vector.empty) extends SeqCell[A, B] {
   override def readUnstable: Option[Vector[A]] = Some(value)
 
-  override def add(newValue: B): CollectionCell[A,B] =
+  override def add(newValue: B): CollectionCell[A, B] =
     copy(value = value :+ newValue)
 }
 

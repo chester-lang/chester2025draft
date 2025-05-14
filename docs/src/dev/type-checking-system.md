@@ -68,7 +68,7 @@ This reactive network allows complex type relationships (like union types) to be
      trait Propagator[Ability] {
        def readingCells: Set[CellIdAny]
        def writingCells: Set[CellIdAny]
-       def zonkingCells: Set[CellIdAny]
+       def defaultingCells: Set[CellIdAny]
        def run(using state: StateAbility[Ability], more: Ability): Boolean
        def naiveZonk(needed: Vector[CellIdAny]): ZonkResult
      }
@@ -110,7 +110,7 @@ This reactive network allows complex type relationships (like union types) to be
      }
      
      // 3. Register with zonking cells
-     for (cell <- propagator.zonkingCells) {
+     for (cell <- propagator.defaultingCells) {
        cell.zonkingPropagators :+= id
      }
      

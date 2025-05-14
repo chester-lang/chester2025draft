@@ -1195,7 +1195,7 @@ To solve the "cells not covered by any propagator" error, several key mechanisms
    ) extends Propagator[Tyck] {
      override val readingCells = Set(cell.asInstanceOf[CIdOf[CellRW[?,?]]])
      override val writingCells = Set.empty
-     override val zonkingCells = Set(cell.asInstanceOf[CIdOf[CellRW[?,?]]])
+     override val defaultingCells = Set(cell.asInstanceOf[CIdOf[CellRW[?,?]]])
 
      // Always succeeds - just ensures the cell is covered
      override def run(using StateAbility[Tyck], Tyck): Boolean = true

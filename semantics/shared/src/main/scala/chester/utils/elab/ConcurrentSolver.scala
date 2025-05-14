@@ -58,9 +58,9 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     val resubmitDelayed = delayedConstraints.getAndSet(Vector.empty)
     addConstraints(resubmitDelayed.map(_.x))
   }
-  private def inPoolTickStage1(zonkLevel: ZonkLevel): Unit = {
+  private def inPoolTickStage1(zonkLevel: DefaultingLevel): Unit = {
     val delayed = delayedConstraints.getAndSet(Vector.empty)
-    delayed.foreach(x => doZonk(x.x, zonkLevel))
+    delayed.foreach(x => doDefaulting(x.x, zonkLevel))
   }
   override def run(): Unit = boundary[Unit] { outer ?=>
     while (true) boundary[Unit] { inner ?=>
@@ -73,7 +73,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         finish()
         boundary.break()(using outer)
       }
-      for (level <- ZonkLevel.Values) {
+      for (level <- DefaultingLevel.Values) {
         val entropyBefore = entropy()
         assume(!pool.isShutdown)
         assume(pool.isQuiescent)
@@ -90,10 +90,10 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
   }
 
-  private def doZonk(x: Constraint, zonkLevel: ZonkLevel): Unit =
+  private def doDefaulting(x: Constraint, zonkLevel: DefaultingLevel): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      handler.zonk(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
+      handler.defaulting(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
       val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
       result match {
         case Result.Done => ()
@@ -120,7 +120,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
 
   @tailrec
-  override protected def updateCell[A,B](id: CellReprOf[A,B], f: Cell[A,B] => Cell[A,B]): Unit = {
+  override protected def updateCell[A, B](id: CellReprOf[A, B], f: Cell[A, B] => Cell[A, B]): Unit = {
     val current = id.storeRef.get()
     val updated = f(current)
     if (current == updated) {
@@ -131,7 +131,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
     // Note that here is a possible race condition that delayed constraints might haven't been added to delayedConstraints
     val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))
-    val related = prev.filter(_.related(id)).map(_.x)
+    val related = prev.withFilter(_.related(id)).map(_.x)
     addConstraints(related)
   }
 }

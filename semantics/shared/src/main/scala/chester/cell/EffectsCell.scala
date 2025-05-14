@@ -3,12 +3,10 @@ package chester.cell
 import chester.syntax.core.*
 import chester.utils.cell.*
 
-trait EffectsCell extends CellRW[Effects] {
-}
-
+trait EffectsCell extends CellRW[Effects] {}
 
 case class DynamicEffectsCell(effects: Map[LocalV, Term] = Map.empty)
-  extends BaseMapCell[LocalV, Term]
+    extends BaseMapCell[LocalV, Term]
     with EffectsCell
     with UnstableCell[Effects, Effects]
     with NoFill[Effects, Effects] {

@@ -10,9 +10,9 @@ open trait CellRepr[+A, -B, +C <: Cell[A, B]] extends CellReprAny {
   override final def toString: String = s"CellId@$tag"
 }
 
-type CellReprOf[A,B] = CellRepr[A, B, Cell[A, B]]
+type CellReprOf[A, B] = CellRepr[A, B, Cell[A, B]]
 type CellReprOfRW[T] = CellRepr[T, T, Cell[T, T]]
 type CellReprOfAny = CellRepr[Any, Nothing, Cell[Any, Nothing]]
 type CellReprOfR[+T] = CellRepr[T, Nothing, Cell[T, Nothing]]
 type CellReprOfW[-T] = CellRepr[Any, T, Cell[Any, T]]
-type CellReprOfRWOr[A] = CellReprOf[A,A]|A
+type CellReprOfRWOr[A] = CellReprOf[A, A] | A

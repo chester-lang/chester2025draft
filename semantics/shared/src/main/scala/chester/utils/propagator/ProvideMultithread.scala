@@ -2,11 +2,11 @@ package chester.utils.propagator
 
 import chester.uniqid.{Uniqid, UniqidOf}
 import chester.i18n.*
+import chester.utils.cell.*
 
 import java.util.concurrent.*
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
-import chester.utils.cell.*
 
 trait ProvideMultithread extends ProvideImpl {
 
@@ -23,8 +23,8 @@ trait ProvideMultithread extends ProvideImpl {
 
     /** Atomically updates the store */
     def compareAndSetStore(
-                            expectedValue: Cell[?, ?],
-                            newValue: Cell[?, ?]
+        expectedValue: Cell[?, ?],
+        newValue: Cell[?, ?]
     ): Boolean = {
       val result = storeRef.compareAndSet(expectedValue, newValue)
       if (result) {
@@ -43,7 +43,7 @@ trait ProvideMultithread extends ProvideImpl {
   type CIdOf[+T <: Cell[?, ?]] = HoldCell[T]
   type PIdOf[+T <: Propagator[?]] = HoldPropagator[T]
   type CellId[T] = CIdOf[CellRW[T]]
-  type SeqId[T] = CIdOf[SeqCell[T,T]]
+  type SeqId[T] = CIdOf[SeqCell[T, T]]
 
   def isCId(x: Any): Boolean = x.isInstanceOf[HoldCell[?]]
 
@@ -130,7 +130,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def update[T <: Cell[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                  Ability
+        Ability
     ): Unit = {
       require(id.uniqId == uniqId)
       var updated = false
@@ -161,7 +161,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def fill[T <: CellRW[U], U](id: CIdOf[T], value: U)(using
-                                                                 Ability
+        Ability
     ): Unit = {
       require(id.uniqId == uniqId)
       var updated = false
@@ -190,7 +190,7 @@ trait ProvideMultithread extends ProvideImpl {
       val id = new HoldPropagator[T](uniqId, propagator)
       propagators.add(id.asInstanceOf[PIdOf[Propagator[Ability]]])
 
-      for (cell <- propagator.zonkingCells)
+      for (cell <- propagator.defaultingCells)
         cell.zonkingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
       for (cell <- propagator.readingCells)
         cell.readingPropagators.add(id.asInstanceOf[PIdOf[Propagator[?]]])
@@ -227,7 +227,7 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def zonk(
+    override def defaulting(
         cells: Vector[CIdOf[Cell[?, ?]]]
     )(using Ability): Unit = {
       val currentDepth = incrementRecursionDepth()
@@ -414,12 +414,12 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class ZonkTask(
-                            c: CIdOf[Cell[?, ?]],
-                            p: PIdOf[Propagator[Ability]],
-                            firstFallback: Boolean,
-                            state: Impl[Ability],
-                            parentRecursionDepth: Int = 0,
-                            processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
+        c: CIdOf[Cell[?, ?]],
+        p: PIdOf[Propagator[Ability]],
+        firstFallback: Boolean,
+        state: Impl[Ability],
+        parentRecursionDepth: Int = 0,
+        processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
     )(using more: Ability)
         extends RecursiveAction {
       override def compute(): Unit = {
@@ -436,22 +436,22 @@ trait ProvideMultithread extends ProvideImpl {
           val zonkResult =
             try
               if (firstFallback) {
-                propagator.zonk(Vector(c))(using state, more)
+                propagator.defaulting(Vector(c))(using state, more)
               } else {
                 propagator.naiveFallbackZonk(Vector(c))(using state, more)
               }
             catch {
               case _: Exception =>
                 // Continue with NotYet result on exception
-                ZonkResult.NotYet
+                DefaultingResult.NotYet
             }
 
           zonkResult match {
-            case ZonkResult.Done =>
+            case DefaultingResult.Done =>
               p.setAlive(false)
               val _ = propagators.remove(p)
               setDidSomething(true)
-            case ZonkResult.Require(needed) =>
+            case DefaultingResult.Require(needed) =>
               // Filter out cells we've already seen to prevent cycles
               val newNeeded = needed.toVector
                 .filter(n => n.noStableValue)
@@ -463,7 +463,7 @@ trait ProvideMultithread extends ProvideImpl {
                 newNeeded.foreach(n => processedCellIds.add(n.toString))
                 // Process the newly needed cells
                 try {
-                  state.zonk(newNeeded)
+                  state.defaulting(newNeeded)
                   setDidSomething(true)
                 } catch {
                   case _: Exception =>
@@ -471,7 +471,7 @@ trait ProvideMultithread extends ProvideImpl {
                     setDidSomething(true)
                 }
               }
-            case ZonkResult.NotYet =>
+            case DefaultingResult.NotYet =>
             // No action needed
           }
         }
@@ -479,7 +479,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class DefaultValueTask(c: CIdOf[Cell[?, ?]], state: Impl[Ability])(using
-                                                                               Ability
+        Ability
     ) extends RecursiveAction {
       override def compute(): Unit =
         if (c.noAnyValue && c.store.default.isDefined) {

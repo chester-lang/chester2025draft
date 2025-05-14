@@ -1,19 +1,14 @@
 package chester.utils.elab
 
-import chester.utils.cell.{CellR, Cell}
-
-// Note that the commit is equal or lower than the actual commit
-case class WaitingConstraint(vars: Vector[CellReprAny], x: Constraint) {
-  def related(x: CellReprAny): Boolean = vars.contains(x)
-}
+import chester.utils.cell.{Cell, CellR}
 
 trait SolverOps {
   def hasStableValue(id: CellReprOfAny): Boolean
   def noStableValue(id: CellReprOfAny): Boolean
-  def readStable[U](id: CellReprOfRW[U]): Option[U]
+  def readStable[U](id: CellReprOfR[U]): Option[U]
   def hasSomeValue(id: CellReprOfAny): Boolean
   def noAnyValue(id: CellReprOfAny): Boolean
-  def readUnstable[U](id: CellReprOfRW[U]): Option[U]
+  def readUnstable[U](id: CellReprOfR[U]): Option[U]
 
   def run(): Unit
   def stable: Boolean
@@ -21,26 +16,27 @@ trait SolverOps {
   def addConstraint(x: Constraint): Unit
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
 
-  def fill[T](id: CellReprOfRW[T], value: T): Unit
+  def addCell[A, B, C <: Cell[A, B]](cell: C): CellRepr[A, B, C] = ???
+  def fill[T](id: CellReprOfW[T], value: T): Unit
 }
 
 trait BasicSolverOps extends SolverOps {
   protected def peakCell[T](id: CellReprOfR[T]): CellR[T]
-  protected def updateCell[A,B](id: CellReprOf[A,B], f: Cell[A,B] => Cell[A,B]): Unit
+  protected def updateCell[A, B](id: CellReprOf[A, B], f: Cell[A, B] => Cell[A, B]): Unit
 
   override def hasStableValue(id: CellReprOfAny): Boolean = peakCell(id).hasStableValue
 
   override def noStableValue(id: CellReprOfAny): Boolean = peakCell(id).noStableValue
 
-  override def readStable[U](id: CellReprOfRW[U]): Option[U] = peakCell(id).readStable
+  override def readStable[U](id: CellReprOfR[U]): Option[U] = peakCell(id).readStable
 
   override def hasSomeValue(id: CellReprOfAny): Boolean = peakCell(id).hasSomeValue
 
   override def noAnyValue(id: CellReprOfAny): Boolean = peakCell(id).noAnyValue
 
-  override def readUnstable[U](id: CellReprOfRW[U]): Option[U] = peakCell(id).readUnstable
+  override def readUnstable[U](id: CellReprOfR[U]): Option[U] = peakCell(id).readUnstable
 
-  override def fill[T](id: CellReprOfRW[T], value: T): Unit = updateCell(id, _.fill(value))
+  override def fill[T](id: CellReprOfW[T], value: T): Unit = updateCell(id, _.fill(value))
 }
 
 trait SolverFactory {

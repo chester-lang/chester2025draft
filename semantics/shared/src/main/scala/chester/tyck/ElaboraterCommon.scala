@@ -9,19 +9,19 @@ import chester.syntax.Name
 import chester.uniqid.Uniqid
 import chester.utils.*
 import chester.utils.propagator.*
+import chester.utils.cell.*
 
 import scala.util.boundary
 import scala.util.boundary.break
 import scala.language.implicitConversions
-import chester.utils.cell.*
 
 trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with CommonPropagator[TyckOps] {
 
   extension (eff: EffectsCell) {
 
     def requireEffect(
-                       effect: Term
-                     )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
+        effect: Term
+    )(using ck: TyckOps, state: StateOps[TyckOps]): LocalV = {
       // Check if this effect already exists in the cell
       val currentEffects = eff.readUnstable.map(_.effects).getOrElse(Map.empty)
 

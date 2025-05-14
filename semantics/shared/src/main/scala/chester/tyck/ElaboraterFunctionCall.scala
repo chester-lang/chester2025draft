@@ -141,7 +141,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(functionTy)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(resultTy, functionCallTerm)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(resultTy, functionCallTerm)
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(resultTy, functionCallTerm)
 
     override def run(using state: StateOps[TyckOps], ck: TyckOps): Boolean = {
 
@@ -282,10 +282,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
       expectedArgs.lazyZip(actualArgs).foreach((expectedArg, actualArg) => unify(expectedArg.ty, actualArg.ty, cause))
     }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CellIdAny]
-    )(using StateOps[TyckOps], TyckOps): ZonkResult =
-      ZonkResult.Require(Vector(functionTy))
+    )(using StateOps[TyckOps], TyckOps): DefaultingResult =
+      DefaultingResult.Require(Vector(functionTy))
   }
 
   // Helper case class for effect propagation
@@ -296,7 +296,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   ) extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(effectsCell)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(callerEffects)
-    override def zonkingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
+    override def defaultingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set.empty
 
     override def run(using state: StateOps[TyckOps], more: TyckOps): Boolean =
       state.readStable(effectsCell) match {
@@ -311,10 +311,10 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         case _             => true // No effects to propagate
       }
 
-    override def zonk(
+    override def defaulting(
         needed: Vector[CIdOf[Cell[?, ?]]]
-    )(using StateOps[TyckOps], TyckOps): ZonkResult =
-      ZonkResult.Require(Vector(effectsCell))
+    )(using StateOps[TyckOps], TyckOps): DefaultingResult =
+      DefaultingResult.Require(Vector(effectsCell))
   }
 
 }
