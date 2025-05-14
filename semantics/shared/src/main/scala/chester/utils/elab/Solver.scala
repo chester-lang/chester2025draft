@@ -1,6 +1,7 @@
 package chester.utils.elab
 
 import chester.utils.cell.{CellContent, CellContentR}
+
 import scala.language.implicitConversions
 
 trait SolverOps {

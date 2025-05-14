@@ -20,7 +20,7 @@ case class IntegerLit(expr: IntegerLiteral, ty: CellRWOr[Term])(using ctx: Conte
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
-  def meta = convertMeta(expr.meta)
+  def meta: Option[TermMeta] = convertMeta(expr.meta)
 }
 
 case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerLit) {
@@ -45,10 +45,9 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
     }
     toTerm(ty) match {
       case ty: MetaTerm => Result.Waiting(assumeCell(ty))
-      case _            => {
+      case _ =>
         result.fill(IntegerTerm(expr.value, meta))
         Failed
-      }
     }
   }
 
@@ -70,7 +69,7 @@ case class StringLit(expr: StringLiteral, ty: CellRWOr[Term])(using ctx: Context
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
-  def meta = convertMeta(expr.meta)
+  def meta: Option[TermMeta] = convertMeta(expr.meta)
 }
 case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit) {
 
@@ -90,7 +89,7 @@ case class SymbolLit(expr: SymbolLiteral, ty: CellRWOr[Term])(using ctx: Context
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
-  def meta = convertMeta(expr.meta)
+  def meta: Option[TermMeta] = convertMeta(expr.meta)
 }
 case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit) {
 

@@ -20,7 +20,7 @@ implicit class LocalCtxOps(ignored: Context.type) {
   }
 }
 
-implicit class ContextItemObject(ignored: ContextItem.type) {
+implicit class ContextItemObject(private val ignored: ContextItem.type) extends AnyVal  {
   def builtin(
       item: BuiltinItem
   ): (TyAndVal, ContextItem) = {

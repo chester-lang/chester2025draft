@@ -16,11 +16,11 @@ import chester.error.ProblemUpickle.problemRW
 import chester.utils.impls.rationalRW
 import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
+import chester.utils.impls.uintRW
 
 import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq
-import chester.utils.impls.uintRW
 
 case class TermMeta(sourcePos: SourcePos) derives ReadWriter
 

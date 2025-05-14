@@ -11,7 +11,7 @@ import chester.utils.elab.*
 import scala.annotation.tailrec
 
 @tailrec
-def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using ops: SolverOps): Term = x match {
+def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using  SolverOps): Term = x match {
   case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasStableValue(c.inner) => toTerm(c.inner, meta)
 
   case x: Term => x
@@ -22,8 +22,8 @@ def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(
     }
 }
 
-implicit class ToTermOps (x: CellRW[Term] | CellR[Term] | Term) {
-  def toTerm(meta: Option[TermMeta] = None)(using ops: SolverOps): Term = chester.elab.toTerm(x, meta)
+implicit class ToTermOps(private val x: CellRW[Term] | CellR[Term] | Term) extends AnyVal  {
+  def toTerm(meta: Option[TermMeta] = None)(using  SolverOps): Term = chester.elab.toTerm(x, meta)
 }
 
 @tailrec
@@ -60,10 +60,10 @@ trait Elab {
   ): CellROr[Term]
 
   def infer(expr: Expr)(using
-      effects: CellEffects,
-      localCtx: Context,
-      ops: ElabOps,
-      state: SolverOps
+       CellEffects,
+       Context,
+       ElabOps,
+       SolverOps
   ): (wellTyped: CellROr[Term], ty: CellROr[Term]) = {
     val ty = SolverOps.useConstraint(IsType(newHole))
     val result = elab(expr, ty)

@@ -2,6 +2,7 @@ package chester.elab
 
 import chester.error.{Reporter, TyckProblem}
 import chester.tyck.api.SemanticCollector
+
 import scala.language.implicitConversions
 
 case class ElabOps(reporter: Reporter[TyckProblem], collector: SemanticCollector) {}

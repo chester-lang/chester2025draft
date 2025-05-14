@@ -5,6 +5,8 @@ import chester.utils.cell.{CellContent, CellContentR}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.language.implicitConversions
+import scala.collection.mutable.Queue
+import scala.collection.mutable.ArrayBuffer
 
 final class ProceduralCell[+A, -B, C <: CellContent[A, B]](
     initialValue: C
@@ -18,10 +20,10 @@ object ProceduralSolver extends SolverFactory {
 
 final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
   given SolverOps = this
-   val todo = mutable.Queue[Constraint]()
-   val delayedConstraints = mutable.ArrayBuffer[WaitingConstraint]()
-   val failedConstraints = mutable.ArrayBuffer[Constraint]()
-   val updatedCells = mutable.ArrayBuffer[CellAny]()
+  val todo: Queue[Constraint] = mutable.Queue[Constraint]()
+  val delayedConstraints: ArrayBuffer[WaitingConstraint] = mutable.ArrayBuffer[WaitingConstraint]()
+  val failedConstraints: ArrayBuffer[Constraint] = mutable.ArrayBuffer[Constraint]()
+  val updatedCells: ArrayBuffer[Cell[Any, Nothing, CellContent[Any, Nothing]]] = mutable.ArrayBuffer[CellAny]()
 
   implicit inline def thereAreAllProcedural[A, B, C <: CellContent[A, B]](inline x: Cell[A, B, C]): ProceduralCell[A, B, C] =
     x.asInstanceOf[ProceduralCell[A, B, C]]
@@ -93,17 +95,17 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
             }
         }
       }
-      if(updatedCells.nonEmpty || todo.nonEmpty)nothingChanged = false
+      if (updatedCells.nonEmpty || todo.nonEmpty) nothingChanged = false
     }
     if (defaults.isEmpty && nothingChanged) {
       throw new IllegalStateException("cannot finish some constraints")
     }
-      val _ = delayedConstraints.filterInPlace { c =>
-        val call = c.vars.exists(updatedCells.contains)
-        if (call) todo.enqueue(c.x)
-        !call
-      }
-      updatedCells.clear()
+    val _ = delayedConstraints.filterInPlace { c =>
+      val call = c.vars.exists(updatedCells.contains)
+      if (call) todo.enqueue(c.x)
+      !call
+    }
+    updatedCells.clear()
     if (!stable) return run()
   }
 

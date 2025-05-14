@@ -52,9 +52,9 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
     (rhs <:? lhs) match {
-        case Trilean.True  => return Result.Done
-        case Trilean.False => return Result.Failed
-        case Trilean.Unknown => ()
+      case Trilean.True    => return Result.Done
+      case Trilean.False   => return Result.Failed
+      case Trilean.Unknown => ()
     }
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
@@ -65,33 +65,31 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       return Result.Waiting(assumeCell(rhs))
     }
     (lhsV, rhsV) match {
-      case (ListType(lhs, meta), ListType(rhs, meta2)) =>
+      case (ListType(lhs, meta), ListType(rhs, _)) =>
         // For debug lhs1 and rhs1
         val lhs1 = toTerm(lhs)
         val rhs1 = toTerm(rhs)
         SolverOps.addConstraint(Unify(lhs1, rhs1))
         Result.Done
-      case (lhs: MetaTerm, rhs) => Result.Waiting(assumeCell(lhs))
-      case (lhs, rhs: MetaTerm) => Result.Waiting(assumeCell(rhs))
-      case (Union(lhs,_),Union(rhs,_)) => {
+      case (lhs: MetaTerm, _) => Result.Waiting(assumeCell(lhs))
+      case (_, rhs: MetaTerm) => Result.Waiting(assumeCell(rhs))
+      case (Union(lhs, _), Union(rhs, _)) =>
         val lhs1 = lhs.map(toTerm(_))
         val rhs1 = rhs.map(toTerm(_))
-        val common = lhs1.filter(x=>rhs1.exists(y=>eqType(x,y)))
-        val lhs2 = lhs1.filter(x=> !common.exists(y=>eqType(x,y)))
-        val rhs2 = rhs1.filter(x=> !common.exists(y=>eqType(x,y)))
-        if(lhs2.isEmpty && rhs2.isEmpty) {
+        val common = lhs1.filter(x => rhs1.exists(y => eqType(x, y)))
+        val lhs2 = lhs1.filterNot(x => common.exists(y => eqType(x, y)))
+        val rhs2 = rhs1.filterNot(x => common.exists(y => eqType(x, y)))
+        if (lhs2.isEmpty && rhs2.isEmpty) {
           return Result.Done
         }
-        if(lhs2.length == 1 && rhs2.length == 1) {
+        if (lhs2.length == 1 && rhs2.length == 1) {
           SolverOps.addConstraint(Unify(lhs2.head, rhs2.head))
           return Result.Done
         }
         ???
-      }
-      case (lhs, Union(rhs, _)) => {
-        rhs.foreach(rhs=>SolverOps.addConstraint(Unify(lhs, rhs)))
+      case (lhs, Union(rhs, _)) =>
+        rhs.foreach(rhs => SolverOps.addConstraint(Unify(lhs, rhs)))
         Result.Done
-      }
       case _ => ???
     }
   }

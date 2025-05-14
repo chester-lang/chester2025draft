@@ -21,7 +21,7 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
     toTerm(ty) match {
       case ty: MetaTerm => Result.Waiting(assumeCell(ty))
       case ListType(ty, meta) =>
-        SolverOps.addConstraint(IsType((ty)))
+        SolverOps.addConstraint(IsType(ty))
         if (items.isEmpty) {
           result.fill(ListTerm(Vector(), meta))
           return Result.Done
@@ -33,17 +33,17 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
         Result.Done
     }
   }
-  override def defaulting(c: ListOf, level: DefaultingLevel)(using ElabOps, SolverOps): Unit ={
-    if(level != DefaultingLevel.ListOfSetListType) return
+  override def defaulting(c: ListOf, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+    if (level != DefaultingLevel.ListOfSetListType) return
     import c.{*, given}
     val ty1 = assumeCell(ty)
     if (items.isEmpty) {
       val innerTy = toTerm(SolverOps.useConstraint(IsType(newHole)))
-      ty1 <:! ListType(innerTy, meta=None)
+      ty1 <:! ListType(innerTy, meta = None)
       return
     }
     val allTys = items.map(_.ty)
     val unioned = SolverOps.useConstraint(SimplifyUnion(allTys.map(_.toTerm()).assumeNonEmpty))
-    ty1 <:! ListType(toTerm(unioned), meta=None)
+    ty1 <:! ListType(toTerm(unioned), meta = None)
   }
 }

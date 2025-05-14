@@ -13,7 +13,7 @@ extension (t: Term) {
   def zonkAll(using SolverOps): Term = t.descentRecursive {
     case t: MetaTerm =>
       toTerm(t) match {
-        case t: MetaTerm => throw new IllegalStateException("Zonked term is still a MetaTerm")
+        case _: MetaTerm => throw new IllegalStateException("Zonked term is still a MetaTerm")
         case t: Term     => t.zonkAll
       }
     case t: Term => t
