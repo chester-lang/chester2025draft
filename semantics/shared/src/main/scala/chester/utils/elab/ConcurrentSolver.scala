@@ -107,7 +107,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
-      val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
+      val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException(s"no handler for ${x.kind}"))
       val result = handler.run(x.asInstanceOf[handler.kind.Of])
       result match {
         case Result.Done => ()
@@ -134,4 +134,6 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     val related = prev.withFilter(_.related(id)).map(_.x)
     addConstraints(related)
   }
+
+  override def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C] = ConcurrentCell(cell)
 }

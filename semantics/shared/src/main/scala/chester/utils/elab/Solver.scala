@@ -21,7 +21,7 @@ trait SolverOps {
     x.result
   }
 
-  def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C] = ???
+  def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C]
   def fill[T](id: CellW[T], value: T): Unit
 }
 

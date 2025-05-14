@@ -23,4 +23,6 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   override def stable: Boolean = ???
 
   override def addConstraint(x: Constraint): Unit = ???
+
+  override def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C] = ???
 }
