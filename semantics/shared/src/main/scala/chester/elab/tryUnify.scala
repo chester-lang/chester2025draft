@@ -101,9 +101,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
           SolverOps.addConstraint(Unify(lhs2.head, Union(rhs2.assumeNonEmpty, rhsMeta), next = next))
           return Result.Done
         }
-        val rhs3 = Union(rhs2.assumeNonEmpty, rhsMeta)
-        SolverOps.addConstraint(Unify(lhs2.head, rhs3, next = Some(Unify(Union(lhs2.tail.assumeNonEmpty, lhsMeta), rhs3, next = next))))
-        Result.Done
+        ???
       case (lhs, Union(rhs, _)) =>
         rhs.foreach(rhs => SolverOps.addConstraint(Unify(lhs, rhs, next = next)))
         Result.Done

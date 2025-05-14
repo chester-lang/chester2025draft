@@ -73,7 +73,6 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         val result = handler.run(c.asInstanceOf[handler.kind.Of])
         result match {
           case Result.Done =>
-            nothingChanged = false
             Vector()
           case Result.Failed =>
             nothingChanged = false
@@ -84,7 +83,6 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
             val result = handler.run(c.asInstanceOf[handler.kind.Of])
             result match {
               case Result.Done =>
-                nothingChanged = false
                 Vector()
               case Result.Failed =>
                 nothingChanged = false
@@ -95,7 +93,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
             }
         }
       }
-      if (updatedCells.nonEmpty || todo.nonEmpty) nothingChanged = false
+      if (updatedCells.nonEmpty) nothingChanged = false
     }
     if (defaults.isEmpty && nothingChanged) {
       throw new IllegalStateException("cannot finish some constraints")
