@@ -18,10 +18,10 @@ object ProceduralSolver extends SolverFactory {
 
 final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
   given SolverOps = this
-  private val todo = mutable.Queue[Constraint]()
-  private val delayedConstraints = mutable.ArrayBuffer[WaitingConstraint]()
-  private val failedConstraints = mutable.ArrayBuffer[Constraint]()
-  private val updatedCells = mutable.ArrayBuffer[CellAny]()
+   val todo = mutable.Queue[Constraint]()
+   val delayedConstraints = mutable.ArrayBuffer[WaitingConstraint]()
+   val failedConstraints = mutable.ArrayBuffer[Constraint]()
+   val updatedCells = mutable.ArrayBuffer[CellAny]()
 
   implicit inline def thereAreAllProcedural[A, B, C <: CellContent[A, B]](inline x: Cell[A, B, C]): ProceduralCell[A, B, C] =
     x.asInstanceOf[ProceduralCell[A, B, C]]
