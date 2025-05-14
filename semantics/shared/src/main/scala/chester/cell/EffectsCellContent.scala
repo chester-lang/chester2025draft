@@ -5,7 +5,7 @@ import chester.utils.cell.*
 import chester.utils.elab.Cell
 
 type ReprEffects = Cell[Effects, Effects, EffectsCellContent]
-trait EffectsCellContent extends CellRW[Effects] {}
+trait EffectsCellContent extends CellContentRW[Effects] {}
 
 case class DynamicEffectsCellContent(effects: Map[LocalV, Term] = Map.empty)
     extends BaseMapCell[LocalV, Term]

@@ -21,9 +21,9 @@ trait CellContent[+A, -B] {
   /** fill an unstable cell */
   def fill(newValue: B): CellContent[A, B]
 }
-type CellRW[A] = CellContent[A, A]
-type CellR[+A] = CellContent[A, Nothing]
-type CellW[-A] = CellContent[Any, A]
+type CellContentRW[A] = CellContent[A, A]
+type CellContentR[+A] = CellContent[A, Nothing]
+type CellContentW[-A] = CellContent[Any, A]
 
 trait SeqCellContent[+A, -B] extends UnstableCellContent[Seq[A], Seq[B]] with NoFill[Seq[A], Seq[B]] {
   def add(newValue: B): SeqCellContent[A, B]
@@ -62,7 +62,7 @@ trait MapCellContent[A, B] extends UnstableCellContent[Map[A, B], Map[A, B]] wit
 case class OnceCellContent[T](
     value: Option[T] = None,
     override val default: Option[T] = None
-) extends CellRW[T] {
+) extends CellContentRW[T] {
   override def readStable: Option[T] = value
 
   override def fill(newValue: T): OnceCellContent[T] = {
@@ -72,7 +72,7 @@ case class OnceCellContent[T](
   }
 }
 
-case class MutableCellContent[T](value: Option[T]) extends CellRW[T] {
+case class MutableCellContent[T](value: Option[T]) extends CellContentRW[T] {
   override def readStable: Option[T] = value
 
   override def fill(newValue: T): MutableCellContent[T] =
@@ -93,7 +93,7 @@ case class MappingCellContent[A, B](value: Map[A, B] = Map.empty[A, B]) extends 
     copy(value = value + (key -> newValue))
 }
 
-case class LiteralCellContent[T](value: T) extends CellRW[T] {
+case class LiteralCellContent[T](value: T) extends CellContentRW[T] {
   override def readStable: Option[T] = Some(value)
 
   override def hasStableValue: Boolean = true
@@ -113,7 +113,7 @@ case class LiteralCellContent[T](value: T) extends CellRW[T] {
 case class DefaultValueCellContent[T](
     defaultValue: T,
     value: Option[T] = None
-) extends CellRW[T] {
+) extends CellContentRW[T] {
   override def readStable: Option[T] = value
 
   override val default: Option[T] = Some(defaultValue)

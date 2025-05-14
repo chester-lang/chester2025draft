@@ -42,7 +42,7 @@ trait ProvideMultithread extends ProvideImpl {
 
   type CIdOf[+T <: CellContent[?, ?]] = HoldCell[T]
   type PIdOf[+T <: Propagator[?]] = HoldPropagator[T]
-  type CellId[T] = CIdOf[CellRW[T]]
+  type CellId[T] = CIdOf[CellContentRW[T]]
   type SeqId[T] = CIdOf[SeqCellContent[T, T]]
 
   def isCId(x: Any): Boolean = x.isInstanceOf[HoldCell[?]]
@@ -160,8 +160,8 @@ trait ProvideMultithread extends ProvideImpl {
       }
     }
 
-    override def fill[T <: CellRW[U], U](id: CIdOf[T], value: U)(using
-        Ability
+    override def fill[T <: CellContentRW[U], U](id: CIdOf[T], value: U)(using
+                                                                        Ability
     ): Unit = {
       require(id.uniqId == uniqId)
       var updated = false
@@ -483,7 +483,7 @@ trait ProvideMultithread extends ProvideImpl {
     ) extends RecursiveAction {
       override def compute(): Unit =
         if (c.noAnyValue && c.store.default.isDefined) {
-          state.fill(c.asInstanceOf[CIdOf[CellRW[Any]]], c.store.default.get)
+          state.fill(c.asInstanceOf[CIdOf[CellContentRW[Any]]], c.store.default.get)
           setDidSomething(true)
         }
     }

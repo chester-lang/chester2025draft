@@ -1,10 +1,10 @@
 package chester.utils.elab
 
-import chester.utils.cell.{CellContent, CellR, CellRW}
+import chester.utils.cell.{CellContent, CellContentR, CellContentRW}
 
 final class ProceduralCell[T](
-    initialValue: CellRW[T]
-) extends ReprRW[T] {
+    initialValue: CellContentRW[T]
+) extends CellRW[T] {
   var store = initialValue
 }
 
@@ -14,9 +14,9 @@ object ProceduralSolver extends SolverFactory {
 
 final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
-  override protected def peakCell[T](id: ReprR[T]): CellR[T] = ???
+  override protected def peakCell[T](id: CellR[T]): CellContentR[T] = ???
 
-  override protected def updateCell[A, B](id: Repr[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit = ???
+  override protected def updateCell[A, B](id: CellOf[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit = ???
 
   override def run(): Unit = ???
 
