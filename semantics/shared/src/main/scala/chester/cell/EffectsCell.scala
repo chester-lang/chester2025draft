@@ -2,7 +2,9 @@ package chester.cell
 
 import chester.syntax.core.*
 import chester.utils.cell.*
+import chester.utils.elab.CellRepr
 
+type ReprEffects = CellRepr[Effects, Effects, EffectsCell]
 trait EffectsCell extends CellRW[Effects] {}
 
 case class DynamicEffectsCell(effects: Map[LocalV, Term] = Map.empty)
