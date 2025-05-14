@@ -61,14 +61,14 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       return Result.Waiting(assumeCell(rhs))
     }
     (lhsV, rhsV) match {
-      case (ListType(lhs,meta), ListType(rhs,meta2)) => {
+      case (ListType(lhs, meta), ListType(rhs, meta2)) =>
         // For debug lhs1 and rhs1
         val lhs1 = toTerm(lhs)
         val rhs1 = toTerm(rhs)
         SolverOps.addConstraint(Unify(lhs1, rhs1))
-        return Result.Done
-      }
-      case _ => ???
+        Result.Done
+      case (lhs: MetaTerm, rhs) => Result.Waiting(assumeCell(lhs))
+      case (lhs, rhs: MetaTerm) => Result.Waiting(assumeCell(rhs))
     }
   }
 
