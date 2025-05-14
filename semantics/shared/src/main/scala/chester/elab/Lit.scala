@@ -2,7 +2,7 @@ package chester.elab
 
 import chester.syntax.concrete.Expr
 import chester.syntax.core.Term
-import chester.utils.elab.{CellRW, CellRWOr, Constraint, Kind}
+import chester.utils.elab.*
 
 trait Lit extends Kind
 
@@ -11,3 +11,8 @@ case object IntegerLit extends Lit {
 }
 
 case class IntegerLit(expr: Expr, ty: CellRWOr[Term], result: CellRW[Term]) extends Constraint(IntegerLit) with ConstraintTerm {}
+
+case object IntegerLitHandler extends Handler[ElabOps,IntegerLit.type](IntegerLit) {
+
+  override def run(constant: IntegerLit)(using ElabOps, SolverOps): Result = ???
+}

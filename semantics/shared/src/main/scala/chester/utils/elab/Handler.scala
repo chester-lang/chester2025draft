@@ -6,23 +6,23 @@ enum Result {
   case Waiting(vars: Vector[CellAny])
 }
 
-open trait Handler[-Ops](val kind: Kind) {
-  def run(constant: kind.Of)(using Ops, SolverOps): Result = ???
+open trait Handler[-Ops, +K <: Kind](val kind: K) {
+  def run(constant: kind.Of)(using Ops, SolverOps): Result
   def defaulting(constant: kind.Of, level: DefaultingLevel)(using Ops, SolverOps): Unit = ()
 }
 
 import scala.collection.concurrent.TrieMap
 
 trait HandlerConf[Ops] {
-  def getHandler(kind: Kind): Option[Handler[Ops]]
+  def getHandler(kind: Kind): Option[Handler[Ops, Kind]]
 }
 
-final class MutHandlerConf[Ops](hs: Handler[Ops]*) extends HandlerConf[Ops] {
-  private val store = TrieMap[Kind, Handler[Ops]](hs.map(h => (h.kind, h))*)
+final class MutHandlerConf[Ops](hs: Handler[Ops,Kind]*) extends HandlerConf[Ops] {
+  private val store = TrieMap[Kind, Handler[Ops,Kind]](hs.map(h => (h.kind, h))*)
 
-  override def getHandler(kind: Kind): Option[Handler[Ops]] = store.get(kind)
+  override def getHandler(kind: Kind): Option[Handler[Ops,Kind]] = store.get(kind)
 
-  def register(handler: Handler[Ops]): Unit = {
+  def register(handler: Handler[Ops,Kind]): Unit = {
     val oldValue = store.putIfAbsent(handler.kind, handler)
     if (oldValue.isDefined) throw new IllegalStateException("already")
   }
