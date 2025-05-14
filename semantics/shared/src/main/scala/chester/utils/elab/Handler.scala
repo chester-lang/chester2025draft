@@ -11,14 +11,24 @@ open trait Handler[-Ops, +K <: Kind](val kind: K) {
   def defaulting(constant: kind.Of, level: DefaultingLevel)(using Ops, SolverOps): Unit = ()
 }
 
-import scala.collection.concurrent.TrieMap
+import scala.collection.mutable
+
+extension [A, B](x: mutable.HashMap[A, B]) {
+  // putIfAbsent is available in concurrent.TrieMap
+  def putIfAbsent(key: A, value: B): Option[B] =
+    if (x.contains(key)) Some(x(key))
+    else {
+      val _ = x.put(key, value)
+      None
+    }
+}
 
 trait HandlerConf[Ops] {
   def getHandler(kind: Kind): Option[Handler[Ops, Kind]]
 }
 
 final class MutHandlerConf[Ops](hs: Handler[Ops, Kind]*) extends HandlerConf[Ops] {
-  private val store = TrieMap[Kind, Handler[Ops, Kind]](hs.map(h => (h.kind, h))*)
+  private val store = mutable.HashMap[Kind, Handler[Ops, Kind]](hs.map(h => (h.kind, h))*)
 
   override def getHandler(kind: Kind): Option[Handler[Ops, Kind]] = store.get(kind)
 
