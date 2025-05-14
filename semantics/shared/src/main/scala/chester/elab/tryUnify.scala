@@ -93,6 +93,9 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         if (rhs2.isEmpty) {
           return Result.Done
         }
+        if(lhs2.isEmpty) {
+          return failed(c)
+        }
         if (lhs2.length == 1 && rhs2.length == 1) {
           SolverOps.addConstraint(Unify(lhs2.head, rhs2.head, next = next))
           return Result.Done
