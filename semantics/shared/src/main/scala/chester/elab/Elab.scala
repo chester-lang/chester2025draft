@@ -54,6 +54,9 @@ trait DefaultElab extends Elab {
       case expr: StringLiteral =>
         SolverOps.addConstraint(Pure(effects))
         SolverOps.useConstraint(StringLit(expr, ty, newHole))
+      case expr: SymbolLiteral =>
+        SolverOps.addConstraint(Pure(effects))
+        SolverOps.useConstraint(SymbolLit(expr, ty, newHole))
       case _ => ???
     }
 }

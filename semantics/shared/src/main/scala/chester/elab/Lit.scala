@@ -63,3 +63,22 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
     Result.Done
   }
 }
+
+case object SymbolLit extends Lit {
+  type Of = SymbolLit
+}
+case class SymbolLit(expr: SymbolLiteral, ty: CellRWOr[Term], result: CellRW[Term])(using ctx0: Context)
+    extends Constraint(SymbolLit)
+    with ConstraintTerm {
+  given Context = ctx0
+  def meta = convertMeta(expr.meta)
+}
+case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit) {
+
+  override def run(c: SymbolLit)(using ElabOps, SolverOps): Result = {
+    import c.{*, given}
+    ty <:! SymbolType(meta)
+    result.fill(SymbolTerm(expr.value, meta))
+    Result.Done
+  }
+}
