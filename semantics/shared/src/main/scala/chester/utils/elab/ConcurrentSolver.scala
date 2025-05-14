@@ -93,8 +93,8 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   private def doDefaulting(x: Constraint, zonkLevel: DefaultingLevel): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      handler.defaulting(x.asInstanceOf[handler.kind.ConstraintType], zonkLevel)
-      val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
+      handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)
+      val result = handler.run(x.asInstanceOf[handler.kind.Of])
       result match {
         case Result.Done => ()
         case Result.Failed =>
@@ -108,7 +108,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
       val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      val result = handler.run(x.asInstanceOf[handler.kind.ConstraintType])
+      val result = handler.run(x.asInstanceOf[handler.kind.Of])
       result match {
         case Result.Done => ()
         case Result.Failed =>
