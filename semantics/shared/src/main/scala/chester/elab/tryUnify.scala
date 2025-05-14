@@ -2,7 +2,7 @@ package chester.elab
 
 import chester.syntax.core.*
 import chester.tyck.Context
-import chester.utils.HoldNotReadable
+import chester.utils.InMeta
 import chester.utils.elab.*
 import spire.math.Trilean
 
@@ -62,8 +62,8 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
     (lhsV, rhsV) match {
-      case (MetaTerm(HoldNotReadable[CellRW[Term] @unchecked](lhs),meta),rhs) => lhs.fill(rhs)
-      case (lhs, MetaTerm(HoldNotReadable[CellRW[Term] @unchecked](rhs),meta)) => rhs.fill(lhs)
+      case (MetaTerm(InMeta[CellRW[Term] @unchecked](lhs),meta),rhs) => lhs.fill(rhs)
+      case (lhs, MetaTerm(InMeta[CellRW[Term] @unchecked](rhs),meta)) => rhs.fill(lhs)
       case _ => ()
     }
   }

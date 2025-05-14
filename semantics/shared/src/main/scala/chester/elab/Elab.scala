@@ -4,7 +4,7 @@ import chester.cell.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
-import chester.utils.HoldNotReadable
+import chester.utils.InMeta
 import chester.utils.cell.{LiteralCellContent, OnceCellContent}
 import chester.utils.elab.*
 
@@ -14,13 +14,13 @@ import scala.annotation.tailrec
 def toTerm(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
   case x: Term =>
     x match {
-      case MetaTerm(c: HoldNotReadable[CellRW[Term] @unchecked], meta) if SolverOps.hasSomeValue(c.inner) => toTerm(c.inner, meta)
+      case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasSomeValue(c.inner) => toTerm(c.inner, meta)
       case x: Term                                                                                        => x
     }
   case c: CellRW[Term @unchecked] =>
     SolverOps.readUnstable(c) match {
       case Some(v) => toTerm(v, meta)
-      case None    => MetaTerm(HoldNotReadable(c), meta = meta)
+      case None    => MetaTerm(InMeta(c), meta = meta)
     }
 }
 
@@ -31,7 +31,7 @@ def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): C
       case Some(v: MetaTerm) => toCell(v, meta)
       case _                 => c
     }
-  case MetaTerm(c: HoldNotReadable[CellRW[Term] @unchecked], meta) => toCell(c.inner, meta)
+  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) => toCell(c.inner, meta)
   case x: Term                                                     => SolverOps.addCell(LiteralCellContent(x))
 }
 

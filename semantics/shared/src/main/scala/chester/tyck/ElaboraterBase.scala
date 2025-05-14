@@ -19,7 +19,7 @@ trait ElaboraterBase extends CommonPropagator[TyckOps] {
       state.readUnstable(x) match {
         case Some(x @ Meta(id)) => rec(id, x).asInstanceOf[T | MetaTerm]
         case Some(x)            => x
-        case None               => MetaTerm(HoldNotReadable(x), meta = None)
+        case None               => MetaTerm(InMeta(x), meta = None)
       }
 
     def unapply(

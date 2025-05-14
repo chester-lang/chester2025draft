@@ -41,7 +41,7 @@ object Bind_ {
 
 object MetaTerm_ {
   @deprecated("meta")
-  def from[T](x: T): MetaTerm = MetaTerm(HoldNotReadable(x), meta = None)
+  def from[T](x: T): MetaTerm = MetaTerm(InMeta(x), meta = None)
 }
 
 object FunctionType_ {

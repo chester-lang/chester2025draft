@@ -202,7 +202,7 @@ extension (e: EffectsM) {
 sealed abstract class EffectsM extends Term derives ReadWriter {
   override type ThisTree <: EffectsM
 }
-case class MetaTerm(@const impl: HoldNotReadable[?], @const meta: Option[TermMeta]) extends EffectsM with SpecialTerm derives ReadWriter {
+case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) extends EffectsM with SpecialTerm derives ReadWriter {
   override type ThisTree = MetaTerm
 
   override def toDoc(using PrettierOptions): Doc =
