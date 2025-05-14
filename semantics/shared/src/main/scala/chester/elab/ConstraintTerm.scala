@@ -1,8 +1,6 @@
 package chester.elab
 
 import chester.syntax.core.Term
-import chester.utils.elab.{CellR, Constraint}
+import chester.utils.elab.ConstraintResult
 
- trait ConstraintTerm extends Constraint {
-  def result: CellR[Term]
-}
+type ConstraintTerm = ConstraintResult[Term]

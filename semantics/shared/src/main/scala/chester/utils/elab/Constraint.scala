@@ -11,3 +11,7 @@ open trait Kind {
 open trait Constraint(val kind: Kind) {
   def show: Vector[Term] = ???
 }
+
+open trait ConstraintResult[A] extends Constraint {
+  def result: CellR[A]
+}
