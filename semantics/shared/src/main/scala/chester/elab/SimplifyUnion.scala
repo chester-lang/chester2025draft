@@ -27,7 +27,7 @@ def eqType(a: Term, b: Term): Boolean = (a, b) match {
   case (StringType(_), StringType(_))   => true
   case (ListType(a, _), ListType(b, _)) => eqType(a, b)
   case (SymbolType(_), SymbolType(_))   => true
-  case _                                => false
+  case _                                => a == b
 }
 
 case object SimplifyUnionHandler extends Handler[ElabOps, SimplifyUnion.type](SimplifyUnion) {

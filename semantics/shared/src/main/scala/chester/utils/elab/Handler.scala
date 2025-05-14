@@ -40,6 +40,7 @@ final class MutHandlerConf[Ops](hs: Handler[Ops, Kind]*) extends HandlerConf[Ops
 
 enum DefaultingLevel extends Enum[DefaultingLevel] {
   case ListOfSetListType
+  case UnifyMerge
   case IsType
 }
 object DefaultingLevel {
