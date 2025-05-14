@@ -16,6 +16,10 @@ trait SolverOps {
 
   def addConstraint(x: Constraint): Unit
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
+  def useConstraint[A](x: ConstraintResult[A]): CellR[A] = {
+    addConstraint(x)
+    x.result
+  }
 
   def addCell[A, B, C <: CellContent[A, B]](cell: C): Cell[A, B, C] = ???
   def fill[T](id: CellW[T], value: T): Unit
