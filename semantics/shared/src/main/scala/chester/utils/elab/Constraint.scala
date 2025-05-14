@@ -1,6 +1,5 @@
 package chester.utils.elab
 
-import chester.syntax.core.Term
 
 /** implementations should be case object */
 open trait Kind {
@@ -9,7 +8,6 @@ open trait Kind {
 }
 
 open trait Constraint(val kind: Kind) {
-  def show: Vector[Term] = ???
 }
 
 open trait ConstraintResult[A] extends Constraint {
