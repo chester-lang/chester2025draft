@@ -29,8 +29,8 @@ final class MutHandlerConf[Ops](hs: Handler[Ops, Kind]*) extends HandlerConf[Ops
 }
 
 enum DefaultingLevel extends Enum[DefaultingLevel] {
-  case First
-  case DefaultingEverything
+  case ListOfSetListType
+  case IsType
 }
 object DefaultingLevel {
   val Values: Vector[DefaultingLevel] = DefaultingLevel.values.toVector.sortBy(_.precedence)

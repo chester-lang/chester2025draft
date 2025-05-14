@@ -22,7 +22,7 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
   }
 
   override def defaulting(constant: IsType, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if (level != DefaultingLevel.DefaultingEverything) return
+    if (level != DefaultingLevel.IsType) return
     import constant.*
     toTerm(result) match {
       case result: MetaTerm =>
