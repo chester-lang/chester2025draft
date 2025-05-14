@@ -8,7 +8,7 @@ case object IsType extends Kind {
   type Of = IsType
 }
 
-case class IsType(result: CellRW[Term])(using ctx: Context) extends Constraint(IsType) with ConstraintTermRW {
+case class IsType(result: CellRWOr[Term])(using ctx: Context) extends Constraint(IsType) with ConstraintResult[CellRWOr[Term]] {
   given Context = ctx
 }
 

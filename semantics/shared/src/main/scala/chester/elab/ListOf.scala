@@ -21,8 +21,11 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
     toTerm(ty) match {
       case ty: MetaTerm => Result.Waiting(assumeCell(ty))
       case ListType(ty, meta) =>
-        SolverOps.addConstraint(IsType(result))
-        if (items.isEmpty) return Result.Done
+        SolverOps.addConstraint(IsType((ty)))
+        if (items.isEmpty) {
+          result.fill(ListTerm(Vector(), meta))
+          return Result.Done
+        }
         val allTys = items.map(_.ty)
         val unioned = SolverOps.useConstraint(SimplifyUnion(allTys.map(_.toTerm()).assumeNonEmpty))
         unioned <:! ty
