@@ -29,7 +29,6 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   given SolverOps = this
   private val pool = new ForkJoinPool()
   private val delayedConstraints = new AtomicReference(Vector[WaitingConstraint]())
-  private val failedConstraints = new AtomicReference(Vector[Constraint]())
   // implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(pool)
 
   private def entropy() = delayedConstraints.get().map(c => c.x.kind.hashCode() << 8 + c.x.hashCode()).sorted.toVector
@@ -97,15 +96,11 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       val result = handler.run(x.asInstanceOf[handler.kind.Of])
       result match {
         case Result.Done => ()
-        case Result.Failed =>
-          val _ = failedConstraints.getAndUpdate(_.appended(x))
         case Result.Waiting(vars*) =>
           handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)
           val result = handler.run(x.asInstanceOf[handler.kind.Of])
           result match {
             case Result.Done => ()
-            case Result.Failed =>
-              val _ = failedConstraints.getAndUpdate(_.appended(x))
             case Result.Waiting(vars*) =>
               val delayed = WaitingConstraint(vars.toVector, x)
               val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
@@ -119,8 +114,6 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       val result = handler.run(x.asInstanceOf[handler.kind.Of])
       result match {
         case Result.Done => ()
-        case Result.Failed =>
-          val _ = failedConstraints.getAndUpdate(_.appended(x))
         case Result.Waiting(vars*) =>
           val delayed = WaitingConstraint(vars.toVector, x)
           val _ = delayedConstraints.getAndUpdate(_.appended(delayed))

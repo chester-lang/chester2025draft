@@ -23,8 +23,8 @@ class ReporterTrackError[T <: Problem](x: Reporter[T]) extends Reporter[T] {
   private var goalVar = false
   private var infoVar = false
 
-  def apply(value: T): Unit = {
-    x.apply(value)
+  def report(value: T): Unit = {
+    x.report(value)
     if value.severity == Severity.Error then errorVar = true
     if value.severity == Severity.Warning then warnVar = true
     if value.severity == Severity.Goal then goalVar = true
@@ -49,7 +49,7 @@ class StateReporter[P, S](val reporter: Reporter[P], private val state: MutBox[S
 
   implicit inline def toReporter: Reporter[P] = reporter
 
-  private def report(problem: P): Unit = reporter.apply(problem)
+  private def report(problem: P): Unit = reporter.report(problem)
 
   def reportseq(problems: Seq[P]): Unit = problems.foreach(report)
 

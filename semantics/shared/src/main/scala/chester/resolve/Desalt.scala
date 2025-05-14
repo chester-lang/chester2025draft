@@ -29,7 +29,7 @@ private object DesaltCaseClauseMatch {
       Some(DesaltCaseClause(pattern, returning, meta))
     case OpSeq(Vector(Identifier(Const.Case, _), _*), _) =>
       val error = ExpectCase(x)
-      reporter(error)
+      reporter.report(error)
       None
     case _ => None
   }
@@ -44,7 +44,7 @@ private object MatchDeclarationTelescope {
       case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
         Some(Arg(name = id, ty = Some(ty), meta = id.meta))
       case _ =>
-        reporter(ExpectParameterList(x))
+        reporter.report(ExpectParameterList(x))
         None
     }
 
@@ -61,7 +61,7 @@ private object MatchDeclarationTelescope {
     case t @ Tuple(terms, _)                          => handleTerms(terms, t, false)
     case t @ ListExpr(terms, _)                       => handleTerms(terms, t, true)
     case _ =>
-      reporter(ExpectParameterList(x))
+      reporter.report(ExpectParameterList(x))
       None
   }
 }
@@ -100,7 +100,7 @@ private object DesaltSimpleFunction {
             )
           case None =>
             val error = ExpectLambda(x)
-            reporter(error)
+            reporter.report(error)
             Some(DesaltFailed(x, error, meta))
         }
       case _ => None
@@ -225,13 +225,13 @@ case object StmtDesalt {
           (xs.take(tIdx), xs.slice(tIdx + 1, vIdx), xs.drop(vIdx + 1))
         case _ =>
           val error = ExpectLetDef(cause)
-          reporter(error)
+          reporter.report(error)
           boundary.break(DesaltFailed(cause, error, cause.meta))
       }
 
       val on = defined(onExprs).getOrElse {
         val error = ExpectLetDef(cause)
-        reporter(error)
+        reporter.report(error)
         boundary.break(DesaltFailed(cause, error, cause.meta))
       }
 
@@ -323,7 +323,7 @@ case object SimpleDesalt {
         }
         if (clauses.length != heads.length + tail.size) {
           val error = ExpectFullCaseBlock(block)
-          reporter(error)
+          reporter.report(error)
           DesaltFailed(block, error, block.meta)
         } else {
           DesaltMatching(clauses, block.meta)
@@ -343,7 +343,7 @@ case object SimpleDesalt {
               )
             )
           case other =>
-            reporter(UnexpectedTelescope(other))
+            reporter.report(UnexpectedTelescope(other))
             Vector(
               DesaltCallingTelescope(
                 Vector(CallingArg(expr = desugar(other), meta = other.meta)),
@@ -395,7 +395,7 @@ case object SimpleDesalt {
               (id, Vector(telescope))
             case _ =>
               val error = ExpectRecordName(nameExpr)
-              reporter(error)
+              reporter.report(error)
               boundary.break[Expr](DesaltFailed(expr, error, meta))
           }
 
@@ -422,11 +422,11 @@ case object SimpleDesalt {
                 case id: Identifier =>
                   Some(RecordField(name = id, meta = id.meta))
                 case other =>
-                  reporter(ExpectFieldDeclaration(other))
+                  reporter.report(ExpectFieldDeclaration(other))
                   None
               }
             case other =>
-              reporter(ExpectFieldDeclaration(other))
+              reporter.report(ExpectFieldDeclaration(other))
               None
           }.flatten
 
@@ -460,7 +460,7 @@ case object SimpleDesalt {
               (id, Vector(telescope))
             case _ =>
               val error = ExpectTraitName(nameExpr)
-              reporter(error)
+              reporter.report(error)
               boundary.break[Expr](DesaltFailed(expr, error, meta))
           }
 
@@ -496,7 +496,7 @@ case object SimpleDesalt {
             case id: Identifier => id
             case _ =>
               val error = ExpectObjectName(nameExpr)
-              reporter(error)
+              reporter.report(error)
               boundary.break[Expr](DesaltFailed(expr, error, meta))
           }
 
@@ -535,7 +535,7 @@ case object SimpleDesalt {
               (id, Vector(telescope))
             case _ =>
               val error = ExpectInterfaceName(nameExpr)
-              reporter(error)
+              reporter.report(error)
               boundary.break[Expr](DesaltFailed(expr, error, meta))
           }
 
@@ -624,7 +624,7 @@ case object OpSeqDesalt {
         val firstPipeIdx = pipeIndices.head
         if (firstPipeIdx % 2 == 0) {
           // Invalid format, pipe operator should be preceded by a type
-          reporter(NotImplemented(opseq))
+          reporter.report(NotImplemented(opseq))
           return opseq
         }
 
@@ -632,14 +632,14 @@ case object OpSeqDesalt {
         val validPipePositions = pipeIndices.forall(_ % 2 == 1)
         if (!validPipePositions) {
           // Invalid format, pipe operators should alternate with types
-          reporter(NotImplemented(opseq))
+          reporter.report(NotImplemented(opseq))
           return opseq
         }
 
         // Extract the types (which should be at even indices: 0, 2, 4, ...)
         val typeIndices = seq.indices.filter(_ % 2 == 0)
         if (typeIndices.isEmpty) {
-          reporter(NotImplemented(opseq))
+          reporter.report(NotImplemented(opseq))
           return opseq
         }
 

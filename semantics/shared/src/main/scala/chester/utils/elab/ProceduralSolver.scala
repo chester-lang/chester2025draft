@@ -22,7 +22,6 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   given SolverOps = this
   val todo: Queue[Constraint] = mutable.Queue[Constraint]()
   val delayedConstraints: ArrayBuffer[WaitingConstraint] = mutable.ArrayBuffer[WaitingConstraint]()
-  val failedConstraints: ArrayBuffer[Constraint] = mutable.ArrayBuffer[Constraint]()
   val updatedCells: ArrayBuffer[Cell[Any, Nothing, CellContent[Any, Nothing]]] = mutable.ArrayBuffer[CellAny]()
 
   implicit inline def thereAreAllProcedural[A, B, C <: CellContent[A, B]](inline x: Cell[A, B, C]): ProceduralCell[A, B, C] =
@@ -49,8 +48,6 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
           // do nothing
           case Result.Waiting(vars*) =>
             delayedConstraints.append(WaitingConstraint(vars.toVector, c))
-          case Result.Failed =>
-            failedConstraints.append(c)
         }
       }
       if (delayedConstraints.nonEmpty) {
@@ -74,19 +71,11 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         result match {
           case Result.Done =>
             Vector()
-          case Result.Failed =>
-            nothingChanged = false
-            failedConstraints.append(c)
-            Vector()
           case Result.Waiting(vars*) =>
             handler.defaulting(c.asInstanceOf[handler.kind.Of], default)
             val result = handler.run(c.asInstanceOf[handler.kind.Of])
             result match {
               case Result.Done =>
-                Vector()
-              case Result.Failed =>
-                nothingChanged = false
-                failedConstraints.append(c)
                 Vector()
               case Result.Waiting(vars*) =>
                 Vector(WaitingConstraint(vars.toVector, c))

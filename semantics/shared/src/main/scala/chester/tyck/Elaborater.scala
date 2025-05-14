@@ -98,7 +98,7 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
       case (Type(LevelUnrestricted(_), _), Type(LevelFinite(_, _), _)) => ()
       case (x, Intersection(xs, _)) =>
         if (xs.exists(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        ck.reporter.report(TypeMismatch(lhs, rhs, cause))
       case (TupleType(types1, _), TupleType(types2, _)) if types1.length == types2.length =>
         types1.lazyZip(types2).foreach((t1, t2) => unify(t1, t2, cause))
       case (Type(level1, _), Type(level2, _))        => unify(level1, level2, cause)
@@ -154,7 +154,7 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
           connectUnionToComponents(unionCellId, componentIds, cause)
         } else {
           // If no compatible component is found, report a type mismatch
-          ck.reporter.apply(TypeMismatch(specificType, Union(unionTypes, None), cause))
+          ck.reporter.report(TypeMismatch(specificType, Union(unionTypes, None), cause))
         }
 
       // Union-to-Specific subtyping (function return case in test)
@@ -166,10 +166,10 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
       // Now add the general intersection and union cases
       case (Intersection(xs, _), x) =>
         if (xs.forall(tryUnify(_, x))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        ck.reporter.report(TypeMismatch(lhs, rhs, cause))
       case (x, Union(xs, _)) =>
         if (xs.forall(tryUnify(x, _))) return
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        ck.reporter.report(TypeMismatch(lhs, rhs, cause))
 
       // Add cases for function calls after the specific union cases
       case (fcall: FCallTerm, _) =>
@@ -177,15 +177,15 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
         connectFunctionCallComponents(fcall, cause)
 
         // Continue with normal unification
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        ck.reporter.report(TypeMismatch(lhs, rhs, cause))
       case (_, fcall: FCallTerm) =>
         // Connect function call components directly
         connectFunctionCallComponents(fcall, cause)
 
         // Continue with normal unification
-        ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+        ck.reporter.report(TypeMismatch(lhs, rhs, cause))
 
-      case _ => ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+      case _ => ck.reporter.report(TypeMismatch(lhs, rhs, cause))
     }
   }
 
@@ -244,13 +244,13 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
         state.addPropagator(Unify(unionTypeCell, specificTypeCell, cause))
       } else {
         // This component isn't compatible, but that's okay if at least one other is
-        // ck.reporter.apply(TypeMismatch(unionType, specificType, cause)) // REMOVED - Don't report error if other components might match
+        // ck.reporter.report(TypeMismatch(unionType, specificType, cause)) // REMOVED - Don't report error if other components might match
         // No need to break, we want to report all errors and check all components
       }
 
     // If no union component matches, the overall unification fails
     if (!anyCompatible) {
-      ck.reporter.apply(TypeMismatch(union, specificType, cause))
+      ck.reporter.report(TypeMismatch(union, specificType, cause))
     } else {
       // Connect the union to its components
       // val unionCell = toId(union)
@@ -364,7 +364,7 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
                   case Some(_) => ???
                   case None =>
                     val problem = UnboundVariable(name, expr)
-                    ck.reporter.apply(problem)
+                    ck.reporter.report(problem)
                     ErrorTerm(problem, convertMeta(expr.meta))
                 }
             }
@@ -392,7 +392,7 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
                   case Some(_) => ???
                   case None =>
                     val problem = UnboundVariable(name, expr)
-                    ck.reporter.apply(problem)
+                    ck.reporter.report(problem)
                     ErrorTerm(problem, convertMeta(expr.meta))
                 }
             }
@@ -568,12 +568,12 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
                     case _ =>
                       // If it's not an Integer, report a type error
                       val problem = TypeMismatch(IntegerType(None), toTerm(argTy), arg)
-                      ck.reporter.apply(problem)
+                      ck.reporter.report(problem)
                       ErrorTerm(problem, convertMeta(meta))
                   }
                 case None =>
                   val problem = NotImplementedFeature("Missing method call argument", expr)
-                  ck.reporter.apply(problem)
+                  ck.reporter.report(problem)
                   ErrorTerm(problem, convertMeta(meta))
               }
             case RecordTypeTerm(recordDef, _, _) =>
@@ -585,12 +585,12 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
                     DotCallTerm(recordTerm, field.name, Vector.empty, toTerm(ty), convertMeta(meta))
                   } else {
                     val problem = NotImplementedFeature("Field access with arguments not supported", expr)
-                    ck.reporter.apply(problem)
+                    ck.reporter.report(problem)
                     ErrorTerm(problem, convertMeta(meta))
                   }
                 case None =>
                   val problem = FieldNotFound(field.name, recordDef.name, expr)
-                  ck.reporter.apply(problem)
+                  ck.reporter.report(problem)
                   ErrorTerm(problem, convertMeta(meta))
               }
             case Meta(id) =>
@@ -599,7 +599,7 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
               DotCallTerm(recordTerm, field.name, Vector.empty, toTerm(ty), convertMeta(meta))
             case _ =>
               val problem = NotARecordType(reducedRecordTy, expr)
-              ck.reporter.apply(problem)
+              ck.reporter.report(problem)
               ErrorTerm(problem, convertMeta(meta))
           }
         }
@@ -614,7 +614,7 @@ trait ProvideElaborater extends ProvideContextOps with Elaborater with Elaborate
 
       case expr: Expr =>
         val problem = NotImplemented(expr)
-        ck.reporter.apply(problem)
+        ck.reporter.report(problem)
         ErrorTerm(problem, convertMeta(expr.meta))
     }
   }

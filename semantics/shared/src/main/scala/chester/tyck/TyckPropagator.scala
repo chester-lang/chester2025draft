@@ -82,7 +82,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               addUnificationPropagator(lhsTypeId, compatibleId)
             } else {
               // No compatible components
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           case (Union(types1, _), rhsType) =>
@@ -101,36 +101,36 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
               }
             } else {
               // No compatible components
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           // Record implementing trait (structural subtyping)
           case (RecordTypeTerm(recordDef, _, _), TraitTypeTerm(traitDef, _)) =>
             if (!checkTraitImplementation(recordDef, traitDef, cause)) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           // Record type implementing trait type (structural subtyping)
           case (lhsType @ RecordStmtTerm(name, _, fields, _, extendsClause, _), rhsType @ TraitStmtTerm(_, _, _, _, _)) =>
             if (!checkTraitImplementation(lhsType, rhsType, cause)) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           // Trait extending trait (structural subtyping)
           case (TraitTypeTerm(childTraitDef, _), TraitTypeTerm(parentTraitDef, _)) =>
             if (!checkTraitExtends(childTraitDef, parentTraitDef, cause)) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           // Handle Intersection types
           case (Intersection(types1, _), rhsType) =>
             if (!types1.exists(t1 => tryUnify(t1, rhsType))) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           case (lhsType, Intersection(types2, _)) =>
             if (!types2.forall(t2 => tryUnify(lhsType, t2))) {
-              ck.reporter.apply(TypeMismatch(lhs, rhs, cause))
+              ck.reporter.report(TypeMismatch(lhs, rhs, cause))
             }
 
           // For other cases, add a direct unification propagator
@@ -580,7 +580,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
                       // Found at least one compatible type in the union
                       true
                     } else {
-                      more.reporter.apply(TypeMismatch(IntegerType(None), ty_, x))
+                      more.reporter.report(TypeMismatch(IntegerType(None), ty_, x))
                       true
                     }
                   // Handle normal integer literal case
@@ -672,7 +672,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
           state.addPropagator(ListOf(tRhs, listTLhs, cause))
           true
         case (_, Some(l)) if !l.isInstanceOf[ListType] =>
-          ck.reporter.apply(TypeMismatch(ListType(AnyType0, meta = None), l, cause))
+          ck.reporter.report(TypeMismatch(ListType(AnyType0, meta = None), l, cause))
           true
         case (Some(t1), Some(ListType(t2, _))) =>
           unify(t2, t1, cause)
@@ -757,12 +757,12 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
                   true
                 case None =>
                   val problem = FieldNotFound(fieldName, recordDef.name, cause)
-                  more.reporter.apply(problem)
+                  more.reporter.report(problem)
                   true
               }
             case other =>
               val problem = NotARecordType(other, cause)
-              more.reporter.apply(problem)
+              more.reporter.report(problem)
               true
           }
         case None => false
@@ -821,7 +821,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
     }
 
     if (!hasExtendsClause) {
-      ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
+      ck.reporter.report(NotImplementingTrait(recordDef.name, traitDef.name, cause))
       false
     } else {
       // Check that all required fields from the trait are present in the record
@@ -836,7 +836,7 @@ trait TyckPropagator extends ElaboraterCommon with Alpha {
       val allFieldsPresent = traitFields.forall { case (fieldName, fieldTy) =>
         recordFields.get(fieldName) match {
           case None =>
-            ck.reporter.apply(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
+            ck.reporter.report(MissingTraitField(fieldName, recordDef.name, traitDef.name, cause))
             false
           case Some(recordFieldTy) =>
             // Add type compatibility check

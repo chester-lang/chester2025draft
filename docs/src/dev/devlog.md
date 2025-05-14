@@ -1338,7 +1338,7 @@ def processTraitStmt(
                         case Some(traitDef: TraitStmtTerm) =>
                             TraitTypeTerm(traitDef, convertMeta(clause.meta))
                         case _ =>
-                            ck.reporter.apply(NotATrait(superTypes.head))
+                            ck.reporter.report(NotATrait(superTypes.head))
                             ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
                     }
                 // Other cases
@@ -1389,7 +1389,7 @@ private def checkTraitImplementation(
 
     if (!hasExtendsClause) {
         // Report error if record doesn't explicitly extend the trait
-        ck.reporter.apply(NotImplementingTrait(recordDef.name, traitDef.name, cause))
+        ck.reporter.report(NotImplementingTrait(recordDef.name, traitDef.name, cause))
         false
     } else {
         true

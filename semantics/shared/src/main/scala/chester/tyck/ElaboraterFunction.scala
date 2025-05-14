@@ -114,7 +114,7 @@ trait ProvideElaboraterFunction extends ElaboraterFunction { this: Elaborater & 
       val isTerminating = analyzeTermination(bodyTerm, functionNameOpt)
       if (!isTerminating) {
         val problem = PotentialNonterminatingFunction(expr)
-        ck.reporter(problem)
+        ck.reporter.report(problem)
       }
     }
 

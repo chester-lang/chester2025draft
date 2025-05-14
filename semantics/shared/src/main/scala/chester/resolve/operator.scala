@@ -47,7 +47,7 @@ def precedenceOf(
       groupPrecedence.getOrElse(
         groupName, {
           // Report unknown precedence group
-          reporter.apply(UnknownPrecedenceGroup(op.group))
+          reporter.report(UnknownPrecedenceGroup(op.group))
           Int.MaxValue
         }
       )
@@ -120,7 +120,7 @@ def parseTokens(
         TokenInfo(id, precedence, associativity, possibleOpTypes, possibleOps)
       } else {
         // If no operator is found, treat it as an operand
-        reporter.apply(UnknownOperator(id))
+        reporter.report(UnknownOperator(id))
         TokenInfo(id, Int.MaxValue, Associativity.None, Set(OpType.Operand))
       }
     case expr =>
@@ -135,7 +135,7 @@ def buildExpr(
     reporter: Reporter[TyckError]
 ): Expr =
   if (stack.isEmpty) {
-    reporter.apply(UnexpectedTokens(List.empty))
+    reporter.report(UnexpectedTokens(List.empty))
     Identifier("error", meta = None)
   } else {
     val tokenInfo = stack.pop()
@@ -220,7 +220,7 @@ def parseExpression(
   // Build the expression tree from the output stack
   val expr = buildExpr(output, opContext, reporter)
   if (output.nonEmpty) {
-    reporter.apply(UnexpectedTokens(output.map(_.expr).toList))
+    reporter.report(UnexpectedTokens(output.map(_.expr).toList))
   }
   expr
 }
@@ -262,7 +262,7 @@ def resolveOpSeq(
 
   val groupPrecedence: Map[QualifiedIDString, Int] = topOrder.fold(
     { _ =>
-      reporter.apply(
+      reporter.report(
         PrecedenceCycleDetected(precedenceGraph.nodes.map(_.outer))
       )
       Map.empty
@@ -299,7 +299,7 @@ def resolveOpSeq(
     // Check if no path exists between group1 and group2
     if node1.pathTo(node2).isEmpty && node2.pathTo(node1).isEmpty
   }
-    reporter.apply(UnconnectedPrecedenceGroups(group1, group2))
+    reporter.report(UnconnectedPrecedenceGroups(group1, group2))
 
   // Parse the expression from tokens
   parseExpression(tokens, opContext, reporter)

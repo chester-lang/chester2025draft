@@ -130,7 +130,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
         stmtTerms
 
       case importStmt: ImportStmt =>
-        ck.reporter.apply(NotImplemented(importStmt))
+        ck.reporter.report(NotImplemented(importStmt))
         Vector.empty
 
       case expr: ObjectStmt =>
@@ -214,7 +214,7 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   private def checkForDuplicateNames(names: Seq[Name], expr: Expr)(using ck: TyckOps): Unit =
     if (names.hasDuplication) {
       val problem = DuplicateDefinition(expr)
-      ck.reporter.apply(problem)
+      ck.reporter.report(problem)
     }
 
   private def processDefLetDefStmt(
@@ -282,11 +282,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
                 state.addPropagator(CheckTraitImplementation(recordStmtTerm, traitDef, expr))
                 traitType
               case _ =>
-                ck.reporter.apply(NotATrait(superTypes.head))
+                ck.reporter.report(NotATrait(superTypes.head))
                 ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
             }
           case superTypeExpr =>
-            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+            ck.reporter.report(UnsupportedExtendsType(superTypeExpr))
             ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
         }
         .getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))
@@ -367,11 +367,11 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
               case Some(traitDef: TraitStmtTerm) =>
                 TraitTypeTerm(traitDef, convertMeta(clause.meta))
               case _ =>
-                ck.reporter.apply(NotATrait(superTypes.head))
+                ck.reporter.report(NotATrait(superTypes.head))
                 ErrorTerm(NotATrait(superTypes.head), convertMeta(clause.meta))
             }
           case superTypeExpr =>
-            ck.reporter.apply(UnsupportedExtendsType(superTypeExpr))
+            ck.reporter.report(UnsupportedExtendsType(superTypeExpr))
             ErrorTerm(UnsupportedExtendsType(superTypeExpr), convertMeta(clause.meta))
         }
         .getOrElse(ErrorTerm(UnsupportedExtendsType(clause), convertMeta(clause.meta)))

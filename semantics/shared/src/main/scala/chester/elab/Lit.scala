@@ -1,10 +1,10 @@
 package chester.elab
 
+import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, convertMeta}
 import chester.utils.elab.*
-import chester.utils.elab.Result.Failed
 import spire.math.UInt
 
 import scala.language.postfixOps
@@ -45,9 +45,10 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
     }
     toTerm(ty) match {
       case ty: MetaTerm => Result.Waiting(assumeCell(ty))
-      case _ =>
+      case ty =>
         result.fill(IntegerTerm(expr.value, meta))
-        Failed
+        Reporter.report(??? : TyckProblem)
+        Result.Done
     }
   }
 
@@ -95,7 +96,7 @@ case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit)
 
   override def run(c: SymbolLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    SymbolType(meta) <:!  ty 
+    SymbolType(meta) <:!  ty
     result.fill(SymbolTerm(expr.value, meta))
     Result.Done
   }

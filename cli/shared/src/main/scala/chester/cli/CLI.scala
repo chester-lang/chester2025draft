@@ -170,7 +170,7 @@ class CLI[F[_]](using
       object reporter extends Reporter[Problem] {
         private var varErrors: Boolean = false
 
-        override def apply(problem: Problem): Unit = {
+        override def report(problem: Problem): Unit = {
           given sourceReader: SourceReader = SourceReader.default
           given prettierOptions: PrettierOptions = PrettierOptions.Default
 

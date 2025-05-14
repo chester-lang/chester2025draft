@@ -184,7 +184,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
         case Some(other) =>
           // Report a function call unification error
           val argTypes = callings.flatMap(_.args.map(_.value))
-          ck.reporter(FunctionCallUnificationError(other, argTypes, cause))
+          ck.reporter.report(FunctionCallUnificationError(other, argTypes, cause))
           true
         case None =>
           // Function type is not yet known; cannot proceed
@@ -249,7 +249,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
             unifyArgs(expectedTele.args, calling.args, cause)
           } else {
             // Expected explicit telescope not matched; report error
-            ck.reporter(FunctionCallArityMismatchError(expected.length, actual.length, cause))
+            ck.reporter.report(FunctionCallArityMismatchError(expected.length, actual.length, cause))
             continueProcessing = false
           }
         }
@@ -268,7 +268,7 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
     ): Unit = {
       // Check that the number of arguments matches
       if (expectedArgs.length != actualArgs.length) {
-        ck.reporter(
+        ck.reporter.report(
           FunctionCallArgumentMismatchError(
             expectedArgs.length,
             actualArgs.length,

@@ -19,7 +19,7 @@ def parseCheckTAST(
     .parseTopLevel(source, ignoreLocation)
     .fold(
       { error =>
-        reporter(error)
+        reporter.report(error)
 
         // Return an empty TAST or handle accordingly
         TAST(

@@ -2,7 +2,6 @@ package chester.utils.elab
 
 enum Result {
   case Done
-  case Failed
   case Waiting(vars: CellAny*)
 }
 

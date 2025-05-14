@@ -1,5 +1,6 @@
 package chester.elab
 
+import chester.error.Reporter
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.*
@@ -16,12 +17,13 @@ case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term], next: Option[Constrai
 }
 
 case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
-  private def failed(c: Unify)(using SolverOps): Result = c.next match {
+  private def failed(c: Unify)(using ElabOps, SolverOps): Result = c.next match {
     case Some(next) =>
       SolverOps.addConstraint(next)
       Result.Done
     case None =>
-      Result.Failed
+      Reporter.report(???)
+      Result.Done
   }
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
     import c.{*, given}

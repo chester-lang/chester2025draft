@@ -46,7 +46,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
             state.fill(eff.asInstanceOf[CellId[Effects]], updatedCell.asInstanceOf[Effects])
           case _ =>
             // For other cell types, we may need different handling
-            ck.reporter(CannotAddEffectError(effect))
+            ck.reporter.report(CannotAddEffectError(effect))
         }
 
         newKey
