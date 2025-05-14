@@ -17,8 +17,7 @@ case class UnifyMultiple(
   given Context = ctx
 }
 
-case object UnifyMultipleHandler
-    extends Handler[ElabOps, UnifyMultiple.type](UnifyMultiple) {
+case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](UnifyMultiple) {
   override def run(c: UnifyMultiple)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
     val lhsV = toTerm(lhs)
@@ -27,25 +26,22 @@ case object UnifyMultipleHandler
     if (rhs1.isEmpty) {
       return Result.Done
     }
-    rhs1.foreach { rhs =>
-      SolverOps.addConstraint(Unify(lhsV, rhs))
-    }
+    SolverOps.addConstraint(Unify(lhsV, Union(rhs1.map(toTerm(_)).assumeNonEmpty, meta = None)))
     Result.Done
   }
 
   override def defaulting(c: UnifyMultiple, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if(level != DefaultingLevel.UnifyMultipleMerge) return
+    if (level != DefaultingLevel.UnifyMultipleMerge) return
     import c.{*, given}
     val lhsV = toTerm(lhs)
     val rhsV = rhs.map(toTerm(_))
     val rhs1 = rhsV.filterNot(x => eqType(lhsV, x)).distinctByEq(eqType)
-    if(rhs1.isEmpty) {
+    if (rhs1.isEmpty) {
       return
     }
-    if(!lhsV.isInstanceOf[MetaTerm]) {
-      for(rhs <- rhs1) {
+    if (!lhsV.isInstanceOf[MetaTerm]) {
+      for (rhs <- rhs1)
         SolverOps.addConstraint(Unify(lhsV, rhs))
-      }
       return
     }
   }
