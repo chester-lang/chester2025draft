@@ -52,7 +52,7 @@ trait ProvideMutable extends ProvideImpl {
     }
 
     override def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                         Ops
+        Ops
     ): Unit = {
       didSomething = true
       require(id.uniqId == uniqId)

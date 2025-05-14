@@ -35,7 +35,7 @@ trait ProvideImmutable extends ProvideImpl {
       state.cells.get(id).asInstanceOf[Option[T]]
 
     override def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                         Ability
+        Ability
     ): Unit =
       state.cells.get(id) match {
         case Some(cell) =>

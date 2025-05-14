@@ -59,10 +59,10 @@ object ElaboraterBlock {
 trait ElaboraterBlock { this: ElaboraterBase & ElaboraterCommon =>
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
-                                                                                      localCtx: Context,
-                                                                                      parameter: SemanticCollector,
-                                                                                      ck: TyckOps,
-                                                                                      state: StateOps[TyckOps]
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: TyckOps,
+      state: StateOps[TyckOps]
   ): BlockTerm
 }
 
@@ -70,10 +70,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   import ElaboraterBlock.*
 
   def elabBlock(expr: Block, ty0: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
-                                                                                      localCtx: Context,
-                                                                                      parameter: SemanticCollector,
-                                                                                      ck: TyckOps,
-                                                                                      state: StateOps[TyckOps]
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: TyckOps,
+      state: StateOps[TyckOps]
   ): BlockTerm = {
     val ty = toId(readMetaVar(toTerm(ty0)))
     val Block(heads0, tail, meta) = expr
@@ -314,10 +314,10 @@ trait ProvideElaboraterBlock extends ElaboraterBlock { this: Elaborater & Elabor
   }
 
   private def processLetLetDefStmt(
-                                    expr: LetDefStmt,
-                                    ctx: Context,
-                                    effects: CIdOf[EffectsCellContent],
-                                    meta: Option[ExprMeta]
+      expr: LetDefStmt,
+      ctx: Context,
+      effects: CIdOf[EffectsCellContent],
+      meta: Option[ExprMeta]
   )(using
       parameter: SemanticCollector,
       ck: TyckOps,

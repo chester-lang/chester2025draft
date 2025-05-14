@@ -57,9 +57,9 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
   def toEffectsM(
       x: CellIdOr[Effects]
   )(using StateOps[TyckOps]): EffectsM = x match {
-    case x: Effects     => x
+    case x: Effects            => x
     case x: EffectsCellContent => Meta(x.asInstanceOf[CellId[Effects]])
-    case _              => unreachable()
+    case _                     => unreachable()
   }
 
   def toEffectsCell(

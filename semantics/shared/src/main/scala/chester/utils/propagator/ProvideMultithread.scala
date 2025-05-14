@@ -23,8 +23,8 @@ trait ProvideMultithread extends ProvideImpl {
 
     /** Atomically updates the store */
     def compareAndSetStore(
-                            expectedValue: CellContent[?, ?],
-                            newValue: CellContent[?, ?]
+        expectedValue: CellContent[?, ?],
+        newValue: CellContent[?, ?]
     ): Boolean = {
       val result = storeRef.compareAndSet(expectedValue, newValue)
       if (result) {
@@ -130,7 +130,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                         Ability
+        Ability
     ): Unit = {
       require(id.uniqId == uniqId)
       var updated = false
@@ -161,7 +161,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     override def fill[T <: CellContentRW[U], U](id: CIdOf[T], value: U)(using
-                                                                        Ability
+        Ability
     ): Unit = {
       require(id.uniqId == uniqId)
       var updated = false
@@ -414,12 +414,12 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class ZonkTask(
-                            c: CIdOf[CellContent[?, ?]],
-                            p: PIdOf[Propagator[Ability]],
-                            firstFallback: Boolean,
-                            state: Impl[Ability],
-                            parentRecursionDepth: Int = 0,
-                            processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
+        c: CIdOf[CellContent[?, ?]],
+        p: PIdOf[Propagator[Ability]],
+        firstFallback: Boolean,
+        state: Impl[Ability],
+        parentRecursionDepth: Int = 0,
+        processedCellIds: scala.collection.mutable.Set[String] = scala.collection.mutable.Set.empty
     )(using more: Ability)
         extends RecursiveAction {
       override def compute(): Unit = {
@@ -479,7 +479,7 @@ trait ProvideMultithread extends ProvideImpl {
     }
 
     private class DefaultValueTask(c: CIdOf[CellContent[?, ?]], state: Impl[Ability])(using
-                                                                                      Ability
+        Ability
     ) extends RecursiveAction {
       override def compute(): Unit =
         if (c.noAnyValue && c.store.default.isDefined) {

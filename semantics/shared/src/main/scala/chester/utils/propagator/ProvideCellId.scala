@@ -81,7 +81,7 @@ trait ProvideCellId {
 
   trait StateOps[Session] extends StateRead[Session] {
     protected def update[T <: CellContent[?, ?]](id: CIdOf[T], f: T => T)(using
-                                                                          Session
+        Session
     ): Unit
 
     def fill[T <: CellContentRW[U], U](id: CIdOf[T], f: U)(using Session): Unit =
@@ -91,7 +91,7 @@ trait ProvideCellId {
       update[T](id, _.add(f).asInstanceOf[T])
 
     def add[T <: MapCellContent[A, B], A, B](id: CIdOf[T], key: A, value: B)(using
-                                                                             Session
+        Session
     ): Unit =
       update[T](id, _.add(key, value).asInstanceOf[T])
 

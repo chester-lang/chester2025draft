@@ -128,14 +128,14 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
   }
 
   private case class UnifyFunctionCall(
-                                        functionTy: CellId[Term],
-                                        callings: Vector[Calling],
-                                        resultTy: CellId[Term],
-                                        cause: Expr,
-                                        functionTerm: Term,
-                                        functionCallTerm: CellId[Term],
-                                        callEffects: CIdOf[EffectsCellContent],
-                                        outerEffects: CIdOf[EffectsCellContent]
+      functionTy: CellId[Term],
+      callings: Vector[Calling],
+      resultTy: CellId[Term],
+      cause: Expr,
+      functionTerm: Term,
+      functionCallTerm: CellId[Term],
+      callEffects: CIdOf[EffectsCellContent],
+      outerEffects: CIdOf[EffectsCellContent]
   )(using Context)
       extends Propagator[TyckOps] {
 
@@ -194,9 +194,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
     // Propagate effects from function call to outer effects
     private def propagateEffects(
-                                  functionEffects: Term,
-                                  outerEffects: CIdOf[EffectsCellContent],
-                                  cause: Expr
+        functionEffects: Term,
+        outerEffects: CIdOf[EffectsCellContent],
+        cause: Expr
     )(using state: StateOps[TyckOps], _ck: TyckOps): Unit =
       functionEffects match {
         case Effects(effects, _) =>
@@ -290,9 +290,9 @@ trait ProvideElaboraterFunctionCall extends ElaboraterFunctionCall { this: Elabo
 
   // Helper case class for effect propagation
   private case class PropagateEffects(
-                                       effectsCell: CellId[Term],
-                                       callerEffects: CIdOf[EffectsCellContent],
-                                       expr: Expr
+      effectsCell: CellId[Term],
+      callerEffects: CIdOf[EffectsCellContent],
+      expr: Expr
   ) extends Propagator[TyckOps] {
     override def readingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(effectsCell)
     override def writingCells(using StateRead[TyckOps], TyckOps): Set[CellIdAny] = Set(callerEffects)

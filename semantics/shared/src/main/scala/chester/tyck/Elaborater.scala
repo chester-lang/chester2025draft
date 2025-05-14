@@ -63,17 +63,17 @@ trait Elaborater extends ProvideContextOps with TyckPropagator {
     }
 
   def elab(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
-                                                                               localCtx: Context,
-                                                                               parameter: SemanticCollector,
-                                                                               ck: TyckOps,
-                                                                               state: StateOps[TyckOps]
+      localCtx: Context,
+      parameter: SemanticCollector,
+      ck: TyckOps,
+      state: StateOps[TyckOps]
   ): Term
 
   def elabId(expr: Expr, ty: CellIdOr[Term], effects: CIdOf[EffectsCellContent])(using
-                                                                                 Context,
-                                                                                 SemanticCollector,
-                                                                                 TyckOps,
-                                                                                 StateOps[TyckOps]
+      Context,
+      SemanticCollector,
+      TyckOps,
+      StateOps[TyckOps]
   ): CellId[Term] = {
     val term = elab(expr, ty, effects)
     toId(term)
