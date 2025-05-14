@@ -11,5 +11,5 @@ open trait Constraint(val kind: Kind) {
 }
 
 open trait ConstraintResult[A] extends Constraint {
-  def result: CellR[A]
+  def result: A
 }

@@ -48,16 +48,28 @@ def newHole(using SolverOps): CellRW[Term] = SolverOps.addCell(OnceCellContent[T
 
 trait Elab {
 
-  def elab(expr: Expr, ty: CellRWOr[Term], effects: CellEffects)(using
+  def elab(expr: Expr, ty: CellRWOr[Term])(using
+                                           effects: CellEffects,
       localCtx: Context,
       ops: ElabOps,
       state: SolverOps
   ): CellROr[Term]
+  
+  def infer(expr: Expr)(using
+                        effects: CellEffects,
+                                              localCtx: Context,
+                                              ops: ElabOps,
+                                              state: SolverOps
+  ): (wellTyped: CellROr[Term], ty: CellROr[Term]) = {
+    val ty = SolverOps.useConstraint(IsType(newHole))
+    val result = elab(expr, ty)
+    (result, ty)
+  }
 
 }
 
 trait DefaultElab extends Elab {
-  override def elab(expr: Expr, ty: CellRWOr[Term], effects: CellEffects)(using localCtx: Context, ops: ElabOps, state: SolverOps): CellROr[Term] =
+  override def elab(expr: Expr, ty: CellRWOr[Term])(using  effects: CellEffects, localCtx: Context, ops: ElabOps, state: SolverOps): CellROr[Term] =
     expr match {
       case expr: IntegerLiteral =>
         SolverOps.addConstraint(Pure(effects))
@@ -68,6 +80,10 @@ trait DefaultElab extends Elab {
       case expr: SymbolLiteral =>
         SolverOps.addConstraint(Pure(effects))
         SolverOps.useConstraint(SymbolLit(expr, ty, newHole))
+      case expr@ ListExpr(xs, meta) => {
+      val items = xs.map(infer(_))
+    SolverOps.useConstraint(ListOf(items, ty, newHole))
+    }
       case _ => ???
     }
 }

@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.cell.newPureEffects
+import chester.cell.{CellEffects, newPureEffects}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
@@ -24,8 +24,9 @@ case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerC
   def inferPure(expr: Expr, context: Context = Context.default)(using ElabOps): Judge = {
     given Context = context
     given solver: SolverOps = fac(handlers)
+    given CellEffects = newPureEffects
     val ty = toTerm(newHole)
-    val term = toTerm(elab.elab(expr, ty, newPureEffects))
+    val term = toTerm(elab.elab(expr, ty))
     solver.run()
     Judge(term.zonkAll, ty.zonkAll, Effects.Empty)
   }
