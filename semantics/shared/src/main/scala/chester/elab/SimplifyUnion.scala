@@ -20,16 +20,6 @@ case class SimplifyUnion(items: NonEmptyVector[CellROr[Term]], meta: Option[Term
   given Context = ctx
 }
 
-def eqType(a: Term, b: Term): Boolean = (a, b) match {
-  case (IntType(_), IntType(_))         => true
-  case (IntegerType(_), IntegerType(_)) => true
-  case (UIntType(_), UIntType(_))       => true
-  case (StringType(_), StringType(_))   => true
-  case (ListType(a, _), ListType(b, _)) => eqType(a, b)
-  case (SymbolType(_), SymbolType(_))   => true
-  case _                                => a == b
-}
-
 case object SimplifyUnionHandler extends Handler[ElabOps, SimplifyUnion.type](SimplifyUnion) {
   override def run(c: SimplifyUnion)(using ElabOps, SolverOps): Result = {
     import c.*
