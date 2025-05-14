@@ -1,8 +1,8 @@
 package chester.elab
 
-import chester.utils.elab.{CellR, Kind}
-import io.github.iltotore.iron.Constraint
+import chester.syntax.core.Term
+import chester.utils.elab.{CellR, Constraint}
 
-open trait ConstraintTerm(val kind: Kind) extends Constraint(kind) {
+ trait ConstraintTerm extends Constraint {
   def result: CellR[Term]
 }
