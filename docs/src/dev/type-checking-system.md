@@ -1,5 +1,7 @@
 # Type Checking System: Propagator Network and Design
 
+NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN
+
 ## Quick Start Guide
 
 Chester's type checking system is powered by a **propagator network** - a constraint-based approach that allows for complex type relationships.

@@ -1,5 +1,7 @@
 # Effect System Design
 
+NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN
+
 ## Overview
 
 The Chester language includes a built-in effect system that enables tracking and controlling side effects. This document outlines the design and implementation of this system.

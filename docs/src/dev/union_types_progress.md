@@ -1,5 +1,7 @@
 # Union Types Implementation
 
+NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN
+
 This document outlines the implementation and current state of union types in Chester.
 
 ## Current State

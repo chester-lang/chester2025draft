@@ -1,5 +1,7 @@
 # Effect System Implementation Plan
 
+NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN
+
 ## Goal
 
 Enable type checking for the simplest effects example in `tests/tyck/effects-basic.chester.todo` by implementing the necessary compiler components for the built-in effects system.

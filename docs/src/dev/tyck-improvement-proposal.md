@@ -1,5 +1,7 @@
 # Comprehensive Type System Improvement Proposal
 
+NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN
+
 This document outlines specific proposed improvements to Chester's type checking system, focusing on dependent types, union and intersection types, and the integration between the reducer and type checker.
 
 ## 1. Overview and Background
