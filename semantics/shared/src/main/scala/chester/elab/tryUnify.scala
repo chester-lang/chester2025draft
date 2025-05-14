@@ -17,9 +17,6 @@ def tryUnify(lhs: CellRWOr[Term], rhs: CellRWOr[Term])(using ElabOps, SolverOps,
   val lhsV = toTerm(lhs)
   val rhsV = toTerm(rhs)
   if (lhsV == rhsV) return Trilean.True
-  if (lhsV.isInstanceOf[MetaTerm] || rhsV.isInstanceOf[MetaTerm]) {
-    return Trilean.Unknown
-  }
   (lhsV, rhsV) match {
     case (IntegerType(_), IntegerType(_)) => Trilean.True
     case (IntegerType(_), _: SimpleType)  => Trilean.False
