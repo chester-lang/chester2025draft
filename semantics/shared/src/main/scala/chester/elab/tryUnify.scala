@@ -51,7 +51,11 @@ case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term])(using ctx: Context) e
 case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    if (rhs <:? lhs isTrue) return Result.Done
+    (rhs <:? lhs) match {
+        case Trilean.True  => return Result.Done
+        case Trilean.False => return Result.Failed
+        case Trilean.Unknown => ()
+    }
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
     if (lhsV.isInstanceOf[MetaTerm]) {
@@ -69,6 +73,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         Result.Done
       case (lhs: MetaTerm, rhs) => Result.Waiting(assumeCell(lhs))
       case (lhs, rhs: MetaTerm) => Result.Waiting(assumeCell(rhs))
+      case _ => ???
     }
   }
 
