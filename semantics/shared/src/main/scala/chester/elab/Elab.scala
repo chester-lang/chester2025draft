@@ -75,7 +75,7 @@ trait Elab {
 trait DefaultElab extends Elab {
   given Elab = this
   override def elab(expr: Expr, ty: CellRWOr[Term])(using effects: CellEffects, localCtx: Context, ops: ElabOps, state: SolverOps): CellROr[Term] =
-    expr match {
+    resolve(expr) match {
       case expr: IntegerLiteral =>
         SolverOps.addConstraint(Pure(effects))
         SolverOps.callConstraint(IntegerLit(expr, ty))
