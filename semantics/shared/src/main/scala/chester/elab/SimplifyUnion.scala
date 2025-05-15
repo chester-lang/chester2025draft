@@ -1,12 +1,10 @@
 package chester.elab
 
-import cats.data.NonEmptyVector
+import cats.data.{NonEmptyMap, NonEmptyVector}
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.*
-import chester.utils.assumeNonEmpty
-
-import scala.collection.mutable
+import chester.utils.*
 
 case object SimplifyUnion extends Kind {
   type Of = SimplifyUnion
@@ -20,21 +18,22 @@ case class SimplifyUnion(items: NonEmptyVector[CellROr[Term]], meta: Option[Term
   given Context = ctx
 }
 
+def cleanUpUnion(xs: NonEmptyVector[Term])(using ElabOps, SolverOps): NonEmptyVector[Term] = xs
+  .map(toTerm(_))
+  .flatMap {
+    case Union(xs, _) => cleanUpUnion(xs)
+    case x            => NonEmptyVector.of(x)
+  }
+  .distinctByEq(eqType)
+  .assumeNonEmpty
+
 case object SimplifyUnionHandler extends Handler[ElabOps, SimplifyUnion.type](SimplifyUnion) {
   override def run(c: SimplifyUnion)(using ElabOps, SolverOps): Result = {
     import c.*
-    val builder = mutable.ArrayBuffer[Term]()
-    for (item <- c.items.map(toTerm(_)).toVector)
-      if (!builder.exists(eqType(_, item))) builder += item
-    val built = builder.toVector
-    val (metas, rest) = built.partition(_.isInstanceOf[MetaTerm])
-    val xs = if (metas.nonEmpty) {
-      rest :+ metas.reduce { (a: Term, b: Term) =>
-        SolverOps.addConstraint(MergeSimple(assumeCell(a), assumeCell(b)))
-        a
-      }
-    } else {
-      rest
+    val xs = cleanUpUnion(items.map(toTerm(_)))
+    val foundMeta = xs.find(_.isInstanceOf[MetaTerm])
+    if (foundMeta.isDefined) {
+      return Result.Waiting(assumeCell(foundMeta.get))
     }
     if (xs.length == 1) {
       result.fill(xs.head)
