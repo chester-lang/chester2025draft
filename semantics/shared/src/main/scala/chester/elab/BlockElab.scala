@@ -33,12 +33,17 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
         case let: LetDefStmt if let.kind == LetDefType.Let =>
           val pattern = let.defined
           val body = let.body.getOrElse { Reporter.report(???); ??? }
-          val ty = let.ty match {
-            case Some(ty) => given_Elab.inferType(ty).wellTyped
-            case _        => newType
+          pattern match {
+            case DefinedPattern(pattern) => {
+              val ty = let.ty match {
+                case Some(ty) => given_Elab.inferType(ty).wellTyped
+                case _ => newType
+              }
+              val body1 = given_Elab.check(body, ty)
+              ???
+            }
+            case _ => ???
           }
-          val body1 = given_Elab.check(body, ty)
-          ???
         case _ => ???
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))
