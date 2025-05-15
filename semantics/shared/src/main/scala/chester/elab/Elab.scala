@@ -76,9 +76,10 @@ trait Elab {
       Context,
       ElabOps,
       SolverOps
-  ): CellROr[Term] = {
+  ): (wellTyped: CellROr[Term], ty: CellRWOr[Term]) = {
     given CellEffects = newPureEffects
-    SolverOps.callConstraint(IsType(infer(expr).wellTyped))
+    val i = infer(expr)
+    (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
 }
