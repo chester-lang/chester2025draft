@@ -10,7 +10,7 @@ import chester.tyck.LocalCtxOps
 implicit object DefaultElabImpl extends DefaultElab {}
 
 extension (t: Term) {
-  def zonkAll(using SolverOps): Term = t.descentRecursive {
+  def zonkAll(using solver: SolverOps): Term = t.descentRecursive {
     case t: MetaTerm =>
       toTerm(t) match {
         case _: MetaTerm => throw new IllegalStateException("Zonked term is still a MetaTerm")
