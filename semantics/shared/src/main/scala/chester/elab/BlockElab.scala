@@ -4,8 +4,9 @@ import chester.cell.CellEffects
 import chester.error.Reporter
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.{Context, convertMeta}
+import chester.tyck.{Context, ContextItem, TyAndVal, convertMeta}
 import chester.tyck.Tycker.MutableContext
+import chester.uniqid.Uniqid
 import chester.utils.elab.*
 
 case object BlockElab extends Kind {
@@ -22,7 +23,7 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffect
 }
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
-  override def run(c: BlockElab)(using ElabOps, SolverOps): Result = {
+  override def run(c: BlockElab)(using elab: ElabOps, solver: SolverOps): Result = {
     import c.{*, given}
     val exprStatements = block.statements.map(resolve(_))
     val outerContext = c.context
@@ -35,12 +36,21 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
           val body = let.body.getOrElse { Reporter.report(???); ??? }
           pattern match {
             case DefinedPattern(pattern) => {
-              val ty = let.ty match {
+              val ty = toTerm(let.ty match {
                 case Some(ty) => given_Elab.inferType(ty).wellTyped
                 case _ => newType
+              })
+              val wellTyped = toTerm(given_Elab.check(body, ty))
+              pattern match {
+                case PatternBind(name, meta) => {
+                  val id = Uniqid.generate[LocalV]
+                  val localv = LocalV(name.name, ty, id, convertMeta(meta))
+                  val r = elab.collector.newSymbol(localv, id, let, context.ctx)
+                  context.update(_.add(ContextItem(name.name, id, localv, ty, Some(r))).knownAdd(id, TyAndVal(ty, wellTyped)))
+                  statements = statements :+ LetStmtTerm(localv, wellTyped, ty, convertMeta(let.meta))
+                }
+                case _ => ???
               }
-              val body1 = given_Elab.check(body, ty)
-              ???
             }
             case _ => ???
           }

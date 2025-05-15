@@ -53,12 +53,17 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
   }
 
   override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    import c.{*, given}
-    if (expr.value.isValidInt) {
-      IntType(meta) <:! ty
-    } else {
-      IntegerType(meta) <:! ty
-    }
+    if(level != DefaultingLevel.Lit) return
+    import c.*
+    toTerm(ty) match {
+      case ty: MetaTerm =>{
+        if (expr.value.isValidInt) {
+          assumeCell(ty).fill(IntType(meta))
+        } else {
+          assumeCell(ty).fill(IntegerType(meta))
+        }
+      }
+      case _ => }
   }
 }
 
