@@ -16,7 +16,7 @@ case object BlockElab extends Kind {
 case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffects, elab: Elab, ops: SolverOps, ctx: Context)
     extends Constraint(BlockElab)
     with ConstraintTerm {
-  override def result: CellRW[Term] = newHole
+  override val result: CellRW[Term] = newHole
   given context: Context = ctx
   given Elab = elab
   given CellEffects = effects
