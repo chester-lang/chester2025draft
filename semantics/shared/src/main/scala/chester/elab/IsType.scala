@@ -29,7 +29,7 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
     import constant.*
     toTerm(result) match {
       case result: MetaTerm =>
-        assumeCell(result).fill(NothingType(meta=None))
+        assumeCell(result).fill(NothingType(meta = None))
       case _ =>
       // do nothing
     }

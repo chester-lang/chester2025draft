@@ -575,7 +575,7 @@ case class Union(@const xs: NonEmptyVector[Term], @const meta: Option[TermMeta])
     copy(xs = xs.map(f))
   )
 }
-def Union1(xs: NonEmptyVector[Term],meta: Option[TermMeta]): Term = if(xs.length == 1) {
+def Union1(xs: NonEmptyVector[Term], meta: Option[TermMeta]): Term = if (xs.length == 1) {
   xs.head
 } else {
   Union(xs, meta)
