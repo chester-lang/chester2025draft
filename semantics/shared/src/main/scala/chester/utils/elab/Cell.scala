@@ -5,6 +5,9 @@ import chester.utils.cell.CellContent
 open trait Cell[+A, -B, +C <: CellContent[A, B]] {
   def tag: String = Integer.toHexString(hashCode)
 
+  // for debugging
+  val stack = Thread.currentThread.getStackTrace
+
   override def toString: String = s"Cell@$tag"
 }
 
