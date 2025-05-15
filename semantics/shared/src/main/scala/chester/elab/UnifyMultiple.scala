@@ -26,6 +26,8 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     if (rhs1.isEmpty) {
       return Result.Done
     }
+    val wait = rhs1.find(_.isInstanceOf[MetaTerm])
+    if(wait.isDefined) return Result.Waiting(assumeCell(wait.get))
     SolverOps.addConstraint(Unify(lhsV, Union(rhs1.map(toTerm(_)).assumeNonEmpty, meta = None)))
     Result.Done
   }
