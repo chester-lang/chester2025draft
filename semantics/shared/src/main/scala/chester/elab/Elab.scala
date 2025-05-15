@@ -48,7 +48,7 @@ def assumeCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps
   case x: Term                                            => throw new IllegalArgumentException("Not a cell?")
 }
 
-def newHole(using SolverOps): CellRW[Term] = SolverOps.addCell(OnceCellContent[Term]())
+def newHole[T<:Term](using SolverOps): CellRW[T] = SolverOps.addCell(OnceCellContent[T]())
 
 trait Elab {
 
@@ -88,7 +88,7 @@ trait DefaultElab extends Elab {
       case expr @ ListExpr(xs, meta) =>
         val items = xs.map(infer(_))
         SolverOps.callConstraint(ListOf(items, ty))
-      case b: Block => ??? // SolverOps.callConstraint(BlockElab(b, ty))
+      case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
       case _ => ???
     }
 }

@@ -13,5 +13,6 @@ implicit val DefaultSolverConf: HandlerConf[ElabOps] = new MutHandlerConf[ElabOp
   ListOfHandler,
   ListOfHandler,
   SimplifyUnionHandler,
-  UnifyMultipleHandler
+  UnifyMultipleHandler,
+  BlockElabHandler
 )
