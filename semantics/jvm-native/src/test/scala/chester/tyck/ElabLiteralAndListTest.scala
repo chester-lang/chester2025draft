@@ -104,4 +104,44 @@ class ElabLiteralAndListTest extends FunSuite {
     println(s"Inferred list element type: ${listType.ty}")
     println(s"Union types: ${unionTypes.map(_.getClass.getSimpleName).mkString(", ")}")
   }
+  
+  test("empty list typechecking with new elab") {
+    // Parse the empty list expression
+    val expr = ChesterReaderV2.parseExpr(FileNameAndContent("empty-list.chester", "[]")).fold(
+      error => fail(s"Failed to parse expression: $error"),
+      identity
+    )
+    
+    // Create reporter and ElabOps for typechecking
+    val reporter = new VectorReporter[TyckProblem]()
+    val elabOps = ElabOps(reporter, NoopSemanticCollector)
+    
+    // Infer the type using the DefaultElaborator
+    val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+    
+    // Assert that there are no errors
+    assertEquals(reporter.getReports.isEmpty, true, 
+      s"Expected no type errors, but got: ${reporter.getReports}")
+    
+    // Check that the elaborated term is a ListTerm
+    assert(judge.wellTyped.isInstanceOf[ListTerm], 
+      s"Expected ListTerm but got ${judge.wellTyped.getClass.getSimpleName}")
+      
+    // Get the list terms and verify it's empty
+    val listTerm = judge.wellTyped.asInstanceOf[ListTerm]
+    assertEquals(listTerm.terms.size, 0, "List should have 0 elements")
+
+    // Check the list type structure
+    assert(judge.ty.isInstanceOf[ListType], 
+      s"Expected ListType but got ${judge.ty.getClass.getSimpleName}")
+    
+    val listType = judge.ty.asInstanceOf[ListType]
+    
+    // Verify that the element type is NothingType
+    assert(listType.ty.isInstanceOf[NothingType], 
+      s"Expected NothingType for empty list element type but got ${listType.ty.getClass.getSimpleName}")
+    
+    // Print the inferred element type for debugging
+    println(s"Empty list element type: ${listType.ty.getClass.getSimpleName}")
+  }
 }
