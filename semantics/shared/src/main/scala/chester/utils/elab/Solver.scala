@@ -17,7 +17,7 @@ trait SolverOps {
 
   def addConstraint(x: Constraint): Unit
   def addConstraints(xs: Seq[Constraint]): Unit = xs.foreach(addConstraint)
-  def useConstraint[A](x: ConstraintResult[A]): A = {
+  def callConstraint[A](x: ConstraintResult[A]): A = {
     addConstraint(x)
     x.result
   }
@@ -27,7 +27,7 @@ trait SolverOps {
 }
 
 object SolverOps {
-  def useConstraint[A](x: ConstraintResult[A])(using ops: SolverOps): A = ops.useConstraint(x)
+  def callConstraint[A](x: ConstraintResult[A])(using ops: SolverOps): A = ops.callConstraint(x)
   def addConstraint(x: Constraint)(using ops: SolverOps): Unit = ops.addConstraint(x)
   def hasSomeValue(id: CellAny)(using ops: SolverOps): Boolean = ops.hasSomeValue(id)
   def readUnstable[U](id: CellR[U])(using ops: SolverOps): Option[U] = ops.readUnstable(id)
