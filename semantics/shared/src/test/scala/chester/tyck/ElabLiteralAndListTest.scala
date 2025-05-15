@@ -190,4 +190,39 @@ class ElabLiteralAndListTest extends FunSuite {
     val innerListType = outerListType.ty.asInstanceOf[ListType]
     assert(innerListType.ty.isInstanceOf[IntType], s"Expected IntType for innermost element but got ${innerListType.ty.getClass.getSimpleName}")
   }
+
+  test("block with let binding typechecking with new elab") {
+    // Parse the block expression with let binding
+    val expr = ChesterReaderV2
+      .parseExpr(FileNameAndContent("block-let.chester", "{let a=0; 1}"))
+      .fold(
+        error => fail(s"Failed to parse expression: $error"),
+        identity
+      )
+
+    // Create reporter and ElabOps for typechecking
+    val reporter = new VectorReporter[TyckProblem]()
+    val elabOps = ElabOps(reporter, NoopSemanticCollector)
+
+    // Infer the type using the DefaultElaborator
+    val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+
+    // Assert that there are no errors
+    assertEquals(reporter.getReports.isEmpty, true, s"Expected no type errors, but got: ${reporter.getReports}")
+
+    // Check that the elaborated term is a BlockTerm
+    assert(judge.wellTyped.isInstanceOf[BlockTerm], s"Expected BlockTerm but got ${judge.wellTyped.getClass.getSimpleName}")
+
+    // The block should contain a let binding and an integer expression
+    val blockTerm = judge.wellTyped.asInstanceOf[BlockTerm]
+    
+    // First statement should be a let binding
+    assert(blockTerm.statements.head.isInstanceOf[LetStmtTerm], s"Expected LetStmtTerm but got ${blockTerm.statements.head.getClass.getSimpleName}")
+    
+    // The return expression should be an IntTerm
+    assert(blockTerm.result.isInstanceOf[IntTerm], s"Expected IntTerm but got ${blockTerm.result.getClass.getSimpleName}")
+
+    // Check that the type of the whole expression is IntType (from the final '1')
+    assert(judge.ty.isInstanceOf[IntType], s"Expected IntType but got ${judge.ty.getClass.getSimpleName}")
+  }
 }
