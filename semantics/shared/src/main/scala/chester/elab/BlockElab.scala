@@ -20,8 +20,11 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffect
 }
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
-  override def run(c: BlockElab)(using ElabOps, SolverOps): Result =
+  override def run(c: BlockElab)(using ElabOps, SolverOps): Result ={
+    import c.*
+    val statements = block.statements
     ???
+  }
 
   override def defaulting(c: BlockElab, level: DefaultingLevel)(using ElabOps, SolverOps): Unit =
     ()

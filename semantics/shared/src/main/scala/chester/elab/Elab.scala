@@ -11,7 +11,7 @@ import chester.utils.elab.*
 import scala.annotation.tailrec
 
 @tailrec
-def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using  SolverOps): Term = x match {
+def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
   case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasStableValue(c.inner) => toTerm(c.inner, meta)
 
   case x: Term => x
@@ -22,8 +22,8 @@ def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(
     }
 }
 
-implicit class ToTermOps(private val x: CellRW[Term] | CellR[Term] | Term) extends AnyVal  {
-  def toTerm(meta: Option[TermMeta] = None)(using  SolverOps): Term = chester.elab.toTerm(x, meta)
+implicit class ToTermOps(private val x: CellRW[Term] | CellR[Term] | Term) extends AnyVal {
+  def toTerm(meta: Option[TermMeta] = None)(using SolverOps): Term = chester.elab.toTerm(x, meta)
 }
 
 @tailrec
@@ -48,7 +48,7 @@ def assumeCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps
   case x: Term                                            => throw new IllegalArgumentException("Not a cell?")
 }
 
-def newHole[T<:Term](using SolverOps): CellRW[T] = SolverOps.addCell(OnceCellContent[T]())
+def newHole[T <: Term](using SolverOps): CellRW[T] = SolverOps.addCell(OnceCellContent[T]())
 
 trait Elab {
 
@@ -60,10 +60,10 @@ trait Elab {
   ): CellROr[Term]
 
   def infer(expr: Expr)(using
-       CellEffects,
-       Context,
-       ElabOps,
-       SolverOps
+      CellEffects,
+      Context,
+      ElabOps,
+      SolverOps
   ): (wellTyped: CellROr[Term], ty: CellRWOr[Term]) = {
     val ty = SolverOps.callConstraint(IsType(newHole))
     val result = elab(expr, ty)
@@ -89,6 +89,6 @@ trait DefaultElab extends Elab {
         val items = xs.map(infer(_))
         SolverOps.callConstraint(ListOf(items, ty))
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
-      case _ => ???
+      case _        => ???
     }
 }

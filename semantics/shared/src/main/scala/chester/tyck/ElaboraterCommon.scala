@@ -2,8 +2,6 @@ package chester.tyck
 
 import chester.cell.*
 import chester.error.*
-import chester.resolve.{SimpleDesalt, resolveOpSeq}
-import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.syntax.Name
 import chester.uniqid.Uniqid
@@ -68,18 +66,6 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
     case x: Effects => state.addCell(FixedEffectsCellContent(x))
     case Meta(x)    => x.asInstanceOf[CIdOf[EffectsCellContent]]
     case _          => unreachable()
-  }
-
-  def resolve(
-      expr: Expr
-  )(using localCtx: Context, reporter: Reporter[TyckProblem]): Expr = {
-    val result = SimpleDesalt.desugarUnwrap(expr) match {
-      case opseq: OpSeq =>
-        val result = resolveOpSeq(reporter, localCtx.operators, opseq)
-        result
-      case default => default
-    }
-    reuse(expr, result)
   }
 
   def newMeta(using _ck: TyckOps, state: StateOps[TyckOps]): CellId[Term] = {
