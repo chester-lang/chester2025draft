@@ -32,17 +32,17 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
       s match {
         case let: LetDefStmt if let.kind == LetDefType.Let =>
           val pattern = let.defined
-          val body = let.body.getOrElse{Reporter.report(???); ???}
+          val body = let.body.getOrElse { Reporter.report(???); ??? }
           val ty = let.ty match {
             case Some(ty) => given_Elab.inferType(ty).wellTyped
             case _        => newType
           }
-          val body1 = given_Elab.elab(body, ty)
+          val body1 = given_Elab.check(body, ty)
           ???
         case _ => ???
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))
-    val returning = toTerm(given_Elab.elab(resultExpr, ty))
+    val returning = toTerm(given_Elab.check(resultExpr, ty))
     // TODO: checking for possible leakage and do substitution for examples like {let a = Int; 1 : a}
     result.fill(BlockTerm(statements, returning, convertMeta(block.meta)))
     Result.Done

@@ -54,7 +54,7 @@ def newType(using SolverOps, Context): CellRW[Term] = toCell(SolverOps.callConst
 
 trait Elab {
 
-  def elab(expr: Expr, ty: CellRWOr[Term])(using
+  def check(expr: Expr, ty: CellRWOr[Term])(using
       effects: CellEffects,
       localCtx: Context,
       ops: ElabOps,
@@ -68,7 +68,7 @@ trait Elab {
       SolverOps
   ): (wellTyped: CellRWOr[Term], ty: CellRWOr[Term]) = {
     val ty = newType
-    val result = elab(expr, ty)
+    val result = check(expr, ty)
     (result, ty)
   }
 
@@ -86,7 +86,7 @@ trait Elab {
 
 trait DefaultElab extends Elab {
   given Elab = this
-  override def elab(expr: Expr, ty: CellRWOr[Term])(using effects: CellEffects, localCtx: Context, ops: ElabOps, state: SolverOps): CellRWOr[Term] =
+  override def check(expr: Expr, ty: CellRWOr[Term])(using effects: CellEffects, localCtx: Context, ops: ElabOps, state: SolverOps): CellRWOr[Term] =
     resolve(expr) match {
       case expr: IntegerLiteral =>
         SolverOps.addConstraint(Pure(effects))
