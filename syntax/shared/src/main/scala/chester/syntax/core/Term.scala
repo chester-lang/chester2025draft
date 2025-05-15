@@ -575,6 +575,11 @@ case class Union(@const xs: NonEmptyVector[Term], @const meta: Option[TermMeta])
     copy(xs = xs.map(f))
   )
 }
+def Union1(xs: NonEmptyVector[Term],meta: Option[TermMeta]): Term = if(xs.length == 1) {
+  xs.head
+} else {
+  Union(xs, meta)
+}
 case class Intersection(@const xs: NonEmptyVector[Term], @const meta: Option[TermMeta]) extends TypeTerm derives ReadWriter {
   override type ThisTree = Intersection
   override def toDoc(using PrettierOptions): Doc =

@@ -1,6 +1,6 @@
 package chester.elab
 
-import cats.data.{NonEmptyMap, NonEmptyVector}
+import cats.data.NonEmptyVector
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.*
@@ -39,7 +39,7 @@ case object SimplifyUnionHandler extends Handler[ElabOps, SimplifyUnion.type](Si
       result.fill(xs.head)
       return Result.Done
     }
-    result.fill(Union(xs.assumeNonEmpty, meta = meta))
+    result.fill(Union1(xs.assumeNonEmpty, meta = meta))
     Result.Done
   }
 }

@@ -36,7 +36,7 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     } else {
       rhs2
     }
-    SolverOps.addConstraint(Unify(lhsV, Union(cleanUpUnion(rhs3.map(toTerm(_)).assumeNonEmpty), meta = None)))
+    SolverOps.addConstraint(Unify(lhsV, Union1(cleanUpUnion(rhs3.map(toTerm(_)).assumeNonEmpty), meta = None)))
     Result.Done
   }
 
