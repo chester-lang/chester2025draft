@@ -22,13 +22,21 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     import c.{*, given}
     val lhsV = toTerm(lhs)
     val rhsV = rhs.map(toTerm(_))
-    val rhs1 = rhsV.filterNot(x => eqType(lhsV, x)).distinctByEq(eqType)
+    val rhs1 = cleanUpUnion(rhsV.filterNot(x => eqType(lhsV, x)).assumeNonEmpty)
     if (rhs1.isEmpty) {
       return Result.Done
     }
     val wait = rhs1.find(_.isInstanceOf[MetaTerm])
     if(wait.isDefined) return Result.Waiting(assumeCell(wait.get))
-    SolverOps.addConstraint(Unify(lhsV, Union(rhs1.map(toTerm(_)).assumeNonEmpty, meta = None)))
+    val (alllist0, rhs2) = rhs1.partition(_.isInstanceOf[ListType])
+    val alllist = alllist0.map(_.asInstanceOf[ListType])
+    val rhs3 = if(alllist.nonEmpty) {
+      val mergedlist = SolverOps.callConstraint(SimplifyUnion(alllist.map(_.ty).assumeNonEmpty))
+      rhs2 :+ ListType(toTerm(mergedlist), meta = None)
+    } else {
+      rhs2
+    }
+    SolverOps.addConstraint(Unify(lhsV, Union(cleanUpUnion(rhs3.map(toTerm(_)).assumeNonEmpty), meta = None)))
     Result.Done
   }
 
