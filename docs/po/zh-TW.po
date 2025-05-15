@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: The Chester Programming Language\n"
-"POT-Creation-Date: 2025-05-01T21:01:19+12:00\n"
+"POT-Creation-Date: 2025-05-15T16:13:17+12:00\n"
 "PO-Revision-Date: 2025-05-01 20:10+1200\n"
 "Last-Translator:  <email@address.com>\n"
 "Language-Team: Language zh-TW\n"
@@ -47,51 +47,60 @@ msgstr "效果系統實現計劃"
 msgid "Effect System Design"
 msgstr "效果系統設計"
 
-#: src/SUMMARY.md:10 src/dev/js2py.md:1
+#: src/SUMMARY.md:10 src/dev/elaboration-system.md:1
+msgid "Chester Elaboration System"
+msgstr ""
+
+#: src/SUMMARY.md:11 src/dev/intellij-idea.md:1
+msgid "Intellij Idea configurations"
+msgstr ""
+
+#: src/SUMMARY.md:12 src/dev/js2py.md:1
 msgid "JavaScript to Python Conversion Process"
 msgstr "JavaScript 到 Python 的轉換過程"
 
-#: src/SUMMARY.md:11 src/dev/reader.md:1
+#: src/SUMMARY.md:13 src/dev/reader.md:1
 msgid "Chester Reader Architecture"
 msgstr "Chester 讀取器架構"
 
-#: src/SUMMARY.md:12 src/dev/scalablytyped-bindings.md:1
+#: src/SUMMARY.md:14 src/dev/scalablytyped-bindings.md:1
 msgid "ScalablyTyped Bindings Guide"
 msgstr "ScalablyTyped 綁定指南"
 
-#: src/SUMMARY.md:13 src/dev/tyck-improvement-proposal.md:1
+#: src/SUMMARY.md:15 src/dev/tyck-improvement-proposal.md:1
 msgid "Comprehensive Type System Improvement Proposal"
 msgstr "全面的類型系統改進提案"
 
-#: src/SUMMARY.md:14 src/dev/type-checking-system.md:1
+#: src/SUMMARY.md:16 src/dev/type-checking-system.md:1
 msgid "Type Checking System: Propagator Network and Design"
 msgstr "類型檢查系統：傳播器網絡和設計"
 
-#: src/SUMMARY.md:15 src/dev/typescript-backend.md:1
+#: src/SUMMARY.md:17 src/dev/typescript-backend.md:1
 msgid "TypeScript Backend Implementation"
 msgstr "TypeScript 後端實現"
 
-#: src/SUMMARY.md:16 src/dev/union_types_progress.md:1
-msgid "Union Types Progress"
-msgstr "聯合類型進展"
+#: src/SUMMARY.md:18 src/dev/union_types_progress.md:1
+#, fuzzy
+msgid "Union Types Implementation"
+msgstr "TypeScript 後端實現"
 
-#: src/SUMMARY.md:17 src/guide/index.md:1
+#: src/SUMMARY.md:19 src/guide/index.md:1
 msgid "Chester Guide"
 msgstr "Chester 指南"
 
-#: src/SUMMARY.md:18 src/guide/Record.md:1
+#: src/SUMMARY.md:20 src/guide/Record.md:1
 msgid "Record Syntax in Chester"
 msgstr "Chester 的記錄語法"
 
-#: src/SUMMARY.md:19 src/dev/compiler-backend.md:198 src/guide/statements.md:1
+#: src/SUMMARY.md:21 src/dev/compiler-backend.md:198 src/guide/statements.md:1
 msgid "Statements"
 msgstr "語句"
 
-#: src/SUMMARY.md:20 src/guide/syntax-grammar.md:1
+#: src/SUMMARY.md:22 src/guide/syntax-grammar.md:1
 msgid "Chester Syntax Grammar (BNF-like)"
 msgstr "Chester 語法文法 (類 BNF)"
 
-#: src/SUMMARY.md:21 src/guide/trait-and-interface.md:1
+#: src/SUMMARY.md:23 src/guide/trait-and-interface.md:1
 msgid "Traits and Interfaces in Chester"
 msgstr "Chester 中的特質和介面"
 
@@ -180,10 +189,14 @@ msgid ""
 msgstr "本節包含 Chester 實現細節和開發說明的技術文檔。"
 
 #: src/dev/index.md:5
+msgid "These documents are made for both llm and human."
+msgstr ""
+
+#: src/dev/index.md:7
 msgid "Documentation Structure"
 msgstr "文檔結構"
 
-#: src/dev/index.md:7
+#: src/dev/index.md:9
 msgid ""
 "We use [mdBook](https://rust-lang.github.io/mdBook/) for organizing and "
 "presenting our documentation. The documentation is structured as follows:"
@@ -191,74 +204,74 @@ msgstr ""
 "我們使用 [mdBook](https://rust-lang.github.io/mdBook/) 來組織和展示我們的文"
 "檔。文檔結構如下："
 
-#: src/dev/index.md:9
+#: src/dev/index.md:11
 msgid "Documentation Management"
 msgstr "文檔管理"
 
-#: src/dev/index.md:11
+#: src/dev/index.md:13
 msgid "The documentation structure is managed through several tools:"
 msgstr "文檔結構通過以下幾種工具進行管理："
 
-#: src/dev/index.md:13
+#: src/dev/index.md:15
 msgid "**SUMMARY.md Generation**:"
 msgstr "**SUMMARY.md 生成**："
 
-#: src/dev/index.md:14
+#: src/dev/index.md:16
 msgid ""
 "The `SUMMARY.md` file is automatically generated using the `dev.sh` script"
 msgstr "`SUMMARY.md` 文件是使用 `dev.sh` 腳本自動生成的"
 
-#: src/dev/index.md:15
+#: src/dev/index.md:17
 msgid "To update the summary: `cd docs && ./dev.sh summary`"
 msgstr "更新摘要：`cd docs && ./dev.sh summary`"
 
-#: src/dev/index.md:16
+#: src/dev/index.md:18
 msgid "Do not edit `SUMMARY.md` directly as changes will be overwritten"
 msgstr "請勿直接編輯 `SUMMARY.md`，因為變更將被覆蓋"
 
-#: src/dev/index.md:18
+#: src/dev/index.md:20
 msgid "**Building Documentation**:"
 msgstr "**構建文檔**："
 
-#: src/dev/index.md:19
+#: src/dev/index.md:21
 msgid "Use mdBook to build and preview changes"
 msgstr "使用 mdBook 構建和預覽變更"
 
-#: src/dev/index.md:20
+#: src/dev/index.md:22
 msgid "The `dev.sh` script provides various documentation management commands"
 msgstr "`dev.sh` 腳本提供各種文檔管理命令"
 
-#: src/dev/index.md:22
+#: src/dev/index.md:24
 msgid "Contributing"
 msgstr "貢獻"
 
-#: src/dev/index.md:24
+#: src/dev/index.md:26
 msgid "When adding new development documentation:"
 msgstr "添加新的開發文檔時："
 
-#: src/dev/index.md:26
+#: src/dev/index.md:28
 msgid ""
 "Create your markdown file in the appropriate subdirectory under `docs/src/"
 "dev/`"
 msgstr "在 `docs/src/dev/` 下的適當子目錄中創建您的 markdown 文件"
 
-#: src/dev/index.md:27
+#: src/dev/index.md:29
 msgid "Place development-related documentation in the `dev/` directory"
 msgstr "將開發相關文檔放在 `dev/` 目錄中"
 
-#: src/dev/index.md:28
+#: src/dev/index.md:30
 msgid "Follow the existing documentation style and structure"
 msgstr "遵循現有的文檔風格和結構"
 
-#: src/dev/index.md:29
+#: src/dev/index.md:31
 msgid "Include code examples where appropriate"
 msgstr "在適當的地方包含代碼示例"
 
-#: src/dev/index.md:30
+#: src/dev/index.md:32
 msgid "Update this README.md if adding new major components"
 msgstr "添加新的主要組件時更新此 README.md"
 
-#: src/dev/index.md:31
+#: src/dev/index.md:33
 msgid "Run `./dev.sh summary` to update the documentation structure"
 msgstr "運行 `./dev.sh summary` 來更新文檔結構"
 
@@ -297,7 +310,7 @@ msgstr "區塊類型洩漏"
 msgid "`{let a = Int; let b: a = 1; b}`"
 msgstr "`{let a = Int; let b: a = 1; b}` // 區塊內部類型變量在外部仍可見"
 
-#: src/dev/compiler-backend.md:3 src/dev/effects-system.md:3 src/dev/js2py.md:3
+#: src/dev/compiler-backend.md:3 src/dev/effects-system.md:5 src/dev/js2py.md:3
 #: src/dev/reader.md:5 src/dev/typescript-backend.md:3
 msgid "Overview"
 msgstr "概述"
@@ -433,7 +446,7 @@ msgstr ""
 "js/AST.scala`）使 Chester 程序能夠在網頁瀏覽器和 Node.js 中運行。"
 
 #: src/dev/compiler-backend.md:55 src/dev/compiler-backend.md:93
-#: src/dev/type-checking-system.md:49
+#: src/dev/type-checking-system.md:51
 msgid "Architecture"
 msgstr "架構"
 
@@ -508,8 +521,7 @@ msgstr "JVM (Java/Scala)"
 msgid ""
 "The JVM target enables integration with the Java ecosystem and leverages the "
 "JVM runtime."
-msgstr ""
-"JVM 目標實現了與 Java 生態系統的集成，並利用 JVM 運行時。"
+msgstr "JVM 目標實現了與 Java 生態系統的集成，並利用 JVM 運行時。"
 
 #: src/dev/compiler-backend.md:95
 msgid "The JVM backend consists of:"
@@ -917,7 +929,7 @@ msgstr ""
 msgid "**Advanced Optimizations**: Target-specific performance improvements"
 msgstr ""
 
-#: src/dev/compiler-backend.md:231 src/dev/union_types_progress.md:242
+#: src/dev/compiler-backend.md:231 src/dev/union_types_progress.md:153
 msgid "References"
 msgstr "參考資料"
 
@@ -1142,7 +1154,7 @@ msgid "# Run a specific test class from the root project\n"
 msgstr ""
 
 #: src/dev/development.md:65 src/dev/development.md:288
-#: src/dev/tyck-improvement-proposal.md:201
+#: src/dev/tyck-improvement-proposal.md:203
 msgid "\"rootJVM/testOnly chester.tyck.FilesTyckTest\""
 msgstr ""
 
@@ -1272,7 +1284,7 @@ msgstr "為新功能添加新測試"
 msgid "Update existing tests when modifying behavior"
 msgstr "修改行為時更新現有測試"
 
-#: src/dev/development.md:110
+#: src/dev/development.md:110 src/dev/elaboration-system.md:232
 msgid "Test both success and failure cases"
 msgstr "測試成功和失敗的情況"
 
@@ -1611,8 +1623,7 @@ msgstr "**⚠️ 關鍵: 始終使用 `| cat` 後綴**"
 msgid ""
 "Git commands that might trigger paging or interactive prompts MUST ALWAYS "
 "end with `| cat`"
-msgstr ""
-"可能觸發分頁或互動提示的 Git 命令必須始終以 `| cat` 結尾"
+msgstr "可能觸發分頁或互動提示的 Git 命令必須始終以 `| cat` 結尾"
 
 #: src/dev/development.md:211
 msgid "This is a MANDATORY practice, not a suggestion"
@@ -1626,11 +1637,10 @@ msgstr "這可確保輸出一致並防止終端控制問題"
 msgid ""
 "Failure to use `| cat` is the leading cause of incomplete reviews and missed "
 "errors"
-msgstr ""
-"未使用 `| cat` 是導致審查不完整和錯過錯誤的主要原因"
+msgstr "未使用 `| cat` 是導致審查不完整和錯過錯誤的主要原因"
 
 #: src/dev/development.md:214 src/dev/devlog.md:357
-#: src/dev/effects-system.md:23
+#: src/dev/effects-system.md:25
 msgid "Examples:"
 msgstr "範例："
 
@@ -1662,7 +1672,7 @@ msgstr ""
 msgid "\"type: description\""
 msgstr ""
 
-#: src/dev/development.md:244 src/dev/development.md:536
+#: src/dev/development.md:244 src/dev/development.md:529
 msgid "**Why This Matters**"
 msgstr "**為什麼這很重要**"
 
@@ -1768,8 +1778,7 @@ msgstr "請用戶提供測試結果"
 msgid ""
 "This indicates a problem with the terminal connection, not with the code "
 "itself"
-msgstr ""
-"這表示終端連接存在問題，而非代碼本身的問題"
+msgstr "這表示終端連接存在問題，而非代碼本身的問題"
 
 #: src/dev/development.md:281
 msgid "**Test Running Best Practices for AI Agents**"
@@ -1859,428 +1868,437 @@ msgid ""
 msgstr ""
 
 #: src/dev/development.md:308
-msgid "Platform-Specific Type System Implementation"
-msgstr "平台特定類型系統實現"
+#, fuzzy
+msgid "Term System Architecture"
+msgstr "Chester 讀取器架構"
 
 #: src/dev/development.md:310
 msgid ""
-"Chester implements its type system with a unified Term definition in "
-"`Term.scala`."
+"Chester uses a unified term representation architecture to support multiple "
+"platforms:"
 msgstr ""
 
 #: src/dev/development.md:312
-msgid "Import Guidelines"
-msgstr ""
+#, fuzzy
+msgid "Term Definition Structure"
+msgstr "文檔結構"
 
 #: src/dev/development.md:314
-msgid "**DO** use `import chester.syntax.core.*`"
+msgid "**Unified Term Definition**"
 msgstr ""
 
 #: src/dev/development.md:315
-msgid "This will give you access to all the Term implementations"
+msgid ""
+"All term types are defined in a single file: `syntax/shared/src/main/scala/"
+"chester/syntax/core/Term.scala`"
+msgstr ""
+
+#: src/dev/development.md:316
+msgid ""
+"This approach simplifies the codebase and eliminates the need for separate "
+"platform-specific implementations"
 msgstr ""
 
 #: src/dev/development.md:317
-msgid "Example"
-msgstr "範例"
+msgid ""
+"Each term type follows a consistent pattern with standard methods and field "
+"annotations"
+msgstr ""
 
-#: src/dev/development.md:320 src/dev/development.md:332
-#: src/dev/development.md:354
+#: src/dev/development.md:319
+msgid "Import Guidelines"
+msgstr ""
+
+#: src/dev/development.md:321
+msgid "**DO** use `import chester.syntax.core.*`"
+msgstr ""
+
+#: src/dev/development.md:322
+msgid "This will give you access to all term implementations"
+msgstr ""
+
+#: src/dev/development.md:325 src/dev/development.md:338
 msgid "// CORRECT"
 msgstr ""
 
-#: src/dev/development.md:322 src/dev/development.md:338
-#: src/dev/development.md:347 src/dev/development.md:351
-msgid "// INCORRECT"
+#: src/dev/development.md:327
+msgid "// INCORRECT - unnecessarily specific imports"
 msgstr ""
 
-#: src/dev/development.md:328
+#: src/dev/development.md:333
 msgid "Pattern Matching and Type Usage"
 msgstr "模式匹配和類型使用"
 
-#: src/dev/development.md:330
-msgid "Use concrete types for pattern matching:"
+#: src/dev/development.md:335
+msgid "Use concrete term types directly for pattern matching:"
 msgstr ""
 
-#: src/dev/development.md:341
-msgid "// Don't use *C suffix traits"
+#: src/dev/development.md:346
+#, fuzzy
+msgid "Term Type Implementation Pattern"
+msgstr "效果系統實現計劃"
+
+#: src/dev/development.md:348
+msgid "All term types follow a consistent implementation pattern:"
 msgstr ""
 
-#: src/dev/development.md:345
-msgid "**DO NOT** use trait versions with suffixes (e.g., `*C`, `*T`):"
+#: src/dev/development.md:352
+msgid "// Use @child for term fields that should be traversed"
 msgstr ""
 
 #: src/dev/development.md:353
-msgid "// Don't use *C suffix"
+msgid "// Use @const for non-term fields "
 msgstr ""
 
-#: src/dev/development.md:359
-msgid ""
-"The codebase provides implicit convert functions for these cases, so "
-"explicit type annotations with trait suffixes are unnecessary."
+#: src/dev/development.md:358
+msgid "// Pretty printing method"
 msgstr ""
 
-#: src/dev/development.md:361
-msgid "Why This Matters"
-msgstr ""
+#: src/dev/development.md:360
+#, fuzzy
+msgid "\"ExampleTerm(\""
+msgstr "範例"
 
-#: src/dev/development.md:363
-msgid "Using concrete types ensures cross-platform compatibility"
-msgstr ""
-
-#: src/dev/development.md:364
-msgid "The convert functions handle type conversions safely and efficiently"
-msgstr ""
-
-#: src/dev/development.md:365
-msgid "Avoiding trait suffixes makes the code more maintainable"
-msgstr ""
-
-#: src/dev/development.md:366
-msgid ""
-"This approach leverages the type system to catch potential platform-specific "
-"issues at compile time"
-msgstr ""
-
-#: src/dev/development.md:368
-msgid "Core Term Architecture and Cross-Platform Implementation"
-msgstr ""
-
-#: src/dev/development.md:370
-msgid ""
-"Chester uses a carefully designed architecture for its term representation "
-"to support multiple platforms:"
-msgstr ""
-
-#: src/dev/development.md:372
-msgid "Core Files and Their Relationships"
-msgstr ""
-
-#: src/dev/development.md:374
-msgid ""
-"**Term.scala** (`syntax/shared/src/main/scala/chester/syntax/core/"
-"Term.scala`)"
-msgstr ""
-
-#: src/dev/development.md:375
-msgid "Contains all Term definitions"
-msgstr ""
-
-#: src/dev/development.md:376
-msgid "Shared across all platforms"
-msgstr ""
-
-#: src/dev/development.md:377
-msgid "Defines behavior, structure and implementation"
-msgstr ""
-
-#: src/dev/development.md:378
-msgid "Used by all platforms"
-msgstr ""
-
-#: src/dev/development.md:380
-msgid ""
-"The previous architecture with separate files (`spec/Term.scala`, "
-"`simple.scala`, and `truffle.scala`) has been refactored. Now all Term "
-"definitions are in a single `Term.scala` file."
-msgstr ""
-
-#: src/dev/development.md:382
-msgid "Platform-Specific Export Mechanism"
-msgstr ""
-
-#: src/dev/development.md:384
-msgid ""
-"The core term implementation is exported through a single unified Term.scala "
-"file."
-msgstr ""
-
-#: src/dev/development.md:386
-msgid "Making Changes to the Term System"
-msgstr ""
-
-#: src/dev/development.md:388
-msgid ""
-"When adding or modifying types in the term system, changes should be made "
-"directly in `Term.scala`:"
-msgstr ""
-
-#: src/dev/development.md:390
-msgid "Define the trait or case class in `Term.scala`"
-msgstr ""
-
-#: src/dev/development.md:391
-msgid "Follow the existing patterns for similar term types"
-msgstr ""
-
-#: src/dev/development.md:392
-msgid "Use appropriate annotations like `@child` and `@const` for fields"
-msgstr ""
-
-#: src/dev/development.md:393
-msgid "Implement the required methods like `descent` and `toDoc`"
-msgstr ""
-
-#: src/dev/development.md:395
-msgid "Example: Adding a New Term Type"
-msgstr ""
-
-#: src/dev/development.md:397
-msgid ""
-"To add a new term type (e.g., `TraitType`), you would add it directly to "
-"`Term.scala`:"
-msgstr ""
-
-#: src/dev/development.md:406
-msgid "\"TraitType(\""
-msgstr ""
-
-#: src/dev/development.md:406
+#: src/dev/development.md:360 src/dev/development.md:389
 msgid "\")\""
 msgstr ""
 
+#: src/dev/development.md:362
+msgid "// Tree traversal method"
+msgstr ""
+
+#: src/dev/development.md:368
+msgid "Adding New Term Types"
+msgstr ""
+
+#: src/dev/development.md:370
+#, fuzzy
+msgid "When adding a new term type:"
+msgstr "添加新的開發文檔時："
+
+#: src/dev/development.md:372
+msgid "Add it directly to `Term.scala`"
+msgstr ""
+
+#: src/dev/development.md:373
+#, fuzzy
+msgid "Follow the existing pattern for similar term types"
+msgstr "遵循現有的文檔風格和結構"
+
+#: src/dev/development.md:374
+msgid "Implement all required methods (`toDoc`, `descent`, etc.)"
+msgstr ""
+
+#: src/dev/development.md:375
+msgid "Use correct field annotations (`@child`, `@const`)"
+msgstr ""
+
+#: src/dev/development.md:376
+msgid "Extend the appropriate base type (e.g., `TypeTerm`, `ExprTerm`)"
+msgstr ""
+
+#: src/dev/development.md:378
+msgid "Example: Adding a New Term Type"
+msgstr ""
+
+#: src/dev/development.md:380
+msgid "For example, to add a new term type for union types:"
+msgstr ""
+
+#: src/dev/development.md:389
+msgid "\"UnionType(\""
+msgstr ""
+
+#: src/dev/development.md:389
+msgid "\", \""
+msgstr ""
+
+#: src/dev/development.md:395
+#, fuzzy
+msgid "Key Term Types"
+msgstr "Chester 類型"
+
+#: src/dev/development.md:397
+msgid "The system includes several important term categories:"
+msgstr ""
+
+#: src/dev/development.md:399
+msgid ""
+"**Expression Terms**: Represent runtime values (variables, function calls, "
+"literals)"
+msgstr ""
+
+#: src/dev/development.md:400
+msgid ""
+"**Type Terms**: Represent type information (primitive types, function types, "
+"union types)"
+msgstr ""
+
+#: src/dev/development.md:401
+msgid ""
+"**Statement Terms**: Represent declarations and control flow (let/def "
+"bindings, trait definitions)"
+msgstr ""
+
+#: src/dev/development.md:402
+msgid "**Pattern Terms**: Represent pattern matching constructs"
+msgstr ""
+
+#: src/dev/development.md:403
+msgid ""
+"**Special Terms**: Represent special language constructs (holes, "
+"placeholders)"
+msgstr ""
+
+#: src/dev/development.md:405
+msgid "Each category has a base trait that defines its common behavior."
+msgstr ""
+
+#: src/dev/development.md:407
+msgid "Why This Matters"
+msgstr ""
+
+#: src/dev/development.md:409
+msgid ""
+"**Simplified Architecture**: The unified term definition makes the codebase "
+"more maintainable"
+msgstr ""
+
+#: src/dev/development.md:410
+msgid ""
+"**Cross-Platform Compatibility**: All platforms use the same term "
+"representation"
+msgstr ""
+
+#: src/dev/development.md:411
+msgid ""
+"**Consistent Patterns**: All term types follow the same implementation "
+"pattern"
+msgstr ""
+
 #: src/dev/development.md:412
-msgid "IMPORTANT: Keeping Types Consistent"
+msgid ""
+"**Easier Extensions**: Adding new term types follows a clear and consistent "
+"approach"
 msgstr ""
 
 #: src/dev/development.md:414
-msgid "It is **crucial** that:"
-msgstr ""
-
-#: src/dev/development.md:416
-msgid "All term types follow a consistent pattern"
-msgstr ""
-
-#: src/dev/development.md:417
-msgid "Field annotations are applied correctly"
-msgstr ""
-
-#: src/dev/development.md:418
-msgid "All required methods are implemented"
-msgstr ""
-
-#: src/dev/development.md:419
-msgid "Serialization with ReadWriter is handled properly"
-msgstr ""
-
-#: src/dev/development.md:421
 msgid "Elaboration and Reduction Strategy"
 msgstr ""
 
-#: src/dev/development.md:423
+#: src/dev/development.md:416
 msgid "Reduction During Type Checking"
 msgstr ""
 
-#: src/dev/development.md:425
+#: src/dev/development.md:418
 msgid "**Keep Original Forms**"
 msgstr ""
 
-#: src/dev/development.md:426
+#: src/dev/development.md:419
 msgid "The elaborator MUST preserve original terms in the elaborated result"
 msgstr ""
 
-#: src/dev/development.md:427
+#: src/dev/development.md:420
 msgid "NEVER reduce during elaboration"
 msgstr ""
 
-#: src/dev/development.md:428
+#: src/dev/development.md:421 src/dev/elaboration-system.md:220
 msgid ""
 "Only use reduction internally during type checking when absolutely necessary"
 msgstr ""
 
-#: src/dev/development.md:429
+#: src/dev/development.md:422
 msgid "This makes the elaborated code identical to source code, making it:"
 msgstr ""
 
-#: src/dev/development.md:430
+#: src/dev/development.md:423
 msgid "Easier to debug"
 msgstr ""
 
-#: src/dev/development.md:431
+#: src/dev/development.md:424
 msgid "Easier to understand"
 msgstr ""
 
-#: src/dev/development.md:432
+#: src/dev/development.md:425
 msgid "Better for error messages"
 msgstr ""
 
-#: src/dev/development.md:433
+#: src/dev/development.md:426
 msgid "More suitable for further transformations"
 msgstr ""
 
-#: src/dev/development.md:435
+#: src/dev/development.md:428
 msgid "**When to Reduce**"
 msgstr ""
 
-#: src/dev/development.md:436
+#: src/dev/development.md:429
 msgid "Only TWO places should use reduction:"
 msgstr ""
 
-#: src/dev/development.md:437
+#: src/dev/development.md:430
 msgid "Type equality checking in unification"
 msgstr ""
 
-#: src/dev/development.md:438
+#: src/dev/development.md:431
 msgid "Field access checking on type-level terms"
 msgstr ""
 
-#: src/dev/development.md:439 src/dev/tyck-improvement-proposal.md:175
+#: src/dev/development.md:432 src/dev/tyck-improvement-proposal.md:177
 msgid "Use `ReduceMode.TypeLevel` for these internal reductions"
 msgstr ""
 
-#: src/dev/development.md:440
+#: src/dev/development.md:433
 msgid "NEVER use reduction in elaborated results"
 msgstr ""
 
-#: src/dev/development.md:442
+#: src/dev/development.md:435
 msgid "Example:"
 msgstr "範例："
 
-#: src/dev/development.md:444
+#: src/dev/development.md:437
 msgid "// Original code"
 msgstr ""
 
-#: src/dev/development.md:448
+#: src/dev/development.md:441
 msgid "// WRONG - reducing during elaboration:"
 msgstr ""
 
-#: src/dev/development.md:451
+#: src/dev/development.md:444
 msgid "// RIGHT - keeping original term:"
 msgstr ""
 
-#: src/dev/development.md:454
+#: src/dev/development.md:447
 msgid "// RIGHT - internal reduction only for field checking:"
 msgstr ""
 
-#: src/dev/development.md:457
+#: src/dev/development.md:450
 msgid "// Use type-level reduction only for checking field existence"
 msgstr ""
 
-#: src/dev/development.md:458
+#: src/dev/development.md:451
 msgid "// Keep original term in result"
 msgstr ""
 
-#: src/dev/development.md:459 src/dev/devlog.md:755 src/dev/devlog.md:764
-#: src/dev/devlog.md:921 src/dev/union_types_progress.md:140
-#: src/dev/union_types_progress.md:186
+#: src/dev/development.md:452 src/dev/devlog.md:755 src/dev/devlog.md:764
+#: src/dev/devlog.md:921
 msgid "// ..."
 msgstr ""
 
-#: src/dev/development.md:463
+#: src/dev/development.md:456
 msgid "Reduction Context and Type Checking"
 msgstr ""
 
-#: src/dev/development.md:465
+#: src/dev/development.md:458
 msgid "**Reduction Context Setup**"
 msgstr ""
 
-#: src/dev/development.md:466
+#: src/dev/development.md:459
 msgid ""
 "Each `Context` instance provides its own reduction context via "
 "`toReduceContext`"
 msgstr ""
 
-#: src/dev/development.md:467
+#: src/dev/development.md:460
 msgid "This ensures consistent reduction behavior during type checking"
 msgstr ""
 
-#: src/dev/development.md:468
+#: src/dev/development.md:461
 msgid "Allows for future extensions to reduction context"
 msgstr ""
 
-#: src/dev/development.md:470
+#: src/dev/development.md:463
 msgid "**Type-Level Reduction**"
 msgstr ""
 
-#: src/dev/development.md:471
+#: src/dev/development.md:464
 msgid "Only reduce type-level terms when necessary for type checking"
 msgstr ""
 
-#: src/dev/development.md:472 src/dev/tyck-improvement-proposal.md:168
+#: src/dev/development.md:465 src/dev/tyck-improvement-proposal.md:170
 msgid "Keep original terms in elaborated results"
 msgstr ""
 
-#: src/dev/development.md:473
+#: src/dev/development.md:466
 msgid "Use `ReduceMode.TypeLevel` to control reduction behavior"
 msgstr ""
 
-#: src/dev/development.md:475
+#: src/dev/development.md:468
 msgid "**Field Access Checking**"
 msgstr ""
 
-#: src/dev/development.md:476
+#: src/dev/development.md:469
 msgid "Use type-level reduction to verify field existence"
 msgstr ""
 
-#: src/dev/development.md:477
+#: src/dev/development.md:470
 msgid "Keep original terms in field access expressions"
 msgstr ""
 
-#: src/dev/development.md:478
+#: src/dev/development.md:471
 msgid "Report errors using original terms for better error messages"
 msgstr ""
 
-#: src/dev/development.md:480
+#: src/dev/development.md:473
 msgid "Common Pitfalls"
 msgstr ""
 
-#: src/dev/development.md:482
+#: src/dev/development.md:475
 msgid "**Over-reduction**"
 msgstr ""
 
-#: src/dev/development.md:483
+#: src/dev/development.md:476
 msgid "Don't reduce terms during elaboration"
 msgstr ""
 
-#: src/dev/development.md:484
+#: src/dev/development.md:477
 msgid "Don't reduce terms when adding to context"
 msgstr ""
 
-#: src/dev/development.md:485
+#: src/dev/development.md:478
 msgid "Only reduce when needed for type checking"
 msgstr ""
 
-#: src/dev/development.md:487
+#: src/dev/development.md:480
 msgid "**Loss of Original Terms**"
 msgstr ""
 
-#: src/dev/development.md:488
+#: src/dev/development.md:481
 msgid "Always preserve original terms in elaborated results"
 msgstr ""
 
-#: src/dev/development.md:489
+#: src/dev/development.md:482
 msgid "Don't reflect internal reductions in output"
 msgstr ""
 
-#: src/dev/development.md:490
+#: src/dev/development.md:483
 msgid "Keep source code structure intact"
 msgstr ""
 
-#: src/dev/development.md:492
+#: src/dev/development.md:485
 msgid "**Incorrect Reduction Context**"
 msgstr ""
 
-#: src/dev/development.md:493
+#: src/dev/development.md:486
 msgid "Always use proper reduction context from current context"
 msgstr ""
 
-#: src/dev/development.md:494
+#: src/dev/development.md:487
 msgid "Don't create new reduction contexts unnecessarily"
 msgstr ""
 
-#: src/dev/development.md:495
+#: src/dev/development.md:488
 msgid "Use consistent reduction mode for type checking"
 msgstr ""
 
-#: src/dev/development.md:497
+#: src/dev/development.md:490
 msgid "Coding Conventions"
 msgstr ""
 
-#: src/dev/development.md:499
+#: src/dev/development.md:492
 msgid "Imports"
 msgstr ""
 
-#: src/dev/development.md:501
+#: src/dev/development.md:494
 msgid ""
 "**Document Utilities:** When using utilities from the `chester.utils.doc` "
 "package (such as `Doc`, `PrettierOptions`, or extension methods like "
@@ -2288,364 +2306,364 @@ msgid ""
 "chester.utils.doc.*`."
 msgstr ""
 
-#: src/dev/development.md:503
+#: src/dev/development.md:496
 msgid "String Formatting and Internationalization"
 msgstr ""
 
-#: src/dev/development.md:505
+#: src/dev/development.md:498
 msgid "**Use Template Strings for User-Facing Text**"
 msgstr ""
 
-#: src/dev/development.md:506
+#: src/dev/development.md:499
 msgid ""
 "ALWAYS use template strings (`t\"\"`) for user-facing messages, not string "
 "interpolation (`s\"\"`)"
 msgstr ""
 
-#: src/dev/development.md:507
+#: src/dev/development.md:500
 msgid ""
 "ALWAYS use template strings (`t\"\"`) for plain user-facing text, even "
 "without variables"
 msgstr ""
 
-#: src/dev/development.md:508
+#: src/dev/development.md:501
 msgid "Always import the internationalization package: `import chester.i18n.*`"
 msgstr ""
 
-#: src/dev/development.md:509
+#: src/dev/development.md:502
 msgid "This ensures proper internationalization and localization support"
 msgstr ""
 
-#: src/dev/development.md:511
+#: src/dev/development.md:504
 msgid "// CORRECT - using template strings for user-facing text"
 msgstr ""
 
-#: src/dev/development.md:514
+#: src/dev/development.md:507
 msgid "\"Alice\""
 msgstr ""
 
-#: src/dev/development.md:515
+#: src/dev/development.md:508
 msgid "t\"Hello $username, welcome to Chester!\""
 msgstr ""
 
-#: src/dev/development.md:517
+#: src/dev/development.md:510
 msgid "// CORRECT - using template strings for plain text without variables"
 msgstr ""
 
-#: src/dev/development.md:518
+#: src/dev/development.md:511
 msgid "t\"Operation failed. Please try again.\""
 msgstr ""
 
-#: src/dev/development.md:520
+#: src/dev/development.md:513
 msgid "// INCORRECT - using string interpolation for user-facing text"
 msgstr ""
 
-#: src/dev/development.md:521
+#: src/dev/development.md:514
 msgid "s\"Hello $username, welcome to Chester!\""
 msgstr ""
 
-#: src/dev/development.md:523
+#: src/dev/development.md:516
 msgid "// INCORRECT - using regular string literals for user-facing text"
 msgstr ""
 
-#: src/dev/development.md:524
+#: src/dev/development.md:517
 msgid "\"Operation failed. Please try again.\""
 msgstr ""
 
-#: src/dev/development.md:527
+#: src/dev/development.md:520
 msgid "**String Interpolation for Internal Use Only**"
 msgstr ""
 
-#: src/dev/development.md:528
+#: src/dev/development.md:521
 msgid ""
 "Only use string interpolation (`s\"\"`) for internal, non-user-facing strings"
 msgstr ""
 
-#: src/dev/development.md:529
+#: src/dev/development.md:522
 msgid ""
 "Examples include debug logging, internal identifiers, and non-displayed text"
 msgstr ""
 
-#: src/dev/development.md:531
+#: src/dev/development.md:524
 msgid "// CORRECT - using string interpolation for internal/technical content"
 msgstr ""
 
-#: src/dev/development.md:532
+#: src/dev/development.md:525
 msgid "s\"DEBUG: Processing request from $username with params $params\""
 msgstr ""
 
-#: src/dev/development.md:533
+#: src/dev/development.md:526
 msgid "s\"${"
 msgstr ""
 
-#: src/dev/development.md:533
+#: src/dev/development.md:526
 msgid "}_${"
 msgstr ""
 
-#: src/dev/development.md:533
+#: src/dev/development.md:526
 msgid "}\""
 msgstr ""
 
-#: src/dev/development.md:537
+#: src/dev/development.md:530
 msgid "Template strings enable automatic translation and localization"
 msgstr ""
 
-#: src/dev/development.md:538
+#: src/dev/development.md:531
 msgid "They maintain consistent messaging across the application"
 msgstr ""
 
-#: src/dev/development.md:539
+#: src/dev/development.md:532
 msgid "They allow for future language additions without code changes"
 msgstr ""
 
-#: src/dev/development.md:540
+#: src/dev/development.md:533
 msgid "They ensure a better experience for non-English users"
 msgstr ""
 
-#: src/dev/development.md:542
+#: src/dev/development.md:535
 msgid "Core Principles"
 msgstr ""
 
-#: src/dev/development.md:544
+#: src/dev/development.md:537
 msgid "**Use C-style Braces**"
 msgstr ""
 
-#: src/dev/development.md:545
+#: src/dev/development.md:538
 msgid "Always use braces for control structures, even for single-line blocks"
 msgstr ""
 
-#: src/dev/development.md:546
+#: src/dev/development.md:539
 msgid "Opening brace on the same line"
 msgstr ""
 
-#: src/dev/development.md:547
+#: src/dev/development.md:540
 msgid "Closing brace on its own line"
 msgstr ""
 
-#: src/dev/development.md:549 src/dev/development.md:570
-#: src/dev/development.md:591 src/dev/development.md:605
-#: src/dev/development.md:626 src/dev/development.md:655
+#: src/dev/development.md:542 src/dev/development.md:563
+#: src/dev/development.md:584 src/dev/development.md:598
+#: src/dev/development.md:619 src/dev/development.md:648
 msgid "// Good"
 msgstr ""
 
-#: src/dev/development.md:556
+#: src/dev/development.md:549
 msgid "// Bad - No braces"
 msgstr ""
 
-#: src/dev/development.md:560
+#: src/dev/development.md:553
 msgid "// Bad - Indentation-based syntax"
 msgstr ""
 
-#: src/dev/development.md:563
+#: src/dev/development.md:556
 msgid "// Unclear scope"
 msgstr ""
 
-#: src/dev/development.md:566
+#: src/dev/development.md:559
 msgid "**No Indentation-Based Syntax**"
 msgstr ""
 
-#: src/dev/development.md:567
+#: src/dev/development.md:560
 msgid "Do not rely on indentation for scope"
 msgstr ""
 
-#: src/dev/development.md:568
+#: src/dev/development.md:561
 msgid "Always use explicit braces to define scope"
 msgstr ""
 
-#: src/dev/development.md:579
+#: src/dev/development.md:572
 msgid "// Bad - Indentation-based"
 msgstr ""
 
-#: src/dev/development.md:587
+#: src/dev/development.md:580
 msgid "**Function Definitions**"
 msgstr ""
 
-#: src/dev/development.md:588
+#: src/dev/development.md:581
 msgid "Opening brace on the same line as the function definition"
 msgstr ""
 
-#: src/dev/development.md:589
+#: src/dev/development.md:582
 msgid "Use explicit return types"
 msgstr ""
 
-#: src/dev/development.md:593 src/dev/development.md:598
+#: src/dev/development.md:586 src/dev/development.md:591
 msgid "// implementation"
 msgstr ""
 
-#: src/dev/development.md:596 src/dev/development.md:615
-#: src/dev/development.md:634 src/dev/development.md:662
+#: src/dev/development.md:589 src/dev/development.md:608
+#: src/dev/development.md:627 src/dev/development.md:655
 msgid "// Bad"
 msgstr ""
 
-#: src/dev/development.md:601
+#: src/dev/development.md:594
 msgid "**Pattern Matching**"
 msgstr ""
 
-#: src/dev/development.md:602
+#: src/dev/development.md:595
 msgid "Use braces for case blocks"
 msgstr ""
 
-#: src/dev/development.md:603
+#: src/dev/development.md:596
 msgid "Align case statements"
 msgstr ""
 
-#: src/dev/development.md:623
+#: src/dev/development.md:616
 msgid "**For Comprehensions**"
 msgstr ""
 
-#: src/dev/development.md:624
+#: src/dev/development.md:617
 msgid "Use braces instead of indentation"
 msgstr ""
 
-#: src/dev/development.md:641
+#: src/dev/development.md:634
 msgid "Additional Guidelines"
 msgstr ""
 
-#: src/dev/development.md:643
+#: src/dev/development.md:636
 msgid "Use parentheses for method calls even when they could be omitted"
 msgstr ""
 
-#: src/dev/development.md:644
+#: src/dev/development.md:637
 msgid "Prefer multi-line formatting with braces for complex expressions"
 msgstr ""
 
-#: src/dev/development.md:645
+#: src/dev/development.md:638
 msgid "Use explicit type annotations for public APIs"
 msgstr ""
 
-#: src/dev/development.md:646
+#: src/dev/development.md:639
 msgid "Keep line length reasonable (max 120 characters)"
 msgstr ""
 
-#: src/dev/development.md:647
+#: src/dev/development.md:640
 msgid "Use two-space indentation within braces"
 msgstr ""
 
-#: src/dev/development.md:649
+#: src/dev/development.md:642
 msgid "Enum Usage"
 msgstr ""
 
-#: src/dev/development.md:651
+#: src/dev/development.md:644
 msgid "**Prefer Enums Over String Literals**"
 msgstr ""
 
-#: src/dev/development.md:652
+#: src/dev/development.md:645
 msgid "Use enums for representing categories, types, or states"
 msgstr ""
 
-#: src/dev/development.md:653
+#: src/dev/development.md:646
 msgid "Never use string literals as pseudo-enums"
 msgstr ""
 
-#: src/dev/development.md:663
+#: src/dev/development.md:656
 msgid "\"CELL\" // Using string literals as enum values"
 msgstr ""
 
-#: src/dev/development.md:666
+#: src/dev/development.md:659
 msgid "**Enum Naming Conventions**"
 msgstr ""
 
-#: src/dev/development.md:667
+#: src/dev/development.md:660
 msgid "Use PascalCase for enum type names"
 msgstr ""
 
-#: src/dev/development.md:668
+#: src/dev/development.md:661
 msgid "Use PascalCase for enum values"
 msgstr ""
 
-#: src/dev/development.md:669
+#: src/dev/development.md:662
 msgid "Keep enum names clear and descriptive"
 msgstr ""
 
-#: src/dev/development.md:671
+#: src/dev/development.md:664
 msgid "**Enum Usage**"
 msgstr ""
 
-#: src/dev/development.md:672
+#: src/dev/development.md:665
 msgid "Import enum values when needed"
 msgstr ""
 
-#: src/dev/development.md:673
+#: src/dev/development.md:666
 msgid "Use qualified access for clarity in other contexts"
 msgstr ""
 
-#: src/dev/development.md:674
+#: src/dev/development.md:667
 msgid "Use pattern matching for exhaustive handling"
 msgstr ""
 
-#: src/dev/development.md:676
+#: src/dev/development.md:669
 msgid "// Good usage"
 msgstr ""
 
-#: src/dev/development.md:688
+#: src/dev/development.md:681
 msgid "Debugging Practices"
 msgstr ""
 
-#: src/dev/development.md:690
+#: src/dev/development.md:683
 msgid "**Understand Before Fixing**"
 msgstr ""
 
-#: src/dev/development.md:691
+#: src/dev/development.md:684
 msgid ""
 "Always understand the root cause of an issue before attempting to fix it"
 msgstr ""
 
-#: src/dev/development.md:692
+#: src/dev/development.md:685
 msgid ""
 "Use the Debug utility with appropriate categories to trace program execution"
 msgstr ""
 
-#: src/dev/development.md:693
+#: src/dev/development.md:686
 msgid "Analyze call stacks to identify where issues occur"
 msgstr ""
 
-#: src/dev/development.md:694
+#: src/dev/development.md:687
 msgid "Create minimal test cases that reproduce the issue"
 msgstr ""
 
-#: src/dev/development.md:696
+#: src/dev/development.md:689
 msgid "**Systematic Debugging Process**"
 msgstr ""
 
-#: src/dev/development.md:697
+#: src/dev/development.md:690
 msgid "Enable relevant debug logging (`Debug.enable(DebugCategory.XXX)`)"
 msgstr ""
 
-#: src/dev/development.md:698
+#: src/dev/development.md:691
 msgid "Add strategic logging points to track object state and method execution"
 msgstr ""
 
-#: src/dev/development.md:699
+#: src/dev/development.md:692
 msgid "Verify assumptions about code behavior using logs and assertions"
 msgstr ""
 
-#: src/dev/development.md:700
+#: src/dev/development.md:693
 msgid "Isolate the issue by creating focused test cases"
 msgstr ""
 
-#: src/dev/development.md:701
+#: src/dev/development.md:694
 msgid "Document your findings to help others understand the problem"
 msgstr ""
 
-#: src/dev/development.md:703
+#: src/dev/development.md:696
 msgid "**Debug-First Approach**"
 msgstr ""
 
-#: src/dev/development.md:704
+#: src/dev/development.md:697
 msgid "When facing complex issues, prioritize debugging over immediate fixes"
 msgstr ""
 
-#: src/dev/development.md:705
+#: src/dev/development.md:698
 msgid ""
 "Add temporary debugging code when needed, but mark it clearly and remove "
 "when done"
 msgstr ""
 
-#: src/dev/development.md:706
+#: src/dev/development.md:699
 msgid "Consider adding permanent debugging hooks for areas prone to issues"
 msgstr ""
 
-#: src/dev/development.md:707
+#: src/dev/development.md:700
 msgid "Document debugging insights even if they seem obvious"
 msgstr ""
 
@@ -2690,15 +2708,15 @@ msgstr ""
 msgid "Added comprehensive support for multiple key types:"
 msgstr ""
 
-#: src/dev/devlog.md:16
+#: src/dev/devlog.md:16 src/dev/reader.md:96
 msgid "Identifier keys (e.g., `{ x = 1 }`)"
 msgstr ""
 
-#: src/dev/devlog.md:17
+#: src/dev/devlog.md:17 src/dev/reader.md:97
 msgid "String literal keys (e.g., `{ \"x\" = 1 }`)"
 msgstr ""
 
-#: src/dev/devlog.md:18
+#: src/dev/devlog.md:18 src/dev/reader.md:98
 msgid "Symbol literal keys (e.g., `{ 'x = 1 }`)"
 msgstr ""
 
@@ -5042,7 +5060,7 @@ msgstr ""
 msgid "Potential issues with comment attachment or source positions"
 msgstr ""
 
-#: src/dev/devlog.md:801
+#: src/dev/devlog.md:801 src/dev/elaboration-system.md:205
 msgid "Testing Approach"
 msgstr ""
 
@@ -5085,7 +5103,6 @@ msgid "Complex pattern matching with blocks still shows AST differences"
 msgstr ""
 
 #: src/dev/devlog.md:818 src/dev/devlog.md:928 src/dev/devlog.md:1139
-#: src/dev/union_types_progress.md:235
 msgid "Next Steps"
 msgstr ""
 
@@ -6654,407 +6671,413 @@ msgstr ""
 msgid "`docs/src/dev/parser-implementation.md`"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:3
-msgid "Goal"
+#: src/dev/effects-implementation-plan.md:3 src/dev/effects-system.md:3
+#: src/dev/tyck-improvement-proposal.md:3 src/dev/type-checking-system.md:3
+#: src/dev/union_types_progress.md:3
+msgid "NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN"
 msgstr ""
 
 #: src/dev/effects-implementation-plan.md:5
+msgid "Goal"
+msgstr ""
+
+#: src/dev/effects-implementation-plan.md:7
 msgid ""
 "Enable type checking for the simplest effects example in `tests/tyck/effects-"
 "basic.chester.todo` by implementing the necessary compiler components for "
 "the built-in effects system."
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:7 src/dev/typescript-backend.md:14
+#: src/dev/effects-implementation-plan.md:9 src/dev/typescript-backend.md:14
 msgid "Current Status"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:9
+#: src/dev/effects-implementation-plan.md:11
 msgid ""
 "We have a basic effects syntax design specified in `docs/src/dev/effects-"
 "system.md`"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:10
+#: src/dev/effects-implementation-plan.md:12
 msgid ""
 "A simple test file `tests/tyck/effects-basic.chester.todo` exists but "
 "doesn't type check yet"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:11
+#: src/dev/effects-implementation-plan.md:13
 msgid "Some of the infrastructure for effects already exists in the codebase"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:13 src/dev/typescript-backend.md:20
+#: src/dev/effects-implementation-plan.md:15 src/dev/typescript-backend.md:20
 msgid "Implementation Tasks"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:15
+#: src/dev/effects-implementation-plan.md:17
 msgid "1. Parser Enhancements"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:17
+#: src/dev/effects-implementation-plan.md:19
 msgid ""
 "Add parsing support for the `/` effect annotation syntax in function types"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:18
+#: src/dev/effects-implementation-plan.md:20
 msgid "Parse built-in effect names (`IO`, `State`, etc.) as identifiers"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:19
+#: src/dev/effects-implementation-plan.md:21
 msgid "Parse effect combinations using the `&` operator"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:20
+#: src/dev/effects-implementation-plan.md:22
 msgid ""
 "Generate AST nodes that correctly represent effects in function signatures"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:23
+#: src/dev/effects-implementation-plan.md:25
 msgid "// Example parser implementation:"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:25
+#: src/dev/effects-implementation-plan.md:27
 msgid "// Parse function signature..."
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:27
+#: src/dev/effects-implementation-plan.md:29
 msgid "// Check for effect annotation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:28
+#: src/dev/effects-implementation-plan.md:30
 msgid "\"/\""
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:38
+#: src/dev/effects-implementation-plan.md:40
 msgid "2. Built-in Effects Registry"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:40
+#: src/dev/effects-implementation-plan.md:42
 msgid "Define a registry for built-in effect types"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:41
+#: src/dev/effects-implementation-plan.md:43
 msgid "Implement recognition of built-in effects like `IO` and `State`"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:42
+#: src/dev/effects-implementation-plan.md:44
 msgid ""
 "Add a mechanism to validate that effect identifiers refer to built-in effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:45
+#: src/dev/effects-implementation-plan.md:47
 msgid "// Example registry:"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:47
+#: src/dev/effects-implementation-plan.md:49
 msgid "\"IO\""
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:48
+#: src/dev/effects-implementation-plan.md:50
 msgid "\"State\""
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:49
+#: src/dev/effects-implementation-plan.md:51
 msgid "\"Exception\""
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:50
+#: src/dev/effects-implementation-plan.md:52
 msgid "\"NonTermination\""
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:58
+#: src/dev/effects-implementation-plan.md:60
 msgid "3. Type Representation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:60
+#: src/dev/effects-implementation-plan.md:62
 msgid "Enhance the `Effects` class to handle built-in effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:61
+#: src/dev/effects-implementation-plan.md:63
 msgid "Implement function type representation that includes effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:62
+#: src/dev/effects-implementation-plan.md:64
 msgid "Support effect combinations (union of effects)"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:65
+#: src/dev/effects-implementation-plan.md:67
 msgid "// Example Effects class:"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:75
+#: src/dev/effects-implementation-plan.md:77
 msgid "4. Type Checking"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:77
+#: src/dev/effects-implementation-plan.md:79
 msgid "Implement effect checking during function definition"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:78
+#: src/dev/effects-implementation-plan.md:80
 msgid "Verify that function bodies only use effects that are declared"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:79
+#: src/dev/effects-implementation-plan.md:81
 msgid "Track effect requirements in the function call chain"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:80
+#: src/dev/effects-implementation-plan.md:82
 msgid "Ensure effects are properly propagated from callee to caller"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:83
+#: src/dev/effects-implementation-plan.md:85
 msgid "// Example type checker for function calls:"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:87
+#: src/dev/effects-implementation-plan.md:89
 msgid "// Check argument types..."
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:89
+#: src/dev/effects-implementation-plan.md:91
 msgid "// Extract function effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:92
+#: src/dev/effects-implementation-plan.md:94
 msgid "// Ensure the current context allows these effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:95
+#: src/dev/effects-implementation-plan.md:97
 msgid "// Return function's return type with effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:100
+#: src/dev/effects-implementation-plan.md:102
 msgid "5. Effect Propagation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:102
+#: src/dev/effects-implementation-plan.md:104
 msgid "Implement a mechanism to accumulate effects from function calls"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:103
+#: src/dev/effects-implementation-plan.md:105
 msgid "Ensure effects are propagated up the call chain"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:104
+#: src/dev/effects-implementation-plan.md:106
 msgid "Handle effect combinations correctly"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:107
+#: src/dev/effects-implementation-plan.md:109
 msgid "// Example propagation:"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:109
+#: src/dev/effects-implementation-plan.md:111
 msgid "// Combine effects from caller and callee"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:114
+#: src/dev/effects-implementation-plan.md:116
 msgid "6. Error Reporting"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:116
+#: src/dev/effects-implementation-plan.md:118
 msgid "Add clear error messages for effect-related type errors"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:117
+#: src/dev/effects-implementation-plan.md:119
 msgid "Report when a function uses unauthorized effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:118
+#: src/dev/effects-implementation-plan.md:120
 msgid "Report when effect types are invalid or unknown"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:121
+#: src/dev/effects-implementation-plan.md:123
 msgid "// Example error generation:"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:123
+#: src/dev/effects-implementation-plan.md:125
 msgid ""
 "s\"Function uses effect '$effect' but it is not declared in the function "
 "signature\""
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:128
+#: src/dev/effects-implementation-plan.md:130
 msgid "Implementation Order"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:130
+#: src/dev/effects-implementation-plan.md:132
 msgid "**First Phase: Basic Type Representation**"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:131
+#: src/dev/effects-implementation-plan.md:133
 msgid "Enhance the AST and type system to represent effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:132
+#: src/dev/effects-implementation-plan.md:134
 msgid "Implement the built-in effects registry"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:133
+#: src/dev/effects-implementation-plan.md:135
 msgid "Add effect annotations to function types"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:135
+#: src/dev/effects-implementation-plan.md:137
 msgid "**Second Phase: Parser Integration**"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:136
+#: src/dev/effects-implementation-plan.md:138
 msgid "Update the parser to handle effect annotations"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:137
+#: src/dev/effects-implementation-plan.md:139
 msgid "Parse effect combinations"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:138
+#: src/dev/effects-implementation-plan.md:140
 msgid "Generate correct AST nodes with effects"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:140
+#: src/dev/effects-implementation-plan.md:142
 msgid "**Third Phase: Type Checking**"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:141
+#: src/dev/effects-implementation-plan.md:143
 msgid "Implement basic effect checking for function bodies"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:142
+#: src/dev/effects-implementation-plan.md:144
 msgid "Add effect validation in function calls"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:143
+#: src/dev/effects-implementation-plan.md:145
 msgid "Ensure effects are correctly propagated"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:145
+#: src/dev/effects-implementation-plan.md:147
 msgid "**Fourth Phase: Error Handling**"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:146
+#: src/dev/effects-implementation-plan.md:148
 msgid "Add descriptive error messages"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:147
+#: src/dev/effects-implementation-plan.md:149
 msgid "Implement suggestions for fixing effect-related errors"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:149
+#: src/dev/effects-implementation-plan.md:151
 msgid "**Fifth Phase: Testing**"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:150
+#: src/dev/effects-implementation-plan.md:152
 msgid "Convert the `.todo` test to a regular test file"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:151
+#: src/dev/effects-implementation-plan.md:153
 msgid "Add additional tests for more complex effect scenarios"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:152
+#: src/dev/effects-implementation-plan.md:154
 msgid "Verify compatibility with existing code"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:154
+#: src/dev/effects-implementation-plan.md:156
 msgid "Timeline"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:156
+#: src/dev/effects-implementation-plan.md:158
 msgid "Days 1-2: First Phase implementation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:157
+#: src/dev/effects-implementation-plan.md:159
 msgid "Days 3-4: Second Phase implementation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:158
+#: src/dev/effects-implementation-plan.md:160
 msgid "Days 5-7: Third Phase implementation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:159
+#: src/dev/effects-implementation-plan.md:161
 msgid "Days 8-9: Fourth Phase implementation"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:160
+#: src/dev/effects-implementation-plan.md:162
 msgid "Day 10: Testing and refinement"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:162
-#: src/dev/tyck-improvement-proposal.md:101 src/dev/typescript-backend.md:183
+#: src/dev/effects-implementation-plan.md:164
+#: src/dev/tyck-improvement-proposal.md:103 src/dev/typescript-backend.md:183
 msgid "Success Criteria"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:164
+#: src/dev/effects-implementation-plan.md:166
 msgid ""
 "The `tests/tyck/effects-basic.chester.todo` file can be renamed to `tests/"
 "tyck/effects-basic.chester` and passes type checking"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:165
+#: src/dev/effects-implementation-plan.md:167
 msgid "The type checker correctly enforces effect constraints"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:166
+#: src/dev/effects-implementation-plan.md:168
 msgid "Effect propagation works as expected in nested function calls"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:167
+#: src/dev/effects-implementation-plan.md:169
 msgid "Pure functions don't require effect annotations"
 msgstr ""
 
-#: src/dev/effects-implementation-plan.md:168
+#: src/dev/effects-implementation-plan.md:170
 msgid "Clear error messages are provided for effect-related type errors"
 msgstr ""
 
-#: src/dev/effects-system.md:5
+#: src/dev/effects-system.md:7
 msgid ""
 "The Chester language includes a built-in effect system that enables tracking "
 "and controlling side effects. This document outlines the design and "
 "implementation of this system."
 msgstr ""
 
-#: src/dev/effects-system.md:7
+#: src/dev/effects-system.md:9
 msgid "Core Concepts"
 msgstr ""
 
-#: src/dev/effects-system.md:9
+#: src/dev/effects-system.md:11
 msgid ""
 "**Effect**: A built-in type in the language that represents a capability to "
 "perform a specific kind of operation."
 msgstr ""
 
-#: src/dev/effects-system.md:10
+#: src/dev/effects-system.md:12
 msgid ""
 "**Effect Values**: Built-in values of type `Effect` (e.g., `IO`, `State`, "
 "`Exception`)."
 msgstr ""
 
-#: src/dev/effects-system.md:11
+#: src/dev/effects-system.md:13
 msgid ""
 "**Effect Requirements**: Functions declare which effects they may use with "
 "the `/ Effect` syntax."
 msgstr ""
 
-#: src/dev/effects-system.md:12
+#: src/dev/effects-system.md:14
 msgid ""
 "**Effect Propagation**: Effect requirements automatically propagate up the "
 "call chain."
 msgstr ""
 
-#: src/dev/effects-system.md:13
+#: src/dev/effects-system.md:15
 msgid ""
 "**Pure Functions**: Functions without effect annotations are pure (no side "
 "effects)."
 msgstr ""
 
-#: src/dev/effects-system.md:15
+#: src/dev/effects-system.md:17
 msgid "Syntax"
 msgstr ""
 
-#: src/dev/effects-system.md:17
+#: src/dev/effects-system.md:19
 msgid "Function Declaration with Effects"
 msgstr ""
 
-#: src/dev/effects-system.md:24
+#: src/dev/effects-system.md:26
 msgid ""
 "```\n"
 "// Function with IO effect\n"
@@ -7065,17 +7088,17 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/effects-system.md:32
+#: src/dev/effects-system.md:34
 msgid "Effect Propagation"
 msgstr ""
 
-#: src/dev/effects-system.md:34
+#: src/dev/effects-system.md:36
 msgid ""
 "When a function calls another function with effects, those effects must be "
 "declared in the caller's signature:"
 msgstr ""
 
-#: src/dev/effects-system.md:36
+#: src/dev/effects-system.md:38
 msgid ""
 "```\n"
 "def hello(): Unit / IO = {\n"
@@ -7084,83 +7107,83 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/effects-system.md:42
+#: src/dev/effects-system.md:44
 msgid "Built-in Effects"
 msgstr ""
 
-#: src/dev/effects-system.md:44
+#: src/dev/effects-system.md:46
 msgid "The language provides several built-in effects:"
 msgstr ""
 
-#: src/dev/effects-system.md:46
+#: src/dev/effects-system.md:48
 msgid "**IO**: Input/output operations (file I/O, console I/O, etc.)"
 msgstr ""
 
-#: src/dev/effects-system.md:47
+#: src/dev/effects-system.md:49
 msgid "**State**: Mutable state operations"
 msgstr ""
 
-#: src/dev/effects-system.md:48
+#: src/dev/effects-system.md:50
 msgid "**Exception**: Operations that may throw exceptions"
 msgstr ""
 
-#: src/dev/effects-system.md:49
+#: src/dev/effects-system.md:51
 msgid "**NonTermination**: Operations that may not terminate"
 msgstr ""
 
-#: src/dev/effects-system.md:51
+#: src/dev/effects-system.md:53
 msgid "Implementation Notes"
 msgstr ""
 
-#: src/dev/effects-system.md:53
+#: src/dev/effects-system.md:55
 msgid "The effect system is implemented through:"
 msgstr ""
 
-#: src/dev/effects-system.md:55
+#: src/dev/effects-system.md:57
 msgid ""
 "**Type Checking**: Functions are verified to declare all effects they use."
 msgstr ""
 
-#: src/dev/effects-system.md:56
+#: src/dev/effects-system.md:58
 msgid ""
 "**Effect Propagation**: Functions automatically require any effects used by "
 "functions they call."
 msgstr ""
 
-#: src/dev/effects-system.md:57
+#: src/dev/effects-system.md:59
 msgid ""
 "**Effect Handling**: The runtime system ensures effects are properly handled."
 msgstr ""
 
-#: src/dev/effects-system.md:59
+#: src/dev/effects-system.md:61
 msgid "Future Extensions"
 msgstr ""
 
-#: src/dev/effects-system.md:61
+#: src/dev/effects-system.md:63
 msgid "Potential future extensions include:"
 msgstr ""
 
-#: src/dev/effects-system.md:63
+#: src/dev/effects-system.md:65
 msgid "User-defined effects"
 msgstr ""
 
-#: src/dev/effects-system.md:64
+#: src/dev/effects-system.md:66
 msgid "Effect polymorphism"
 msgstr ""
 
-#: src/dev/effects-system.md:65
+#: src/dev/effects-system.md:67
 msgid "Effect inference"
 msgstr ""
 
-#: src/dev/effects-system.md:66
+#: src/dev/effects-system.md:68
 msgid "Effect handlers for controlling effect execution"
 msgstr ""
 
-#: src/dev/effects-system.md:68
+#: src/dev/effects-system.md:70
 msgid "Example Usage"
 msgstr ""
 
-#: src/dev/effects-system.md:70
+#: src/dev/effects-system.md:72
 msgid ""
 "```\n"
 "// Function with an IO effect requirement\n"
@@ -7174,6 +7197,762 @@ msgid ""
 "// Pure function with no effects\n"
 "def pure(): Integer = 123\n"
 "```"
+msgstr ""
+
+#: src/dev/elaboration-system.md:3
+msgid "Introduction"
+msgstr ""
+
+#: src/dev/elaboration-system.md:5
+msgid "Chester features two elaboration systems for type checking:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:7
+msgid ""
+"**Original Type Checking Logic (`chester.tyck`)**: The constraint-based type "
+"checking system using propagator networks"
+msgstr ""
+
+#: src/dev/elaboration-system.md:8
+msgid ""
+"**New Elaboration System (`chester.elab`)**: A modernized, more modular "
+"approach to elaboration with a dedicated solver"
+msgstr ""
+
+#: src/dev/elaboration-system.md:10
+msgid ""
+"This document explains both systems, their differences, and provides "
+"guidance on how to work with the new elaboration system."
+msgstr ""
+
+#: src/dev/elaboration-system.md:12
+#, fuzzy
+msgid "Architectural Comparison"
+msgstr "架構"
+
+#: src/dev/elaboration-system.md:14
+msgid "Original System (`chester.tyck`)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:16
+msgid ""
+"The original type checking system is built around propagator networks with "
+"cells and constraints:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:18
+msgid "Uses `TyckPropagator` for constraint propagation"
+msgstr ""
+
+#: src/dev/elaboration-system.md:19
+msgid ""
+"Has a monolithic `Elaborater` class with specialized components "
+"(`ElaboraterBlock`, `ElaboraterFunction`, etc.)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:20
+msgid "Relies on `CellId` references for tracking types"
+msgstr ""
+
+#: src/dev/elaboration-system.md:21
+msgid "Uses a stateful approach for tracking and resolving constraints"
+msgstr ""
+
+#: src/dev/elaboration-system.md:23
+msgid "New System (`chester.elab`)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:25
+msgid ""
+"The new elaboration system takes a fundamentally different approach to type "
+"checking:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:27
+msgid ""
+"**Constraint-based Solver**: Uses a dedicated solver architecture for "
+"tracking and resolving typing constraints"
+msgstr ""
+
+#: src/dev/elaboration-system.md:28
+msgid ""
+"**Modular Handler System**: Each elaboration concern is handled by a "
+"dedicated, composable handler"
+msgstr ""
+
+#: src/dev/elaboration-system.md:29
+msgid ""
+"**Cell-based Representation**: Uses cells to represent type variables and "
+"constraints in a more structured way"
+msgstr ""
+
+#: src/dev/elaboration-system.md:30
+msgid ""
+"**More Precise Types**: Infers more specific types (e.g., `IntTerm` instead "
+"of `IntegerTerm`)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:31
+msgid ""
+"**Handler-driven Architecture**: Components like `BlockElabHandler` and "
+"`ListOfHandler` encapsulate specific elaboration logic"
+msgstr ""
+
+#: src/dev/elaboration-system.md:33
+msgid "Key Components of the New System"
+msgstr ""
+
+#: src/dev/elaboration-system.md:35
+msgid "1. Core Interfaces"
+msgstr ""
+
+#: src/dev/elaboration-system.md:37
+msgid ""
+"**Elab Trait** (`Elab.scala`) serves as the primary interface for "
+"elaboration operations. It provides three key methods:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:39
+msgid ""
+"`elab`: Elaborates an expression against a given type, returning a cell "
+"containing the elaborated term"
+msgstr ""
+
+#: src/dev/elaboration-system.md:40
+msgid ""
+"`infer`: Infers both the term and type for an expression, returning them as "
+"a pair"
+msgstr ""
+
+#: src/dev/elaboration-system.md:41
+msgid ""
+"`inferType`: Specializes in type-checking expressions that should be types "
+"themselves"
+msgstr ""
+
+#: src/dev/elaboration-system.md:43
+msgid ""
+"All these methods require appropriate context, effects tracking, and solver "
+"operations to function."
+msgstr ""
+
+#: src/dev/elaboration-system.md:45
+msgid ""
+"**DefaultElab Implementation** provides the core elaboration logic for "
+"different expression types. It uses pattern matching to handle different "
+"kinds of expressions, dispatching each to an appropriate constraint handler:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:47
+msgid "Integer literals are handled by the IntegerLit constraint"
+msgstr ""
+
+#: src/dev/elaboration-system.md:48
+msgid "String literals are handled by the StringLit constraint"
+msgstr ""
+
+#: src/dev/elaboration-system.md:49
+msgid "List expressions are handled by the ListOf constraint"
+msgstr ""
+
+#: src/dev/elaboration-system.md:50
+msgid "Blocks are handled by the BlockElab constraint"
+msgstr ""
+
+#: src/dev/elaboration-system.md:52
+msgid ""
+"For each expression type, a corresponding constraint is created and passed "
+"to the solver through SolverOps."
+msgstr ""
+
+#: src/dev/elaboration-system.md:54
+msgid "2. Entry Point"
+msgstr ""
+
+#: src/dev/elaboration-system.md:56
+msgid ""
+"**DefaultElaborator** (`Elaborator.scala`) is the main entry point for using "
+"the new elaboration system. It's configured with:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:58
+msgid "A default Elab implementation (DefaultElabImpl)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:59
+msgid "A SolverFactory (ConcurrentSolverFactory)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:60
+msgid "A handler configuration (DefaultSolverConf)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:62
+msgid ""
+"This setup provides the `inferPure()` method that is used by the REPL and "
+"tests as the primary entry point for type checking expressions."
+msgstr ""
+
+#: src/dev/elaboration-system.md:64
+msgid "3. Constraint Handlers"
+msgstr ""
+
+#: src/dev/elaboration-system.md:66
+msgid ""
+"The system uses a handler-based architecture where each type of constraint "
+"has a dedicated handler:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:68
+msgid ""
+"**Literal Handlers**: `IntegerLitHandler`, `StringLitHandler`, "
+"`SymbolLitHandler`"
+msgstr ""
+
+#: src/dev/elaboration-system.md:69
+msgid "**Block Handler**: `BlockElabHandler` for elaborating code blocks"
+msgstr ""
+
+#: src/dev/elaboration-system.md:70
+msgid "**List Handler**: `ListOfHandler` for list expressions"
+msgstr ""
+
+#: src/dev/elaboration-system.md:71
+msgid ""
+"**Unification Handlers**: `UnifyHandler`, `UnifyMultipleHandler` for type "
+"compatibility"
+msgstr ""
+
+#: src/dev/elaboration-system.md:72
+msgid ""
+"**Type Handlers**: `IsTypeHandler` for type checking, `SimplifyUnionHandler` "
+"for union types"
+msgstr ""
+
+#: src/dev/elaboration-system.md:74
+msgid ""
+"Each handler implements the `Handler` trait with a `run` method that "
+"processes a specific type of constraint."
+msgstr ""
+
+#: src/dev/elaboration-system.md:76
+msgid "4. Operations Interface"
+msgstr ""
+
+#: src/dev/elaboration-system.md:78
+msgid ""
+"**ElabOps** (`ElabOps.scala`) provides operations for error reporting and "
+"semantic collection:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:82
+msgid "// Delegated reporter methods"
+msgstr ""
+
+#: src/dev/elaboration-system.md:87 src/dev/type-checking-system.md:171
+msgid "Current Implementation Status"
+msgstr ""
+
+#: src/dev/elaboration-system.md:89
+msgid "Features Supported"
+msgstr ""
+
+#: src/dev/elaboration-system.md:91
+msgid "The new elaboration system currently supports:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:93
+msgid "Basic literals (integers, strings, symbols)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:94
+msgid ""
+"Lists (including heterogeneous and nested lists with correct union typing)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:95
+msgid "Code blocks with statements and expressions"
+msgstr ""
+
+#: src/dev/elaboration-system.md:96
+msgid "Type unification and compatibility checking"
+msgstr ""
+
+#: src/dev/elaboration-system.md:97
+msgid "Pure expressions (without effects)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:99
+#, fuzzy
+msgid "REPL Integration"
+msgstr "Web API 集成"
+
+#: src/dev/elaboration-system.md:101
+msgid ""
+"The REPL engine now uses the new elaboration system by default, as seen in "
+"`REPLEngine.scala`:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:103
+msgid ""
+"The REPL implementation includes a toggle (`useNewElab`) set to true by "
+"default that allows switching between the old and new elaboration systems. "
+"When enabled, the typeCheck method creates a reporter and ElabOps, then "
+"calls DefaultElaborator.inferPure() to type check expressions. The results "
+"are wrapped in a TyckResult0 object to maintain compatibility with the old "
+"system's result format."
+msgstr ""
+
+#: src/dev/elaboration-system.md:105
+msgid ""
+"This implementation allows seamless switching between the old and new "
+"elaboration systems, with the new system as the default."
+msgstr ""
+
+#: src/dev/elaboration-system.md:107
+msgid "Test Coverage"
+msgstr ""
+
+#: src/dev/elaboration-system.md:109
+msgid ""
+"Test coverage for the new system is implemented in "
+"`ElabLiteralAndListTest.scala`, which verifies:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:111
+msgid "**Integer literals**: Correctly elaborated to `IntTerm` with `IntType`"
+msgstr ""
+
+#: src/dev/elaboration-system.md:112
+msgid ""
+"**Heterogeneous lists**: Elaborated to `ListTerm` with a union type for "
+"elements"
+msgstr ""
+
+#: src/dev/elaboration-system.md:113
+msgid "**Empty lists**: Properly typed as `ListTerm[NothingType]`"
+msgstr ""
+
+#: src/dev/elaboration-system.md:114
+msgid ""
+"**Nested lists**: Correctly handle nested list structures and their type "
+"relationships"
+msgstr ""
+
+#: src/dev/elaboration-system.md:116
+msgid "These tests demonstrate the system's ability to:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:117
+msgid ""
+"Infer precise types (using `IntTerm` instead of the more general "
+"`IntegerTerm`)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:118
+msgid "Handle heterogeneity through proper union type creation"
+msgstr ""
+
+#: src/dev/elaboration-system.md:119
+msgid "Maintain correct type relationships in nested structures"
+msgstr ""
+
+#: src/dev/elaboration-system.md:121
+msgid "Using the New Elaboration System"
+msgstr ""
+
+#: src/dev/elaboration-system.md:123
+msgid "Basic Usage"
+msgstr ""
+
+#: src/dev/elaboration-system.md:125
+msgid ""
+"The following example shows how to use the new elaboration system to type "
+"check an expression:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:127
+msgid "To use the new elaboration system, you'll need to:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:129
+msgid "Parse an expression using ChesterReaderV2 or another parser"
+msgstr ""
+
+#: src/dev/elaboration-system.md:130
+msgid "Create a reporter and ElabOps for error collection"
+msgstr ""
+
+#: src/dev/elaboration-system.md:131
+msgid ""
+"Call DefaultElaborator.inferPure() to obtain a Judge containing the "
+"elaborated term and type"
+msgstr ""
+
+#: src/dev/elaboration-system.md:132
+msgid "Check for errors and access the elaborated term and inferred type"
+msgstr ""
+
+#: src/dev/elaboration-system.md:134
+msgid ""
+"This process will properly handle parsing and type checking of various "
+"expressions, including heterogeneous lists that will be typed with "
+"appropriate union types."
+msgstr ""
+
+#: src/dev/elaboration-system.md:136
+msgid "Extending the System with New Expression Types"
+msgstr ""
+
+#: src/dev/elaboration-system.md:138
+msgid ""
+"To add support for a new expression type, you need to follow these steps:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:140 src/dev/elaboration-system.md:144
+msgid "1. Define a Constraint Kind"
+msgstr ""
+
+#: src/dev/elaboration-system.md:142
+msgid "Create a Kind object for your constraint:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:146
+msgid ""
+"Create a Kind object in the `chester.elab` package that defines the type of "
+"your constraint. This serves as a unique identifier for your constraint type "
+"in the system."
+msgstr ""
+
+#: src/dev/elaboration-system.md:148
+msgid "2. Create a Constraint Class"
+msgstr ""
+
+#: src/dev/elaboration-system.md:150
+msgid "Define a constraint class for your expression type that takes:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:151
+msgid "Your expression type as a parameter"
+msgstr ""
+
+#: src/dev/elaboration-system.md:152
+msgid "The target type cell"
+msgstr ""
+
+#: src/dev/elaboration-system.md:153
+msgid "Required implicit parameters (effects, elab, ops, ctx)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:155
+msgid ""
+"The constraint class should extend the `Constraint` abstract class with your "
+"Kind."
+msgstr ""
+
+#: src/dev/elaboration-system.md:157
+msgid "3. Implement a Handler"
+msgstr ""
+
+#: src/dev/elaboration-system.md:159
+msgid ""
+"Create a handler that processes your constraint by implementing the "
+"`Handler` trait. The handler needs to:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:160
+msgid "Override the `run` method to implement the elaboration logic"
+msgstr ""
+
+#: src/dev/elaboration-system.md:161
+msgid "Create appropriate cells for your results"
+msgstr ""
+
+#: src/dev/elaboration-system.md:162
+msgid "Connect your result to the target type using constraints like `Unify`"
+msgstr ""
+
+#: src/dev/elaboration-system.md:163
+msgid ""
+"Optionally implement defaulting behavior for when type information is "
+"incomplete"
+msgstr ""
+
+#: src/dev/elaboration-system.md:165
+msgid "4. Register the Handler"
+msgstr ""
+
+#: src/dev/elaboration-system.md:167
+msgid ""
+"Add your handler to `DefaultSolverConf.scala` so the system knows how to "
+"process your constraint. This involves adding your handler to the list of "
+"handlers in the `DefaultSolverConf` value."
+msgstr ""
+
+#: src/dev/elaboration-system.md:169
+msgid "5. Update DefaultElab"
+msgstr ""
+
+#: src/dev/elaboration-system.md:171
+msgid ""
+"Finally, extend the `elab()` method in `DefaultElab` to handle your "
+"expression type by adding a pattern matching case for your expression type "
+"that calls your constraint."
+msgstr ""
+
+#: src/dev/elaboration-system.md:173
+msgid "Example: Adding Support for Boolean Literals"
+msgstr ""
+
+#: src/dev/elaboration-system.md:175
+msgid ""
+"A practical example would be adding support for boolean literals, which "
+"would require:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:177
+msgid "Defining a `BooleanLit` Kind to identify the boolean literal constraint"
+msgstr ""
+
+#: src/dev/elaboration-system.md:178
+msgid ""
+"Creating a `BooleanLit` constraint class that takes a BooleanLiteral "
+"expression and target type"
+msgstr ""
+
+#: src/dev/elaboration-system.md:179
+msgid "Implementing a `BooleanLitHandler` that:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:180
+msgid "Creates a BooleanTerm with the appropriate value"
+msgstr ""
+
+#: src/dev/elaboration-system.md:181
+msgid "Adds a cell containing that term"
+msgstr ""
+
+#: src/dev/elaboration-system.md:182
+msgid "Creates a BooleanType cell"
+msgstr ""
+
+#: src/dev/elaboration-system.md:183
+msgid "Unifies the target type with the boolean type"
+msgstr ""
+
+#: src/dev/elaboration-system.md:184
+msgid "Connects the boolean term to the output cell"
+msgstr ""
+
+#: src/dev/elaboration-system.md:185
+msgid "Registering the handler in DefaultSolverConf"
+msgstr ""
+
+#: src/dev/elaboration-system.md:186
+msgid ""
+"Adding a case for BooleanLiteral expressions in the DefaultElab.elab method"
+msgstr ""
+
+#: src/dev/elaboration-system.md:188
+msgid "Transition Guidelines"
+msgstr ""
+
+#: src/dev/elaboration-system.md:190
+msgid ""
+"While both systems currently coexist, the development focus is transitioning "
+"to the new `chester.elab` system. Follow these guidelines when working with "
+"the codebase:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:192
+#, fuzzy
+msgid "For New Development"
+msgstr "開發日誌"
+
+#: src/dev/elaboration-system.md:194
+msgid ""
+"Use `DefaultElaborator.inferPure()` as the primary entry point for new "
+"typechecking code"
+msgstr ""
+
+#: src/dev/elaboration-system.md:195
+msgid "Implement new features and extensions in the `chester.elab` package"
+msgstr ""
+
+#: src/dev/elaboration-system.md:196
+msgid "Add handlers for new expression types following the pattern shown above"
+msgstr ""
+
+#: src/dev/elaboration-system.md:197
+msgid "Write tests specifically against the new elaboration system"
+msgstr ""
+
+#: src/dev/elaboration-system.md:199
+msgid "For Maintenance of Existing Code"
+msgstr ""
+
+#: src/dev/elaboration-system.md:201
+msgid ""
+"When fixing bugs in the existing `chester.tyck` system, consider if the fix "
+"should also be applied to `chester.elab`"
+msgstr ""
+
+#: src/dev/elaboration-system.md:202
+msgid ""
+"Document cross-references between equivalent functionality in both systems"
+msgstr ""
+
+#: src/dev/elaboration-system.md:203
+msgid "Gradually migrate test cases to support the new system"
+msgstr ""
+
+#: src/dev/elaboration-system.md:207
+msgid ""
+"Use `ElabLiteralAndListTest.scala` as a reference for test structure and "
+"pattern"
+msgstr ""
+
+#: src/dev/elaboration-system.md:208
+msgid "Create test cases that work with both systems to ensure compatibility"
+msgstr ""
+
+#: src/dev/elaboration-system.md:209
+msgid ""
+"The REPL's toggle (`useNewElab`) allows easy switching between systems for "
+"comparison"
+msgstr ""
+
+#: src/dev/elaboration-system.md:211 src/guide/statements.md:85
+msgid "Best Practices"
+msgstr ""
+
+#: src/dev/elaboration-system.md:213
+msgid "1. Preserve Original Terms"
+msgstr ""
+
+#: src/dev/elaboration-system.md:215
+msgid ""
+"Consistent with the existing guidelines for the original elaboration system:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:217
+msgid "The elaboration system should preserve the original structure of terms"
+msgstr ""
+
+#: src/dev/elaboration-system.md:218
+msgid "Avoid reduction during elaboration"
+msgstr ""
+
+#: src/dev/elaboration-system.md:219
+msgid "Keep source code structure intact in elaborated results"
+msgstr ""
+
+#: src/dev/elaboration-system.md:222
+msgid "2. Error Reporting"
+msgstr ""
+
+#: src/dev/elaboration-system.md:224
+msgid "Use the `ElabOps` reporter for consistent error messages"
+msgstr ""
+
+#: src/dev/elaboration-system.md:225
+msgid "Provide detailed type information in error messages"
+msgstr ""
+
+#: src/dev/elaboration-system.md:226
+msgid "Match the error format of the original system for consistency"
+msgstr ""
+
+#: src/dev/elaboration-system.md:227
+msgid "Include source position information when available"
+msgstr ""
+
+#: src/dev/elaboration-system.md:228
+msgid "Use internationalized messages (with `t\"\"` string templates)"
+msgstr ""
+
+#: src/dev/elaboration-system.md:230
+msgid "3. Testing"
+msgstr ""
+
+#: src/dev/elaboration-system.md:233
+msgid "Verify the structure of elaborated terms"
+msgstr ""
+
+#: src/dev/elaboration-system.md:234
+msgid ""
+"Check inferred types carefully, especially for complex cases like union types"
+msgstr ""
+
+#: src/dev/elaboration-system.md:235
+msgid "Test with heterogeneous data to verify union type handling"
+msgstr ""
+
+#: src/dev/elaboration-system.md:236
+msgid ""
+"Ensure tests cover edge cases like empty collections and nested structures"
+msgstr ""
+
+#: src/dev/elaboration-system.md:238
+msgid "Current Limitations and Future Work"
+msgstr ""
+
+#: src/dev/elaboration-system.md:240
+msgid ""
+"The new elaboration system is still under development and doesn't yet "
+"support the full range of Chester language features. Current limitations "
+"include:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:242
+msgid "Limited support for complex expressions and statements"
+msgstr ""
+
+#: src/dev/elaboration-system.md:243
+msgid ""
+"Incomplete handling of advanced type features like traits and interfaces"
+msgstr ""
+
+#: src/dev/elaboration-system.md:244
+msgid "Partial support for effects system"
+msgstr ""
+
+#: src/dev/elaboration-system.md:245
+msgid "Incomplete support for pattern matching"
+msgstr ""
+
+#: src/dev/elaboration-system.md:247
+msgid "Future development should focus on:"
+msgstr ""
+
+#: src/dev/elaboration-system.md:249
+msgid "Extending the system to support all Chester language features"
+msgstr ""
+
+#: src/dev/elaboration-system.md:250
+msgid "Improving error messages and diagnostics"
+msgstr ""
+
+#: src/dev/elaboration-system.md:251
+msgid "Enhancing performance and error recovery"
+msgstr ""
+
+#: src/dev/elaboration-system.md:252
+msgid "Eventually replacing the original system entirely"
+msgstr ""
+
+#: src/dev/intellij-idea.md:3
+msgid "use nightly update of scala plugin"
+msgstr ""
+
+#: src/dev/intellij-idea.md:4
+msgid "use \"Compiler\" for scala2"
+msgstr ""
+
+#: src/dev/intellij-idea.md:5
+msgid ""
+"in sbt settings, Create separate modules for main and test; Use separate "
+"compiler output paths"
 msgstr ""
 
 #: src/dev/js2py.md:5
@@ -7668,7 +8447,7 @@ msgstr ""
 msgid "**ExprMeta**: Metadata handling for source positions and comments"
 msgstr ""
 
-#: src/dev/reader.md:34 src/dev/reader.md:67
+#: src/dev/reader.md:34 src/dev/reader.md:68
 msgid "Characteristics"
 msgstr ""
 
@@ -7684,7 +8463,7 @@ msgstr ""
 msgid "Recursive descent parsing model"
 msgstr ""
 
-#: src/dev/reader.md:40 src/dev/reader.md:75
+#: src/dev/reader.md:40 src/dev/reader.md:78
 msgid "Implementation Structure"
 msgstr ""
 
@@ -7738,235 +8517,284 @@ msgstr ""
 #: src/dev/reader.md:58
 msgid ""
 "ReaderV2 uses a custom tokenizer and a state machine-based approach for "
-"parsing."
+"parsing, with significant improvements to block termination detection and "
+"object expression parsing."
 msgstr ""
 
 #: src/dev/reader.md:62
-msgid "**Tokenizer**: Converts source code into a stream of tokens"
+msgid ""
+"**Lexer**: Converts source code into a stream of tokens for efficient parsing"
 msgstr ""
 
 #: src/dev/reader.md:63
 msgid ""
-"**ReaderState**: Tracks current position, token history, and pending tokens"
+"**ReaderState**: Tracks current token position, history, and pending "
+"whitespace/comments"
 msgstr ""
 
 #: src/dev/reader.md:64
-msgid "**ReaderContext**: Tracks semantic context for parsing decisions"
+msgid ""
+"**ReaderContext**: Contains context flags like `newLineAfterBlockMeansEnds` "
+"for parsing decisions"
 msgstr ""
 
 #: src/dev/reader.md:65
 msgid ""
-"**Token Handlers**: Specialized methods for parsing different token types"
+"**Token**: Represents tokens like identifiers, operators, literals, with "
+"source position information"
 msgstr ""
 
-#: src/dev/reader.md:69
-msgid "Pre-tokenization for token stream processing"
+#: src/dev/reader.md:66
+msgid ""
+"**Token Handlers**: Specialized methods for parsing different token types "
+"and structures"
 msgstr ""
 
 #: src/dev/reader.md:70
-msgid "Separate lexing and parsing phases"
+msgid "Pre-tokenization for efficient token stream processing"
 msgstr ""
 
 #: src/dev/reader.md:71
-msgid "Explicit context tracking for syntactic patterns"
+msgid "Separate lexing and parsing phases for cleaner code organization"
 msgstr ""
 
 #: src/dev/reader.md:72
-msgid "UTF-16 aware Unicode and emoji handling"
+msgid "Context-aware parsing with explicit state tracking"
 msgstr ""
 
 #: src/dev/reader.md:73
-msgid "Explicit state management"
+msgid "Enhanced UTF-16 aware Unicode and emoji handling"
 msgstr ""
 
-#: src/dev/reader.md:77
+#: src/dev/reader.md:74
+msgid "Robust block termination detection with the `}\\n` pattern"
+msgstr ""
+
+#: src/dev/reader.md:75
+msgid "Comprehensive object expression support with multiple key types"
+msgstr ""
+
+#: src/dev/reader.md:76
+msgid "Optimized comment handling and attachment"
+msgstr ""
+
+#: src/dev/reader.md:80
 msgid "ReaderV2 consists of:"
 msgstr ""
 
-#: src/dev/reader.md:79
+#: src/dev/reader.md:82
 msgid ""
 "**Two-Phase Parsing**: Separates tokenization from parsing, with a dedicated "
 "Tokenizer creating a stream of tokens before parsing begins."
 msgstr ""
 
-#: src/dev/reader.md:81
+#: src/dev/reader.md:84
 msgid ""
-"**State Machine**: The parser maintains explicit state through a "
-"`ReaderState` object that tracks the current token, previous tokens, pending "
-"comments/whitespace, and other contextual information."
-msgstr ""
-
-#: src/dev/reader.md:83
-msgid ""
-"**Context-Aware Processing**: A `ReaderContext` object tracks semantic "
-"context, enabling context-sensitive decisions during parsing."
+"**State Management**: The parser maintains state through two complementary "
+"objects:"
 msgstr ""
 
 #: src/dev/reader.md:85
 msgid ""
-"**Comment Handling**: Methods like `skipComments()` and `pullComments()` "
-"manage comment attachment without recursive descent."
+"**ReaderState**: Tracks token position, history, and pending whitespace/"
+"comments"
+msgstr ""
+
+#: src/dev/reader.md:86
+msgid ""
+"**ReaderContext**: Contains context flags like `newLineAfterBlockMeansEnds` "
+"for syntactic decisions"
 msgstr ""
 
 #: src/dev/reader.md:87
 msgid ""
-"**Block Termination Detection**: The special `}\\n` pattern detection uses "
-"explicit context tracking and lookahead to determine when blocks end."
+"Together they enable precise tracking of parser state and contextual "
+"information"
 msgstr ""
 
 #: src/dev/reader.md:89
+msgid ""
+"**Context-Aware Processing**: Context flags enable important syntactic "
+"decisions like proper block termination with the `}\\n` pattern, while "
+"maintaining uniform symbol treatment."
+msgstr ""
+
+#: src/dev/reader.md:91
+msgid ""
+"**Optimized Comment Handling**: Non-recursive methods like `skipComments()` "
+"and `pullComments()` efficiently manage comment attachment, replacing the "
+"previous recursive approach."
+msgstr ""
+
+#: src/dev/reader.md:93
+msgid ""
+"**Robust Block Termination**: The special `}\\n` pattern detection is "
+"implemented in the `checkForRBraceNewlinePattern()` method, which uses the "
+"`newLineAfterBlockMeansEnds` flag from ReaderContext to determine when "
+"blocks should end."
+msgstr ""
+
+#: src/dev/reader.md:95
+msgid "**Enhanced Object Expressions**: Support for multiple key types:"
+msgstr ""
+
+#: src/dev/reader.md:99
+msgid "Both `=` and `=>` operators in object clauses"
+msgstr ""
+
+#: src/dev/reader.md:101
 msgid ""
 "**Error Handling**: The parser produces structured `ParseError` objects with "
 "detailed source position information and recovery mechanisms."
 msgstr ""
 
-#: src/dev/reader.md:91
+#: src/dev/reader.md:103
 msgid ""
 "**Bottom-Up Construction**: Parsing builds expressions from atoms and then "
 "extends them through continuation-based parsing in `parseRest()`."
 msgstr ""
 
-#: src/dev/reader.md:93
+#: src/dev/reader.md:105
 msgid "Key Similarities Between Implementations"
 msgstr ""
 
-#: src/dev/reader.md:95
+#: src/dev/reader.md:107
 msgid "Both parsers:"
 msgstr ""
 
-#: src/dev/reader.md:97
+#: src/dev/reader.md:109
 msgid "Track source positions for error reporting"
 msgstr ""
 
-#: src/dev/reader.md:98
+#: src/dev/reader.md:110
 msgid "Preserve comments in the AST"
 msgstr ""
 
-#: src/dev/reader.md:99
+#: src/dev/reader.md:111
 msgid "Handle the `}\\n` block termination pattern"
 msgstr ""
 
-#: src/dev/reader.md:100
+#: src/dev/reader.md:112
 msgid "Produce flat operator sequences without precedence handling"
 msgstr ""
 
-#: src/dev/reader.md:101
+#: src/dev/reader.md:113
 msgid "Parse the same language syntax"
 msgstr ""
 
-#: src/dev/reader.md:102
+#: src/dev/reader.md:114
 msgid "Use context tracking for parsing decisions"
 msgstr ""
 
-#: src/dev/reader.md:103
+#: src/dev/reader.md:115
 msgid "Generate identical AST structures"
 msgstr ""
 
-#: src/dev/reader.md:105
+#: src/dev/reader.md:117
 msgid "Key Differences Between Implementations"
 msgstr ""
 
-#: src/dev/reader.md:107
+#: src/dev/reader.md:119
 msgid "Feature"
 msgstr ""
 
-#: src/dev/reader.md:107
+#: src/dev/reader.md:119
 msgid "ReaderV1"
 msgstr ""
 
-#: src/dev/reader.md:107
+#: src/dev/reader.md:119
 msgid "ReaderV2"
 msgstr ""
 
-#: src/dev/reader.md:109
+#: src/dev/reader.md:121
 msgid "**Parsing Approach**"
 msgstr ""
 
-#: src/dev/reader.md:109
+#: src/dev/reader.md:121
 msgid "Parser combinators (FastParse)"
 msgstr ""
 
-#: src/dev/reader.md:109
+#: src/dev/reader.md:121
 msgid "Token-based state machine"
 msgstr ""
 
-#: src/dev/reader.md:110
+#: src/dev/reader.md:122
 msgid "**Error Recovery**"
 msgstr ""
 
-#: src/dev/reader.md:110
+#: src/dev/reader.md:122
 msgid "Limited"
 msgstr ""
 
-#: src/dev/reader.md:110
+#: src/dev/reader.md:122
 msgid "Enhanced with token-based recovery"
 msgstr ""
 
-#: src/dev/reader.md:111
+#: src/dev/reader.md:123
 msgid "**Token Creation**"
 msgstr ""
 
-#: src/dev/reader.md:111
+#: src/dev/reader.md:123
 msgid "On-demand during parsing"
 msgstr ""
 
-#: src/dev/reader.md:111
+#: src/dev/reader.md:123
 msgid "Separate tokenization phase"
 msgstr ""
 
-#: src/dev/reader.md:112
+#: src/dev/reader.md:124
 msgid "**State Handling**"
 msgstr ""
 
-#: src/dev/reader.md:112
+#: src/dev/reader.md:124
 msgid "Implicit in parse context"
 msgstr ""
 
-#: src/dev/reader.md:112
+#: src/dev/reader.md:124
 msgid "Explicit in ReaderState"
 msgstr ""
 
-#: src/dev/reader.md:113
+#: src/dev/reader.md:125
 msgid "**Code Structure**"
 msgstr ""
 
-#: src/dev/reader.md:113
+#: src/dev/reader.md:125
 msgid "Grammar-centric"
 msgstr ""
 
-#: src/dev/reader.md:113
+#: src/dev/reader.md:125
 msgid "Process-centric"
 msgstr ""
 
-#: src/dev/reader.md:114
+#: src/dev/reader.md:126
 msgid "**Performance**"
 msgstr ""
 
-#: src/dev/reader.md:114
+#: src/dev/reader.md:126
 msgid "Good"
 msgstr ""
 
-#: src/dev/reader.md:114
+#: src/dev/reader.md:126
 msgid "Better (especially on large files)"
 msgstr ""
 
-#: src/dev/reader.md:115
+#: src/dev/reader.md:127
 msgid "**Unicode Support**"
 msgstr ""
 
-#: src/dev/reader.md:115
+#: src/dev/reader.md:127
 msgid "Basic"
 msgstr ""
 
-#: src/dev/reader.md:115
+#: src/dev/reader.md:127
 msgid "Enhanced with better UTF-16 handling"
 msgstr ""
 
-#: src/dev/reader.md:117
+#: src/dev/reader.md:129
 msgid "Testing Infrastructure"
 msgstr ""
 
-#: src/dev/reader.md:119
+#: src/dev/reader.md:131
 msgid ""
 "Chester's test framework validates parser correctness and compatibility "
 "between V1 and V2 implementations. This framework, defined in `reader/shared/"
@@ -7974,206 +8802,206 @@ msgid ""
 "testing functions:"
 msgstr ""
 
-#: src/dev/reader.md:121
+#: src/dev/reader.md:133
 msgid "Core Testing Functions"
 msgstr ""
 
-#: src/dev/reader.md:123
+#: src/dev/reader.md:135
 msgid "**Parser-Specific Testing**:"
 msgstr ""
 
-#: src/dev/reader.md:124
+#: src/dev/reader.md:136
 msgid ""
 "`parseV1(input)`: Parses input with V1 parser only and returns the result"
 msgstr ""
 
-#: src/dev/reader.md:125
+#: src/dev/reader.md:137
 msgid ""
 "`parseV2(input)`: Parses input with V2 parser only and returns the result"
 msgstr ""
 
-#: src/dev/reader.md:126
+#: src/dev/reader.md:138
 msgid ""
 "`parseAndCheckV1(input, expected)`: Tests V1 parser against expected output"
 msgstr ""
 
-#: src/dev/reader.md:127
+#: src/dev/reader.md:139
 msgid ""
 "`parseAndCheckV2(input, expected)`: Tests V2 parser against expected output"
 msgstr ""
 
-#: src/dev/reader.md:129
+#: src/dev/reader.md:141
 msgid "**Cross-Parser Verification**:"
 msgstr ""
 
-#: src/dev/reader.md:130
+#: src/dev/reader.md:142
 msgid ""
 "`parseAndCheckBoth(input, expected)`: Tests both parsers and ensures they "
 "produce identical results"
 msgstr ""
 
-#: src/dev/reader.md:131
+#: src/dev/reader.md:143
 msgid "Tests backward compatibility and feature parity"
 msgstr ""
 
-#: src/dev/reader.md:133
+#: src/dev/reader.md:145
 msgid "**Top-Level Parsing**:"
 msgstr ""
 
-#: src/dev/reader.md:134
+#: src/dev/reader.md:146
 msgid ""
 "`parseTopLevelV1/V2` and `parseAndCheckTopLevelV1/V2/Both`: Similar "
 "functions for testing top-level parsing"
 msgstr ""
 
-#: src/dev/reader.md:135
+#: src/dev/reader.md:147
 msgid "Handle file-level parsing with multiple expressions"
 msgstr ""
 
-#: src/dev/reader.md:137
+#: src/dev/reader.md:149
 msgid "Error Reporting"
 msgstr ""
 
-#: src/dev/reader.md:139
+#: src/dev/reader.md:151
 msgid "The testing framework provides error reporting with:"
 msgstr ""
 
-#: src/dev/reader.md:141
+#: src/dev/reader.md:153
 msgid "Detailed error messages showing exact failure position"
 msgstr ""
 
-#: src/dev/reader.md:142
+#: src/dev/reader.md:154
 msgid "Visual pointer to error location in source code"
 msgstr ""
 
-#: src/dev/reader.md:143
+#: src/dev/reader.md:155
 msgid "Context-aware error descriptions"
 msgstr ""
 
-#: src/dev/reader.md:144
+#: src/dev/reader.md:156
 msgid "Comparison between expected and actual AST structures"
 msgstr ""
 
-#: src/dev/reader.md:146
+#: src/dev/reader.md:158
 msgid "Serialization Verification"
 msgstr ""
 
-#: src/dev/reader.md:148
+#: src/dev/reader.md:160
 msgid ""
 "The framework also tests that parsed expressions can be correctly serialized "
 "and deserialized:"
 msgstr ""
 
-#: src/dev/reader.md:150
+#: src/dev/reader.md:162
 msgid "Verifies JSON serialization with `read[Expr](write[Expr](value))`"
 msgstr ""
 
-#: src/dev/reader.md:151
+#: src/dev/reader.md:163
 msgid ""
 "Confirms binary serialization with `readBinary[Expr](writeBinary[Expr]"
 "(value))`"
 msgstr ""
 
-#: src/dev/reader.md:152
+#: src/dev/reader.md:164
 msgid "Ensures AST structures maintain integrity through serialization cycles"
 msgstr ""
 
-#: src/dev/reader.md:154
+#: src/dev/reader.md:166
 msgid "Test Organization"
 msgstr ""
 
-#: src/dev/reader.md:156
+#: src/dev/reader.md:168
 msgid "Parser tests are organized into several categories:"
 msgstr ""
 
-#: src/dev/reader.md:158
+#: src/dev/reader.md:170
 msgid "**Expression Tests**: Verify parsing of individual expression types"
 msgstr ""
 
-#: src/dev/reader.md:159
+#: src/dev/reader.md:171
 msgid "**Integration Tests**: Test combined language features"
 msgstr ""
 
-#: src/dev/reader.md:160
+#: src/dev/reader.md:172
 msgid "**Regression Tests**: Ensure previously fixed issues don't reoccur"
 msgstr ""
 
-#: src/dev/reader.md:161
+#: src/dev/reader.md:173
 msgid "**Migration Tests**: Track progress in supporting V1 features in V2"
 msgstr ""
 
-#: src/dev/reader.md:163
+#: src/dev/reader.md:175
 msgid "File-Based Testing"
 msgstr ""
 
-#: src/dev/reader.md:165
+#: src/dev/reader.md:177
 msgid ""
 "In addition to the core testing functions, Chester implements file-based "
 "integration tests:"
 msgstr ""
 
-#: src/dev/reader.md:167
+#: src/dev/reader.md:179
 msgid ""
 "**FileParserTest.scala**: Tests ReaderV2 against a suite of test files in "
 "`tests/parser` directory"
 msgstr ""
 
-#: src/dev/reader.md:168
+#: src/dev/reader.md:180
 msgid ""
 "**FileParserTestV1.scala**: Tests ReaderV1 against the same test suite for "
 "comparison"
 msgstr ""
 
-#: src/dev/reader.md:170
+#: src/dev/reader.md:182
 msgid "These file-based tests:"
 msgstr ""
 
-#: src/dev/reader.md:171
+#: src/dev/reader.md:183
 msgid "Ensure consistency when parsing complete Chester files"
 msgstr ""
 
-#: src/dev/reader.md:172
+#: src/dev/reader.md:184
 msgid "Verify parser behavior across a wide range of syntax combinations"
 msgstr ""
 
-#: src/dev/reader.md:173
+#: src/dev/reader.md:185
 msgid "Automatically generate expected output for regression testing"
 msgstr ""
 
-#: src/dev/reader.md:174
+#: src/dev/reader.md:186
 msgid "Maintain backward compatibility during parser evolution"
 msgstr ""
 
-#: src/dev/reader.md:176
+#: src/dev/reader.md:188
 msgid "Future Development"
 msgstr ""
 
-#: src/dev/reader.md:178
+#: src/dev/reader.md:190
 msgid ""
 "ReaderV2 is the focus of ongoing development, with priorities including:"
 msgstr ""
 
-#: src/dev/reader.md:180
+#: src/dev/reader.md:192
 msgid "Completing error recovery implementation"
 msgstr ""
 
-#: src/dev/reader.md:181
+#: src/dev/reader.md:193
 msgid "Adding source maps support"
 msgstr ""
 
-#: src/dev/reader.md:182
+#: src/dev/reader.md:194
 msgid "Migrating any remaining V1-only tests"
 msgstr ""
 
-#: src/dev/reader.md:183
+#: src/dev/reader.md:195
 msgid "Expanding test coverage"
 msgstr ""
 
-#: src/dev/reader.md:184
+#: src/dev/reader.md:196
 msgid "Optimizing token handling for better performance"
 msgstr ""
 
-#: src/dev/reader.md:186
+#: src/dev/reader.md:198
 msgid "See [devlog.md](devlog.md) for chronological implementation details."
 msgstr ""
 
@@ -8406,65 +9234,65 @@ msgstr ""
 msgid "For troubleshooting binding generation, check `jsTypings/stOutputs`"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:3
+#: src/dev/tyck-improvement-proposal.md:5
 msgid ""
 "This document outlines specific proposed improvements to Chester's type "
 "checking system, focusing on dependent types, union and intersection types, "
 "and the integration between the reducer and type checker."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:5
+#: src/dev/tyck-improvement-proposal.md:7
 msgid "1. Overview and Background"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:7
+#: src/dev/tyck-improvement-proposal.md:9
 msgid ""
 "Chester's type system is based on a constraint propagation network where:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:8
+#: src/dev/tyck-improvement-proposal.md:10
 msgid "Type constraints are represented by **propagators**"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:9
+#: src/dev/tyck-improvement-proposal.md:11
 msgid "**Cells** hold type information and track their propagators"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:10
+#: src/dev/tyck-improvement-proposal.md:12
 msgid "Two types of propagator connections:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:11
+#: src/dev/tyck-improvement-proposal.md:13
 msgid "**Reading**: Propagators that read from a cell"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:12
+#: src/dev/tyck-improvement-proposal.md:14
 msgid "**Zonking**: Propagators that can write to or resolve a cell"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:14
+#: src/dev/tyck-improvement-proposal.md:16
 msgid ""
 "Recent improvements have focused on enhancing support for dependent types, "
 "which require:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:15
+#: src/dev/tyck-improvement-proposal.md:17
 msgid "Types that can depend on terms"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:16
+#: src/dev/tyck-improvement-proposal.md:18
 msgid "Variable bindings in types with alpha-equivalence checking"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:17
+#: src/dev/tyck-improvement-proposal.md:19
 msgid "Sophisticated reduction strategies for type equality"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:19
+#: src/dev/tyck-improvement-proposal.md:21
 msgid "2. Current Status and Progress"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:21
+#: src/dev/tyck-improvement-proposal.md:23
 msgid ""
 "**Note**: Many key improvements have been completed and documented in the "
 "devlog entries. Refer to `docs/src/dev/devlog.md` for details on completed "
@@ -8472,122 +9300,122 @@ msgid ""
 "implementation, and the new AutoConnect propagator."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:23
+#: src/dev/tyck-improvement-proposal.md:25
 msgid "3. Remaining Issues and Implementation Plan"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:25
+#: src/dev/tyck-improvement-proposal.md:27
 msgid "3.1 ✅ Union Type Subtyping Implementation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:27
-#: src/dev/tyck-improvement-proposal.md:40
+#: src/dev/tyck-improvement-proposal.md:29
+#: src/dev/tyck-improvement-proposal.md:42
 msgid "**Status: COMPLETED**"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:29
+#: src/dev/tyck-improvement-proposal.md:31
 msgid ""
 "The union type implementation has been completed with full support for the "
 "pipe operator (`|`) syntax and proper subtyping relationships. All "
 "components have been implemented as documented in the devlog."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:31
+#: src/dev/tyck-improvement-proposal.md:33
 msgid "Completed implementations include:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:32
+#: src/dev/tyck-improvement-proposal.md:34
 msgid "Union-to-Union subtyping (`A|B <: C|D`)"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:33
+#: src/dev/tyck-improvement-proposal.md:35
 msgid "Specific-to-Union subtyping (`A <: B|C`)"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:34
+#: src/dev/tyck-improvement-proposal.md:36
 msgid "Union-to-Specific subtyping (`A|B <: C`)"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:35
+#: src/dev/tyck-improvement-proposal.md:37
 msgid "Cell coverage mechanisms for union types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:36
+#: src/dev/tyck-improvement-proposal.md:38
 msgid "Proper type checking for union types in all contexts"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:38
+#: src/dev/tyck-improvement-proposal.md:40
 msgid "3.2 ✅ Removal of the EnsureCellCoverage Hack"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:42
+#: src/dev/tyck-improvement-proposal.md:44
 msgid ""
 "The `EnsureCellCoverage` hack has been replaced with a proper `AutoConnect` "
 "propagator that establishes meaningful type relationships. See the devlog "
 "for implementation details."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:44
+#: src/dev/tyck-improvement-proposal.md:46
 msgid "Key improvements include:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:45
+#: src/dev/tyck-improvement-proposal.md:47
 msgid "Analysis of term structure to create proper type connections"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:46
+#: src/dev/tyck-improvement-proposal.md:48
 msgid "Smart handling of union and intersection types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:47
+#: src/dev/tyck-improvement-proposal.md:49
 msgid "Specialized support for function calls and their arguments"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:48
+#: src/dev/tyck-improvement-proposal.md:50
 msgid "Default value support for truly unconstrained type variables"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:49
+#: src/dev/tyck-improvement-proposal.md:51
 msgid "Complete removal of all `EnsureCellCoverage` instances"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:51
+#: src/dev/tyck-improvement-proposal.md:53
 msgid "All success criteria have been met:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:52
+#: src/dev/tyck-improvement-proposal.md:54
 msgid "All cells are covered by meaningful propagators with actual logic"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:53
+#: src/dev/tyck-improvement-proposal.md:55
 msgid "No explicit `EnsureCellCoverage` instances in the codebase"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:54
+#: src/dev/tyck-improvement-proposal.md:56
 msgid "Union types and other complex types work correctly"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:55
+#: src/dev/tyck-improvement-proposal.md:57
 msgid "Type errors are detected and reported accurately"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:56
+#: src/dev/tyck-improvement-proposal.md:58
 msgid "Tests pass with proper constraint checking"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:57
+#: src/dev/tyck-improvement-proposal.md:59
 msgid "Improved code clarity and maintainability"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:59
+#: src/dev/tyck-improvement-proposal.md:61
 msgid "3.3 Enhanced Type-Level Function Application Reduction"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:61
+#: src/dev/tyck-improvement-proposal.md:63
 msgid "Current Limitation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:63
+#: src/dev/tyck-improvement-proposal.md:65
 msgid ""
 "The current type checker supports basic type-level function applications, "
 "but has limited handling of nested or recursive function applications in "
@@ -8596,65 +9424,65 @@ msgid ""
 "type checking, leading to:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:65
+#: src/dev/tyck-improvement-proposal.md:67
 msgid "Type errors due to incomplete reduction of nested function applications"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:66
+#: src/dev/tyck-improvement-proposal.md:68
 msgid "Reduced flexibility when using type-level functions in complex ways"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:67
+#: src/dev/tyck-improvement-proposal.md:69
 msgid "Unclear error messages when type-level function applications fail"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:69 src/dev/typescript-backend.md:82
+#: src/dev/tyck-improvement-proposal.md:71 src/dev/typescript-backend.md:82
 #: src/dev/typescript-backend.md:120
 msgid "Implementation Plan"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:71
+#: src/dev/tyck-improvement-proposal.md:73
 msgid "The implementation requires focused changes to:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:73
+#: src/dev/tyck-improvement-proposal.md:75
 msgid "**DefaultReducer Enhancement**:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:74
+#: src/dev/tyck-improvement-proposal.md:76
 msgid "Improve handling of nested type-level function applications"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:75
+#: src/dev/tyck-improvement-proposal.md:77
 msgid "Implement recursive handling of type-level function results"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:76
+#: src/dev/tyck-improvement-proposal.md:78
 msgid "Ensure consistent reduction behavior for composed functions"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:78
+#: src/dev/tyck-improvement-proposal.md:80
 msgid "**Type Checking Integration**:"
 msgstr "**類型檢查整合**："
 
-#: src/dev/tyck-improvement-proposal.md:79
+#: src/dev/tyck-improvement-proposal.md:81
 msgid ""
 "Further enhance the `tryUnify` method to handle complex function call terms"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:80
+#: src/dev/tyck-improvement-proposal.md:82
 msgid "Ensure proper cell coverage for nested function applications"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:81
+#: src/dev/tyck-improvement-proposal.md:83
 msgid "Add guards to prevent pattern matching conflicts"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:83
+#: src/dev/tyck-improvement-proposal.md:85
 msgid "Testable Example"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:85
+#: src/dev/tyck-improvement-proposal.md:87
 msgid ""
 "```chester\n"
 "// Test enhanced type-level function application\n"
@@ -8674,55 +9502,55 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:103
+#: src/dev/tyck-improvement-proposal.md:105
 msgid "Nested function applications are properly reduced during type checking"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:104
+#: src/dev/tyck-improvement-proposal.md:106
 msgid "Field access on types produced by composed functions works correctly"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:105
+#: src/dev/tyck-improvement-proposal.md:107
 msgid "The original function applications are preserved in elaborated results"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:106
+#: src/dev/tyck-improvement-proposal.md:108
 msgid "No \"cells not covered by any propagator\" errors occur during zonking"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:108
+#: src/dev/tyck-improvement-proposal.md:110
 msgid "4. Testing Strategy"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:110
+#: src/dev/tyck-improvement-proposal.md:112
 msgid "4.1 Create Specialized Tests for Dependent Types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:112
+#: src/dev/tyck-improvement-proposal.md:114
 msgid "Implement tests that verify:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:113
+#: src/dev/tyck-improvement-proposal.md:115
 msgid "Function types with type dependencies"
 msgstr "帶有類型依賴的函數類型"
 
-#: src/dev/tyck-improvement-proposal.md:114
+#: src/dev/tyck-improvement-proposal.md:116
 msgid "Equality of types with different variable names but same structure"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:115
+#: src/dev/tyck-improvement-proposal.md:117
 msgid "Union and intersection types with alpha-equivalent components"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:117
+#: src/dev/tyck-improvement-proposal.md:119
 msgid "4.2 Union Type Testing Cases"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:119
+#: src/dev/tyck-improvement-proposal.md:121
 msgid "Completed test cases:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:121
+#: src/dev/tyck-improvement-proposal.md:123
 msgid ""
 "```chester\n"
 "// Widening (Success)\n"
@@ -8731,11 +9559,11 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:127
+#: src/dev/tyck-improvement-proposal.md:129
 msgid "Additional test cases needed:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:129
+#: src/dev/tyck-improvement-proposal.md:131
 msgid ""
 "```chester\n"
 "// Nested Union Types\n"
@@ -8750,213 +9578,213 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:140
+#: src/dev/tyck-improvement-proposal.md:142
 msgid "5. Implementation Steps"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:142
+#: src/dev/tyck-improvement-proposal.md:144
 msgid "5.1 Phase 1: Core Type System Improvements"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:144
+#: src/dev/tyck-improvement-proposal.md:146
 msgid "**Status**: Most core improvements have been completed."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:146
+#: src/dev/tyck-improvement-proposal.md:148
 msgid "Completed improvements (see devlog for details):"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:147
+#: src/dev/tyck-improvement-proposal.md:149
 msgid "✅ Enhanced Type Structure Reduction in DefaultReducer"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:148
+#: src/dev/tyck-improvement-proposal.md:150
 msgid "✅ Alpha-Equivalence Checking in TyckPropagator"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:149
+#: src/dev/tyck-improvement-proposal.md:151
 msgid "✅ Enhanced Type Level Comparison"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:150
+#: src/dev/tyck-improvement-proposal.md:152
 msgid "✅ Cell Coverage Mechanisms with AutoConnect propagator"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:151
+#: src/dev/tyck-improvement-proposal.md:153
 msgid "✅ Union Type Subtyping Implementation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:152
+#: src/dev/tyck-improvement-proposal.md:154
 msgid "✅ Basic Trait Implementation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:154
+#: src/dev/tyck-improvement-proposal.md:156
 msgid "Remaining items to complete:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:155
+#: src/dev/tyck-improvement-proposal.md:157
 msgid "Add more complex test cases for nested union types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:156
+#: src/dev/tyck-improvement-proposal.md:158
 msgid ""
 "Complete enhanced type-level function application for complex nested cases"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:157
+#: src/dev/tyck-improvement-proposal.md:159
 msgid "Add test cases for complex type-level functions"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:159
+#: src/dev/tyck-improvement-proposal.md:161
 msgid "5.2 Phase 2: Advanced Type Features"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:160
+#: src/dev/tyck-improvement-proposal.md:162
 msgid "Test with complex type-level function examples"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:161
+#: src/dev/tyck-improvement-proposal.md:163
 msgid "Verify all success criteria are met"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:162
+#: src/dev/tyck-improvement-proposal.md:164
 msgid "Add more test cases for edge cases"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:163
+#: src/dev/tyck-improvement-proposal.md:165
 msgid "Document implementation details and usage patterns"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:165
+#: src/dev/tyck-improvement-proposal.md:167
 msgid "6. Design Principles to Follow"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:167
+#: src/dev/tyck-improvement-proposal.md:169
 msgid "6.1 Term Preservation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:169
+#: src/dev/tyck-improvement-proposal.md:171
 msgid "Never reduce during elaboration"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:170
+#: src/dev/tyck-improvement-proposal.md:172
 msgid "Only use reduction for type-level comparisons"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:171
+#: src/dev/tyck-improvement-proposal.md:173
 msgid "Preserve source structure for better error reporting"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:173
+#: src/dev/tyck-improvement-proposal.md:175
 msgid "6.2 Reduction Strategy"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:174
+#: src/dev/tyck-improvement-proposal.md:176
 msgid "Only reduce during type equality checking"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:176
+#: src/dev/tyck-improvement-proposal.md:178
 msgid "Use proper reduction context from current context"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:177
+#: src/dev/tyck-improvement-proposal.md:179
 msgid "Never reflect internal reductions in output"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:179
+#: src/dev/tyck-improvement-proposal.md:181
 msgid "6.3 Documentation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:180
+#: src/dev/tyck-improvement-proposal.md:182
 msgid "Keep this document updated with implementation progress"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:181
+#: src/dev/tyck-improvement-proposal.md:183
 msgid "Document design decisions and trade-offs"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:182
+#: src/dev/tyck-improvement-proposal.md:184
 msgid "Maintain clear test cases for each feature"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:184
+#: src/dev/tyck-improvement-proposal.md:186
 msgid "7. Success Criteria"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:186
+#: src/dev/tyck-improvement-proposal.md:188
 msgid "All tests pass, including the specialized dependent type tests"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:187
+#: src/dev/tyck-improvement-proposal.md:189
 msgid "The type checking system correctly handles:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:188
+#: src/dev/tyck-improvement-proposal.md:190
 msgid "Complex dependent type scenarios"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:189
+#: src/dev/tyck-improvement-proposal.md:191
 msgid "Intersection type comparisons"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:190
+#: src/dev/tyck-improvement-proposal.md:192
 msgid "Union type subtyping"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:191
+#: src/dev/tyck-improvement-proposal.md:193
 msgid "Type-level function applications"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:192
+#: src/dev/tyck-improvement-proposal.md:194
 msgid ""
 "Documentation clearly explains dependent type concepts and usage patterns"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:193
+#: src/dev/tyck-improvement-proposal.md:195
 msgid "Meta variables in complex types resolve correctly"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:195
+#: src/dev/tyck-improvement-proposal.md:197
 msgid "8. Running Tests"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:197
+#: src/dev/tyck-improvement-proposal.md:199
 msgid ""
 "To run the tests for the type checker specifically, use the following SBT "
 "command:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:200
+#: src/dev/tyck-improvement-proposal.md:202
 msgid "# Run the FilesTyckTest suite to test the type checking system\n"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:204
+#: src/dev/tyck-improvement-proposal.md:206
 msgid ""
 "⚠️ **IMPORTANT WARNING**: Do NOT use the `-z` test filter option (e.g., `sbt "
 "\"rootJVM/testOnly -- -z pattern\"`) as it is broken and produces unreliable "
 "results. Instead, run the entire test suite and review the results."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:206
+#: src/dev/tyck-improvement-proposal.md:208
 msgid "8.5 Quick Test Guide"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:208
+#: src/dev/tyck-improvement-proposal.md:210
 msgid "Basic Test Cases By Feature"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:210
+#: src/dev/tyck-improvement-proposal.md:212
 msgid ""
 "Below are minimal test cases for each feature that can be used for quick "
 "verification. Create these in separate `.chester` files in the `tests/tyck/` "
 "directory to validate implementation."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:212
+#: src/dev/tyck-improvement-proposal.md:214
 msgid "1. Union Type Tests"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:214
+#: src/dev/tyck-improvement-proposal.md:216
 msgid ""
 "```chester\n"
 "// FILE: union_basic.chester\n"
@@ -8966,7 +9794,7 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:221
+#: src/dev/tyck-improvement-proposal.md:223
 msgid ""
 "```chester\n"
 "// FILE: union_function.chester\n"
@@ -8977,7 +9805,7 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:229
+#: src/dev/tyck-improvement-proposal.md:231
 msgid ""
 "```chester\n"
 "// FILE: union_specific.chester\n"
@@ -8988,11 +9816,11 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:237
+#: src/dev/tyck-improvement-proposal.md:239
 msgid "2. Trait Tests"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:239
+#: src/dev/tyck-improvement-proposal.md:241
 msgid ""
 "```chester\n"
 "// FILE: trait_basic.chester\n"
@@ -9011,7 +9839,7 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:255
+#: src/dev/tyck-improvement-proposal.md:257
 msgid ""
 "```chester\n"
 "// FILE: trait_field.chester\n"
@@ -9028,11 +9856,11 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:269
+#: src/dev/tyck-improvement-proposal.md:271
 msgid "3. Type-Level Function Tests"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:271
+#: src/dev/tyck-improvement-proposal.md:273
 msgid ""
 "```chester\n"
 "// FILE: type_function.chester\n"
@@ -9048,997 +9876,1081 @@ msgid ""
 "```"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:284
+#: src/dev/tyck-improvement-proposal.md:286
 msgid "Running Individual Test Cases"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:286
+#: src/dev/tyck-improvement-proposal.md:288
 msgid "To run a specific test file:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:289
+#: src/dev/tyck-improvement-proposal.md:291
 msgid "# Compile and run a specific test file\n"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:290
+#: src/dev/tyck-improvement-proposal.md:292
 msgid "\"rootJVM/testOnly chester.tyck.FilesTyckTest -- -only add.chester\""
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:293
+#: src/dev/tyck-improvement-proposal.md:295
 msgid "Test Verification Checklist"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:295
+#: src/dev/tyck-improvement-proposal.md:297
 msgid "For each test case, verify:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:297
+#: src/dev/tyck-improvement-proposal.md:299
 msgid "✅ Compilation succeeds without errors"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:298
+#: src/dev/tyck-improvement-proposal.md:300
 msgid "✅ Type checks pass correctly"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:299
+#: src/dev/tyck-improvement-proposal.md:301
 msgid "✅ No \"cells not covered by any propagator\" errors"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:300
+#: src/dev/tyck-improvement-proposal.md:302
 msgid ""
 "✅ Error messages are clear and helpful when intentional errors are "
 "introduced"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:302
+#: src/dev/tyck-improvement-proposal.md:304
 msgid "9. ✅ Trait Implementation Plan"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:304
-#: src/dev/tyck-improvement-proposal.md:320
+#: src/dev/tyck-improvement-proposal.md:306
+#: src/dev/tyck-improvement-proposal.md:322
 msgid "**Status: BASIC IMPLEMENTATION COMPLETED**"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:306
+#: src/dev/tyck-improvement-proposal.md:308
 msgid ""
 "Basic trait implementation has been completed and documented in the "
 "development log. See the devlog for implementation details."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:308
+#: src/dev/tyck-improvement-proposal.md:310
 msgid "Future Enhancements for Traits"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:310
+#: src/dev/tyck-improvement-proposal.md:312
 msgid ""
 "While basic trait functionality is working, the following enhancements are "
 "planned for future implementation:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:312
+#: src/dev/tyck-improvement-proposal.md:314
 msgid "Complete field requirement verification for traits"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:313
+#: src/dev/tyck-improvement-proposal.md:315
 msgid "Multiple trait inheritance support"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:314
+#: src/dev/tyck-improvement-proposal.md:316
 msgid "Trait method and default implementations"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:315
+#: src/dev/tyck-improvement-proposal.md:317
 msgid "More comprehensive trait test cases"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:316
+#: src/dev/tyck-improvement-proposal.md:318
 msgid "Advanced trait composition patterns"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:318
+#: src/dev/tyck-improvement-proposal.md:320
 msgid "10. ✅ Detailed Plan for Complex Union Types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:322
+#: src/dev/tyck-improvement-proposal.md:324
 msgid ""
 "Many of the planned union type improvements have been completed and "
 "documented in the devlog. The implementation includes proper handling of "
 "union subtyping and cell coverage through the new AutoConnect propagator."
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:324
+#: src/dev/tyck-improvement-proposal.md:326
 msgid "Future Work for Complex Union Types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:326
+#: src/dev/tyck-improvement-proposal.md:328
 msgid ""
 "To further extend support for complex union types (nested unions, unions "
 "with generic types), the following detailed technical steps are still needed:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:328
+#: src/dev/tyck-improvement-proposal.md:330
 msgid "**Enhance Parser and Desalter Support**:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:329
+#: src/dev/tyck-improvement-proposal.md:331
 msgid "Improve handling of parenthesized union types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:330
+#: src/dev/tyck-improvement-proposal.md:332
 msgid "Add special handling for union types with generic parameters"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:331
+#: src/dev/tyck-improvement-proposal.md:333
 msgid "Support deeper nested union types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:333
+#: src/dev/tyck-improvement-proposal.md:335
 msgid "**Strengthen Type Checking for Advanced Cases**:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:334
+#: src/dev/tyck-improvement-proposal.md:336
 msgid "Enhance handling of nested unions by \"flattening\" when appropriate"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:335
+#: src/dev/tyck-improvement-proposal.md:337
 msgid "Improve error reporting for complex union scenarios"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:336
+#: src/dev/tyck-improvement-proposal.md:338
 msgid "Update unification to handle multi-level nested unions properly"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:338
+#: src/dev/tyck-improvement-proposal.md:340
 msgid "**Expand the Test Suite**:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:339
+#: src/dev/tyck-improvement-proposal.md:341
 msgid "Add specific unit tests for each subtyping scenario"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:340
+#: src/dev/tyck-improvement-proposal.md:342
 msgid "Test nested unions with different depths"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:341
+#: src/dev/tyck-improvement-proposal.md:343
 msgid "Test unions with different combinations of types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:342
+#: src/dev/tyck-improvement-proposal.md:344
 msgid "Test function types with union parameters and return types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:343
+#: src/dev/tyck-improvement-proposal.md:345
 msgid "Test generic type parameters with union bounds"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:344
+#: src/dev/tyck-improvement-proposal.md:346
 msgid ""
 "Test more complex scenarios combining unions, intersections, and generic "
 "types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:346
+#: src/dev/tyck-improvement-proposal.md:348
 msgid "Success Metrics"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:348
+#: src/dev/tyck-improvement-proposal.md:350
 msgid "The implementation will be considered successful when:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:350
+#: src/dev/tyck-improvement-proposal.md:352
 msgid "All test cases pass without errors"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:351
+#: src/dev/tyck-improvement-proposal.md:353
 msgid "The type checker correctly handles complex nested unions"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:352
+#: src/dev/tyck-improvement-proposal.md:354
 msgid "No \"cells not covered\" exceptions occur"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:353
+#: src/dev/tyck-improvement-proposal.md:355
 msgid "Type error messages are clear and help identify the issue"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:354
+#: src/dev/tyck-improvement-proposal.md:356
 msgid "The implementation can scale to handle arbitrarily complex union types"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:356
+#: src/dev/tyck-improvement-proposal.md:358
 msgid "11. Experimental Implementation Notes: Union Type Improvements"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:358
+#: src/dev/tyck-improvement-proposal.md:360
 msgid ""
 "During an experimental implementation attempt to fix union type handling, "
 "the following specific changes were made to improve union type subtyping and "
 "prevent cell coverage errors:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:360
+#: src/dev/tyck-improvement-proposal.md:362
 msgid "11.1 Union-to-Specific Type Relationship Changes"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:362
+#: src/dev/tyck-improvement-proposal.md:364
 msgid ""
 "The key issue identified was in how union types were converted to specific "
 "types (e.g., `Integer | String` to `Integer`):"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:364
+#: src/dev/tyck-improvement-proposal.md:366
 msgid "**Original Implementation Issues:**"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:365
+#: src/dev/tyck-improvement-proposal.md:367
 msgid ""
 "In `TyckPropagator.scala`, the `unionSpecificCompatible` method only checked "
 "if ANY component of the union was compatible with the specific type"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:366
+#: src/dev/tyck-improvement-proposal.md:368
 msgid ""
 "This allowed unsound expressions like `def f(x: Integer | String): Integer = "
 "x` to type-check"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:368
+#: src/dev/tyck-improvement-proposal.md:370
 msgid "**Specific Changes Made:**"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:369
+#: src/dev/tyck-improvement-proposal.md:371
 msgid ""
 "Modified `unionSpecificCompatible` method to check if ALL union components "
 "are compatible with the specific type"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:370
+#: src/dev/tyck-improvement-proposal.md:372
 msgid ""
 "Changed the implementation logic from `unionTypes.exists(compatible)` to `!"
 "unionTypes.exists(!compatible)`"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:371
+#: src/dev/tyck-improvement-proposal.md:373
 msgid ""
 "Added explicit error reporting in `handleUnionSpecific` method within the "
 "`Unify` case class"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:372
+#: src/dev/tyck-improvement-proposal.md:374
 msgid ""
 "Enhanced debug output to include step-by-step component compatibility checks"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:373
+#: src/dev/tyck-improvement-proposal.md:375
 msgid ""
 "Modified `Elaborater.unify` method's union case to properly handle specific-"
 "to-union compatibility"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:375
+#: src/dev/tyck-improvement-proposal.md:377
 msgid "11.2 DefaultValuePropagator Implementation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:377
+#: src/dev/tyck-improvement-proposal.md:379
 msgid "To solve the \"cells not covered by any propagator\" errors:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:379
+#: src/dev/tyck-improvement-proposal.md:381
 msgid "**Specific Implementation Changes:**"
 msgstr "**具體實現變更**："
 
-#: src/dev/tyck-improvement-proposal.md:380
+#: src/dev/tyck-improvement-proposal.md:382
 msgid ""
 "Rewritten `ensureDefaultValue[T]` method (line ~1087 in "
 "`TyckPropagator.scala`):"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:381
+#: src/dev/tyck-improvement-proposal.md:383
 msgid "Added explicit `state.addPropagator` call to add a dedicated propagator"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:382
+#: src/dev/tyck-improvement-proposal.md:384
 msgid "Added explicit `state.fill` call to ensure cells have values"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:383
+#: src/dev/tyck-improvement-proposal.md:385
 msgid "Added diagnostic logging to track cell state"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:385
+#: src/dev/tyck-improvement-proposal.md:387
 msgid "Created a new `DefaultValuePropagator[T]` case class with:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:386
+#: src/dev/tyck-improvement-proposal.md:388
 msgid "Set `score = 100` to give it high priority"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:387
+#: src/dev/tyck-improvement-proposal.md:389
 msgid "Implemented `run`, `defaulting`, and `naiveFallbackZonk` methods"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:388
+#: src/dev/tyck-improvement-proposal.md:390
 msgid ""
 "Added proper cell tracking with `readingCells`, `writingCells`, and "
 "`defaultingCells`"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:389
+#: src/dev/tyck-improvement-proposal.md:391
 msgid ""
 "Added custom `identify` method returning `Some(id)` to prevent propagator "
 "removal"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:391
+#: src/dev/tyck-improvement-proposal.md:393
 msgid "11.3 Infinite Recursion Prevention"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:393
+#: src/dev/tyck-improvement-proposal.md:395
 msgid "Specific changes to break cyclic dependencies:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:395
+#: src/dev/tyck-improvement-proposal.md:397
 msgid "In `UnionOf` propagator:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:396
+#: src/dev/tyck-improvement-proposal.md:398
 msgid "Removed recursive calls to `unify` that could cause infinite loops"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:397
+#: src/dev/tyck-improvement-proposal.md:399
 msgid "Used early returns and simplified value checking logic"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:398
+#: src/dev/tyck-improvement-proposal.md:400
 msgid "Added guard conditions before recursive propagator creation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:400
+#: src/dev/tyck-improvement-proposal.md:402
 msgid "In the `handleUnionSpecific` method:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:401
+#: src/dev/tyck-improvement-proposal.md:403
 msgid ""
 "Used `ensureDefaultValue` for each union component instead of creating "
 "linked propagators"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:402
+#: src/dev/tyck-improvement-proposal.md:404
 msgid ""
 "Added filtered component selection before creating propagator connections"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:403
+#: src/dev/tyck-improvement-proposal.md:405
 msgid ""
 "Used explicit value discarding with statements like `val _ = "
 "ensureDefaultValue(unionType)`"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:405
+#: src/dev/tyck-improvement-proposal.md:407
 msgid "11.4 Test File Updates"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:407
+#: src/dev/tyck-improvement-proposal.md:409
 msgid "Specific file changes:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:408
+#: src/dev/tyck-improvement-proposal.md:410
 msgid ""
 "Moved `tests/tyck-fails/union-subtype-fail.chester.todo` to active status by "
 "removing `.todo` extension"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:409
+#: src/dev/tyck-improvement-proposal.md:411
 msgid ""
 "Updated the expected behavior of `def f(x: Integer | String): Integer = x` "
 "to correctly fail"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:410
+#: src/dev/tyck-improvement-proposal.md:412
 msgid ""
 "Modified `tests/tyck/simple-union.chester.todo` to ensure it properly tests "
 "union widening"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:412
+#: src/dev/tyck-improvement-proposal.md:414
 msgid "11.5 Key Identifier Changes for Future Reference"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:414
+#: src/dev/tyck-improvement-proposal.md:416
 msgid "The most significant method and identifier changes were:"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:415
+#: src/dev/tyck-improvement-proposal.md:417
 msgid "`unionSpecificCompatible`: Changed compatibility check logic"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:416
+#: src/dev/tyck-improvement-proposal.md:418
 msgid "`handleUnionSpecific`: Rewrote to handle ALL union components"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:417
+#: src/dev/tyck-improvement-proposal.md:419
 msgid "`ensureDefaultValue`: Enhanced with propagator creation"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:418
+#: src/dev/tyck-improvement-proposal.md:420
 msgid "Added new `DefaultValuePropagator` class"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:419
+#: src/dev/tyck-improvement-proposal.md:421
 msgid "Modified `Unify.defaulting` case for union handling"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:420
+#: src/dev/tyck-improvement-proposal.md:422
 msgid "Updated union component debug logging using `Debug.debugPrint`"
 msgstr ""
 
-#: src/dev/tyck-improvement-proposal.md:422
+#: src/dev/tyck-improvement-proposal.md:424
 msgid ""
 "These changes collectively represent an approach to fixing union type "
 "subtyping that ensures sound type checking while preventing \"cells not "
 "covered\" errors through improved propagator management."
 msgstr ""
 
-#: src/dev/type-checking-system.md:3
+#: src/dev/type-checking-system.md:5
 msgid "Quick Start Guide"
 msgstr ""
 
-#: src/dev/type-checking-system.md:5
+#: src/dev/type-checking-system.md:7
 msgid ""
 "Chester's type checking system is powered by a **propagator network** - a "
 "constraint-based approach that allows for complex type relationships."
 msgstr ""
 
-#: src/dev/type-checking-system.md:7
+#: src/dev/type-checking-system.md:9
 msgid "Simple Visual Overview"
 msgstr ""
 
-#: src/dev/type-checking-system.md:36
+#: src/dev/type-checking-system.md:38
 msgid "Key Concepts in 30 Seconds"
 msgstr ""
 
-#: src/dev/type-checking-system.md:38
+#: src/dev/type-checking-system.md:40
 msgid "**Cells** - Hold type information and track connections to propagators"
 msgstr ""
 
-#: src/dev/type-checking-system.md:39
+#: src/dev/type-checking-system.md:41
 msgid ""
 "**Propagators** - Define constraints between cells and propagate type "
 "information"
 msgstr ""
 
-#: src/dev/type-checking-system.md:40
+#: src/dev/type-checking-system.md:42
 msgid ""
 "**Network** - The collection of cells and propagators that work together"
 msgstr ""
 
-#: src/dev/type-checking-system.md:42
+#: src/dev/type-checking-system.md:44
 msgid "When type checking:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:43
+#: src/dev/type-checking-system.md:45
 msgid "Cells store type information (like \"this variable has type Integer\")"
 msgstr ""
 
-#: src/dev/type-checking-system.md:44
+#: src/dev/type-checking-system.md:46
 msgid ""
 "Propagators enforce constraints (like \"parameter type must match argument "
 "type\")"
 msgstr ""
 
-#: src/dev/type-checking-system.md:45
+#: src/dev/type-checking-system.md:47
 msgid ""
 "When a cell value changes, connected propagators activate to propagate that "
 "change"
 msgstr ""
 
-#: src/dev/type-checking-system.md:47
+#: src/dev/type-checking-system.md:49
 msgid ""
 "This reactive network allows complex type relationships (like union types) "
 "to be modeled effectively."
 msgstr ""
 
-#: src/dev/type-checking-system.md:51
+#: src/dev/type-checking-system.md:53
 msgid "1. Core Components"
 msgstr ""
 
-#: src/dev/type-checking-system.md:53
+#: src/dev/type-checking-system.md:55
 msgid "**Cells (`HoldCell`)**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:54
+#: src/dev/type-checking-system.md:56
 msgid "Hold type information and state"
 msgstr ""
 
-#: src/dev/type-checking-system.md:55
+#: src/dev/type-checking-system.md:57
 msgid "Track propagator connections:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:58
+#: src/dev/type-checking-system.md:60
 msgid "// Current value"
 msgstr ""
 
-#: src/dev/type-checking-system.md:59
+#: src/dev/type-checking-system.md:61
 msgid "// Change tracking"
 msgstr ""
 
-#: src/dev/type-checking-system.md:65
+#: src/dev/type-checking-system.md:67
 msgid "**Propagators**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:66
+#: src/dev/type-checking-system.md:68
 msgid "Base trait defining propagator behavior:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:77
+#: src/dev/type-checking-system.md:79
 msgid "2. Key Propagator Types"
 msgstr ""
 
-#: src/dev/type-checking-system.md:79
+#: src/dev/type-checking-system.md:81
 msgid "**Unify Propagator**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:80
+#: src/dev/type-checking-system.md:82
 msgid "Handles type unification and subtyping"
 msgstr ""
 
-#: src/dev/type-checking-system.md:81
+#: src/dev/type-checking-system.md:83
 msgid "Special cases for:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:82
+#: src/dev/type-checking-system.md:84
 msgid "Meta variables"
 msgstr ""
 
-#: src/dev/type-checking-system.md:83
+#: src/dev/type-checking-system.md:85
 msgid "Union types"
 msgstr ""
 
-#: src/dev/type-checking-system.md:84
+#: src/dev/type-checking-system.md:86
 msgid "Intersection types"
 msgstr ""
 
-#: src/dev/type-checking-system.md:85
+#: src/dev/type-checking-system.md:87
 msgid "List types"
 msgstr ""
 
-#: src/dev/type-checking-system.md:86
+#: src/dev/type-checking-system.md:88
 msgid "Record types"
 msgstr ""
 
-#: src/dev/type-checking-system.md:88
+#: src/dev/type-checking-system.md:90
 msgid "**UnionOf Propagator**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:89
+#: src/dev/type-checking-system.md:91
 msgid "Manages union type construction"
 msgstr ""
 
-#: src/dev/type-checking-system.md:90
+#: src/dev/type-checking-system.md:92
 msgid "Handles:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:91
+#: src/dev/type-checking-system.md:93
 msgid "Component type collection"
 msgstr ""
 
-#: src/dev/type-checking-system.md:92
+#: src/dev/type-checking-system.md:94
 msgid "Meta variable resolution"
 msgstr ""
 
-#: src/dev/type-checking-system.md:93
+#: src/dev/type-checking-system.md:95
 msgid "Type compatibility checks"
 msgstr ""
 
-#: src/dev/type-checking-system.md:95
+#: src/dev/type-checking-system.md:97
 msgid "**LiteralType Propagator**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:96
+#: src/dev/type-checking-system.md:98
 msgid "Handles literal type inference"
 msgstr "處理字面值類型推斷"
 
-#: src/dev/type-checking-system.md:97
+#: src/dev/type-checking-system.md:99
 msgid "Manages type constraints for literals"
 msgstr ""
 
-#: src/dev/type-checking-system.md:99
+#: src/dev/type-checking-system.md:101
 msgid "3. Propagation Process"
 msgstr ""
 
-#: src/dev/type-checking-system.md:101
+#: src/dev/type-checking-system.md:103
 msgid "**Registration**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:104
+#: src/dev/type-checking-system.md:106
 msgid "// 1. Create propagator holder"
 msgstr ""
 
-#: src/dev/type-checking-system.md:107
+#: src/dev/type-checking-system.md:109
 msgid "// 2. Register with reading cells"
 msgstr ""
 
-#: src/dev/type-checking-system.md:112
+#: src/dev/type-checking-system.md:114
 msgid "// 3. Register with zonking cells"
 msgstr ""
 
-#: src/dev/type-checking-system.md:117
+#: src/dev/type-checking-system.md:119
 msgid "// 4. Initial run"
 msgstr ""
 
-#: src/dev/type-checking-system.md:124
+#: src/dev/type-checking-system.md:126
 msgid "**Execution**"
 msgstr ""
 
-#: src/dev/type-checking-system.md:131
+#: src/dev/type-checking-system.md:133
 msgid "// Run reading propagators"
 msgstr ""
 
-#: src/dev/type-checking-system.md:142
+#: src/dev/type-checking-system.md:144
 msgid "3. Union Type Subtyping"
 msgstr ""
 
-#: src/dev/type-checking-system.md:144
+#: src/dev/type-checking-system.md:146
 msgid ""
 "Chester supports union types (`A|B`) with a sophisticated subtyping "
 "relationship managed by the propagator network. The subtyping rules are "
 "implemented in the `unify` method in `Elaborater.scala`."
 msgstr ""
 
-#: src/dev/type-checking-system.md:146
+#: src/dev/type-checking-system.md:148
 msgid "Union Subtyping Rules"
 msgstr ""
 
-#: src/dev/type-checking-system.md:148
+#: src/dev/type-checking-system.md:150
 msgid "**Union-to-Union Subtyping**: `(A|B) <: (C|D)`"
 msgstr ""
 
-#: src/dev/type-checking-system.md:149
+#: src/dev/type-checking-system.md:151
 msgid ""
 "For each type in the right union, at least one type in the left union must "
 "accept it"
 msgstr ""
 
-#: src/dev/type-checking-system.md:150
+#: src/dev/type-checking-system.md:152
 msgid ""
 "Implemented by creating propagator connections between compatible component "
 "types"
 msgstr ""
 
-#: src/dev/type-checking-system.md:152
+#: src/dev/type-checking-system.md:154
 msgid "**Specific-to-Union Subtyping**: `A <: (B|C)`"
 msgstr ""
 
-#: src/dev/type-checking-system.md:153
+#: src/dev/type-checking-system.md:155
 msgid ""
 "A specific type can be used where a union is expected if it's compatible "
 "with any union member"
 msgstr ""
 
-#: src/dev/type-checking-system.md:154
+#: src/dev/type-checking-system.md:156
 msgid "Example: Passing an `Integer` to a function expecting `Integer|String`"
 msgstr ""
 
-#: src/dev/type-checking-system.md:156
+#: src/dev/type-checking-system.md:158
 msgid "**Union-to-Specific Subtyping**: `(A|B) <: C`"
 msgstr ""
 
-#: src/dev/type-checking-system.md:157
+#: src/dev/type-checking-system.md:159
 msgid ""
 "A union can be assigned to a specific type if all union members are "
 "compatible with that type"
 msgstr ""
 
-#: src/dev/type-checking-system.md:158
+#: src/dev/type-checking-system.md:160
 msgid ""
 "Example: Returning an `Integer|Float` from a function that promises to "
 "return `Number`"
 msgstr ""
 
-#: src/dev/type-checking-system.md:160
+#: src/dev/type-checking-system.md:162
 msgid "Implementation Challenges"
 msgstr ""
 
-#: src/dev/type-checking-system.md:162
+#: src/dev/type-checking-system.md:164
 msgid "The union type subtyping implementation addresses several challenges:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:164
+#: src/dev/type-checking-system.md:166
 msgid ""
 "**Cell Coverage**: Ensuring all cells (including component types) are "
 "properly covered by propagators"
 msgstr ""
 
-#: src/dev/type-checking-system.md:165
+#: src/dev/type-checking-system.md:167
 msgid ""
 "**Meta Variables in Unions**: Special handling for meta variables that "
 "appear in unions"
 msgstr ""
 
-#: src/dev/type-checking-system.md:166
+#: src/dev/type-checking-system.md:168
 msgid ""
 "**Early Return Prevention**: Avoiding early returns that could leave cells "
 "uncovered"
 msgstr ""
 
-#: src/dev/type-checking-system.md:167
+#: src/dev/type-checking-system.md:169
 msgid ""
 "**Component Tracking**: Ensuring each component of a union has proper "
 "propagator connections"
 msgstr ""
 
-#: src/dev/type-checking-system.md:169
-msgid "Current Implementation Status"
-msgstr ""
-
-#: src/dev/type-checking-system.md:171
-msgid ""
-"The implementation of the core type system features, including union type "
-"subtyping and cell coverage mechanisms, has been completed. See the devlog "
-"entry for 2025-03-25 for detailed implementation information."
-msgstr ""
-
 #: src/dev/type-checking-system.md:173
-msgid "Remaining Challenges"
+msgid ""
+"The implementation of the core type system features has been completed with "
+"recent significant enhancements. Major milestones include:"
 msgstr ""
 
 #: src/dev/type-checking-system.md:175
-msgid "**Complex Type-Level Expressions**"
-msgstr ""
-
-#: src/dev/type-checking-system.md:176
-msgid "More complex nested type-level function applications"
+msgid "1. Cell Coverage Improvements (2025-04-21)"
 msgstr ""
 
 #: src/dev/type-checking-system.md:177
-msgid "Advanced dependent type scenarios with multiple levels of abstraction"
+msgid ""
+"The previously \"hacky\" approach to cell coverage has been completely "
+"redesigned:"
 msgstr ""
 
 #: src/dev/type-checking-system.md:178
-msgid "Recursive type-level computation"
+msgid "Removed the `AutoConnect` propagator and related indirection"
+msgstr ""
+
+#: src/dev/type-checking-system.md:179
+msgid "Implemented direct type relationship handling during unification"
 msgstr ""
 
 #: src/dev/type-checking-system.md:180
-msgid "**Advanced Trait Features**"
+msgid ""
+"Created explicit relationships between types directly at creation/"
+"unification points"
 msgstr ""
 
-#: src/dev/type-checking-system.md:181 src/dev/type-checking-system.md:242
-msgid "Complete field requirement verification"
+#: src/dev/type-checking-system.md:181
+msgid "Simplified codebase by removing several layers of indirection"
 msgstr ""
 
-#: src/dev/type-checking-system.md:182 src/dev/type-checking-system.md:243
-msgid "Multiple trait inheritance"
+#: src/dev/type-checking-system.md:182
+msgid ""
+"Maintained the same type checking capabilities with a cleaner implementation"
 msgstr ""
 
-#: src/dev/type-checking-system.md:183 src/dev/type-checking-system.md:244
-msgid "Trait methods and default implementations"
+#: src/dev/type-checking-system.md:184
+msgid "2. Union Type Subtyping (2025-03-25)"
 msgstr ""
 
-#: src/dev/type-checking-system.md:185
-msgid "Testing Strategy"
+#: src/dev/type-checking-system.md:186
+msgid ""
+"Union types are now fully implemented with support for all subtyping "
+"relationships:"
 msgstr ""
 
 #: src/dev/type-checking-system.md:187
-msgid "1. Coverage Tests"
+msgid ""
+"**Union-to-Union**: `(A|B) <: (C|D)` with proper component compatibility"
 msgstr ""
 
 #: src/dev/type-checking-system.md:188
-msgid "Test basic cell coverage"
+msgid ""
+"**Specific-to-Union**: `A <: (B|C)` for cases like passing `Integer` to "
+"`Integer|String`"
 msgstr ""
 
 #: src/dev/type-checking-system.md:189
+msgid ""
+"**Union-to-Specific**: `(A|B) <: C` for returning unions from specific "
+"return type functions"
+msgstr ""
+
+#: src/dev/type-checking-system.md:191
+msgid "3. Trait Implementation (2025-03-19)"
+msgstr ""
+
+#: src/dev/type-checking-system.md:193
+msgid "Basic trait support is now available:"
+msgstr ""
+
+#: src/dev/type-checking-system.md:194
+msgid "Empty traits and record extension using `<:` syntax"
+msgstr ""
+
+#: src/dev/type-checking-system.md:195
+msgid "Trait-record subtyping relation in type system"
+msgstr ""
+
+#: src/dev/type-checking-system.md:196
+msgid "`TraitTypeTerm` representation with proper error reporting"
+msgstr ""
+
+#: src/dev/type-checking-system.md:197
+msgid "Context tracking for trait processing"
+msgstr ""
+
+#: src/dev/type-checking-system.md:199
+msgid "Remaining Challenges"
+msgstr ""
+
+#: src/dev/type-checking-system.md:201
+#, fuzzy
+msgid "**Type-Level Computation**"
+msgstr "**類型註解檢查**："
+
+#: src/dev/type-checking-system.md:202
+msgid "Further improvements to recursive type-level function applications"
+msgstr ""
+
+#: src/dev/type-checking-system.md:203
+msgid "Advanced dependent types with multiple levels of abstraction"
+msgstr ""
+
+#: src/dev/type-checking-system.md:204
+msgid "More comprehensive testing of type-level computation"
+msgstr ""
+
+#: src/dev/type-checking-system.md:206
+msgid "**Advanced Trait Features**"
+msgstr ""
+
+#: src/dev/type-checking-system.md:207 src/dev/type-checking-system.md:269
+msgid "Complete field requirement verification"
+msgstr ""
+
+#: src/dev/type-checking-system.md:208 src/dev/type-checking-system.md:270
+msgid "Multiple trait inheritance"
+msgstr ""
+
+#: src/dev/type-checking-system.md:209 src/dev/type-checking-system.md:271
+msgid "Trait methods and default implementations"
+msgstr ""
+
+#: src/dev/type-checking-system.md:210
+msgid "Trait-to-trait inheritance constraints"
+msgstr ""
+
+#: src/dev/type-checking-system.md:212
+msgid "Testing Strategy"
+msgstr ""
+
+#: src/dev/type-checking-system.md:214
+msgid "1. Coverage Tests"
+msgstr ""
+
+#: src/dev/type-checking-system.md:215
+msgid "Test basic cell coverage"
+msgstr ""
+
+#: src/dev/type-checking-system.md:216
 msgid "Test union type component coverage"
 msgstr ""
 
-#: src/dev/type-checking-system.md:190
+#: src/dev/type-checking-system.md:217
 msgid "Test meta variable coverage"
 msgstr ""
 
-#: src/dev/type-checking-system.md:192
+#: src/dev/type-checking-system.md:219
 #, fuzzy
 msgid "2. State Tests"
 msgstr "第 2 章：語句"
 
-#: src/dev/type-checking-system.md:193
+#: src/dev/type-checking-system.md:220
 msgid "Test propagator lifecycle"
 msgstr ""
 
-#: src/dev/type-checking-system.md:194
+#: src/dev/type-checking-system.md:221
 msgid "Test union type state"
 msgstr ""
 
-#: src/dev/type-checking-system.md:195
+#: src/dev/type-checking-system.md:222
 msgid "Test meta variable resolution"
 msgstr ""
 
-#: src/dev/type-checking-system.md:197
+#: src/dev/type-checking-system.md:224
 msgid "3. Integration Tests"
 msgstr ""
 
-#: src/dev/type-checking-system.md:198
+#: src/dev/type-checking-system.md:225
 msgid "Test complex type scenarios"
 msgstr ""
 
-#: src/dev/type-checking-system.md:199
+#: src/dev/type-checking-system.md:226
 msgid "Test error handling"
 msgstr ""
 
-#: src/dev/type-checking-system.md:200
+#: src/dev/type-checking-system.md:227
 msgid "Test performance"
 msgstr ""
 
-#: src/dev/type-checking-system.md:202
+#: src/dev/type-checking-system.md:229
 msgid "Trait Implementation"
 msgstr ""
 
-#: src/dev/type-checking-system.md:204
+#: src/dev/type-checking-system.md:231
 msgid ""
 "Chester's type system now supports traits and record-trait subtyping "
 "relationships through the `<:` syntax, with the following features "
 "implemented:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:206
+#: src/dev/type-checking-system.md:233
 msgid "1. Trait Definition and Implementation"
 msgstr ""
 
-#: src/dev/type-checking-system.md:209
+#: src/dev/type-checking-system.md:236
 msgid "// Define a trait"
 msgstr ""
 
-#: src/dev/type-checking-system.md:213
+#: src/dev/type-checking-system.md:240
 msgid "// Record implementing a trait"
 msgstr ""
 
-#: src/dev/type-checking-system.md:216
+#: src/dev/type-checking-system.md:243
 msgid "// Using the record with correct field"
 msgstr ""
 
-#: src/dev/type-checking-system.md:221
+#: src/dev/type-checking-system.md:248
 msgid "2. Trait Subtyping Rules"
 msgstr ""
 
-#: src/dev/type-checking-system.md:223
+#: src/dev/type-checking-system.md:250
 msgid "The type system implements several trait-related subtyping rules:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:225
+#: src/dev/type-checking-system.md:252
 msgid ""
 "**Record-Trait Subtyping**: Records that extend traits are considered "
 "subtypes of those traits"
 msgstr ""
 
-#: src/dev/type-checking-system.md:226
+#: src/dev/type-checking-system.md:253
 msgid ""
 "**Trait-Record Compatibility**: Traits can be used where their implementing "
 "records are expected"
 msgstr ""
 
-#: src/dev/type-checking-system.md:227
+#: src/dev/type-checking-system.md:254
 msgid "**Trait-Trait Inheritance**: Traits can extend other traits"
 msgstr ""
 
-#: src/dev/type-checking-system.md:229
+#: src/dev/type-checking-system.md:256
 msgid "3. Implementation Components"
 msgstr ""
 
-#: src/dev/type-checking-system.md:231
+#: src/dev/type-checking-system.md:258
 msgid "The trait implementation consists of several key components:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:233
+#: src/dev/type-checking-system.md:260
 msgid "**TraitTypeTerm** in `Term.scala` for trait type representation"
 msgstr ""
 
-#: src/dev/type-checking-system.md:234
+#: src/dev/type-checking-system.md:261
 msgid "**TraitStmtTerm** for trait definitions with optional bodies"
 msgstr ""
 
-#: src/dev/type-checking-system.md:235
+#: src/dev/type-checking-system.md:262
 msgid ""
 "**processTraitStmt** in `ElaboraterBlock.scala` to handle trait declarations"
 msgstr ""
 
-#: src/dev/type-checking-system.md:236
+#: src/dev/type-checking-system.md:263
 msgid ""
 "**checkTraitImplementation** in `TyckPropagator.scala` to verify trait "
 "implementation"
 msgstr ""
 
-#: src/dev/type-checking-system.md:237
+#: src/dev/type-checking-system.md:264
 msgid ""
 "Special context tracking with `withProcessingType` to handle trait bodies"
 msgstr ""
 
-#: src/dev/type-checking-system.md:239
+#: src/dev/type-checking-system.md:266
 msgid "4. Future Enhancements"
 msgstr ""
 
-#: src/dev/type-checking-system.md:241
+#: src/dev/type-checking-system.md:268
 msgid "Future work will focus on:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:246
+#: src/dev/type-checking-system.md:273
 msgid "Best Practices for Cell Management"
 msgstr ""
 
-#: src/dev/type-checking-system.md:248
+#: src/dev/type-checking-system.md:275
 msgid "OnceCell Usage Guidelines"
 msgstr ""
 
-#: src/dev/type-checking-system.md:250
+#: src/dev/type-checking-system.md:277
 msgid ""
 "The `OnceCell` implementation is a specialized cell type that enforces "
 "single-assignment semantics. Proper usage requires careful attention to "
 "avoid errors:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:252
+#: src/dev/type-checking-system.md:279
 msgid "1. Cell Filling Best Practices"
 msgstr ""
 
-#: src/dev/type-checking-system.md:254
+#: src/dev/type-checking-system.md:281
 msgid ""
 "**Always check before filling**: Before calling `fill()` on any cell, check "
 "if it already has a value using `state.readUnstable(cell)`."
 msgstr ""
 
-#: src/dev/type-checking-system.md:255
+#: src/dev/type-checking-system.md:282
 msgid ""
 "**Handle already-filled cells gracefully**: When a cell already has a value, "
 "check if new value equals existing value."
 msgstr ""
 
-#: src/dev/type-checking-system.md:256
+#: src/dev/type-checking-system.md:283
 msgid ""
 "**Use debug assertions**: Include debug prints for cell operations to trace "
 "propagation flow."
 msgstr ""
 
-#: src/dev/type-checking-system.md:258
+#: src/dev/type-checking-system.md:285
 msgid "2. Propagator Implementation Guidelines"
 msgstr ""
 
-#: src/dev/type-checking-system.md:260
+#: src/dev/type-checking-system.md:287
 msgid ""
 "**Declare cell dependencies correctly**: Ensure all propagators correctly "
 "declare their reading and zonking cell dependencies."
 msgstr ""
 
-#: src/dev/type-checking-system.md:261
+#: src/dev/type-checking-system.md:288
 msgid ""
 "**Implement naiveZonk correctly**: The `naiveZonk` method should return "
 "appropriate dependencies for zonking."
 msgstr ""
 
-#: src/dev/type-checking-system.md:262
+#: src/dev/type-checking-system.md:289
 msgid ""
 "**Be idempotent**: Propagator's `run` method should be idempotent - multiple "
 "calls with the same input should produce the same output."
 msgstr ""
 
-#: src/dev/type-checking-system.md:264
+#: src/dev/type-checking-system.md:291
 msgid "3. Type-Level Function Handling"
 msgstr ""
 
-#: src/dev/type-checking-system.md:266
+#: src/dev/type-checking-system.md:293
 msgid "When implementing propagators that handle type-level functions:"
 msgstr ""
 
-#: src/dev/type-checking-system.md:268
+#: src/dev/type-checking-system.md:295
 msgid ""
 "**Watch for recursive effects**: Type-level functions may cause recursive "
 "propagation attempts"
 msgstr ""
 
-#: src/dev/type-checking-system.md:269
+#: src/dev/type-checking-system.md:296
 msgid ""
 "**Avoid modifications during reduction**: When reducing for type equality, "
 "don't modify the original terms"
 msgstr ""
 
-#: src/dev/type-checking-system.md:270
+#: src/dev/type-checking-system.md:297
 msgid ""
 "**Use correct reduction mode**: Use `ReduceMode.TypeLevel` for reductions "
 "needed for type equality checks"
@@ -10481,317 +11393,435 @@ msgstr ""
 msgid "The TypeScript code is readable and follows TypeScript best practices"
 msgstr ""
 
-#: src/dev/union_types_progress.md:3
-msgid ""
-"This document outlines the progress and current state of union types "
-"implementation in Chester."
-msgstr ""
-
 #: src/dev/union_types_progress.md:5
-msgid "Current State"
+msgid ""
+"This document outlines the implementation and current state of union types "
+"in Chester."
 msgstr ""
 
 #: src/dev/union_types_progress.md:7
-msgid ""
-"We've created a test file `simplest_union.chester.todo` with basic test "
-"cases for union types, but none of the implementation work has been "
-"completed yet."
+msgid "Current State"
 msgstr ""
 
 #: src/dev/union_types_progress.md:9
-msgid "Required Changes"
+msgid ""
+"Union types are now fully implemented in Chester with both parsing and type "
+"checking support. The implementation can handle all three key subtyping "
+"relationships: union-to-union, specific-to-union, and union-to-specific."
 msgstr ""
 
 #: src/dev/union_types_progress.md:11
-msgid ""
-"Based on our testing and analysis, the following changes are needed in the "
-"codebase:"
-msgstr ""
+#, fuzzy
+msgid "Implementation Overview"
+msgstr "實作方法"
 
 #: src/dev/union_types_progress.md:13
-msgid "1. Parser & Desalting (`Desalt.scala`)"
+msgid "The following components have been implemented to support union types:"
 msgstr ""
 
 #: src/dev/union_types_progress.md:15
+msgid "1. Parser & Desalting (`Desalt.scala`)"
+msgstr ""
+
+#: src/dev/union_types_progress.md:17
 msgid ""
-"**Union Type Parsing**: Update the `desugar` method to handle union type "
-"expressions:"
+"**Union Type Parsing**: Implemented in the `desugar` method to handle union "
+"type expressions:"
+msgstr ""
+
+#: src/dev/union_types_progress.md:18
+msgid "Detects `|` operators in type expressions"
 msgstr ""
 
 #: src/dev/union_types_progress.md:19
-msgid "// First check if this is a type annotation sequence (x : Type)"
+msgid "Creates a `UnionTypeExpr` node with component types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:20
+msgid "Handles nested union types properly"
 msgstr ""
 
 #: src/dev/union_types_progress.md:21
-msgid "// Type annotation - process right part potentially as a union"
+msgid "Preserves source position information for error reporting"
 msgstr ""
 
-#: src/dev/union_types_progress.md:28
-msgid "// Look for pipe operators in the sequence"
+#: src/dev/union_types_progress.md:22
+msgid "Respects operator precedence and grouping"
 msgstr ""
 
-#: src/dev/union_types_progress.md:29
-msgid "\"|\""
+#: src/dev/union_types_progress.md:24
+msgid "The parser now correctly recognizes syntax like:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:34
-msgid "// No pipe operators found, return the original expression"
+#: src/dev/union_types_progress.md:25
+msgid ""
+"```chester\n"
+"// Simple union type\n"
+"function accept(value: Integer | String) { ... }\n"
+"\n"
+"// Nested union types\n"
+"function process(data: Integer | String | (Array | Object)) { ... }\n"
+"\n"
+"// Union in type annotation\n"
+"let value: Integer | String = \"hello\";\n"
+"```"
 msgstr ""
 
-#: src/dev/union_types_progress.md:35
-msgid "// with its components desugared"
-msgstr ""
-
-#: src/dev/union_types_progress.md:38
-msgid "// Found pipe operators, construct a union type"
-msgstr ""
-
-#: src/dev/union_types_progress.md:40
-msgid "// Extract the types separated by pipe operators"
-msgstr ""
-
-#: src/dev/union_types_progress.md:46
-msgid "// Add the segment before the pipe"
-msgstr ""
-
-#: src/dev/union_types_progress.md:48
-msgid "// Single element"
-msgstr ""
-
-#: src/dev/union_types_progress.md:51
-msgid "// Multiple elements forming a type expression"
-msgstr ""
-
-#: src/dev/union_types_progress.md:55
-msgid "// Empty segment (e.g., \"| Type\") - this is invalid"
-msgstr ""
-
-#: src/dev/union_types_progress.md:59
-msgid "// Move past the pipe"
-msgstr ""
-
-#: src/dev/union_types_progress.md:63
-msgid "// Handle the last segment after the final pipe"
-msgstr ""
-
-#: src/dev/union_types_progress.md:71
-msgid "// Empty segment at the end (e.g., \"Type |\") - this is invalid"
-msgstr ""
-
-#: src/dev/union_types_progress.md:76
-msgid "// Process each type expression to handle nested unions"
-msgstr ""
-
-#: src/dev/union_types_progress.md:79
-msgid "// Create a UnionTypeExpr with the extracted types"
-msgstr ""
-
-#: src/dev/union_types_progress.md:92
+#: src/dev/union_types_progress.md:36
 msgid "2. Type Elaboration (`Elaborater.scala`)"
 msgstr ""
 
-#: src/dev/union_types_progress.md:94
+#: src/dev/union_types_progress.md:38
 msgid ""
-"**Type Compatibility Checking**: Implement a more flexible type "
-"compatibility system that can handle different representations of the same "
-"type:"
+"**Union Type Elaboration**: Implemented handling for union type expressions "
+"in the type checking system:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:97
-msgid "// Helper to check if a term is an Integer type in any form"
+#: src/dev/union_types_progress.md:39
+msgid "Elaborate each component type in the union"
 msgstr ""
 
-#: src/dev/union_types_progress.md:103
-msgid "\"integer\""
+#: src/dev/union_types_progress.md:40
+msgid "Create proper `Union` term with component types"
 msgstr ""
 
-#: src/dev/union_types_progress.md:103
-msgid "\"int\""
+#: src/dev/union_types_progress.md:41
+msgid "Register appropriate propagators for type constraints"
 msgstr ""
 
-#: src/dev/union_types_progress.md:103
-msgid "\"interface\""
+#: src/dev/union_types_progress.md:42
+msgid "Maintain connections between union types and components"
 msgstr ""
 
-#: src/dev/union_types_progress.md:107
-msgid "// Helper to check if a term is a String type in any form"
-msgstr ""
-
-#: src/dev/union_types_progress.md:113
-msgid "\"string\""
-msgstr ""
-
-#: src/dev/union_types_progress.md:113
-msgid "\"stringbuilder\""
-msgstr ""
-
-#: src/dev/union_types_progress.md:117
-msgid "// Check based on the matched types"
-msgstr ""
-
-#: src/dev/union_types_progress.md:121
-msgid "// Default: standard equality"
-msgstr ""
-
-#: src/dev/union_types_progress.md:127
+#: src/dev/union_types_progress.md:44
 msgid ""
-"**Unification Enhancement**: Modify the `unify` method to use structural "
-"compatibility:"
+"**Union Type Unification**: Implemented support for all three subtyping "
+"relationships:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:130
-msgid "// Check for structural compatibility first"
+#: src/dev/union_types_progress.md:45
+msgid ""
+"**Union-to-Union**: `(A|B) <: (C|D)` with proper component compatibility "
+"checks"
 msgstr ""
 
-#: src/dev/union_types_progress.md:133
-msgid "// Proceed with type-level reduction if needed"
+#: src/dev/union_types_progress.md:46
+msgid ""
+"**Specific-to-Union**: `A <: (B|C)` for cases like passing `Integer` to a "
+"parameter of type `Integer|String`"
 msgstr ""
 
-#: src/dev/union_types_progress.md:139
-msgid "// Continue with existing logic for other cases"
+#: src/dev/union_types_progress.md:47
+msgid ""
+"**Union-to-Specific**: `(A|B) <: C` for returning a union from a function "
+"with specific return type"
 msgstr ""
 
-#: src/dev/union_types_progress.md:144
-msgid "**Union Type Construction**: Properly handle union type expressions:"
+#: src/dev/union_types_progress.md:49
+msgid ""
+"**Type-Level Functions with Union Types**: Added support for type-level "
+"functions that:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:147
-msgid "// Elaborate each component type"
+#: src/dev/union_types_progress.md:50
+msgid "Return union types"
 msgstr ""
 
-#: src/dev/union_types_progress.md:150
-msgid "// Create the union type"
+#: src/dev/union_types_progress.md:51
+msgid "Accept union types as arguments"
 msgstr ""
 
-#: src/dev/union_types_progress.md:154
-msgid "// Set up propagators for unification"
+#: src/dev/union_types_progress.md:52
+msgid "Process union components correctly"
 msgstr ""
 
-#: src/dev/union_types_progress.md:158
-msgid "// Connect union to components"
+#: src/dev/union_types_progress.md:54
+msgid "The implementation enables code patterns like:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:161
-msgid "// Ensure cell coverage"
+#: src/dev/union_types_progress.md:56
+msgid ""
+"```chester\n"
+"// Accepting a union type parameter\n"
+"def process(value: Integer | String): String = {\n"
+"  match value {\n"
+"    case i: Integer => i.toString()\n"
+"    case s: String => s\n"
+"  }\n"
+"}\n"
+"\n"
+"// Returning a union type\n"
+"def fetch(): Integer | String | Null = {\n"
+"  if (hasData()) getData()\n"
+"  else null\n"
+"}\n"
+"\n"
+"// Union types in generic contexts\n"
+"def firstOrDefault[T](list: List[T], default: T): T = {\n"
+"  if (isEmpty(list)) default else first(list)\n"
+"}\n"
+"```"
 msgstr ""
 
-#: src/dev/union_types_progress.md:165
-msgid "// Return the union type"
-msgstr ""
-
-#: src/dev/union_types_progress.md:169
+#: src/dev/union_types_progress.md:77
 msgid "3. Type Propagator (`TyckPropagator.scala`)"
 msgstr ""
 
-#: src/dev/union_types_progress.md:171
+#: src/dev/union_types_progress.md:79
 msgid ""
-"**UnionOf Improvements**: Enhance the `UnionOf` propagator to better handle "
-"union types:"
+"**UnionOf Propagator Implementation**: Implemented the `UnionOf` propagator "
+"to handle union type constraints:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:178
-msgid "// Existing code..."
+#: src/dev/union_types_progress.md:80
+msgid "Manages relationships between union types and their components"
 msgstr ""
 
-#: src/dev/union_types_progress.md:181
-msgid "// When component types are all defined, create a union type"
+#: src/dev/union_types_progress.md:81
+msgid "Enforces proper subtyping relationships with union types"
 msgstr ""
 
-#: src/dev/union_types_progress.md:185
-msgid "// Handle various cases for LHS"
+#: src/dev/union_types_progress.md:82
+msgid "Handles cell coverage for all union components"
 msgstr ""
 
-#: src/dev/union_types_progress.md:189
-msgid "// Enhance zonking to ensure all cells are properly filled"
+#: src/dev/union_types_progress.md:83
+msgid "Ensures proper zonking of union types"
 msgstr ""
 
-#: src/dev/union_types_progress.md:193
+#: src/dev/union_types_progress.md:85
 msgid ""
-"**Add Type Compatibility for Union Types**: Enhance the `tryUnify` method to "
-"handle union type compatibility:"
+"**Enhanced Type Compatibility for Union Types**: Implemented union type "
+"compatibility with three key cases:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:195
-msgid "// Add specific handling for union type compatibility"
+#: src/dev/union_types_progress.md:87
+msgid "**Union-to-Union Compatibility**:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:197
-msgid "// Check if both unions have compatible types"
+#: src/dev/union_types_progress.md:90
+msgid "// For union-to-union subtyping, we check component compatibility"
 msgstr ""
 
-#: src/dev/union_types_progress.md:200
-msgid "// Add specific handling for term to union type compatibility"
-msgstr ""
-
-#: src/dev/union_types_progress.md:202
-msgid "// Check if term is compatible with any type in the union"
-msgstr ""
-
-#: src/dev/union_types_progress.md:206
-msgid "// Check if any type in the union is compatible with the term"
-msgstr ""
-
-#: src/dev/union_types_progress.md:210
-msgid "4. Test Framework Updates"
-msgstr ""
-
-#: src/dev/union_types_progress.md:212
-msgid "Modify `common.scala` to recognize `.todo` extensions:"
-msgstr ""
-
-#: src/dev/union_types_progress.md:220 src/dev/union_types_progress.md:231
-msgid "\".chester\""
-msgstr "\".chester\""
-
-#: src/dev/union_types_progress.md:220 src/dev/union_types_progress.md:228
-#: src/dev/union_types_progress.md:229
-msgid "\".chester.todo\""
-msgstr ""
-
-#: src/dev/union_types_progress.md:225
-msgid "Update `FilesTyckTest.scala` to handle `.todo` extensions:"
-msgstr ""
-
-#: src/dev/union_types_progress.md:237
-msgid "Implement the changes outlined above"
-msgstr ""
-
-#: src/dev/union_types_progress.md:238
-msgid "Test with the `simplest_union.chester.todo` file"
-msgstr ""
-
-#: src/dev/union_types_progress.md:239
+#: src/dev/union_types_progress.md:91
 msgid ""
-"Once basic functionality works, remove the `.todo` suffix and add more "
-"comprehensive test cases"
+"// with complex rules for determining when unions are subtypes of each other"
 msgstr ""
 
-#: src/dev/union_types_progress.md:240
-msgid "Document the union type features in user documentation"
+#: src/dev/union_types_progress.md:95
+msgid "**Term-to-Union Compatibility**:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:244
-msgid "Test file: `tests/tyck/simplest_union.chester.todo`"
+#: src/dev/union_types_progress.md:98
+msgid "// For term-to-union subtyping, we check if the term is compatible"
 msgstr ""
 
-#: src/dev/union_types_progress.md:245
+#: src/dev/union_types_progress.md:99
+msgid "// with any type in the union"
+msgstr ""
+
+#: src/dev/union_types_progress.md:103
+msgid "**Union-to-Term Compatibility**:"
+msgstr ""
+
+#: src/dev/union_types_progress.md:106
+msgid "// For union-to-term subtyping, we check if all types in the union"
+msgstr ""
+
+#: src/dev/union_types_progress.md:107
+msgid "// are compatible with the term"
+msgstr ""
+
+#: src/dev/union_types_progress.md:111
+msgid ""
+"**Cell Coverage Implementation**: Added comprehensive cell coverage "
+"mechanisms:"
+msgstr ""
+
+#: src/dev/union_types_progress.md:112
+msgid "Direct connections between union types and their components"
+msgstr ""
+
+#: src/dev/union_types_progress.md:113
+msgid "Self-coverage for component types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:114
+msgid "Enhanced zonking capabilities for union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:115
+msgid "Prevention of early returns that could leave cells uncovered"
+msgstr ""
+
+#: src/dev/union_types_progress.md:117
+msgid "4. Test Framework and Validation"
+msgstr ""
+
+#: src/dev/union_types_progress.md:119
+msgid ""
+"**Comprehensive Test Suite**: Added a complete set of tests to validate "
+"union type functionality:"
+msgstr ""
+
+#: src/dev/union_types_progress.md:120
+msgid "Basic union type syntax tests"
+msgstr ""
+
+#: src/dev/union_types_progress.md:121
+msgid "Union type subtyping tests (all three relationship types)"
+msgstr ""
+
+#: src/dev/union_types_progress.md:122
+msgid "Union type pattern matching tests"
+msgstr ""
+
+#: src/dev/union_types_progress.md:123
+#, fuzzy
+msgid "Function with union type parameters and return values"
+msgstr "帶有類型依賴的函數類型"
+
+#: src/dev/union_types_progress.md:124
+msgid "Cell coverage tests for union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:125
+msgid "Edge cases and error handling tests"
+msgstr ""
+
+#: src/dev/union_types_progress.md:127
+#, fuzzy
+msgid "**Test Files**:"
+msgstr "**測試狀態**："
+
+#: src/dev/union_types_progress.md:128
+msgid "`tests/tyck/simplest_union.chester`: Basic union type functionality"
+msgstr ""
+
+#: src/dev/union_types_progress.md:129
+msgid "`tests/tyck/union-subtype.chester`: Union subtyping relationships"
+msgstr ""
+
+#: src/dev/union_types_progress.md:130
+msgid ""
+"`tests/tyck/union-pattern-matching.chester`: Pattern matching with union "
+"types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:131
+msgid ""
+"Various integration tests using union types with other language features"
+msgstr ""
+
+#: src/dev/union_types_progress.md:133
+msgid "Current Status and Future Work"
+msgstr ""
+
+#: src/dev/union_types_progress.md:135
+msgid "Completed"
+msgstr ""
+
+#: src/dev/union_types_progress.md:137
+msgid "✅ Parser support for union type syntax"
+msgstr ""
+
+#: src/dev/union_types_progress.md:138
+msgid "✅ Type elaboration for union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:139
+msgid "✅ Full union type subtyping relationships"
+msgstr ""
+
+#: src/dev/union_types_progress.md:140
+msgid "✅ Cell coverage mechanisms for union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:141
+msgid "✅ Error reporting for union type mismatch errors"
+msgstr ""
+
+#: src/dev/union_types_progress.md:142
+msgid "✅ Integration with trait types and interfaces"
+msgstr ""
+
+#: src/dev/union_types_progress.md:143
+#, fuzzy
+msgid "✅ Pattern matching with union types"
+msgstr "模式匹配和類型使用"
+
+#: src/dev/union_types_progress.md:145
+msgid "Future Enhancements"
+msgstr ""
+
+#: src/dev/union_types_progress.md:147
+msgid "More comprehensive error messages for specific union type errors"
+msgstr ""
+
+#: src/dev/union_types_progress.md:148
+msgid "Performance optimizations for complex union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:149
+msgid "Enhanced type inference with union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:150
+msgid "Integration with effect system"
+msgstr ""
+
+#: src/dev/union_types_progress.md:151
+msgid "Compiler backend optimizations for union types"
+msgstr ""
+
+#: src/dev/union_types_progress.md:155
 msgid "Main implementation files:"
 msgstr ""
 
-#: src/dev/union_types_progress.md:246
-msgid "`Desalt.scala` (parser changes)"
+#: src/dev/union_types_progress.md:156
+msgid "`Desalt.scala` (parser implementation)"
 msgstr ""
 
-#: src/dev/union_types_progress.md:247
-msgid "`Elaborater.scala` (type checking)"
+#: src/dev/union_types_progress.md:157
+msgid "`Elaborater.scala` (type checking implementation)"
 msgstr ""
 
-#: src/dev/union_types_progress.md:248
-msgid "`TyckPropagator.scala` (propagators)"
+#: src/dev/union_types_progress.md:158
+msgid "`TyckPropagator.scala` (propagator implementation)"
 msgstr ""
 
-#: src/dev/union_types_progress.md:249
-msgid "`FilesTyckTest.scala` (test framework)"
+#: src/dev/union_types_progress.md:159
+msgid "`Term.scala` (union type representation)"
+msgstr ""
+
+#: src/dev/union_types_progress.md:161
+msgid "Test files:"
+msgstr ""
+
+#: src/dev/union_types_progress.md:162
+msgid "`tests/tyck/simplest_union.chester`"
+msgstr ""
+
+#: src/dev/union_types_progress.md:163
+msgid "`tests/tyck/union-subtype.chester`"
+msgstr ""
+
+#: src/dev/union_types_progress.md:164
+msgid "Other integration test files"
+msgstr ""
+
+#: src/dev/union_types_progress.md:166
+#, fuzzy
+msgid "Related documentation:"
+msgstr "**構建文檔**："
+
+#: src/dev/union_types_progress.md:167
+#, fuzzy
+msgid "Type checking system documentation"
+msgstr "**類型檢查整合**："
+
+#: src/dev/union_types_progress.md:168
+msgid "Trait implementation documentation"
 msgstr ""
 
 #: src/guide/Record.md:3
@@ -11061,10 +12091,6 @@ msgstr ""
 msgid "Referencing a `let` binding before its declaration results in an error."
 msgstr ""
 
-#: src/guide/statements.md:85
-msgid "Best Practices"
-msgstr ""
-
 #: src/guide/statements.md:87
 msgid ""
 "Use `let` when you don't need to reference the binding before its "
@@ -11096,7 +12122,8 @@ msgid ""
 "with the current implementation. It should be used as a general guide rather "
 "than a precise specification."
 msgstr ""
-"**重要提示：** 本文檔僅提供Chester語言語法的大致描述，可能高度不準確或與當前實現不完全一致。應將其用作一般指南，而非精確的規範。"
+"**重要提示：** 本文檔僅提供Chester語言語法的大致描述，可能高度不準確或與當前"
+"實現不完全一致。應將其用作一般指南，而非精確的規範。"
 
 #: src/guide/syntax-grammar.md:5
 msgid ""
@@ -11110,7 +12137,8 @@ msgid ""
 "tokens and are not explicitly shown in the grammar rules unless significant "
 "(like newlines in blocks)."
 msgstr ""
-"**注意：** 空白字符和註釋（`// ...`）通常允許在標記之間出現，除非有特殊意義（如區塊中的換行），否則在語法規則中不會明確顯示。"
+"**注意：** 空白字符和註釋（`// ...`）通常允許在標記之間出現，除非有特殊意義"
+"（如區塊中的換行），否則在語法規則中不會明確顯示。"
 
 #: src/guide/syntax-grammar.md:9
 msgid "Top Level"
@@ -11122,7 +12150,8 @@ msgid ""
 "statement separators similar to semicolons. The last expression in a block "
 "acts as its return value unless followed by a semicolon._"
 msgstr ""
-"_注意：在許多上下文（如區塊或頂層）中，換行可以像分號一樣作為語句分隔符。區塊中的最後一個表達式作為其返回值，除非後跟分號。_"
+"_注意：在許多上下文（如區塊或頂層）中，換行可以像分號一樣作為語句分隔符。區塊"
+"中的最後一個表達式作為其返回值，除非後跟分號。_"
 
 #: src/guide/syntax-grammar.md:20
 msgid ""
@@ -11219,7 +12248,9 @@ msgid ""
 "and interfaces. While both serve to define contracts that other types can "
 "implement, they differ in their subtyping behavior and intended use cases."
 msgstr ""
-"Chester提供了兩種不同的機制來定義抽象類型：特質(traits)和介面(interfaces)。雖然它們都用於定義其他類型可以實現的契約，但它們在子類型行為和預期用例方面有所不同。"
+"Chester提供了兩種不同的機制來定義抽象類型：特質(traits)和介面(interfaces)。雖"
+"然它們都用於定義其他類型可以實現的契約，但它們在子類型行為和預期用例方面有所"
+"不同。"
 
 #: src/guide/trait-and-interface.md:5
 msgid "Traits: Nominal Subtyping"
@@ -11230,7 +12261,8 @@ msgid ""
 "Traits in Chester use nominal subtyping, which means that the name of the "
 "type is significant in determining subtype relationships."
 msgstr ""
-"Chester中的特質使用名義子類型(nominal subtyping)，這意味著類型的名稱在確定子類型關係時很重要。"
+"Chester中的特質使用名義子類型(nominal subtyping)，這意味著類型的名稱在確定子"
+"類型關係時很重要。"
 
 #: src/guide/trait-and-interface.md:9
 msgid "Here's an example of a trait definition in Chester:"
@@ -11255,7 +12287,8 @@ msgid ""
 "the `<:` operator. This relationship is based on the names of the types, not "
 "just their structure."
 msgstr ""
-"在此例中，`Dog` 通過使用 `<:` 操作符明確聲明為 `Animal` 的子類型。這種關係基於類型的名稱，而不僅僅是它們的結構。"
+"在此例中，`Dog` 通過使用 `<:` 操作符明確聲明為 `Animal` 的子類型。這種關係基"
+"於類型的名稱，而不僅僅是它們的結構。"
 
 #: src/guide/trait-and-interface.md:23
 msgid "Interfaces: Structural Subtyping"
@@ -11267,7 +12300,8 @@ msgid ""
 "relationships are determined by the structure (methods and properties) of "
 "the types, regardless of their names."
 msgstr ""
-"Chester中的介面使用結構子類型(structural subtyping)，這意味著子類型關係是由類型的結構（方法和屬性）決定的，而不考慮它們的名稱。"
+"Chester中的介面使用結構子類型(structural subtyping)，這意味著子類型關係是由類"
+"型的結構（方法和屬性）決定的，而不考慮它們的名稱。"
 
 #: src/guide/trait-and-interface.md:27
 msgid "Here's an example of an interface definition:"
@@ -11295,7 +12329,8 @@ msgid ""
 "matching `makeSound` method, even though it wasn't explicitly declared as "
 "such."
 msgstr ""
-"在這個例子中，`Cat` 被視為 `Soundmaker` 的子類型，因為它有一個匹配的 `makeSound` 方法，即使它並沒有被明確聲明為這樣。"
+"在這個例子中，`Cat` 被視為 `Soundmaker` 的子類型，因為它有一個匹配的 "
+"`makeSound` 方法，即使它並沒有被明確聲明為這樣。"
 
 #: src/guide/trait-and-interface.md:44
 msgid "Design Inspiration"
@@ -11305,8 +12340,7 @@ msgstr "設計靈感"
 msgid ""
 "This dual approach to abstract types is inspired by the Pony programming "
 "language, as described in:"
-msgstr ""
-"這種對抽象類型的雙重方法受到 Pony 程式語言的啟發，如以下文獻所述："
+msgstr "這種對抽象類型的雙重方法受到 Pony 程式語言的啟發，如以下文獻所述："
 
 #: src/guide/trait-and-interface.md:48
 msgid ""
@@ -11346,4 +12380,14 @@ msgid ""
 "code, allowing for both strict hierarchies and more flexible, duck-typed-"
 "style programming where appropriate."
 msgstr ""
-"這種設計給予Chester開發者靈活性，使他們能夠根據需要同時使用嚴格的類型層次結構和更靈活的鴨子類型風格編程。"
+"這種設計給予Chester開發者靈活性，使他們能夠根據需要同時使用嚴格的類型層次結構"
+"和更靈活的鴨子類型風格編程。"
+
+#~ msgid "Union Types Progress"
+#~ msgstr "聯合類型進展"
+
+#~ msgid "Platform-Specific Type System Implementation"
+#~ msgstr "平台特定類型系統實現"
+
+#~ msgid "\".chester\""
+#~ msgstr "\".chester\""
