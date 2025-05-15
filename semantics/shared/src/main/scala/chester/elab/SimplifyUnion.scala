@@ -1,6 +1,6 @@
 package chester.elab
 
-import cats.data.{NonEmptyMap, NonEmptyVector}
+import cats.data.NonEmptyVector
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.*
