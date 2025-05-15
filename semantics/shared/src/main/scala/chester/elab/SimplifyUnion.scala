@@ -13,7 +13,7 @@ case object SimplifyUnion extends Kind {
 
 case class SimplifyUnion(items: NonEmptyVector[CellROr[Term]], meta: Option[TermMeta] = None)(using ctx: Context, ops: SolverOps)
     extends Constraint(SimplifyUnion)
-    with ConstraintTermRW {
+    with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
 }

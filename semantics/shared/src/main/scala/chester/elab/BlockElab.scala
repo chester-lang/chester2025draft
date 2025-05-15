@@ -15,7 +15,7 @@ case object BlockElab extends Kind {
 case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffects, elab: Elab, ops: SolverOps, ctx: Context)
     extends Constraint(BlockElab)
     with ConstraintTerm {
-  override def result: CellRW[BlockTerm] = newHole
+  override def result: CellRW[Term] = newHole
   given context: Context = ctx
   given Elab = elab
   given CellEffects = effects
@@ -32,11 +32,13 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
       s match {
         case let: LetDefStmt if let.kind == LetDefType.Let =>
           val pattern = let.defined
-          val body = let.body.getOrElse(Reporter.report(???))
+          val body = let.body.getOrElse{Reporter.report(???); ???}
           val ty = let.ty match {
             case Some(ty) => given_Elab.inferType(ty).wellTyped
             case _        => newType
           }
+          val body1 = given_Elab.elab(body, ty)
+          ???
         case _ => ???
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))

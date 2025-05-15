@@ -1,7 +1,7 @@
 package chester.elab
 
 import chester.syntax.core.Term
-import chester.utils.elab.{CellR, CellRW, ConstraintResult}
+import chester.utils.elab.{CellRW, ConstraintResult}
 
-type ConstraintTerm = ConstraintResult[CellR[Term]]
-type ConstraintTermRW = ConstraintResult[CellRW[Term]]
+type ConstraintTerm = ConstraintResult[CellRW[Term]]
+
