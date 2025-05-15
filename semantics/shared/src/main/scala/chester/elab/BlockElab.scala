@@ -21,8 +21,8 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffect
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
   override def run(c: BlockElab)(using ElabOps, SolverOps): Result ={
-    import c.*
-    val statements = block.statements
+    import c.{*,given}
+    val statements = block.statements.map(resolve(_))
     ???
   }
 
