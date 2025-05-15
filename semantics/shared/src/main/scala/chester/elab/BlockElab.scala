@@ -1,6 +1,7 @@
 package chester.elab
 
 import chester.cell.CellEffects
+import chester.error.Reporter
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, convertMeta}
@@ -29,6 +30,14 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     var statements: Vector[StmtTerm] = Vector()
     for (s <- exprStatements)
       s match {
+        case let: LetDefStmt if let.kind == LetDefType.Let => {
+          val pattern = let.defined
+          val body = let.body.getOrElse{Reporter.report(???)}
+          val ty = let.ty match {
+            case Some(ty) => SolverOps.callConstraint(IsType(given_Elab.infer(ty).wellTyped))
+            case _ => ???
+          }
+        }
         case _ => ???
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))

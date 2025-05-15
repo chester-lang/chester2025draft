@@ -4,16 +4,19 @@ import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.*
 
+import scala.language.implicitConversions
+
 case object IsType extends Kind {
-  type Of = IsType
+  type Of = IsType[Nothing]
 }
 
-case class IsType(result: CellRWOr[Term])(using ctx: Context) extends Constraint(IsType) with ConstraintResult[CellRWOr[Term]] {
+case class IsType[W](result: CellOf[Term, W] | Term)(using ctx: Context) extends Constraint(IsType) with ConstraintResult[CellOf[Term, W] | Term] {
   given Context = ctx
 }
 
 case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
-  override def run(c: IsType)(using ElabOps, SolverOps): Result = {
+  implicit inline def writeTerm[W](inline x: CellOf[Term, W] | Term): CellRWOr[Term] = x.asInstanceOf[CellRWOr[Term]]
+  override def run(c: IsType[Nothing])(using ElabOps, SolverOps): Result = {
     import c.*
     toTerm(result) match {
       case _: MetaTerm => Result.Waiting(assumeCell(result))
@@ -21,7 +24,7 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
     }
   }
 
-  override def defaulting(constant: IsType, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+  override def defaulting(constant: IsType[Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
     if (level != DefaultingLevel.IsType) return
     import constant.*
     toTerm(result) match {
