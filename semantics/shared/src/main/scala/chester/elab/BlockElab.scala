@@ -35,23 +35,21 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
           val pattern = let.defined
           val body = let.body.getOrElse { Reporter.report(???); ??? }
           pattern match {
-            case DefinedPattern(pattern) => {
+            case DefinedPattern(pattern) =>
               val ty = toTerm(let.ty match {
                 case Some(ty) => given_Elab.inferType(ty).wellTyped
-                case _ => newType
+                case _        => newType
               })
               val wellTyped = toTerm(given_Elab.check(body, ty))
               pattern match {
-                case PatternBind(name, meta) => {
+                case PatternBind(name, meta) =>
                   val id = Uniqid.generate[LocalV]
                   val localv = LocalV(name.name, ty, id, convertMeta(meta))
                   val r = elab.collector.newSymbol(localv, id, let, context.ctx)
                   context.update(_.add(ContextItem(name.name, id, localv, ty, Some(r))).knownAdd(id, TyAndVal(ty, wellTyped)))
                   statements = statements :+ LetStmtTerm(localv, wellTyped, ty, convertMeta(let.meta))
-                }
                 case _ => ???
               }
-            }
             case _ => ???
           }
         case _ => ???
