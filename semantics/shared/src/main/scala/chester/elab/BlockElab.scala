@@ -30,14 +30,13 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     var statements: Vector[StmtTerm] = Vector()
     for (s <- exprStatements)
       s match {
-        case let: LetDefStmt if let.kind == LetDefType.Let => {
+        case let: LetDefStmt if let.kind == LetDefType.Let =>
           val pattern = let.defined
-          val body = let.body.getOrElse{Reporter.report(???)}
+          val body = let.body.getOrElse(Reporter.report(???))
           val ty = let.ty match {
             case Some(ty) => given_Elab.inferType(ty)
-            case _ => ???
+            case _        => ???
           }
-        }
         case _ => ???
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))

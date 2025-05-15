@@ -55,9 +55,9 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
   override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
     import c.{*, given}
     if (expr.value.isValidInt) {
-       IntType(meta) <:! ty
+      IntType(meta) <:! ty
     } else {
-      IntegerType(meta)  <:!  ty
+      IntegerType(meta) <:! ty
     }
   }
 }
@@ -76,7 +76,7 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
 
   override def run(c: StringLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    StringType(meta) <:!  ty
+    StringType(meta) <:! ty
     result.fill(StringTerm(expr.value, meta))
     Result.Done
   }
@@ -96,7 +96,7 @@ case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit)
 
   override def run(c: SymbolLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    SymbolType(meta) <:!  ty
+    SymbolType(meta) <:! ty
     result.fill(SymbolTerm(expr.value, meta))
     Result.Done
   }

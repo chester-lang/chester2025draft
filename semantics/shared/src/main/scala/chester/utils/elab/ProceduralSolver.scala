@@ -85,7 +85,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       if (updatedCells.nonEmpty) nothingChanged = false
     }
     if (defaults.isEmpty && nothingChanged && todo.isEmpty) {
-      if(stable) return
+      if (stable) return
       throw new IllegalStateException("cannot finish some constraints")
     }
     val _ = delayedConstraints.filterInPlace { c =>

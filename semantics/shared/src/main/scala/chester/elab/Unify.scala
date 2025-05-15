@@ -42,7 +42,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     }
     (lhsV, rhsV) match {
       case (AnyType(level, _), _)                  => Result.Done // TODO: check for level
-      case (_: SimpleType, AnyType(level, _))         => failed(c)
+      case (_: SimpleType, AnyType(level, _))      => failed(c)
       case (_, NothingType(_))                     => Result.Done
       case (ListType(lhs, meta), ListType(rhs, _)) =>
         // For debug lhs1 and rhs1
