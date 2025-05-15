@@ -6,7 +6,6 @@ import chester.reader.FileNameAndContent
 import chester.readerv2.ChesterReaderV2
 import chester.syntax.core.*
 import chester.tyck.api.NoopSemanticCollector
-import chester.utils.elimNonEmptyVector
 import munit.FunSuite
 
 class ElabLiteralAndListTest extends FunSuite {
@@ -37,10 +36,6 @@ class ElabLiteralAndListTest extends FunSuite {
     // Check that the type is IntType
     assert(judge.ty.isInstanceOf[IntType], 
       s"Expected IntType but got ${judge.ty.getClass.getSimpleName}")
-      
-    // For debugging
-    println(s"Literal \"1\" was typed as: ${judge.wellTyped.getClass.getSimpleName}")
-    println(s"With type: ${judge.ty.getClass.getSimpleName}")
   }
   
   test("heterogeneous list typechecking with new elab") {
@@ -99,10 +94,6 @@ class ElabLiteralAndListTest extends FunSuite {
     
     assert(hasIntType, "Union type should contain IntType")
     assert(hasStringType, "Union type should contain StringType")
-    
-    // Print the inferred element type for debugging
-    println(s"Inferred list element type: ${listType.ty}")
-    println(s"Union types: ${unionTypes.map(_.getClass.getSimpleName).mkString(", ")}")
   }
   
   test("empty list typechecking with new elab") {
@@ -140,8 +131,65 @@ class ElabLiteralAndListTest extends FunSuite {
     // Verify that the element type is NothingType
     assert(listType.ty.isInstanceOf[NothingType], 
       s"Expected NothingType for empty list element type but got ${listType.ty.getClass.getSimpleName}")
+  }
+  
+  test("nested list typechecking with new elab") {
+    // Parse the nested list expression [[1], [2]]
+    val expr = ChesterReaderV2.parseExpr(FileNameAndContent("nested-list.chester", "[[1], [2]]")).fold(
+      error => fail(s"Failed to parse expression: $error"),
+      identity
+    )
     
-    // Print the inferred element type for debugging
-    println(s"Empty list element type: ${listType.ty.getClass.getSimpleName}")
+    // Create reporter and ElabOps for typechecking
+    val reporter = new VectorReporter[TyckProblem]()
+    val elabOps = ElabOps(reporter, NoopSemanticCollector)
+    
+    // Infer the type using the DefaultElaborator
+    val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+    
+    // Assert that there are no errors
+    assertEquals(reporter.getReports.isEmpty, true, 
+      s"Expected no type errors, but got: ${reporter.getReports}")
+    
+    // Check that the elaborated term is a ListTerm
+    assert(judge.wellTyped.isInstanceOf[ListTerm], 
+      s"Expected ListTerm but got ${judge.wellTyped.getClass.getSimpleName}")
+    
+    // Get the list terms and verify they are also ListTerms
+    val outerListTerm = judge.wellTyped.asInstanceOf[ListTerm]
+    assertEquals(outerListTerm.terms.size, 2, "Outer list should have 2 elements")
+    
+    // First element should be a ListTerm
+    assert(outerListTerm.terms(0).isInstanceOf[ListTerm], 
+      s"First element should be ListTerm but got ${outerListTerm.terms(0).getClass.getSimpleName}")
+    
+    // Second element should be a ListTerm
+    assert(outerListTerm.terms(1).isInstanceOf[ListTerm], 
+      s"Second element should be ListTerm but got ${outerListTerm.terms(1).getClass.getSimpleName}")
+    
+    // Verify the inner lists contain IntTerm elements
+    val firstInnerList = outerListTerm.terms(0).asInstanceOf[ListTerm]
+    val secondInnerList = outerListTerm.terms(1).asInstanceOf[ListTerm]
+    
+    assert(firstInnerList.terms(0).isInstanceOf[IntTerm], 
+      s"Inner list element should be IntTerm but got ${firstInnerList.terms(0).getClass.getSimpleName}")
+    
+    assert(secondInnerList.terms(0).isInstanceOf[IntTerm], 
+      s"Inner list element should be IntTerm but got ${secondInnerList.terms(0).getClass.getSimpleName}")
+
+    // Check the list type structure for List(List(Int))
+    assert(judge.ty.isInstanceOf[ListType], 
+      s"Expected outer ListType but got ${judge.ty.getClass.getSimpleName}")
+    
+    val outerListType = judge.ty.asInstanceOf[ListType]
+    
+    // Verify that the element type is a ListType
+    assert(outerListType.ty.isInstanceOf[ListType], 
+      s"Expected ListType but got ${outerListType.ty.getClass.getSimpleName}")
+    
+    // Verify that the inner list element type is IntType
+    val innerListType = outerListType.ty.asInstanceOf[ListType]
+    assert(innerListType.ty.isInstanceOf[IntType], 
+      s"Expected IntType for innermost element but got ${innerListType.ty.getClass.getSimpleName}")
   }
 }
