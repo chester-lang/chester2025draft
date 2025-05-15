@@ -3,7 +3,8 @@ package chester.elab
 import chester.cell.CellEffects
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.tyck.{Context, convertMeta}
+import chester.tyck.Tycker.MutableContext
 import chester.utils.elab.*
 
 case object BlockElab extends Kind {
@@ -14,18 +15,26 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffect
     extends Constraint(BlockElab)
     with ConstraintTerm {
   override def result: CellRW[BlockTerm] = newHole
-  given Context = ctx
+  given context: Context = ctx
   given Elab = elab
   given CellEffects = effects
 }
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
-  override def run(c: BlockElab)(using ElabOps, SolverOps): Result ={
-    import c.{*,given}
-    val statements = block.statements.map(resolve(_))
-    ???
+  override def run(c: BlockElab)(using ElabOps, SolverOps): Result = {
+    import c.{*, given}
+    val exprStatements = block.statements.map(resolve(_))
+    val outerContext = c.context
+    given context: MutableContext = new MutableContext(outerContext)
+    var statements: Vector[StmtTerm] = Vector()
+    for (s <- exprStatements)
+      s match {
+        case _ => ???
+      }
+    val resultExpr = block.result.getOrElse(UnitExpr(meta = None))
+    val returning = toTerm(given_Elab.elab(resultExpr, ty))
+    // TODO: checking for possible leakage and do substitution for examples like {let a = Int; 1 : a}
+    result.fill(BlockTerm(statements, returning, convertMeta(block.meta)))
+    Result.Done
   }
-
-  override def defaulting(c: BlockElab, level: DefaultingLevel)(using ElabOps, SolverOps): Unit =
-    ()
 }
