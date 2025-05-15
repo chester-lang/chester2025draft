@@ -8,7 +8,7 @@ open trait Cell[+A, -B, +C <: CellContent[A, B]] {
   override def toString: String = s"Cell@$tag"
 }
 
-type CellOf[A, B] = Cell[A, B, CellContent[A, B]]
+type CellOf[+A, -B] = Cell[A, B, CellContent[A, B]]
 type CellRW[T] = Cell[T, T, CellContent[T, T]]
 type CellAny = Cell[Any, Nothing, CellContent[Any, Nothing]]
 type CellR[+T] = Cell[T, Nothing, CellContent[T, Nothing]]

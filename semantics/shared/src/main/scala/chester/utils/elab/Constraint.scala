@@ -8,6 +8,6 @@ open trait Kind {
 
 open trait Constraint(val kind: Kind) {}
 
-open trait ConstraintResult[A] extends Constraint {
+open trait ConstraintResult[+A] extends Constraint {
   def result: A
 }

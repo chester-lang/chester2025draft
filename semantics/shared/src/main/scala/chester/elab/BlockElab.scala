@@ -34,7 +34,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
           val pattern = let.defined
           val body = let.body.getOrElse{Reporter.report(???)}
           val ty = let.ty match {
-            case Some(ty) => SolverOps.callConstraint(IsType(given_Elab.infer(ty).wellTyped))
+            case Some(ty) => given_Elab.inferType(ty)
             case _ => ???
           }
         }

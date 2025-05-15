@@ -50,6 +50,8 @@ def assumeCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps
 
 def newHole[T <: Term](using SolverOps): CellRW[T] = SolverOps.addCell(OnceCellContent[T]())
 
+def newType(using SolverOps, Context): CellRW[Term] = toCell(SolverOps.callConstraint(IsType[Term,Term](newHole)))
+
 trait Elab {
 
   def elab(expr: Expr, ty: CellRWOr[Term])(using
@@ -65,9 +67,18 @@ trait Elab {
       ElabOps,
       SolverOps
   ): (wellTyped: CellROr[Term], ty: CellRWOr[Term]) = {
-    val ty = SolverOps.callConstraint(IsType(newHole))
+    val ty = newType
     val result = elab(expr, ty)
     (result, ty)
+  }
+
+  def inferType(expr: Expr)(using
+                            Context,
+                            ElabOps,
+                            SolverOps
+  ): CellROr[Term] = {
+    given CellEffects = newPureEffects
+    SolverOps.callConstraint(IsType(infer(expr).wellTyped))
   }
 
 }

@@ -7,16 +7,16 @@ import chester.utils.elab.*
 import scala.language.implicitConversions
 
 case object IsType extends Kind {
-  type Of = IsType[Nothing]
+  type Of = IsType[Term, Nothing]
 }
 
-case class IsType[W](result: CellOf[Term, W] | Term)(using ctx: Context) extends Constraint(IsType) with ConstraintResult[CellOf[Term, W] | Term] {
+case class IsType[+T <: Term, -W](result: CellOf[T, W] | T)(using ctx: Context) extends Constraint(IsType) with ConstraintResult[CellOf[T, W] | T] {
   given Context = ctx
 }
 
 case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
-  implicit inline def writeTerm[W](inline x: CellOf[Term, W] | Term): CellRWOr[Term] = x.asInstanceOf[CellRWOr[Term]]
-  override def run(c: IsType[Nothing])(using ElabOps, SolverOps): Result = {
+  implicit inline def writeTerm[T <: Term, W](inline x: CellOf[T, W] | T): CellRWOr[Term] = x.asInstanceOf[CellRWOr[Term]]
+  override def run(c: IsType[Term, Nothing])(using ElabOps, SolverOps): Result = {
     import c.*
     toTerm(result) match {
       case _: MetaTerm => Result.Waiting(assumeCell(result))
@@ -24,7 +24,7 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
     }
   }
 
-  override def defaulting(constant: IsType[Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
+  override def defaulting(constant: IsType[Term, Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
     if (level != DefaultingLevel.IsType) return
     import constant.*
     toTerm(result) match {
