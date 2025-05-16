@@ -550,6 +550,7 @@ lazy val spireNative = crossProject(NativePlatform)
   )
   .nativeSettings(
   )
+  .jvmSettings(commonJvmSettings)
 
 // https://codeberg.org/sciss/scala-stm/commit/3244edf13c41f22ff8b45143186745e9eb469220
 // test currently removed, will be added later
