@@ -868,7 +868,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.29.0"
+val jlineVersion = "3.30.1"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
@@ -1038,7 +1038,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   )
   .jvmSettings(commonJvmSettings)
 
-val jgitVersion = "7.2.0.202503040940-r"
+val jgitVersion = "7.2.1.202505142326-r"
 lazy val buildTool = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
