@@ -53,7 +53,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       case (ListType(_, meta), _: SimpleType) => failed(c)
       case (lhs: MetaTerm, _)                 => Result.Waiting(assumeCell(lhs))
       case (_, rhs: MetaTerm)                 => Result.Waiting(assumeCell(rhs))
-      case (Union(lhs, lhsMeta), Union(rhs, rhsMeta)) =>
+      case (Union(lhs, _), Union(rhs, rhsMeta)) =>
         val lhs1 = lhs.map(toTerm(_))
         val rhs1 = rhs.map(toTerm(_))
         val common = lhs1.filter(x => rhs1.exists(y => eqType(x, y)))

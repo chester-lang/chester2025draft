@@ -52,8 +52,8 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     if (!lhsV.isInstanceOf[MetaTerm]) {
       for (rhs <- rhs1)
         SolverOps.addConstraint(Unify(lhsV, rhs))
-       true
-    } else{
+      true
+    } else {
       false
     }
   }

@@ -7,6 +7,7 @@ enum Result {
 
 open trait Handler[-Ops, +K <: Kind](val kind: K) {
   def run(constant: kind.Of)(using Ops, SolverOps): Result
+
   /** return true means did something false means nothing */
   def defaulting(constant: kind.Of, level: DefaultingLevel)(using Ops, SolverOps): Boolean = false
 }

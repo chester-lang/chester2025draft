@@ -11,7 +11,7 @@ import scala.concurrent.stm.*
 final class ConcurrentCell[+A, -B, C <: CellContent[A, B]](
     initialValue: C
 ) extends Cell[A, B, C] {
-  val storeRef = Ref(initialValue)
+  val storeRef: Ref[C] = Ref(initialValue)
 }
 
 val parameterTxn = new Parameter[InTxn]()

@@ -97,7 +97,7 @@ trait DefaultElab extends Elab {
       case expr: SymbolLiteral =>
         SolverOps.addConstraint(Pure(effects))
         SolverOps.callConstraint(SymbolLit(expr, ty))
-      case expr @ ListExpr(xs, meta) =>
+      case _ @ ListExpr(xs, meta) =>
         val items = xs.map(infer(_))
         SolverOps.callConstraint(ListOf(items, ty))
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))

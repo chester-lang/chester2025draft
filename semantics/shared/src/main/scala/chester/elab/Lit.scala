@@ -45,7 +45,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
     }
     toTerm(ty) match {
       case ty: MetaTerm => Result.Waiting(assumeCell(ty))
-      case ty =>
+      case _ =>
         result.fill(IntegerTerm(expr.value, meta))
         Reporter.report(??? : TyckProblem)
         Result.Done

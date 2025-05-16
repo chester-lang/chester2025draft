@@ -7,7 +7,6 @@ import chester.resolve.{SimpleDesalt, resolveOpSeq}
 import chester.utils.*
 
 import scala.language.implicitConversions
-import scala.language.implicitConversions
 
 def resolve(
     expr: Expr

@@ -562,15 +562,14 @@ lazy val scalaSTM = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("vendor/scala-stm"))
   .settings(
     commonVendorSettings,
-  libraryDependencies ++= Seq(
-    "org.scalatest"     %%% "scalatest"  % "3.2.19"     % Test,
-    "org.scalatestplus" %%  "junit-5-10" % "3.2.19.1" % Test,
-    "org.junit.jupiter"             %   "junit-jupiter-api"      % "5.10.5"         % Test,
-  ),
+    libraryDependencies ++= Seq(
+      "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
+      "org.scalatestplus" %% "junit-4-13" % "3.2.19.1" % Test,
+      "junit" % "junit" % "4.13.2" % Test
+    )
   )
   .disablePlugins(ScalafixPlugin)
   .jvmSettings(commonJvmSettings)
-
 
 val AIRFRAME_VERSION = "2025.1.10"
 val ironVersion = "3.0.1"
@@ -645,7 +644,7 @@ lazy val utils = useSpire(
     .jvmSettings(
       libraryDependencies ++= Seq(
         "org.scala-stm" %%% "scala-stm" % "0.11.1"
-      ),
+      )
     )
 )
 
