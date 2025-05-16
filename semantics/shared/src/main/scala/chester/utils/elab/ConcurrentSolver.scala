@@ -126,12 +126,12 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       atom {
         val result = handler.run(x.asInstanceOf[handler.kind.Of])
         result match {
-          case Result.Done => ()
+          case Result.Done => delayedConstraints.set(delayedConstraints.get.filterNot(_ == delayed))
           case Result.Waiting(vars*) =>
             if (handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)) {
               val result = handler.run(x.asInstanceOf[handler.kind.Of])
               result match {
-                case Result.Done => ()
+                case Result.Done => delayedConstraints.set(delayedConstraints.get.filterNot(_ == delayed))
                 case Result.Waiting(vars*) =>
                   val delayed1 = WaitingConstraint(vars.toVector, x)
                   val got = delayedConstraints.get
