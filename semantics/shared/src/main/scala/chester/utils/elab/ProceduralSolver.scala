@@ -72,13 +72,16 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
           case Result.Done =>
             Vector()
           case Result.Waiting(vars*) =>
-            handler.defaulting(c.asInstanceOf[handler.kind.Of], default)
-            val result = handler.run(c.asInstanceOf[handler.kind.Of])
-            result match {
-              case Result.Done =>
-                Vector()
-              case Result.Waiting(vars*) =>
-                Vector(WaitingConstraint(vars.toVector, c))
+            if (handler.defaulting(c.asInstanceOf[handler.kind.Of], default)) {
+              val result = handler.run(c.asInstanceOf[handler.kind.Of])
+              result match {
+                case Result.Done =>
+                  Vector()
+                case Result.Waiting(vars*) =>
+                  Vector(WaitingConstraint(vars.toVector, c))
+              }
+            } else {
+              Vector(WaitingConstraint(vars.toVector, c))
             }
         }
       }
