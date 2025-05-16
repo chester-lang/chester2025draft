@@ -551,6 +551,26 @@ lazy val spireNative = crossProject(NativePlatform)
   .nativeSettings(
   )
 
+// https://codeberg.org/sciss/scala-stm/commit/3244edf13c41f22ff8b45143186745e9eb469220
+// test currently removed, will be added later
+// js: shouldParkAfterFailedAcquire patched the  do while loop; AtomicIntegerArray val length instead of `length` and removed length() method
+// shared scala.concurrent.stm.Handle var meta: Long changed to var meta1: Long and  def meta: Long  def meta_=(value: Long):Unit so that js's CCSTMRefs.scala can override it
+lazy val scalaSTM = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("vendor/scala-stm"))
+  .settings(
+    commonVendorSettings,
+  libraryDependencies ++= Seq(
+    "org.scalatest"     %%% "scalatest"  % "3.2.19"     % Test,
+    "org.scalatestplus" %%  "junit-5-10" % "3.2.19.1" % Test,
+    "org.junit.jupiter"             %   "junit-jupiter-api"      % "5.10.5"         % Test,
+  ),
+  )
+  .disablePlugins(ScalafixPlugin)
+  .jvmSettings(commonJvmSettings)
+
+
 val AIRFRAME_VERSION = "2025.1.10"
 val ironVersion = "3.0.1"
 
@@ -618,6 +638,13 @@ lazy val utils = useSpire(
       )
     )
     .jsSettings(
+    )
+    .nativeConfigure(_.dependsOn(scalaSTM.native))
+    .jsConfigure(_.dependsOn(scalaSTM.js))
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        "org.scala-stm" %%% "scala-stm" % "0.11.1"
+      ),
     )
 )
 
@@ -1145,7 +1172,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     optional,
     jsForPython,
     jsForLua,
-    testCommon
+    testCommon,
+    scalaSTM
   )
   .settings(
     scalaVersion := scala3Version
