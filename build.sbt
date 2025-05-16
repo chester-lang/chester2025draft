@@ -550,7 +550,6 @@ lazy val spireNative = crossProject(NativePlatform)
   )
   .nativeSettings(
   )
-  .jvmSettings(commonJvmSettings)
 
 val AIRFRAME_VERSION = "2025.1.10"
 val ironVersion = "3.0.1"
