@@ -56,7 +56,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     delayedConstraints.get.map(c => c.x.kind.hashCode() << 8 + c.x.hashCode()).sorted.toVector
   }
   override def stable: Boolean = {
-    if (delayedConstraints.get.nonEmpty) return false
+    if (atom(delayedConstraints.get).nonEmpty) return false
     if (pool.isShutdown) return true
     if (pool.isQuiescent) {
       finish()
@@ -67,10 +67,8 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   private def finish(): Unit = {
     atom {
-      assume(pool.isQuiescent)
       assume(delayedConstraints.get.isEmpty)
       assume(pool.isQuiescent)
-      assume(delayedConstraints.get.isEmpty)
     }
     val tasks = pool.shutdownNow()
     assume(tasks.isEmpty)
@@ -143,9 +141,9 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   }
 
   override def addConstraint(x: Constraint): Unit =
+    val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException(s"no handler for ${x.kind}"))
     pool.execute { () =>
       atom {
-        val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException(s"no handler for ${x.kind}"))
         val result = handler.run(x.asInstanceOf[handler.kind.Of])
         result match {
           case Result.Done => ()
