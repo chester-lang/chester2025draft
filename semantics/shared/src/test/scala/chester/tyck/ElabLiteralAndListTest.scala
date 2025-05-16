@@ -215,10 +215,10 @@ class ElabLiteralAndListTest extends FunSuite {
 
     // The block should contain a let binding and an integer expression
     val blockTerm = judge.wellTyped.asInstanceOf[BlockTerm]
-    
+
     // First statement should be a let binding
     assert(blockTerm.statements.head.isInstanceOf[LetStmtTerm], s"Expected LetStmtTerm but got ${blockTerm.statements.head.getClass.getSimpleName}")
-    
+
     // The return expression should be an IntTerm
     assert(blockTerm.result.isInstanceOf[IntTerm], s"Expected IntTerm but got ${blockTerm.result.getClass.getSimpleName}")
 
