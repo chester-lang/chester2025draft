@@ -525,7 +525,7 @@ lazy val genProductTypes = TaskKey[Seq[File]](
   "gen-product-types",
   "Generates several type classes for Tuple2-22."
 )
-lazy val spireNative = crossProject(NativePlatform)
+lazy val spireNative = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(NativePlatform)
   .crossType(CrossType.Full)
   .in(file("vendor/spire-native"))
