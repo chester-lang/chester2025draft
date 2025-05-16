@@ -30,6 +30,11 @@ private def optionalAtom[T](f: => T): T =
     f
   }
 
+private def assumeNotInAtom(): Unit =
+  if (parameterTxn.getOption.isDefined) {
+    throw new IllegalStateException(" in transaction")
+  }
+
 private def atom[T](f: => T): T =
   atomic { implicit txn: InTxn =>
     parameterTxn.withValue(txn) {
@@ -56,6 +61,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     delayedConstraints.get.map(c => c.x.kind.hashCode() << 8 + c.x.hashCode()).sorted.toVector
   }
   override def stable: Boolean = {
+    assumeNotInAtom()
     if (atom(delayedConstraints.get).nonEmpty) return false
     if (pool.isShutdown) return true
     if (pool.isQuiescent) {
@@ -66,6 +72,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   }
 
   private def finish(): Unit = {
+    assumeNotInAtom()
     atom {
       assume(delayedConstraints.get.isEmpty)
       assume(pool.isQuiescent)
@@ -75,6 +82,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   }
 
   private def inPoolTickStage1(zonkLevel: DefaultingLevel): Unit = {
+    assumeNotInAtom()
     val delayed = atom {
       val delayed = delayedConstraints.get
       delayedConstraints.set(Vector.empty)
@@ -83,6 +91,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     delayed.foreach(x => doDefaulting(x, zonkLevel))
   }
   override def run(): Unit = boundary[Unit] { outer ?=>
+    assumeNotInAtom()
     while (true) boundary[Unit] { inner ?=>
       assume(!pool.isShutdown)
       val _ = pool.awaitQuiescence(Long.MaxValue, TimeUnit.DAYS)
@@ -109,6 +118,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   }
 
   private def doDefaulting(delayed: WaitingConstraint, zonkLevel: DefaultingLevel): Unit = {
+    assumeNotInAtom()
     val x = delayed.x
     val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
     if (!handler.canDefaulting(zonkLevel)) {
