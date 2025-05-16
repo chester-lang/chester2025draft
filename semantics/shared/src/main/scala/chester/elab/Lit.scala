@@ -53,7 +53,6 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
   }
 
   override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
-    if (level != DefaultingLevel.Lit) return false
     import c.*
     toTerm(ty) match {
       case ty: MetaTerm =>
@@ -66,6 +65,8 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       case _ => false
     }
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = level == DefaultingLevel.Lit
 }
 
 case object StringLit extends Lit {
@@ -86,6 +87,8 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
     result.fill(StringTerm(expr.value, meta))
     Result.Done
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = false
 }
 
 case object SymbolLit extends Lit {
@@ -106,4 +109,6 @@ case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit)
     result.fill(SymbolTerm(expr.value, meta))
     Result.Done
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = false
 }

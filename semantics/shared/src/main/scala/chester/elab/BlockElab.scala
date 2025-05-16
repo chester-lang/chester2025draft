@@ -60,4 +60,6 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     result.fill(BlockTerm(statements, returning, convertMeta(block.meta)))
     Result.Done
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = false
 }

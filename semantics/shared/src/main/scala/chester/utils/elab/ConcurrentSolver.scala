@@ -114,7 +114,9 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     val x = delayed.x
     val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
     if (!handler.canDefaulting(zonkLevel)) {
-      delayedConstraints.set(delayedConstraints.get.appended(delayed))
+      atom {
+        delayedConstraints.set(delayedConstraints.get.appended(delayed))
+      }
       return
     }
     pool.execute { () =>

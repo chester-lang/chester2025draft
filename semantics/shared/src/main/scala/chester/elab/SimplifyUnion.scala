@@ -42,4 +42,6 @@ case object SimplifyUnionHandler extends Handler[ElabOps, SimplifyUnion.type](Si
     result.fill(Union1(xs.assumeNonEmpty, meta = meta))
     Result.Done
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = false
 }

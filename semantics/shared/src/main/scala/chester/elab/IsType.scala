@@ -25,7 +25,6 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
   }
 
   override def defaulting(constant: IsType[Term, Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
-    if (level != DefaultingLevel.IsType) return false
     import constant.*
     toTerm(result) match {
       case result: MetaTerm =>
@@ -36,4 +35,6 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
         false
     }
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = (level == DefaultingLevel.IsType)
 }

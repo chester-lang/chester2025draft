@@ -41,7 +41,6 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
   }
 
   override def defaulting(c: UnifyMultiple, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
-    if (level != DefaultingLevel.UnifyMultipleMerge) return false
     import c.{*, given}
     val lhsV = toTerm(lhs)
     val rhsV = rhs.map(toTerm(_))
@@ -57,4 +56,6 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
       false
     }
   }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = level == DefaultingLevel.UnifyMultipleMerge
 }

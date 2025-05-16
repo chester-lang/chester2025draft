@@ -26,4 +26,6 @@ case object MergeSimpleHandler extends Handler[Reporter[TyckProblem], MergeSimpl
           Result.Done
         }
     }
+
+  override def canDefaulting(level: DefaultingLevel): Boolean = false
 }
