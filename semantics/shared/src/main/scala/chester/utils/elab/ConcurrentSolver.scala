@@ -1,30 +1,52 @@
 package chester.utils.elab
 
+import chester.utils.Parameter
 import chester.utils.cell.*
 
 import java.util.concurrent.{ForkJoinPool, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
-import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.util.boundary
+import scala.concurrent.stm.*
 
 final class ConcurrentCell[+A, -B, C <: CellContent[A, B]](
     initialValue: C
 ) extends Cell[A, B, C] {
-  val storeRef = new AtomicReference[C](initialValue)
+  val storeRef = Ref(initialValue)
 }
 
-@deprecated("highly experimental solver implementation that will cause a lot of race conditions and headache. We need software transactional memory")
+val parameterTxn = new Parameter[InTxn]()
+
 object ConcurrentSolver extends SolverFactory {
   override def apply[Ops](conf: HandlerConf[Ops])(using Ops): SolverOps = new ConcurrentSolver(conf)
 }
+
+private def optionalAtom[T](f: => T): T =
+  if (parameterTxn.getOption.isEmpty) {
+    atom {
+      f
+    }
+  } else {
+    f
+  }
+
+private def atom[T](f: => T): T =
+  atomic { implicit txn: InTxn =>
+    parameterTxn.withValue(txn) {
+      f
+    }
+  }
 
 final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends BasicSolverOps {
 
   implicit inline def thereAreAllConcurrent[A, B, C <: CellContent[A, B]](inline x: Cell[A, B, C]): ConcurrentCell[A, B, C] =
     x.asInstanceOf[ConcurrentCell[A, B, C]]
 
-  override protected def peakCell[T](id: CellR[T]): CellContentR[T] = id.storeRef.get()
+  implicit def inTxn: InTxn = parameterTxn.getOrElse(throw new IllegalStateException("not in transaction"))
+
+  override protected def peakCell[T](id: CellR[T]): CellContentR[T] = optionalAtom {
+    id.storeRef.get
+  }
 
   given SolverOps = this
   private val pool = new ForkJoinPool()
@@ -92,45 +114,41 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   private def doDefaulting(x: Constraint, zonkLevel: DefaultingLevel): Unit =
     pool.execute { () =>
-      val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
-      val result = handler.run(x.asInstanceOf[handler.kind.Of])
-      result match {
-        case Result.Done => ()
-        case Result.Waiting(vars*) =>
-          handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)
-          val result = handler.run(x.asInstanceOf[handler.kind.Of])
-          result match {
-            case Result.Done => ()
-            case Result.Waiting(vars*) =>
-              val delayed = WaitingConstraint(vars.toVector, x)
-              val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
-          }
+      atom {
+        val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
+        val result = handler.run(x.asInstanceOf[handler.kind.Of])
+        result match {
+          case Result.Done => ()
+          case Result.Waiting(vars*) =>
+            handler.defaulting(x.asInstanceOf[handler.kind.Of], zonkLevel)
+            val result = handler.run(x.asInstanceOf[handler.kind.Of])
+            result match {
+              case Result.Done => ()
+              case Result.Waiting(vars*) =>
+                val delayed = WaitingConstraint(vars.toVector, x)
+                val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+            }
+        }
       }
     }
 
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
-      val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException(s"no handler for ${x.kind}"))
-      val result = handler.run(x.asInstanceOf[handler.kind.Of])
-      result match {
-        case Result.Done => ()
-        case Result.Waiting(vars*) =>
-          val delayed = WaitingConstraint(vars.toVector, x)
-          val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+      atom {
+        val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException(s"no handler for ${x.kind}"))
+        val result = handler.run(x.asInstanceOf[handler.kind.Of])
+        result match {
+          case Result.Done => ()
+          case Result.Waiting(vars*) =>
+            val delayed = WaitingConstraint(vars.toVector, x)
+            val _ = delayedConstraints.getAndUpdate(_.appended(delayed))
+        }
       }
     }
 
-  @tailrec
   override protected def updateCell[A, B](id: CellOf[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit = {
-    val current = id.storeRef.get()
-    val updated = f(current)
-    if (current == updated) {
-      return
-    }
-    if (!id.storeRef.compareAndSet(current, updated)) {
-      return updateCell(id, f)
-    }
-    // Note that here is a possible race condition that delayed constraints might haven't been added to delayedConstraints
+    val current = id.storeRef.get
+    id.storeRef.set(f(current))
     val prev = delayedConstraints.getAndUpdate(_.filterNot(_.related(id)))
     val related = prev.withFilter(_.related(id)).map(_.x)
     addConstraints(related)
