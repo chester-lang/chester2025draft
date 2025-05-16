@@ -10,6 +10,8 @@ open trait Handler[-Ops, +K <: Kind](val kind: K) {
 
   /** return true means did something false means nothing */
   def defaulting(constant: kind.Of, level: DefaultingLevel)(using Ops, SolverOps): Boolean = false
+
+  def canDefaulting(level: DefaultingLevel): Boolean = true
 }
 
 import scala.collection.mutable

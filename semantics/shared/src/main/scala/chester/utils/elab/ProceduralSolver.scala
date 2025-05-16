@@ -67,22 +67,26 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       val _ = delayedConstraints.flatMapInPlace { x =>
         val c = x.x
         val handler = conf.getHandler(c.kind).getOrElse(throw new IllegalStateException("no handler"))
-        val result = handler.run(c.asInstanceOf[handler.kind.Of])
-        result match {
-          case Result.Done =>
-            Vector()
-          case Result.Waiting(vars*) =>
-            if (handler.defaulting(c.asInstanceOf[handler.kind.Of], default)) {
-              val result = handler.run(c.asInstanceOf[handler.kind.Of])
-              result match {
-                case Result.Done =>
-                  Vector()
-                case Result.Waiting(vars*) =>
-                  Vector(WaitingConstraint(vars.toVector, c))
+        if (handler.canDefaulting(default)) {
+          val result = handler.run(c.asInstanceOf[handler.kind.Of])
+          result match {
+            case Result.Done =>
+              Vector()
+            case Result.Waiting(vars*) =>
+              if (handler.defaulting(c.asInstanceOf[handler.kind.Of], default)) {
+                val result = handler.run(c.asInstanceOf[handler.kind.Of])
+                result match {
+                  case Result.Done =>
+                    Vector()
+                  case Result.Waiting(vars*) =>
+                    Vector(WaitingConstraint(vars.toVector, c))
+                }
+              } else {
+                Vector(WaitingConstraint(vars.toVector, c))
               }
-            } else {
-              Vector(WaitingConstraint(vars.toVector, c))
-            }
+          }
+        } else {
+          Vector(x)
         }
       }
       if (updatedCells.nonEmpty) nothingChanged = false

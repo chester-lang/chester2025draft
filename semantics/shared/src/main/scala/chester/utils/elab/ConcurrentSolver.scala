@@ -110,11 +110,15 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     }
   }
 
-  private def doDefaulting(delayed: WaitingConstraint, zonkLevel: DefaultingLevel): Unit =
+  private def doDefaulting(delayed: WaitingConstraint, zonkLevel: DefaultingLevel): Unit = {
+    val x = delayed.x
+    val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
+    if (!handler.canDefaulting(zonkLevel)) {
+      delayedConstraints.set(delayedConstraints.get.appended(delayed))
+      return
+    }
     pool.execute { () =>
       atom {
-        val x = delayed.x
-        val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
         val result = handler.run(x.asInstanceOf[handler.kind.Of])
         result match {
           case Result.Done => ()
@@ -134,6 +138,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
         }
       }
     }
+  }
 
   override def addConstraint(x: Constraint): Unit =
     pool.execute { () =>
