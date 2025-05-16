@@ -33,8 +33,6 @@ case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerC
 }
 
 val DefaultElaborator = {
-  given Elab = DefaultElabImpl
-  given SolverFactory = ConcurrentSolver // ProceduralSolver
-  given HandlerConf[ElabOps] = DefaultSolverConf
+  import chester.elab.Defaults.given
   Elaborator()
 }
