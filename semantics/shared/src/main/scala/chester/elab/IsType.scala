@@ -24,14 +24,16 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
     }
   }
 
-  override def defaulting(constant: IsType[Term, Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if (level != DefaultingLevel.IsType) return
+  override def defaulting(constant: IsType[Term, Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
+    if (level != DefaultingLevel.IsType) return false
     import constant.*
     toTerm(result) match {
       case result: MetaTerm =>
         assumeCell(result).fill(NothingType(meta = None))
+        true
       case _ =>
-      // do nothing
+        // do nothing
+        false
     }
   }
 }

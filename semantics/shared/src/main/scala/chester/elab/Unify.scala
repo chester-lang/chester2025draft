@@ -81,8 +81,8 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     }
   }
 
-  override def defaulting(c: Unify, level: DefaultingLevel)(using elabops: ElabOps, solverOps: SolverOps): Unit = {
-    if (level != DefaultingLevel.UnifyMerge) return
+  override def defaulting(c: Unify, level: DefaultingLevel)(using elabops: ElabOps, solverOps: SolverOps): Boolean = {
+    if (level != DefaultingLevel.UnifyMerge) return false
     import c.*
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
@@ -91,5 +91,6 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       case (lhs, MetaTerm(InMeta[CellRW[Term] @unchecked](rhs), meta)) => rhs.fill(lhs)
       case _                                                           => ()
     }
+    true
   }
 }

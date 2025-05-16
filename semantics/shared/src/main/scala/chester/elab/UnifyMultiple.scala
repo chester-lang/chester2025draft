@@ -40,19 +40,21 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     Result.Done
   }
 
-  override def defaulting(c: UnifyMultiple, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if (level != DefaultingLevel.UnifyMultipleMerge) return
+  override def defaulting(c: UnifyMultiple, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
+    if (level != DefaultingLevel.UnifyMultipleMerge) return false
     import c.{*, given}
     val lhsV = toTerm(lhs)
     val rhsV = rhs.map(toTerm(_))
     val rhs1 = rhsV.filterNot(x => eqType(lhsV, x)).distinctByEq(eqType)
     if (rhs1.isEmpty) {
-      return
+      return false
     }
     if (!lhsV.isInstanceOf[MetaTerm]) {
       for (rhs <- rhs1)
         SolverOps.addConstraint(Unify(lhsV, rhs))
-      return
+       true
+    } else{
+      false
     }
   }
 }

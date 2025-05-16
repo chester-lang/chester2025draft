@@ -31,9 +31,10 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
         Result.Done
     }
   }
-  override def defaulting(c: ListOf, level: DefaultingLevel)(using ElabOps, SolverOps): Unit = {
-    if (level != DefaultingLevel.ListOfSetListType) return
+  override def defaulting(c: ListOf, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
+    if (level != DefaultingLevel.ListOfSetListType) return false
     import c.{*, given}
     assumeCell(ty).fill(ListType(toTerm(newType), meta = None))
+    true
   }
 }
