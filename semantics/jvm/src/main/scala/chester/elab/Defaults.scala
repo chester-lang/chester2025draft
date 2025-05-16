@@ -1,10 +1,11 @@
 package chester.elab
 
-import chester.utils.elab.{ConcurrentSolver, HandlerConf, SolverFactory}
+import chester.utils.elab.{ConcurrentSolver, HandlerConf, ProceduralSolver, SolverFactory}
+import chester.utils.ifNativeImage
 
 object Defaults {
   given Elab = DefaultElabImpl
-  given SolverFactory = ConcurrentSolver // ProceduralSolver
+  given SolverFactory = ifNativeImage(ProceduralSolver)(ConcurrentSolver)
   given HandlerConf[ElabOps] = DefaultSolverConf
 
 }

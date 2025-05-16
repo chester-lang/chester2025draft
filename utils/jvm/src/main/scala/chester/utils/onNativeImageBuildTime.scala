@@ -10,3 +10,6 @@ inline def onNativeImageRunTime(f: => Unit): Unit =
 
 inline def ifNativeImageRunTime[A](f: => A)(g: => A): A =
   if (ImageInfo.inImageRuntimeCode) f else g
+
+inline def ifNativeImage[A](f: => A)(g: => A): A =
+  if (ImageInfo.inImageCode) f else g
