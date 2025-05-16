@@ -84,9 +84,7 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   private def inPoolTickStage1(zonkLevel: DefaultingLevel): Unit = {
     assumeNotInAtom()
     val delayed = atom {
-      val delayed = delayedConstraints.get
-      delayedConstraints.set(Vector.empty)
-      delayed
+      delayedConstraints.get
     }
     delayed.foreach(x => doDefaulting(x, zonkLevel))
   }
@@ -122,9 +120,6 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
     val x = delayed.x
     val handler = conf.getHandler(x.kind).getOrElse(throw new IllegalStateException("no handler"))
     if (!handler.canDefaulting(zonkLevel)) {
-      atom {
-        delayedConstraints.set(delayedConstraints.get.appended(delayed))
-      }
       return
     }
     pool.execute { () =>
@@ -138,12 +133,20 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
               result match {
                 case Result.Done => ()
                 case Result.Waiting(vars*) =>
-                  val delayed = WaitingConstraint(vars.toVector, x)
-                  delayedConstraints.set(delayedConstraints.get.appended(delayed))
+                  val delayed1 = WaitingConstraint(vars.toVector, x)
+                  val got = delayedConstraints.get
+                  val delayedConstraints1 = got.filterNot(_ == delayed)
+                  if (delayedConstraints1.length < got.length) {
+                    delayedConstraints.set(delayedConstraints1.appended(delayed1))
+                  }
               }
             } else {
-              val delayed = WaitingConstraint(vars.toVector, x)
-              delayedConstraints.set(delayedConstraints.get.appended(delayed))
+              val delayed1 = WaitingConstraint(vars.toVector, x)
+              val got = delayedConstraints.get
+              val delayedConstraints1 = got.filterNot(_ == delayed)
+              if (delayedConstraints1.length < got.length) {
+                delayedConstraints.set(delayedConstraints1.appended(delayed1))
+              }
             }
         }
       }
