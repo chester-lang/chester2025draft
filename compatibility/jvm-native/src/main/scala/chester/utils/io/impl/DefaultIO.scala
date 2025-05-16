@@ -22,7 +22,7 @@ given DefaultRunner: Runner[Id] {
   override inline def map[A, B](fa: A)(f: A => B): B = f(fa)
 
   @tailrec
-  override def tailRecM[A, B](a: A)(f: A => Id[Either[A, B]]): Id[B] = f(
+  final override def tailRecM[A, B](a: A)(f: A => Id[Either[A, B]]): Id[B] = f(
     a
   ) match {
     case Left(a1) => tailRecM(a1)(f)
