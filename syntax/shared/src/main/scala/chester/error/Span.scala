@@ -93,7 +93,7 @@ case class Span(source: Source, range: SpanInFile) derives ReadWriter {
   }
 
   override def toString: String =
-    t"SourcePos(\"${encodeString(fileName)}\",$range)"
+    t"Span(\"${encodeString(fileName)}\",$range)"
 }
 
 extension (pos: Option[Span]) {

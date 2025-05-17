@@ -114,7 +114,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   private def mergeMeta(existing: Option[ExprMeta], newMeta: Option[ExprMeta]): Option[ExprMeta] =
     (existing, newMeta) match {
       case (Some(existing), Some(ExprMeta(newSourcePos, newCommentInfo))) =>
-        val mergedSourcePos = existing.sourcePos.orElse(newSourcePos)
+        val mergedSourcePos = existing.span.orElse(newSourcePos)
         val mergedCommentInfo = (existing.commentInfo, newCommentInfo) match {
           case (Some(existingInfo), Some(newInfo)) =>
             Some(
@@ -142,7 +142,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
     terms match {
       case Vector() => Left(ParseError(t"Empty operator sequence", Some(this.state.sourcePos)))
       case Vector(expr) if comments.nonEmpty =>
-        Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.sourcePos), comments))))
+        Right(expr.updateMeta(meta => mergeMeta(meta, createMetaWithComments(meta.flatMap(_.span), comments))))
       case Vector(expr) => Right(expr)
       case _ =>
         Right(OpSeq(terms, createMetaWithComments(None, comments)))
@@ -181,7 +181,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             val funcCall = FunctionCall(
               expr,
               Tuple(Vector(objExpr), createMeta(None, None)), // Wrap object in a Tuple
-              createMeta(Some(expr.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+              createMeta(Some(expr.meta.flatMap(_.span).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
             )
             // parseObject advanced state, now continue parsing after the object
             parseRest(funcCall, context = context) // Recurse with the new FunctionCall
@@ -425,10 +425,10 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
   private def handleBlockArgument(
-                                   expr: ParsedExpr,
-                                   terms: Vector[ParsedExpr],
-                                   braceSourcePos: Span,
-                                   context: ReaderContext = ReaderContext()
+      expr: ParsedExpr,
+      terms: Vector[ParsedExpr],
+      braceSourcePos: Span,
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, ParsedExpr] =
     // this.state is already set correctly
     parseBlock(context0 = context).flatMap { block =>
@@ -454,7 +454,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             val newFuncCall = FunctionCall(
               funcCall,
               Tuple(Vector(block), createMeta(None, None)),
-              createMeta(Some(funcCall.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+              createMeta(Some(funcCall.meta.flatMap(_.span).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
             )
 
             if (this.state.isAtTerminator) {
@@ -467,7 +467,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
           val funcCall = FunctionCall(
             id,
             Tuple(Vector(block), createMeta(None, None)),
-            createMeta(Some(id.meta.flatMap(_.sourcePos).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
+            createMeta(Some(id.meta.flatMap(_.span).getOrElse(braceSourcePos)), Some(this.state.sourcePos))
           )
 
           if (this.state.isAtTerminator) {
@@ -586,9 +586,9 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   }
 
   private def handleDotCall(
-                             dotSourcePos: Span,
-                             terms: Vector[ParsedExpr],
-                             context: ReaderContext = ReaderContext()
+      dotSourcePos: Span,
+      terms: Vector[ParsedExpr],
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, ParsedExpr] = {
     // Skip the dot
     advance()
@@ -756,7 +756,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             this.state.current match {
               case Right(Token.LParen(_)) =>
                 parseTuple(context0 = context).map { args =>
-                  val funcSourcePos = identifier.meta.flatMap(_.sourcePos)
+                  val funcSourcePos = identifier.meta.flatMap(_.span)
                   FunctionCall(
                     identifier,
                     args,
@@ -865,12 +865,12 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
     */
   @tailrec
   private def parseElementSequence(
-                                    closingTokenPredicate: Token => Boolean,
-                                    allowSemicolon: Boolean,
-                                    startPosForError: Span,
-                                    contextDescription: String,
-                                    accumulatedExprs: Vector[ParsedExpr] = Vector.empty,
-                                    context: ReaderContext = ReaderContext()
+      closingTokenPredicate: Token => Boolean,
+      allowSemicolon: Boolean,
+      startPosForError: Span,
+      contextDescription: String,
+      accumulatedExprs: Vector[ParsedExpr] = Vector.empty,
+      context: ReaderContext = ReaderContext()
   ): Either[ParseError, Vector[ParsedExpr]] = {
     // Skip comments and whitespace before checking the token
     skipComments()
@@ -914,7 +914,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
                   expr.updateMeta { meta =>
                     mergeMeta(
                       meta,
-                      createMetaWithComments(meta.flatMap(_.sourcePos), Vector.empty, trailingComments)
+                      createMetaWithComments(meta.flatMap(_.span), Vector.empty, trailingComments)
                     )
                   }
                 } else {
@@ -933,7 +933,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
                     expr.updateMeta { meta =>
                       mergeMeta(
                         meta,
-                        createMetaWithComments(meta.flatMap(_.sourcePos), Vector.empty, trailingComments)
+                        createMetaWithComments(meta.flatMap(_.span), Vector.empty, trailingComments)
                       )
                     }
                   } else {
@@ -1006,7 +1006,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
                 createMeta(Some(sourcePos), Some(this.state.sourcePos))
                   .map(m =>
                     ExprMeta(
-                      m.sourcePos,
+                      m.span,
                       createCommentInfo(comments.collect { case c: Comment => c }, Vector.empty)
                     )
                   )
@@ -1328,7 +1328,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
               val comments = pullComments()
               val objectMeta = if (comments.nonEmpty) {
                 val meta = createMeta(Some(sourcePos), Some(endPos))
-                meta.map(m => ExprMeta(m.sourcePos, createCommentInfo(comments)))
+                meta.map(m => ExprMeta(m.span, createCommentInfo(comments)))
               } else {
                 createMeta(Some(sourcePos), Some(endPos))
               }
@@ -1395,7 +1395,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
         Comment(
           content = c.text.trim,
           typ = commentType,
-          sourcePos = Some(c.span)
+          span = Some(c.span)
         ): CommOrWhite
       case w: Token.Whitespace => w: CommOrWhite
     }
@@ -1418,9 +1418,9 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   /** Creates ExprMeta with comments.
     */
   private def createMetaWithComments(
-                                      sourcePos: Option[Span],
-                                      leadingComments: Vector[CommOrWhite] = Vector.empty,
-                                      trailingComments: Vector[Comment] = Vector.empty
+      sourcePos: Option[Span],
+      leadingComments: Vector[CommOrWhite] = Vector.empty,
+      trailingComments: Vector[Comment] = Vector.empty
   ): Option[ExprMeta] =
     ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments, trailingComments))
 
@@ -1463,7 +1463,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
       val updatedExpr = if (leadingComments.nonEmpty || trailingComments.nonEmpty) {
         expr.updateMeta { existingMeta =>
           val newMeta = createMetaWithComments(
-            existingMeta.flatMap(_.sourcePos),
+            existingMeta.flatMap(_.span),
             leadingComments,
             trailingComments
           )
@@ -1491,9 +1491,9 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
 
   // Create a helper method for parsing literals with common pattern
   private def parseLiteral[T <: ParsedExpr](
-                                             extract: Token => Option[(String, Span)],
-                                             create: (String, Option[ExprMeta]) => T,
-                                             errorMsg: String
+      extract: Token => Option[(String, Span)],
+      create: (String, Option[ExprMeta]) => T,
+      errorMsg: String
   ): Either[ParseError, T] =
     this.state.current match {
       case Right(token) =>

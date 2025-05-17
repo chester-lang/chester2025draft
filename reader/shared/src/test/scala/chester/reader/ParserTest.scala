@@ -13,7 +13,7 @@ class ParserTest extends FunSuite {
     result match {
       case Right(Identifier(name, Some(meta))) =>
         assertEquals(name, "validIdentifier123")
-        meta.sourcePos match {
+        meta.span match {
           case Some(pos) =>
             assertEquals(pos.fileName, "testFile")
             assertEquals(pos.range.start.line.asInt, 0)
@@ -30,7 +30,7 @@ class ParserTest extends FunSuite {
     result match {
       case Right(Identifier(name, Some(meta))) =>
         assertEquals(name, "valid-Identifier_123")
-        meta.sourcePos match {
+        meta.span match {
           case Some(pos) =>
             assertEquals(pos.fileName, "testFile")
             assertEquals(pos.range.start.line.asInt, 0)

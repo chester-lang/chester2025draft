@@ -27,7 +27,7 @@ object Backend {
     */
   private def transform(term: Term): Expression = {
     // Use map instead of flatMap, should be equivalent for Option[TermMeta]
-    val jsMeta = term.meta.map(_.sourcePos).map(sp => Meta(sp))
+    val jsMeta = term.meta.map(_.span).map(sp => Meta(sp))
 
     term match {
       // Literals

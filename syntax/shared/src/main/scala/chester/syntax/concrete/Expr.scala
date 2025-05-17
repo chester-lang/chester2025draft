@@ -29,8 +29,8 @@ enum CommentType derives ReadWriter {
 case class Comment(
     content: String,
     typ: CommentType,
-    sourcePos: Option[Span]
-) derives ReadWriter
+    span: Option[Span]
+) extends SpanOptional1 derives ReadWriter
 
 case class CommentInfo(
     commentBefore: Vector[Comment],
@@ -56,10 +56,10 @@ object CommentInfo {
 }
 
 case class ExprMeta(
-                     sourcePos: Option[Span],
-                     commentInfo: Option[CommentInfo]
-) derives ReadWriter {
-  require(sourcePos.isDefined || commentInfo.isDefined)
+    span: Option[Span],
+    commentInfo: Option[CommentInfo]
+) extends SpanOptional1 derives ReadWriter {
+  require(span.isDefined || commentInfo.isDefined)
 }
 
 object ExprMeta {
@@ -106,7 +106,7 @@ sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWr
 
   /** Every Expr has meta to trace compile time errors, type checking errors */
   def meta: Option[ExprMeta]
-  final def span0: Option[Span] = meta.flatMap(_.sourcePos)
+  final def span0: Option[Span] = meta.flatMap(_.span)
 
   def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr
 
@@ -152,7 +152,7 @@ case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr d
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): Identifier = this
 
-  override def toString: String = meta.flatMap(_.sourcePos) match {
+  override def toString: String = meta.flatMap(_.span) match {
     case None      => s"Identifier(\"${encodeString(name)}\")"
     case Some(pos) => s"Identifier(\"${encodeString(name)}\", $pos)"
   }
@@ -598,7 +598,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): StringLiteral = this
 
-  override def toString: String = meta.flatMap(_.sourcePos) match {
+  override def toString: String = meta.flatMap(_.span) match {
     case None => s"StringLiteral(\"${encodeString(value)}\")"
     case Some(pos) =>
       s"StringLiteral(\"${encodeString(value)}\", $pos)"

@@ -32,10 +32,10 @@ trait Problem extends ToDoc with SpanOptional with WithServerity {
 }
 
 private case class ProblemSer(
-                               stage: Problem.Stage,
-                               severity: Problem.Severity,
-                               message: Doc,
-                               span0: Option[Span]
+    stage: Problem.Stage,
+    severity: Problem.Severity,
+    message: Doc,
+    span0: Option[Span]
 ) extends Problem derives ReadWriter {
   override def toDoc(using PrettierOptions): Doc = message
 }

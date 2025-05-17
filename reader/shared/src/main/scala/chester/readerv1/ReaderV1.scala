@@ -26,7 +26,7 @@ case class ReaderV1(
 
   private def commentOneLine: P[Comment] =
     PwithMeta("//" ~ CharPred(_ != '\n').rep.! ~ ("\n" | End)).map { case (content, meta) =>
-      Comment(content, CommentType.OneLine, meta.flatMap(_.sourcePos))
+      Comment(content, CommentType.OneLine, meta.flatMap(_.span))
     }
 
   private def allComment: P[Comment] = P(commentOneLine)
@@ -101,8 +101,8 @@ case class ReaderV1(
   }
 
   private def createMeta(
-                          pos: Option[Span],
-                          comments: Option[CommentInfo]
+      pos: Option[Span],
+      comments: Option[CommentInfo]
   ): Option[ExprMeta] =
     (pos, comments) match {
       case (None, None) => None

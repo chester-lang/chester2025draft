@@ -22,12 +22,13 @@ import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq
 
-case class TermMeta(sourcePos: Span) derives ReadWriter
+case class TermMeta(span: Span) extends SpanRequired derives ReadWriter
 
 type ExecuteGeneric = (VirtualFrame, Term) => Object
 val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
 
-sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional with ContainsUniqid with Tree[Term] derives ReadWriter {
+sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional with ContainsUniqid with Tree[Term]
+    derives ReadWriter {
   type ThisTree <: Term
   final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric.get(frame, this)
 
@@ -37,7 +38,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
 
   def whnf: Trilean
 
-  def span0: Option[Span] = meta.map(_.sourcePos)
+  def span0: Option[Span] = meta.map(_.span)
 
   private def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
 

@@ -3,9 +3,9 @@ package chester.readerv2
 import chester.error.*
 import chester.i18n.*
 
-case class StringChar(text: String, sourcePos: Span)
+case class StringChar(text: String, span: Span)
 
-sealed trait Token extends Product with SpanRequired with Serializable {
+sealed trait Token extends SpanRequired {
   def span: Span
   def isWhitespace: Boolean = false
   def isComment: Boolean = false
