@@ -36,5 +36,5 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
     }
   }
 
-  override def canDefaulting(level: DefaultingLevel): Boolean = (level == DefaultingLevel.IsType)
+  override def canDefaulting(level: DefaultingLevel): Boolean = level == DefaultingLevel.IsType
 }

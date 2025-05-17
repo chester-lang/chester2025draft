@@ -37,7 +37,6 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
     true
   }
 
-  override def canDefaulting(level: DefaultingLevel): Boolean = {
+  override def canDefaulting(level: DefaultingLevel): Boolean =
     level == DefaultingLevel.ListOfSetListType
-  }
 }

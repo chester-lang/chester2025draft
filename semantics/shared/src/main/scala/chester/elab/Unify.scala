@@ -81,7 +81,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     }
   }
 
-  override def defaulting(c: Unify, level: DefaultingLevel)(using elabops: ElabOps, solverOps: SolverOps): Boolean = {
+  override def defaulting(c: Unify, level: DefaultingLevel)(using  ElabOps,  SolverOps): Boolean = {
     import c.*
     val lhsV = toTerm(lhs)
     val rhsV = toTerm(rhs)
