@@ -99,14 +99,14 @@ object MetaFactory {
     }
 }
 
-sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter {
+sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
 
   /** Every Expr has meta to trace compile time errors, type checking errors */
   def meta: Option[ExprMeta]
-  final def sourcePos: Option[Span] = meta.flatMap(_.sourcePos)
+  final def span0: Option[Span] = meta.flatMap(_.sourcePos)
 
   def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr
 

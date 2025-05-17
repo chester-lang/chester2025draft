@@ -21,21 +21,21 @@ trait WithServerity extends Any {
   final def isError: Boolean = severity == Problem.Severity.Error
 }
 
-case class DescriptionElement(doc: ToDoc, sourcePos: Option[Span]) extends WithPos
+case class DescriptionElement(doc: ToDoc, span0: Option[Span]) extends SpanOptional
 
 case class FullDescription(begin: ToDoc, explanations: Vector[DescriptionElement], end: ToDoc)
 
-trait Problem extends ToDoc with WithPos with WithServerity {
+trait Problem extends ToDoc with SpanOptional with WithServerity {
   def stage: Problem.Stage
   // TODO: use this
   def fullDescription: Option[FullDescription] = None
 }
 
 private case class ProblemSer(
-    stage: Problem.Stage,
-    severity: Problem.Severity,
-    message: Doc,
-    sourcePos: Option[Span]
+                               stage: Problem.Stage,
+                               severity: Problem.Severity,
+                               message: Doc,
+                               span0: Option[Span]
 ) extends Problem derives ReadWriter {
   override def toDoc(using PrettierOptions): Doc = message
 }
@@ -45,7 +45,7 @@ private object ProblemSer {
     problem.stage,
     problem.severity,
     problem.toDoc(using PrettierOptions.Default),
-    problem.sourcePos
+    problem.span0
   )
 }
 
@@ -66,7 +66,7 @@ private def renderFullDescription(desc: FullDescription)(using options: Prettier
   val beginDoc = desc.begin.toDoc
   val explanationsDoc = desc.explanations.map { elem =>
     val elemDoc = elem.doc.toDoc
-    elem.sourcePos.flatMap(sourceReader.apply) match {
+    elem.span0.flatMap(sourceReader.apply) match {
       case Some(lines) =>
         val sourceLines = lines.map { case (lineNumber, line) =>
           Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
@@ -97,7 +97,7 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
 
   val baseDoc = severityDoc <+> p.toDoc
 
-  p.sourcePos match {
+  p.span0 match {
     case Some(pos) =>
       val locationHeader = Doc.text(t"Location") <+>
         Doc.text(

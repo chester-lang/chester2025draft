@@ -41,7 +41,7 @@ object IntegrityCheck {
       .fold(
         error =>
           fail(
-            t"Parsing failed for input: $input ${error.message} at index ${error.sourcePos}"
+            t"Parsing failed for input: $input ${error.message} at index ${error.span0}"
           ),
         value => assertEquals(value, expected, t"Failed for input: $input")
       )

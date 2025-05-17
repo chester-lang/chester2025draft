@@ -44,7 +44,7 @@ def parseV1(input: String): Expr =
   ChesterReaderV1
     .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
-      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.sourcePos}"),
+      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.span0}"),
       value => value
     )
 
@@ -57,7 +57,7 @@ def parseV2(input: String): Expr = {
     .fold(
       error => {
         val errorIndex =
-          try error.sourcePos.get.range.start.index.utf16.asInt
+          try error.span0.get.range.start.index.utf16.asInt
           catch { case _: NoSuchElementException => 0 }
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
@@ -69,7 +69,7 @@ def parseV2(input: String): Expr = {
 
         fail(t"""V2 parsing failed for input: $input
              |Error: ${error.message}
-             |At position ${error.sourcePos}:
+             |At position ${error.span0}:
              |$line
              |$pointer""".stripMargin)
       },
@@ -82,7 +82,7 @@ def parseTopLevelV1(input: String): Expr =
   ChesterReaderV1
     .parseTopLevel(FileNameAndContent("testFile", input), ignoreLocation = true)
     .fold(
-      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.sourcePos}"),
+      error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.span0}"),
       value => value
     )
 
@@ -95,7 +95,7 @@ def parseTopLevelV2(input: String): Expr = {
     .fold(
       error => {
         val errorIndex =
-          try error.sourcePos.get.range.start.index.utf16.asInt
+          try error.span0.get.range.start.index.utf16.asInt
           catch { case _: NoSuchElementException => 0 }
         val lineStart = input.lastIndexOf('\n', errorIndex) + 1
         val lineEnd = input.indexOf('\n', errorIndex) match {
@@ -107,7 +107,7 @@ def parseTopLevelV2(input: String): Expr = {
 
         fail(t"""V2 parsing failed for input: $input
              |Error: ${error.message}
-             |At position ${error.sourcePos}:
+             |At position ${error.span0}:
              |$line
              |$pointer""".stripMargin)
       },

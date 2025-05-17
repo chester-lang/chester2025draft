@@ -185,8 +185,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         val range =
           try
             new Range(
-              new Position(parseError.sourcePos.get.range.start.line.asInt, parseError.sourcePos.get.range.start.column.utf16.asInt),
-              new Position(parseError.sourcePos.get.range.end.line.asInt, parseError.sourcePos.get.range.end.column.utf16.asInt)
+              new Position(parseError.span0.get.range.start.line.asInt, parseError.span0.get.range.start.column.utf16.asInt),
+              new Position(parseError.span0.get.range.end.line.asInt, parseError.span0.get.range.end.column.utf16.asInt)
             )
           catch {
             case _: NoSuchElementException => ???
@@ -223,7 +223,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     )
   }
   private def convertProblem(problem: TyckProblem): Diagnostic = {
-    val range = problem.sourcePos
+    val range = problem.span0
       .map(rangeFromSourcePos)
       .getOrElse(new Range(new Position(0, 0), new Position(0, 0)))
     val severity = problem match {
@@ -389,15 +389,15 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             case Some(sourcePos) =>
               logger.debug(t"Source position obtained: $sourcePos")
               val symbolOpt = document.symbols.find { sym =>
-                positionWithin(sym.definedOn.sourcePos.get, sourcePos) ||
-                sym.referencedOn.exists(ref => positionWithin(ref.sourcePos.get, sourcePos))
+                positionWithin(sym.definedOn.span0.get, sourcePos) ||
+                sym.referencedOn.exists(ref => positionWithin(ref.span0.get, sourcePos))
               }
               symbolOpt match {
                 case Some(symbolInfo) =>
                   logger.debug(t"Symbol found: ${symbolInfo.name}")
                   val location = new Location(
-                    symbolInfo.definedOn.sourcePos.get.fileName,
-                    rangeFromSourcePos(symbolInfo.definedOn.sourcePos.get)
+                    symbolInfo.definedOn.span0.get.fileName,
+                    rangeFromSourcePos(symbolInfo.definedOn.span0.get)
                   )
                   val locations = java.util.Collections.singletonList(location)
                   Either.forLeft(locations)
@@ -409,8 +409,8 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
                     logger.trace("Available symbols:")
                     document.symbols.foreach { sym =>
                       logger.trace(t"Symbol name: ${sym.name}")
-                      sym.definedOn.sourcePos.foreach(pos => logger.trace(t"  Defined at: $pos"))
-                      sym.referencedOn.foreach(ref => ref.sourcePos.foreach(pos => logger.trace(t"  Referenced at: $pos")))
+                      sym.definedOn.span0.foreach(pos => logger.trace(t"  Defined at: $pos"))
+                      sym.referencedOn.foreach(ref => ref.span0.foreach(pos => logger.trace(t"  Referenced at: $pos")))
                     }
                   }
                   Either.forLeft(java.util.Collections.emptyList())
@@ -456,15 +456,15 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
             case Some(sourcePos) =>
               val symbolOpt = document.symbols.find { sym =>
                 positionWithin(
-                  sym.definedOn.sourcePos.get,
+                  sym.definedOn.span0.get,
                   sourcePos
-                ) || sym.referencedOn.exists(ref => positionWithin(ref.sourcePos.get, sourcePos))
+                ) || sym.referencedOn.exists(ref => positionWithin(ref.span0.get, sourcePos))
               }
               symbolOpt match {
                 case Some(symbolInfo) =>
                   val locations = (symbolInfo.referencedOn.flatMap(
-                    _.sourcePos
-                  ) ++ symbolInfo.definedOn.sourcePos).map(refPos => new Location(refPos.fileName, rangeFromSourcePos(refPos)))
+                    _.span0
+                  ) ++ symbolInfo.definedOn.span0).map(refPos => new Location(refPos.fileName, rangeFromSourcePos(refPos)))
                   new java.util.ArrayList(locations.toList.asJava)
                 case None =>
                   java.util.Collections.emptyList()
@@ -506,7 +506,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       val matchingSymbols = allSymbols
         .withFilter { symbol =>
           symbol.name.toLowerCase.contains(query) &&
-          symbol.definedOn.sourcePos.nonEmpty
+          symbol.definedOn.span0.nonEmpty
         }
         .map(tyckSymbolToLSP)
 
@@ -515,7 +515,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     }
 
   private def tyckSymbolToLSP(symbol: CollectedSymbol): WorkspaceSymbol = {
-    val sp = symbol.definedOn.sourcePos.get
+    val sp = symbol.definedOn.span0.get
     val location = new Location(
       sp.fileName,
       rangeFromSourcePos(sp)

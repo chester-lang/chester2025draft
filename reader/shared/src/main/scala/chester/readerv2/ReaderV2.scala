@@ -56,8 +56,8 @@ case class ReaderState(
   }
   def sourcePos: Span = current.orelse(previousToken) match {
     // ParseError produced by Tokenizer should all be Some(xx) so unreachable
-    case Left(err) => err.sourcePos.getOrElse(unreachableOr(Span(Source(FileNameAndContent(t"", "")), SpanInFile(Pos.zero, Pos.zero))))
-    case Right(t)  => t.sourcePos
+    case Left(err) => err.span0.getOrElse(unreachableOr(Span(Source(FileNameAndContent(t"", "")), SpanInFile(Pos.zero, Pos.zero))))
+    case Right(t)  => t.span
   }
 
   // Helper methods for common state checks
@@ -92,8 +92,8 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
       identity,
       t =>
         ParseError(
-          f"Expected $expected but found ${t.tokenType} at ${t.sourcePos.range.start.line}:${t.sourcePos.range.start.column}",
-          Some(t.sourcePos)
+          f"Expected $expected but found ${t.tokenType} at ${t.span.range.start.line}:${t.span.range.start.column}",
+          Some(t.span)
         )
     )
 
@@ -207,7 +207,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
         advance()
 
         // Add operator to terms
-        val updatedTerms = localTerms :+ Identifier(id.text, createMeta(Some(id.sourcePos), None))
+        val updatedTerms = localTerms :+ Identifier(id.text, createMeta(Some(id.span), None))
 
         // Create a regular OpSeq if we're at the end of a function call argument or similar boundary
         if (
@@ -368,7 +368,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
 
             case Right(opToken: Token.Identifier) =>
               val id = Identifier(text, createMeta(Some(sourcePos), None))
-              val opId = Identifier(opToken.text, createMeta(Some(opToken.sourcePos), None))
+              val opId = Identifier(opToken.text, createMeta(Some(opToken.span), None))
               val updatedTerms = localTerms :+ id :+ opId
 
               // Advance past the operator
@@ -508,14 +508,14 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             parseTuple().map { tuple =>
               // parseTuple has already updated this.state
               FunctionCall(
-                Identifier(id.text, createMeta(Some(id.sourcePos), None)),
+                Identifier(id.text, createMeta(Some(id.span), None)),
                 tuple,
-                createMeta(Some(id.sourcePos), None)
+                createMeta(Some(id.span), None)
               )
             }
           // Prefix form: op expr
           case _ =>
-            terms = Vector(Identifier(id.text, createMeta(Some(id.sourcePos), None)))
+            terms = Vector(Identifier(id.text, createMeta(Some(id.span), None)))
             withComments(() => parseAtom()).flatMap { expr =>
               terms = terms :+ expr
 
@@ -883,7 +883,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
       // Handle separators (comma and optionally semicolon)
       case Right(token @ (_: Token.Comma | _: Token.Semicolon)) =>
         if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
-          Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", Some(token.sourcePos)))
+          Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", Some(token.span)))
         } else {
           advance() // Skip the separator
           // Continue parsing elements recursively
@@ -925,7 +925,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
               // Found a separator after the expression
               case Right(token @ (_: Token.Comma | _: Token.Semicolon)) =>
                 if (!allowSemicolon && token.isInstanceOf[Token.Semicolon]) {
-                  Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", Some(token.sourcePos)))
+                  Left(ParseError(t"Semicolon not allowed as separator in $contextDescription", Some(token.span)))
                 } else {
                   // Pull comments collected *after* the expression, before the separator
                   val trailingComments = pullComments().collect { case c: Comment => c }
@@ -954,7 +954,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
               // Unexpected token after expression
               case Right(other) =>
                 val separatorDesc = if (allowSemicolon) "',' or ';'" else "','"
-                Left(ParseError(t"Expected $separatorDesc or closing token for $contextDescription, but found $other", Some(other.sourcePos)))
+                Left(ParseError(t"Expected $separatorDesc or closing token for $contextDescription, but found $other", Some(other.span)))
               case Left(err) => Left(err)
             }
         }
@@ -980,7 +980,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
     this.state.current match {
       case Right(token) if openingTokenMatcher.isDefinedAt(Right(token)) =>
         val openToken = openingTokenMatcher(Right(token))
-        val sourcePos = openToken.sourcePos
+        val sourcePos = openToken.span
 
         // Advance past the opening token and skip comments
         advance()
@@ -1236,8 +1236,8 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   // Helper method to check if whitespace contains a newline
   private def isNewlineWhitespace(token: Token): Boolean =
     source.readContent.toOption.exists { src =>
-      val startPos = token.sourcePos.range.start.index.utf16.asInt
-      val endPos = token.sourcePos.range.end.index.utf16.asInt
+      val startPos = token.span.range.start.index.utf16.asInt
+      val endPos = token.span.range.end.index.utf16.asInt
       startPos < src.length && endPos <= src.length &&
       src.substring(startPos, endPos).contains('\n')
     }
@@ -1395,7 +1395,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
         Comment(
           content = c.text.trim,
           typ = commentType,
-          sourcePos = Some(c.sourcePos)
+          sourcePos = Some(c.span)
         ): CommOrWhite
       case w: Token.Whitespace => w: CommOrWhite
     }
@@ -1441,7 +1441,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
       errorMsg: String
   ): Either[ParseError, T] =
     parser match {
-      case Left(err) => Left(ParseError(t"$errorMsg: ${err.message}", err.sourcePos))
+      case Left(err) => Left(ParseError(t"$errorMsg: ${err.message}", err.span0))
       case right     => right
     }
 
@@ -1504,7 +1504,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
             advance()
             Right(create(value, meta))
           case None =>
-            Left(ParseError(errorMsg, Some(token.sourcePos)))
+            Left(ParseError(errorMsg, Some(token.span)))
         }
       case Left(err) => Left(err)
     }

@@ -4,7 +4,7 @@ import chester.error.*
 import chester.utils.doc.*
 import upickle.default.*
 
-case class Meta(sourcePos: Span) derives ReadWriter
+case class Meta(span: Span) extends SpanRequired derives ReadWriter
 
 // Base trait for all AST nodes
 sealed trait ASTNode extends ToDoc derives ReadWriter {

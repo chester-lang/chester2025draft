@@ -76,7 +76,7 @@ class SemanticDBGenerator extends VectorSemanticCollector {
   // Convert Expr to Range
   // TODO: check if should use utf16 or codepoints
   private def exprRange(expr: Expr): Option[Range] =
-    expr.sourcePos.map { pos =>
+    expr.span0.map { pos =>
       Range(
         startLine = pos.range.start.line.asInt,
         startCharacter = pos.range.start.column.utf16.asInt,

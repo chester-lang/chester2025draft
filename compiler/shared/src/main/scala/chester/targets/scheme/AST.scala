@@ -4,7 +4,7 @@ import chester.error.*
 import chester.utils.doc.*
 import upickle.default.*
 
-case class Meta(sourcePos: Span) derives ReadWriter {
+case class Meta(span: Span) extends SpanRequired derives ReadWriter {
   inline def link(x: Doc): Doc = Doc.link(this, x)
 }
 
