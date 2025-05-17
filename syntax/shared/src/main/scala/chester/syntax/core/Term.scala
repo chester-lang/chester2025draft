@@ -22,7 +22,7 @@ import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq
 
-case class TermMeta(sourcePos: SourcePos) derives ReadWriter
+case class TermMeta(sourcePos: Span) derives ReadWriter
 
 type ExecuteGeneric = (VirtualFrame, Term) => Object
 val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
@@ -37,7 +37,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
 
   def whnf: Trilean
 
-  def sourcePos: Option[SourcePos] = meta.map(_.sourcePos)
+  def sourcePos: Option[Span] = meta.map(_.sourcePos)
 
   private def doElevate(level: IntegerTerm): Term = descent(_.doElevate(level))
 

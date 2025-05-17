@@ -1,5 +1,5 @@
 package chester.error
 
 trait WithPos extends Any {
-  def sourcePos: Option[SourcePos]
+  def sourcePos: Option[Span]
 }

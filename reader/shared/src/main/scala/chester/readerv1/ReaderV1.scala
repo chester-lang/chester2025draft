@@ -81,11 +81,11 @@ case class ReaderV1(
   private def loc(
       begin: spire.math.Natural,
       end: spire.math.Natural
-  ): Option[SourcePos] = {
+  ): Option[Span] = {
     if (ignoreLocation) return None
     val start = indexer.charIndexToLineAndColumnWithUTF16(begin.asInt)
     val endPos = indexer.charIndexToLineAndColumnWithUTF16(end.asInt)
-    val range = RangeInFile(
+    val range = SpanInFile(
       Pos(
         WithUTF16(indexer.charIndexToUnicodeIndex(begin), begin),
         start.line,
@@ -97,12 +97,12 @@ case class ReaderV1(
         endPos.column
       )
     )
-    Some(source.offset.add(SourcePos(source, range)))
+    Some(source.offset.add(Span(source, range)))
   }
 
   private def createMeta(
-      pos: Option[SourcePos],
-      comments: Option[CommentInfo]
+                          pos: Option[Span],
+                          comments: Option[CommentInfo]
   ): Option[ExprMeta] =
     (pos, comments) match {
       case (None, None) => None

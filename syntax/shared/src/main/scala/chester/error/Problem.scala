@@ -21,7 +21,7 @@ trait WithServerity extends Any {
   final def isError: Boolean = severity == Problem.Severity.Error
 }
 
-case class DescriptionElement(doc: ToDoc, sourcePos: Option[SourcePos]) extends WithPos
+case class DescriptionElement(doc: ToDoc, sourcePos: Option[Span]) extends WithPos
 
 case class FullDescription(begin: ToDoc, explanations: Vector[DescriptionElement], end: ToDoc)
 
@@ -35,7 +35,7 @@ private case class ProblemSer(
     stage: Problem.Stage,
     severity: Problem.Severity,
     message: Doc,
-    sourcePos: Option[SourcePos]
+    sourcePos: Option[Span]
 ) extends Problem derives ReadWriter {
   override def toDoc(using PrettierOptions): Doc = message
 }
@@ -130,8 +130,8 @@ private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, so
   *   - lineContent: The actual text content of that line Note: While internal line tracking is 0-based, this API returns 1-based line numbers for
   *     display
   */
-case class SourceReader(readSource: SourcePos => Option[Vector[(Int, String)]]) {
-  def apply(pos: SourcePos): Option[Vector[(Int, String)]] = readSource(pos)
+case class SourceReader(readSource: Span => Option[Vector[(Int, String)]]) {
+  def apply(pos: Span): Option[Vector[(Int, String)]] = readSource(pos)
 }
 
 object SourceReader {

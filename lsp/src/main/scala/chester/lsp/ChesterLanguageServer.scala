@@ -305,7 +305,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
   private def sourcePosFromLSP(
       uri: String,
       position: Position
-  ): Option[SourcePos] = {
+  ): Option[Span] = {
     logger.debug(
       t"Converting LSP position to source position for URI: $uri at position: $position"
     )
@@ -343,9 +343,9 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
           line = lineAndColumn.line,
           column = lineAndColumn.column
         )
-        val range = RangeInFile(start = pos, end = pos)
+        val range = SpanInFile(start = pos, end = pos)
         val source = Source(FileNameAndContent(uri, text))
-        val sourcePos = SourcePos(source, range)
+        val sourcePos = Span(source, range)
 
         logger.debug(t"Generated SourcePos: $sourcePos")
 
@@ -356,7 +356,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
     }
   }
 
-  private def rangeFromSourcePos(sourcePos: SourcePos): Range = {
+  private def rangeFromSourcePos(sourcePos: Span): Range = {
     val startLine = sourcePos.range.start.line.asInt
     val startCharacter = sourcePos.range.start.column.utf16.asInt
     val endLine = sourcePos.range.end.line.asInt
@@ -427,7 +427,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       }
     }
 
-  private def positionWithin(pos1: SourcePos, pos2: SourcePos): Boolean =
+  private def positionWithin(pos1: Span, pos2: Span): Boolean =
     pos1.source.fileName == pos2.source.fileName &&
       comparePositions(pos1.range.start, pos2.range.start) <= 0 &&
       comparePositions(pos1.range.end, pos2.range.end) >= 0

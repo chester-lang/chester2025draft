@@ -1,6 +1,6 @@
 package chester.readerv2
 
-import chester.error.{Pos, RangeInFile, SourcePos}
+import chester.error.{Pos, SpanInFile, Span}
 import chester.reader.{ParseError, Source}
 import chester.utils.{Nat, WithUTF16, asInt}
 import chester.syntax.IdentifierRules.{isIdentifierFirst, isIdentifierPart, isOperatorSymbol}
@@ -14,7 +14,7 @@ type TokenStream = LazyList[Either[ParseError, Token]]
 object Lexer {
   def apply(sourceOffset: Source): Lexer = new Lexer(sourceOffset)
   private val escapes = Map('n' -> "\n", 't' -> "\t", 'r' -> "\r", '"' -> "\"", '\\' -> "\\", 'b' -> "\b", 'f' -> "\f")
-  private val tokens: Map[Char, SourcePos => Token] = Map(
+  private val tokens: Map[Char, Span => Token] = Map(
     '(' -> Token.LParen.apply,
     ')' -> Token.RParen.apply,
     '[' -> Token.LBracket.apply,
@@ -41,9 +41,9 @@ class Lexer(source: Source) {
   )
 
   private def mkPos(start: Int, end: Int = pos) = source.offset.add(
-    SourcePos(
+    Span(
       source,
-      RangeInFile(
+      SpanInFile(
         Pos(
           WithUTF16(Nat(start), Nat(text.substring(0, start).length)),
           Nat(line),
@@ -59,7 +59,7 @@ class Lexer(source: Source) {
   )
 
   private def err(msg: String, p: Int) = Left(ParseError(msg, Some(mkPos(p))))
-  private def tok[T <: Token](f: SourcePos => T, start: Int) = Right(f(mkPos(start)))
+  private def tok[T <: Token](f: Span => T, start: Int) = Right(f(mkPos(start)))
 
   private def consume(pred: Char => Boolean = _ => true): String = {
     val start = pos

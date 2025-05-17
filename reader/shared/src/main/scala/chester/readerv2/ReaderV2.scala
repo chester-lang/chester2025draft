@@ -1,6 +1,6 @@
 package chester.readerv2
 import chester.i18n.*
-import chester.error.{Pos, RangeInFile, SourcePos, unreachableOr}
+import chester.error.{Pos, SpanInFile, Span, unreachableOr}
 import chester.reader.{ParseError, Source}
 import chester.syntax.concrete.{
   Block,
@@ -54,9 +54,9 @@ case class ReaderState(
     case Left(_) =>
       copy(index = index + 1)
   }
-  def sourcePos: SourcePos = current.orelse(previousToken) match {
+  def sourcePos: Span = current.orelse(previousToken) match {
     // ParseError produced by Tokenizer should all be Some(xx) so unreachable
-    case Left(err) => err.sourcePos.getOrElse(unreachableOr(SourcePos(Source(FileNameAndContent(t"", "")), RangeInFile(Pos.zero, Pos.zero))))
+    case Left(err) => err.sourcePos.getOrElse(unreachableOr(Span(Source(FileNameAndContent(t"", "")), SpanInFile(Pos.zero, Pos.zero))))
     case Right(t)  => t.sourcePos
   }
 
@@ -98,12 +98,12 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
     )
 
   /** Creates expression metadata from source positions and comments. */
-  private def createMeta(startPos: Option[SourcePos], endPos: Option[SourcePos]): Option[ExprMeta] =
+  private def createMeta(startPos: Option[Span], endPos: Option[Span]): Option[ExprMeta] =
     if (ignoreLocation) None
     else
       (startPos, endPos) match {
         case (Some(start), Some(end)) =>
-          ExprMeta.maybe(Some(SourcePos(source, RangeInFile(start.range.start, end.range.end))))
+          ExprMeta.maybe(Some(Span(source, SpanInFile(start.range.start, end.range.end))))
         case (Some(pos), _) =>
           ExprMeta.maybe(Some(pos))
         case (_, Some(pos)) =>
@@ -425,10 +425,10 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   /** Handle block arguments - uses skipComments() and pullComments() for comment handling
     */
   private def handleBlockArgument(
-      expr: ParsedExpr,
-      terms: Vector[ParsedExpr],
-      braceSourcePos: SourcePos,
-      context: ReaderContext = ReaderContext()
+                                   expr: ParsedExpr,
+                                   terms: Vector[ParsedExpr],
+                                   braceSourcePos: Span,
+                                   context: ReaderContext = ReaderContext()
   ): Either[ParseError, ParsedExpr] =
     // this.state is already set correctly
     parseBlock(context0 = context).flatMap { block =>
@@ -586,9 +586,9 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   }
 
   private def handleDotCall(
-      dotSourcePos: SourcePos,
-      terms: Vector[ParsedExpr],
-      context: ReaderContext = ReaderContext()
+                             dotSourcePos: Span,
+                             terms: Vector[ParsedExpr],
+                             context: ReaderContext = ReaderContext()
   ): Either[ParseError, ParsedExpr] = {
     // Skip the dot
     advance()
@@ -865,12 +865,12 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
     */
   @tailrec
   private def parseElementSequence(
-      closingTokenPredicate: Token => Boolean,
-      allowSemicolon: Boolean,
-      startPosForError: SourcePos,
-      contextDescription: String,
-      accumulatedExprs: Vector[ParsedExpr] = Vector.empty,
-      context: ReaderContext = ReaderContext()
+                                    closingTokenPredicate: Token => Boolean,
+                                    allowSemicolon: Boolean,
+                                    startPosForError: Span,
+                                    contextDescription: String,
+                                    accumulatedExprs: Vector[ParsedExpr] = Vector.empty,
+                                    context: ReaderContext = ReaderContext()
   ): Either[ParseError, Vector[ParsedExpr]] = {
     // Skip comments and whitespace before checking the token
     skipComments()
@@ -1273,7 +1273,7 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
       case Left(err) => Left(err)
     }
 
-  private def parseField(key: ParsedExpr, keySourcePos: SourcePos, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
+  private def parseField(key: ParsedExpr, keySourcePos: Span, context: ReaderContext = ReaderContext()): Either[ParseError, ObjectClause] =
     this.state.current match {
       case Right(id: Token.Identifier) =>
         advance()
@@ -1418,9 +1418,9 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
   /** Creates ExprMeta with comments.
     */
   private def createMetaWithComments(
-      sourcePos: Option[SourcePos],
-      leadingComments: Vector[CommOrWhite] = Vector.empty,
-      trailingComments: Vector[Comment] = Vector.empty
+                                      sourcePos: Option[Span],
+                                      leadingComments: Vector[CommOrWhite] = Vector.empty,
+                                      trailingComments: Vector[Comment] = Vector.empty
   ): Option[ExprMeta] =
     ExprMeta.maybe(sourcePos, createCommentInfo(leadingComments, trailingComments))
 
@@ -1491,9 +1491,9 @@ final class ReaderV2(initState: ReaderState, source: Source, ignoreLocation: Boo
 
   // Create a helper method for parsing literals with common pattern
   private def parseLiteral[T <: ParsedExpr](
-      extract: Token => Option[(String, SourcePos)],
-      create: (String, Option[ExprMeta]) => T,
-      errorMsg: String
+                                             extract: Token => Option[(String, Span)],
+                                             create: (String, Option[ExprMeta]) => T,
+                                             errorMsg: String
   ): Either[ParseError, T] =
     this.state.current match {
       case Right(token) =>

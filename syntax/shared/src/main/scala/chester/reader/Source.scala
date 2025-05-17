@@ -7,7 +7,7 @@ import chester.utils.doc.{Doc, PrettierOptions}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
 
-case class ParseError(message: String, sourcePos: Option[SourcePos] = None) extends Problem {
+case class ParseError(message: String, sourcePos: Option[Span] = None) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
   override def stage: Problem.Stage = Problem.Stage.PARSE
 
@@ -64,8 +64,8 @@ case class Offset(
   if (lineOffset != Nat(0)) require(posOffset.nonZero)
   if (posOffset.nonZero) require(lineOffset != Nat(0))
   def add(x: Pos): Pos = Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)
-  def add(x: RangeInFile): RangeInFile = RangeInFile(start = add(x.start), end = add(x.end))
-  def add(x: SourcePos): SourcePos = SourcePos(source = x.source, range = add(x.range))
+  def add(x: SpanInFile): SpanInFile = SpanInFile(start = add(x.start), end = add(x.end))
+  def add(x: Span): Span = Span(source = x.source, range = add(x.range))
 }
 
 object Offset {

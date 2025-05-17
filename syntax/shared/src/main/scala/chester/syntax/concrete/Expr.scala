@@ -29,7 +29,7 @@ enum CommentType derives ReadWriter {
 case class Comment(
     content: String,
     typ: CommentType,
-    sourcePos: Option[SourcePos]
+    sourcePos: Option[Span]
 ) derives ReadWriter
 
 case class CommentInfo(
@@ -56,14 +56,14 @@ object CommentInfo {
 }
 
 case class ExprMeta(
-    sourcePos: Option[SourcePos],
-    commentInfo: Option[CommentInfo]
+                     sourcePos: Option[Span],
+                     commentInfo: Option[CommentInfo]
 ) derives ReadWriter {
   require(sourcePos.isDefined || commentInfo.isDefined)
 }
 
 object ExprMeta {
-  def maybe(sourcePos: Option[SourcePos] = None, commentInfo: Option[CommentInfo] = None): Option[ExprMeta] =
+  def maybe(sourcePos: Option[Span] = None, commentInfo: Option[CommentInfo] = None): Option[ExprMeta] =
     Option.unless(sourcePos.isEmpty && commentInfo.isEmpty)(ExprMeta(sourcePos, commentInfo))
 }
 
@@ -106,7 +106,7 @@ sealed trait Expr extends WithPos with Tree[Expr] with ToDoc derives ReadWriter 
 
   /** Every Expr has meta to trace compile time errors, type checking errors */
   def meta: Option[ExprMeta]
-  final def sourcePos: Option[SourcePos] = meta.flatMap(_.sourcePos)
+  final def sourcePos: Option[Span] = meta.flatMap(_.sourcePos)
 
   def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr
 

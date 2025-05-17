@@ -17,7 +17,7 @@ object Pos {
 }
 
 /** start <= i < end */
-case class RangeInFile(start: Pos, end: Pos) derives ReadWriter {}
+case class SpanInFile(start: Pos, end: Pos) derives ReadWriter {}
 
 type AcceptedString = String | LazyList[String] | ParserInput
 
@@ -47,7 +47,7 @@ object FileContent {
 
 //given SourcePosCodec: JsonValueCodec[SourcePos] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
-case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
+case class Span(source: Source, range: SpanInFile) derives ReadWriter {
   private lazy val fileContent: Option[FileContent] =
     source.readContent.toOption.map(content => FileContent(content, source.offset))
   val fileName: String = source.fileName
@@ -80,7 +80,7 @@ case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
       } // Line numbers are 1-based
   }
 
-  def combine(other: SourcePos): SourcePos = {
+  def combine(other: Span): Span = {
     if (fileName != other.fileName) {
       throw new IllegalArgumentException(
         "Cannot combine source positions from different files"
@@ -88,16 +88,16 @@ case class SourcePos(source: Source, range: RangeInFile) derives ReadWriter {
     }
     require(range.start.index <= other.range.start.index)
     require(source == other.source)
-    val newRange = RangeInFile(range.start, other.range.end)
-    SourcePos(source, newRange)
+    val newRange = SpanInFile(range.start, other.range.end)
+    Span(source, newRange)
   }
 
   override def toString: String =
     t"SourcePos(\"${encodeString(fileName)}\",$range)"
 }
 
-extension (pos: Option[SourcePos]) {
-  def combineInOption(other: Option[SourcePos]): Option[SourcePos] =
+extension (pos: Option[Span]) {
+  def combineInOption(other: Option[Span]): Option[Span] =
     (pos, other) match {
       case (None, None)         => None
       case (Some(p), None)      => Some(p)
