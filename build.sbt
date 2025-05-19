@@ -589,7 +589,7 @@ lazy val utils = useSpire(
         "org.typelevel" %%% "cats-core" % "2.13.0",
         "org.typelevel" %%% "cats-free" % "2.13.0",
         "com.lihaoyi" %%% "pprint" % "0.9.0",
-        "com.lihaoyi" %%% "upickle" % "4.1.0",
+        "com.lihaoyi" %%% "upickle" % "4.2.1",
         "com.lihaoyi" %%% "fansi" % "0.5.0",
         "com.lihaoyi" %%% "fastparse" % "3.1.1",
         // "com.lihaoyi" %%% "scalatags" % "0.13.1",
