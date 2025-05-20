@@ -600,8 +600,8 @@ lazy val utils = useSpire(
         // "io.getkyo" %%% "kyo-data" % "0.18.0",
         "org.scala-graph" %%% "graph-core" % "2.0.3",
         "com.outr" %%% "scribe" % "3.16.1",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.35.3",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.35.3",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.1",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.1",
         "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
@@ -895,7 +895,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.30.1"
+val jlineVersion = "3.30.2"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
