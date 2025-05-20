@@ -20,8 +20,8 @@ case class UnifyMultiple(
 case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](UnifyMultiple) {
   override def run(c: UnifyMultiple)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    val lhsV = toTerm(lhs)
-    val rhsV = rhs.map(toTerm(_))
+    val lhsV = toTermRec(lhs)
+    val rhsV = rhs.map(toTermRec(_))
     val rhs1 = cleanUpUnion(rhsV.filterNot(x => eqType(lhsV, x)).assumeNonEmpty)
     if (rhs1.isEmpty) {
       return Result.Done
@@ -32,18 +32,18 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     val alllist = alllist0.map(_.asInstanceOf[ListType])
     val rhs3 = if (alllist.nonEmpty) {
       val mergedlist = SolverOps.callConstraint(SimplifyUnion(alllist.map(_.ty).assumeNonEmpty))
-      rhs2 :+ ListType(toTerm(mergedlist), meta = None)
+      rhs2 :+ ListType(toTermRec(mergedlist), meta = None)
     } else {
       rhs2
     }
-    SolverOps.addConstraint(Unify(lhsV, Union1(cleanUpUnion(rhs3.map(toTerm(_)).assumeNonEmpty), meta = None)))
+    SolverOps.addConstraint(Unify(lhsV, Union1(cleanUpUnion(rhs3.map(toTermRec(_)).assumeNonEmpty), meta = None)))
     Result.Done
   }
 
   override def defaulting(c: UnifyMultiple, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
     import c.{*, given}
-    val lhsV = toTerm(lhs)
-    val rhsV = rhs.map(toTerm(_))
+    val lhsV = toTermRec(lhs)
+    val rhsV = rhs.map(toTermRec(_))
     val rhs1 = rhsV.filterNot(x => eqType(lhsV, x)).distinctByEq(eqType)
     if (rhs1.isEmpty) {
       return false
