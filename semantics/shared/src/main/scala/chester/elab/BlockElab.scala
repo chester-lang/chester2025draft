@@ -81,6 +81,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))
     val returning = toTerm(given_Elab.check(resultExpr, ty))
+    assume(defs.isEmpty)
     // TODO: checking for possible leakage and do substitution for examples like {let a = Int; 1 : a}
     result.fill(BlockTerm(statements, returning, convertMeta(block.meta)))
     Result.Done
