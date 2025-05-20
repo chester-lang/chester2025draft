@@ -29,6 +29,18 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     val outerContext = c.context
     given context: MutableContext = new MutableContext(outerContext)
     var statements: Vector[StmtTerm] = Vector()
+    exprStatements.foreach {
+      case defstmt: LetDefStmt if defstmt.kind == LetDefType.Def => defstmt.defined match {
+        case DefinedPattern(PatternBind(name, meta)) => {
+          val ty = toTerm(newType)
+          val id = Uniqid.generate[LocalV]
+          val localv = LocalV(name.name, ty, id, convertMeta(meta))
+          ???
+        }
+        case _ => ???
+      }
+      case _ => () // ignored
+    }
     for (s <- exprStatements)
       s match {
         case let: LetDefStmt if let.kind == LetDefType.Let =>
@@ -38,7 +50,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
             case DefinedPattern(pattern) =>
               val ty = toTerm(let.ty match {
                 case Some(ty) => given_Elab.inferType(ty).wellTyped
-                case _        => newType
+                case None        => newType
               })
               val wellTyped = toTerm(given_Elab.check(body, ty))
               pattern match {
