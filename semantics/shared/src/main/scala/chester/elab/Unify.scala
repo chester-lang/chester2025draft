@@ -32,8 +32,8 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       case Trilean.False   => return failed(c)
       case Trilean.Unknown => ()
     }
-    val lhsV = toTerm(lhs)
-    val rhsV = toTerm(rhs)
+    val lhsV = toTermRec(lhs)
+    val rhsV = toTermRec(rhs)
     if (lhsV.isInstanceOf[MetaTerm]) {
       return Result.Waiting(assumeCell(lhs))
     }
