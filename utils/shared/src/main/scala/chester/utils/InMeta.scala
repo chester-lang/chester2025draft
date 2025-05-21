@@ -13,7 +13,10 @@ given HoldNotReadableRW: ReadWriter[InMeta[?]] =
 case class InMeta[T](inner: T) {
   override def equals(obj: Any): Boolean =
     obj match {
-      case InMeta(other) => (inner eq other) || inner == other
+      case InMeta(other) => {
+        val result = (inner eq other) || inner == other
+        result
+      }
       case _             => false
     }
 }
