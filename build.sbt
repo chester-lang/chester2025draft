@@ -708,8 +708,11 @@ lazy val syntax = useSpire(
     .settings(
       commonLibSettings
     )
-    .jvmSettings(commonJvmSettings)
-    .jvmSettings(dependOnGraal)
+    .jvmSettings(
+      commonJvmSettings,
+      scalacOptions ++= Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:syntax-truffle"),
+      dependOnGraal
+    )
 )
 
 lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
