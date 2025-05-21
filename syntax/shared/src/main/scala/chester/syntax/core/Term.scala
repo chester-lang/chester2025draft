@@ -208,7 +208,7 @@ case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) exten
   override type ThisTree = MetaTerm
 
   override def toDoc(using PrettierOptions): Doc =
-    Doc.group("Meta" <> Doc.text(impl.toString))
+    Doc.group("Meta(" <> Doc.text(impl.toString) <> ")")
 
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
