@@ -66,7 +66,7 @@ case class OnceCellContent[T](
   override def readStable: Option[T] = value
 
   override def fill(newValue: T): OnceCellContent[T] = {
-
+    if (value.contains(newValue)) return this
     require(value.isEmpty)
     copy(value = Some(newValue))
   }
