@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.error.*
+import chester.error.{Reporter, LiteralTypeMismatch}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, convertMeta}
@@ -47,7 +47,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       case ty: MetaTerm => Result.Waiting(assumeCell(ty))
       case _ =>
         result.fill(IntegerTerm(expr.value, meta))
-        Reporter.report(??? : TyckProblem)
+        Reporter.report(LiteralTypeMismatch(IntegerTerm(expr.value, meta), toTerm(ty), expr))
         Result.Done
     }
   }

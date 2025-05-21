@@ -1,6 +1,7 @@
 package chester.utils.elab
 
-import chester.error.{Reporter, TyckProblem}
+import chester.error.{Reporter, TyckProblem, MergeError, MissingImplementation}
+import chester.syntax.concrete.EmptyExpr
 
 case object MergeSimple extends Kind {
   type Of = MergeSimple[?]
@@ -22,7 +23,13 @@ case object MergeSimpleHandler extends Handler[Reporter[TyckProblem], MergeSimpl
         if (a == b) {
           Result.Done
         } else {
-          Reporter.report(???)
+          // For term values, provide better error message
+          (a, b) match {
+            case (aTerm: chester.syntax.core.Term, bTerm: chester.syntax.core.Term) =>
+              Reporter.report(MergeError(aTerm, bTerm))
+            case _ =>
+              Reporter.report(MissingImplementation(s"Merge for values of type ${a.getClass.getSimpleName}", EmptyExpr))
+          }
           Result.Done
         }
     }

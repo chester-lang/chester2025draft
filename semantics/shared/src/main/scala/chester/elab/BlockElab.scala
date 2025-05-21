@@ -1,7 +1,7 @@
 package chester.elab
 
 import chester.cell.CellEffects
-import chester.error.Reporter
+import chester.error.{Reporter, MissingLetBody}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, ContextItem, TyAndVal, convertMeta}
@@ -50,7 +50,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
       s match {
         case let: LetDefStmt =>
           val pattern = let.defined
-          val body = let.body.getOrElse { Reporter.report(???); ??? }
+          val body = let.body.getOrElse { Reporter.report(MissingLetBody(let)); ??? }
           pattern match {
             case DefinedPattern(pattern) =>
               val ty = toTerm(let.ty match {

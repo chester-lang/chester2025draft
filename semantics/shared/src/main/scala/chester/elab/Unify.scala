@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.error.Reporter
+import chester.error.{Reporter, UnificationError}
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.*
@@ -22,7 +22,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       SolverOps.addConstraint(next)
       Result.Done
     case None =>
-      Reporter.report(???)
+      Reporter.report(UnificationError(toTermRec(c.lhs), toTermRec(c.rhs)))
       Result.Done
   }
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
