@@ -9,7 +9,14 @@ given HoldNotReadableRW: ReadWriter[InMeta[?]] =
     _ => throw new UnsupportedOperationException("Cannot read HoldNotReadable")
   )
 
-case class InMeta[T](inner: T) extends AnyVal
+case class InMeta[T](inner: T) extends AnyVal {
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case InMeta(other) => inner == other
+      case _             => false
+    }
+  }
+}
 
 private case class InMetaRW() derives ReadWriter
 

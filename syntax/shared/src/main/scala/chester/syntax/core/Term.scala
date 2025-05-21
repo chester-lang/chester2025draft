@@ -213,6 +213,11 @@ case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) exten
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
+
+  override def equals(other: Any): Boolean = other match {
+    case MetaTerm(other, _) => impl == other
+    case _ => false
+  }
 }
 case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
   val terms: ArraySeq[Term] = ArraySeq.unsafeWrapArray(terms0)
