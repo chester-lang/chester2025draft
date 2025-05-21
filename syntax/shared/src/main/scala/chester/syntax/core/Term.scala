@@ -213,11 +213,6 @@ case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) exten
   def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
-
-  override def equals(other: Any): Boolean = other match {
-    case MetaTerm(other, _) => impl == other
-    case _ => false
-  }
 }
 case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
   val terms: ArraySeq[Term] = ArraySeq.unsafeWrapArray(terms0)
@@ -225,8 +220,13 @@ case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(terms0 = terms.map(f))
   )
+  override def equals(other: Any): Boolean = other match {
+    case other: ListTerm => this.terms == other.terms && this.meta == other.meta
+    case _ => false
+  }
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`)(terms)
+    
 }
 sealed trait TypeTerm extends WHNF derives ReadWriter {
   override type ThisTree <: TypeTerm
@@ -456,6 +456,10 @@ case class TelescopeTerm(
 ) extends WHNF derives ReadWriter {
   val args: ArraySeq[ArgTerm] = ArraySeq.unsafeWrapArray(args0)
   override type ThisTree = TelescopeTerm
+  override def equals(other: Any): Boolean = other match {
+    case other: TelescopeTerm => this.args == other.args && this.implicitly == other.implicitly && this.meta == other.meta
+    case _                    => false
+  }
   override def toDoc(using PrettierOptions): Doc = {
     val argsDoc =
       args.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
@@ -497,6 +501,11 @@ case class FunctionType(
 ) extends WHNF derives ReadWriter {
   val telescopes: ArraySeq[TelescopeTerm] = ArraySeq.unsafeWrapArray(telescopes0)
   override type ThisTree = FunctionType
+  override def equals(other: Any): Boolean = other match {
+    case other: FunctionType =>
+      this.telescopes == other.telescopes && this.resultTy == other.resultTy && this.effects == other.effects && this.meta == other.meta
+    case _ => false
+  }
   override def toDoc(using PrettierOptions): Doc = {
     val telescopeDoc =
       telescopes.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
@@ -541,6 +550,10 @@ case class ObjectTerm(
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(clauses0 = clauses.map(g))
   )
+  override def equals(other: Any): Boolean = other match {
+    case other: ObjectTerm => this.clauses == other.clauses && this.meta == other.meta
+    case _                 => false
+  }
 }
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
 case class ObjectType(
@@ -557,6 +570,11 @@ case class ObjectType(
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(fieldTypes0 = fieldTypes.map(g))
   )
+  override def equals(other: Any): Boolean = other match {
+    case other: ObjectType =>
+      this.fieldTypes == other.fieldTypes && this.exactFields == other.exactFields && this.meta == other.meta
+    case _ => false
+  }
 }
 case class ListF(@const meta: Option[TermMeta]) extends Builtin derives ReadWriter {
   override type ThisTree = ListF
@@ -769,6 +787,11 @@ case class BlockTerm(
       result = f(result)
     )
   )
+  override def equals(other: Any): Boolean = other match {
+    case other: BlockTerm =>
+      this.statements == other.statements && this.result == other.result && this.meta == other.meta
+    case _ => false
+  }
 }
 case class Annotation(
     @child var term: Term,
