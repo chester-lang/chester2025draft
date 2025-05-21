@@ -16,7 +16,7 @@ implicit class LocalCtxOps(ignored: Context.type) {
       .map(item => item._2.uniqId -> item._1)
       .toMap
       .asInstanceOf[Map[UniqidOf[ReferenceCall], TyAndVal]]
-    Context(map, contextItems, knownMap)
+    Context(map = map, contextItems = contextItems, knownMap = knownMap)
   }
 }
 

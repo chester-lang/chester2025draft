@@ -32,6 +32,8 @@ object Imports {
 }
 
 case class Context(
+    // TODO: use this - effects
+    effects: EffectsM = Effects.Empty,
     map: Map[Name, UniqidOf[ReferenceCall]] = HashMap.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
     contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
       HashMap.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
