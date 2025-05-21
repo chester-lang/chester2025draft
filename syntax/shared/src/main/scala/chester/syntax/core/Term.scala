@@ -61,7 +61,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
         case _                  => false
       }
     ) return this
-    descentRecursive {
+    descentRec {
       case x: TermWithUniqid if x.uniqId == from.uniqId => to
       case x                                            => x
     }
@@ -87,12 +87,12 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
     }
   }
 
-  override final def collectU(collector: UCollector): Unit = inspectRecursive {
+  override final def collectU(collector: UCollector): Unit = inspectRec {
     case x: TermWithUniqid => collector(x.uniqId)
     case _                 =>
   }
 
-  override final def replaceU(reranger: UReplacer): Term = descentRecursive {
+  override final def replaceU(reranger: UReplacer): Term = descentRec {
     case x: TermWithUniqid => x.switchUniqId(reranger)
     case x                 => x
   }
