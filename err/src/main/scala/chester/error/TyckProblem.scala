@@ -326,9 +326,9 @@ case class MissingEffectHandlerError(effect: Term) extends TyckError {
 
 // Used in BlockElab.scala where let.body is None
 case class MissingLetBody(let: LetDefStmt) extends TyckError {
-  override def toDoc(using PrettierOptions): Doc = 
+  override def toDoc(using PrettierOptions): Doc =
     t"Missing body expression in let statement"
-  
+
   override def cause: Term | Expr = let
 }
 
@@ -336,7 +336,7 @@ case class MissingLetBody(let: LetDefStmt) extends TyckError {
 case class UnificationError(lhs: Term, rhs: Term) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Unification error: cannot unify ${lhs.toDoc} with ${rhs.toDoc}"
-  
+
   override def cause: Term | Expr = lhs
 }
 
@@ -344,7 +344,7 @@ case class UnificationError(lhs: Term, rhs: Term) extends TyckError {
 case class LiteralTypeMismatch(value: Term, expectedType: Term, expr: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Literal ${value.toDoc} cannot be used as type ${expectedType.toDoc}"
-  
+
   override def cause: Term | Expr = expr
 }
 
@@ -352,14 +352,14 @@ case class LiteralTypeMismatch(value: Term, expectedType: Term, expr: Expr) exte
 case class MergeError(lhs: Term, rhs: Term) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
     t"Cannot merge ${lhs.toDoc} with ${rhs.toDoc}"
-  
+
   override def cause: Term | Expr = lhs
 }
 
 // General missing implementation error
 case class MissingImplementation(context: String, expr: Expr) extends TyckError {
   override def toDoc(using PrettierOptions): Doc =
-    t"Missing implementation for ${context}"
-  
+    t"Missing implementation for $context"
+
   override def cause: Term | Expr = expr
 }
