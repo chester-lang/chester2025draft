@@ -27,8 +27,8 @@ trait Tree[A <: Tree[A]] extends Any {
     f
   ).asInstanceOf[ThisTree]
 
-  final def descentRecursive(f: A => A): A = thisOr {
-    f(descent(_.descentRecursive(f(_))))
+  final def descentRec(f: A => A): A = thisOr {
+    f(descent(_.descentRec(f(_))))
   }
 
   def inspect(f: A => Unit): Unit = {
@@ -37,14 +37,14 @@ trait Tree[A <: Tree[A]] extends Any {
     })
   }
 
-  def inspectRecursive(operator: A => Unit): Unit = {
-    inspect(_.inspectRecursive(operator(_)))
+  final def inspectRec(operator: A => Unit): Unit = {
+    inspect(_.inspectRec(operator(_)))
     operator(this.asInstanceOf[A])
   }
 
   def mapFlatten[B](f: A => Seq[B]): Vector[B] = {
     var result = Vector.empty[B]
-    inspectRecursive(term => result ++= f(term))
+    inspectRec(term => result ++= f(term))
     result
   }
 
