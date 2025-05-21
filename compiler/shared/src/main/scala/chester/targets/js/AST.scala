@@ -12,7 +12,7 @@ case class Meta(span: Span) extends SpanRequired derives ReadWriter
 sealed trait ASTNode extends ToDoc with Tree[ASTNode] derives ReadWriter {
   override type ThisTree <: ASTNode
   val meta: Option[Meta]
-  
+
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 

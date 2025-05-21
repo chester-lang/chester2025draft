@@ -6,7 +6,4 @@ enum Target(val name: String) {
   case Rust extends Target("rust")
 }
 
-
-trait Backend[AST](val target: Target) {
-
-}
+trait Backend[AST](val target: Target) {}
