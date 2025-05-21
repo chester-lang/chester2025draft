@@ -5,6 +5,6 @@ trait SpanOptional extends Any {
 }
 
 trait SpanOptional1 extends Any with SpanOptional {
-  def span: Option[Span]
-  override def span0: Option[Span] = span
+    def span: Option[Span]
+    override def span0: Option[Span] = span
 }

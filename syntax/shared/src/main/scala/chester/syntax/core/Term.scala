@@ -17,7 +17,7 @@ import chester.utils.impls.rationalRW
 import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
 import chester.utils.impls.uintRW
-import com.eed3si9n.ifdef.*
+
 import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq
@@ -123,35 +123,9 @@ implicit val SeqCallingArgTermRW: ReadWriter[Seq[CallingArgTerm]] =
 
 implicit inline def makeArray[T: scala.reflect.ClassTag](xs: Seq[T]): Array[T] = xs.toArray
 
-@ifndef("syntax-truffle")
-case class Calling(
-    args: Seq[CallingArgTerm],
-    @const implicitly: Boolean = false,
-    @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-
-  override def toDoc(using PrettierOptions): Doc = {
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
-  }
-
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(args = args.map(g))
-  )
-
-  override type ThisTree = Calling
-}
-@ifdef("syntax-truffle")
-object Calling {
-  def apply(args: Seq[CallingArgTerm], implicitly: Boolean = false, meta: Option[TermMeta]): Calling = {
-    val args0 = args.toArray
-    new Calling(args0, implicitly, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class Calling(
     @children args0: Array[CallingArgTerm],
-    @const implicitly: Boolean,
+    @const implicitly: Boolean = false,
     @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
 
@@ -165,44 +139,11 @@ case class Calling(
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
     copy(args0 = args.map(g))
   )
-  override def equals(other: Any): Boolean = other match {
-    case other: Calling => this.args == other.args && this.implicitly == other.implicitly && this.meta == other.meta
-    case _              => false
-  }
 
   override type ThisTree = Calling
 
 }
 
-@ifndef("syntax-truffle")
-case class FCallTerm(
-    @child var f: Term,
-    args: Seq[Calling],
-    @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-  override type ThisTree = FCallTerm
-
-  override def descent(a: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(f = a(f), args = args.map(g))
-  )
-  override def toDoc(using PrettierOptions): Doc = {
-    val fDoc = f.toDoc
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    group(fDoc <+> argsDoc)
-  }
-}
-@ifdef("syntax-truffle")
-object FCallTerm {
-  def apply(
-      f: Term,
-      args: Seq[Calling],
-      meta: Option[TermMeta]
-  ): FCallTerm = {
-    val args0 = args.toArray
-    new FCallTerm(f, args0, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class FCallTerm(
     @child var f: Term,
     @children args0: Array[Calling],
@@ -218,10 +159,6 @@ case class FCallTerm(
     val fDoc = f.toDoc
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     group(fDoc <+> argsDoc)
-  }
-  override def equals(other: Any): Boolean = other match {
-    case other: FCallTerm => this.f == other.f && this.args == other.args && this.meta == other.meta
-    case _                => false
   }
 
 }
@@ -277,23 +214,6 @@ case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) exten
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = this
 }
-@ifndef("syntax-truffle")
-case class ListTerm(terms: Seq[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
-  override type ThisTree = ListTerm
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(terms = terms.map(f))
-  )
-  override def toDoc(using PrettierOptions): Doc =
-    Doc.wrapperlist(Docs.`[`, Docs.`]`)(terms)
-}
-@ifdef("syntax-truffle")
-object ListTerm {
-  def apply(terms: Seq[Term], meta: Option[TermMeta]): ListTerm = {
-    val terms0 = terms.toArray
-    new ListTerm(terms0, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
   val terms: ArraySeq[Term] = ArraySeq.unsafeWrapArray(terms0)
   override final type ThisTree = ListTerm
@@ -302,11 +222,11 @@ case class ListTerm(@children terms0: Array[Term], @const meta: Option[TermMeta]
   )
   override def equals(other: Any): Boolean = other match {
     case other: ListTerm => this.terms == other.terms && this.meta == other.meta
-    case _               => false
+    case _ => false
   }
   override def toDoc(using PrettierOptions): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`)(terms)
-
+    
 }
 sealed trait TypeTerm extends WHNF derives ReadWriter {
   override type ThisTree <: TypeTerm
@@ -529,28 +449,9 @@ case class ArgTerm(
 
   def name: Name = bind.name
 }
-@ifndef("syntax-truffle")
-case class TelescopeTerm(args: Seq[ArgTerm], @const implicitly: Boolean = false, @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
-  override type ThisTree = TelescopeTerm
-  override def toDoc(using PrettierOptions): Doc = {
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    if (implicitly) Docs.`[` <> argsDoc <> Docs.`]` else Docs.`(` <> argsDoc <> Docs.`)`
-  }
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(args = args.map(g))
-  )
-}
-@ifdef("syntax-truffle")
-object TelescopeTerm {
-  def apply(args: Seq[ArgTerm], implicitly: Boolean = false, meta: Option[TermMeta]): TelescopeTerm = {
-    val args0 = args.toArray
-    new TelescopeTerm(args0, implicitly, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class TelescopeTerm(
     @children args0: Array[ArgTerm],
-    @const implicitly: Boolean,
+    @const implicitly: Boolean = false,
     @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   val args: ArraySeq[ArgTerm] = ArraySeq.unsafeWrapArray(args0)
@@ -592,49 +493,10 @@ case class Function(
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(copy(ty = g(ty), body = f(body)))
 }
-@ifndef("syntax-truffle")
-case class FunctionType(
-    telescopes: Seq[TelescopeTerm],
-    @child var resultTy: Term,
-    @const effects: EffectsM = Effects.Empty,
-    @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-  override type ThisTree = FunctionType
-  override def toDoc(using PrettierOptions): Doc = {
-    val telescopeDoc =
-      telescopes.map(_.toDoc).reduceLeftOption(_ <+> _).getOrElse(Doc.empty)
-    val effectsDoc = if (effects.nonEmpty) {
-      Docs.`/` <+> effects.toDoc
-    } else {
-      Doc.empty
-    }
-    group(telescopeDoc <+> Docs.`->` <+> resultTy.toDoc <> effectsDoc)
-  }
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(
-      telescopes = telescopes.map(g),
-      resultTy = f(resultTy),
-      effects = g(effects)
-    )
-  )
-}
-@ifdef("syntax-truffle")
-object FunctionType {
-  def apply(
-      telescopes: Seq[TelescopeTerm],
-      resultTy: Term,
-      effects: EffectsM = Effects.Empty,
-      meta: Option[TermMeta]
-  ): FunctionType = {
-    val telescopes0 = telescopes.toArray
-    new FunctionType(telescopes0, resultTy, effects, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class FunctionType(
     @children telescopes0: Array[TelescopeTerm],
     @child var resultTy: Term,
-    @const effects: EffectsM,
+    @const effects: EffectsM = Effects.Empty,
     @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   val telescopes: ArraySeq[TelescopeTerm] = ArraySeq.unsafeWrapArray(telescopes0)
@@ -676,28 +538,6 @@ case class ObjectClauseValueTerm(
     copy(key = f(key), value = f(value))
   )
 }
-
-@ifndef("syntax-truffle")
-case class ObjectTerm(
-    clauses: Seq[ObjectClauseValueTerm],
-    @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-  override type ThisTree = ObjectTerm
-  override def toDoc(using PrettierOptions): Doc =
-    Doc.wrapperlist(Docs.`{`, Docs.`}`)(clauses.map(_.toDoc))
-
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(clauses = clauses.map(g))
-  )
-}
-@ifdef("syntax-truffle")
-object ObjectTerm {
-  def apply(clauses: Seq[ObjectClauseValueTerm], meta: Option[TermMeta]): ObjectTerm = {
-    val clauses0 = clauses.toArray
-    new ObjectTerm(clauses0, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class ObjectTerm(
     @children clauses0: Array[ObjectClauseValueTerm],
     @const meta: Option[TermMeta]
@@ -715,34 +555,10 @@ case class ObjectTerm(
     case _                 => false
   }
 }
-
-@ifndef("syntax-truffle")
-case class ObjectType(
-    fieldTypes: Seq[ObjectClauseValueTerm],
-    @const exactFields: Boolean = false,
-    @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-  override type ThisTree = ObjectType
-  override def toDoc(using PrettierOptions): Doc =
-    Doc.wrapperlist("Object" </> Docs.`{`, Docs.`}`)(
-      fieldTypes.map(_.toDoc)
-    )
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(fieldTypes = fieldTypes.map(g))
-  )
-}
-@ifdef("syntax-truffle")
-object ObjectType {
-  def apply(fieldTypes: Seq[ObjectClauseValueTerm], exactFields: Boolean = false, meta: Option[TermMeta]): ObjectType = {
-    val fieldTypes0 = fieldTypes.toArray
-    new ObjectType(fieldTypes0, exactFields, meta)
-  }
-}
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
-@ifdef("syntax-truffle")
 case class ObjectType(
     @children fieldTypes0: Array[ObjectClauseValueTerm],
-    @const exactFields: Boolean,
+    @const exactFields: Boolean = false,
     @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
   private val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
@@ -954,28 +770,6 @@ case class TupleTerm(@const values: Vector[Term], @const meta: Option[TermMeta])
     copy(values = values.map(f))
   )
 }
-@ifndef("syntax-truffle")
-case class BlockTerm(
-    statements: Seq[StmtTerm],
-    @child var result: Term,
-    @const meta: Option[TermMeta]
-) extends Uneval derives ReadWriter {
-  override type ThisTree = BlockTerm
-  override def toDoc(using PrettierOptions): Doc =
-    Doc.wrapperlist(Docs.`{`, Docs.`}`, ";")(statements.map(_.toDoc) :+ result.toDoc)
-
-  override def descent(f: Term => Term, g: TreeMap[Term]): Term = thisOr(
-    copy(statements = statements.map(g), result = f(result))
-  )
-}
-@ifdef("syntax-truffle")
-object BlockTerm {
-  def apply(statements: Seq[StmtTerm], result: Term, meta: Option[TermMeta]): BlockTerm = {
-    val statements0 = statements.toArray
-    new BlockTerm(statements0, result, meta)
-  }
-}
-@ifdef("syntax-truffle")
 case class BlockTerm(
     @children statements0: Array[StmtTerm],
     @child var result: Term,

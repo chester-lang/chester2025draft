@@ -23,9 +23,10 @@ def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(
 }
 
 def toTermRec(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using SolverOps): Term = toTerm(x).descentRecursive {
-  case x: MetaTerm =>
+  case x: MetaTerm => {
     val updated = toTerm(x, x.meta)
-    if (updated == x) x else toTermRec(updated, updated.meta)
+    if(updated == x) x else toTermRec(updated, updated.meta)
+  }
   case t => t
 }
 
