@@ -713,6 +713,10 @@ lazy val syntax = useSpire(
       scalacOptions ++= Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:syntax-truffle"),
       dependOnGraal
     )
+    .nativeSettings(
+      // some tests don't pass on scala native without this for some unknown reason - java.lang.UnsupportedOperationException: empty.reduceLeft - we don't have reduceLeft in our code?
+      scalacOptions ++= Seq("-Xmacro-settings:com.eed3si9n.ifdef.declare:syntax-truffle")
+    )
 )
 
 lazy val err = crossProject(JSPlatform, JVMPlatform, NativePlatform)
