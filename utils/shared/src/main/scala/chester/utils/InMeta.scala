@@ -2,6 +2,7 @@ package chester.utils
 
 import upickle.default.*
 
+import scala.reflect.Selectable.reflectiveSelectable
 // allow to write, not allow read
 given HoldNotReadableRW: ReadWriter[InMeta[?]] =
   readwriter[InMetaRW].bimap(
@@ -9,13 +10,12 @@ given HoldNotReadableRW: ReadWriter[InMeta[?]] =
     _ => throw new UnsupportedOperationException("Cannot read HoldNotReadable")
   )
 
-case class InMeta[T](inner: T) extends AnyVal {
-  override def equals(obj: Any): Boolean = {
+case class InMeta[T](inner: T) {
+  override def equals(obj: Any): Boolean =
     obj match {
-      case InMeta(other) => inner == other
+      case InMeta(other) => (inner eq other) || inner == other
       case _             => false
     }
-  }
 }
 
 private case class InMetaRW() derives ReadWriter
