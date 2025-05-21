@@ -5,3 +5,8 @@ enum Target(val name: String) {
   case Scala extends Target("scala")
   case Rust extends Target("rust")
 }
+
+
+trait Backend[AST](val target: Target) {
+
+}
