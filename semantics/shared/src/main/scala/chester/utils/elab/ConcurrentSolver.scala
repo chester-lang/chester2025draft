@@ -169,7 +169,9 @@ final class ConcurrentSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
 
   override protected def updateCell[A, B](id: CellOf[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit = {
     val current = id.storeRef.get
-    id.storeRef.set(f(current))
+    val newValue = f(current)
+    if (current == newValue) return
+    id.storeRef.set(newValue)
     val (related, others) = delayedConstraints.get.partition(_.related(id))
     delayedConstraints.set(others)
     addConstraints(related.map(_.x))

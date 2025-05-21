@@ -30,7 +30,10 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
   override protected def peakCell[T](id: CellR[T]): CellContentR[T] = id.store
 
   override protected def updateCell[A, B](id: CellOf[A, B], f: CellContent[A, B] => CellContent[A, B]): Unit = {
-    id.store = f(id.store)
+    val current = id.store
+    val newValue = f(current)
+    if (current == newValue) return
+    id.store = newValue
     updatedCells.append(id)
   }
 
