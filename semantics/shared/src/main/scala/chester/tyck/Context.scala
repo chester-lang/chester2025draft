@@ -31,8 +31,14 @@ object Imports {
   val Empty: Imports = Imports()
 }
 
+case class Features(preview: Boolean = false)
+object Features {
+  val Default: Features = Features()
+}
+
 case class Context(
     effects: EffectsM = Effects.Empty,
+    features: Features = Features.Default,
     map: Map[Name, UniqidOf[ReferenceCall]] = HashMap.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
     contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
       HashMap.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs

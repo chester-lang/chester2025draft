@@ -6,7 +6,6 @@ case object Pure extends Kind {
   type Of = Pure
 }
 
-
 case class Pure(effects: Eff) extends Constraint(Pure) {}
 
 case object PureHandler extends Handler[ElabOps, Pure.type](Pure) {
