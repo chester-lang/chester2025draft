@@ -67,7 +67,7 @@ case class OnceCellContent[T](
 
   override def fill(newValue: T): OnceCellContent[T] = {
     if (value.contains(newValue)) return this
-    require(value.isEmpty)
+    require(value.isEmpty, s"OnceCellContent can only be filled once, but was already filled with ${value.get} and now with $newValue")
     copy(value = Some(newValue))
   }
 }
