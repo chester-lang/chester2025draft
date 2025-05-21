@@ -2,6 +2,8 @@ package chester.targets.scheme
 
 import chester.error.*
 import chester.utils.doc.*
+import chester.syntax.Tree
+import chester.syntax.TreeMap
 import upickle.default.*
 
 case class Meta(span: Span) extends SpanRequired derives ReadWriter {
@@ -16,42 +18,57 @@ extension (m: Option[Meta]) {
 }
 
 // Base trait for all AST nodes
-sealed trait ASTNode extends ToDoc derives ReadWriter {
+sealed trait ASTNode extends ToDoc with Tree[ASTNode] derives ReadWriter {
   val meta: Option[Meta]
+  
+  // Implementing the ThisTree type required by chester.syntax.Tree
+  override type ThisTree <: ASTNode
 }
 
 // Expressions
-sealed trait Expression extends ASTNode derives ReadWriter
+sealed trait Expression extends ASTNode derives ReadWriter {
+  override type ThisTree <: Expression
+}
 
 // Scheme literals
-sealed trait Literal extends Expression derives ReadWriter
+sealed trait Literal extends Expression derives ReadWriter {
+  override type ThisTree <: Literal
+}
 
 case class StringLiteral(
     value: String,
     meta: Option[Meta] = None
 ) extends Literal {
-  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(s""""$value""""))
+  override type ThisTree = StringLiteral
+  def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(s"""$value"""))
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NumberLiteral(
     value: Double,
     meta: Option[Meta] = None
 ) extends Literal {
+  override type ThisTree = NumberLiteral
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(value.toString))
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class BooleanLiteral(
     value: Boolean,
     meta: Option[Meta] = None
 ) extends Literal {
+  override type ThisTree = BooleanLiteral
   def toDoc(using PrettierOptions): Doc =
     meta.link(if (value) Doc.text("#t") else Doc.text("#f"))
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NullLiteral(
     meta: Option[Meta] = None
 ) extends Literal {
+  override type ThisTree = NullLiteral
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("'()"))
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Identifiers
@@ -59,7 +76,9 @@ case class Identifier(
     name: String,
     meta: Option[Meta] = None
 ) extends Expression {
+  override type ThisTree = Identifier
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(name))
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // ListExpression as a case class
@@ -67,10 +86,16 @@ case class ListExpression(
     elements: Vector[Expression],
     meta: Option[Meta] = None
 ) extends Expression derives ReadWriter {
+  override type ThisTree = ListExpression
 
   def toDoc(using PrettierOptions): Doc = {
     val elemsDoc = Doc.sep(Doc.text(" "), elements.map(_.toDoc))
-    meta.link(Doc.text("(") <> elemsDoc <> Doc.text(")"))
+    meta.link(Doc.text("(") <> elemsDoc <> Doc.text("))"))
+  }
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
+    val newElements = elements.map(e => g(e).asInstanceOf[Expression])
+    if (elements eq newElements) this else ListExpression(newElements, meta)
   }
 }
 
@@ -177,7 +202,13 @@ case class Quotation(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
+  override type ThisTree = Quotation
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("'") <> value.toDoc)
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
+    val newValue = g(value).asInstanceOf[Expression]
+    if (value eq newValue) this else Quotation(newValue, meta)
+  }
 }
 
 // QuasiQuotation class
@@ -185,7 +216,13 @@ case class QuasiQuotation(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
+  override type ThisTree = QuasiQuotation
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("`") <> value.toDoc)
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
+    val newValue = g(value).asInstanceOf[Expression]
+    if (value eq newValue) this else QuasiQuotation(newValue, meta)
+  }
 }
 
 // Unquote class
@@ -193,7 +230,13 @@ case class Unquote(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
+  override type ThisTree = Unquote
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(",") <> value.toDoc)
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
+    val newValue = g(value).asInstanceOf[Expression]
+    if (value eq newValue) this else Unquote(newValue, meta)
+  }
 }
 
 // UnquoteSplicing class
@@ -201,7 +244,13 @@ case class UnquoteSplicing(
     value: Expression,
     meta: Option[Meta] = None
 ) extends Expression {
+  override type ThisTree = UnquoteSplicing
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(",@") <> value.toDoc)
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
+    val newValue = g(value).asInstanceOf[Expression]
+    if (value eq newValue) this else UnquoteSplicing(newValue, meta)
+  }
 }
 
 // Program
@@ -209,6 +258,12 @@ case class Program(
     expressions: Vector[Expression],
     meta: Option[Meta] = None
 ) extends ASTNode {
+  override type ThisTree = Program
   def toDoc(using PrettierOptions): Doc =
     meta.link(Doc.concat(expressions.map(_.toDoc <> Doc.line)))
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
+    val newExpressions = expressions.map(e => g(e).asInstanceOf[Expression])
+    if (expressions eq newExpressions) this else Program(newExpressions, meta)
+  }
 }

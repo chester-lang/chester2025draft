@@ -1,21 +1,30 @@
 package chester.targets.js
 
 import chester.error.*
+import chester.syntax.Tree
+import chester.syntax.TreeMap
 import chester.utils.doc.*
 import upickle.default.*
 
 case class Meta(span: Span) extends SpanRequired derives ReadWriter
 
 // Base trait for all AST nodes
-sealed trait ASTNode extends ToDoc derives ReadWriter {
+sealed trait ASTNode extends ToDoc with Tree[ASTNode] derives ReadWriter {
+  override type ThisTree <: ASTNode
   val meta: Option[Meta]
+  
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Expressions
-sealed trait Expression extends ASTNode derives ReadWriter
+sealed trait Expression extends ASTNode derives ReadWriter {
+  override type ThisTree <: Expression
+}
 
 // Patterns for destructuring
-sealed trait Pattern extends ASTNode derives ReadWriter
+sealed trait Pattern extends ASTNode derives ReadWriter {
+  override type ThisTree <: Pattern
+}
 
 // Unannotated Identifier
 case class Identifier(
@@ -23,6 +32,8 @@ case class Identifier(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.text(name)
+  override type ThisTree = Identifier
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Annotated Identifier
@@ -32,6 +43,8 @@ case class TypedIdentifier(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.text(name) <> Doc.text(":") <+> typeAnnotation.toDoc
+  override type ThisTree = TypedIdentifier
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Operators as Enums (Using Scala 3 Syntax)
@@ -132,6 +145,8 @@ case class BinaryExpression(
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc =
     Doc.group(left.toDoc <+> Doc.text(operator.toString) <+> right.toDoc)
+  override type ThisTree = BinaryExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Logical Expression
@@ -200,33 +215,49 @@ case class ConditionalExpression(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.group(test.toDoc <+> Doc.text("?") <+> consequent.toDoc <+> Doc.text(":") <+> alternate.toDoc)
+  override type ThisTree = ConditionalExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Literals
-sealed trait Literal extends Expression derives ReadWriter
+sealed trait Literal extends Expression derives ReadWriter {
+  override type ThisTree <: Literal
+}
 
 case class NumericLiteral(value: Double, meta: Option[Meta] = None) extends Literal {
   def toDoc(using PrettierOptions): Doc = Doc.text(value.toString)
+  override type ThisTree = NumericLiteral
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class StringLiteral(value: String, meta: Option[Meta] = None) extends Literal {
   def toDoc(using PrettierOptions): Doc = Doc.text("\"" + value + "\"")
+  override type ThisTree = StringLiteral
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class BooleanLiteral(value: Boolean, meta: Option[Meta] = None) extends Literal {
   def toDoc(using PrettierOptions): Doc = Doc.text(if (value) "true" else "false")
+  override type ThisTree = BooleanLiteral
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NullLiteral(meta: Option[Meta] = None) extends Literal {
   def toDoc(using PrettierOptions): Doc = Doc.text("null")
+  override type ThisTree = NullLiteral
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class BigIntLiteral(value: String, meta: Option[Meta] = None) extends Literal {
   def toDoc(using PrettierOptions): Doc = Doc.text(value + "n")
+  override type ThisTree = BigIntLiteral
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class RegExpLiteral(pattern: String, flags: String, meta: Option[Meta] = None) extends Literal {
   def toDoc(using PrettierOptions): Doc = Doc.text(s"/$pattern/$flags")
+  override type ThisTree = RegExpLiteral
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Template Literals
@@ -253,6 +284,8 @@ case class TemplateElement(
     meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using PrettierOptions): Doc = Doc.text(value)
+  override type ThisTree = TemplateElement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Expressions
@@ -305,6 +338,8 @@ case class OptionalMemberExpression(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = MemberExpression(obj, property, computed, optional = true, meta).toDoc
+  override type ThisTree = OptionalMemberExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class FunctionExpression(
@@ -368,6 +403,8 @@ case class ClassExpression(
 
 case class AwaitExpression(argument: Expression, meta: Option[Meta] = None) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.text("await") <+> argument.toDoc
+  override type ThisTree = AwaitExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class YieldExpression(
@@ -388,14 +425,20 @@ case class TaggedTemplateExpression(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = tag.toDoc <> quasi.toDoc
+  override type ThisTree = TaggedTemplateExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class SequenceExpression(expressions: List[Expression], meta: Option[Meta] = None) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.group(Doc.sep(Doc.text(","), expressions.map(_.toDoc)))
+  override type ThisTree = SequenceExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class SpreadElement(argument: Expression, meta: Option[Meta] = None) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.text("...") <> argument.toDoc
+  override type ThisTree = SpreadElement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ObjectExpression(
@@ -447,6 +490,8 @@ case class IdentifierPattern(
     meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using PrettierOptions): Doc = identifier.toDoc
+  override type ThisTree = IdentifierPattern
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ObjectPattern(
@@ -501,6 +546,8 @@ case class RestElement(
     meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using PrettierOptions): Doc = Doc.text("...") <> argument.toDoc
+  override type ThisTree = RestElement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class AssignmentPattern(
@@ -509,6 +556,8 @@ case class AssignmentPattern(
     meta: Option[Meta] = None
 ) extends Pattern {
   def toDoc(using PrettierOptions): Doc = Doc.group(left.toDoc <+> Doc.text("=") <+> right.toDoc)
+  override type ThisTree = AssignmentPattern
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Statements
@@ -601,6 +650,8 @@ case class ExpressionStatement(
     meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using PrettierOptions): Doc = expression.toDoc <> Doc.text(";")
+  override type ThisTree = ExpressionStatement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Control Flow Statements
@@ -646,6 +697,8 @@ case class WhileStatement(
     meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using PrettierOptions): Doc = Doc.text("while (") <> test.toDoc <> Doc.text(")") <+> body.toDoc
+  override type ThisTree = WhileStatement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class DoWhileStatement(
@@ -654,6 +707,8 @@ case class DoWhileStatement(
     meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using PrettierOptions): Doc = Doc.text("do") <+> body.toDoc <+> Doc.text("while (") <> test.toDoc <> Doc.text(");")
+  override type ThisTree = DoWhileStatement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ForInStatement(
@@ -664,6 +719,8 @@ case class ForInStatement(
 ) extends Statement {
   def leftDoc(using PrettierOptions): Doc = left.fold(_.toDoc, _.toDoc)
   def toDoc(using PrettierOptions): Doc = Doc.text("for (") <> leftDoc <> Doc.text(" in ") <> right.toDoc <> Doc.text(")") <+> body.toDoc
+  override type ThisTree = ForInStatement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ForOfStatement(
@@ -677,6 +734,8 @@ case class ForOfStatement(
   def awaitDoc(using PrettierOptions): Doc = if (await) Doc.text("await") <+> Doc.empty else Doc.empty
   def toDoc(using PrettierOptions): Doc =
     Doc.text("for") <+> awaitDoc <> Doc.text("(") <> leftDoc <> Doc.text(" of ") <> right.toDoc <> Doc.text(")") <+> body.toDoc
+  override type ThisTree = ForOfStatement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class SwitchStatement(
@@ -740,6 +799,8 @@ case class ThrowStatement(
     meta: Option[Meta] = None
 ) extends Statement {
   def toDoc(using PrettierOptions): Doc = Doc.text("throw") <+> argument.toDoc <> Doc.text(";")
+  override type ThisTree = ThrowStatement
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class TryStatement(
@@ -778,6 +839,8 @@ case class ClassDeclaration(
     meta: Option[Meta] = None
 ) extends Declaration {
   def toDoc(using PrettierOptions): Doc = ClassExpression(Some(id), typeParameters, superClass, implementsInterfaces, body, decorators).toDoc
+  override type ThisTree = ClassDeclaration
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ClassBody(
@@ -869,6 +932,8 @@ case class ImportDefaultSpecifier(
     meta: Option[Meta] = None
 ) extends ImportSpecifier {
   def toDoc(using PrettierOptions): Doc = local.toDoc
+  override type ThisTree = ImportDefaultSpecifier
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ImportNamespaceSpecifier(
@@ -876,6 +941,8 @@ case class ImportNamespaceSpecifier(
     meta: Option[Meta] = None
 ) extends ImportSpecifier {
   def toDoc(using PrettierOptions): Doc = Doc.text("* as ") <> local.toDoc
+  override type ThisTree = ImportNamespaceSpecifier
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ImportNamedSpecifier(
@@ -920,6 +987,8 @@ case class ExportDefaultDeclaration(
     meta: Option[Meta] = None
 ) extends ExportDeclaration {
   def toDoc(using PrettierOptions): Doc = Doc.text("export default ") <> declaration.toDoc
+  override type ThisTree = ExportDefaultDeclaration
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ExportAllDeclaration(
@@ -979,6 +1048,8 @@ case class UnionType(
     meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.sep(Doc.text(" | "), types.map(_.toDoc))
+  override type ThisTree = UnionType
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class IntersectionType(
@@ -986,6 +1057,8 @@ case class IntersectionType(
     meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.sep(Doc.text(" & "), types.map(_.toDoc))
+  override type ThisTree = IntersectionType
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Generics
@@ -995,47 +1068,69 @@ case class GenericTypeAnnotation(
     meta: Option[Meta] = None
 ) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = TypeReference(id.name, typeParameters, meta).toDoc
+  override type ThisTree = GenericTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Primitive Type Annotations
 case class AnyTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("any")
+  override type ThisTree = AnyTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class UnknownTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("unknown")
+  override type ThisTree = UnknownTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NumberTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("number")
+  override type ThisTree = NumberTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class StringTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("string")
+  override type ThisTree = StringTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class BooleanTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("boolean")
+  override type ThisTree = BooleanTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NullTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("null")
+  override type ThisTree = NullTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class UndefinedTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("undefined")
+  override type ThisTree = UndefinedTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NeverTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("never")
+  override type ThisTree = NeverTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class ObjectTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("object")
+  override type ThisTree = ObjectTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class SymbolTypeAnnotation(meta: Option[Meta] = None) extends TypeAnnotation {
   def toDoc(using PrettierOptions): Doc = Doc.text("symbol")
+  override type ThisTree = SymbolTypeAnnotation
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Type Parameters
@@ -1096,6 +1191,8 @@ case class TypeAssertion(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = Doc.text("<") <> typeAnnotation.toDoc <> Doc.text(">") <> expression.toDoc
+  override type ThisTree = TypeAssertion
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class AsExpression(
@@ -1104,6 +1201,8 @@ case class AsExpression(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = expression.toDoc <+> Doc.text("as ") <> typeAnnotation.toDoc
+  override type ThisTree = AsExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class NonNullExpression(
@@ -1111,6 +1210,8 @@ case class NonNullExpression(
     meta: Option[Meta] = None
 ) extends Expression {
   def toDoc(using PrettierOptions): Doc = expression.toDoc <> Doc.text("!")
+  override type ThisTree = NonNullExpression
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Decorators (TypeScript)
@@ -1119,6 +1220,8 @@ case class Decorator(
     meta: Option[Meta] = None
 ) extends ASTNode {
   def toDoc(using PrettierOptions): Doc = Doc.text("@") <> expression.toDoc
+  override type ThisTree = Decorator
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 // Destructuring and Spread Elements
@@ -1155,6 +1258,8 @@ case class IndexSignature(
 ) extends ASTNode {
   def toDoc(using PrettierOptions): Doc =
     Doc.text("[") <> parameter.toDoc <> Doc.text("]") <> Doc.text(":") <+> typeAnnotation.toDoc
+  override type ThisTree = IndexSignature
+  override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = this
 }
 
 case class MappedType(
