@@ -62,14 +62,12 @@ def newType(using SolverOps, Context): CellRW[Term] = toCell(SolverOps.callConst
 trait Elab {
 
   def check(expr: Expr, ty: CellRWOr[Term])(using
-      effects: CellEffects,
-      localCtx: Context,
+      ctx: Context,
       ops: ElabOps,
       state: SolverOps
   ): CellRWOr[Term]
 
   def infer(expr: Expr)(using
-      CellEffects,
       Context,
       ElabOps,
       SolverOps
@@ -80,11 +78,11 @@ trait Elab {
   }
 
   def inferType(expr: Expr)(using
-      Context,
-      ElabOps,
-      SolverOps
+      ctx: Context,
+      _1: ElabOps,
+      _2: SolverOps
   ): (wellTyped: CellRWOr[Term], ty: CellRWOr[Term]) = {
-    given CellEffects = newPureEffects
+    given Context = ctx.copy(effects = newPureEffects.toEffectsM)
     val i = infer(expr)
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
@@ -93,16 +91,16 @@ trait Elab {
 
 trait DefaultElab extends Elab {
   given Elab = this
-  override def check(expr: Expr, ty: CellRWOr[Term])(using effects: CellEffects, localCtx: Context, ops: ElabOps, state: SolverOps): CellRWOr[Term] =
+  override def check(expr: Expr, ty: CellRWOr[Term])(using ctx: Context, ops: ElabOps, state: SolverOps): CellRWOr[Term] =
     resolve(expr) match {
       case expr: IntegerLiteral =>
-        SolverOps.addConstraint(Pure(effects))
+        SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.callConstraint(IntegerLit(expr, ty))
       case expr: StringLiteral =>
-        SolverOps.addConstraint(Pure(effects))
+        SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.callConstraint(StringLit(expr, ty))
       case expr: SymbolLiteral =>
-        SolverOps.addConstraint(Pure(effects))
+        SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.callConstraint(SymbolLit(expr, ty))
       case _ @ListExpr(xs, meta) =>
         val items = xs.map(infer(_))

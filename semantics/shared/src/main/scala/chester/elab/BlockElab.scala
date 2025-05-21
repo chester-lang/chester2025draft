@@ -1,6 +1,5 @@
 package chester.elab
 
-import chester.cell.CellEffects
 import chester.error.{Reporter, MissingLetBody}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
@@ -15,13 +14,12 @@ case object BlockElab extends Kind {
   type Of = BlockElab
 }
 
-case class BlockElab(block: Block, ty: CellRWOr[Term])(using effects: CellEffects, elab: Elab, ops: SolverOps, ctx: Context)
+case class BlockElab(block: Block, ty: CellRWOr[Term])(using elab: Elab, ops: SolverOps, ctx: Context)
     extends Constraint(BlockElab)
     with ConstraintTerm {
   override val result: CellRW[Term] = newHole
   given context: Context = ctx
   given Elab = elab
-  given CellEffects = effects
 }
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
