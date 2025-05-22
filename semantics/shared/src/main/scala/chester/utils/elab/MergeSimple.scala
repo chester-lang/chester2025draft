@@ -1,6 +1,6 @@
 package chester.utils.elab
 
-import chester.error.{Reporter, TyckProblem, MergeError, MissingImplementation}
+import chester.error.{MergeError, MissingImplementation, Reporter, TyckProblem}
 import chester.syntax.concrete.EmptyExpr
 
 case object MergeSimple extends Kind {

@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.error.{Reporter, MissingLetBody}
+import chester.error.{MissingLetBody, Reporter}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, ContextItem, TyAndVal, convertMeta}
@@ -33,7 +33,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     exprStatements.foreach {
       case defstmt: LetDefStmt if defstmt.kind == LetDefType.Def =>
         defstmt.defined match {
-          case defined @ DefinedPattern(PatternBind(name, meta)) =>
+          case _ @ DefinedPattern(PatternBind(name, meta)) =>
             val ty = newType
             val id = Uniqid.generate[LocalV]
             val localv = LocalV(name.name, toTerm(ty), id, convertMeta(meta))

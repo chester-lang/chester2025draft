@@ -1,6 +1,6 @@
 package chester.readerv2
 import chester.i18n.*
-import chester.error.{Pos, SpanInFile, Span, unreachableOr}
+import chester.error.{Pos, Span, SpanInFile, unreachableOr}
 import chester.reader.{ParseError, Source}
 import chester.syntax.concrete.{
   Block,

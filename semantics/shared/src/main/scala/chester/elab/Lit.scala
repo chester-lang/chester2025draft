@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.error.{Reporter, LiteralTypeMismatch}
+import chester.error.{LiteralTypeMismatch, Reporter}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, convertMeta}
