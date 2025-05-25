@@ -20,7 +20,7 @@ lazy val chesterPlugin =
     .enablePlugins(SbtIdeaPlugin)
     .settings(
       name := "ChesterLanguageSupport",
-      version := "0.0.33",
+      version := "0.0.34",
       scalaVersion := "3.7.2-RC1-bin-20250523-ee14905-NIGHTLY",
       Compile / javacOptions ++= Seq("--release", "17"),
       Compile / scalacOptions ++= Seq("--release", "17"),
@@ -36,7 +36,7 @@ lazy val chesterPlugin =
       scalacOptions ++= Seq("-Wunused:all", "-Xlint:adapted-args"),
       // Exclude LSP4J dependencies
       libraryDependencies ++= Seq(
-        ("com.github.chester-lang.chester" %% "lsp" % "0.0.33")
+        ("com.github.chester-lang.chester" %% "lsp" % "0.0.34")
           .exclude("org.eclipse.lsp4j", "org.eclipse.lsp4j")
           .exclude("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc"),
         "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5"

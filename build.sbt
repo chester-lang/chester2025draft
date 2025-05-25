@@ -10,7 +10,7 @@ val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
 val graalvmVersion = "24.2.1"
 
-ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.33")
+ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.34")
 ThisBuild / organization := "com.github.chester-lang"
 
 import org.scalajs.linker.interface.OutputPatterns
