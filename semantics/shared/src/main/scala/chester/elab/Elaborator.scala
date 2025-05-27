@@ -12,9 +12,13 @@ implicit object DefaultElabImpl extends DefaultElab {}
 extension (t: Term) {
   def zonkAll(using ops: SolverOps): Term = t.descentRec {
     case t: MetaTerm =>
-      toTerm(t) match {
-        case _: MetaTerm => throw new IllegalStateException("Zonked term is still a MetaTerm")
-        case t: Term     => t.zonkAll
+      // introduce a variable for easy breakpoint
+      val result = toTerm(t)
+      result match {
+        case _: MetaTerm =>
+          // newline for easy breakpoint
+          throw new IllegalStateException("Zonked term is still a MetaTerm")
+        case t: Term => t.zonkAll
       }
     case t: Term => t
   }
