@@ -139,6 +139,7 @@ trait ElaboraterCommon extends ProvideContextOps with ElaboraterBase with Common
       result
     }
 
+  @silentDeprecated("see newer one in chester.elab")
   class MutableContext(var ctx: Context) {
     def update(f: Context => Context): Unit =
       ctx = f(ctx)

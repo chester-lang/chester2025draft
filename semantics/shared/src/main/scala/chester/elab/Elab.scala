@@ -88,6 +88,8 @@ trait Elab {
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
+  def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): CellRWOr[TAST] = ???
+
 }
 
 trait DefaultElab extends Elab {

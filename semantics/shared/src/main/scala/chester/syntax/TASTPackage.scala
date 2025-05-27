@@ -19,6 +19,7 @@ object TASTPackage {
   // Typed Abstract Syntax Trees
   // files
   // TODO: handle SourcePos for performance and file size, especially avoid duplicated SourceOffset
+  @silentDeprecated("see newer one in chester.elab.TAST")
   case class TAST(
       fileName: String,
       module: ModuleRef,
