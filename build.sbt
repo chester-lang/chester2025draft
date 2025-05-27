@@ -1,6 +1,6 @@
 // reads env: NATIVE_IMAGE_OPTIONS, VERSION
 
-val scala3Nightly = "3.7.2-RC1-bin-20250523-ee14905-NIGHTLY"
+val scala3Nightly = "3.7.2-RC1-bin-20250526-f906270-NIGHTLY"
 val scala3Version = "3.7.1-RC2"
 val scala3Lib = "3.6.4"
 val scala2Version = "2.13.16"
