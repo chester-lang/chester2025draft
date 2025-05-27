@@ -109,7 +109,9 @@ trait DefaultElab extends Elab {
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
       case id: Identifier =>
         ctx.get(id.name) match {
-          case Some(item) => item.ref
+          case Some(item) =>
+            ty >:! item.ty
+            item.ref
           case None =>
             Reporter.report(???)
             ErrorTerm(???, meta = convertMeta(id.meta))
