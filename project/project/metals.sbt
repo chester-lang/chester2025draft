@@ -3,8 +3,8 @@
 
 // This plugin enables semantic information to be produced by sbt.
 // It also adds support for debugging using the Debug Adapter Protocol
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-addSbtPlugin("org.scalameta" % "sbt-metals" % "1.5.2")
+
+addSbtPlugin("org.scalameta" % "sbt-metals" % "1.5.3")
 
 // This plugin makes sure that the JDI tools are in the sbt classpath.
 // JDI tools are used by the debug adapter server.
