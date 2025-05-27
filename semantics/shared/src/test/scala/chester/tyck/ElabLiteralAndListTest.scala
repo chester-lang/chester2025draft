@@ -225,4 +225,48 @@ class ElabLiteralAndListTest extends FunSuite {
     // Check that the type of the whole expression is IntType (from the final '1')
     assert(judge.ty.isInstanceOf[IntType], s"Expected IntType but got ${judge.ty.getClass.getSimpleName}")
   }
+
+  test("block with let binding returning the bound variable") {
+    // Parse the block expression {let x=0; x}
+    val expr = ChesterReaderV2
+      .parseExpr(FileNameAndContent("block-let-var.chester", "{let x=0; x}"))
+      .fold(
+        error => fail(s"Failed to parse expression: $error"),
+        identity
+      )
+
+    // Create reporter and ElabOps for typechecking
+    val reporter = new VectorReporter[TyckProblem]()
+    val elabOps = ElabOps(reporter, NoopSemanticCollector)
+
+    // Infer the type using the DefaultElaborator
+    val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+
+    // Assert that there are no errors
+    assertEquals(reporter.getReports.isEmpty, true, s"Expected no type errors, but got: ${reporter.getReports}")
+
+    // Check that the elaborated term is a BlockTerm
+    assert(judge.wellTyped.isInstanceOf[BlockTerm], s"Expected BlockTerm but got ${judge.wellTyped.getClass.getSimpleName}")
+
+    // The block should contain a let binding and a variable reference
+    val blockTerm = judge.wellTyped.asInstanceOf[BlockTerm]
+
+    // First statement should be a let binding
+    assert(blockTerm.statements.head.isInstanceOf[LetStmtTerm], s"Expected LetStmtTerm but got ${blockTerm.statements.head.getClass.getSimpleName}")
+
+    // Verify the let binding details
+    val letStmt = blockTerm.statements.head.asInstanceOf[LetStmtTerm]
+    assertEquals(letStmt.localv.name, "x", "Variable name should be 'x'")
+    assert(letStmt.value.isInstanceOf[IntTerm], s"Let binding value should be IntTerm but got ${letStmt.value.getClass.getSimpleName}")
+
+    // The return expression should be a LocalV (variable reference)
+    assert(blockTerm.result.isInstanceOf[LocalV], s"Expected LocalV but got ${blockTerm.result.getClass.getSimpleName}")
+
+    // Verify it refers to the correct variable
+    val varRef = blockTerm.result.asInstanceOf[LocalV]
+    assertEquals(varRef.name, "x", "Variable reference should be to 'x'")
+
+    // Check that the type of the whole expression is IntType (inferred from x which has type Int)
+    assert(judge.ty.isInstanceOf[IntType], s"Expected IntType but got ${judge.ty.getClass.getSimpleName}")
+  }
 }
