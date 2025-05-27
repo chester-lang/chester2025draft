@@ -1,6 +1,7 @@
 package chester.elab
 
 import chester.cell.*
+import chester.error.Reporter
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
@@ -106,6 +107,13 @@ trait DefaultElab extends Elab {
         val items = xs.map(infer(_))
         SolverOps.callConstraint(ListOf(items, ty))
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
-      case _        => ???
+      case id: Identifier =>
+        ctx.get(id.name) match {
+          case Some(item) => item.ref
+          case None =>
+            Reporter.report(???)
+            ErrorTerm(???, meta = convertMeta(id.meta))
+        }
+      case _ => ???
     }
 }
