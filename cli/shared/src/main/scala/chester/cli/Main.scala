@@ -10,6 +10,7 @@ import chester.utils.io.impl.given
 import chester.cli.Config.*
 import chester.i18n.*
 
+@deprecated("only for internal testing, needs rework")
 object Main {
 
   // Parsing state class with default command set to "run"
@@ -17,6 +18,8 @@ object Main {
       command: String = "run", // Default command is "run"
       input: Option[String] = None,
       inputs: Seq[String] = Seq(),
+      target: Option[String] = None,
+      output: Option[String] = None,
       targetDir: String = ".",
       version: Boolean = false,
       packages: Seq[String] = Seq(),
@@ -56,6 +59,29 @@ object Main {
         cmd("integrity")
           .action((_, c) => c.copy(command = "integrity"))
           .text("Run integrity check"),
+        cmd("comp")
+          .action((_, c) => c.copy(command = "compile1"))
+          .text("Compile internal single file test")
+          .children(
+            arg[String]("inputFile")
+              .required()
+              .validate {
+                case path if fileExists(path) => success
+                case path =>
+                  failure(
+                    t"Invalid input. Provide a valid file. Provided: $path"
+                  )
+              }
+              .action((x, c) => c.copy(input = Some(x))),
+            opt[String]("target")
+              .optional()
+              .action((x, c) => c.copy(target = Some(x))),
+            opt[String]("output")
+              .abbr("o")
+              .optional()
+              .action((x, c) => c.copy(output = Some(x)))
+              .text("Output path for compiled file.")
+          ),
         cmd("compile")
           .action((_, c) => c.copy(command = "compile"))
           .text("Compile Chester source files")
@@ -191,6 +217,16 @@ object Main {
                 "Error: At least one input file is required for compile command."
               )
               return
+            }
+          case "compile1" =>
+            val target = cliConfig.target.getOrElse("ts")
+            val output = cliConfig.output.getOrElse("output")
+            cliConfig.input match {
+              case Some(inputFile) =>
+                Compile1Config(inputFile, target, output)
+              case None =>
+                println("Error: Input file is required for compile command.")
+                return
             }
           case "decompile" =>
             cliConfig.input match {

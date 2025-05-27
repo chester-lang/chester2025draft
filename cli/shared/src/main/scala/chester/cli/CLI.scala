@@ -22,6 +22,7 @@ import chester.readerv2.ChesterReaderV2
 
 import scala.language.experimental.betterFors
 
+@deprecated("only for internal testing, needs rework")
 object CLI {
   def spawn[F[_]](config: Option[Config])(using
       runner: Runner[F],
@@ -57,6 +58,8 @@ class CLI[F[_]](using
             this.runIntegrityCheck()
           case CompileConfig(inputs, targetDir, tastDirs) =>
             this.compileFiles(inputs, targetDir, tastDirs)
+          case Compile1Config(inputPath, targetName, outputPath) =>
+            ???
           case DecompileConfig(inputFile) =>
             this.decompileFile(inputFile)
           case InitConfig =>
