@@ -9,21 +9,6 @@ import chester.tyck.LocalCtxOps
 
 implicit object DefaultElabImpl extends DefaultElab {}
 
-extension (t: Term) {
-  def zonkAll(using ops: SolverOps): Term = t.descentRec {
-    case t: MetaTerm =>
-      // introduce a variable for easy breakpoint
-      val result = toTerm(t)
-      result match {
-        case _: MetaTerm =>
-          // newline for easy breakpoint
-          throw new IllegalStateException("Zonked term is still a MetaTerm")
-        case t: Term => t.zonkAll
-      }
-    case t: Term => t
-  }
-}
-
 case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerConf[ElabOps]) {
   def inferPure(expr: Expr, context: Context = Context.default)(using ElabOps): Judge = {
     given solver: SolverOps = fac(handlers)
