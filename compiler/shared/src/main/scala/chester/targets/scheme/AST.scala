@@ -94,7 +94,7 @@ case class ListExpression(
   }
 
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
-    val newElements = elements.map(e => g(e).asInstanceOf[Expression])
+    val newElements = elements.map(e => g.use(e).asInstanceOf[Expression])
     if (elements eq newElements) this else ListExpression(newElements, meta)
   }
 }
@@ -206,7 +206,7 @@ case class Quotation(
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("'") <> value.toDoc)
 
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
-    val newValue = g(value).asInstanceOf[Expression]
+    val newValue = g.use(value).asInstanceOf[Expression]
     if (value eq newValue) this else Quotation(newValue, meta)
   }
 }
@@ -220,7 +220,7 @@ case class QuasiQuotation(
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text("`") <> value.toDoc)
 
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
-    val newValue = g(value).asInstanceOf[Expression]
+    val newValue = g.use(value).asInstanceOf[Expression]
     if (value eq newValue) this else QuasiQuotation(newValue, meta)
   }
 }
@@ -234,7 +234,7 @@ case class Unquote(
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(",") <> value.toDoc)
 
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
-    val newValue = g(value).asInstanceOf[Expression]
+    val newValue = g.use(value).asInstanceOf[Expression]
     if (value eq newValue) this else Unquote(newValue, meta)
   }
 }
@@ -248,7 +248,7 @@ case class UnquoteSplicing(
   def toDoc(using PrettierOptions): Doc = meta.link(Doc.text(",@") <> value.toDoc)
 
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
-    val newValue = g(value).asInstanceOf[Expression]
+    val newValue = g.use(value).asInstanceOf[Expression]
     if (value eq newValue) this else UnquoteSplicing(newValue, meta)
   }
 }
@@ -263,7 +263,7 @@ case class Program(
     meta.link(Doc.concat(expressions.map(_.toDoc <> Doc.line)))
 
   override def descent(f: ASTNode => ASTNode, g: TreeMap[ASTNode]): ASTNode = {
-    val newExpressions = expressions.map(e => g(e).asInstanceOf[Expression])
+    val newExpressions = expressions.map(e => g.use(e).asInstanceOf[Expression])
     if (expressions eq newExpressions) this else Program(newExpressions, meta)
   }
 }
