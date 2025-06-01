@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 trait Tree[A <: Tree[A]] extends Any {
   type RootTree = A
   type ThisTree <: Tree[A]
-  // it is too hard to verify following properties in scala type system, so we just assume them
+  // it is too hard to express following properties in scala type system, so we just assume them
   implicit val ev1: Tree[A] <:< A = implicitly[A =:= A].asInstanceOf[Tree[A] <:< A]
   given ev3[T <: A](using x: T): (x.ThisTree <:< A) = implicitly[A <:< A].asInstanceOf[x.ThisTree <:< A]
 
@@ -50,12 +50,9 @@ trait Tree[A <: Tree[A]] extends Any {
 
 }
 
-/** means not changing the subtype of Term */
+/** means not changing the subtype of Term, except for MetaTerm */
 trait TreeMap[Tre <: Tree[Tre]] {
-
-  /** note that special rules might apply when x is MetaTerm, which is hard to represent in scala type system */
   def use[T <: Tre](x: T): x.ThisTree
-  final def apply[T <: Tre](x: T): T = use(x).asInstanceOf[T]
 }
 
 implicit def convertSpecialMap2[A <: Tree[A], T <: A](f: TreeMap[A]): Tree[A] => T = x => f.use(x.asInstanceOf[T]).asInstanceOf[T]
