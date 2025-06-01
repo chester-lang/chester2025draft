@@ -3,9 +3,8 @@ package chester.elab
 import chester.syntax.core.{MetaTerm, Term}
 import chester.utils.elab.SolverOps
 
-// type unsafe but convenient
-implicit class ZonkAllOnTerm[T <: Term](t: T) {
-  def zonkAll(using ops: SolverOps): T = t
+implicit class ZonkAllOnTerm[T <: Term](val t: T) {
+  def zonkAll(using ops: SolverOps): t.ThisTree = t
     .descentRec {
       case t: MetaTerm =>
         // introduce a variable for easy breakpoint
@@ -18,7 +17,7 @@ implicit class ZonkAllOnTerm[T <: Term](t: T) {
         }
       case t: Term => t
     }
-    .asInstanceOf[T]
+    .asInstanceOf[t.ThisTree]
 }
 
 implicit class ZonkAllOnTAST(tast: TAST) {

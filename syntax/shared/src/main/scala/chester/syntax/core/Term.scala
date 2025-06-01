@@ -29,6 +29,7 @@ val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGener
 
 sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional with ContainsUniqid with Tree[Term]
     derives ReadWriter {
+  // ThisTree is defined for almost all subclasses of Term, except for MetaTerm
   type ThisTree <: Term
   final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric.get(frame, this)
 
@@ -268,8 +269,6 @@ sealed abstract class EffectsM extends Term derives ReadWriter {
   override type ThisTree <: EffectsM
 }
 case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) extends EffectsM with SpecialTerm derives ReadWriter {
-  override type ThisTree = MetaTerm
-
   override def toDoc(using PrettierOptions): Doc =
     Doc.group("Meta(" <> Doc.text(impl.toString) <> ")")
 
