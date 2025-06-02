@@ -12,7 +12,7 @@ case class Void0Expr(meta: Option[Meta] = None) extends TSExpr {
 
   override type ThisTree = Void0Expr
 
-  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): TSExpr = this
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): Void0Expr = this
 }
 
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
@@ -20,5 +20,5 @@ case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
 
   override type ThisTree = DoubleExpr
 
-  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): TSExpr = this
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): DoubleExpr = this
 }
