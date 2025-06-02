@@ -92,7 +92,8 @@ object Main extends CommandsEntryPoint {
   override def commands: Seq[Command[?]] = Seq(
     CommandRun,
     CommandVersion,
-    CommandHelp
+    CommandHelp,
+    CommandCompile
   )
   override def description: String = t"Chester CLI - A command line interface for Chester"
   override def summaryDesc: String = t"Chester CLI is a command line interface for Chester, a tool for managing and running tasks."
