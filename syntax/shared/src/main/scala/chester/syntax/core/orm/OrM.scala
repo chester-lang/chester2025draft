@@ -12,6 +12,7 @@ import scala.reflect.ClassTag
   */
 type OrM[T <: Term] = T | MetaTerm
 
+// this needs to be in a separate package to avoid circular runtime dependencies which results in dead lock as given is implemented with lazy val and circular lazy val will cause deadloop
 given OrMRW[T <: Term](using rw: ReadWriter[Term], ct: ClassTag[T]): ReadWriter[OrM[T]] =
   rw.bimap(
     (term: OrM[T]) =>
