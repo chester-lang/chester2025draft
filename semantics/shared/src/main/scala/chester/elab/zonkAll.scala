@@ -23,7 +23,7 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) {
 implicit class ZonkAllOnTAST(tast: TAST) {
   def zonkAll(using ops: SolverOps): TAST =
     tast.copy(
-      ast = tast.ast.zonkAll,
+      ast = TAST.termToBlock(tast.ast.zonkAll),
       effects = tast.effects.zonkAll,
       ty = tast.ty.zonkAll
     )
