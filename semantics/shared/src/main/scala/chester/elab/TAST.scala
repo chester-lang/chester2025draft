@@ -4,8 +4,10 @@ import chester.error.*
 import chester.syntax.*
 import chester.uniqid.*
 import upickle.default.*
+
 import scala.language.implicitConversions
 import chester.syntax.core.*
+import chester.syntax.core.orm.{OrM, given}
 import chester.uniqid.ContainsUniqid
 import upickle.default as upickle
 
@@ -13,17 +15,9 @@ implicit val ProblemReaderRW: ReadWriter[() => Vector[TyckProblem]] = readwriter
   (problems: () => Vector[TyckProblem]) => problems(),
   (problems: Vector[TyckProblem]) => () => problems
 )
-implicit val BMRW: ReadWriter[BlockTerm | MetaTerm] = readwriter[Term].bimap(
-  (term: BlockTerm | MetaTerm) => term,
-  (term: Term) =>
-    term match {
-      case b: BlockTerm => b
-      case m: MetaTerm  => m
-    }
-)
 
 object TAST {
-  def termToBlock(ast: Term): BlockTerm | MetaTerm = ast match {
+  def termToBlock(ast: Term): OrM[BlockTerm] = ast match {
     case b: BlockTerm => b
     case m: MetaTerm  => m
     case x            => BlockTerm(Vector(), x, x.meta)
@@ -44,7 +38,7 @@ object TAST {
 case class TAST(
     fileName: String,
     module: ModuleRef,
-    ast: BlockTerm | MetaTerm,
+    ast: OrM[BlockTerm],
     ty: Term,
     effects: EffectsM,
     problems: () => Vector[TyckProblem]
