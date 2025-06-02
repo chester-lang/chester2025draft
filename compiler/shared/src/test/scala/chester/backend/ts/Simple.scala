@@ -1,5 +1,3 @@
 package chester.backend.ts
 
-class Simple {
-
-}
+class Simple {}

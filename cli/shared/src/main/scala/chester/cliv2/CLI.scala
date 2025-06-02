@@ -69,7 +69,7 @@ class CLI[F[_]](using
                       given solver: SolverOps = summon[SolverFactory](summon[HandlerConf[ElabOps]])
                       given Context = Context.default
                       val elab = summon[Elab]
-                        ???
+                      ???
                   }
                 } yield ()
               }

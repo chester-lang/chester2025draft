@@ -21,15 +21,17 @@ object TSContext {
 }
 
 case object TSBackend extends Backend(Typescript) {
-  def compileModule(mod: ZonkedTAST): Toplevel =
-    {
-      require(mod.ast.result match {
+  def compileModule(mod: ZonkedTAST): Toplevel = {
+    require(
+      mod.ast.result match {
         case UnitTerm_(_) => true
         case _            => false
-      }, "Module must return unit")
-      given TSContext = TSContext.create()
-      Toplevel(mod.ast.statements.map(compileStmt))
-    }
+      },
+      "Module must return unit"
+    )
+    given TSContext = TSContext.create()
+    Toplevel(mod.ast.statements.map(compileStmt))
+  }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
     case _                    => ???
