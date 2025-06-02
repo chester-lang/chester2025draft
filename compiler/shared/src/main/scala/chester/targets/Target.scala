@@ -1,9 +1,20 @@
 package chester.targets
 
-enum Target(val name: String) {
-  case Typescript extends Target("ts")
-  case Scala extends Target("scala")
-  case Rust extends Target("rust")
+sealed trait Target {
+  def name: String
+  type ModuleType
+}
+
+case object Typescript extends Target {
+  val name: String = "ts"
+}
+
+case object Scala extends Target {
+  val name: String = "scala"
+}
+
+case object Rust extends Target {
+  val name: String = "rust"
 }
 
 trait Backend[AST](val target: Target) {}
