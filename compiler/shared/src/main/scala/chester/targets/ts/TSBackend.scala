@@ -3,6 +3,7 @@ package chester.targets.ts
 import chester.elab.*
 import chester.syntax.core.*
 import chester.targets.{Backend, Typescript}
+import scala.language.implicitConversions
 
 // TODO
 implicit def metaConvert(x: Option[TermMeta]): Option[Meta] = None
