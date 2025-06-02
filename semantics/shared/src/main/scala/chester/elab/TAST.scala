@@ -28,20 +28,20 @@ object TAST {
     ast = termToBlock(ast),
     ty = ty,
     effects = effects,
-    problems = problems
+    getProblems = problems
   )
 }
 
 // Typed Abstract Syntax Trees
 // files
 // TODO: handle SourcePos for performance and file size, especially avoid duplicated SourceOffset
-case class TAST(
+open case class TAST(
     fileName: String,
     module: ModuleRef,
     ast: OrM[BlockTerm],
     ty: Term,
     effects: EffectsM,
-    problems: () => Vector[TyckProblem]
+    getProblems: () => Vector[TyckProblem]
 ) extends ContainsUniqid derives ReadWriter {
   override def collectU(collector: UCollector): Unit = {
     ast.collectU(collector)
@@ -64,3 +64,12 @@ case class TAST(
 
   def readString(str: String): TAST = upickle.read[TAST](str)
 }
+
+class FinalTAST(
+    fileName: String,
+    module: ModuleRef,
+    override val ast: BlockTerm,
+    ty: Term,
+    override val effects: Effects,
+    val problems: Vector[TyckProblem]
+) extends TAST(fileName = fileName, module = module, ast = ast, ty = ty, effects = effects, getProblems = () => problems) {}
