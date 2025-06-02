@@ -583,6 +583,7 @@ lazy val utils = useSpire(
     .settings(
       commonLibSettings,
       libraryDependencies ++= Seq(
+        "com.github.alexarchambault" %%% "case-app" % "2.1.0-M30",
         "io.github.iltotore" %%% "iron" % ironVersion,
         "io.github.iltotore" %%% "iron-cats" % ironVersion,
         "io.github.iltotore" %%% "iron-upickle" % ironVersion exclude ("com.lihaoyi", "upickle_3"),
