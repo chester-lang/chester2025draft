@@ -6,6 +6,7 @@ import chester.reader.given
 import chester.utils.env.DefaultEnv
 import chester.utils.io.given
 import chester.utils.io.impl.given
+import chester.i18n.*
 
 case class NoOptions()
 
@@ -19,7 +20,7 @@ object CommandRun extends Command[NoOptions] {
     } else if (args.all.size == 1) {
       CLI.spawn(Config.Run(Some(args.all.head)))
     } else {
-      printLine("run subcommand only accept at most one argument at this moment", toStderr = true)
+      printLine(t"run subcommand only accept at most one argument at this moment", toStderr = true)
       exit(1)
     }
 }
@@ -62,7 +63,7 @@ object MainCommand extends Command[NoOptions] {
     if (args.all.isEmpty) {
       CLI.spawn(Config.Run(None))
     } else {
-      printLine("Invalid command.", toStderr = true)
+      printLine(t"Invalid command.", toStderr = true)
       val usage = Main.help.help(helpFormat, showHidden = false)
       printLine(usage, toStderr = true)
       exit(1)
@@ -76,8 +77,8 @@ object Main extends CommandsEntryPoint {
     CommandVersion,
     CommandHelp
   )
-  override def description: String = "Chester CLI - A command line interface for Chester"
-  override def summaryDesc: String = "Chester CLI is a command line interface for Chester, a tool for managing and running tasks."
+  override def description: String = t"Chester CLI - A command line interface for Chester"
+  override def summaryDesc: String = t"Chester CLI is a command line interface for Chester, a tool for managing and running tasks."
   override def defaultCommand: Option[Command[?]] = Some(MainCommand)
   override def enableCompleteCommand = true
   override def enableCompletionsCommand = true
