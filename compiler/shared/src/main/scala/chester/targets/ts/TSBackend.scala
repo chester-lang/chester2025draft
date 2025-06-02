@@ -15,4 +15,7 @@ case object TSBackend extends Backend(Typescript) {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
     case _                    => ???
   }
+  def compileStmt(stmt: StmtTerm): Stmt = stmt match {
+    case _                    => ???
+  }
 }

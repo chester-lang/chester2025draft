@@ -22,3 +22,25 @@ case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): DoubleExpr = this
 }
+
+sealed trait TSStmt extends TSExpr derives ReadWriter {
+  override type ThisTree <: TSStmt
+}
+
+case class EmptyStmt(meta: Option[Meta] = None) extends TSStmt {
+  override def toString: String = ";"
+
+  override type ThisTree = EmptyStmt
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): EmptyStmt = this
+}
+
+case class ConstStmt(name: String, ty: Option[TSExpr], value: TSExpr, meta: Option[Meta] = None) extends TSStmt {
+
+  override type ThisTree = ConstStmt
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): ConstStmt = copy(
+    ty = ty.map(f),
+    value = f(value)
+  )
+}
