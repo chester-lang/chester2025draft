@@ -39,5 +39,10 @@ class CLI[F[_]](using
       IO.println(s"Chester version: ${chester.BuildInfo.version}")
     case Config.Run(None)            => spawnREPLEngine()
     case Config.Run(Some(fileOrDir)) => ???
+    case Config.Compile(target0, inputFile, outputFile0) => {
+      val target = target0.getOrElse("typescript")
+      val outputFile = outputFile0.getOrElse("a.out")
+      ???
+    }
   }
 }
