@@ -610,7 +610,7 @@ case class FunctionType(
     }
     group(telescopeDoc <+> Docs.`->` <+> resultTy.toDoc <> effectsDoc)
   }
-  override def descent(f: Term => Term, g: TreeMap[Term]): Function = thisOr(
+  override def descent(f: Term => Term, g: TreeMap[Term]): FunctionType = thisOr(
     copy(
       telescopes = telescopes.map(g),
       resultTy = f(resultTy),
