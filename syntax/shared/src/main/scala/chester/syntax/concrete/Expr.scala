@@ -110,8 +110,6 @@ sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWr
 
   def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ThisTree
 
-  def self: ThisTree = updateMeta(x=>x)
-
   final def commentAtStart(comment: Comment): ThisTree = updateMeta {
     case Some(meta) =>
       Some(
@@ -120,7 +118,7 @@ sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWr
     case None => Some(ExprMeta(None, Some(CommentInfo(Vector(comment)))))
   }
 
-  final def commentAtStart(comment: Vector[Comment]): ThisTree = if (comment.isEmpty) self
+  final def commentAtStart(comment: Vector[Comment]): ThisTree = if (comment.isEmpty) this
   else
     updateMeta {
       case Some(meta) =>
