@@ -1,7 +1,7 @@
 package chester.cliv2
 
 import caseapp.*
-
+import caseapp.core.Error
 import chester.reader.given
 import chester.utils.env.DefaultEnv
 import chester.utils.io.given
@@ -19,7 +19,7 @@ object CommandRun extends Command[NoOptions] {
     } else if (args.all.size == 1) {
       CLI.spawn(Config.Run(Some(args.all.head)))
     } else {
-      printLine("Usage: chester run [file]", toStderr = true)
+      printLine("run subcommand only accept at most one argument at this moment", toStderr = true)
       exit(1)
     }
 }
@@ -28,17 +28,55 @@ object CommandVersion extends Command[NoOptions] {
   override def names: List[List[String]] = List(
     List("version")
   )
-  def run(options: NoOptions, args: RemainingArgs): Unit = {
+  def run(options: NoOptions, args: RemainingArgs): Unit =
     CLI.spawn(Config.Version)
+}
+
+object CommandHelp extends Command[NoOptions] {
+  override def names: List[List[String]] = List(
+    List("help")
+  )
+  def run(options: NoOptions, args: RemainingArgs): Unit =
+    Main.printUsage()
+}
+
+object MainCommand extends Command[NoOptions] {
+  override def names: List[List[String]] = List(
+    List(Main.progName)
+  )
+  override def helpAsked(progName: String, maybeOptions: Either[Error, NoOptions]): Nothing = {
+    var help = Main.help
+    if (progName.nonEmpty) help = help.copy(progName = progName)
+    val usage = Main.help.help(Main.helpFormat, showHidden = false)
+    printLine(usage, toStderr = false)
+    exit(0)
   }
+  override def usageAsked(progName: String, maybeOptions: Either[Error, NoOptions]): Nothing = {
+    var help = Main.help
+    if (progName.nonEmpty) help = help.copy(progName = progName)
+    val usage = Main.help.help(Main.helpFormat, showHidden = false)
+    printLine(usage, toStderr = false)
+    exit(0)
+  }
+  def run(options: NoOptions, args: RemainingArgs): Unit =
+    if (args.all.isEmpty) {
+      CLI.spawn(Config.Run(None))
+    } else {
+      printLine("Invalid command.", toStderr = true)
+      val usage = Main.help.help(helpFormat, showHidden = false)
+      printLine(usage, toStderr = true)
+      exit(1)
+    }
 }
 
 object Main extends CommandsEntryPoint {
   def progName = "chester"
   def commands: Seq[Command[?]] = Seq(
-    CommandRun
+    CommandRun,
+    CommandVersion,
+    CommandHelp
   )
-  override def defaultCommand: Option[Command[?]] = Some(CommandRun)
+  override def defaultCommand: Option[Command[?]] = Some(MainCommand)
   override def enableCompleteCommand = true
   override def enableCompletionsCommand = true
 }
