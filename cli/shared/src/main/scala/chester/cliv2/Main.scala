@@ -70,12 +70,14 @@ object MainCommand extends Command[NoOptions] {
 }
 
 object Main extends CommandsEntryPoint {
-  def progName = "chester"
-  def commands: Seq[Command[?]] = Seq(
+  override def progName = "chester"
+  override def commands: Seq[Command[?]] = Seq(
     CommandRun,
     CommandVersion,
     CommandHelp
   )
+  override def description: String = "Chester CLI - A command line interface for Chester"
+  override def summaryDesc: String = "Chester CLI is a command line interface for Chester, a tool for managing and running tasks."
   override def defaultCommand: Option[Command[?]] = Some(MainCommand)
   override def enableCompleteCommand = true
   override def enableCompletionsCommand = true
