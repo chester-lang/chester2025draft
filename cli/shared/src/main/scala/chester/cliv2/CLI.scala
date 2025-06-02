@@ -1,10 +1,15 @@
 package chester.cliv2
 
+import chester.elab.{Elab, ElabOps}
+import chester.error.{TyckProblem, VectorReporter}
 import chester.repl.REPLEngine
 
 import scala.language.experimental.betterFors
 import chester.reader.{FileNameAndContent, FilePathImpl}
 import chester.readerv2.ChesterReaderV2
+import chester.tyck.Context
+import chester.tyck.api.NoopSemanticCollector
+import chester.utils.elab.*
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
@@ -54,7 +59,18 @@ class CLI[F[_]](using
                 for {
                   inputContent <- IO.readString(inputPath)
                   parsed = ChesterReaderV2.parseTopLevel(FileNameAndContent(inputFile, inputContent))
-                  _ <- ??? // TODO
+                  _ <- parsed match {
+                    case Left(error) =>
+                      IO.println(s"Error parsing input file '$inputFile': $error")
+                    case Right(ast) =>
+                      import chester.elab.Defaults.given
+                      val reporter = new VectorReporter[TyckProblem]()
+                      given elabOps: ElabOps = ElabOps(reporter, NoopSemanticCollector)
+                      given solver: SolverOps = summon[SolverFactory](summon[HandlerConf[ElabOps]])
+                      given Context = Context.default
+                      val elab = summon[Elab]
+                        ???
+                  }
                 } yield ()
               }
           } yield ()

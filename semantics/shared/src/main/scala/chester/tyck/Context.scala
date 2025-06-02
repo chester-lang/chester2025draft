@@ -4,10 +4,11 @@ import chester.syntax.*
 import chester.syntax.accociativity.OperatorsContext
 import chester.syntax.core.*
 import chester.tyck.api.SymbolCollector
-import chester.uniqid.UniqidOf
+import chester.uniqid.{Uniqid, UniqidOf}
 import chester.reduce.ReduceContext
 import chester.reduce.{DefaultReducer, Reducer}
 import chester.i18n.*
+import chester.tyck.PreludeBuiltin.BuiltinItem
 
 import scala.collection.immutable.HashMap
 
@@ -25,6 +26,20 @@ case class ContextItem(
     reference: Option[SymbolCollector] = None
 )
 
+object ContextItem {
+  def builtin(
+      item: BuiltinItem
+  ): (TyAndVal, ContextItem) = {
+    val varId = Uniqid.generate[ToplevelV]
+    val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
+    val ty1 = item.ty
+    (
+      TyAndVal(ty1, item.value),
+      ContextItem(item.id, varId, name, ty1)
+    )
+  }
+}
+
 case class Imports()
 
 object Imports {
@@ -34,6 +49,20 @@ object Imports {
 case class Features(preview: Boolean = false)
 object Features {
   val Default: Features = Features()
+}
+
+object Context {
+
+  val default: Context = {
+    val items = PreludeBuiltin.builtinItems.map(ContextItem.builtin)
+    val map = items.map(item => item._2.name -> item._2.uniqId).toMap
+    val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
+    val knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = items
+      .map(item => item._2.uniqId -> item._1)
+      .toMap
+      .asInstanceOf[Map[UniqidOf[ReferenceCall], TyAndVal]]
+    Context(map = map, contextItems = contextItems, knownMap = knownMap)
+  }
 }
 
 case class Context(

@@ -1,38 +1,8 @@
 package chester.tyck
 
-import chester.syntax.*
 import chester.syntax.core.*
-import chester.tyck.PreludeBuiltin.BuiltinItem
-import chester.uniqid.*
 import chester.utils.propagator.*
 import chester.utils.cell.*
-
-implicit class LocalCtxOps(ignored: Context.type) {
-  val default: Context = {
-    val items = PreludeBuiltin.builtinItems.map(ContextItem.builtin)
-    val map = items.map(item => item._2.name -> item._2.uniqId).toMap
-    val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
-    val knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = items
-      .map(item => item._2.uniqId -> item._1)
-      .toMap
-      .asInstanceOf[Map[UniqidOf[ReferenceCall], TyAndVal]]
-    Context(map = map, contextItems = contextItems, knownMap = knownMap)
-  }
-}
-
-implicit class ContextItemObject(private val ignored: ContextItem.type) extends AnyVal {
-  def builtin(
-      item: BuiltinItem
-  ): (TyAndVal, ContextItem) = {
-    val varId = Uniqid.generate[ToplevelV]
-    val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
-    val ty1 = item.ty
-    (
-      TyAndVal(ty1, item.value),
-      ContextItem(item.id, varId, name, ty1)
-    )
-  }
-}
 
 trait ProvideContextOps extends ProvideCellId with ElaboraterBase {
 

@@ -5,7 +5,6 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.{SolverFactory, *}
-import chester.tyck.LocalCtxOps
 
 implicit object DefaultElabImpl extends DefaultElab {}
 
