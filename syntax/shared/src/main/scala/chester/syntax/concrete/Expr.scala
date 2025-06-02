@@ -30,7 +30,7 @@ case class Comment(
     content: String,
     typ: CommentType,
     span: Option[Span]
-) extends SpanOptional1 derives ReadWriter
+) extends SpanOptional derives ReadWriter
 
 case class CommentInfo(
     commentBefore: Vector[Comment],
@@ -58,7 +58,7 @@ object CommentInfo {
 case class ExprMeta(
     span: Option[Span],
     commentInfo: Option[CommentInfo]
-) extends SpanOptional1 derives ReadWriter {
+) extends SpanOptional derives ReadWriter {
   require(span.isDefined || commentInfo.isDefined)
 }
 
@@ -99,7 +99,7 @@ object MetaFactory {
     }
 }
 
-sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWriter {
+sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr

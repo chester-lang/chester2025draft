@@ -26,7 +26,7 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
   def cause: Term | Expr
 
   override def span0: Option[Span] = cause match {
-    case x: SpanOptional => x.span0
+    case x: SpanOptional0 => x.span0
   }
 }
 
