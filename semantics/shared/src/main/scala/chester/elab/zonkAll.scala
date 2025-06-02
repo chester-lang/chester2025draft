@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.syntax.core.{MetaTerm, Term}
+import chester.syntax.core.{Effects, MetaTerm, Term}
 import chester.utils.elab.SolverOps
 
 implicit class ZonkAllOnTerm[T <: Term](val t: T) {
@@ -21,10 +21,20 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) {
 }
 
 implicit class ZonkAllOnTAST(tast: TAST) {
-  def zonkAll(using ops: SolverOps): TAST =
-    tast.copy(
-      ast = TAST.termToBlock(tast.ast.zonkAll),
-      effects = tast.effects.zonkAll,
-      ty = tast.ty.zonkAll
-    )
+  def zonkAll(using ops: SolverOps): ZonkedTAST =
+    tast
+      .copy(
+        ty = tast.ty.zonkAll
+      )
+      .zonked(
+        ast = TAST.termToBlockNoMeta(tast.ast.zonkAll),
+        effects = tast.effects.zonkAll.assumeEffects
+      )
+}
+
+extension (t: Term) {
+  def assumeEffects: Effects = t match {
+    case e: Effects => e
+    case _          => throw new IllegalArgumentException(s"Expected Effects, but got: $t")
+  }
 }

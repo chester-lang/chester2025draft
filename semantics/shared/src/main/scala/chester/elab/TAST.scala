@@ -22,6 +22,11 @@ object TAST {
     case m: MetaTerm  => m
     case x            => BlockTerm(Vector(), x, x.meta)
   }
+  def termToBlockNoMeta(ast: Term): BlockTerm = ast match {
+    case b: BlockTerm => b
+    case m: MetaTerm  => throw new IllegalArgumentException(s"Expected BlockTerm, but got MetaTerm: $m")
+    case x            => BlockTerm(Vector(), x, x.meta)
+  }
   def apply(fileName: String, module: ModuleRef, ast: Term, ty: Term, effects: EffectsM, problems: () => Vector[TyckProblem]): TAST = new TAST(
     fileName = fileName,
     module = module,
@@ -63,9 +68,20 @@ open case class TAST(
   def writeString: String = upickle.write[TAST](this)
 
   def readString(str: String): TAST = upickle.read[TAST](str)
+  
+  def zonked(ast: BlockTerm, effects: Effects): ZonkedTAST = {
+    ZonkedTAST(
+      fileName = fileName,
+      module = module,
+      ast = ast,
+      ty = ty,
+      effects = effects,
+      problems = getProblems()
+    )
+  }
 }
 
-class FinalTAST(
+class ZonkedTAST(
     fileName: String,
     module: ModuleRef,
     override val ast: BlockTerm,
