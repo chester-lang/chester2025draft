@@ -3,7 +3,7 @@ package chester.targets.ts
 import chester.syntax.{Tree, TreeMap}
 import upickle.default.*
 
-sealed trait Expr extends Tree[Expr] derives ReadWriter{
+sealed trait Expr extends Tree[Expr] derives ReadWriter {
   def meta: Option[Meta] = None
 }
 

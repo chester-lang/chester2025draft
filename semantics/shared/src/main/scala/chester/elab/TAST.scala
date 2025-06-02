@@ -68,8 +68,8 @@ open case class TAST(
   def writeString: String = upickle.write[TAST](this)
 
   def readString(str: String): TAST = upickle.read[TAST](str)
-  
-  def zonked(ast: BlockTerm, effects: Effects): ZonkedTAST = {
+
+  def zonked(ast: BlockTerm, effects: Effects): ZonkedTAST =
     ZonkedTAST(
       fileName = fileName,
       module = module,
@@ -78,7 +78,6 @@ open case class TAST(
       effects = effects,
       problems = getProblems()
     )
-  }
 }
 
 class ZonkedTAST(

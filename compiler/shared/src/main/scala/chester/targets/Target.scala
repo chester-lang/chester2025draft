@@ -1,12 +1,15 @@
 package chester.targets
 
+import chester.targets.ts.Toplevel
+
 sealed trait Target {
   def name: String
   type ModuleType
 }
 
 case object Typescript extends Target {
-  val name: String = "ts"
+  override val name: String = "ts"
+  override type ModuleType = Toplevel
 }
 
 case object Scala extends Target {
