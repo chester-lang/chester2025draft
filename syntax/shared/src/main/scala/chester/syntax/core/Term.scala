@@ -247,7 +247,7 @@ sealed abstract class Uneval extends Term derives ReadWriter {
 }
 sealed trait SpecialTerm extends Term derives ReadWriter {
   // commented out because of MetaTerm
-  //override type ThisTree <: SpecialTerm
+  // override type ThisTree <: SpecialTerm
   override def whnf: Trilean = Unknown
 }
 sealed trait TermWithUniqid extends Term with HasUniqid derives ReadWriter {
@@ -266,7 +266,7 @@ extension (e: EffectsM) {
 
 sealed abstract class EffectsM extends Term derives ReadWriter {
   // commented out because of MetaTerm
-  //override type ThisTree <: EffectsM
+  // override type ThisTree <: EffectsM
 }
 case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) extends EffectsM with SpecialTerm derives ReadWriter {
   type ThisTree = Term
