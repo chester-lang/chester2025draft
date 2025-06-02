@@ -33,6 +33,23 @@ object CommandVersion extends Command[NoOptions] {
     CLI.spawn(Config.Version)
 }
 
+case class CompileOptions(target: Option[String] = None, output: Option[String] = None)
+
+object CommandCompile extends Command[CompileOptions] {
+    override def names: List[List[String]] = List(
+        List("compile")
+    )
+    def run(options: CompileOptions, args: RemainingArgs): Unit =
+      if(args.all.size != 1) {
+        printLine(t"compile subcommand requires exactly one argument", toStderr = true)
+        exit(1)
+      } else {
+        val inputFile = args.all.head
+        val outputFile = options.output
+        CLI.spawn(Config.Compile(options.target, inputFile, outputFile))
+      }
+}
+
 object CommandHelp extends Command[NoOptions] {
   override def names: List[List[String]] = List(
     List("help")
