@@ -1,7 +1,8 @@
 package chester.elab
 
 import chester.cell.*
-import chester.error.Reporter
+import chester.error.{Reporter, TyckProblem, VectorReporter}
+import chester.syntax.{DefaultModule, ModuleRef}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
@@ -88,7 +89,28 @@ trait Elab {
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
-  def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): CellRWOr[TAST] = ???
+  def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): CellRWOr[TAST] = {
+    val (module, blk): (ModuleRef, Block) = resolve(block) match {
+      case b @ Block(head +: heads, tail, _) =>
+        resolve(head) match {
+          case ModuleStmt(module, meta) => (module, Block(heads, tail, meta))
+          case _                        => (DefaultModule, b)
+        }
+      case expr => (DefaultModule, Block(Vector(), Some(expr), expr.meta))
+    }
+    val effects = newDynamicEffects.toEffectsM
+    val ctx1 = ctx.updateModule(module).copy(effects = effects)
+    val reporter = new VectorReporter[TyckProblem]()
+    val (wellTyped, ty) = infer(blk)(using ctx1, _1.copy(reporter = reporter), _2)
+    TAST(
+      fileName = fileName,
+      module = module,
+      ast = toTerm(wellTyped),
+      ty = toTerm(ty),
+      effects = effects,
+      problems = () => reporter.getReports
+    )
+  }
 
 }
 

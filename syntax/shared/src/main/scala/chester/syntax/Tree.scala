@@ -7,9 +7,10 @@ import scala.language.implicitConversions
 trait Tree[A <: Tree[A]] extends Any {
   type RootTree = A
   type ThisTree <: Tree[A]
-  // it is too hard to express following properties in scala type system, so we just assume them
+  // it is too hard to express the following properties in scala type system, so we just assume them
   implicit val ev1: Tree[A] <:< A = implicitly[A =:= A].asInstanceOf[Tree[A] <:< A]
   given ev3[T <: A](using x: T): (x.ThisTree <:< A) = implicitly[A <:< A].asInstanceOf[x.ThisTree <:< A]
+  implicit inline def thisIsThisTree(_ignored: this.type): ThisTree = this.asInstanceOf[ThisTree]
 
   // this utility method is not that type safe
   protected final inline def thisOr[T <: A](inline x: T): T =

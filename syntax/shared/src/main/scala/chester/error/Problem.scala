@@ -21,11 +21,11 @@ trait WithServerity extends Any {
   final def isError: Boolean = severity == Problem.Severity.Error
 }
 
-case class DescriptionElement(doc: ToDoc, span0: Option[Span]) extends SpanOptional
+case class DescriptionElement(doc: ToDoc, span0: Option[Span]) extends SpanOptional0
 
 case class FullDescription(begin: ToDoc, explanations: Vector[DescriptionElement], end: ToDoc)
 
-trait Problem extends ToDoc with SpanOptional with WithServerity {
+trait Problem extends ToDoc with SpanOptional0 with WithServerity {
   def stage: Problem.Stage
   // TODO: use this
   def fullDescription: Option[FullDescription] = None

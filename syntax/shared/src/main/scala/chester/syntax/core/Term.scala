@@ -27,7 +27,7 @@ case class TermMeta(span: Span) extends SpanRequired derives ReadWriter
 type ExecuteGeneric = (VirtualFrame, Term) => Object
 val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
 
-sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional with ContainsUniqid with Tree[Term]
+sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional0 with ContainsUniqid with Tree[Term]
     derives ReadWriter {
   // ThisTree is defined for almost all subclasses of Term, except for MetaTerm
   type ThisTree <: Term

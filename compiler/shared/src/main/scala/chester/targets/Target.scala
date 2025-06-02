@@ -1,9 +1,23 @@
 package chester.targets
 
-enum Target(val name: String) {
-  case Typescript extends Target("ts")
-  case Scala extends Target("scala")
-  case Rust extends Target("rust")
+import chester.targets.ts.Toplevel
+
+sealed trait Target {
+  def name: String
+  type ModuleType
 }
 
-trait Backend[AST](val target: Target) {}
+case object Typescript extends Target {
+  override val name: String = "ts"
+  override type ModuleType = Toplevel
+}
+
+case object Scala extends Target {
+  val name: String = "scala"
+}
+
+case object Rust extends Target {
+  val name: String = "rust"
+}
+
+trait Backend(val target: Target) {}

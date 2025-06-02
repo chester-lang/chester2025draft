@@ -30,7 +30,7 @@ case class Comment(
     content: String,
     typ: CommentType,
     span: Option[Span]
-) extends SpanOptional1 derives ReadWriter
+) extends SpanOptional derives ReadWriter
 
 case class CommentInfo(
     commentBefore: Vector[Comment],
@@ -58,7 +58,7 @@ object CommentInfo {
 case class ExprMeta(
     span: Option[Span],
     commentInfo: Option[CommentInfo]
-) extends SpanOptional1 derives ReadWriter {
+) extends SpanOptional derives ReadWriter {
   require(span.isDefined || commentInfo.isDefined)
 }
 
@@ -99,7 +99,7 @@ object MetaFactory {
     }
 }
 
-sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWriter {
+sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
@@ -108,9 +108,9 @@ sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWr
   def meta: Option[ExprMeta]
   final def span0: Option[Span] = meta.flatMap(_.span)
 
-  def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr
+  def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ThisTree
 
-  final def commentAtStart(comment: Comment): Expr = updateMeta {
+  final def commentAtStart(comment: Comment): ThisTree = updateMeta {
     case Some(meta) =>
       Some(
         meta.copy(commentInfo = meta.commentInfo.map(info => info.copy(commentBefore = info.commentBefore :+ comment)))
@@ -118,7 +118,7 @@ sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWr
     case None => Some(ExprMeta(None, Some(CommentInfo(Vector(comment)))))
   }
 
-  final def commentAtStart(comment: Vector[Comment]): Expr = if (comment.isEmpty) this
+  final def commentAtStart(comment: Vector[Comment]): ThisTree = if (comment.isEmpty) this
   else
     updateMeta {
       case Some(meta) =>
@@ -138,8 +138,6 @@ sealed trait Expr extends SpanOptional with Tree[Expr] with ToDoc derives ReadWr
 
 sealed trait ParsedExpr extends Expr derives ReadWriter {
   override type ThisTree <: ParsedExpr
-
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ParsedExpr
 
 }
 
@@ -1032,7 +1030,7 @@ case class PrecedenceGroupResolving(
     nameDoc <+> higherThanDoc <+> lowerThanDoc <+> associativityDoc
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): PrecedenceGroupResolving =
     copy(meta = updater(meta))
 }
 
@@ -1068,7 +1066,7 @@ case class PrecedenceGroupResolved(
     Doc.text(nameDoc) <+> higherThanDoc <+> lowerThanDoc <+> associativityDoc
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): PrecedenceGroupResolved =
     copy(meta = updater(meta))
 }
 
@@ -1150,7 +1148,7 @@ case class LetDefStmt(
     decorationsDoc <+> kindDoc <+> definedDoc <+> tyDoc <+> bodyDoc
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): LetDefStmt =
     copy(meta = updater(meta))
 }
 
@@ -1342,7 +1340,7 @@ case class ReturnStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
     Doc.text("return ") <> expr.toDoc
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ReturnStmt =
     copy(meta = updater(meta))
 }
 
@@ -1355,7 +1353,7 @@ case class ImportStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
     Doc.text("import") <+> module.toDoc
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ImportStmt =
     copy(meta = updater(meta))
 }
 
@@ -1368,7 +1366,7 @@ case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
     Doc.text("module") <+> module.toDoc
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Expr =
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ModuleStmt =
     copy(meta = updater(meta))
 }
 
