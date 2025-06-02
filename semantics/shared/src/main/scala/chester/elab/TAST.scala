@@ -6,7 +6,8 @@ import chester.uniqid.*
 import upickle.default.*
 
 import scala.language.implicitConversions
-import chester.syntax.core.{*, given}
+import chester.syntax.core.*
+import chester.syntax.core.orm.{OrM, given}
 import chester.uniqid.ContainsUniqid
 import upickle.default as upickle
 
