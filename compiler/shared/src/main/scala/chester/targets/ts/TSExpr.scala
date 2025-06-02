@@ -4,7 +4,7 @@ import chester.syntax.{Tree, TreeMap}
 import upickle.default.*
 
 sealed trait TSExpr extends Tree[TSExpr] derives ReadWriter {
-  def meta: Option[Meta] = None
+  def meta: Option[Meta]
 }
 
 case class Void0Expr(meta: Option[Meta] = None) extends TSExpr {
