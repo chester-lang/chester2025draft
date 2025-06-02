@@ -912,7 +912,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
   .dependsOn(compatibility, platform, compiler)
   .settings(
-    Compile / mainClass := Some("chester.cli.Main"),
+    Compile / mainClass := Some("chester.cliv2.Main"),
     assembly / assemblyOutputPath := file("target") / "chester.jar",
     libraryDependencies ++= Seq(
       // "com.github.alexarchambault" %%% "case-app" % "2.1.0-M29",
