@@ -20,4 +20,4 @@ case object Rust extends Target {
   val name: String = "rust"
 }
 
-trait Backend[AST](val target: Target) {}
+trait Backend(val target: Target) {}
