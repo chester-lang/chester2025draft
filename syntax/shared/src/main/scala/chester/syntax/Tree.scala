@@ -6,6 +6,7 @@ import scala.language.implicitConversions
 
 trait Tree[A <: Tree[A]] extends Any {
   type RootTree = A
+  // ThisTree is not specified like in  other types in MetaTerm. ThisType = Term in MetaTerm
   type ThisTree <: Tree[A]
   // it is too hard to express the following properties in scala type system, so we just assume them
   implicit val ev1: Tree[A] <:< A = implicitly[A =:= A].asInstanceOf[Tree[A] <:< A]
@@ -16,8 +17,8 @@ trait Tree[A <: Tree[A]] extends Any {
   protected final inline def thisOr[T <: A](inline x: T): T =
     reuse(this.asInstanceOf[T], x)
 
-  def descent(f: A => A, g: TreeMap[A]): A
-  final def descent(f: A => A): A = descent(
+  def descent(f: A => A, g: TreeMap[A]): ThisTree
+  final def descent(f: A => A): ThisTree = descent(
     f,
     new TreeMap[A] {
       def use[T <: A](x: T): x.ThisTree = x.descent(f.asInstanceOf).asInstanceOf[x.ThisTree]
@@ -26,7 +27,7 @@ trait Tree[A <: Tree[A]] extends Any {
   final def descent2(f: TreeMap[A]): ThisTree = descent(
     f.use,
     f
-  ).asInstanceOf[ThisTree]
+  )
 
   final def descentRec(f: A => A): A = thisOr {
     f(descent(_.descentRec(f(_))))

@@ -102,8 +102,6 @@ object MetaFactory {
 sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadWriter {
   type ThisTree <: Expr
 
-  def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr
-
   /** Every Expr has meta to trace compile time errors, type checking errors */
   def meta: Option[ExprMeta]
   final def span0: Option[Span] = meta.flatMap(_.span)
@@ -420,8 +418,6 @@ case class DesaltCallingTelescope(
 
 sealed trait MaybeTelescope extends Expr derives ReadWriter {
   override type ThisTree <: MaybeTelescope
-
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): MaybeTelescope = this
 }
 
 sealed trait ParsedMaybeTelescope extends MaybeTelescope with ParsedExpr derives ReadWriter {
@@ -931,9 +927,6 @@ case class DesaltFailed(
 
 sealed trait DesaltPattern extends DesaltExpr derives ReadWriter {
   override type ThisTree <: DesaltPattern
-
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): DesaltPattern = this
-
   def bindings: Vector[Identifier] = Vector.empty
 }
 
@@ -1164,7 +1157,7 @@ case class TraitStmt(
 ) extends DeclarationStmt {
   override type ThisTree = TraitStmt
 
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr = thisOr(
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): TraitStmt = thisOr(
     copy(
       name = g.use(name),
       extendsClause = extendsClause.map(_.descent(f, g)),
@@ -1194,7 +1187,7 @@ case class InterfaceStmt(
 ) extends DeclarationStmt {
   override type ThisTree = InterfaceStmt
 
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr = thisOr(
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): InterfaceStmt = thisOr(
     copy(
       name = g.use(name),
       extendsClause = extendsClause.map(_.descent(f, g)),
@@ -1221,7 +1214,6 @@ sealed trait Field extends DesaltExpr derives ReadWriter {
 
   def name: Identifier
   def ty: Option[Expr]
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): Field
 }
 
 case class RecordField(
@@ -1306,7 +1298,7 @@ case class ObjectStmt(
 ) extends DeclarationStmt {
   override type ThisTree = ObjectStmt
 
-  override def descent(f: Expr => Expr, g: TreeMap[Expr]): Expr = thisOr(
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): ObjectStmt = thisOr(
     copy(
       name = g.use(name),
       extendsClause = extendsClause.map(_.descent(f, g)),
