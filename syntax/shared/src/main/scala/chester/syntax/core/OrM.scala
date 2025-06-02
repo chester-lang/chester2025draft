@@ -1,4 +1,4 @@
-package chester.syntax.core.orm
+package chester.syntax.core
 
 import chester.syntax.core.*
 import upickle.default.*
