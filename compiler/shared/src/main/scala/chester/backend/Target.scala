@@ -8,7 +8,7 @@ sealed trait Target {
 }
 
 case object Typescript extends Target {
-  override val name: String = "ts"
+  override val name: String = "typescript"
   override type ModuleType = Toplevel
 }
 

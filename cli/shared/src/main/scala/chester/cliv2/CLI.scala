@@ -3,10 +3,10 @@ package chester.cliv2
 import chester.repl.REPLEngine
 
 import scala.language.experimental.betterFors
-
-import chester.reader.FilePathImpl
+import chester.reader.{FileNameAndContent, FilePathImpl}
+import chester.readerv2.ChesterReaderV2
 import chester.utils.env.Environment
-import chester.utils.io.{IO, Runner, Spawn}
+import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
 
 object CLI {
@@ -39,10 +39,27 @@ class CLI[F[_]](using
       IO.println(s"Chester version: ${chester.BuildInfo.version}")
     case Config.Run(None)            => spawnREPLEngine()
     case Config.Run(Some(fileOrDir)) => ???
-    case Config.Compile(target0, inputFile, outputFile0) => {
+    case Config.Compile(target0, inputFile, outputFile0) =>
       val target = target0.getOrElse("typescript")
       val outputFile = outputFile0.getOrElse("a.out")
-      ???
-    }
+      target match {
+        case "typescript" =>
+          for {
+            inputPath = io.pathOps.of(inputFile)
+            inputExists <- IO.exists(inputPath)
+            _ <-
+              if (!inputExists) {
+                IO.println(s"Input file '$inputFile' does not exist.")
+              } else {
+                for {
+                  inputContent <- IO.readString(inputPath)
+                  parsed = ChesterReaderV2.parseTopLevel(FileNameAndContent(inputFile, inputContent))
+                  _ <- ??? // TODO
+                } yield ()
+              }
+          } yield ()
+        case unsupported =>
+          IO.println(s"Unsupported target: $unsupported.")
+      }
   }
 }
