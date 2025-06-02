@@ -1,6 +1,6 @@
-package chester.targets
+package chester.backend
 
-import chester.targets.ts.Toplevel
+import chester.backend.ts.Toplevel
 
 sealed trait Target {
   def name: String

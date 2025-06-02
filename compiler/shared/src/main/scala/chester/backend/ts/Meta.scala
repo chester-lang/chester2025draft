@@ -1,4 +1,4 @@
-package chester.targets.ts
+package chester.backend.ts
 
 import chester.error.*
 

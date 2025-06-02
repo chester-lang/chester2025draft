@@ -1,8 +1,8 @@
-package chester.targets.ts
+package chester.backend.ts
 
 import chester.elab.*
 import chester.syntax.core.*
-import chester.targets.{Backend, Typescript}
+import chester.backend.{Backend, Typescript}
 import chester.uniqid.UniqidOf
 
 import scala.collection.mutable
