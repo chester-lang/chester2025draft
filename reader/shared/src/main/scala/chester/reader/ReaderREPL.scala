@@ -1,5 +1,6 @@
 package chester.reader
 
+import chester.error.reporterToEither
 import spire.math.Natural
 import chester.syntax.concrete.*
 import chester.utils.term.*
@@ -72,10 +73,12 @@ object ReaderREPL {
       linesOffset: Natural,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
-    ChesterReaderV1.parseExprWithOffset(
-      sourceName = "repl",
-      content = input,
-      linesOffset = linesOffset,
-      posOffset = posOffset
+    reporterToEither(
+      ChesterReaderV1.parseExprWithOffset(
+        sourceName = "repl",
+        content = input,
+        linesOffset = linesOffset,
+        posOffset = posOffset
+      )
     )
 }

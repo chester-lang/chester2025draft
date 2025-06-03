@@ -16,9 +16,9 @@ object CommandRun extends Command[NoOptions] {
   )
   def run(options: NoOptions, args: RemainingArgs): Unit =
     if (args.all.isEmpty) {
-      CLI.spawn(Config.Run(None))
+      CLI.run(Config.Run(None))
     } else if (args.all.size == 1) {
-      CLI.spawn(Config.Run(Some(args.all.head)))
+      CLI.run(Config.Run(Some(args.all.head)))
     } else {
       printLine(t"run subcommand only accept at most one argument at this moment", toStderr = true)
       exit(1)
@@ -30,7 +30,7 @@ object CommandVersion extends Command[NoOptions] {
     List("version")
   )
   def run(options: NoOptions, args: RemainingArgs): Unit =
-    CLI.spawn(Config.Version)
+    CLI.run(Config.Version)
 }
 
 case class CompileOptions(target: Option[String] = None, output: Option[String] = None)
@@ -46,8 +46,16 @@ object CommandCompile extends Command[CompileOptions] {
     } else {
       val inputFile = args.all.head
       val outputFile = options.output
-      CLI.spawn(Config.Compile(options.target, inputFile, outputFile))
+      CLI.run(Config.Compile(options.target, inputFile, outputFile))
     }
+}
+
+object CommandIntegrity extends Command[NoOptions] {
+  override def names: List[List[String]] = List(
+    List("integrity")
+  )
+  def run(options: NoOptions, args: RemainingArgs): Unit =
+    CLI.run(Config.Integrity)
 }
 
 object CommandHelp extends Command[NoOptions] {
@@ -78,7 +86,7 @@ object MainCommand extends Command[NoOptions] {
   }
   def run(options: NoOptions, args: RemainingArgs): Unit =
     if (args.all.isEmpty) {
-      CLI.spawn(Config.Run(None))
+      CLI.run(Config.Run(None))
     } else {
       printLine(t"Invalid command.", toStderr = true)
       val usage = Main.help.help(helpFormat, showHidden = false)
@@ -93,7 +101,8 @@ object Main extends CommandsEntryPoint {
     CommandRun,
     CommandVersion,
     CommandHelp,
-    CommandCompile
+    CommandCompile,
+    CommandIntegrity
   )
   override def description: String = t"Chester CLI - A command line interface for Chester"
   override def summaryDesc: String = t"Chester CLI is a command line interface for Chester, a tool for managing and running tasks."

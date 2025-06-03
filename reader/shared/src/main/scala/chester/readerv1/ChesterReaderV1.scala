@@ -7,16 +7,20 @@ import chester.syntax.concrete.*
 import chester.utils.{Nat, StringIndex, WithUTF16}
 import fastparse.*
 
-import scala.util.*
 object ChesterReaderV1 {
+  
+  // Reporter api is used for future error recovery that is a result can be returned even though there are errors
 
   private def parseFromSource[T](
       source: ParserSource,
       parserFunc: ReaderV1 => P[T],
       ignoreLocation: Boolean = false
-  ): Either[ParseError, T] =
+  )(using reporter: Reporter[ParseError]): Option[T] =
     source.readContent.fold(
-      error => Left(error),
+      error => {
+        reporter.report(error)
+        None
+      },
       { content =>
         val indexer = StringIndex(content)
         parse(
@@ -30,7 +34,7 @@ object ChesterReaderV1 {
               )(using x)
             )
         ) match {
-          case Parsed.Success(result, _) => Right(result)
+          case Parsed.Success(result, _) => Some(result)
           case Parsed.Failure(_, index, extra) =>
             val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
             val p = Pos(
@@ -38,7 +42,8 @@ object ChesterReaderV1 {
               pos.line,
               pos.column
             )
-            Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(Span(Source(source), SpanInFile(p, p)))))
+            reporter.report(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(Span(Source(source), SpanInFile(p, p)))))
+            None
         }
       }
     )
@@ -46,19 +51,19 @@ object ChesterReaderV1 {
   def parseStatements(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, Vector[ParsedExpr]] =
+  )(using reporter: Reporter[ParseError]): Option[ Vector[ParsedExpr]] =
     parseFromSource(source, _.statementsEntrance, ignoreLocation)
 
   def parseTopLevel(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, Block] =
+  )(using reporter: Reporter[ParseError]): Option[ Block] =
     parseFromSource(source, _.toplevelEntrance, ignoreLocation)
 
   def parseExpr(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  ): Either[ParseError, ParsedExpr] =
+  )(using reporter: Reporter[ParseError]): Option[ ParsedExpr] =
     parseFromSource(source, _.exprEntrance, ignoreLocation)
 
   /** Parses an expression string, typically used for REPL input.
@@ -79,7 +84,7 @@ object ChesterReaderV1 {
       content: String,
       linesOffset: spire.math.Natural,
       posOffset: WithUTF16
-  ): Either[ParseError, ParsedExpr] = {
+  )(using reporter: Reporter[ParseError]): Option[ ParsedExpr] = {
     val indexer = StringIndex(content)
     val source = Source(
       FileNameAndContent(sourceName, content),
@@ -92,7 +97,7 @@ object ChesterReaderV1 {
       content,
       p => ReaderV1(source)(using p).exprEntrance
     ) match {
-      case Parsed.Success(expr, _)         => Right(expr)
+      case Parsed.Success(expr, _)         => Some(expr)
       case Parsed.Failure(_, index, extra) =>
         // Use the indexer associated with *this* content snippet for error reporting
         val pos = indexer.charIndexToLineAndColumnWithUTF16(index)
@@ -108,7 +113,8 @@ object ChesterReaderV1 {
           // Revisit if column reporting seems off in multi-line REPL inputs.
           pos.column
         )
-        Left(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(Span(source, SpanInFile(finalPos, finalPos)))))
+        reporter.report(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(Span(source, SpanInFile(finalPos, finalPos)))))
+        None
     }
   }
 

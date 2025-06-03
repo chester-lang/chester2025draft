@@ -5,6 +5,8 @@ import chester.syntax.concrete.*
 import chester.i18n.*
 import chester.readerv1.ChesterReaderV1
 
+import chester.error.reporterToEither
+
 // Test that the binary is still performing well when compiled differently.
 object IntegrityCheck {
   private val tests = scala.collection.mutable.ListBuffer[() => Unit]()
@@ -30,14 +32,19 @@ object IntegrityCheck {
     throw new AssertionError(message)
 
   private def parseAndCheck(input: String, expected: Expr): Unit = {
-    val _ = ChesterReaderV1.parseExpr(
-      FileNameAndContent("testFile", input)
-    ) // it must parse with location
-    ChesterReaderV1
-      .parseExpr(
-        FileNameAndContent("testFile", input),
-        ignoreLocation = true
+    // it must parse with location
+    val _ = reporterToEither(
+      ChesterReaderV1.parseExpr(
+        FileNameAndContent("testFile", input)
       )
+    )
+    reporterToEither(
+      ChesterReaderV1
+        .parseExpr(
+          FileNameAndContent("testFile", input),
+          ignoreLocation = true
+        )
+    )
       .fold(
         error =>
           fail(

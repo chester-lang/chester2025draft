@@ -15,8 +15,10 @@ import chester.error.TyckError
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
   given options: PrettierOptions =
     PrettierOptions.Default.updated(LightMode, lightMode)
-  ChesterReaderV1.parseTopLevel(
-    FileNameAndContent("playground.chester", content)
+  reporterToEither(
+    ChesterReaderV1.parseTopLevel(
+      FileNameAndContent("playground.chester", content)
+    )
   ) match {
     case Right(parsedBlock) =>
       val reporter = new VectorReporter[TyckProblem]()

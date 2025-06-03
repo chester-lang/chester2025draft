@@ -1,7 +1,9 @@
 package chester.cli
 
+import chester.error.reporterToEither
 import chester.elab.{Elab, ElabOps}
 import chester.error.{TyckProblem, VectorReporter}
+import chester.integrity.IntegrityCheck
 import chester.repl.REPLEngine
 
 import scala.language.experimental.betterFors
@@ -15,13 +17,13 @@ import chester.utils.io.*
 import chester.utils.term.{Terminal, TerminalInit}
 
 object CLI {
-  def spawn[F[_]](config: Config)(using
-      runner: Runner[F],
-      terminal: Terminal[F],
-      env: Environment,
-      path: FilePathImpl,
-      spawn: Spawn[F],
-      io: IO[F]
+  def run[F[_]](config: Config)(using
+                                runner: Runner[F],
+                                terminal: Terminal[F],
+                                env: Environment,
+                                path: FilePathImpl,
+                                spawn: Spawn[F],
+                                io: IO[F]
   ): Unit =
     Spawn.spawn {
       (new CLI[F]).run(config)
@@ -42,6 +44,10 @@ class CLI[F[_]](using
   def run(config: Config): F[Unit] = config match {
     case Config.Version =>
       IO.println(s"Chester version: ${chester.BuildInfo.version}")
+    case Config.Integrity => {
+      IntegrityCheck()
+      IO.println(s"Integrity check passed.")
+    }
     case Config.Run(None)            => spawnREPLEngine()
     case Config.Run(Some(fileOrDir)) => ???
     case Config.Compile(target0, inputFile, outputFile0) =>
@@ -58,7 +64,7 @@ class CLI[F[_]](using
               } else {
                 for {
                   inputContent <- IO.readString(inputPath)
-                  parsed = ChesterReaderV1.parseTopLevel(FileNameAndContent(inputFile, inputContent))
+                  parsed = reporterToEither(ChesterReaderV1.parseTopLevel(FileNameAndContent(inputFile, inputContent)))
                   _ <- parsed match {
                     case Left(error) =>
                       IO.println(s"Error parsing input file '$inputFile': $error")

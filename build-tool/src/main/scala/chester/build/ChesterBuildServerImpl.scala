@@ -1,6 +1,7 @@
 package chester.build
 
 import ch.epfl.scala.bsp4j.*
+import chester.error.reporterToEither
 import org.log4s.*
 import chester.reader.FileNameAndContent
 import chester.i18n.*
@@ -288,8 +289,10 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
         Files.walk(dir).forEach { path =>
           if (Files.isRegularFile(path) && path.toString.endsWith(".chester")) {
             val content = Files.readString(path)
-            ChesterReaderV1
-              .parseTopLevel(FileNameAndContent(path.toString, content))
+            reporterToEither(
+              ChesterReaderV1
+                .parseTopLevel(FileNameAndContent(path.toString, content))
+            )
               .fold(
                 error =>
                   logger

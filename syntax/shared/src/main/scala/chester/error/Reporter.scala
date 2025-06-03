@@ -1,5 +1,15 @@
 package chester.error
 
+def reporterToEither[Err <: WithServerity, T](x: Reporter[Err] ?=> Option[T]): Either[Err, T] = {
+  given reporter: VectorReporter[Err] = new VectorReporter[Err]()
+  val result = x
+  val problems = reporter.getReports
+  if (problems.exists(_.isError)) {
+    return Left(problems.find(_.isError).get)
+  }
+  Right(result.getOrElse(throw new IllegalStateException("No result returned from reporter")))
+}
+
 trait Reporter[-T] {
   def report(value: T): Unit
 }

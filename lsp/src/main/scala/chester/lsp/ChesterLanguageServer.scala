@@ -178,7 +178,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       uri: String,
       text: String
   ): (TyckResult[Unit, Judge], Vector[CollectedSymbol], List[Diagnostic]) = {
-    val parseResult = ChesterReaderV1.parseTopLevel(FileNameAndContent(uri, text))
+    val parseResult = reporterToEither(ChesterReaderV1.parseTopLevel(FileNameAndContent(uri, text)))
     val collector = new VectorSemanticCollector()
 
     parseResult.fold(
