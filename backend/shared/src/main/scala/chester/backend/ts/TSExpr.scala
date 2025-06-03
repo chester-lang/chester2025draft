@@ -17,17 +17,15 @@ case class Void0Expr(meta: Option[Meta] = None) extends TSExpr {
 }
 
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
-  override def toString: String = if (value.isValidInt) {
-    value.toInt.toString
-  } else {
-    value.toString
-  }
-
   override type ThisTree = DoubleExpr
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): DoubleExpr = this
 
-  override def toDoc(using options: PrettierOptions): Doc = Doc.text(value.toString)
+  override def toDoc(using options: PrettierOptions): Doc = if (value.isValidInt) {
+    value.toInt.toString
+  } else {
+    value.toString
+  }
 }
 
 sealed trait TSStmt extends TSExpr derives ReadWriter {
