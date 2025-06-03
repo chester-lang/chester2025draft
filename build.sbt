@@ -769,7 +769,7 @@ lazy val backend = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("backend"))
-  .dependsOn(semantics)
+  .dependsOn(semantics, compatibility % Test, testCommon % Test, reader % Test)
   .jvmConfigure(_.dependsOn(backend213.jvm))
   .jsConfigure(_.dependsOn(backend213.js))
   .settings(
