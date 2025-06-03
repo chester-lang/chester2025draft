@@ -1,4 +1,4 @@
-package chester.cliv2
+package chester.cli
 
 enum Config {
   case Run(file: Option[String]) extends Config

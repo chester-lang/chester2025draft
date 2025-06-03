@@ -1,4 +1,4 @@
-package chester.cliv2
+package chester.cli
 
 import chester.elab.{Elab, ElabOps}
 import chester.error.{TyckProblem, VectorReporter}

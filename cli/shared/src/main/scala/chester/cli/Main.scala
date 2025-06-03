@@ -1,4 +1,4 @@
-package chester.cliv2
+package chester.cli
 
 import caseapp.*
 import caseapp.core.Error
