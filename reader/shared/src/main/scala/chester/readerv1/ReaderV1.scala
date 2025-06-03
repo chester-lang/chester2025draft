@@ -347,12 +347,10 @@ case class ReaderV1(
     else Pass(Block(Vector.from(heads), tail, meta))
   }
 
+  // empty block is allowed
   def block: P[ParsedExpr] = PwithMeta(
     "{" ~ (maybeSpace ~ statement).rep ~ maybeSpace ~ parse().? ~ maybeSpace ~ "}"
-  ).flatMap { case (heads, tail, meta) =>
-    if (heads.isEmpty && tail.isEmpty) Fail("expect something")
-    else Pass(Block(Vector.from(heads), tail, meta))
-  }
+  ).map { case (heads, tail, meta) => Block(Vector.from(heads), tail, meta) }
 
   private inline def anonymousBlockLikeFunction: P[ParsedExpr] = block | objectParse
 
@@ -404,7 +402,7 @@ case class ReaderV1(
       .map(ObjectExprClauseOnValue.apply)
 
   private def objectParse: P[ParsedExpr] = PwithMeta(
-    "{" ~ (objectClause0 | objectClause1).rep(sep = comma) ~ comma.? ~ maybeSpace ~ "}"
+    "%{" ~ (objectClause0 | objectClause1).rep(sep = comma) ~ comma.? ~ maybeSpace ~ "}"
   ).map((fields, meta) => ObjectExpr(fields.toVector, meta))
 
   private def keyword: P[ParsedExpr] = PwithMeta(

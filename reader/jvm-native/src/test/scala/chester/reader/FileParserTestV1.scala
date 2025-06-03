@@ -43,7 +43,7 @@ class FileParserTestV1 extends FunSuite {
                 val expected = Files
                   .readString(expectedFile, StandardCharsets.UTF_8)
                   .replace("\r\n", "\n")
-                // assertEquals(actual, expected)
+                assertEquals(actual, expected)
                 val _ = expected // To avoid unused variable warning
               }
             }

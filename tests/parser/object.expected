@@ -1,7 +1,6 @@
 Block(
-  statements = Vector(),
-  result = Some(
-    value = ObjectExpr(
+  statements = Vector(
+    ObjectExpr(
       clauses = Vector(
         ObjectExprClause(
           key = DotCall(
@@ -48,5 +47,6 @@ Block(
       meta = None
     )
   ),
+  result = None,
   meta = None
 )

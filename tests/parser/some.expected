@@ -156,7 +156,7 @@ Block(
           ),
           meta = None
         ),
-        ObjectExpr(clauses = Vector(), meta = None)
+        Block(statements = Vector(), result = None, meta = None)
       ),
       meta = None
     ),

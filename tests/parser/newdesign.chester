@@ -10,7 +10,7 @@ data Cons[n, T] <: Vector[succ(n), T] {
 }
 
 cons1 = Cons(0, Nil);
-cons2 = Cons { head = 0, tail = Nil };
+cons2 = Cons %{ head = 0, tail = Nil };
 
 implement Vector[n, T] {
   isEmpty: Boolean = ?todo;
