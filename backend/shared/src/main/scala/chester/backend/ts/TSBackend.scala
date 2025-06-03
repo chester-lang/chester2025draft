@@ -32,6 +32,10 @@ case object TSBackend extends Backend(Typescript) {
     given TSContext = TSContext.create()
     Toplevel(mod.ast.statements.map(compileStmt))
   }
+  def compileType(term: Term)(using ctx: TSContext): TSType = term match {
+    case IntType(meta) => NumberType(meta)
+    case _ => ???
+  }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
     case _                    => ???
@@ -50,7 +54,7 @@ case object TSBackend extends Backend(Typescript) {
       val name = introduceLetVar(let)
       ConstStmt(
         name = name,
-        ty = Some(compileExpr(let.ty)),
+        ty = Some(compileType(let.ty)),
         value = compileExpr(let.value),
         meta = let.meta
       )

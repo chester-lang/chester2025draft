@@ -8,7 +8,7 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) {
     .descentRec {
       case t: MetaTerm =>
         // introduce a variable for easy breakpoint
-        val result = toTerm(t)
+        val result = toTermUnstable(t)
         result match {
           case _: MetaTerm =>
             // newline for easy breakpoint

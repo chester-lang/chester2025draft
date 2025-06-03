@@ -13,6 +13,19 @@ import chester.utils.elab.*
 import scala.annotation.tailrec
 
 @tailrec
+def toTermUnstable[T <: Term](x: CellRW[T] | CellR[T] | T, meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
+  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasSomeValue(c.inner) =>
+    toTermUnstable(c.inner.asInstanceOf[CellRW[T] | CellR[T] | T], meta)
+
+  case x: Term => x
+  case c: CellRW[Term @unchecked] =>
+    SolverOps.readUnstable(c) match {
+      case Some(v) => toTermUnstable(v.asInstanceOf[CellRW[T] | CellR[T] | T], meta)
+      case None    => MetaTerm(InMeta(c), meta = meta)
+    }
+}
+
+@tailrec
 def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
   case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasStableValue(c.inner) => toTerm(c.inner, meta)
 
@@ -141,6 +154,10 @@ trait DefaultElab extends Elab {
             ErrorTerm(???, meta = convertMeta(id.meta))
         }
       case _: ObjectExpr => ??? // SolverOps.callConstraint()
-      case _             => ???
+      case expr: UnitExpr =>
+        SolverOps.addConstraint(Pure(ctx.effects))
+        ty >:! UnitType(convertMeta(expr.meta))
+        UnitTerm_(convertMeta(expr.meta))
+      case _ => ???
     }
 }

@@ -6,7 +6,7 @@ import chester.syntax.core.*
 import chester.tyck.Context
 import chester.utils.elab.{SolverFactory, *}
 
-implicit object DefaultElabImpl extends DefaultElab {}
+object DefaultElabImpl extends DefaultElab {}
 
 case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerConf[ElabOps]) {
   def inferPure(expr: Expr, context: Context = Context.default)(using ElabOps): Judge = {

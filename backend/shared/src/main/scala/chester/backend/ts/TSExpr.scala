@@ -38,12 +38,12 @@ case class EmptyStmt(meta: Option[Meta] = None) extends TSStmt {
   override def toDoc(using options: PrettierOptions): Doc = ";"
 }
 
-case class ConstStmt(name: String, ty: Option[TSExpr], value: TSExpr, meta: Option[Meta] = None) extends TSStmt {
+case class ConstStmt(name: String, ty: Option[TSType], value: TSExpr, meta: Option[Meta] = None) extends TSStmt {
 
   override type ThisTree = ConstStmt
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): ConstStmt = copy(
-    ty = ty.map(f),
+    ty = ty.map(g.use),
     value = f(value)
   )
 
@@ -56,4 +56,16 @@ case class ConstStmt(name: String, ty: Option[TSExpr], value: TSExpr, meta: Opti
       "const" <+> name <+>
         "=" <+> value <+> ";"
   }
+}
+
+sealed trait TSType extends TSExpr derives ReadWriter {
+  override type ThisTree <: TSType
+}
+
+case class NumberType(meta: Option[Meta] = None) extends TSType {
+  override def toDoc(using options: PrettierOptions): Doc = "number"
+
+  override type ThisTree = NumberType
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): NumberType = this
 }
