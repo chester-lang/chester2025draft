@@ -44,7 +44,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       while (todo.nonEmpty && heuristics < 32) {
         heuristics += 1
         val c = todo.dequeue()
-        val handler = conf.getHandler(c.kind).getOrElse(throw new IllegalStateException("no handler"))
+        val handler = c.cached(conf.getHandler(c.kind).getOrElse(throw new IllegalStateException("no handler")))
         val result = handler.run(c.asInstanceOf[handler.kind.Of])
         result match {
           case Result.Done =>
@@ -69,7 +69,7 @@ final class ProceduralSolver[Ops](val conf: HandlerConf[Ops])(using Ops) extends
       defaults = defaults.tail
       val _ = delayedConstraints.flatMapInPlace { x =>
         val c = x.x
-        val handler = conf.getHandler(c.kind).getOrElse(throw new IllegalStateException("no handler"))
+        val handler = c.cached(conf.getHandler(c.kind).getOrElse(throw new IllegalStateException("no handler")))
         if (handler.canDefaulting(default)) {
           val result = handler.run(c.asInstanceOf[handler.kind.Of])
           result match {
