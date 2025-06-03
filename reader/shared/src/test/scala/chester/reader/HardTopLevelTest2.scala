@@ -5,11 +5,11 @@ import chester.readerv2.ReaderV2.DEBUG
 import munit.FunSuite
 
 class HardTopLevelTest2 extends FunSuite {
-  test("cons2 = Cons { head = 0, tail = Nil };") {
+  test("cons2 = Cons %{ head = 0, tail = Nil };") {
 
     val input =
       """
-        |cons2 = Cons { head = 0, tail = Nil };
+        |cons2 = Cons %{ head = 0, tail = Nil };
         |""".stripMargin
     val expected =
       Block(

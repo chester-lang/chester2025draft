@@ -5,8 +5,8 @@ import munit.FunSuite
 
 class HardTableTest extends FunSuite {
 
-  test("{ x.x = 1, y = 0 }") {
-    val input = "{ x.x = 1, y = 0 }"
+  test("%{ x.x = 1, y = 0 }") {
+    val input = "%{ x.x = 1, y = 0 }"
     val expected =
       ObjectExpr(
         clauses = Vector(

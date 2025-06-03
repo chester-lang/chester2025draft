@@ -6,7 +6,7 @@ import munit.FunSuite
 class HardObjectTest extends FunSuite {
 
   test("{ boot.loader.systemd-boot.enable = true, y = 0, }") {
-    val input = "{ boot.loader.systemd-boot.enable = true, y = 0, }"
+    val input = "%{ boot.loader.systemd-boot.enable = true, y = 0, }"
     val expected =
       ObjectExpr(
         clauses = Vector(

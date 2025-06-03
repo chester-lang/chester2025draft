@@ -5,8 +5,8 @@ import munit.FunSuite
 
 class HardCons extends FunSuite {
 
-  test("Cons { head = 0, tail = Nil }") {
-    val input = "Cons { head = 0, tail = Nil }"
+  test("Cons %{ head = 0, tail = Nil }") {
+    val input = "Cons %{ head = 0, tail = Nil }"
     val expected =
       FunctionCall(
         function = Identifier(

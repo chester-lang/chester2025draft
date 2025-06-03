@@ -7,13 +7,13 @@ import munit.FunSuite
 class ObjectParserTest extends FunSuite {
 
   test("parse empty object") {
-    val input = "{}"
+    val input = "%{}"
     val expected = ObjectExpr(Vector(), meta = None)
     parseAndCheckBoth(input, expected)
   }
 
   test("parse object with single field") {
-    val input = "{ a = 1 }"
+    val input = "%{ a = 1 }"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None)
@@ -24,7 +24,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with single field 2") {
-    val input = "{a=1}"
+    val input = "%{a=1}"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None)
@@ -35,7 +35,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with single field 3") {
-    val input = "{ 'a => 1}"
+    val input = "%{ 'a => 1}"
     val expected = ObjectExpr(
       Vector(
         ObjectExprClauseOnValue(
@@ -49,7 +49,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with single field 4") {
-    val input = "{'a=>1}"
+    val input = "%{'a=>1}"
     val expected = ObjectExpr(
       Vector(
         ObjectExprClauseOnValue(
@@ -63,7 +63,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with multiple fields") {
-    val input = "{ a = 1, b = 2, c = 3 }"
+    val input = "%{ a = 1, b = 2, c = 3 }"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
@@ -76,7 +76,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with multiple fields with one more comma") {
-    val input = "{ a = 1, b = 2, c = 3 ,}"
+    val input = "%{ a = 1, b = 2, c = 3 ,}"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
@@ -89,7 +89,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with multiple fields with one more comma without spaces") {
-    val input = "{a=1,b=2,c=3,}"
+    val input = "%{a=1,b=2,c=3,}"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
@@ -102,7 +102,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with nested object") {
-    val input = "{ a = { b = 2 }, c = 3 }"
+    val input = "%{ a = %{ b = 2 }, c = 3 }"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> ObjectExpr(
@@ -119,7 +119,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with mixed types") {
-    val input = "{ a = 1, b = \"hello\", c = [1, 2, 3], d = { e = 4 } }"
+    val input = "%{ a = 1, b = \"hello\", c = [1, 2, 3], d = %{ e = 4 } }"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
@@ -145,7 +145,7 @@ class ObjectParserTest extends FunSuite {
   }
 
   test("parse object with trailing comma") {
-    val input = "{ a = 1, b = 2, }"
+    val input = "%{ a = 1, b = 2, }"
     val expected = ObjectExpr(
       Vector(
         Identifier("a", meta = None) -> IntegerLiteral(1, meta = None),
