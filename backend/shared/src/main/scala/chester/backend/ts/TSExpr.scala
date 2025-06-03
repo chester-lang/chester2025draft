@@ -17,7 +17,11 @@ case class Void0Expr(meta: Option[Meta] = None) extends TSExpr {
 }
 
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
-  override def toString: String = value.toString
+  override def toString: String = if (value.isValidInt) {
+    value.toInt.toString
+  } else {
+    value.toString
+  }
 
   override type ThisTree = DoubleExpr
 
