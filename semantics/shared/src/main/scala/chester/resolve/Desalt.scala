@@ -126,13 +126,13 @@ private object ObjectDesalt {
       case (acc, (k +: ks, v)) =>
         val nestedObj = acc.clauses
           .collectFirst {
-            case ObjectExprClause(id: Identifier, obj: ObjectExpr) if id.name == k =>
+            case ObjectExprClause(id: Identifier, obj: ObjectExpr, _) if id.name == k =>
               obj
           }
           .getOrElse(ObjectExpr(Vector.empty, v.meta))
         val updatedNested = insertNested(Vector((ks, v)), nestedObj)
         val updatedClauses = acc.clauses.filterNot {
-          case ObjectExprClause(id: Identifier, _) => id.name == k
+          case ObjectExprClause(id: Identifier, _, _) => id.name == k
           case _                                   => false
         } :+ ObjectExprClause(Identifier(k, v.meta), updatedNested)
         acc.copy(clauses = updatedClauses)
@@ -143,7 +143,7 @@ private object ObjectDesalt {
     val (desugaredFields, otherClauses) = expr.clauses.foldLeft(
       (Vector.empty[(Vector[String], Expr)], Vector.empty[ObjectClause])
     ) {
-      case ((fields, others), ObjectExprClause(qname, value)) =>
+      case ((fields, others), ObjectExprClause(qname, value, _)) =>
         (fields :+ (desugarQualifiedName(qname), value), others)
       case ((fields, others), clause) =>
         (fields, others :+ clause)
@@ -152,7 +152,7 @@ private object ObjectDesalt {
     val nestedObject = insertNested(desugaredFields, ObjectExpr(Vector.empty, meta = expr.meta))
 
     val updatedClauses = (nestedObject.clauses ++ otherClauses).map {
-      case ObjectExprClause(key: Identifier, value) =>
+      case ObjectExprClause(key: Identifier, value, _) =>
         ObjectExprClauseOnValue(SymbolLiteral(key.name, key.meta), value)
       case other: ObjectExprClauseOnValue => other
       case _                              => unreachable()

@@ -395,11 +395,11 @@ case class ReaderV1(
 
   private def objectClause0: P[ObjectClause] =
     (maybeSpace ~ qualifiedName ~ maybeSpace ~ "=" ~ maybeSpace ~ parse() ~ maybeSpace)
-      .map(ObjectExprClause.apply)
+      .map(ObjectExprClause(_, _))
 
   private def objectClause1: P[ObjectClause] =
     (maybeSpace ~ parse(ctx = ParsingContext(dontallowOpSeq = true)) ~ maybeSpace ~ "=>" ~ maybeSpace ~ parse() ~ maybeSpace)
-      .map(ObjectExprClauseOnValue.apply)
+      .map(ObjectExprClauseOnValue(_, _))
 
   private def objectParse: P[ParsedExpr] = PwithMeta(
     "%{" ~ (objectClause0 | objectClause1).rep(sep = comma) ~ comma.? ~ maybeSpace ~ "}"
