@@ -89,7 +89,7 @@ trait Elab {
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
-  def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): CellRWOr[TAST] = {
+  def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): TAST = {
     val (module, blk): (ModuleRef, Block) = resolve(block) match {
       case b @ Block(head +: heads, tail, _) =>
         resolve(head) match {

@@ -1,7 +1,8 @@
 package chester.cli
 
+import chester.backend.ts.TSBackend
 import chester.error.reporterToEither
-import chester.elab.{Elab, ElabOps}
+import chester.elab.*
 import chester.error.{TyckProblem, VectorReporter}
 import chester.integrity.IntegrityCheck
 import chester.repl.REPLEngine
@@ -74,7 +75,22 @@ class CLI[F[_]](using
                       given solver: SolverOps = summon[SolverFactory](summon[HandlerConf[ElabOps]])
                       given Context = Context.default
                       val elab = summon[Elab]
-                      ???
+                      val tast = elab.checkWholeUnit(inputFile, ast)
+                      solver.run()
+                      assume(solver.stable, "Solver did not stabilize after elaboration.")
+                      val problems = reporter.getReports
+                      val errors = problems.filter(_.isError)
+                      if (errors.nonEmpty) {
+                        IO.println(s"Errors found during elaboration: ${errors.mkString("\n")}")
+                      } else {
+                        val tast1 = tast.zonkAll
+                        val outputPath = io.pathOps.of(outputFile)
+                        val compiled = TSBackend.compileModule(tast1)
+                        for {
+                          _ <- IO.println(s"Writing output to '$outputFile'.")
+                          _ <- IO.writeString(outputPath, compiled.toString)
+                        } yield ()
+                      }
                   }
                 } yield ()
               }
