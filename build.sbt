@@ -751,10 +751,10 @@ lazy val semantics = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(commonJvmSettings)
 
 // compiles with scala native. XmlParser broken on nativeLink step. will wait for scalameta scala3 migration
-lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
+lazy val backend213 = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("compiler213"))
+  .in(file("backend213"))
   .dependsOn(utils, syntax, err)
   .settings(
     scala2Common,
@@ -765,15 +765,14 @@ lazy val compiler213 = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies += ("org.scala-lang" % "scalap" % scala2Version).exclude("org.jline", "jline")
   )
   .jvmSettings(commonJvmSettings, scala2JVM)
-lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val backend = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("compiler"))
+  .in(file("backend"))
   .dependsOn(semantics)
-  .jvmConfigure(_.dependsOn(compiler213.jvm))
-  .jsConfigure(_.dependsOn(compiler213.js))
+  .jvmConfigure(_.dependsOn(backend213.jvm))
+  .jsConfigure(_.dependsOn(backend213.js))
   .settings(
-    name := "compiler",
     commonSettings
   )
   .jvmSettings(commonJvmSettings)
@@ -783,7 +782,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("platform"))
-  .dependsOn(compatibility, compiler, semantics, core)
+  .dependsOn(compatibility, backend, semantics, core)
   .jsConfigure(
     _.dependsOn(jsTypings.js)
   )
@@ -910,7 +909,7 @@ lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cli"))
   .jvmEnablePlugins(NativeImagePlugin)
   .enablePlugins(BuildInfoPlugin) // Enable the BuildInfoPlugin
-  .dependsOn(compatibility, platform, compiler)
+  .dependsOn(compatibility, platform, backend)
   .settings(
     Compile / mainClass := Some("chester.cliv2.Main"),
     assembly / assemblyOutputPath := file("target") / "chester.jar",
@@ -1145,7 +1144,7 @@ lazy val interpreter = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val allprojects = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .in(file("project/allprojects"))
-  .dependsOn(utils, reader, compiler, compiler213, syntax, err, pretty, semantics, platform, lsp, cli, platform, core, interpreter)
+  .dependsOn(utils, reader, backend, backend213, syntax, err, pretty, semantics, platform, lsp, cli, platform, core, interpreter)
   .settings(
     commonSettings
   )
@@ -1160,8 +1159,8 @@ lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     jsTypings,
     utils,
     reader,
-    compiler,
-    compiler213,
+    backend,
+    backend213,
     syntax,
     err,
     pretty,
