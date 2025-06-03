@@ -12,7 +12,7 @@ object Scala {
     case IntegerTerm(i, _) =>
       require(i.isValidInt)
       meta.Lit.Int(i.asInt)
-    case IntTerm(i, _)     => meta.Lit.Int(i)
+    case IntTerm(i, _)     => meta.Lit.Int(i.asInt)
     case StringTerm(s, _)  => meta.Lit.String(s)
     case SymbolTerm(s, _)  => meta.Lit.Symbol(Symbol(s))
     case BooleanTerm(b, _) => meta.Lit.Boolean(b)

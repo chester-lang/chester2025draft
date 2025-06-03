@@ -36,4 +36,7 @@ object AsInt {
   implicit class AsIntFor(private val n: BigInt) extends AnyVal {
     def asInt: Int = if (n.isValidInt) n.toInt else throw new IllegalArgumentException("BigInt is too large to fit in an Int")
   }
+  implicit class AsIntForLong(private val n: Long) extends AnyVal {
+    def asInt: Int = if (n.isValidInt) n.toInt else throw new IllegalArgumentException("Long is too large to fit in an Int")
+  }
 }

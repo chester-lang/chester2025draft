@@ -5,7 +5,6 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.{Context, convertMeta}
 import chester.utils.elab.*
-import spire.math.UInt
 
 import scala.language.postfixOps
 
@@ -35,12 +34,12 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       result.fill(NaturalTerm(expr.value, meta))
       return Result.Done
     }
-    if (expr.value.isValidInt && (ty <:? IntType(meta) isTrue)) {
-      result.fill(IntTerm(expr.value.toInt, meta))
+    if (PlatformInfo.isValidInt(expr.value) && (ty <:? IntType(meta) isTrue)) {
+      result.fill(IntTerm(expr.value.toLong, meta))
       return Result.Done
     }
-    if (expr.value >= 0 && expr.value.isValidLong && expr.value.toLong <= UInt.MaxValue.toLong && (ty <:? UIntType(meta) isTrue)) {
-      result.fill(UIntTerm(UInt(expr.value.toLong), meta))
+    if (JVMPlatformInfo.isValidUInt(expr.value.toLong) && (ty <:? UIntType(meta) isTrue)) {
+      result.fill(UIntTerm(expr.value, meta))
       return Result.Done
     }
     toTerm(ty) match {

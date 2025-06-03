@@ -375,13 +375,13 @@ sealed abstract class LiteralTerm extends WHNF derives ReadWriter {
 sealed abstract class AbstractIntTerm extends LiteralTerm derives ReadWriter {
   override type ThisTree <: AbstractIntTerm
 }
-case class IntTerm(@const value: Int, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
+case class IntTerm(@const value: Long, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
   override type ThisTree = IntTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): IntTerm = this
   override def toDoc(using PrettierOptions): Doc =
     Doc.text(value.toString, ColorProfile.literalColor)
 }
-case class UIntTerm(@const value: UInt, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
+case class UIntTerm(@const value: BigInt, @const meta: Option[TermMeta]) extends AbstractIntTerm derives ReadWriter {
   override type ThisTree = UIntTerm
   override def descent(f: Term => Term, g: TreeMap[Term]): UIntTerm = this
   override def toDoc(using PrettierOptions): Doc =

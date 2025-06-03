@@ -69,27 +69,29 @@ class CLI[F[_]](using
                     case Left(error) =>
                       IO.println(s"Error parsing input file '$inputFile': $error")
                     case Right(ast) =>
-                      import chester.elab.Defaults.given
-                      val reporter = new VectorReporter[TyckProblem]()
-                      given elabOps: ElabOps = ElabOps(reporter, NoopSemanticCollector)
-                      given solver: SolverOps = summon[SolverFactory](summon[HandlerConf[ElabOps]])
-                      given Context = Context.default
-                      val elab = summon[Elab]
-                      val tast = elab.checkWholeUnit(inputFile, ast)
-                      solver.run()
-                      assume(solver.stable, "Solver did not stabilize after elaboration.")
-                      val problems = reporter.getReports
-                      val errors = problems.filter(_.isError)
-                      if (errors.nonEmpty) {
-                        IO.println(s"Errors found during elaboration: ${errors.mkString("\n")}")
-                      } else {
-                        val tast1 = tast.zonkAll
-                        val outputPath = io.pathOps.of(outputFile)
-                        val compiled = TSBackend.compileModule(tast1)
-                        for {
-                          _ <- IO.println(s"Writing output to '$outputFile'.")
-                          _ <- IO.writeString(outputPath, compiled.toString)
-                        } yield ()
+                      platformInfo.withValue(TypescriptPlatformInfo) {
+                        import chester.elab.Defaults.given
+                        val reporter = new VectorReporter[TyckProblem]()
+                        given elabOps: ElabOps = ElabOps(reporter, NoopSemanticCollector)
+                        given solver: SolverOps = summon[SolverFactory](summon[HandlerConf[ElabOps]])
+                        given Context = Context.default
+                        val elab = summon[Elab]
+                        val tast = elab.checkWholeUnit(inputFile, ast)
+                        solver.run()
+                        assume(solver.stable, "Solver did not stabilize after elaboration.")
+                        val problems = reporter.getReports
+                        val errors = problems.filter(_.isError)
+                        if (errors.nonEmpty) {
+                          IO.println(s"Errors found during elaboration: ${errors.mkString("\n")}")
+                        } else {
+                          val tast1 = tast.zonkAll
+                          val outputPath = io.pathOps.of(outputFile)
+                          val compiled = TSBackend.compileModule(tast1)
+                          for {
+                            _ <- IO.println(s"Writing output to '$outputFile'.")
+                            _ <- IO.writeString(outputPath, compiled.toString)
+                          } yield ()
+                        }
                       }
                   }
                 } yield ()
