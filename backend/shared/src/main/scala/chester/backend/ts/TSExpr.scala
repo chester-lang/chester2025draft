@@ -49,12 +49,12 @@ case class ConstStmt(name: String, ty: Option[TSType], value: TSExpr, meta: Opti
 
   override def toDoc(using options: PrettierOptions): Doc = ty match {
     case Some(tyExpr) =>
-      "const" <+> name <+>
+      "const" <+> name <>
         ":" <+> tyExpr <+>
-        "=" <+> value <+> ";"
+        "=" <+> value <> ";"
     case None =>
       "const" <+> name <+>
-        "=" <+> value <+> ";"
+        "=" <+> value <> ";"
   }
 }
 

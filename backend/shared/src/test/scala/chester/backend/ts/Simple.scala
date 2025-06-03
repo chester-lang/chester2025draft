@@ -31,7 +31,7 @@ class Simple extends FunSuite {
     val tast1 = tast.zonkAll
     val compiled = TSBackend.compileModule(tast1)
     assert(compiled.stmts.length == 1, "Expected exactly one statement in the compiled output.")
-    assertEquals(compiled.stmts.head.toString, "const x : number = 42.0 ;")
+    assertEquals(compiled.stmts.head.toString, "const x: number = 42.0;")
   }
 
 }
