@@ -14,7 +14,7 @@ type OrM[T <: Term] = T | MetaTerm[Term]
 type OrM1[T <: Term] = T | MetaTerm[T]
 
 // this needs to be in a separate package to avoid circular runtime dependencies which results in dead lock as given is implemented with lazy val and circular lazy val will cause deadloop
-implicit def OrMRW1[T <: Term](using rw: ReadWriter[Term], ct: ClassTag[T]): ReadWriter[OrM1[T]] =
+def OrMRW1[T <: Term](using rw: ReadWriter[Term], ct: ClassTag[T]): ReadWriter[OrM1[T]] =
   rw.bimap(
     (term: OrM1[T]) =>
       term match {
