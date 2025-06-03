@@ -1,15 +1,20 @@
 package chester.elab
 
+import chester.syntax.core.{BlockTerm, Effects, Term}
+import upickle.default.*
+import upickle.default as upickle
+import chester.i18n.*
+
+import scala.collection.immutable.HashMap
+
 import chester.error.*
 import chester.syntax.*
 import chester.uniqid.*
-import upickle.default.*
 
 import scala.language.implicitConversions
 import chester.syntax.core.*
 import chester.syntax.core.orm.{OrM, given}
 import chester.uniqid.ContainsUniqid
-import upickle.default as upickle
 
 implicit val ProblemReaderRW: ReadWriter[() => Vector[TyckProblem]] = readwriter[Vector[TyckProblem]].bimap(
   (problems: () => Vector[TyckProblem]) => problems(),
@@ -88,3 +93,23 @@ class ZonkedTAST(
     override val effects: Effects,
     val problems: Vector[TyckProblem]
 ) extends TAST(fileName = fileName, module = module, ast = ast, ty = ty, effects = effects, getProblems = () => problems) {}
+
+case class LoadedModules(map: HashMap[ModuleRef, Vector[TAST]] = HashMap()) extends AnyVal {
+  def add(tast: TAST): LoadedModules =
+    if (
+      map.contains(tast.module) && map
+        .apply(tast.module)
+        .exists(_.fileName == tast.fileName)
+    ) {
+      throw new IllegalArgumentException(
+        t"Module ${tast.module} already loaded from file ${tast.fileName}"
+      )
+    } else {
+      val newTASTs = map.getOrElse(tast.module, Vector()) :+ tast
+      LoadedModules(map.updated(tast.module, newTASTs))
+    }
+}
+
+object LoadedModules {
+  val Empty: LoadedModules = LoadedModules()
+}

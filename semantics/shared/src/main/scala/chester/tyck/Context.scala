@@ -1,5 +1,6 @@
 package chester.tyck
 
+import chester.elab.LoadedModules
 import chester.syntax.*
 import chester.syntax.accociativity.OperatorsContext
 import chester.syntax.core.*

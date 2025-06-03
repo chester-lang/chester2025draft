@@ -3,9 +3,6 @@ package chester.truffle
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.reader.*
 import chester.readerv2.ChesterReaderV2
-import chester.syntax.core.*
-import chester.truffle.ChesterLang.ChesterRootNode
-import chester.tyck.*
 
 object Utils {
   @throws[Exception]
@@ -15,6 +12,8 @@ object Utils {
       .fold(
         _ => ???,
         parsedBlock =>
+        ???
+        /*
           val tyckResult = Tycker.check(parsedBlock)
           if (tyckResult.errorsEmpty) {
             // This is equivalent to TyckResult.Success case
@@ -25,6 +24,6 @@ object Utils {
           } else {
             // This is equivalent to TyckResult.Failure case
             ???
-          }
+          }*/
       )
 }

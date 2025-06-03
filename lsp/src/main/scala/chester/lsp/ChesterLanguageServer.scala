@@ -1,6 +1,7 @@
 package chester.lsp
 
-import chester.error.*
+import chester.elab.{DefaultElaborator, ElabOps}
+import chester.error.{VectorReporter, *}
 import chester.reader.*
 import chester.syntax.core.*
 import chester.tyck.api.*
@@ -204,21 +205,15 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
         (tyckResult, Vector(), List(diagnostic))
       },
       { parsedExpr =>
-        val tyckResult = Tycker.check(parsedExpr, sementicCollector = collector)
+        val reporter = new VectorReporter[TyckProblem]()
+        given ElabOps = ElabOps(reporter = reporter, collector = collector)
+        val tyckResult = DefaultElaborator.inferPure(parsedExpr)
+        val reported = reporter.getReports
 
         // Generate diagnostics from the TyckResult
-        val diagnostics = if (tyckResult.errorsEmpty) {
-          // This is equivalent to TyckResult.Success case
-          // Process warnings
-          val warnings = tyckResult.problems.collect { case w: TyckWarning => w }
-          warnings.map(convertProblem).toList
-        } else {
-          // This is equivalent to TyckResult.Failure case
-          // Combine errors and warnings into diagnostics
-          tyckResult.problems.map(convertProblem).toList
-        }
+        val diagnostics = reported.map(convertProblem).toList
 
-        (tyckResult, collector.get, diagnostics)
+        (TyckResult0((), tyckResult, reported), collector.get, diagnostics)
       }
     )
   }

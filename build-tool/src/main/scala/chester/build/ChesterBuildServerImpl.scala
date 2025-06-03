@@ -1,10 +1,8 @@
 package chester.build
 
-import chester.error.TyckError
 import ch.epfl.scala.bsp4j.*
 import org.log4s.*
 import chester.reader.FileNameAndContent
-import chester.tyck.Tycker
 import chester.i18n.*
 import chester.readerv2.ChesterReaderV2
 
@@ -297,6 +295,9 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
                   logger
                     .error(t"Parsing failed for file: $path with error: $error"),
                 parsedBlock =>
+                  // TODO
+                  logger.info(t"Parsing succeeded for file: $path with content: $parsedBlock")
+                /*
                   val tyckResult = Tycker.check(parsedBlock)
                   if (tyckResult.errorsEmpty) {
                     // This is equivalent to TyckResult.Success case
@@ -307,7 +308,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
                     logger.error(
                       t"Type checking failed for file: $path with errors: $errors"
                     )
-                  }
+                  }*/
               )
           }
         }

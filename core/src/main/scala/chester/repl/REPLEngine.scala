@@ -16,7 +16,6 @@ import fansi.*
 import chester.i18n.*
 import chester.tyck.api.NoopSemanticCollector
 
-val useNewElab = true
 // could be inline
 def REPLEngine[F[_]](using
     runner: Runner[F],
@@ -203,14 +202,11 @@ def REPLEngine[F[_]](using
     }
   }
 
-  def typeCheck(expr: Expr): TyckResult[?, Judge] =
-    if (useNewElab) {
-      given reporter: VectorReporter[TyckProblem] = new VectorReporter[TyckProblem]()
-      given ElabOps = ElabOps(reporter, NoopSemanticCollector)
-      TyckResult0((), DefaultElaborator.inferPure(expr), reporter.getReports)
-    } else {
-      Tycker.check(expr)
-    }
+  def typeCheck(expr: Expr): TyckResult[?, Judge] = {
+    given reporter: VectorReporter[TyckProblem] = new VectorReporter[TyckProblem]()
+    given ElabOps = ElabOps(reporter, NoopSemanticCollector)
+    TyckResult0((), DefaultElaborator.inferPure(expr), reporter.getReports)
+  }
 
   def printErrors(
       er: Vector[chester.error.TyckError],
