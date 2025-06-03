@@ -3,6 +3,8 @@ package chester.elab
 trait PlatformInfo {
   def IntMin: Long
   def IntMax: Long
+  def isValidInt(value: Long): Boolean =
+    value >= IntMin && value <= IntMax
 }
 
 object JVMPlatformInfo extends PlatformInfo {
