@@ -45,7 +45,7 @@ case class ConstStmt(name: String, ty: Option[TSType], value: TSExpr, meta: Opti
   override type ThisTree = ConstStmt
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): ConstStmt = copy(
-    ty = ty.map(g.use),
+    ty = ty.map(g(_)),
     value = f(value)
   )
 

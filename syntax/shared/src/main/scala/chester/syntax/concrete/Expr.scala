@@ -228,7 +228,7 @@ case class InfixExpr(
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): InfixExpr = thisOr {
     copy(
       left = f(left),
-      operator = g.use(operator),
+      operator = g(operator),
       right = f(right)
     )
   }
@@ -251,7 +251,7 @@ case class PrefixExpr(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): PrefixExpr = thisOr {
     copy(
-      operator = g.use(operator),
+      operator = g(operator),
       operand = f(operand)
     )
   }
@@ -275,7 +275,7 @@ case class PostfixExpr(
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): PostfixExpr = thisOr {
     copy(
       operand = f(operand),
-      operator = g.use(operator)
+      operator = g(operator)
     )
   }
 
@@ -341,8 +341,8 @@ case class Arg(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): Arg =
     Arg(
-      decorations.map(g.use),
-      g.use(name),
+      decorations.map(g(_)),
+      g(name),
       ty.map(f),
       exprOrDefault.map(f),
       vararg,
@@ -382,7 +382,7 @@ case class CallingArg(
     copy(meta = updater(meta))
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): CallingArg =
-    CallingArg(name.map(g.use), f(expr), vararg, meta)
+    CallingArg(name.map(g(_)), f(expr), vararg, meta)
 
   override def toDoc(using PrettierOptions): Doc = group {
     val nameDoc = name.map(n => n.toDoc <> Docs.`=` <+> Doc.empty).getOrElse(Doc.empty)
@@ -402,7 +402,7 @@ case class DesaltCallingTelescope(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DesaltCallingTelescope =
     thisOr {
-      DesaltCallingTelescope(args.map(g.use(_)), implicitly, meta)
+      DesaltCallingTelescope(args.map(g(_)), implicitly, meta)
     }
 
   override def updateMeta(
@@ -448,7 +448,7 @@ case class DefTelescope(
   override type ThisTree = DefTelescope
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DefTelescope = thisOr {
-    DefTelescope(args.map(g.use(_)), implicitly, meta)
+    DefTelescope(args.map(g(_)), implicitly, meta)
   }
 
   override def updateMeta(
@@ -494,7 +494,7 @@ case class DesaltFunctionCall(
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DesaltFunctionCall = thisOr {
     DesaltFunctionCall(
       f(function),
-      telescopes.map(g.use(_)),
+      telescopes.map(g(_)),
       meta
     )
   }
@@ -520,7 +520,7 @@ case class DotCall(
     DotCall(
       f(expr),
       f(field),
-      telescope.map(g.use(_)),
+      telescope.map(g(_)),
       meta
     )
   }
@@ -674,8 +674,8 @@ case class AnnotatedExpr(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): AnnotatedExpr = thisOr {
     AnnotatedExpr(
-      g.use(annotation),
-      telescope.map(g.use(_)),
+      g(annotation),
+      telescope.map(g(_)),
       f(expr),
       meta
     )
@@ -738,7 +738,7 @@ case class ObjectExpr(
   override type ThisTree = ObjectExpr
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ObjectExpr = thisOr {
-    ObjectExpr(clauses.map(g.use(_)), meta)
+    ObjectExpr(clauses.map(g(_)), meta)
   }
 
   override def updateMeta(
@@ -764,7 +764,7 @@ case class Keyword(
   override type ThisTree = Keyword
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): Keyword = thisOr {
-    Keyword(key, telescope.map(g.use(_)), meta)
+    Keyword(key, telescope.map(g(_)), meta)
   }
 
   override def updateMeta(
@@ -808,7 +808,7 @@ case class DesaltMatching(
   override type ThisTree = DesaltMatching
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DesaltMatching = thisOr(
-    DesaltMatching(clauses.map(g.use(_)), meta)
+    DesaltMatching(clauses.map(g(_)), meta)
   )
 
   override def updateMeta(
@@ -832,7 +832,7 @@ case class FunctionExpr(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): FunctionExpr = thisOr(
     FunctionExpr(
-      telescope.map(g.use(_)),
+      telescope.map(g(_)),
       resultTy.map(f),
       effect.map(f),
       f(body),
@@ -1175,9 +1175,9 @@ case class TraitStmt(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): TraitStmt = thisOr(
     copy(
-      name = g.use(name),
-      extendsClause = extendsClause.map(g.use(_)),
-      body = body.map(g.use(_)),
+      name = g(name),
+      extendsClause = extendsClause.map(g(_)),
+      body = body.map(g(_)),
       meta = meta
     )
   )
@@ -1205,9 +1205,9 @@ case class InterfaceStmt(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): InterfaceStmt = thisOr(
     copy(
-      name = g.use(name),
-      extendsClause = extendsClause.map(g.use(_)),
-      body = body.map(g.use(_)),
+      name = g(name),
+      extendsClause = extendsClause.map(g(_)),
+      body = body.map(g(_)),
       meta = meta
     )
   )
@@ -1234,8 +1234,8 @@ case class ExtensionStmt(
   override type ThisTree = ExtensionStmt
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ExtensionStmt = thisOr {
     copy(
-      telescope = telescope.map(g.use(_)),
-      body = g.use(body)
+      telescope = telescope.map(g(_)),
+      body = g(body)
     )
   }
 
@@ -1270,7 +1270,7 @@ case class RecordField(
   override type ThisTree = RecordField
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): RecordField = copy(
-    name = g.use(name),
+    name = g(name),
     ty = ty.map(f),
     defaultValue = defaultValue.map(f),
     meta = meta
@@ -1314,10 +1314,10 @@ case class RecordStmt(
   override type ThisTree = RecordStmt
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): RecordStmt = copy(
-    name = g.use(name),
-    fields = fields.map(g.use(_)),
-    extendsClause = extendsClause.map(g.use(_)),
-    body = body.map(g.use(_)),
+    name = g(name),
+    fields = fields.map(g(_)),
+    extendsClause = extendsClause.map(g(_)),
+    body = body.map(g(_)),
     meta = meta
   )
 
@@ -1345,9 +1345,9 @@ case class ObjectStmt(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ObjectStmt = thisOr(
     copy(
-      name = g.use(name),
-      extendsClause = extendsClause.map(g.use(_)),
-      body = body.map(g.use(_)),
+      name = g(name),
+      extendsClause = extendsClause.map(g(_)),
+      body = body.map(g(_)),
       meta = meta
     )
   )

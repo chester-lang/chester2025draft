@@ -81,9 +81,7 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
     this match {
       case term: MetaTerm => f(term)
       case _ =>
-        descent2(new TreeMap[Term] {
-          def use[T <: Term](x: T): x.ThisTree = x.replaceMeta(f).asInstanceOf[x.ThisTree]
-        })
+        descent2([T <: Term] => (x: T) => x.replaceMeta(f).asInstanceOf[x.ThisTree])
     }
   }
 
@@ -136,7 +134,7 @@ case class Calling(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Calling = thisOr(
-    copy(args = args.map(g))
+    copy(args = args.map(g(_)))
   )
 
   override type ThisTree = Calling
@@ -163,7 +161,7 @@ case class Calling(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): Calling = thisOr(
-    copy(args0 = args.map(g))
+    copy(args0 = args.map(g(_)))
   )
   override def equals(other: Any): Boolean = other match {
     case other: Calling => this.args == other.args && this.implicitly == other.implicitly && this.meta == other.meta
@@ -183,7 +181,7 @@ case class FCallTerm(
   override type ThisTree = FCallTerm
 
   override def descent(a: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
-    copy(f = a(f), args = args.map(g))
+    copy(f = a(f), args = args.map(g(_)))
   )
   override def toDoc(using PrettierOptions): Doc = {
     val fDoc = f.toDoc
@@ -212,7 +210,7 @@ case class FCallTerm(
   override type ThisTree = FCallTerm
 
   override def descent(a: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
-    copy(f = a(f), args0 = args.map(g))
+    copy(f = a(f), args0 = args.map(g(_)))
   )
   override def toDoc(using PrettierOptions): Doc = {
     val fDoc = f.toDoc
@@ -538,7 +536,7 @@ case class TelescopeTerm(args: Seq[ArgTerm], @const implicitly: Boolean = false,
     if (implicitly) Docs.`[` <> argsDoc <> Docs.`]` else Docs.`(` <> argsDoc <> Docs.`)`
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): TelescopeTerm = thisOr(
-    copy(args = args.map(g))
+    copy(args = args.map(g(_)))
   )
 }
 @ifdef("syntax-truffle")
@@ -571,7 +569,7 @@ case class TelescopeTerm(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): TelescopeTerm = thisOr(
-    copy(args0 = args.map(g))
+    copy(args0 = args.map(g(_)))
   )
 }
 case class Function(
@@ -613,9 +611,9 @@ case class FunctionType(
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): FunctionType = thisOr(
     copy(
-      telescopes = telescopes.map(g),
+      telescopes = telescopes.map(g(_)),
       resultTy = f(resultTy),
-      effects = g(effects)
+      effects = g(effects).asInstanceOf[EffectsM]
     )
   )
 }
@@ -657,9 +655,9 @@ case class FunctionType(
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): FunctionType = thisOr(
     copy(
-      telescopes0 = telescopes.map(g),
+      telescopes0 = telescopes.map(g(_)),
       resultTy = f(resultTy),
-      effects = g(effects)
+      effects = g(effects).asInstanceOf[EffectsM]
     )
   )
 }
@@ -688,7 +686,7 @@ case class ObjectTerm(
     Doc.wrapperlist(Docs.`{`, Docs.`}`)(clauses.map(_.toDoc))
 
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectTerm = thisOr(
-    copy(clauses = clauses.map(g))
+    copy(clauses = clauses.map(g(_)))
   )
 }
 @ifdef("syntax-truffle")
@@ -709,7 +707,7 @@ case class ObjectTerm(
     Doc.wrapperlist(Docs.`{`, Docs.`}`)(clauses.map(_.toDoc))
 
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectTerm = thisOr(
-    copy(clauses0 = clauses.map(g))
+    copy(clauses0 = clauses.map(g(_)))
   )
   override def equals(other: Any): Boolean = other match {
     case other: ObjectTerm => this.clauses == other.clauses && this.meta == other.meta
@@ -729,7 +727,7 @@ case class ObjectType(
       fieldTypes.map(_.toDoc)
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectType = thisOr(
-    copy(fieldTypes = fieldTypes.map(g))
+    copy(fieldTypes = fieldTypes.map(g(_)))
   )
 }
 @ifdef("syntax-truffle")
@@ -753,7 +751,7 @@ case class ObjectType(
       fieldTypes.map(_.toDoc)
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectType = thisOr(
-    copy(fieldTypes0 = fieldTypes.map(g))
+    copy(fieldTypes0 = fieldTypes.map(g(_)))
   )
   override def equals(other: Any): Boolean = other match {
     case other: ObjectType =>
@@ -966,7 +964,7 @@ case class BlockTerm(
     Doc.wrapperlist(Docs.`{`, Docs.`}`, ";")(statements.map(_.toDoc) :+ result.toDoc)
 
   override def descent(f: Term => Term, g: TreeMap[Term]): BlockTerm = thisOr(
-    copy(statements = statements.map(g), result = f(result))
+    copy(statements = statements.map(g(_)), result = f(result))
   )
 }
 @ifdef("syntax-truffle")
@@ -990,7 +988,7 @@ case class BlockTerm(
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): BlockTerm = thisOr(
     copy(
-      statements0 = statements.map(g),
+      statements0 = statements.map(g(_)),
       result = f(result)
     )
   )
@@ -1018,7 +1016,7 @@ case class Annotation(
     copy(
       term = f(term),
       ty = ty.map(f),
-      effects = effects.map(g)
+      effects = effects.map(g(_)).asInstanceOf[Option[EffectsM]]
     )
   )
 }
@@ -1060,8 +1058,8 @@ case class RecordStmtTerm(
 
   override def descent(f: Term => Term, g: TreeMap[Term]): RecordStmtTerm = thisOr(
     copy(
-      fields = fields.map(g),
-      body = body.map(g),
+      fields = fields.map(g(_)),
+      body = body.map(g(_)),
       extendsClause = extendsClause.map(f)
     )
   )
@@ -1100,7 +1098,7 @@ case class TraitStmtTerm(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): TraitStmtTerm = thisOr(
-    copy(extendsClause = extendsClause.map(g), body = body.map(g))
+    copy(extendsClause = extendsClause.map(g(_)), body = body.map(g(_)))
   )
 }
 case class InterfaceStmtTerm(
@@ -1123,7 +1121,7 @@ case class InterfaceStmtTerm(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): InterfaceStmtTerm = thisOr(
-    copy(extendsClause = extendsClause.map(g), body = body.map(g))
+    copy(extendsClause = extendsClause.map(g(_)), body = body.map(g(_)))
   )
 }
 case class RecordTypeTerm(
@@ -1192,7 +1190,7 @@ case class ObjectStmtTerm(
     Doc.text("object") <+> Doc.text(name) <+> extendsDoc <+> bodyDoc
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectStmtTerm = thisOr(
-    copy(extendsClause = extendsClause.map(g), body = body.map(g))
+    copy(extendsClause = extendsClause.map(g(_)), body = body.map(g(_)))
   )
 }
 sealed abstract class TypeDefinition extends StmtTerm with TermWithUniqid derives ReadWriter {
@@ -1220,6 +1218,6 @@ case class DotCallTerm(
     group(record.toDoc <> Docs.`.` <> fieldName.toDoc <> argsDoc)
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): DotCallTerm = thisOr(
-    copy(record = f(record), args = args.map(g), fieldType = f(fieldType))
+    copy(record = f(record), args = args.map(g(_)), fieldType = f(fieldType))
   )
 }
