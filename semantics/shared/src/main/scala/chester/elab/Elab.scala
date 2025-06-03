@@ -140,7 +140,7 @@ trait DefaultElab extends Elab {
             Reporter.report(???)
             ErrorTerm(???, meta = convertMeta(id.meta))
         }
-      case ob: ObjectExpr => ??? // SolverOps.callConstraint()
-      case _ => ???
+      case _: ObjectExpr => ??? // SolverOps.callConstraint()
+      case _             => ???
     }
 }

@@ -8,7 +8,7 @@ import chester.utils.{Nat, StringIndex, WithUTF16}
 import fastparse.*
 
 object ChesterReaderV1 {
-  
+
   // Reporter api is used for future error recovery that is a result can be returned even though there are errors
 
   private def parseFromSource[T](
@@ -51,19 +51,19 @@ object ChesterReaderV1 {
   def parseStatements(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  )(using reporter: Reporter[ParseError]): Option[ Vector[ParsedExpr]] =
+  )(using reporter: Reporter[ParseError]): Option[Vector[ParsedExpr]] =
     parseFromSource(source, _.statementsEntrance, ignoreLocation)
 
   def parseTopLevel(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  )(using reporter: Reporter[ParseError]): Option[ Block] =
+  )(using reporter: Reporter[ParseError]): Option[Block] =
     parseFromSource(source, _.toplevelEntrance, ignoreLocation)
 
   def parseExpr(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  )(using reporter: Reporter[ParseError]): Option[ ParsedExpr] =
+  )(using reporter: Reporter[ParseError]): Option[ParsedExpr] =
     parseFromSource(source, _.exprEntrance, ignoreLocation)
 
   /** Parses an expression string, typically used for REPL input.
@@ -84,7 +84,7 @@ object ChesterReaderV1 {
       content: String,
       linesOffset: spire.math.Natural,
       posOffset: WithUTF16
-  )(using reporter: Reporter[ParseError]): Option[ ParsedExpr] = {
+  )(using reporter: Reporter[ParseError]): Option[ParsedExpr] = {
     val indexer = StringIndex(content)
     val source = Source(
       FileNameAndContent(sourceName, content),

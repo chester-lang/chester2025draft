@@ -7,13 +7,14 @@ import chester.readerv1.ChesterReaderV1
 import chester.syntax.core.*
 import chester.tyck.api.NoopSemanticCollector
 import munit.FunSuite
+import chester.error.reporterToEither
 
 class ElabLiteralAndListTest extends FunSuite {
 
   test("integer literal typechecking with new elab") {
     // Parse the integer literal expression using FileNameAndContent
-    val expr = ChesterReaderV1
-      .parseExpr(FileNameAndContent("literal.chester", "1"))
+    val expr = reporterToEither(ChesterReaderV1
+      .parseExpr(FileNameAndContent("literal.chester", "1")))
       .fold(
         error => fail(s"Failed to parse expression: $error"),
         identity
@@ -39,8 +40,8 @@ class ElabLiteralAndListTest extends FunSuite {
 
   test("heterogeneous list typechecking with new elab") {
     // Parse the list expression with mixed types
-    val expr = ChesterReaderV1
-      .parseExpr(FileNameAndContent("list.chester", "[1, \"a\"]"))
+    val expr = reporterToEither(ChesterReaderV1
+      .parseExpr(FileNameAndContent("list.chester", "[1, \"a\"]")))
       .fold(
         error => fail(s"Failed to parse expression: $error"),
         identity
@@ -93,8 +94,8 @@ class ElabLiteralAndListTest extends FunSuite {
 
   test("empty list typechecking with new elab") {
     // Parse the empty list expression
-    val expr = ChesterReaderV1
-      .parseExpr(FileNameAndContent("empty-list.chester", "[]"))
+    val expr = reporterToEither(ChesterReaderV1
+      .parseExpr(FileNameAndContent("empty-list.chester", "[]")))
       .fold(
         error => fail(s"Failed to parse expression: $error"),
         identity
@@ -128,8 +129,8 @@ class ElabLiteralAndListTest extends FunSuite {
 
   test("nested list typechecking with new elab") {
     // Parse the nested list expression [[1], [2]]
-    val expr = ChesterReaderV1
-      .parseExpr(FileNameAndContent("nested-list.chester", "[[1], [2]]"))
+    val expr = reporterToEither(ChesterReaderV1
+      .parseExpr(FileNameAndContent("nested-list.chester", "[[1], [2]]")))
       .fold(
         error => fail(s"Failed to parse expression: $error"),
         identity
@@ -193,8 +194,8 @@ class ElabLiteralAndListTest extends FunSuite {
 
   test("block with let binding typechecking with new elab") {
     // Parse the block expression with let binding
-    val expr = ChesterReaderV1
-      .parseExpr(FileNameAndContent("block-let.chester", "{let a=0; 1}"))
+    val expr = reporterToEither(ChesterReaderV1
+      .parseExpr(FileNameAndContent("block-let.chester", "{let a=0; 1}")))
       .fold(
         error => fail(s"Failed to parse expression: $error"),
         identity
@@ -228,8 +229,8 @@ class ElabLiteralAndListTest extends FunSuite {
 
   test("block with let binding returning the bound variable") {
     // Parse the block expression {let x=0; x}
-    val expr = ChesterReaderV1
-      .parseExpr(FileNameAndContent("block-let-var.chester", "{let x=0; x}"))
+    val expr = reporterToEither(ChesterReaderV1
+      .parseExpr(FileNameAndContent("block-let-var.chester", "{let x=0; x}")))
       .fold(
         error => fail(s"Failed to parse expression: $error"),
         identity

@@ -18,12 +18,12 @@ import chester.utils.term.{Terminal, TerminalInit}
 
 object CLI {
   def run[F[_]](config: Config)(using
-                                runner: Runner[F],
-                                terminal: Terminal[F],
-                                env: Environment,
-                                path: FilePathImpl,
-                                spawn: Spawn[F],
-                                io: IO[F]
+      runner: Runner[F],
+      terminal: Terminal[F],
+      env: Environment,
+      path: FilePathImpl,
+      spawn: Spawn[F],
+      io: IO[F]
   ): Unit =
     Spawn.spawn {
       (new CLI[F]).run(config)
@@ -44,10 +44,9 @@ class CLI[F[_]](using
   def run(config: Config): F[Unit] = config match {
     case Config.Version =>
       IO.println(s"Chester version: ${chester.BuildInfo.version}")
-    case Config.Integrity => {
+    case Config.Integrity =>
       IntegrityCheck()
       IO.println(s"Integrity check passed.")
-    }
     case Config.Run(None)            => spawnREPLEngine()
     case Config.Run(Some(fileOrDir)) => ???
     case Config.Compile(target0, inputFile, outputFile0) =>

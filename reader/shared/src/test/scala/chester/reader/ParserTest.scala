@@ -5,11 +5,12 @@ import munit.FunSuite
 import chester.i18n.*
 import chester.readerv1.ChesterReaderV1
 import chester.utils.asInt
+import chester.error.reporterToEither
 
 class ParserTest extends FunSuite {
   test("parse valid identifier") {
     val result =
-      ChesterReaderV1.parseExpr(FileNameAndContent("testFile", "validIdentifier123"))
+      reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", "validIdentifier123")))
     result match {
       case Right(Identifier(name, Some(meta))) =>
         assertEquals(name, "validIdentifier123")
@@ -26,7 +27,7 @@ class ParserTest extends FunSuite {
 
   test("parse identifier with symbols") {
     val result =
-      ChesterReaderV1.parseExpr(FileNameAndContent("testFile", "valid-Identifier_123"))
+      reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", "valid-Identifier_123")))
     result match {
       case Right(Identifier(name, Some(meta))) =>
         assertEquals(name, "valid-Identifier_123")
@@ -42,7 +43,7 @@ class ParserTest extends FunSuite {
   }
 
   test("parse empty input") {
-    val result = ChesterReaderV1.parseExpr(FileNameAndContent("testFile", ""))
+    val result = reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", "")))
     assert(result.isLeft)
   }
 
@@ -106,7 +107,7 @@ class ParserTest extends FunSuite {
 
   test("parse single-line string literal") {
     val input = "\"Hello, world!\""
-    val result = ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input))
+    val result = reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input)))
     result match {
       case Right(StringLiteral(value, meta)) =>
         assertEquals(value, "Hello, world!")
@@ -116,7 +117,7 @@ class ParserTest extends FunSuite {
 
   test("parse escaped characters in string literal") {
     val input = "\"Hello, \\\"world\\\"!\\n\""
-    val result = ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input))
+    val result = reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input)))
     result match {
       case Right(StringLiteral(value, meta)) =>
         assertEquals(value, "Hello, \"world\"!\n")
@@ -127,7 +128,7 @@ class ParserTest extends FunSuite {
 
     test("parse heredoc string literal") {
       val input = "\"\"\"\n  Hello,\n  world!\n\"\"\""
-      val result = ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input))
+      val result = reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input)))
       result match {
         case Right(StringLiteral(value, meta)) =>
           assertEquals(value, "Hello,\nworld!")
@@ -137,7 +138,7 @@ class ParserTest extends FunSuite {
 
     test("parse heredoc string literal with inconsistent indentation") {
       val input = "\"\"\"\n  Hello,\n   world!\n\"\"\""
-      val result = ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input))
+      val result = reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input)))
       result match {
         case Left(error) =>
           assert(
@@ -156,7 +157,7 @@ class ParserTest extends FunSuite {
 
   test("parse invalid escape sequence in string literal") {
     val input = "\"Hello, \\xworld!\""
-    val result = ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input))
+    val result = reporterToEither(ChesterReaderV1.parseExpr(FileNameAndContent("testFile", input)))
     assert(result.isLeft)
   }
 

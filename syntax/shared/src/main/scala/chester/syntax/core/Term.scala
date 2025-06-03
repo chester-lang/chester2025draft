@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
 import chester.utils.impls.uintRW
 import com.eed3si9n.ifdef.*
+
 import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq

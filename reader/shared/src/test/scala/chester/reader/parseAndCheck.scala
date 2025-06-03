@@ -5,12 +5,18 @@ import upickle.default.*
 import chester.i18n.*
 import chester.readerv1.ChesterReaderV1
 import chester.utils.asInt
+import chester.error.reporterToEither
+
+// TODO: since we removed v2 now all tests run against v1 parser only
 
 // Only runs against V1 (original reader)
 def parseAndCheckV1(input: String, expected: Expr): Unit = {
-  val resultignored = ChesterReaderV1.parseExpr(
-    FileNameAndContent("testFile", input)
-  ) // it must parse with location
+  // it must parse with location
+  val resultignored = reporterToEither(
+    ChesterReaderV1.parseExpr(
+      FileNameAndContent("testFile", input)
+    )
+  )
   val value = parseV1(input)
 
   assertEquals(read[Expr](write[Expr](value)), value)
@@ -40,8 +46,10 @@ def parseAndCheckBoth(input: String, expected: Expr): Unit = {
 
 // New function to parse with V1 parser only and return the result
 def parseV1(input: String): Expr =
-  ChesterReaderV1
-    .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
+  reporterToEither(
+    ChesterReaderV1
+      .parseExpr(FileNameAndContent("testFile", input), ignoreLocation = true)
+  )
     .fold(
       error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.span0}"),
       value => value
@@ -51,8 +59,10 @@ def parseV1(input: String): Expr =
 def parseV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
 
-  ChesterReaderV1
-    .parseExpr(source, ignoreLocation = true)
+  reporterToEither(
+    ChesterReaderV1
+      .parseExpr(source, ignoreLocation = true)
+  )
     .fold(
       error => {
         val errorIndex =
@@ -78,8 +88,10 @@ def parseV2(input: String): Expr = {
 
 // New function to parse with V1 parser only and return the result (using TopLevel)
 def parseTopLevelV1(input: String): Expr =
-  ChesterReaderV1
-    .parseTopLevel(FileNameAndContent("testFile", input), ignoreLocation = true)
+  reporterToEither(
+    ChesterReaderV1
+      .parseTopLevel(FileNameAndContent("testFile", input), ignoreLocation = true)
+  )
     .fold(
       error => fail(t"V1 parsing failed for input: $input ${error.message} at index ${error.span0}"),
       value => value
@@ -89,8 +101,10 @@ def parseTopLevelV1(input: String): Expr =
 def parseTopLevelV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
 
-  ChesterReaderV1
-    .parseTopLevel(source, ignoreLocation = true)
+  reporterToEither(
+    ChesterReaderV1
+      .parseTopLevel(source, ignoreLocation = true)
+  )
     .fold(
       error => {
         val errorIndex =

@@ -4,17 +4,15 @@ import chester.syntax.core.{BlockTerm, Effects, Term}
 import upickle.default.*
 import upickle.default as upickle
 import chester.i18n.*
-
-import scala.collection.immutable.HashMap
-
 import chester.error.*
 import chester.syntax.*
 import chester.uniqid.*
-
-import scala.language.implicitConversions
 import chester.syntax.core.*
 import chester.syntax.core.orm.{OrM, given}
 import chester.uniqid.ContainsUniqid
+
+import scala.collection.immutable.HashMap
+import scala.language.implicitConversions
 
 implicit val ProblemReaderRW: ReadWriter[() => Vector[TyckProblem]] = readwriter[Vector[TyckProblem]].bimap(
   (problems: () => Vector[TyckProblem]) => problems(),

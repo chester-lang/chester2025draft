@@ -4,7 +4,6 @@ import chester.reader.FileNameAndContent
 import chester.syntax.concrete.*
 import chester.i18n.*
 import chester.readerv1.ChesterReaderV1
-
 import chester.error.reporterToEither
 
 // Test that the binary is still performing well when compiled differently.
