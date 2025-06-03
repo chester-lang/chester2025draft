@@ -11,8 +11,7 @@ object Utils {
       .parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString))
       .fold(
         _ => ???,
-        parsedBlock =>
-        ???
+        parsedBlock => ???
         /*
           val tyckResult = Tycker.check(parsedBlock)
           if (tyckResult.errorsEmpty) {
