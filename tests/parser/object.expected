@@ -19,7 +19,8 @@ Block(
             telescope = Vector(),
             meta = None
           ),
-          value = Identifier(name = "true", meta = None)
+          value = Identifier(name = "true", meta = None),
+          meta = None
         ),
         ObjectExprClause(
           key = DotCall(
@@ -28,7 +29,8 @@ Block(
             telescope = Vector(),
             meta = None
           ),
-          value = ListExpr(terms = Vector(), meta = None)
+          value = ListExpr(terms = Vector(), meta = None),
+          meta = None
         ),
         ObjectExprClause(
           key = Identifier(name = "console", meta = None),
@@ -36,12 +38,18 @@ Block(
             clauses = Vector(
               ObjectExprClause(
                 key = Identifier(name = "font", meta = None),
-                value = StringLiteral(value = "Lat2-Terminus16", meta = None)
+                value = StringLiteral(value = "Lat2-Terminus16", meta = None),
+                meta = None
               ),
-              ObjectExprClause(key = Identifier(name = "keyMap", meta = None), value = StringLiteral(value = "us", meta = None))
+              ObjectExprClause(
+                key = Identifier(name = "keyMap", meta = None),
+                value = StringLiteral(value = "us", meta = None),
+                meta = None
+              )
             ),
             meta = None
-          )
+          ),
+          meta = None
         )
       ),
       meta = None

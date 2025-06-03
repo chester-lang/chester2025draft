@@ -9,7 +9,8 @@ Block(
             telescope = Vector(),
             meta = None
           ),
-          value = IntegerLiteral(value = 0, meta = None)
+          value = IntegerLiteral(value = 0, meta = None),
+          meta = None
         ),
         ObjectExprClause(
           key = Identifier(name = "y", meta = None),
@@ -17,11 +18,13 @@ Block(
             clauses = Vector(
               ObjectExprClauseOnValue(
                 key = StringLiteral(value = "x", meta = None),
-                value = IntegerLiteral(value = 1, meta = None)
+                value = IntegerLiteral(value = 1, meta = None),
+                meta = None
               )
             ),
             meta = None
-          )
+          ),
+          meta = None
         )
       ),
       meta = None
