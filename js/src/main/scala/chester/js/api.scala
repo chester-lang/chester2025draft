@@ -10,13 +10,13 @@ import chester.reader.FileNameAndContent
 import chester.utils.doc.ColorfulToHtml.colorfulToHtml
 import chester.utils.doc.*
 import chester.i18n.*
-import chester.readerv2.ChesterReaderV2
+import chester.readerv1.ChesterReaderV1
 import chester.error.TyckError
 
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
   given options: PrettierOptions =
     PrettierOptions.Default.updated(LightMode, lightMode)
-  ChesterReaderV2.parseTopLevel(
+  ChesterReaderV1.parseTopLevel(
     FileNameAndContent("playground.chester", content)
   ) match {
     case Right(parsedBlock) =>

@@ -5,7 +5,7 @@ import chester.syntax.concrete.*
 import chester.utils.term.*
 import chester.utils.{Nat, StringIndex, WithUTF16, platformUseCRLF}
 import chester.i18n.*
-import chester.readerv2.ChesterReaderV2
+import chester.readerv1.ChesterReaderV1
 
 import scala.util.*
 import scala.util.boundary
@@ -72,7 +72,7 @@ object ReaderREPL {
       linesOffset: Natural,
       posOffset: WithUTF16
   ): Either[ParseError, ParsedExpr] =
-    ChesterReaderV2.parseExprWithOffset(
+    ChesterReaderV1.parseExprWithOffset(
       sourceName = "repl",
       content = input,
       linesOffset = linesOffset,

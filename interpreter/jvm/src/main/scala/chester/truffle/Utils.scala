@@ -2,12 +2,12 @@ package chester.truffle
 
 import com.oracle.truffle.api.{CallTarget, TruffleLanguage}
 import chester.reader.*
-import chester.readerv2.ChesterReaderV2
+import chester.readerv1.ChesterReaderV1
 
 object Utils {
   @throws[Exception]
   def parse(lang: ChesterLang, request: TruffleLanguage.ParsingRequest): CallTarget =
-    ChesterReaderV2
+    ChesterReaderV1
       .parseTopLevel(FileNameAndContent(request.getSource.getPath, request.getSource.getCharacters.toString))
       .fold(
         _ => ???,

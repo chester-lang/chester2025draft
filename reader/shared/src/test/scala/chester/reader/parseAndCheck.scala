@@ -4,7 +4,6 @@ import munit.Assertions.{assertEquals, fail}
 import upickle.default.*
 import chester.i18n.*
 import chester.readerv1.ChesterReaderV1
-import chester.readerv2.ChesterReaderV2
 import chester.utils.asInt
 
 // Only runs against V1 (original reader)
@@ -52,7 +51,7 @@ def parseV1(input: String): Expr =
 def parseV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
 
-  ChesterReaderV2
+  ChesterReaderV1
     .parseExpr(source, ignoreLocation = true)
     .fold(
       error => {
@@ -90,7 +89,7 @@ def parseTopLevelV1(input: String): Expr =
 def parseTopLevelV2(input: String): Expr = {
   val source = FileNameAndContent("testFile", input)
 
-  ChesterReaderV2
+  ChesterReaderV1
     .parseTopLevel(source, ignoreLocation = true)
     .fold(
       error => {

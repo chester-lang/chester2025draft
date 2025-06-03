@@ -12,7 +12,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.log4s.*
 import chester.i18n.*
-import chester.readerv2.ChesterReaderV2
+import chester.readerv1.ChesterReaderV1
 
 import java.util.List as JList
 import java.util.concurrent.CompletableFuture
@@ -178,7 +178,7 @@ class ChesterLanguageServer extends LanguageServer with TextDocumentService with
       uri: String,
       text: String
   ): (TyckResult[Unit, Judge], Vector[CollectedSymbol], List[Diagnostic]) = {
-    val parseResult = ChesterReaderV2.parseTopLevel(FileNameAndContent(uri, text))
+    val parseResult = ChesterReaderV1.parseTopLevel(FileNameAndContent(uri, text))
     val collector = new VectorSemanticCollector()
 
     parseResult.fold(

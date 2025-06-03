@@ -6,7 +6,7 @@ import chester.repl.REPLEngine
 
 import scala.language.experimental.betterFors
 import chester.reader.{FileNameAndContent, FilePathImpl}
-import chester.readerv2.ChesterReaderV2
+import chester.readerv1.ChesterReaderV1
 import chester.tyck.Context
 import chester.tyck.api.NoopSemanticCollector
 import chester.utils.elab.*
@@ -58,7 +58,7 @@ class CLI[F[_]](using
               } else {
                 for {
                   inputContent <- IO.readString(inputPath)
-                  parsed = ChesterReaderV2.parseTopLevel(FileNameAndContent(inputFile, inputContent))
+                  parsed = ChesterReaderV1.parseTopLevel(FileNameAndContent(inputFile, inputContent))
                   _ <- parsed match {
                     case Left(error) =>
                       IO.println(s"Error parsing input file '$inputFile': $error")

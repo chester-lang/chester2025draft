@@ -4,7 +4,7 @@ import ch.epfl.scala.bsp4j.*
 import org.log4s.*
 import chester.reader.FileNameAndContent
 import chester.i18n.*
-import chester.readerv2.ChesterReaderV2
+import chester.readerv1.ChesterReaderV1
 
 import java.util.concurrent.CompletableFuture
 import java.util.Collections
@@ -288,7 +288,7 @@ class ChesterBuildServerImpl extends ChesterBuildServer with BuildServer {
         Files.walk(dir).forEach { path =>
           if (Files.isRegularFile(path) && path.toString.endsWith(".chester")) {
             val content = Files.readString(path)
-            ChesterReaderV2
+            ChesterReaderV1
               .parseTopLevel(FileNameAndContent(path.toString, content))
               .fold(
                 error =>
