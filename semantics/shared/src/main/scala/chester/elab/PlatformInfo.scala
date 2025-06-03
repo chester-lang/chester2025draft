@@ -3,7 +3,12 @@ package chester.elab
 import chester.utils.Parameter
 import spire.math.UInt
 
+enum NativeCharIndexInString {
+  case Byte, UTF16, UTF32
+}
+
 trait PlatformInfo {
+  def charIndexInString: NativeCharIndexInString
   def verify(): Unit = {
 
     // requires at least 32 bits for Int
@@ -29,12 +34,14 @@ object JVMPlatformInfo extends PlatformInfo {
   override val IntMin: Long = Int.MinValue.toLong
   override val IntMax: Long = Int.MaxValue.toLong
   override val UIntMax: BigInt = UInt.MaxValue.toBigInt
+  override def charIndexInString: NativeCharIndexInString = NativeCharIndexInString.UTF16
   verify()
 }
 
 object TypescriptPlatformInfo extends PlatformInfo {
   override val IntMin: Long = -9007199254740991L // -(2^53 - 1)
   override val IntMax: Long = 9007199254740991L // 2^53 - 1
+  override def charIndexInString: NativeCharIndexInString = NativeCharIndexInString.UTF16
   verify()
 }
 
