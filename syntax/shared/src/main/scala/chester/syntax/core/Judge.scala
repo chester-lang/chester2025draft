@@ -11,9 +11,9 @@ case class Judge(wellTyped: Term, ty: Term, effects: Effects = Effects.Empty) ex
     effects.substitute(from, to).asInstanceOf[Effects]
   )
 
-  def collectMeta: Vector[MetaTerm] =
+  def collectMeta: Vector[MetaTerm[?]] =
     wellTyped.collectMeta ++ ty.collectMeta ++ effects.collectMeta
-  def replaceMeta(f: MetaTerm => Term): Judge =
+  def replaceMeta(f: MetaTerm[?] => Term): Judge =
     Judge(wellTyped.replaceMeta(f), ty.replaceMeta(f), effects.replaceMeta(f).asInstanceOf[Effects])
 
   override def collectU(collector: UCollector): Unit = {

@@ -43,7 +43,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       return Result.Done
     }
     toTerm(ty) match {
-      case ty: MetaTerm => Result.Waiting(assumeCell(ty))
+      case ty: MetaTerm[?] => Result.Waiting(assumeCell(ty))
       case _ =>
         result.fill(IntegerTerm(expr.value, meta))
         Reporter.report(LiteralTypeMismatch(IntegerTerm(expr.value, meta), toTerm(ty), expr))
@@ -54,7 +54,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
   override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
     import c.*
     toTerm(ty) match {
-      case ty: MetaTerm =>
+      case ty: MetaTerm[?] =>
         if (expr.value.isValidInt) {
           assumeCell(ty).fill(IntType(meta))
         } else {

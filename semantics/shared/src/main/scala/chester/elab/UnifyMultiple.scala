@@ -26,9 +26,9 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     if (rhs1.isEmpty) {
       return Result.Done
     }
-    val wait = rhs1.find(_.isInstanceOf[MetaTerm])
+    val wait = rhs1.find(_.isInstanceOf[MetaTerm[?]])
     if (wait.isDefined) return Result.Waiting(assumeCell(wait.get))
-    val (alllist0, rhs2) = rhs1.partition(x => x.isInstanceOf[ListType] && x.asInstanceOf[ListType].ty.isInstanceOf[MetaTerm])
+    val (alllist0, rhs2) = rhs1.partition(x => x.isInstanceOf[ListType] && x.asInstanceOf[ListType].ty.isInstanceOf[MetaTerm[?]])
     val alllist = alllist0.map(_.asInstanceOf[ListType])
     val rhs3 = if (alllist.nonEmpty) {
       val mergedlist = SolverOps.callConstraint(SimplifyUnion(alllist.map(_.ty).assumeNonEmpty))
@@ -48,7 +48,7 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     if (rhs1.isEmpty) {
       return false
     }
-    if (!lhsV.isInstanceOf[MetaTerm]) {
+    if (!lhsV.isInstanceOf[MetaTerm[?]]) {
       for (rhs <- rhs1)
         SolverOps.addConstraint(Unify(lhsV, rhs))
       true

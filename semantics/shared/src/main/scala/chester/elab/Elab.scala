@@ -6,7 +6,7 @@ import chester.syntax.{DefaultModule, ModuleRef}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.tyck.Context
-import chester.utils.InMeta
+import chester.utils.HoldNotReadable
 import chester.utils.cell.{LiteralCellContent, OnceCellContent}
 import chester.utils.elab.*
 
@@ -14,31 +14,31 @@ import scala.annotation.tailrec
 
 @tailrec
 def toTermUnstable[T <: Term](x: CellRW[T] | CellR[T] | T, meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
-  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasSomeValue(c.inner) =>
-    toTermUnstable(c.inner.asInstanceOf[CellRW[T] | CellR[T] | T], meta)
+  case m @ MetaTerm(_, meta) if SolverOps.hasSomeValue(m.unsafeRead[CellRW[T] | CellR[T]]) =>
+    toTermUnstable(m.unsafeRead[CellRW[T] | CellR[T]], meta)
 
   case x: Term => x
   case c: CellRW[Term @unchecked] =>
     SolverOps.readUnstable(c) match {
       case Some(v) => toTermUnstable(v.asInstanceOf[CellRW[T] | CellR[T] | T], meta)
-      case None    => MetaTerm(InMeta(c), meta = meta)
+      case None    => MetaTerm(HoldNotReadable(c), meta = meta)
     }
 }
 
 @tailrec
 def toTerm(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using SolverOps): Term = x match {
-  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) if SolverOps.hasStableValue(c.inner) => toTerm(c.inner, meta)
+  case MetaTerm(c: HoldNotReadable[CellRW[Term] @unchecked], meta) if SolverOps.hasStableValue(c.inner) => toTerm(c.inner, meta)
 
   case x: Term => x
   case c: CellRW[Term @unchecked] =>
     SolverOps.readStable(c) match {
       case Some(v) => toTerm(v, meta)
-      case None    => MetaTerm(InMeta(c), meta = meta)
+      case None    => MetaTerm(HoldNotReadable(c), meta = meta)
     }
 }
 
 def toTermRec(x: CellRW[Term] | CellR[Term] | Term, meta: Option[TermMeta] = None)(using SolverOps): Term = toTerm(x).descentRec {
-  case x: MetaTerm =>
+  case x: MetaTerm[?] =>
     val updated = toTerm(x, x.meta)
     if (updated == x) x else toTermRec(updated, updated.meta)
   case t => t
@@ -52,22 +52,22 @@ implicit class ToTermOps(private val x: CellRW[Term] | CellR[Term] | Term) exten
 def toCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): CellRW[Term] = x match {
   case c: CellRW[Term @unchecked] =>
     SolverOps.readStable(c) match {
-      case Some(v: MetaTerm) => toCell(v, meta)
-      case _                 => c
+      case Some(v: MetaTerm[?]) => toCell(v, meta)
+      case _                    => c
     }
-  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) => toCell(c.inner, meta)
-  case x: Term                                            => SolverOps.addCell(LiteralCellContent(x))
+  case m @ MetaTerm(_, meta) => toCell(m.unsafeRead[CellRW[Term]], meta)
+  case x: Term               => SolverOps.addCell(LiteralCellContent(x))
 }
 
 @tailrec
 def assumeCell(x: CellRWOr[Term], meta: Option[TermMeta] = None)(using SolverOps): CellRW[Term] = x match {
   case c: CellRW[Term @unchecked] =>
     SolverOps.readStable(c) match {
-      case Some(v: MetaTerm) => assumeCell(v, meta)
-      case _                 => c
+      case Some(v: MetaTerm[?]) => assumeCell(v, meta)
+      case _                    => c
     }
-  case MetaTerm(c: InMeta[CellRW[Term] @unchecked], meta) => assumeCell(c.inner, meta)
-  case x: Term                                            => throw new IllegalArgumentException("Not a cell?")
+  case m @ MetaTerm(_, meta) => assumeCell(m.unsafeRead[CellRW[Term]], meta)
+  case x: Term               => throw new IllegalArgumentException("Not a cell?")
 }
 
 def newHole[T <: Term](using SolverOps): CellRW[T] = SolverOps.addCell(OnceCellContent[T]())

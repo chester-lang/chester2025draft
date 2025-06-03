@@ -27,7 +27,7 @@ trait SemanticCollector {
       localCtx: Context
   ): SymbolCollector = NoopSymbolCollector
 
-  def metaFinished(replace: MetaTerm => Term): Unit = ()
+  def metaFinished(replace: MetaTerm[?] => Term): Unit = ()
 }
 
 private implicit inline def rwUniqIDOfVar[T]: ReadWriter[UniqidOf[ReferenceCall]] =
@@ -42,7 +42,7 @@ case class CollectedSymbol(
 ) derives ReadWriter {
   def name: Name = call.name
 
-  def metaFinished(replace: MetaTerm => Term): CollectedSymbol =
+  def metaFinished(replace: MetaTerm[?] => Term): CollectedSymbol =
     this.copy(call = call.replaceMeta(replace).asInstanceOf[ReferenceCall])
 }
 
@@ -67,7 +67,7 @@ class VectorSemanticCollector extends SemanticCollector {
   }
   def get: Vector[CollectedSymbol] = builder.toVector
 
-  override def metaFinished(replace: MetaTerm => Term): Unit =
+  override def metaFinished(replace: MetaTerm[?] => Term): Unit =
     builder = builder.map(_.metaFinished(replace))
 }
 

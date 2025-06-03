@@ -6,11 +6,11 @@ import chester.utils.elab.SolverOps
 implicit class ZonkAllOnTerm[T <: Term](val t: T) {
   def zonkAll(using ops: SolverOps): t.ThisTree = t
     .descentRec {
-      case t: MetaTerm =>
+      case t: MetaTerm[?] =>
         // introduce a variable for easy breakpoint
         val result = toTermUnstable(t)
         result match {
-          case _: MetaTerm =>
+          case _: MetaTerm[?] =>
             // newline for easy breakpoint
             throw new IllegalStateException("Zonked term is still a MetaTerm")
           case t: Term => t.zonkAll

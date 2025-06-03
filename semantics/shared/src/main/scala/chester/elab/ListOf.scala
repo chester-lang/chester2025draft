@@ -18,7 +18,7 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
   override def run(c: ListOf)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
     toTerm(ty) match {
-      case ty: MetaTerm => Result.Waiting(assumeCell(ty))
+      case ty: MetaTerm[?] => Result.Waiting(assumeCell(ty))
       case ListType(ty, meta) =>
         SolverOps.addConstraint(IsType(ty))
         if (items.isEmpty) {

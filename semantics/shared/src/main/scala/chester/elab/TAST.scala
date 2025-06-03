@@ -21,14 +21,14 @@ implicit val ProblemReaderRW: ReadWriter[() => Vector[TyckProblem]] = readwriter
 
 object TAST {
   def termToBlock(ast: Term): OrM[BlockTerm] = ast match {
-    case b: BlockTerm => b
-    case m: MetaTerm  => m
-    case x            => BlockTerm(Vector(), x, x.meta)
+    case b: BlockTerm                 => b
+    case m: MetaTerm[Term @unchecked] => m
+    case x                            => BlockTerm(Vector(), x, x.meta)
   }
   def termToBlockNoMeta(ast: Term): BlockTerm = ast match {
-    case b: BlockTerm => b
-    case m: MetaTerm  => throw new IllegalArgumentException(s"Expected BlockTerm, but got MetaTerm: $m")
-    case x            => BlockTerm(Vector(), x, x.meta)
+    case b: BlockTerm   => b
+    case m: MetaTerm[?] => throw new IllegalArgumentException(s"Expected BlockTerm, but got MetaTerm: $m")
+    case x              => BlockTerm(Vector(), x, x.meta)
   }
   def apply(fileName: String, module: ModuleRef, ast: Term, ty: Term, effects: EffectsM, problems: () => Vector[TyckProblem]): TAST = new TAST(
     fileName = fileName,

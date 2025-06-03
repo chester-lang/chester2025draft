@@ -19,15 +19,15 @@ case object IsTypeHandler extends Handler[ElabOps, IsType.type](IsType) {
   override def run(c: IsType[Term, Nothing])(using ElabOps, SolverOps): Result = {
     import c.*
     toTerm(result) match {
-      case _: MetaTerm => Result.Waiting(assumeCell(result))
-      case _           => Result.Done
+      case _: MetaTerm[?] => Result.Waiting(assumeCell(result))
+      case _              => Result.Done
     }
   }
 
   override def defaulting(constant: IsType[Term, Nothing], level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
     import constant.*
     toTerm(result) match {
-      case result: MetaTerm =>
+      case result: MetaTerm[?] =>
         assumeCell(result).fill(NothingType(meta = None))
         true
       case _ =>

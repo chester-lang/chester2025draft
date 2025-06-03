@@ -13,10 +13,9 @@ import spire.math.Trilean.*
 import spire.math.{Rational, Trilean}
 import upickle.default.*
 import chester.error.ProblemUpickle.problemRW
-import chester.utils.impls.rationalRW
+import chester.utils.impls.{rationalRW, uintRW, union2RW}
 import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
-import chester.utils.impls.uintRW
 import com.eed3si9n.ifdef.*
 
 import scala.language.implicitConversions
@@ -67,19 +66,19 @@ sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc 
     }
   }
 
-  def collectMeta: Vector[MetaTerm] = {
+  def collectMeta: Vector[MetaTerm[?]] = {
     this match {
-      case term: MetaTerm => return Vector(term)
-      case _              =>
+      case term: MetaTerm[?] => return Vector(term)
+      case _                 =>
     }
-    var result = Vector.empty[MetaTerm]
+    var result = Vector.empty[MetaTerm[?]]
     inspect(x => result ++= x.collectMeta)
     result
   }
 
-  def replaceMeta(f: MetaTerm => Term): Term = thisOr {
+  def replaceMeta(f: MetaTerm[?] => Term): Term = thisOr {
     this match {
-      case term: MetaTerm => f(term)
+      case term: MetaTerm[?] => f(term)
       case _ =>
         descent2([T <: Term] => (x: T) => x.replaceMeta(f).asInstanceOf[x.ThisTree])
     }
@@ -263,18 +262,16 @@ extension (e: EffectsM) {
   }
 }
 
-sealed abstract class EffectsM extends Term derives ReadWriter {
-  // commented out because of MetaTerm
-  // override type ThisTree <: EffectsM
-}
-case class MetaTerm(@const impl: InMeta[?], @const meta: Option[TermMeta]) extends EffectsM with SpecialTerm derives ReadWriter {
-  type ThisTree = Term
+implicit val EffectsMrw: ReadWriter[EffectsM] = union2RW[Effects, MetaTerm[Effects]]
+type EffectsM = Effects | MetaTerm[Effects]
+case class MetaTerm[T <: Term](@const impl: HoldNotReadable[?], @const meta: Option[TermMeta]) extends SpecialTerm derives ReadWriter {
+  override type ThisTree = MetaTerm[T] | T
   override def toDoc(using PrettierOptions): Doc =
     Doc.group("Meta(" <> Doc.text(impl.toString) <> ")")
 
-  def unsafeRead[T]: T = impl.inner.asInstanceOf[T]
+  inline def unsafeRead[A]: A = impl.inner.asInstanceOf[A]
 
-  override def descent(f: Term => Term, g: TreeMap[Term]): MetaTerm = this
+  override def descent(f: Term => Term, g: TreeMap[Term]): MetaTerm[T] = this
 }
 @ifndef("syntax-truffle")
 case class ListTerm(terms: Seq[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
@@ -800,7 +797,7 @@ sealed abstract class Builtin extends WHNF derives ReadWriter {
 sealed abstract class Effect extends WHNF derives ReadWriter {
   override type ThisTree <: Effect
 }
-case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const meta: Option[TermMeta]) extends EffectsM with WHNF derives ReadWriter {
+case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
 
   override type ThisTree = Effects
   override def toDoc(using PrettierOptions): Doc =
@@ -808,10 +805,10 @@ case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const met
       k.toDoc <+> Docs.`:` <+> v.toDoc
     })
 
-  override def collectMeta: Vector[MetaTerm] =
+  override def collectMeta: Vector[MetaTerm[?]] =
     effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
-  override def replaceMeta(f: MetaTerm => Term): Term = copy(effects = effects.map { case (a, b) =>
+  override def replaceMeta(f: MetaTerm[?] => Term): Term = copy(effects = effects.map { case (a, b) =>
     (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
   })
   def isEmpty: Boolean = effects.isEmpty

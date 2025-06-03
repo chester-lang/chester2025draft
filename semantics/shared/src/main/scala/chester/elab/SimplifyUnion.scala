@@ -31,7 +31,7 @@ case object SimplifyUnionHandler extends Handler[ElabOps, SimplifyUnion.type](Si
   override def run(c: SimplifyUnion)(using ElabOps, SolverOps): Result = {
     import c.*
     val xs = cleanUpUnion(items.map(toTerm(_)))
-    val foundMeta = xs.find(_.isInstanceOf[MetaTerm])
+    val foundMeta = xs.find(_.isInstanceOf[MetaTerm[?]])
     if (foundMeta.isDefined) {
       return Result.Waiting(assumeCell(foundMeta.get))
     }
