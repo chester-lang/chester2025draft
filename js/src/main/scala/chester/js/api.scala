@@ -3,7 +3,6 @@ package chester.js
 import chester.elab.{DefaultElaborator, ElabOps}
 import chester.error.*
 import chester.elab.api.*
-
 import chester.doc.consts.LightMode
 import chester.reader.FileNameAndContent
 import chester.utils.doc.ColorfulToHtml.colorfulToHtml

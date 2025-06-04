@@ -67,8 +67,8 @@ def render(
 )(using options: DocConf, printer: DocPrinter): printer.Layout =
   render0(doc.toDoc)
 def render(doc: ToDoc, w: Width)(using
-                                 options: DocConf,
-                                 printer: DocPrinter
+    options: DocConf,
+    printer: DocPrinter
 ): printer.Layout = render0(doc.toDoc, w)
 
 @deprecated("use mkList")
@@ -91,7 +91,7 @@ def mkList(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep:
 
 /** no softline compared to mkList */
 def mkDoc(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using
-                                                                                             DocConf
+    DocConf
 ): Doc = group {
   docs.toList match {
     case Nil =>

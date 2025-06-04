@@ -6,10 +6,10 @@ import chester.readerv2.ReaderV2.DEBUG
 import chester.syntax.concrete.*
 import munit.FunSuite
 import upickle.default.*
+import chester.error.reporterToEither
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import chester.error.reporterToEither
 
 class FileParserTestV1 extends FunSuite {
   val (testDir, inputFiles) = getInputFiles("tests/parser")

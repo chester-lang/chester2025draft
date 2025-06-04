@@ -2,7 +2,6 @@ package chester.syntax
 
 import chester.utils.reuse
 
-import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 trait Tree[A <: Tree[A]] extends Any {

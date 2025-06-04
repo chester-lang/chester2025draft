@@ -1,7 +1,4 @@
 package chester.scala
-
-import chester.syntax.core._
-
 import scala.meta
 import scala.meta._
 import scala.annotation.experimental

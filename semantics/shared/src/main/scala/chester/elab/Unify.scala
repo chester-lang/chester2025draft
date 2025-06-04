@@ -52,8 +52,8 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         SolverOps.addConstraint(Unify(lhs1, rhs1, next = next))
         Result.Done
       case (ListType(_, meta), _: SimpleType) => failed(c)
-      case (lhs: MetaTerm[?], _)                 => Result.Waiting(assumeCell(lhs))
-      case (_, rhs: MetaTerm[?])                 => Result.Waiting(assumeCell(rhs))
+      case (lhs: MetaTerm[?], _)              => Result.Waiting(assumeCell(lhs))
+      case (_, rhs: MetaTerm[?])              => Result.Waiting(assumeCell(rhs))
       case (Union(lhs, _), Union(rhs, rhsMeta)) =>
         val lhs1 = lhs.map(toTerm(_))
         val rhs1 = rhs.map(toTerm(_))
@@ -89,7 +89,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
     (lhsV, rhsV) match {
       case (MetaTerm(HoldNotReadable[CellRW[Term] @unchecked](lhs), meta), rhs) => lhs.fill(rhs)
       case (lhs, MetaTerm(HoldNotReadable[CellRW[Term] @unchecked](rhs), meta)) => rhs.fill(lhs)
-      case _                                                           => ()
+      case _                                                                    => ()
     }
     true
   }

@@ -133,7 +133,7 @@ private object ObjectDesalt {
         val updatedNested = insertNested(Vector((ks, v)), nestedObj)
         val updatedClauses = acc.clauses.filterNot {
           case ObjectExprClause(id: Identifier, _, _) => id.name == k
-          case _                                   => false
+          case _                                      => false
         } :+ ObjectExprClause(Identifier(k, v.meta), updatedNested)
         acc.copy(clauses = updatedClauses)
       case (acc, _) => acc

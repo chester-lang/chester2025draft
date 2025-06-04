@@ -6,10 +6,10 @@ import upickle.default.*
 import chester.i18n.*
 import chester.readerv1.ChesterReaderV1
 import chester.readerv2.ReaderV2.DEBUG
+import chester.error.reporterToEither
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import chester.error.reporterToEither
 
 class FileParserTest extends FunSuite {
   val (testDir, inputFiles) = getInputFiles("tests/parser")
@@ -22,11 +22,13 @@ class FileParserTest extends FunSuite {
       val expectedExists = Files.exists(expectedFile)
 
       DEBUG.withValue(false) {
-        reporterToEither(ChesterReaderV1
-          .parseTopLevel(
-            FilePath(inputFile.toString),
-            ignoreLocation = true
-          ))
+        reporterToEither(
+          ChesterReaderV1
+            .parseTopLevel(
+              FilePath(inputFile.toString),
+              ignoreLocation = true
+            )
+        )
           .fold(
             error => fail(t"Failed to parse file: $inputFile, error: $error"),
             { parsedBlock =>
