@@ -71,9 +71,13 @@ def render(doc: ToDoc, w: Width)(using
     printer: DocPrinter
 ): printer.Layout = render0(doc.toDoc, w)
 
+@deprecated("use mkList")
 def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
     docs: Iterable[ToDoc]
-)(using PrettierOptions): Doc = group {
+)(using PrettierOptions): Doc = mkList(docs, begin, end, sep)
+
+/** already use softline to either insert a space or a linebreak after sep, no need to add one */
+def mkList(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using PrettierOptions): Doc = group {
   docs.toList match {
     case Nil =>
       begin.toDoc <> end.toDoc
@@ -85,13 +89,19 @@ def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
   }
 }
 
-def mkDoc(sep: ToDoc = ",", docs: Iterable[ToDoc])(using
+/** no softline compared to mkList */
+def mkDoc(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using
     PrettierOptions
-): Doc = docs.toList match {
-  case Nil         => Doc.empty
-  case head :: Nil => head.toDoc
-  case head :: tail =>
-    tail.foldLeft(head.toDoc)((acc, doc) => acc <> sep.toDoc <> doc.toDoc)
+): Doc = group {
+  docs.toList match {
+    case Nil =>
+      begin.toDoc <> end.toDoc
+    case head :: Nil =>
+      begin.toDoc <> head.toDoc <> end.toDoc
+    case head :: tail =>
+      val content = tail.foldLeft(head.toDoc)((acc, doc) => acc <> sep.toDoc <> doc.toDoc)
+      begin.toDoc <> content <> end.toDoc
+  }
 }
 
 def concat(docs: ToDoc*)(using PrettierOptions): Doc = group {
@@ -111,7 +121,7 @@ object Doc {
   def indented(doc: ToDoc)(using PrettierOptions): Doc = doc.indented()
   def indent(doc: ToDoc)(using PrettierOptions): Doc = doc.indented()
 
-  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, mkDoc, empty, concat, hardline, line, sep, link}
+  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, mkList, mkDoc, empty, concat, hardline, line, sep, link}
 }
 
 implicit class DocOps(doc: Doc) extends AnyVal {
@@ -262,10 +272,14 @@ extension (self: ToDoc)(using options: PrettierOptions) {
     if pred(other) then self <+> other else self
 
   /** Return the concatenation of this document with the argument using a `softline` separator.
+    *
+    * softline: Return a document that behaves like `space` if the resulting output fits the page, otherwise it behaves like `line`.
     */
   def </>(other: ToDoc): Doc = `$</>`(self, other)
 
   /** Return the concatenation of this document with the argument using a `softbreak` separator.
+    *
+    * softbreak: Return a document that behaves like `empty` if the resulting output fits the page, otherwise it behaves like `line`.
     */
   def <\>(other: ToDoc): Doc = `$<\\>`(self, other)
 
