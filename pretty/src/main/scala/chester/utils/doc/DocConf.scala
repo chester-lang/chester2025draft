@@ -24,19 +24,19 @@ case class DocConf(x: Map[DocConfKey[?], Any]) extends AnyVal {
     DocConf(options.updated(key, value))
 }
 
-case class PrettierKeyValue[T](key: DocConfKey[T], value: T)
+case class DocConfKeyVal[T](key: DocConfKey[T], value: T)
 
-implicit def tuple2PrettyKeyValue[T](
+implicit def tuple2docConfKeyVal[T](
     tuple: (DocConfKey[T], T)
-): PrettierKeyValue[T] = PrettierKeyValue(tuple._1, tuple._2)
-implicit def prettyKeyValue2Tuple[T](
-    kv: PrettierKeyValue[T]
+): DocConfKeyVal[T] = DocConfKeyVal(tuple._1, tuple._2)
+implicit def docConfKeyVal2tuple[T](
+    kv: DocConfKeyVal[T]
 ): (DocConfKey[T], T) = (kv.key, kv.value)
 
 object DocConf {
   val Default: DocConf = DocConf(Map.empty)
 
-  def apply(options: PrettierKeyValue[?]*): DocConf = DocConf(
-    options.map(prettyKeyValue2Tuple).toMap
+  def apply(options: DocConfKeyVal[?]*): DocConf = DocConf(
+    options.map(docConfKeyVal2tuple).toMap
   )
 }
