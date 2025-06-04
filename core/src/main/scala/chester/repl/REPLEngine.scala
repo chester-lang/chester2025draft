@@ -203,9 +203,11 @@ def REPLEngine[F[_]](using
   }
 
   def typeCheck(expr: Expr): TyckResult[?, Judge] = {
-    given reporter: VectorReporter[TyckProblem] = new VectorReporter[TyckProblem]()
-    given ElabOps = ElabOps(reporter, NoopSemanticCollector)
-    TyckResult0((), DefaultElaborator.inferPure(expr), reporter.getReports)
+    platformInfo.withValue(JVMPlatformInfo) {
+      given reporter: VectorReporter[TyckProblem] = new VectorReporter[TyckProblem]()
+      given ElabOps = ElabOps(reporter, NoopSemanticCollector)
+      TyckResult0((), DefaultElaborator.inferPure(expr), reporter.getReports)
+    }
   }
 
   def printErrors(
