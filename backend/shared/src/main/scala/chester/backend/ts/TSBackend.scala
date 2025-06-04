@@ -84,8 +84,12 @@ case object TSBackend extends Backend(Typescript) {
       },
       "Module must return unit"
     )
-    given TSContext = TSContext.create()
-    Toplevel(mod.ast.statements.map(compileStmt))
+    implicit var ctx: TSContext = TSContext.create()
+    Toplevel(mod.ast.statements.map { stmt =>
+      val (compiledStmt, newCtx) = compileStmt(stmt)(using ctx)
+      ctx = newCtx
+      compiledStmt
+    })
   }
   def compileType(term: Term)(using ctx: TSContext): TSType = term match {
     case IntType(meta) => NumberType(meta)
@@ -95,23 +99,26 @@ case object TSBackend extends Backend(Typescript) {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
     case _                    => ???
   }
-  def introduceLetVar(let: LetStmtTerm)(using ctx: TSContext): String = {
+  def introduceLetVar(let: LetStmtTerm)(using ctx: TSContext): (String, TSContext) = {
     // TODO: handle shadowing and uniqueness and javascript reserved words and javascript reserved symbols and a lot more
-    val name = let.localv.name
+    val (name, ctx1) = ctx.convertAndAdd(let.localv.name)
     assume(!ctx.map.contains(let.localv.uniqId), s"Variable $name already exists in the context")
     val _ = ctx.map.put(let.localv.uniqId, name)
-    name
+    (name, ctx1)
   }
   def useVar(localV: LocalV)(using ctx: TSContext): String =
     ctx.map.getOrElse(localV.uniqId, throw new IllegalArgumentException(s"Variable ${localV.name} not found in context"))
-  def compileStmt(stmt: StmtTerm)(using ctx: TSContext): TSStmt = stmt match {
+  def compileStmt(stmt: StmtTerm)(using ctx: TSContext): (TSStmt, TSContext) = stmt match {
     case let: LetStmtTerm =>
-      val name = introduceLetVar(let)
-      ConstStmt(
-        name = name,
-        ty = Some(compileType(let.ty)),
-        value = compileExpr(let.value),
-        meta = let.meta
+      val (name, ctx) = introduceLetVar(let)
+      (
+        ConstStmt(
+          name = name,
+          ty = Some(compileType(let.ty)),
+          value = compileExpr(let.value),
+          meta = let.meta
+        ),
+        ctx
       )
     case _ => ???
   }
