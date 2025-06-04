@@ -1,8 +1,10 @@
 package chester.backend.ts
 
 import chester.elab.*
+import chester.utils.*
 import chester.syntax.core.*
 import chester.backend.{Backend, Typescript}
+import chester.error.unreachable
 import chester.uniqid.UniqidOf
 
 import scala.collection.mutable
@@ -13,7 +15,53 @@ implicit def metaConvert(x: Option[TermMeta]): Option[Meta] = x match {
   case None                 => None
 }
 
-case class TSContext(map: mutable.HashMap[UniqidOf[LocalV], String])
+object IdentifierRules {
+  // In JavaScript, identifiers can contain Unicode letters, $, _, and digits (0-9), but may not start with a digit.
+  // An identifier differs from a string in that a string is data, while an identifier is part of the code.
+  // In JavaScript, there is no way to convert identifiers to strings, but sometimes it is possible to parse strings into identifiers.
+  def charToJS(codePoint: Int): String = {
+    val str = new String(Character.toChars(codePoint))
+    if (Character.isLetter(codePoint)) return str
+    if (str == "$" || str == "_") return str
+    if (Character.isDigit(codePoint)) return str
+    if (str == "+") return "Plus"
+    if (str == "-") return "Minus"
+    if (str == "*") return "Star"
+    if (str == "/") return "Slash"
+    if (str == "=") return "Equals"
+    if (str == "<") return "Less"
+    if (str == ">") return "Greater"
+    "$"
+  }
+
+  def convertToJSIdentifier(codePoints: Seq[Int]): String = {
+    val sb = new StringBuilder()
+    for (codePoint <- codePoints) {
+      if (sb.isEmpty && Character.isDigit(codePoint)) {
+        sb.append("_") // The First character cannot be a digit, so we prepend a _ sign
+      }
+      sb.append(charToJS(codePoint))
+    }
+    sb.toString()
+  }
+
+  def convertToJSIdentifier(name: String): String =
+    convertToJSIdentifier(name.getCodePoints)
+
+  def newSymbol(exisiting: Set[String], need: String): String = {
+    if (!exisiting.contains(need)) return need
+    var i = 1
+    while (true) {
+      val newName = s"${need}_$i"
+      if (!exisiting.contains(newName)) return newName
+      i += 1
+    }
+    unreachable()
+  }
+
+}
+
+case class TSContext(map: mutable.HashMap[UniqidOf[LocalV], String], definedSymbols: Set[String] = Set.empty)
 
 object TSContext {
   def create(map: mutable.HashMap[UniqidOf[LocalV], String] = new mutable.HashMap()): TSContext =
@@ -34,7 +82,7 @@ case object TSBackend extends Backend(Typescript) {
   }
   def compileType(term: Term)(using ctx: TSContext): TSType = term match {
     case IntType(meta) => NumberType(meta)
-    case _ => ???
+    case _             => ???
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
