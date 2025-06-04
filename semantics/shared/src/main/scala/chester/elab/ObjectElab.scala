@@ -3,7 +3,7 @@ package chester.elab
 import chester.error.unreachable
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.tyck.*
 import chester.utils.elab.*
 
 case object ObjectElab extends Kind {
@@ -24,11 +24,20 @@ case class ObjectElab(obj: ObjectExpr, ty: CellRWOr[Term])(using elab0: Elab, op
 case object ObjectElabHandler extends Handler[ElabOps, ObjectElab.type](ObjectElab) {
   override def run(c: ObjectElab)(using elabOps: ElabOps, solver: SolverOps): Result = {
     import c.{*, given}
+    // TODO: different elab rules for more cases like when use lile a hashmap
     val xs = obj.clauses.map {
       case _: ObjectExprClause             => unreachable("ObjectExprClause should already be resolved")
-      case clause: ObjectExprClauseOnValue => (elab.infer(clause.key), elab.infer(clause.value))
+      case clause: ObjectExprClauseOnValue => (elab.inferPure(clause.key), elab.infer(clause.value), clause.meta)
     }
-    ???
+    val types = xs.map { case (k, v, meta) => ObjectClauseValueTerm(toTerm(k.wellTyped), toTerm(v.ty), meta) }
+    val values = xs.map { case (k, v, meta) => ObjectClauseValueTerm(toTerm(k.wellTyped), toTerm(v.wellTyped), meta) }
+    val ty1 = ObjectType(
+      types,
+      meta = obj.meta
+    )
+    ty >:! toTerm(ty1)
+    result.fill(ObjectTerm(values, meta = convertMeta(obj.meta)))
+    Result.Done
   }
 
   override def canDefaulting(level: DefaultingLevel): Boolean = false

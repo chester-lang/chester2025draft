@@ -92,6 +92,15 @@ trait Elab {
     (result, ty)
   }
 
+  def inferPure(expr: Expr)(using
+      ctx: Context,
+      _1: ElabOps,
+      _2: SolverOps
+  ): (wellTyped: CellRWOr[Term], ty: CellRWOr[Term]) = {
+    given ctx1: Context = ctx.copy(effects = newPureEffects.toEffectsM)
+    infer(expr)(using ctx1, _1, _2)
+  }
+
   def inferType(expr: Expr)(using
       ctx: Context,
       _1: ElabOps,
