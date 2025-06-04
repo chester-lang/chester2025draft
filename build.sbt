@@ -571,7 +571,7 @@ lazy val scalaSTM = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .disablePlugins(ScalafixPlugin)
   .jvmSettings(commonJvmSettings)
 
-val AIRFRAME_VERSION = "2025.1.11"
+val AIRFRAME_VERSION = "2025.1.12"
 val ironVersion = "3.0.1"
 
 // split modules trying to increase incremental compilation speed
