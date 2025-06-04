@@ -14,20 +14,21 @@ case object BlockElab extends Kind {
   type Of = BlockElab
 }
 
-case class BlockElab(block: Block, ty: CellRWOr[Term])(using elab: Elab, ops: SolverOps, ctx: Context)
+case class BlockElab(block: Block, ty: CellRWOr[Term])(using elab: Elab, ops: SolverOps, ctx0: Context)
     extends Constraint(BlockElab)
     with ConstraintTerm {
   override val result: CellRW[Term] = newHole
-  given context: Context = ctx
+  val ctx: Context = ctx0
   given Elab = elab
 }
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
   override def run(c: BlockElab)(using elab: ElabOps, solver: SolverOps): Result = {
-    import c.{*, given}
-    val exprStatements = block.statements.map(resolve(_)(using c.context))
-    val outerContext = c.context
-    given context: MutableContext = new MutableContext(outerContext)
+    import c.*
+    val exprStatements = block.statements.map(resolve(_)(using c.ctx))
+    val outerContext = c.ctx
+    val context: MutableContext = new MutableContext(outerContext)
+    given MutableContext = context
     var statements: Vector[StmtTerm] = Vector()
     val defs: mutable.Queue[(defined: Identifier, ty: CellRW[Term], id: UniqidOf[LocalV], localv: LocalV)] = mutable.Queue()
     exprStatements.foreach {
@@ -52,10 +53,10 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
           pattern match {
             case DefinedPattern(pattern) =>
               val ty = toTerm(let.ty match {
-                case Some(ty) => given_Elab.inferType(ty).wellTyped
+                case Some(ty) => c.given_Elab.inferType(ty).wellTyped
                 case None     => newType
               })
-              val wellTyped = toTerm(given_Elab.check(body, ty))
+              val wellTyped = toTerm(c.given_Elab.check(body, ty))
               pattern match {
                 case PatternBind(name, meta) =>
                   if (let.kind == LetDefType.Let) {
@@ -78,7 +79,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
         case _ => ???
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))
-    val returning = toTerm(given_Elab.check(resultExpr, ty))
+    val returning = toTerm(c.given_Elab.check(resultExpr, ty))
     assume(defs.isEmpty)
     // TODO: checking for possible leakage and do substitution for examples like {let a = Int; 1 : a}
     result.fill(BlockTerm(statements, returning, convertMeta(block.meta)))
