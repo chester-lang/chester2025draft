@@ -7,7 +7,7 @@ import chester.utils.doc.*
 inline def unreachable(message: String | ToDoc = ""): Nothing = {
   val msg = message match {
     case msg: String => msg
-    case msg: ToDoc  => StringPrinter.render(msg)(using PrettierOptions.Default)
+    case msg: ToDoc  => StringPrinter.render(msg)(using DocConf.Default)
   }
   throw new AssertionError(msg)
 }

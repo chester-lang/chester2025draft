@@ -8,19 +8,19 @@ object Colors {
 }
 
 class ColorProfile {
-  def literalColor(using PrettierOptions): Style =
+  def literalColor(using DocConf): Style =
     if (LightMode.get) Foreground.Red else Foreground.LightRed
 
-  def typeColor(using PrettierOptions): Style =
+  def typeColor(using DocConf): Style =
     if (LightMode.get) Foreground.Blue else Foreground.LightBlue
 }
 
-case object ColorProfile extends PrettierOptionsKey[ColorProfile] {
+case object ColorProfile extends DocConfKey[ColorProfile] {
 
   val default = new ColorProfile
 
-  def literalColor(using PrettierOptions): Style = get.literalColor
+  def literalColor(using DocConf): Style = get.literalColor
 
-  def typeColor(using PrettierOptions): Style = get.typeColor
+  def typeColor(using DocConf): Style = get.typeColor
 
 }

@@ -3,7 +3,7 @@ package chester.reader
 import upickle.default.*
 import chester.error.*
 import chester.utils.{Nat, WithUTF16}
-import chester.utils.doc.{Doc, PrettierOptions}
+import chester.utils.doc.{Doc, DocConf}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
 
@@ -11,7 +11,7 @@ case class ParseError(message: String, span0: Option[Span] = None) extends Probl
   override def severity: Problem.Severity = Problem.Severity.Error
   override def stage: Problem.Stage = Problem.Stage.PARSE
 
-  override def toDoc(using PrettierOptions): Doc = Doc.text(message)
+  override def toDoc(using DocConf): Doc = Doc.text(message)
 }
 
 sealed trait ParserSource extends Product with Serializable derives ReadWriter {

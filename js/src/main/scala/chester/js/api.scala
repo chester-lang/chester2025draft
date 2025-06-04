@@ -13,8 +13,8 @@ import chester.readerv1.ChesterReaderV1
 import chester.error.TyckError
 
 def runFileTopLevel(content: String, lightMode: Boolean): String = {
-  given options: PrettierOptions =
-    PrettierOptions.Default.updated(LightMode, lightMode)
+  given options: DocConf =
+    DocConf.Default.updated(LightMode, lightMode)
   reporterToEither(
     ChesterReaderV1.parseTopLevel(
       FileNameAndContent("playground.chester", content)

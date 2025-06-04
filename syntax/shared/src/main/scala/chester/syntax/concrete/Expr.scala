@@ -129,7 +129,7 @@ sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadW
   final def commentInfo: Option[CommentInfo] = meta.flatMap(_.commentInfo)
 
   override def toString: String = {
-    implicit val options: PrettierOptions = PrettierOptions.Default
+    implicit val options: DocConf = DocConf.Default
     render(this)
   }
 }
@@ -157,7 +157,7 @@ case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr d
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Identifier = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = Doc.text(name)
+  override def toDoc(using DocConf): Doc = Doc.text(name)
 
   def toSymbol: SymbolLiteral = SymbolLiteral(name, meta)
 }
@@ -176,7 +176,7 @@ case class ResolvedIdentifier(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ResolvedIdentifier = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text(module.toString) <> Docs.`.` <> Doc.text(name)
   )
 }
@@ -195,7 +195,7 @@ case class ResolvedLocalVar(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ResolvedLocalVar = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text(name) <> Doc.text(s"($varId)")
   )
 }
@@ -211,7 +211,7 @@ case class OpSeq(seq: Vector[Expr], meta: Option[ExprMeta]) extends ParsedExpr w
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): OpSeq = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(seq.map(_.toDoc))
   )
 }
@@ -237,7 +237,7 @@ case class InfixExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): InfixExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     left.toDoc <+> operator.toDoc <+> right.toDoc
   )
 }
@@ -260,7 +260,7 @@ case class PrefixExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PrefixExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     operator.toDoc <+> operand.toDoc
   )
 }
@@ -283,7 +283,7 @@ case class PostfixExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PostfixExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     operand.toDoc <+> operator.toDoc
   )
 }
@@ -303,7 +303,7 @@ case class Block(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Block = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val headDocs = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`;` </> Doc.empty)(statements.map(_.toDoc))
     val tailDoc = result.map(_.toDoc).getOrElse(Doc.empty)
 
@@ -356,7 +356,7 @@ case class Arg(
       s"Arg($decorations,$name,$ty,$exorOrDefault,$vararg)"
   }
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val decDoc =
       if (decorations.nonEmpty)
         Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(decorations.map(_.toDoc)) <+> Doc.empty
@@ -384,7 +384,7 @@ case class CallingArg(
   def descent(f: Expr => Expr, g: TreeMap[Expr]): CallingArg =
     CallingArg(name.map(g(_)), f(expr), vararg, meta)
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val nameDoc = name.map(n => n.toDoc <> Docs.`=` <+> Doc.empty).getOrElse(Doc.empty)
     val exprDoc = expr.toDoc
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
@@ -409,7 +409,7 @@ case class DesaltCallingTelescope(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltCallingTelescope = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val argsDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`,` <+> Doc.empty)(args.map(_.toDoc))
     if (implicitly) Docs.`[` <> argsDoc <> Docs.`]`
     else Docs.`(` <> argsDoc <> Docs.`)`
@@ -435,7 +435,7 @@ case class Tuple(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedMayb
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Tuple = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(terms.map(_.toDoc))
 }
 
@@ -455,7 +455,7 @@ case class DefTelescope(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DefTelescope = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(args.map(_.toDoc))
 }
 
@@ -479,7 +479,7 @@ case class FunctionCall(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): FunctionCall = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     function.toDoc <> telescope.toDoc
   )
 }
@@ -503,7 +503,7 @@ case class DesaltFunctionCall(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltFunctionCall = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     function.toDoc <> Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescopes.map(_.toDoc))
   )
 }
@@ -541,7 +541,7 @@ case class DotCall(
     }
   }
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     expr.toDoc <> Docs.`.` <> field.toDoc <>
       Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
   )
@@ -571,7 +571,7 @@ case class IntegerLiteral(value: BigInt, meta: Option[ExprMeta]) extends Literal
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): IntegerLiteral =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.text(value.toString)
 }
 
@@ -583,7 +583,7 @@ case class RationalLiteral(value: Rational, meta: Option[ExprMeta]) extends Lite
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): RationalLiteral =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.text(value.toString)
 }
 
@@ -601,7 +601,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): StringLiteral =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.text("\"" + encodeString(value) + "\"")
 }
 
@@ -613,7 +613,7 @@ case class SymbolLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): SymbolLiteral =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.text("'" + value)
 
   def toIdentifier: Identifier = Identifier(value, meta)
@@ -630,7 +630,7 @@ case class ListExpr(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedM
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ListExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.wrapperlist(Docs.`[`, Docs.`]`, Docs.`,` <+> Doc.empty)(terms.map(_.toDoc))
 }
 
@@ -643,7 +643,7 @@ case class HoleExpr(description: String, meta: Option[ExprMeta]) extends Expr {
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): HoleExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("?") <> Doc.text(description)
   )
 }
@@ -659,7 +659,7 @@ case class TypeAnnotation(expr: Expr, ty: Expr, meta: Option[ExprMeta]) extends 
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): TypeAnnotation = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     expr.toDoc <> Docs.`:` <+> ty.toDoc
   )
 }
@@ -685,7 +685,7 @@ case class AnnotatedExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): AnnotatedExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     annotation.toDoc <>
       Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc)) <> expr.toDoc
   )
@@ -703,7 +703,7 @@ case class ObjectExprClause(key: QualifiedName, value: Expr, meta: Option[ExprMe
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectExprClause = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     key.toDoc <> Docs.`=` <+> value.toDoc
   }
 }
@@ -716,7 +716,7 @@ case class ObjectExprClauseOnValue(key: Expr, value: Expr, meta: Option[ExprMeta
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectExprClauseOnValue = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     key.toDoc <> Docs.`=>` <+> value.toDoc
   }
 }
@@ -745,7 +745,7 @@ case class ObjectExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`,` <+> Doc.empty)(
       clauses.map {
         case ObjectExprClause(key, value, _) =>
@@ -771,7 +771,7 @@ case class Keyword(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Keyword = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("#" + key) <>
       Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
   )
@@ -796,7 +796,7 @@ case class DesaltCaseClause(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltCaseClause = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("case") <+> pattern.toDoc <+> Docs.`=>` <+> returning.toDoc
   )
 }
@@ -815,7 +815,7 @@ case class DesaltMatching(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltMatching = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`;` <+> Doc.empty)(
       clauses.map(_.toDoc)
     )
@@ -844,7 +844,7 @@ case class FunctionExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): FunctionExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val telescopeDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
     val effectDoc = effect.map(_.toDoc).getOrElse(Doc.empty)
     val resultDoc = resultTy.map(r => Docs.`->` <+> r.toDoc).getOrElse(Doc.empty)
@@ -871,7 +871,7 @@ case class TypeAnotationNoEffects(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): TypeAnotationNoEffects = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     expr.toDoc <> Docs.`:` <+> ty.toDoc
   )
 }
@@ -896,7 +896,7 @@ case class RecoverableParseError(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): RecoverableParseError = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("RecoverableParseError(") <>
       partialResult.map(_.toDoc).getOrElse(Doc.text("None")) <> Doc.text(", ") <>
       Doc.text(message) <> Doc.text(")")
@@ -914,7 +914,7 @@ case object EmptyExpr extends ErrorExpr {
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): EmptyExpr.type = throw new UnsupportedOperationException()
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Doc.text("EmptyExpr")
 }
 
@@ -934,7 +934,7 @@ case class DesaltFailed(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltFailed = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("DesaltFailed(") <> origin.toDoc <> Doc.text(
       ", "
     ) <> error.toDoc <> Doc.text(")")
@@ -957,7 +957,7 @@ case class PatternCompare(literal: Expr, meta: Option[ExprMeta]) extends DesaltP
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PatternCompare = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = literal.toDoc
+  override def toDoc(using DocConf): Doc = literal.toDoc
 }
 
 case class PatternBind(name: Identifier, meta: Option[ExprMeta]) extends DesaltPattern {
@@ -969,7 +969,7 @@ case class PatternBind(name: Identifier, meta: Option[ExprMeta]) extends DesaltP
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PatternBind = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = name.toDoc
+  override def toDoc(using DocConf): Doc = name.toDoc
 
   override def bindings: Vector[Identifier] = Vector(name)
 }
@@ -1001,7 +1001,7 @@ case class ExprStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ExprStmt =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = expr.toDoc
+  override def toDoc(using DocConf): Doc = expr.toDoc
 }
 
 @deprecated("not used")
@@ -1022,7 +1022,7 @@ case class PrecedenceGroupResolving(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): PrecedenceGroupResolving = this
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val nameDoc = name.toDoc
     val higherThanDoc =
       if (higherThan.isEmpty) Doc.empty
@@ -1058,7 +1058,7 @@ case class PrecedenceGroupResolved(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): PrecedenceGroupResolved = this
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val nameDoc = name.toString
     val higherThanDoc =
       if (higherThan.isEmpty) Doc.empty
@@ -1089,7 +1089,7 @@ sealed trait Defined extends ToDoc derives ReadWriter {
 }
 
 case class DefinedPattern(pattern: DesaltPattern) extends Defined {
-  override def toDoc(using PrettierOptions): Doc = pattern.toDoc
+  override def toDoc(using DocConf): Doc = pattern.toDoc
 
   def bindings: Vector[Identifier] = pattern.bindings
 }
@@ -1100,7 +1100,7 @@ case class DefinedFunction(
 ) extends Defined {
   def bindings: Vector[Identifier] = Vector(id)
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     id.toDoc <> Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
   )
 }
@@ -1114,7 +1114,7 @@ case class UnitExpr(meta: Option[ExprMeta]) extends DesaltExpr {
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): UnitExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = Doc.text("()")
+  override def toDoc(using DocConf): Doc = Doc.text("()")
 }
 
 case class LetDefStmt(
@@ -1145,7 +1145,7 @@ case class LetDefStmt(
     case LetDefType.Def => Bindings(forwardingBindings = defined.bindings)
   }
 
-  override def toDoc(using PrettierOptions): Doc = group {
+  override def toDoc(using DocConf): Doc = group {
     val kindDoc = kind match {
       case LetDefType.Let => Doc.text("let")
       case LetDefType.Def => Doc.text("def")
@@ -1185,7 +1185,7 @@ case class TraitStmt(
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): TraitStmt =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val nameDoc = name.toDoc
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
@@ -1215,7 +1215,7 @@ case class InterfaceStmt(
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): InterfaceStmt =
     copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val nameDoc = name.toDoc
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
@@ -1243,7 +1243,7 @@ case class ExtensionStmt(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ExtensionStmt = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val telescopeDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
     val bodyDoc = body.toDoc
     group(
@@ -1280,7 +1280,7 @@ case class RecordField(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): RecordField = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val tyDoc = ty.map(t => Docs.`:` <+> t.toDoc).getOrElse(Doc.empty)
     val defaultDoc = defaultValue.map(v => Docs.`=` <+> v.toDoc).getOrElse(Doc.empty)
     name.toDoc <> tyDoc <> defaultDoc
@@ -1298,7 +1298,7 @@ case class ExtendsClause(superTypes: Vector[Expr], meta: Option[ExprMeta]) exten
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ExtendsClause = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val typesDoc = superTypes.map(_.toDoc).reduce((a, b) => a <+> Docs.`with` <+> b)
     Docs.`<:` <+> typesDoc
   }
@@ -1325,7 +1325,7 @@ case class RecordStmt(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): RecordStmt = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
     val fieldsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(fields.map(_.toDoc))
     val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
@@ -1356,7 +1356,7 @@ case class ObjectStmt(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectStmt = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = {
+  override def toDoc(using DocConf): Doc = {
     val nameDoc = name.toDoc
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(_.toDoc).getOrElse(Doc.empty)
@@ -1373,7 +1373,7 @@ case class ReturnStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
     ReturnStmt(f(expr), meta)
   }
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("return ") <> expr.toDoc
   )
 
@@ -1386,7 +1386,7 @@ case class ImportStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ImportStmt = this
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("import") <+> module.toDoc
   )
 
@@ -1399,7 +1399,7 @@ case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ModuleStmt = this
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.text("module") <+> module.toDoc
   )
 
@@ -1422,7 +1422,7 @@ case class UnionTypeExpr(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): UnionTypeExpr = copy(meta = updater(meta))
 
-  override def toDoc(using PrettierOptions): Doc = group(
+  override def toDoc(using DocConf): Doc = group(
     Doc.wrapperlist(Doc.empty, Doc.empty, Doc.text(" | "))(types.map(_.toDoc))
   )
 }

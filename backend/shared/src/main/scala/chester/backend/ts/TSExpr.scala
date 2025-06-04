@@ -13,7 +13,7 @@ case class Void0Expr(meta: Option[Meta] = None) extends TSExpr {
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): Void0Expr = this
 
-  override def toDoc(using options: PrettierOptions): Doc = Doc.text("(void 0)")
+  override def toDoc(using options: DocConf): Doc = Doc.text("(void 0)")
 }
 
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
@@ -21,7 +21,7 @@ case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): DoubleExpr = this
 
-  override def toDoc(using options: PrettierOptions): Doc = if (value.isValidInt) {
+  override def toDoc(using options: DocConf): Doc = if (value.isValidInt) {
     value.toInt.toString
   } else {
     value.toString
@@ -37,7 +37,7 @@ case class EmptyStmt(meta: Option[Meta] = None) extends TSStmt {
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): EmptyStmt = this
 
-  override def toDoc(using options: PrettierOptions): Doc = ";"
+  override def toDoc(using options: DocConf): Doc = ";"
 }
 
 case class ConstStmt(name: String, ty: Option[TSType], value: TSExpr, meta: Option[Meta] = None) extends TSStmt {
@@ -49,7 +49,7 @@ case class ConstStmt(name: String, ty: Option[TSType], value: TSExpr, meta: Opti
     value = f(value)
   )
 
-  override def toDoc(using options: PrettierOptions): Doc = ty match {
+  override def toDoc(using options: DocConf): Doc = ty match {
     case Some(tyExpr) =>
       "const" <+> name <>
         ":" <+> tyExpr <+>
@@ -65,7 +65,7 @@ sealed trait TSType extends TSExpr derives ReadWriter {
 }
 
 case class NumberType(meta: Option[Meta] = None) extends TSType {
-  override def toDoc(using options: PrettierOptions): Doc = "number"
+  override def toDoc(using options: DocConf): Doc = "number"
 
   override type ThisTree = NumberType
 

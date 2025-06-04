@@ -22,7 +22,7 @@ def REPLEngine[F[_]](using
     inTerminal: InTerminal[F],
     env: Environment
 ): F[Unit] = {
-  given options: PrettierOptions = PrettierOptions.Default.updated(
+  given options: DocConf = DocConf.Default.updated(
     ReplaceBracketsWithWord,
     env.hasWindowsNarrator
   )

@@ -37,14 +37,14 @@ private case class ProblemSer(
     message: Doc,
     span0: Option[Span]
 ) extends Problem derives ReadWriter {
-  override def toDoc(using PrettierOptions): Doc = message
+  override def toDoc(using DocConf): Doc = message
 }
 
 private object ProblemSer {
   def from(problem: Problem): ProblemSer = ProblemSer(
     problem.stage,
     problem.severity,
-    problem.toDoc(using PrettierOptions.Default),
+    problem.toDoc(using DocConf.Default),
     problem.span0
   )
 }
@@ -55,14 +55,14 @@ object ProblemUpickle {
 }
 
 extension (p: Problem) {
-  def renderDoc(using options: PrettierOptions, sourceReader: SourceReader): Doc =
+  def renderDoc(using options: DocConf, sourceReader: SourceReader): Doc =
     p.fullDescription match {
       case Some(desc) => renderFullDescription(desc)(using options, sourceReader)
       case None       => renderToDocWithSource(p)(using options, sourceReader)
     }
 }
 
-private def renderFullDescription(desc: FullDescription)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
+private def renderFullDescription(desc: FullDescription)(using options: DocConf, sourceReader: SourceReader): Doc = {
   val beginDoc = desc.begin.toDoc
   val explanationsDoc = desc.explanations.map { elem =>
     val elemDoc = elem.doc.toDoc
@@ -87,7 +87,7 @@ private def renderFullDescription(desc: FullDescription)(using options: Prettier
   )
 }
 
-private def renderToDocWithSource(p: Problem)(using options: PrettierOptions, sourceReader: SourceReader): Doc = {
+private def renderToDocWithSource(p: Problem)(using options: DocConf, sourceReader: SourceReader): Doc = {
   val severityDoc = p.severity match {
     case Problem.Severity.Error   => Doc.text(t"Error")
     case Problem.Severity.Warning => Doc.text(t"Warning")

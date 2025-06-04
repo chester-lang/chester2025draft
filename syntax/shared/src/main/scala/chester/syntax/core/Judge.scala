@@ -29,6 +29,6 @@ case class Judge(wellTyped: Term, ty: Term, effects: Effects = Effects.Empty) ex
       effects.replaceU(reranger).asInstanceOf[Effects]
     )
 
-  override def toDoc(using PrettierOptions): Doc =
+  override def toDoc(using DocConf): Doc =
     Docs.`(` <> wellTyped.toDoc <> Docs.`,` <> ty.toDoc <> Docs.`,` <> effects.toDoc <> Docs.`)`
 }

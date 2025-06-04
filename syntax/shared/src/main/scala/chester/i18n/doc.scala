@@ -1,12 +1,12 @@
 package chester.i18n
 
-import chester.utils.doc.{PrettierOptions, PrettierOptionsKey}
+import chester.utils.doc.{DocConf, DocConfKey}
 
 import scala.language.implicitConversions
 
-case object LanguageKey extends PrettierOptionsKey[Language] {
+case object LanguageKey extends DocConfKey[Language] {
   val default: Language = Language.from("en_NZ")
 }
 
-implicit def languageInPretty(using PrettierOptions): Language =
+implicit def languageInPretty(using DocConf): Language =
   LanguageKey.get

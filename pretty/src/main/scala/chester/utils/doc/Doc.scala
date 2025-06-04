@@ -18,14 +18,14 @@ sealed trait Doc extends ToDoc derives ReadWriter {
 
   def printToExpr(using printer: DocPrinter): printer.Expr
 
-  final inline def toDoc(using PrettierOptions): Doc = this
+  final inline def toDoc(using DocConf): Doc = this
 
   def descent(f: Doc => Doc): Doc = this
 
   def styled(style: Style): Doc = descent(_.styled(style))
 
   override def toString: String =
-    StringPrinter.render(this)(using PrettierOptions.Default)
+    StringPrinter.render(this)(using DocConf.Default)
 }
 
 implicit inline def textFrom(inline s: String): Doc = text(s)
@@ -64,20 +64,20 @@ def render(doc: Doc, w: Width = maxWidth)(using
 ): printer.Layout = render0(doc, w)
 def render(
     doc: ToDoc
-)(using options: PrettierOptions, printer: DocPrinter): printer.Layout =
+)(using options: DocConf, printer: DocPrinter): printer.Layout =
   render0(doc.toDoc)
 def render(doc: ToDoc, w: Width)(using
-    options: PrettierOptions,
-    printer: DocPrinter
+                                 options: DocConf,
+                                 printer: DocPrinter
 ): printer.Layout = render0(doc.toDoc, w)
 
 @deprecated("use mkList")
 def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
     docs: Iterable[ToDoc]
-)(using PrettierOptions): Doc = mkList(docs, begin, end, sep)
+)(using DocConf): Doc = mkList(docs, begin, end, sep)
 
 /** already use softline to either insert a space or a linebreak after sep, no need to add one */
-def mkList(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using PrettierOptions): Doc = group {
+def mkList(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using DocConf): Doc = group {
   docs.toList match {
     case Nil =>
       begin.toDoc <> end.toDoc
@@ -91,7 +91,7 @@ def mkList(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep:
 
 /** no softline compared to mkList */
 def mkDoc(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using
-    PrettierOptions
+                                                                                             DocConf
 ): Doc = group {
   docs.toList match {
     case Nil =>
@@ -104,12 +104,12 @@ def mkDoc(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: 
   }
 }
 
-def concat(docs: ToDoc*)(using PrettierOptions): Doc = group {
+def concat(docs: ToDoc*)(using DocConf): Doc = group {
   docs.foldLeft(Doc.empty)((acc, doc) => acc <> doc.toDoc)
 }
 
 @targetName("concatIterable")
-def concat(docs: Iterable[ToDoc])(using PrettierOptions): Doc = group {
+def concat(docs: Iterable[ToDoc])(using DocConf): Doc = group {
   docs.foldLeft(Doc.empty)((acc, doc) => acc <> doc.toDoc)
 }
 
@@ -118,8 +118,8 @@ val hardline = text("\n") // TODO: CRLF?
 val line = hardline
 
 object Doc {
-  def indented(doc: ToDoc)(using PrettierOptions): Doc = doc.indented()
-  def indent(doc: ToDoc)(using PrettierOptions): Doc = doc.indented()
+  def indented(doc: ToDoc)(using DocConf): Doc = doc.indented()
+  def indent(doc: ToDoc)(using DocConf): Doc = doc.indented()
 
   export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, mkList, mkDoc, empty, concat, hardline, line, sep, link}
 }
@@ -136,11 +136,11 @@ implicit class DocPrinterOps[T <: DocPrinter](val printer: T) extends AnyVal {
   def render(doc: Doc, maxWidth: Width = maxWidth): printer.Layout =
     doc.render(maxWidth)(using printer)
 
-  def render(doc: ToDoc)(using options: PrettierOptions): printer.Layout =
+  def render(doc: ToDoc)(using options: DocConf): printer.Layout =
     Doc.render(doc)(using options, printer)
 
   def render(doc: ToDoc, maxWidth: Width)(using
-      options: PrettierOptions
+      options: DocConf
   ): printer.Layout = Doc.render(doc, maxWidth)(using options, printer)
 
   def renderToDocument(doc: Doc, maxWidth: Width = maxWidth): printer.Document =
@@ -148,8 +148,8 @@ implicit class DocPrinterOps[T <: DocPrinter](val printer: T) extends AnyVal {
 }
 
 trait ToDoc extends Any {
-  def toDoc(using options: PrettierOptions): Doc
-  override def toString: String = StringPrinter.render(this)(using PrettierOptions.Default)
+  def toDoc(using options: DocConf): Doc
+  override def toString: String = StringPrinter.render(this)(using DocConf.Default)
 }
 
 case class `$<>`(left: Doc, right: Doc) extends Doc {
@@ -247,12 +247,12 @@ case class $link(n: HoldOptionNoRead[AnyRef], d: Doc) extends Doc {
   override def descent(f: Doc => Doc): Doc = copy(d = f(d))
 }
 
-def hsep(ds: Seq[ToDoc], sep: ToDoc)(using PrettierOptions): Doc = $hsep(ds.map(_.toDoc), sep.toDoc)
-def ssep(ds: Seq[ToDoc], sep: ToDoc)(using PrettierOptions): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
-def sep(sep: ToDoc, ds: Seq[ToDoc])(using PrettierOptions): Doc = hsep(ds, sep)
-def link(n: AnyRef, d: ToDoc)(using PrettierOptions): Doc = $link(HoldOptionNoRead(Some(n)), d.toDoc)
+def hsep(ds: Seq[ToDoc], sep: ToDoc)(using DocConf): Doc = $hsep(ds.map(_.toDoc), sep.toDoc)
+def ssep(ds: Seq[ToDoc], sep: ToDoc)(using DocConf): Doc = $ssep(ds.map(_.toDoc), sep.toDoc)
+def sep(sep: ToDoc, ds: Seq[ToDoc])(using DocConf): Doc = hsep(ds, sep)
+def link(n: AnyRef, d: ToDoc)(using DocConf): Doc = $link(HoldOptionNoRead(Some(n)), d.toDoc)
 def link(n: AnyRef, d: Doc): Doc = $link(HoldOptionNoRead(Some(n)), d)
-extension (self: ToDoc)(using options: PrettierOptions) {
+extension (self: ToDoc)(using options: DocConf) {
   implicit inline def asDoc: Doc = self.toDoc
 
   /** Return the concatenation of this document with the argument.
