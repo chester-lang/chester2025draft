@@ -741,7 +741,7 @@ case class ObjectType(
     @const exactFields: Boolean,
     @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
-  private val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
+  val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
   override type ThisTree = ObjectType
   override def toDoc(using DocConf): Doc =
     Doc.wrapperlist("Object" </> Docs.`{`, Docs.`}`)(
