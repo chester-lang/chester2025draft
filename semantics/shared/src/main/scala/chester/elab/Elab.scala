@@ -153,7 +153,7 @@ trait DefaultElab extends Elab {
             Reporter.report(???)
             ErrorTerm(???, meta = convertMeta(id.meta))
         }
-      case _: ObjectExpr => ??? // SolverOps.callConstraint()
+      case expr: ObjectExpr => SolverOps.callConstraint(ObjectElab(expr, ty))
       case expr: UnitExpr =>
         SolverOps.addConstraint(Pure(ctx.effects))
         ty >:! UnitType(convertMeta(expr.meta))
