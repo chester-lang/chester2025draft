@@ -48,7 +48,7 @@ class CLI[F[_]](using
     case Config.Integrity =>
       IntegrityCheck()
       IO.println("Integrity check passed.")
-    case Config.Run(None)            => spawnREPLEngine()
+    case Config.Run(None)    => spawnREPLEngine()
     case Config.Run(Some(_)) => ???
     case Config.Compile(target0, inputFile, outputFile0) =>
       val target = target0.getOrElse("typescript")

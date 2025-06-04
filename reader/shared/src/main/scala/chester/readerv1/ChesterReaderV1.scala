@@ -51,19 +51,19 @@ object ChesterReaderV1 {
   def parseStatements(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  )(using reporter: Reporter[ParseError]): Option[Vector[ParsedExpr]] =
+  )(using Reporter[ParseError]): Option[Vector[ParsedExpr]] =
     parseFromSource(source, _.statementsEntrance, ignoreLocation)
 
   def parseTopLevel(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  )(using reporter: Reporter[ParseError]): Option[Block] =
+  )(using Reporter[ParseError]): Option[Block] =
     parseFromSource(source, _.toplevelEntrance, ignoreLocation)
 
   def parseExpr(
       source: ParserSource,
       ignoreLocation: Boolean = false
-  )(using reporter: Reporter[ParseError]): Option[ParsedExpr] =
+  )(using Reporter[ParseError]): Option[ParsedExpr] =
     parseFromSource(source, _.exprEntrance, ignoreLocation)
 
   /** Parses an expression string, typically used for REPL input.

@@ -2,7 +2,7 @@ package chester.backend
 
 import chester.backend.ts.Toplevel
 
-sealed trait Target {
+sealed trait Target extends Product with Serializable {
   def name: String
   type ModuleType
 }

@@ -91,7 +91,7 @@ case object TSBackend extends Backend(Typescript) {
       compiledStmt
     })
   }
-  def compileType(term: Term)(using ctx: TSContext): TSType = term match {
+  def compileType(term: Term)(using TSContext): TSType = term match {
     case IntType(meta)  => NumberType(meta)
     case UIntType(meta) => NumberType(meta)
     case _              => ???

@@ -3,8 +3,8 @@ package chester.elab
 import chester.syntax.core.{Effects, MetaTerm, Term}
 import chester.utils.elab.SolverOps
 
-implicit class ZonkAllOnTerm[T <: Term](val t: T) {
-  def zonkAll(using ops: SolverOps): t.ThisTree = t
+implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
+  def zonkAll(using SolverOps): t.ThisTree = t
     .descentRec {
       case t: MetaTerm[?] =>
         // introduce a variable for easy breakpoint
@@ -20,8 +20,8 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) {
     .asInstanceOf[t.ThisTree]
 }
 
-implicit class ZonkAllOnTAST(tast: TAST) {
-  def zonkAll(using ops: SolverOps): ZonkedTAST =
+implicit class ZonkAllOnTAST(private val tast: TAST) extends AnyVal {
+  def zonkAll(using SolverOps): ZonkedTAST =
     tast
       .copy(
         ty = tast.ty.zonkAll

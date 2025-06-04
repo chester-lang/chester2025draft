@@ -22,7 +22,7 @@ case class ObjectElab(obj: ObjectExpr, ty: CellRWOr[Term])(using elab0: Elab, op
 }
 
 case object ObjectElabHandler extends Handler[ElabOps, ObjectElab.type](ObjectElab) {
-  override def run(c: ObjectElab)(using elabOps: ElabOps, solver: SolverOps): Result = {
+  override def run(c: ObjectElab)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
     // TODO: different elab rules for more cases like when use lile a hashmap
     val xs = obj.clauses.map {
