@@ -42,7 +42,7 @@ update_translations() {
     echo "Translations updated"
 }
 
-CHESTER_JS_PATH="js/target/scala-3.7.1-RC2/docs-opt/main.js"
+CHESTER_JS_PATH="js/target/scala-3.7.1/docs-opt/main.js"
 copy_chester_js() {
     cp "$CHESTER_JS_PATH" "$1/main.js"
     cp "$CHESTER_JS_PATH.map" "$1/main.js.map"
