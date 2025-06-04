@@ -97,7 +97,8 @@ case object TSBackend extends Backend(Typescript) {
     case _              => ???
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
-    case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
+    case IntTerm(value, meta)  => DoubleExpr(value.toDouble, meta)
+    case UIntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
     case localV: LocalV =>
       val name = ctx.map.getOrElse(
         localV.uniqId,
