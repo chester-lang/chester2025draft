@@ -92,8 +92,9 @@ case object TSBackend extends Backend(Typescript) {
     })
   }
   def compileType(term: Term)(using ctx: TSContext): TSType = term match {
-    case IntType(meta) => NumberType(meta)
-    case _             => ???
+    case IntType(meta)  => NumberType(meta)
+    case UIntType(meta) => NumberType(meta)
+    case _              => ???
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
