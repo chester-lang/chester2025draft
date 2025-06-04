@@ -71,7 +71,6 @@ def render(doc: ToDoc, w: Width)(using
     printer: DocPrinter
 ): printer.Layout = render0(doc.toDoc, w)
 
-// TODO: this is broken, please fix
 def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
     docs: Iterable[ToDoc]
 )(using PrettierOptions): Doc = group {
