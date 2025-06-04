@@ -87,4 +87,43 @@ class ElabObjectTest extends FunSuite {
       assertEquals(objectType.fieldTypes.size, 1, "ObjectType should have 1 fieldType for single field object")
     }
   }
+
+  test("nested object %{a.a=1,b=2} typechecking with new elab") {
+    platformInfo.withValue(TypescriptPlatformInfo) {
+      // Parse the nested object expression %{a.a=1,b=2} which should be equivalent to %{a=%{a=1},b=2}
+      val expr = reporterToEither(
+        ChesterReaderV1
+          .parseExpr(FileNameAndContent("nested-object.chester", "%{a.a=1,b=2}"))
+      )
+        .fold(
+          error => fail(s"Failed to parse expression: $error"),
+          identity
+        )
+
+      // Create reporter and ElabOps for typechecking
+      val reporter = new VectorReporter[TyckProblem]()
+      val elabOps = ElabOps(reporter, NoopSemanticCollector)
+
+      // Infer the type using the DefaultElaborator
+      val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+
+      // Assert that there are no errors
+      assertEquals(reporter.getReports.isEmpty, true, s"Expected no type errors, but got: ${reporter.getReports}")
+
+      // Check that the elaborated term is an ObjectTerm
+      assert(judge.wellTyped.isInstanceOf[ObjectTerm], s"Expected ObjectTerm but got ${judge.wellTyped.getClass.getSimpleName}")
+
+      // Get the object terms and verify it has two fields (a and b)
+      val objectTerm = judge.wellTyped.asInstanceOf[ObjectTerm]
+      assertEquals(objectTerm.clauses.size, 2, "Object should have 2 clauses (a and b)")
+
+      // Check the object type structure  
+      assert(judge.ty.isInstanceOf[ObjectType], s"Expected ObjectType but got ${judge.ty.getClass.getSimpleName}")
+
+      val objectType = judge.ty.asInstanceOf[ObjectType]
+      
+      // Verify that the object type has two fields (a nested object and b simple field)
+      assertEquals(objectType.fieldTypes.size, 2, "ObjectType should have 2 fieldTypes for nested object with dot notation")
+    }
+  }
 }
