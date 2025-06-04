@@ -1,2 +1,2 @@
 let a = 42;
-let a = 43;
+let a = a;
