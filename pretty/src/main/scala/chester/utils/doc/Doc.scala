@@ -88,7 +88,12 @@ def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
 
 def mkDoc(sep: ToDoc = ",", docs: Iterable[ToDoc])(using
     PrettierOptions
-): Doc = wrapperlist(Doc.empty, Doc.empty, sep)(docs)
+): Doc = docs.toList match {
+  case Nil         => Doc.empty
+  case head :: Nil => head.toDoc
+  case head :: tail =>
+    tail.foldLeft(head.toDoc)((acc, doc) => acc <> sep.toDoc <> doc.toDoc)
+}
 
 def concat(docs: ToDoc*)(using PrettierOptions): Doc = group {
   docs.foldLeft(Doc.empty)((acc, doc) => acc <> doc.toDoc)
