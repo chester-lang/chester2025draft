@@ -61,7 +61,14 @@ object IdentifierRules {
 
 }
 
-case class TSContext(map: mutable.HashMap[UniqidOf[LocalV], String], definedSymbols: Set[String] = Set.empty)
+case class TSContext(map: mutable.HashMap[UniqidOf[LocalV], String], definedSymbols: Set[String] = Set.empty) {
+  def convertAndAdd(name: String): (String, TSContext) = {
+    val converted = IdentifierRules.convertToJSIdentifier(name)
+    val newName = IdentifierRules.newSymbol(definedSymbols, converted)
+    assume(!definedSymbols.contains(newName), s"Symbol $newName already exists in the context")
+    (newName, copy(definedSymbols = definedSymbols + newName))
+  }
+}
 
 object TSContext {
   def create(map: mutable.HashMap[UniqidOf[LocalV], String] = new mutable.HashMap()): TSContext =
