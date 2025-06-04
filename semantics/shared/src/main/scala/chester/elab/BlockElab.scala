@@ -18,16 +18,16 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using elab: Elab, ops: So
     extends Constraint(BlockElab)
     with ConstraintTerm {
   override val result: CellRW[Term] = newHole
-  val ctx: Context = ctx0
+  val context: Context = ctx0
   given Elab = elab
 }
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
   override def run(c: BlockElab)(using elab: ElabOps, solver: SolverOps): Result = {
     import c.*
-    val exprStatements = block.statements.map(resolve(_)(using c.ctx))
-    val outerContext = c.ctx
-    val context: MutableContext = new MutableContext(outerContext)
+    val exprStatements = block.statements.map(resolve(_)(using c.context))
+    // separate val and given definitions for better debugging in intellij idea
+    val context: MutableContext = new MutableContext(c.context)
     given MutableContext = context
     var statements: Vector[StmtTerm] = Vector()
     val defs: mutable.Queue[(defined: Identifier, ty: CellRW[Term], id: UniqidOf[LocalV], localv: LocalV)] = mutable.Queue()
