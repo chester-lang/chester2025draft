@@ -59,14 +59,14 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.15.21",
+    "@types/node": "^22.15.29",
     "@types/vscode": "1.99.1",
-    "@typescript-eslint/eslint-plugin": "^8.32.1",
-    "@typescript-eslint/parser": "^8.32.1",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.4.2",
     "esbuild": "^0.25.5",
-    "eslint": "^9.27.0",
+    "eslint": "^9.28.0",
     "shx": "^0.4.0",
     "typescript": "^5.8.3"
   },
