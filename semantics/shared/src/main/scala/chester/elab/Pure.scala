@@ -1,5 +1,6 @@
 package chester.elab
 
+import chester.elab.ElabOps
 import chester.utils.elab.*
 
 case object Pure extends Kind {

@@ -1,11 +1,11 @@
 package chester.lsp
 
 import chester.elab.{DefaultElaborator, ElabOps}
-import chester.error.{VectorReporter, *}
+import chester.error.*
 import chester.reader.*
 import chester.syntax.core.*
-import chester.tyck.api.*
-import chester.tyck.*
+import chester.elab.api.*
+import chester.elab.*
 import chester.utils.{Nat, StringIndex, WithUTF16, asInt}
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either

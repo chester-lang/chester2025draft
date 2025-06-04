@@ -2,9 +2,9 @@ package chester.elab
 
 import cats.data.NonEmptyVector
 import chester.syntax.core.*
-import chester.tyck.Context
-import chester.utils.elab.*
+import chester.elab.Context
 import chester.utils.*
+import chester.utils.elab.*
 
 case object SimplifyUnion extends Kind {
   type Of = SimplifyUnion

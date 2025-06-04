@@ -1,9 +1,9 @@
-package chester.tyck.api
+package chester.elab.api
 
 import chester.syntax.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.elab.Context
 import upickle.default.*
 import chester.uniqid.*
 

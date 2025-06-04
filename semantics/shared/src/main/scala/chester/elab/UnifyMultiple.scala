@@ -1,9 +1,9 @@
 package chester.elab
 
 import chester.syntax.core.*
-import chester.tyck.Context
-import chester.utils.elab.*
+import chester.elab.Context
 import chester.utils.*
+import chester.utils.elab.*
 
 case object UnifyMultiple extends Kind {
   override type Of = UnifyMultiple

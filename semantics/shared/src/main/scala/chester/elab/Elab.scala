@@ -1,11 +1,12 @@
 package chester.elab
 
 import chester.cell.*
+import chester.elab.*
 import chester.error.{Reporter, TyckProblem, VectorReporter}
-import chester.syntax.{DefaultModule, ModuleRef}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.syntax.{DefaultModule, ModuleRef}
+import chester.elab.Context
 import chester.utils.HoldNotReadable
 import chester.utils.cell.{LiteralCellContent, OnceCellContent}
 import chester.utils.elab.*

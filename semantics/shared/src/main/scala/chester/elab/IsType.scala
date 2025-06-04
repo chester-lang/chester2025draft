@@ -1,7 +1,8 @@
 package chester.elab
 
+import chester.elab.ElabOps
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.elab.Context
 import chester.utils.elab.*
 
 import scala.language.implicitConversions

@@ -2,9 +2,7 @@ package chester.truffle;
 
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.object.DynamicObject;
 import org.jetbrains.annotations.NotNull;
-import chester.tyck.Context;
 
 public final class ChesterContext {
     private static final TruffleLanguage.ContextReference<ChesterContext> REF =

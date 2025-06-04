@@ -1,6 +1,6 @@
 package chester.reduce
 
-import chester.tyck.Context
+import chester.elab.Context
 
 /** Context for reduction/evaluation of terms.
   *

@@ -1,6 +1,6 @@
 package chester.truffle;
 
-import chester.tyck.Context;
+import chester.elab.Context;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;

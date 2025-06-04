@@ -3,7 +3,7 @@ package chester.elab
 import chester.error.unreachable
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.*
+import chester.elab.*
 import chester.utils.elab.*
 
 case object ObjectElab extends Kind {

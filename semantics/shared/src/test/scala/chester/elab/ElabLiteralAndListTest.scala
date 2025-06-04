@@ -1,11 +1,11 @@
-package chester.tyck
+package chester.elab
 
 import chester.error.{TyckProblem, VectorReporter}
 import chester.elab.{DefaultElaborator, ElabOps, TypescriptPlatformInfo, platformInfo}
 import chester.reader.FileNameAndContent
 import chester.readerv1.ChesterReaderV1
 import chester.syntax.core.*
-import chester.tyck.api.NoopSemanticCollector
+import chester.elab.api.NoopSemanticCollector
 import munit.FunSuite
 import chester.error.reporterToEither
 

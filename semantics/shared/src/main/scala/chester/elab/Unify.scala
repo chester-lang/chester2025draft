@@ -1,8 +1,9 @@
 package chester.elab
 
+import chester.elab.ElabOps
 import chester.error.{Reporter, UnificationError}
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.elab.Context
 import chester.utils.*
 import chester.utils.elab.*
 import spire.math.Trilean

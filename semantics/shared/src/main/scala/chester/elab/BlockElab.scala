@@ -1,9 +1,10 @@
 package chester.elab
 
+import chester.elab.MutableContext
 import chester.error.{MissingLetBody, Reporter}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.{Context, ContextItem, TyAndVal, convertMeta}
+import chester.elab.{Context, ContextItem, TyAndVal, convertMeta}
 import chester.uniqid.{Uniqid, UniqidOf}
 import chester.utils.elab.*
 
@@ -23,8 +24,7 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using elab: Elab, ops: So
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
   override def run(c: BlockElab)(using elab: ElabOps, solver: SolverOps): Result = {
-    import c.*
-    import c.given_Elab
+    import c.{*, given}
     val exprStatements = block.statements.map(resolve(_)(using c.context))
     val outerContext = c.context
     given context: MutableContext = new MutableContext(outerContext)

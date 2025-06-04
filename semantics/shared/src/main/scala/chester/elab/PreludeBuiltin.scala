@@ -1,4 +1,4 @@
-package chester.tyck
+package chester.elab
 
 import chester.syntax.Name
 import chester.syntax.core.*

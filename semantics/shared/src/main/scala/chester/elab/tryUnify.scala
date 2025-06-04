@@ -1,7 +1,7 @@
 package chester.elab
 
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.elab.Context
 import chester.utils.elab.*
 import spire.math.Trilean
 

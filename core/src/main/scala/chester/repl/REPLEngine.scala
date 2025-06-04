@@ -7,14 +7,14 @@ import chester.error.*
 import chester.reader.ReaderREPL
 import chester.syntax.concrete.Expr
 import chester.syntax.core.*
-import chester.tyck.*
+import chester.elab.*
 import chester.utils.doc.*
 import chester.utils.env.Environment
 import chester.utils.io.*
 import chester.utils.term.*
 import fansi.*
 import chester.i18n.*
-import chester.tyck.api.NoopSemanticCollector
+import chester.elab.api.NoopSemanticCollector
 
 // could be inline
 def REPLEngine[F[_]](using

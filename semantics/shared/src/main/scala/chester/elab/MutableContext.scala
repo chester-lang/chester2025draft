@@ -1,4 +1,5 @@
 package chester.elab
+
 import scala.language.implicitConversions
 
 class MutableContext(var ctx: Context) {

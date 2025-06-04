@@ -5,8 +5,8 @@ import chester.reader.FileNameAndContent
 import chester.readerv1.ChesterReaderV1
 import munit.FunSuite
 import chester.error.{TyckProblem, VectorReporter, reporterToEither}
-import chester.tyck.Context
-import chester.tyck.api.NoopSemanticCollector
+import chester.elab.Context
+import chester.elab.api.NoopSemanticCollector
 import chester.utils.elab.{HandlerConf, SolverFactory, SolverOps}
 import chester.elab.Defaults.given
 

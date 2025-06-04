@@ -1,9 +1,10 @@
 package chester.elab
 
+import chester.elab.*
 import chester.error.{LiteralTypeMismatch, Reporter}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.{Context, convertMeta}
+import chester.elab.{Context, convertMeta}
 import chester.utils.elab.*
 
 import scala.language.postfixOps

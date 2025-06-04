@@ -1,7 +1,7 @@
 package chester.elab
 
 import chester.error.{Reporter, TyckProblem}
-import chester.tyck.api.SemanticCollector
+import chester.elab.api.SemanticCollector
 
 import scala.language.implicitConversions
 

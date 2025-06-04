@@ -3,8 +3,8 @@ package chester.elab
 import chester.cell.newPureEffects
 import chester.syntax.concrete.*
 import chester.syntax.core.*
-import chester.tyck.Context
-import chester.utils.elab.{SolverFactory, *}
+import chester.elab.Context
+import chester.utils.elab.*
 
 object DefaultElabImpl extends DefaultElab {}
 

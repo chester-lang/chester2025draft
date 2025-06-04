@@ -10,8 +10,8 @@ import chester.repl.REPLEngine
 import scala.language.experimental.betterFors
 import chester.reader.{FileNameAndContent, FilePathImpl}
 import chester.readerv1.ChesterReaderV1
-import chester.tyck.Context
-import chester.tyck.api.NoopSemanticCollector
+import chester.elab.Context
+import chester.elab.api.NoopSemanticCollector
 import chester.utils.elab.*
 import chester.utils.env.Environment
 import chester.utils.io.*

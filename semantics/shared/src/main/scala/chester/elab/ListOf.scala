@@ -1,7 +1,8 @@
 package chester.elab
 
+import chester.elab.{ElabOps, UnifyMultiple}
 import chester.syntax.core.*
-import chester.tyck.Context
+import chester.elab.Context
 import chester.utils.elab.*
 
 case object ListOf extends Kind {

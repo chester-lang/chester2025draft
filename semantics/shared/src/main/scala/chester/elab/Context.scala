@@ -1,15 +1,15 @@
-package chester.tyck
+package chester.elab
 
 import chester.elab.LoadedModules
 import chester.syntax.*
 import chester.syntax.accociativity.OperatorsContext
 import chester.syntax.core.*
-import chester.tyck.api.SymbolCollector
+import chester.elab.api.SymbolCollector
 import chester.uniqid.{Uniqid, UniqidOf}
 import chester.reduce.ReduceContext
 import chester.reduce.{DefaultReducer, Reducer}
 import chester.i18n.*
-import chester.tyck.PreludeBuiltin.BuiltinItem
+import chester.elab.PreludeBuiltin.BuiltinItem
 
 import scala.collection.immutable.HashMap
 
