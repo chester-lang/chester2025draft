@@ -16,6 +16,14 @@ case class Void0Expr(meta: Option[Meta] = None) extends TSExpr {
   override def toDoc(using options: DocConf): Doc = Doc.text("(void 0)")
 }
 
+case class IdentifierExpr(name: String, meta: Option[Meta] = None) extends TSExpr {
+  override type ThisTree = IdentifierExpr
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): IdentifierExpr = this
+
+  override def toDoc(using options: DocConf): Doc = Doc.text(name)
+}
+
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
   override type ThisTree = DoubleExpr
 

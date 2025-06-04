@@ -97,7 +97,13 @@ case object TSBackend extends Backend(Typescript) {
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta) => DoubleExpr(value.toDouble, meta)
-    case _                    => ???
+    case localV: LocalV =>
+      val name = ctx.map.getOrElse(
+        localV.uniqId,
+        throw new IllegalArgumentException(s"Variable ${localV.name} not found in context")
+      )
+      IdentifierExpr(name, localV.meta)
+    case _ => ???
   }
   def introduceLetVar(let: LetStmtTerm)(using ctx: TSContext): (String, TSContext) = {
     // TODO: handle shadowing and uniqueness and javascript reserved words and javascript reserved symbols and a lot more
