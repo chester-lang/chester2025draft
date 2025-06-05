@@ -33,7 +33,7 @@ class Simple extends FunSuite {
       val problems = reporter.getReports
       val errors = problems.filter(_.isError)
       assert(errors.isEmpty, s"Errors found during elaboration: ${errors.mkString(", ")}")
-      val tast1 = tast.zonkAll
+      val tast1 = tast.readMetaAll
       val compiled = TSBackend.compileModule(tast1)
       assert(compiled.stmts.length == 1, "Expected exactly one statement in the compiled output.")
       assertEquals(compiled.stmts.head.toString, "const x: number = 42;")

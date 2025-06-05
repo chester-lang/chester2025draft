@@ -4,7 +4,7 @@ import chester.syntax.core.{Effects, MetaTerm, Term}
 import chester.utils.elab.SolverOps
 
 implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
-  def zonkAll(using SolverOps): t.ThisTree = t
+  def readMetaAll(using SolverOps): t.ThisTree = t
     .descentRec {
       case t: MetaTerm[?] =>
         // introduce a variable for easy breakpoint
@@ -13,7 +13,7 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
           case _: MetaTerm[?] =>
             // newline for easy breakpoint
             throw new IllegalStateException("Zonked term is still a MetaTerm")
-          case t: Term => t.zonkAll
+          case t: Term => t.readMetaAll
         }
       case t: Term => t
     }
@@ -21,14 +21,14 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
 }
 
 implicit class ZonkAllOnTAST(private val tast: TAST) extends AnyVal {
-  def zonkAll(using SolverOps): ZonkedTAST =
+  def readMetaAll(using SolverOps): ZonkedTAST =
     tast
       .copy(
-        ty = tast.ty.zonkAll
+        ty = tast.ty.readMetaAll
       )
       .zonked(
-        ast = TAST.termToBlockNoMeta(tast.ast.zonkAll),
-        effects = tast.effects.zonkAll.assumeEffects
+        ast = TAST.termToBlockNoMeta(tast.ast.readMetaAll),
+        effects = tast.effects.readMetaAll.assumeEffects
       )
 }
 

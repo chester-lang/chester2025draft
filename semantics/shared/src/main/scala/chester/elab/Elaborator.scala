@@ -15,7 +15,7 @@ case class Elaborator()(using elab: Elab, fac: SolverFactory, handlers: HandlerC
     val ty = toTerm(newHole)
     val term = toTerm(elab.check(expr, ty))
     solver.run()
-    Judge(term.zonkAll, ty.zonkAll, Effects.Empty)
+    Judge(term.readMetaAll, ty.readMetaAll, Effects.Empty)
   }
 }
 
