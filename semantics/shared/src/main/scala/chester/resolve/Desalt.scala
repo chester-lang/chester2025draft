@@ -300,6 +300,9 @@ case object SimpleDesalt {
       case OpSeq(xs, _) if xs.length == 1 => xs.head
       case _ @DesaltCaseClauseMatch(x)    => x
 
+      case OpSeq(Vector(a, op: Identifier, b), meta) =>
+        DotCall(a, op, Vector(Tuple(Vector(b), meta = b.meta)), meta)
+
       // Handle OpSeq that might contain pipe operators for union types
       case opseq @ OpSeq(seq, meta) if seq.exists {
             case Identifier("|", _) => true
