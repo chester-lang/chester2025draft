@@ -83,7 +83,7 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
 
   override def run(c: StringLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    SolverOps.addConstraint(Unify(ty, StringType(meta)))
+    SolverOps.addConstraint(Unify(ty, StringType(meta), expr))
     result.fill(StringTerm(expr.value, meta))
     Result.Done
   }
@@ -105,7 +105,7 @@ case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit)
 
   override def run(c: SymbolLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    SolverOps.addConstraint(Unify(ty, SymbolType(meta)))
+    SolverOps.addConstraint(Unify(ty, SymbolType(meta), expr))
     result.fill(SymbolTerm(expr.value, meta))
     Result.Done
   }

@@ -2,6 +2,7 @@ package chester.elab
 
 import chester.syntax.core.*
 import chester.elab.Context
+import chester.syntax.concrete.Expr
 import chester.utils.*
 import chester.utils.elab.*
 
@@ -11,7 +12,8 @@ case object UnifyMultiple extends Kind {
 
 case class UnifyMultiple(
     lhs: CellRWOr[Term],
-    rhs: Vector[CellRWOr[Term]]
+    rhs: Vector[CellRWOr[Term]],
+    cause: Expr
 )(using ctx: Context)
     extends Constraint(UnifyMultiple) {
   given Context = ctx
@@ -36,7 +38,7 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     } else {
       rhs2
     }
-    SolverOps.addConstraint(Unify(lhsV, Union1(cleanUpUnion(rhs3.map(toTermRec(_)).assumeNonEmpty), meta = None)))
+    SolverOps.addConstraint(Unify(lhsV, Union1(cleanUpUnion(rhs3.map(toTermRec(_)).assumeNonEmpty), meta = None), cause))
     Result.Done
   }
 
@@ -50,7 +52,7 @@ case object UnifyMultipleHandler extends Handler[ElabOps, UnifyMultiple.type](Un
     }
     if (!lhsV.isInstanceOf[MetaTerm[?]]) {
       for (rhs <- rhs1)
-        SolverOps.addConstraint(Unify(lhsV, rhs))
+        SolverOps.addConstraint(Unify(lhsV, rhs, cause))
       true
     } else {
       false

@@ -23,6 +23,7 @@ sealed trait TyckProblem extends Problem derives ReadWriter {
 
   override def toDoc(using options: DocConf): Doc
 
+  // Only as a helper for defining span0
   def cause: Term | Expr
 
   override def span0: Option[Span] = cause match {
@@ -333,11 +334,9 @@ case class MissingLetBody(let: LetDefStmt) extends TyckError {
 }
 
 // Used in Unify.scala where the unification fails with no next constraint
-case class UnificationError(lhs: Term, rhs: Term, c: Option[Expr]) extends TyckError {
+case class UnificationError(lhs: Term, rhs: Term, cause: Expr) extends TyckError {
   override def toDoc(using DocConf): Doc =
     t"Unification error: cannot unify ${lhs.toDoc} with ${rhs.toDoc}"
-
-  override def cause: Term | Expr = lhs
 }
 
 // Used in Lit.scala where a literal doesn't match the expected type

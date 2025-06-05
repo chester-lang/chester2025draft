@@ -150,9 +150,9 @@ trait DefaultElab extends Elab {
       case expr: SymbolLiteral =>
         SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.callConstraint(SymbolLit(expr, ty))
-      case _ @ListExpr(xs, meta) =>
+      case expr @ ListExpr(xs, meta) =>
         val items = xs.map(infer(_))
-        SolverOps.callConstraint(ListOf(items, ty))
+        SolverOps.callConstraint(ListOf(items, ty, expr))
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
       case OpSeq(Vector(Identifier("?", _), holeName), meta) =>
         holeName match {
@@ -167,7 +167,7 @@ trait DefaultElab extends Elab {
       case id: Identifier =>
         ctx.get(id.name) match {
           case Some(item) =>
-            SolverOps.addConstraint(Unify(ty, item.ty))
+            SolverOps.addConstraint(Unify(ty, item.ty, id))
             item.ref
           case None =>
             Reporter.report(???)
@@ -176,7 +176,7 @@ trait DefaultElab extends Elab {
       case expr: ObjectExpr => SolverOps.callConstraint(ObjectElab(expr, ty))
       case expr: UnitExpr =>
         SolverOps.addConstraint(Pure(ctx.effects))
-        SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta))))
+        SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta)), expr))
         UnitTerm_(convertMeta(expr.meta))
       case _ => ???
     }

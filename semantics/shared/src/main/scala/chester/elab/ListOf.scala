@@ -3,12 +3,13 @@ package chester.elab
 import chester.elab.{ElabOps, UnifyMultiple}
 import chester.syntax.core.*
 import chester.elab.Context
+import chester.syntax.concrete.ListExpr
 import chester.utils.elab.*
 
 case object ListOf extends Kind {
   type Of = ListOf
 }
-case class ListOf(items: Vector[(wellTyped: CellROr[Term], ty: CellRWOr[Term])], ty: CellRWOr[Term])(using ctx: Context, ops: SolverOps)
+case class ListOf(items: Vector[(wellTyped: CellROr[Term], ty: CellRWOr[Term])], ty: CellRWOr[Term], cause: ListExpr)(using ctx: Context, ops: SolverOps)
     extends Constraint(ListOf)
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
@@ -27,7 +28,7 @@ case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
           return Result.Done
         }
         val allTys = items.map(_.ty)
-        SolverOps.addConstraint(UnifyMultiple(ty, allTys))
+        SolverOps.addConstraint(UnifyMultiple(ty, allTys, cause))
         result.fill(ListTerm(items.map(_.wellTyped.toTerm()), meta))
         Result.Done
     }

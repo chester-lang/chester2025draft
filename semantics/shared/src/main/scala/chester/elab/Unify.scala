@@ -14,7 +14,7 @@ case object Unify extends Kind {
 }
 
 // if unify failed failback to next or fail if next is None
-case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term], cause: Option[Expr] = None, next: Option[Constraint] = None)(using ctx: Context) extends Constraint(Unify) {
+case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term], cause: Expr, next: Option[Constraint] = None)(using ctx: Context) extends Constraint(Unify) {
   given Context = ctx
 }
 
@@ -50,7 +50,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
         // For debug lhs1 and rhs1
         val lhs1 = toTerm(lhs)
         val rhs1 = toTerm(rhs)
-        SolverOps.addConstraint(Unify(lhs1, rhs1, next = next))
+        SolverOps.addConstraint(Unify(lhs1, rhs1, cause, next = next))
         Result.Done
       case (ListType(_, meta), _: SimpleType) => failed(c)
       case (lhs: MetaTerm[?], _)              => Result.Waiting(assumeCell(lhs))
@@ -68,16 +68,16 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
           return failed(c)
         }
         if (lhs2.length == 1 && rhs2.length == 1) {
-          SolverOps.addConstraint(Unify(lhs2.head, rhs2.head, next = next))
+          SolverOps.addConstraint(Unify(lhs2.head, rhs2.head,cause, next = next))
           return Result.Done
         }
         if (lhs2.length == 1) {
-          SolverOps.addConstraint(Unify(lhs2.head, Union(rhs2.assumeNonEmpty, rhsMeta), next = next))
+          SolverOps.addConstraint(Unify(lhs2.head, Union(rhs2.assumeNonEmpty, rhsMeta),cause, next = next))
           return Result.Done
         }
         ???
       case (lhs, Union(rhs, _)) =>
-        rhs.foreach(rhs => SolverOps.addConstraint(Unify(lhs, rhs, next = next)))
+        rhs.foreach(rhs => SolverOps.addConstraint(Unify(lhs, rhs,cause, next = next)))
         Result.Done
       case _ => ???
     }
