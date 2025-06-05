@@ -1,5 +1,6 @@
 package chester.elab
 
+import scala.language.implicitConversions
 import chester.syntax.concrete.ExprMeta
 import chester.syntax.core.*
 
