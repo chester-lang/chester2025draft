@@ -1234,3 +1234,23 @@ case class HoleTerm(
     copy(ty = f(ty), effects = effects.map(x => g(x).asInstanceOf[EffectsM]))
   )
 }
+
+case class NativeTerm(
+    @const repr: Term,
+    @const ty: Term,
+    @const effects: Option[EffectsM] = None,
+    @const meta: Option[TermMeta]
+) extends SpecialTerm derives ReadWriter {
+  override type ThisTree = NativeTerm
+  override def toDoc(using DocConf): Doc = {
+    val effectsDoc = effects.map(e => Docs.`/` <+> e.toDoc).getOrElse(Doc.empty)
+    Doc.text("Native") <> repr.toDoc <> Docs.`:` <+> ty.toDoc <> effectsDoc
+  }
+  override def descent(f: Term => Term, g: TreeMap[Term]): NativeTerm = thisOr(
+    copy(
+      repr = f(repr),
+      ty = f(ty),
+      effects = effects.map(x => g(x).asInstanceOf[EffectsM])
+    )
+  )
+}
