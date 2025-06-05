@@ -248,6 +248,7 @@ case class TokenInfo(
 )
 
 // Resolves an operation sequence into an expression
+@deprecated("not use, need rework")
 def resolveOpSeq(
     reporter: Reporter[TyckError],
     opContext: OperatorsContext,

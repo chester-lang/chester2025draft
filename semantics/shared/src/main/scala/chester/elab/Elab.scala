@@ -154,6 +154,16 @@ trait DefaultElab extends Elab {
         val items = xs.map(infer(_))
         SolverOps.callConstraint(ListOf(items, ty))
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
+      case OpSeq(Vector(Identifier("?", _), holeName), meta) =>
+        holeName match {
+          case Identifier(name, _) =>
+            SolverOps.addConstraint(IsType(ty))
+            HoleTerm(name = name, ty = toTerm(ty), meta = meta)
+          case _ =>
+            Reporter.report(???)
+            SolverOps.addConstraint(IsType(ty))
+            HoleTerm(name = "hole", ty = toTerm(ty), meta = meta)
+        }
       case id: Identifier =>
         ctx.get(id.name) match {
           case Some(item) =>
