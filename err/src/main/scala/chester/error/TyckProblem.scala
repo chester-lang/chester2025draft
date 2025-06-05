@@ -333,7 +333,7 @@ case class MissingLetBody(let: LetDefStmt) extends TyckError {
 }
 
 // Used in Unify.scala where the unification fails with no next constraint
-case class UnificationError(lhs: Term, rhs: Term) extends TyckError {
+case class UnificationError(lhs: Term, rhs: Term, c: Option[Expr]) extends TyckError {
   override def toDoc(using DocConf): Doc =
     t"Unification error: cannot unify ${lhs.toDoc} with ${rhs.toDoc}"
 

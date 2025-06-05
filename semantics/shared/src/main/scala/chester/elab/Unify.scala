@@ -4,6 +4,7 @@ import chester.elab.ElabOps
 import chester.error.{Reporter, UnificationError}
 import chester.syntax.core.*
 import chester.elab.Context
+import chester.syntax.concrete.Expr
 import chester.utils.*
 import chester.utils.elab.*
 import spire.math.Trilean
@@ -13,7 +14,7 @@ case object Unify extends Kind {
 }
 
 // if unify failed failback to next or fail if next is None
-case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term], next: Option[Constraint] = None)(using ctx: Context) extends Constraint(Unify) {
+case class Unify(lhs: CellRWOr[Term], rhs: CellRWOr[Term], cause: Option[Expr] = None, next: Option[Constraint] = None)(using ctx: Context) extends Constraint(Unify) {
   given Context = ctx
 }
 
@@ -23,7 +24,7 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       SolverOps.addConstraint(next)
       Result.Done
     case None =>
-      Reporter.report(UnificationError(toTermRec(c.lhs), toTermRec(c.rhs)))
+      Reporter.report(UnificationError(toTermRec(c.lhs), toTermRec(c.rhs), c.cause))
       Result.Done
   }
   override def run(c: Unify)(using ElabOps, SolverOps): Result = {
