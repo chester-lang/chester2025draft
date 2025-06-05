@@ -273,6 +273,10 @@ case class MetaTerm[T <: Term](@const impl: HoldNotReadable[?], @const meta: Opt
 
   override def descent(f: Term => Term, g: TreeMap[Term]): MetaTerm[T] = this
 }
+extension (g: TreeMap[Term]) {
+  // workaround a type checking difficulty
+  inline def use(effectsm: EffectsM): EffectsM = g(effectsm).asInstanceOf[EffectsM]
+}
 @ifndef("syntax-truffle")
 case class ListTerm(terms: Seq[Term], @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
   override type ThisTree = ListTerm
@@ -610,7 +614,7 @@ case class FunctionType(
     copy(
       telescopes = telescopes.map(g(_)),
       resultTy = f(resultTy),
-      effects = g(effects).asInstanceOf[EffectsM]
+      effects = g(effects)
     )
   )
 }
@@ -654,7 +658,7 @@ case class FunctionType(
     copy(
       telescopes0 = telescopes.map(g(_)),
       resultTy = f(resultTy),
-      effects = g(effects).asInstanceOf[EffectsM]
+      effects = g.use(effects)
     )
   )
 }
@@ -1231,7 +1235,7 @@ case class HoleTerm(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): HoleTerm = thisOr(
-    copy(ty = f(ty), effects = effects.map(x => g(x).asInstanceOf[EffectsM]))
+    copy(ty = f(ty), effects = effects.map(x => g.use(x)))
   )
 }
 
@@ -1250,7 +1254,7 @@ case class NativeTerm(
     copy(
       repr = f(repr),
       ty = f(ty),
-      effects = effects.map(x => g(x).asInstanceOf[EffectsM])
+      effects = effects.map(x => g.use(x))
     )
   )
 }
