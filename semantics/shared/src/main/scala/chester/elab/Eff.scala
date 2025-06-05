@@ -9,12 +9,12 @@ type Eff = CellEffects | EffectsM
 
 extension (eff: Eff) {
   def toCellEffects(using SolverOps): CellEffects = eff match {
-    case e: CellEffects                                             => e
+    case e: CellEffects @unchecked                                  => e
     case MetaTerm(HoldNotReadable(e: CellEffects @unchecked), meta) => e
     case effects: Effects                                           => SolverOps.addCell(FixedEffectsCellContent(effects))
   }
   def toEffectsM(using SolverOps): EffectsM = eff match {
-    case eff: EffectsM     => eff
-    case cell: CellEffects => MetaTerm(HoldNotReadable(cell), meta = None)
+    case eff: EffectsM                => eff
+    case cell: CellEffects @unchecked => MetaTerm(HoldNotReadable(cell), meta = None)
   }
 }
