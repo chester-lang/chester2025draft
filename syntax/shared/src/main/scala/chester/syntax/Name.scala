@@ -42,7 +42,7 @@ case class ModuleRef(xs: Vector[Name], namespace: Namespace = Namespace.Default)
     Doc.text(xs.mkString("."))
 }
 
-val BuiltinModule = ModuleRef(Vector("_builtin"))
+val BuiltinModule = ModuleRef(Vector("__builtin"))
 
 val DefaultModule = ModuleRef(Vector("_default"))
 
