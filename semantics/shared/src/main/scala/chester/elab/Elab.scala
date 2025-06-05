@@ -167,7 +167,7 @@ trait DefaultElab extends Elab {
       case id: Identifier =>
         ctx.get(id.name) match {
           case Some(item) =>
-            ty >:! item.ty
+            SolverOps.addConstraint(Unify(ty, item.ty))
             item.ref
           case None =>
             Reporter.report(???)
@@ -176,7 +176,7 @@ trait DefaultElab extends Elab {
       case expr: ObjectExpr => SolverOps.callConstraint(ObjectElab(expr, ty))
       case expr: UnitExpr =>
         SolverOps.addConstraint(Pure(ctx.effects))
-        ty >:! UnitType(convertMeta(expr.meta))
+        SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta))))
         UnitTerm_(convertMeta(expr.meta))
       case _ => ???
     }

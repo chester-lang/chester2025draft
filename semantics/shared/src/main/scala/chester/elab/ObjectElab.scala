@@ -35,7 +35,7 @@ case object ObjectElabHandler extends Handler[ElabOps, ObjectElab.type](ObjectEl
       types,
       meta = obj.meta
     )
-    ty >:! toTerm(ty1)
+    SolverOps.addConstraint(Unify(ty, toTerm(ty1)))
     result.fill(ObjectTerm(values, meta = convertMeta(obj.meta)))
     Result.Done
   }
