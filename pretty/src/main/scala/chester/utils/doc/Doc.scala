@@ -71,11 +71,6 @@ def render(doc: ToDoc, w: Width)(using
     printer: DocPrinter
 ): printer.Layout = render0(doc.toDoc, w)
 
-@deprecated("use mkList")
-def wrapperlist(begin: ToDoc, end: ToDoc, sep: ToDoc = ",")(
-    docs: Iterable[ToDoc]
-)(using DocConf): Doc = mkList(docs, begin, end, sep)
-
 /** already use softline to either insert a space or a linebreak after sep, no need to add one */
 def mkList(docs: Iterable[ToDoc], begin: ToDoc = empty, end: ToDoc = empty, sep: ToDoc = ",")(using DocConf): Doc = group {
   docs.toList match {
@@ -121,7 +116,7 @@ object Doc {
   def indented(doc: ToDoc)(using DocConf): Doc = doc.indented()
   def indent(doc: ToDoc)(using DocConf): Doc = doc.indented()
 
-  export chester.utils.doc.{renderToDocument, render, text, group, wrapperlist, mkList, mkDoc, empty, concat, hardline, line, sep, link}
+  export chester.utils.doc.{renderToDocument, render, text, group, mkList, mkDoc, empty, concat, hardline, line, sep, link}
 }
 
 implicit class DocOps(doc: Doc) extends AnyVal {

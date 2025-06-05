@@ -752,7 +752,10 @@ case class ObjectExpr(
           key.toDoc <> Docs.`=` <+> value.toDoc
         case ObjectExprClauseOnValue(key, value, _) =>
           key.toDoc <> Docs.`=>` <+> value.toDoc
-      }, Docs.`{`, Docs.`}`, Docs.`,`
+      },
+      Docs.`{`,
+      Docs.`}`,
+      Docs.`,`
     )
 }
 
@@ -817,7 +820,10 @@ case class DesaltMatching(
 
   override def toDoc(using DocConf): Doc =
     Doc.mkList(
-      clauses.map(_.toDoc), Docs.`{`, Docs.`}`, Docs.`;`
+      clauses.map(_.toDoc),
+      Docs.`{`,
+      Docs.`}`,
+      Docs.`;`
     )
 }
 

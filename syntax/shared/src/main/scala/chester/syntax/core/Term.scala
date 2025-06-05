@@ -725,7 +725,10 @@ case class ObjectType(
   override type ThisTree = ObjectType
   override def toDoc(using DocConf): Doc =
     Doc.mkList(
-      fieldTypes.map(_.toDoc), "Object" </> Docs.`{`, Docs.`}`, Doc.empty
+      fieldTypes.map(_.toDoc),
+      "Object" </> Docs.`{`,
+      Docs.`}`,
+      Doc.empty
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectType = thisOr(
     copy(fieldTypes = fieldTypes.map(g(_)))
@@ -749,7 +752,10 @@ case class ObjectType(
   override type ThisTree = ObjectType
   override def toDoc(using DocConf): Doc =
     Doc.mkList(
-      fieldTypes.map(_.toDoc), "Object" </> Docs.`{`, Docs.`}`, Doc.empty
+      fieldTypes.map(_.toDoc),
+      "Object" </> Docs.`{`,
+      Docs.`}`,
+      Doc.empty
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectType = thisOr(
     copy(fieldTypes0 = fieldTypes.map(g(_)))
@@ -805,9 +811,14 @@ case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const met
 
   override type ThisTree = Effects
   override def toDoc(using DocConf): Doc =
-    Doc.mkList(effects.map { case (k, v) =>
-      k.toDoc <+> Docs.`:` <+> v.toDoc
-    }, Docs.`{`, Docs.`}`, Doc.empty)
+    Doc.mkList(
+      effects.map { case (k, v) =>
+        k.toDoc <+> Docs.`:` <+> v.toDoc
+      },
+      Docs.`{`,
+      Docs.`}`,
+      Doc.empty
+    )
 
   override def collectMeta: Vector[MetaTerm[?]] =
     effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
@@ -986,7 +997,10 @@ case class BlockTerm(
   override type ThisTree = BlockTerm
   override def toDoc(using DocConf): Doc =
     Doc.mkList(
-      statements.map(_.toDoc) :+ result.toDoc, Docs.`{`, Docs.`}`, ";"
+      statements.map(_.toDoc) :+ result.toDoc,
+      Docs.`{`,
+      Docs.`}`,
+      ";"
     )
   override def descent(f: Term => Term, g: TreeMap[Term]): BlockTerm = thisOr(
     copy(
