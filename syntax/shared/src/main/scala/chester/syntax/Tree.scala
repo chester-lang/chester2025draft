@@ -4,7 +4,7 @@ import chester.utils.reuse
 
 import scala.language.implicitConversions
 
-trait Tree[A <: Tree[A]] extends Any {
+trait Tree[A <: Tree[A]] extends Any { _: A =>
   type RootTree = A
   // ThisTree is not specified like in  other types in MetaTerm. ThisType = Term in MetaTerm
   type ThisTree <: RootTree
