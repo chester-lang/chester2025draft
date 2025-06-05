@@ -61,3 +61,9 @@ trait Tree[A <: Tree[A]] extends Any {
 }
 
 type TreeMap[Tre <: Tree[Tre]] = [T <: Tre] => (x: T) => x.ThisTree
+
+object TreeMap {
+  def unsafe[Tre <: Tree[Tre]](f: Tre => Tre): TreeMap[Tre] = {
+    [T <: Tre] => (x: T) => f(x).asInstanceOf[x.ThisTree]
+  }
+}
