@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 trait Tree[A <: Tree[A]] extends Any {
   type RootTree = A
   // ThisTree is not specified like in  other types in MetaTerm. ThisType = Term in MetaTerm
-  type ThisTree <: Tree[A]
+  type ThisTree <: RootTree
   // it is too hard to express the following properties in scala type system, so we just assume them
   implicit val ev1: Tree[A] <:< A = implicitly[A =:= A].asInstanceOf[Tree[A] <:< A]
 
@@ -63,7 +63,6 @@ trait Tree[A <: Tree[A]] extends Any {
 type TreeMap[Tre <: Tree[Tre]] = [T <: Tre] => (x: T) => x.ThisTree
 
 object TreeMap {
-  def unsafe[Tre <: Tree[Tre]](f: Tre => Tre): TreeMap[Tre] = {
+  def unsafe[Tre <: Tree[Tre]](f: Tre => Tre): TreeMap[Tre] =
     [T <: Tre] => (x: T) => f(x).asInstanceOf[x.ThisTree]
-  }
 }
