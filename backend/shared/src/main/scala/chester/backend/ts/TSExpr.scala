@@ -29,7 +29,7 @@ case class RawExpr(code: String, meta: Option[Meta] = None) extends TSExpr {
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): RawExpr = this
 
-  override def toDoc(using DocConf): Doc = code
+  override def toDoc(using DocConf): Doc = "("+code+")"
 }
 
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
