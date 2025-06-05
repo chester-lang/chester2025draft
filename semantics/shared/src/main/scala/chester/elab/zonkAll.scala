@@ -1,6 +1,6 @@
 package chester.elab
 
-import chester.syntax.core.{Effects, MetaTerm, Term}
+import chester.syntax.core.{BlockTerm, Effects, LetStmtTerm, MetaTerm, Term}
 import chester.utils.elab.SolverOps
 
 implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
@@ -18,6 +18,16 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
       case t: Term => t
     }
     .asInstanceOf[t.ThisTree]
+
+  def zonkAll(using SolverOps, Context, Elab): Term = readMetaAll.descent2Rec(
+    [A <: Term] =>
+      (x: A) =>
+        x match {
+          case let: LetStmtTerm =>
+            let.copy(ty = summon[Elab].reduceNoEffectUntyped(let.ty)).asInstanceOf[x.ThisTree]
+          case t => t.asInstanceOf[x.ThisTree]
+      }
+  )
 }
 
 implicit class ZonkAllOnTAST(private val tast: TAST) extends AnyVal {
@@ -30,11 +40,19 @@ implicit class ZonkAllOnTAST(private val tast: TAST) extends AnyVal {
         ast = TAST.termToBlockNoMeta(tast.ast.readMetaAll),
         effects = tast.effects.readMetaAll.assumeEffects
       )
+  def zonkAll(using SolverOps, Context, Elab): ZonkedTAST = {
+    val result = readMetaAll
+    result.zonked(ast = result.ast.zonkAll.assumeBlock, effects = result.effects.zonkAll.assumeEffects)
+  }
 }
 
 extension (t: Term) {
   def assumeEffects: Effects = t match {
     case e: Effects => e
     case _          => throw new IllegalArgumentException(s"Expected Effects, but got: $t")
+  }
+  def assumeBlock: BlockTerm = t match {
+    case b: BlockTerm => b
+    case _            => throw new IllegalArgumentException(s"Expected Block, but got: $t")
   }
 }

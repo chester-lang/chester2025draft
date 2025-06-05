@@ -32,7 +32,10 @@ trait Tree[A <: Tree[A]] extends Any {
   )
 
   final def descentRec(f: A => A): A = thisOr {
-    f(descent(_.descentRec(f(_))))
+    f(descent(_.descentRec(f)))
+  }
+  final def descent2Rec(f: TreeMap[A]): ThisTree = thisOr {
+    f(descent2([T <: A] => (x: T) => x.descent2Rec(f))).asInstanceOf[A & ThisTree]
   }
 
   def inspect(f: A => Unit): Unit = {
