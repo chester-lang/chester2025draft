@@ -614,7 +614,7 @@ case class FunctionType(
     copy(
       telescopes = telescopes.map(g(_)),
       resultTy = f(resultTy),
-      effects = g(effects)
+      effects = g.use(effects)
     )
   )
 }
