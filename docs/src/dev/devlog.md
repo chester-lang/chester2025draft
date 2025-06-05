@@ -634,6 +634,103 @@ This solution preserves the uniform symbol treatment principle while ensuring th
   - `docs/src/dev/tyck-improvement-proposal.md`
   - `docs/src/dev/type-checking-system.md`
   - `docs/src/dev/devlog.md`
+## Historical: Chester.tyck System (Deprecated and Removed)
+
+> **Note**: The `chester.tyck` system has been removed from Chester. This content is preserved for historical reference and understanding of the evolution to the current `chester.elab` system.
+
+### Original System Architecture (`chester.tyck`)
+
+The original type checking system was built around propagator networks with cells and constraints:
+
+- Used `TyckPropagator` for constraint propagation
+- Had a monolithic `Elaborater` class with specialized components (`ElaboraterBlock`, `ElaboraterFunction`, etc.)
+- Relied on `CellId` references for tracking types
+- Used a stateful approach for tracking and resolving constraints
+
+### Historical Development Commands
+
+Commands that were used with the chester.tyck system:
+
+```bash
+# Historical test commands for chester.tyck (no longer applicable)
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+sbt "semantic/testOnly chester.tyck.TheTyckTest"
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest -- -only add.chester"
+```
+
+### Historical Issues and Solutions
+
+The chester.tyck system had several architectural issues that led to its replacement:
+
+#### 1. Complex Propagator Networks
+- Constraint propagation was difficult to debug and reason about
+- Cell coverage issues led to frequent "cells not covered by any propagator" errors
+- Complex interdependencies between propagators made the system brittle
+
+#### 2. Monolithic Architecture
+- Large `Elaborater` class was difficult to maintain and extend
+- Specialized components were tightly coupled
+- Adding new language features required extensive modifications
+
+#### 3. Type System Limitations
+- Union type handling was complex and error-prone
+- Type-level function applications had limited support
+- Alpha-equivalence checking was incomplete for dependent types
+
+### Migration to chester.elab
+
+The transition from chester.tyck to chester.elab addressed these issues:
+
+- **Modular Design**: Handler-based architecture replaced monolithic elaborator
+- **Cleaner Constraints**: Simplified constraint system with dedicated solver
+- **Better Type Support**: Improved union types, type-level functions, and dependent types
+- **Maintainability**: Clearer separation of concerns and more focused components
+
+### Legacy Test File Patterns
+
+The chester.tyck system used different test patterns:
+
+```scala
+// Old chester.tyck test pattern
+class FilesTyckTest extends FunSuite {
+  test("some feature") {
+    // Test logic using chester.tyck components
+    val elaborater = new Elaborater(...)
+    val result = elaborater.elaborate(expr)
+    // Assertions
+  }
+}
+```
+
+Compare with current chester.elab pattern:
+
+```scala
+// Current chester.elab test pattern  
+class ElabHoleTest extends FunSuite {
+  test("feature description") {
+    // Setup
+    val reporter = new VectorReporter[TyckProblem]()
+    val elabOps = ElabOps(reporter, NoopSemanticCollector)
+    
+    // Test
+    val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+    
+    // Assertions
+    assertEquals(reporter.getReports.isEmpty, true)
+    assert(judge.wellTyped.isInstanceOf[ExpectedTerm])
+  }
+}
+```
+
+### Historical Documentation References
+
+Content that previously referenced chester.tyck has been updated:
+
+- Development commands in `development.md` updated to focus on chester.elab
+- Architecture documentation in `elaboration-system.md` simplified to focus on current system
+- Type checking improvement proposals moved to historical section
+
+This historical information is preserved to help developers understand the evolution of Chester's type system and the rationale behind the current chester.elab architecture.
 
 - **Files Removed**:
   - `syntax/shared/src/main/scala/chester/syntax/core/spec/Term.scala`

@@ -1,8 +1,10 @@
-# Comprehensive Type System Improvement Proposal
+# Chester Type System Historical Reference (OUTDATED)
 
-NOTE THAT THIS DOCUMENT IS OUTDATED AS RELEVANT CODE IS BEING REWRITTEN
+> **⚠️ IMPORTANT**: This document is completely outdated and preserved only for historical reference. The `chester.tyck` system described here has been removed and replaced with `chester.elab`. For current information about Chester's type system, see `elaboration-system.md`.
 
-This document outlines specific proposed improvements to Chester's type checking system, focusing on dependent types, union and intersection types, and the integration between the reducer and type checker.
+> **NOTE**: This document originally described improvements to `chester.tyck`, but that system is no longer part of Chester. The content below is preserved for historical context.
+
+## Historical Context
 
 ## 1. Overview and Background
 

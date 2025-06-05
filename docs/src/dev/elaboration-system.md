@@ -1,36 +1,22 @@
-# Chester Elaboration System
+# Chester Elaboration System (chester.elab)
 
 ## Introduction
 
-Chester features two elaboration systems for type checking:
+Chester's type checking system uses a modernized elaboration approach with the `chester.elab` package. This system provides a more modular, constraint-based approach to type checking and elaboration.
 
-1. **Original Type Checking Logic (`chester.tyck`)**: The constraint-based type checking system using propagator networks
-2. **New Elaboration System (`chester.elab`)**: A modernized, more modular approach to elaboration with a dedicated solver
+## Architecture Overview
 
-This document explains both systems, their differences, and provides guidance on how to work with the new elaboration system.
+### Core System (`chester.elab`)
 
-## Architectural Comparison
+The elaboration system is built around a constraint-based solver with dedicated handlers:
 
-### Original System (`chester.tyck`)
+- Uses a dedicated solver architecture for tracking and resolving typing constraints
+- Features a modular handler system where each elaboration concern is handled by a dedicated, composable handler
+- Uses cells to represent type variables and constraints in a structured way
+- Infers more specific types (e.g., `IntTerm` instead of `IntegerTerm`)
+- Employs handler-driven architecture with components like `BlockElabHandler` and `ListOfHandler`
 
-The original type checking system is built around propagator networks with cells and constraints:
-
-- Uses `TyckPropagator` for constraint propagation
-- Has a monolithic `Elaborater` class with specialized components (`ElaboraterBlock`, `ElaboraterFunction`, etc.)
-- Relies on `CellId` references for tracking types
-- Uses a stateful approach for tracking and resolving constraints
-
-### New System (`chester.elab`)
-
-The new elaboration system takes a fundamentally different approach to type checking:
-
-- **Constraint-based Solver**: Uses a dedicated solver architecture for tracking and resolving typing constraints
-- **Modular Handler System**: Each elaboration concern is handled by a dedicated, composable handler
-- **Cell-based Representation**: Uses cells to represent type variables and constraints in a more structured way
-- **More Precise Types**: Infers more specific types (e.g., `IntTerm` instead of `IntegerTerm`)
-- **Handler-driven Architecture**: Components like `BlockElabHandler` and `ListOfHandler` encapsulate specific elaboration logic
-
-### Key Components of the New System
+### Key Components
 
 #### 1. Core Interfaces
 
@@ -88,7 +74,7 @@ case class ElabOps(reporter: Reporter[TyckProblem], collector: SemanticCollector
 
 ### Features Supported
 
-The new elaboration system currently supports:
+The elaboration system currently supports:
 
 - Basic literals (integers, strings, symbols)
 - Lists (including heterogeneous and nested lists with correct union typing)
@@ -98,11 +84,9 @@ The new elaboration system currently supports:
 
 ### REPL Integration
 
-The REPL engine now uses the new elaboration system by default, as seen in `REPLEngine.scala`:
+The REPL uses the elaboration system by default, as seen in `REPLEngine.scala`:
 
-The REPL implementation includes a toggle (`useNewElab`) set to true by default that allows switching between the old and new elaboration systems. When enabled, the typeCheck method creates a reporter and ElabOps, then calls DefaultElaborator.inferPure() to type check expressions. The results are wrapped in a TyckResult0 object to maintain compatibility with the old system's result format.
-
-This implementation allows seamless switching between the old and new elaboration systems, with the new system as the default.
+The REPL implementation calls DefaultElaborator.inferPure() to type check expressions. This provides the main entry point for the elaboration system.
 
 ### Test Coverage
 
@@ -118,13 +102,13 @@ These tests demonstrate the system's ability to:
 2. Handle heterogeneity through proper union type creation
 3. Maintain correct type relationships in nested structures
 
-## Using the New Elaboration System
+## Using the Elaboration System
 
 ### Basic Usage
 
-The following example shows how to use the new elaboration system to type check an expression:
+The following example shows how to use the elaboration system to type check an expression:
 
-To use the new elaboration system, you'll need to:
+To use the elaboration system, you'll need to:
 
 1. Parse an expression using ChesterReaderV2 or another parser
 2. Create a reporter and ElabOps for error collection
@@ -185,34 +169,28 @@ A practical example would be adding support for boolean literals, which would re
 4. Registering the handler in DefaultSolverConf
 5. Adding a case for BooleanLiteral expressions in the DefaultElab.elab method
 
-## Transition Guidelines
+## Development Guidelines
 
-While both systems currently coexist, the development focus is transitioning to the new `chester.elab` system. Follow these guidelines when working with the codebase:
+Follow these guidelines when working with the codebase:
 
 ### For New Development
 
 - Use `DefaultElaborator.inferPure()` as the primary entry point for new typechecking code
 - Implement new features and extensions in the `chester.elab` package
-- Add handlers for new expression types following the pattern shown above
-- Write tests specifically against the new elaboration system
-
-### For Maintenance of Existing Code
-
-- When fixing bugs in the existing `chester.tyck` system, consider if the fix should also be applied to `chester.elab`
-- Document cross-references between equivalent functionality in both systems
-- Gradually migrate test cases to support the new system
+- Add handlers for new expression types following the established patterns
+- Write tests specifically for the elaboration system
 
 ### Testing Approach
 
 - Use `ElabLiteralAndListTest.scala` as a reference for test structure and pattern
-- Create test cases that work with both systems to ensure compatibility
-- The REPL's toggle (`useNewElab`) allows easy switching between systems for comparison
+- Create comprehensive test cases for new features
+- Test both success and failure cases to ensure robust error handling
 
 ## Best Practices
 
 ### 1. Preserve Original Terms
 
-Consistent with the existing guidelines for the original elaboration system:
+Follow the existing guidelines for the elaboration system:
 
 - The elaboration system should preserve the original structure of terms
 - Avoid reduction during elaboration
@@ -222,8 +200,7 @@ Consistent with the existing guidelines for the original elaboration system:
 ### 2. Error Reporting
 
 - Use the `ElabOps` reporter for consistent error messages
-- Provide detailed type information in error messages
-- Match the error format of the original system for consistency
+- Match the error format for consistency
 - Include source position information when available
 - Use internationalized messages (with `t""` string templates)
 
@@ -237,7 +214,7 @@ Consistent with the existing guidelines for the original elaboration system:
 
 ## Current Limitations and Future Work
 
-The new elaboration system is still under development and doesn't yet support the full range of Chester language features. Current limitations include:
+The elaboration system is under active development and doesn't yet support the full range of Chester language features. Current limitations include:
 
 - Limited support for complex expressions and statements
 - Incomplete handling of advanced type features like traits and interfaces
@@ -249,4 +226,4 @@ Future development should focus on:
 1. Extending the system to support all Chester language features
 2. Improving error messages and diagnostics
 3. Enhancing performance and error recovery
-4. Eventually replacing the original system entirely
+4. Implementing more advanced type system features

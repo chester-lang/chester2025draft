@@ -62,17 +62,15 @@ NOTE THAT ALL CODE AND DOCUMENTS CAN AND WILL BE OUTDATED OR CONFLICTING. ANALYS
      sbt rootJVM/test
 
      # Run a specific test class from the root project
-     sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+     sbt "rootJVM/testOnly chester.elab.ElabHoleTest"
      
      # You can also run tests for specific modules when needed
      sbt reader/test
-     sbt semantic/test
-     sbt cli/test
+     sbt semantics/test
      
      # Run specific test classes in modules
-     sbt "reader/testOnly chester.reader.ReaderTest"
-     sbt "semantic/testOnly chester.tyck.TheTyckTest"
-     sbt "cli/testOnly chester.cli.CLITest"
+     sbt "reader/testOnly chester.reader.FileParserTest"
+     sbt "semantics/testOnly chester.elab.ElabLiteralAndListTest"
      ```
    - **DO NOT** navigate into subdirectories to run tests (e.g., `cd reader && sbt test`)
    - **ALWAYS** run tests from the root project directory
@@ -101,23 +99,19 @@ NOTE THAT ALL CODE AND DOCUMENTS CAN AND WILL BE OUTDATED OR CONFLICTING. ANALYS
        sbt "rootJVM/testOnly -- -n MyTest"
        
        # Custom incorrect style
-       sbt "rootJVM/testOnly -- -only file.chester"
+       sbt "rootJVM/testOnly -- -only testname"
        ```
    - ALWAYS run `sbt rootJVM/test` before committing changes
    - Fix any test failures before committing
    - Add new tests for new functionality
    - Update existing tests when modifying behavior
    - Test both success and failure cases
-   - **💡 Development Tip:** For quickly adding and testing new type checking scenarios during development, you can add code snippets to the `tests/tyck.chester` file. To run *only* these snippets for rapid feedback, use the specific test class `chester.tyck.TheTyckTest`. **The correct command for this specific development workflow is:**
+   - **💡 Development Tip:** For quickly adding and testing new elaboration scenarios during development, you can add test cases to existing test files in the `semantics/shared/src/test/scala/chester/elab/` directory or create new test files following the existing patterns. To run specific elaboration tests for rapid feedback, use commands like:
      ```bash
-     sbt "semantic/testOnly chester.tyck.TheTyckTest" | cat
+     sbt "semantics/testOnly chester.elab.ElabLiteralAndListTest" | cat
+     sbt "semantics/testOnly chester.elab.ElabHoleTest" | cat
      ```
-     This command targets the test directly within its module (`semantic`), providing a faster feedback loop than running the full suite via `rootJVM/test`. Note that `TheTyckTest` is designed for this temporary testing and is often disabled (`doTest = false`) otherwise. Remember to use `sbt rootJVM/test | cat` for final verification before committing.
-   - **📝 Post-Development Workflow:** Once the code in `tests/tyck.chester` passes type checking with `TheTyckTest`:
-     1. Move the `tests/tyck.chester` file to the main `tests/tyck/` directory.
-     2. Give the file a descriptive name reflecting the feature tested (e.g., `union-assignment.chester`).
-     3. Set the `doTest` flag in `semantic/jvm-native/src/test/scala/chester/tyck/TheTyckTest.scala` to `false` to disable this specific test run until needed again.
-     (Note: Test suites like `FilesTyckTest` automatically discover files in the `tests/tyck/` directory, so no explicit addition is needed).
+     This approach targets elaboration tests directly within the semantics module, providing a faster feedback loop than running the full suite via `sbt rootJVM/test`. Remember to use `sbt rootJVM/test | cat` for final verification before committing.
    - For parser changes:
      - Many tests now run against both old and new readers (V1 and V2)
      - Some complex tests currently only run against V1 (original reader)
@@ -285,11 +279,11 @@ NOTE THAT ALL CODE AND DOCUMENTS CAN AND WILL BE OUTDATED OR CONFLICTING. ANALYS
      sbt rootJVM/test | cat
 
      # Run a specific test class (include quotation marks)
-     sbt "rootJVM/testOnly chester.tyck.FilesTyckTest" | cat
+     sbt "semantics/testOnly chester.elab.ElabLiteralAndListTest" | cat
      ```
-   - **NEVER** attempt to run tests with other project paths like `cli/test`, `semantic/test`, etc.
+   - **NEVER** attempt to run tests with other project paths like `cli/test`, `semantics/test`, etc.
    - ⚠️ **CRITICAL: NEVER use the `-z` test filter option** ⚠️
-     - Example of what NOT to do: `sbt "rootJVM/testOnly chester.tyck.FilesTyckTest -z myTest"`
+     - Example of what NOT to do: `sbt "semantics/testOnly chester.elab.ElabLiteralAndListTest -z myTest"`
      - The `-z` flag is completely broken and will cause misleading results
      - Tests might appear to pass when they should fail
      - Using `-z` will lead to incorrect conclusions about code behavior
