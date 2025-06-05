@@ -84,7 +84,7 @@ class CLI[F[_]](using
                         if (errors.nonEmpty) {
                           IO.println(s"Errors found during elaboration: ${errors.mkString("\n")}")
                         } else {
-                          val tast1 = tast.readMetaAll
+                          val tast1 = tast.zonkAll
                           val outputPath = io.pathOps.of(outputFile)
                           val compiled = TSBackend.compileModule(tast1)
                           for {
