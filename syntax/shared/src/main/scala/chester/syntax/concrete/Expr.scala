@@ -212,7 +212,7 @@ case class OpSeq(seq: Vector[Expr], meta: Option[ExprMeta]) extends ParsedExpr w
   ): OpSeq = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = group(
-    Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(seq.map(_.toDoc))
+    Doc.mkList(seq.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
   )
 }
 
@@ -304,7 +304,7 @@ case class Block(
   ): Block = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = group {
-    val headDocs = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`;` </> Doc.empty)(statements.map(_.toDoc))
+    val headDocs = Doc.mkList(statements.map(_.toDoc), Doc.empty, Doc.empty, Docs.`;`)
     val tailDoc = result.map(_.toDoc).getOrElse(Doc.empty)
 
     Docs.`{` </>
@@ -359,7 +359,7 @@ case class Arg(
   override def toDoc(using DocConf): Doc = group {
     val decDoc =
       if (decorations.nonEmpty)
-        Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(decorations.map(_.toDoc)) <+> Doc.empty
+        Doc.mkList(decorations.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty) <+> Doc.empty
       else Doc.empty
     val nameDoc = name.toDoc
     val tyDoc = ty.map(t => Docs.`:` <+> t.toDoc).getOrElse(Doc.empty)
@@ -410,7 +410,7 @@ case class DesaltCallingTelescope(
   ): DesaltCallingTelescope = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = {
-    val argsDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Docs.`,` <+> Doc.empty)(args.map(_.toDoc))
+    val argsDoc = Doc.mkList(args.map(_.toDoc), Doc.empty, Doc.empty, Docs.`,`)
     if (implicitly) Docs.`[` <> argsDoc <> Docs.`]`
     else Docs.`(` <> argsDoc <> Docs.`)`
   }
@@ -436,7 +436,7 @@ case class Tuple(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedMayb
   ): Tuple = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
-    Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(terms.map(_.toDoc))
+    Doc.mkList(terms.map(_.toDoc), Docs.`(`, Docs.`)`, Docs.`,`)
 }
 
 case class DefTelescope(
@@ -456,7 +456,7 @@ case class DefTelescope(
   ): DefTelescope = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
-    Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(args.map(_.toDoc))
+    Doc.mkList(args.map(_.toDoc), Docs.`(`, Docs.`)`, Docs.`,`)
 }
 
 object DefTelescope {
@@ -504,7 +504,7 @@ case class DesaltFunctionCall(
   ): DesaltFunctionCall = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = group(
-    function.toDoc <> Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescopes.map(_.toDoc))
+    function.toDoc <> Doc.mkList(telescopes.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
   )
 }
 
@@ -543,7 +543,7 @@ case class DotCall(
 
   override def toDoc(using DocConf): Doc = group(
     expr.toDoc <> Docs.`.` <> field.toDoc <>
-      Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
+      Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
   )
 }
 
@@ -631,7 +631,7 @@ case class ListExpr(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedM
   ): ListExpr = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
-    Doc.wrapperlist(Docs.`[`, Docs.`]`, Docs.`,` <+> Doc.empty)(terms.map(_.toDoc))
+    Doc.mkList(terms.map(_.toDoc), Docs.`[`, Docs.`]`, Docs.`,`)
 }
 
 case class HoleExpr(description: String, meta: Option[ExprMeta]) extends Expr {
@@ -687,7 +687,7 @@ case class AnnotatedExpr(
 
   override def toDoc(using DocConf): Doc = group(
     annotation.toDoc <>
-      Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc)) <> expr.toDoc
+      Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty) <> expr.toDoc
   )
 }
 
@@ -746,13 +746,13 @@ case class ObjectExpr(
   ): ObjectExpr = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
-    Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`,` <+> Doc.empty)(
+    Doc.mkList(
       clauses.map {
         case ObjectExprClause(key, value, _) =>
           key.toDoc <> Docs.`=` <+> value.toDoc
         case ObjectExprClauseOnValue(key, value, _) =>
           key.toDoc <> Docs.`=>` <+> value.toDoc
-      }
+      }, Docs.`{`, Docs.`}`, Docs.`,`
     )
 }
 
@@ -773,7 +773,7 @@ case class Keyword(
 
   override def toDoc(using DocConf): Doc = group(
     Doc.text("#" + key) <>
-      Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
+      Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
   )
 }
 
@@ -816,8 +816,8 @@ case class DesaltMatching(
   ): DesaltMatching = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
-    Doc.wrapperlist(Docs.`{`, Docs.`}`, Docs.`;` <+> Doc.empty)(
-      clauses.map(_.toDoc)
+    Doc.mkList(
+      clauses.map(_.toDoc), Docs.`{`, Docs.`}`, Docs.`;`
     )
 }
 
@@ -845,7 +845,7 @@ case class FunctionExpr(
   ): FunctionExpr = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = group {
-    val telescopeDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
+    val telescopeDoc = Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
     val effectDoc = effect.map(_.toDoc).getOrElse(Doc.empty)
     val resultDoc = resultTy.map(r => Docs.`->` <+> r.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.toDoc
@@ -1101,7 +1101,7 @@ case class DefinedFunction(
   def bindings: Vector[Identifier] = Vector(id)
 
   override def toDoc(using DocConf): Doc = group(
-    id.toDoc <> Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
+    id.toDoc <> Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
   )
 }
 
@@ -1153,7 +1153,7 @@ case class LetDefStmt(
     val definedDoc = defined.toDoc
     val tyDoc = ty.map(t => Doc.text(": ") <> t.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.map(b => Doc.text(" = ") <> b.toDoc).getOrElse(Doc.empty)
-    val decorationsDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(decorations.map(_.toDoc))
+    val decorationsDoc = Doc.mkList(decorations.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
     decorationsDoc <+> kindDoc <+> definedDoc <+> tyDoc <+> bodyDoc
   }
 
@@ -1244,7 +1244,7 @@ case class ExtensionStmt(
   ): ExtensionStmt = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = {
-    val telescopeDoc = Doc.wrapperlist(Doc.empty, Doc.empty, Doc.empty)(telescope.map(_.toDoc))
+    val telescopeDoc = Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
     val bodyDoc = body.toDoc
     group(
       Doc.text("extension") <+> telescopeDoc <+> Docs.`{` </>
@@ -1327,7 +1327,7 @@ case class RecordStmt(
 
   override def toDoc(using DocConf): Doc = {
     val extendsDoc = extendsClause.map(_.toDoc).getOrElse(Doc.empty)
-    val fieldsDoc = Doc.wrapperlist(Docs.`(`, Docs.`)`, Docs.`,` <+> Doc.empty)(fields.map(_.toDoc))
+    val fieldsDoc = Doc.mkList(fields.map(_.toDoc), Docs.`(`, Docs.`)`, Docs.`,`)
     val bodyDoc = body.map(b => Doc.empty <+> b.toDoc).getOrElse(Doc.empty)
     group(
       Doc.text("record") <+> name.toDoc <> extendsDoc <> fieldsDoc <> bodyDoc
@@ -1423,6 +1423,6 @@ case class UnionTypeExpr(
   ): UnionTypeExpr = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = group(
-    Doc.wrapperlist(Doc.empty, Doc.empty, Doc.text(" | "))(types.map(_.toDoc))
+    Doc.mkList(types.map(_.toDoc), Doc.empty, Doc.empty, Doc.text(" | "))
   )
 }
