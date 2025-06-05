@@ -840,6 +840,7 @@ case class ExceptionEffect(@const meta: Option[TermMeta]) extends Effect derives
 // todo:  whatever IO: console, file, network, ...
 sealed abstract class ReferenceCall extends Uneval with TermWithUniqid derives ReadWriter {
   override type ThisTree <: ReferenceCall
+  override def uniqId: UniqidOf[ReferenceCall]
   def name: Name
 
   def ty: Term
