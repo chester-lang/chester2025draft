@@ -7,7 +7,7 @@
     - [Development Log](dev/devlog.md)
     - [Effect System Implementation Plan](dev/effects-implementation-plan.md)
     - [Effect System Design](dev/effects-system.md)
-    - [Chester Elaboration System](dev/elaboration-system.md)
+    - [Chester Elaboration System (chester.elab)](dev/elaboration-system.md)
     - [Intellij Idea configurations](dev/intellij-idea.md)
     - [JavaScript to Python Conversion Process](dev/js2py.md)
     - [Chester Reader Architecture](dev/reader.md)
