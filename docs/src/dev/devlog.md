@@ -1644,4 +1644,142 @@ During a comprehensive code review to align with Chester's term architecture pri
   - `docs/src/dev/parser-implementation.md`
   - `docs/src/dev/devlog.md`
 
+## Historical: Chester.tyck System Improvement Proposals (Archived)
+
+> **⚠️ IMPORTANT**: This content was originally from `tyck-improvement-proposal.md` and has been moved here for historical reference. The `chester.tyck` system described below has been completely removed and replaced with `chester.elab`. This content is preserved to understand the evolution of Chester's type system.
+
+### Original Context and Background
+
+Chester's type system was originally based on a constraint propagation network where:
+- Type constraints were represented by **propagators**
+- **Cells** held type information and tracked their propagators  
+- Two types of propagator connections:
+  - **Reading**: Propagators that read from a cell
+  - **Zonking**: Propagators that could write to or resolve a cell
+
+The original system focused on enhancing support for dependent types, which required:
+1. Types that could depend on terms
+2. Variable bindings in types with alpha-equivalence checking
+3. Sophisticated reduction strategies for type equality
+
+### Original Implementation Plans and Issues
+
+#### Union Type Subtyping Implementation Plans
+
+The original chester.tyck system had detailed plans for union type implementation:
+- Union-to-Union subtyping (`A|B <: C|D`)
+- Specific-to-Union subtyping (`A <: B|C`)
+- Union-to-Specific subtyping (`A|B <: C`)
+- Cell coverage mechanisms for union types
+- Proper type checking for union types in all contexts
+
+#### EnsureCellCoverage Hack Removal Plans
+
+The original system included plans to replace the `EnsureCellCoverage` hack with proper `AutoConnect` propagators:
+- Analysis of term structure to create proper type connections
+- Smart handling of union and intersection types
+- Specialized support for function calls and their arguments
+- Default value support for truly unconstrained type variables
+
+#### Enhanced Type-Level Function Application
+
+Original plans included:
+- Better handling of nested type-level function applications
+- Improved `DefaultReducer` for composed functions
+- Enhanced `tryUnify` method for complex function call terms
+- Testing with examples like:
+  ```chester
+  // Test enhanced type-level function application
+  record A(a: Integer);
+  record B(b: String);
+  
+  // Basic identity function for types
+  def idType(x: Type): Type = x;
+  
+  // Function composition at the type level
+  def composeTypes(f: Type -> Type, g: Type -> Type, x: Type): Type = f(g(x));
+  
+  // Test basic composition
+  let aT = composeTypes(idType, idType, A);
+  def getA(x: aT): Integer = x.a;  // Should work via reduction
+  ```
+
+#### Original Testing Strategy
+
+The chester.tyck system used different testing commands:
+```bash
+# Historical test commands for chester.tyck (no longer applicable)
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest"
+sbt "semantic/testOnly chester.tyck.TheTyckTest"
+sbt "rootJVM/testOnly chester.tyck.FilesTyckTest -- -only add.chester"
 ```
+
+#### Design Principles from Original System
+
+The original chester.tyck system followed these principles:
+1. **Term Preservation**: Keep original terms in elaborated results
+2. **Reduction Strategy**: Only reduce during type equality checking using `ReduceMode.TypeLevel`
+3. **Documentation**: Maintain clear test cases for each feature
+
+#### Experimental Implementation Notes
+
+During the chester.tyck era, experimental changes were made to improve union type handling:
+
+**Union-to-Specific Type Relationship Changes**:
+- Modified `unionSpecificCompatible` method to check ALL components
+- Changed logic from `unionTypes.exists(compatible)` to `!unionTypes.exists(!compatible)`
+- Added explicit error reporting in `handleUnionSpecific` method
+
+**DefaultValuePropagator Implementation**:
+- Implemented dedicated propagators to solve "cells not covered" errors
+- Added `DefaultValuePropagator[T]` case class with high priority score
+- Implemented proper cell tracking with `readingCells`, `writingCells`, and `defaultingCells`
+
+**Infinite Recursion Prevention**:
+- Added guard conditions in `UnionOf` propagator
+- Used early returns to prevent cyclic dependencies
+- Implemented filtered component selection before creating propagator connections
+
+### Migration to chester.elab
+
+The transition from chester.tyck to chester.elab addressed these issues:
+- Simplified constraint system without cell coverage hacks
+- More direct type relationship handling
+- Better union type management
+- Cleaner function call processing
+- Eliminated complicated propagator networks
+
+#### Comparison: Old vs New Test Patterns
+
+**Old chester.tyck test pattern:**
+```scala  
+class MyTest extends FunSuite {
+  test("my test") {
+    // Test logic using chester.tyck components
+    // Complex setup with propagators, cells, etc.
+  }
+}
+```
+
+**Current chester.elab test pattern:**
+```scala
+class ElabHoleTest extends FunSuite {
+  test("?hole should produce HoleTerm") {
+    platformInfo.withValue(TypescriptPlatformInfo) {
+      // Simpler, more direct test logic
+      val elabOps = ElabOps(reporter, NoopSemanticCollector)
+      val judge = DefaultElaborator.inferPure(expr)(using elabOps)
+      assert(judge.wellTyped.isInstanceOf[HoleTerm])
+    }
+  }
+}
+```
+
+### Legacy Documentation Impact
+
+Content that previously referenced chester.tyck was updated when the system was replaced:
+- Development commands in `development.md` updated to focus on chester.elab
+- All type system documentation migrated to new elaboration system
+- Test commands updated to use current chester.elab test suites
+
+This historical information is preserved to help developers understand the evolution of Chester's type system and the rationale behind the current chester.elab architecture.

@@ -12,7 +12,6 @@
     - [JavaScript to Python Conversion Process](dev/js2py.md)
     - [Chester Reader Architecture](dev/reader.md)
     - [ScalablyTyped Bindings Guide](dev/scalablytyped-bindings.md)
-    - [Chester Type System Historical Reference (OUTDATED)](dev/tyck-improvement-proposal.md)
     - [Type Checking System: Propagator Network and Design](dev/type-checking-system.md)
     - [TypeScript Backend Implementation](dev/typescript-backend.md)
     - [Union Types Implementation](dev/union_types_progress.md)
