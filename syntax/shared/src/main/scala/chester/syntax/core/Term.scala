@@ -1218,3 +1218,23 @@ case class DotCallTerm(
     copy(record = f(record), args = args.map(g(_)), fieldType = f(fieldType))
   )
 }
+case class HoleTerm(
+    @const name: Name,
+    @const ty: Term,
+    @const effects: EffectsM = Effects.Empty,
+    @const meta: Option[TermMeta] = None
+) extends SpecialTerm derives ReadWriter {
+  override type ThisTree = HoleTerm
+  override def toDoc(using DocConf): Doc = {
+    val effectsDoc = if (effects.nonEmpty) {
+      Docs.`/` <+> effects.toDoc
+    } else {
+      Doc.empty
+    }
+    Doc.text(name) <> Docs.`:` <+> ty.toDoc <> effectsDoc
+  }
+
+  override def descent(f: Term => Term, g: TreeMap[Term]): HoleTerm = thisOr(
+    copy(ty = f(ty), effects = g(effects).asInstanceOf[EffectsM])
+  )
+}
