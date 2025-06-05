@@ -6,6 +6,7 @@ import chester.syntax.core.*
 import chester.backend.{Backend, Typescript}
 import chester.error.unreachable
 import chester.uniqid.UniqidOf
+import chester.i18n.*
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -94,7 +95,7 @@ case object TSBackend extends Backend(Typescript) {
   def compileType(term: Term)(using TSContext): TSType = term match {
     case IntType(meta)  => NumberType(meta)
     case UIntType(meta) => NumberType(meta)
-    case _              => ???
+    case term           => throw new UnsupportedOperationException(t"This has not been implemented yet: class ${term.getClass} $term")
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta)  => DoubleExpr(value.toDouble, meta)
@@ -102,7 +103,10 @@ case object TSBackend extends Backend(Typescript) {
     case NativeTerm(repr, ty, _, meta) =>
       repr match {
         case StringTerm(code, _) => RawExpr(code, meta)
-        case _                   => ???
+        case _ =>
+          throw new UnsupportedOperationException(
+            t"This has not been implemented yet: NativeTerm with repr $repr and type $ty"
+          )
       }
     case localV: LocalV =>
       val name = ctx.map.getOrElse(
@@ -110,7 +114,10 @@ case object TSBackend extends Backend(Typescript) {
         throw new IllegalArgumentException(s"Variable ${localV.name} not found in context")
       )
       IdentifierExpr(name, localV.meta)
-    case _ => ???
+    case term =>
+      throw new UnsupportedOperationException(
+        t"This has not been implemented yet: class ${term.getClass} $term"
+      )
   }
   def introduceLetVar(let: LetStmtTerm)(using ctx: TSContext): (String, TSContext) = {
     // TODO: handle shadowing and uniqueness and javascript reserved words and javascript reserved symbols and a lot more
@@ -133,6 +140,9 @@ case object TSBackend extends Backend(Typescript) {
         ),
         ctx
       )
-    case _ => ???
+    case stmt =>
+      throw new UnsupportedOperationException(
+        t"This has not been implemented yet: class ${stmt.getClass} $stmt"
+      )
   }
 }
