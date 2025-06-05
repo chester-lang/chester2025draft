@@ -303,21 +303,6 @@ case object SimpleDesalt {
       case OpSeq(Vector(a, op: Identifier, b), meta) =>
         DotCall(a, op, Vector(Tuple(Vector(b), meta = b.meta)), meta)
 
-      // Handle OpSeq that might contain pipe operators for union types
-      case opseq @ OpSeq(seq, meta) if seq.exists {
-            case Identifier("|", _) => true
-            case _                  => false
-          } =>
-        // Check if this OpSeq contains pipe operators that should be treated as union types
-        // Delegate to OpSeqDesalt to handle union type expressions
-        OpSeqDesalt.desugar(opseq) match {
-          case unionExpr: UnionTypeExpr => unionExpr
-          case _                        =>
-            // Proceed with normal OpSeq desugaring
-            // For non-union cases, fallback to regular behavior
-            if (seq.length == 1) seq.head else opseq
-        }
-
       case block @ Block(heads, tail, _)
           if heads.exists(_.isInstanceOf[DesaltCaseClause]) ||
             tail.exists(_.isInstanceOf[DesaltCaseClause]) =>
