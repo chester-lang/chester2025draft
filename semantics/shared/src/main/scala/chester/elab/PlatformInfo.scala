@@ -17,6 +17,11 @@ trait PlatformInfo {
     require(IntMax >= Int.MaxValue.toLong)
     require(UIntMax >= IntMax)
 
+    if (IntIsInteger) {
+      require(IntMin == Long.MinValue)
+      require(IntMax == Long.MaxValue)
+    }
+
     if (!hasUInt)
       require(UIntMax == IntMax, s"UIntMax must be equal to IntMax when hasUInt is false, but got UIntMax = $UIntMax and IntMax = $IntMax")
   }
@@ -24,6 +29,7 @@ trait PlatformInfo {
   def IntMin: Long
   def IntMax: Long
   def hasUInt: Boolean
+  def IntIsInteger: Boolean
   final def UIntMin: Long = 0L
   def UIntMax: BigInt = IntMax
   def isValidInt(value: BigInt): Boolean =
@@ -39,6 +45,7 @@ object JVMPlatformInfo extends PlatformInfo {
   override val IntMax: Long = Int.MaxValue.toLong
   override val UIntMax: BigInt = UInt.MaxValue.toBigInt
   override val hasUInt: Boolean = true
+  override val IntIsInteger: Boolean = false
   override def charIndexInString: NativeCharIndexInString = NativeCharIndexInString.UTF16
   verify()
 }
@@ -47,6 +54,7 @@ object TypescriptPlatformInfo extends PlatformInfo {
   override val IntMin: Long = -9007199254740991L // -(2^53 - 1)
   override val IntMax: Long = 9007199254740991L // 2^53 - 1
   override val hasUInt: Boolean = false
+  override val IntIsInteger: Boolean = false
   override def charIndexInString: NativeCharIndexInString = NativeCharIndexInString.UTF16
   verify()
 }
