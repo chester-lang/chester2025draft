@@ -154,9 +154,11 @@ trait DefaultElab extends Elab {
         val items = xs.map(infer(_))
         SolverOps.callConstraint(ListOf(items, ty, expr))
       case b: Block => SolverOps.callConstraint(BlockElab(b, ty))
-      case expr @ FunctionCall(Identifier("__native", _), telescopes, meta) =>
+      case expr @ DesaltFunctionCall(Identifier("__native", _), telescopes, meta) =>
         telescopes match {
-          case Tuple(Vector(ty0, s @ StringLiteral(code, _)), _) =>
+          case Vector(
+                DesaltCallingTelescope(Seq(CallingArg(None, ty0, false, _), CallingArg(None, s @ StringLiteral(code, _), false, _)), false, _)
+              ) =>
             val ty1 = inferType(ty0)
             SolverOps.addConstraint(Unify(ty, ty1.wellTyped, expr))
             NativeTerm(StringTerm(code, s.meta), toTerm(ty1.wellTyped), meta = meta)
@@ -188,6 +190,8 @@ trait DefaultElab extends Elab {
         SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta)), expr))
         UnitTerm_(convertMeta(expr.meta))
-      case _ => ???
+      case expr: Expr =>
+        val _ = expr
+        ???
     }
 }
