@@ -7,6 +7,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.syntax.{DefaultModule, ModuleRef}
 import chester.elab.Context
+import chester.uniqid.Uniqid
 import chester.utils.HoldNotReadable
 import chester.utils.cell.{LiteralCellContent, OnceCellContent}
 import chester.utils.elab.*
@@ -112,6 +113,17 @@ trait Elab {
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
+  def levelOfSort(ty: CellRWOr[Term])(using ctx: Context, _1: ElabOps, _2: SolverOps): Term =
+    // TODO
+    Level0
+
+  def maxLevelOf(levels: Seq[CellRWOr[Term]])(using ctx: Context, _1: ElabOps, _2: SolverOps): Term =
+    // TODO
+    Level0
+
+  def maxLevel(levels: CellRWOr[Term]*)(using ctx: Context, _1: ElabOps, _2: SolverOps): Term =
+    maxLevelOf(levels.toSeq)
+
   def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): TAST = {
     val (module, blk): (ModuleRef, Block) = resolve(block) match {
       case b @ Block(head +: heads, tail, _) =>
@@ -197,8 +209,30 @@ trait DefaultElab extends Elab {
         SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta)), expr))
         UnitTerm_(convertMeta(expr.meta))
-      case DotCall(ty, Identifier("=>", _), Seq(DesaltCallingTelescope(Seq(CallingArg(None, argTy, false, _)), false, _)), meta) =>
-        ???
+      case expr @ DotCall(tyFrom, Identifier("=>", _), Seq(DesaltCallingTelescope(Seq(CallingArg(None, tyTo, false, _)), false, _)), meta) =>
+        val tyFrom1 = inferType(tyFrom)
+        val tyTo1 = inferType(tyTo)
+        val level = maxLevel(levelOfSort(tyFrom1.ty), levelOfSort(tyTo1.ty))
+        // TODO: correct sort logic
+        val sort = Type(level, meta)
+        SolverOps.addConstraint(Unify(ty, sort, expr))
+        // TODO: handle effects
+        FunctionType(
+          telescopes = Vector(
+            TelescopeTerm(
+              Vector(
+                ArgTerm(
+                  LocalV("domain", toTerm(tyFrom1.wellTyped), Uniqid.generate[LocalV], meta = tyFrom.meta),
+                  ty = toTerm(tyFrom1.wellTyped),
+                  meta = tyFrom.meta
+                )
+              ),
+              meta = meta
+            )
+          ),
+          resultTy = toTerm(tyTo1.wellTyped),
+          meta = meta
+        )
       case expr: Expr =>
         val _ = expr
         throw new UnsupportedOperationException("It hasn't been implemented yet: " + expr.getClass.getName + " " + expr.toString)
