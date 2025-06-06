@@ -80,7 +80,7 @@ given DefaultIO: IO[Id] {
       case WriteMode.Append =>
         os.write.append(path.resolveFrom(workingDir), content)
       case WriteMode.Overwrite =>
-        os.write.overwrite(path.resolveFrom(workingDir), content)
+        os.write.over(path.resolveFrom(workingDir), content)
     }
 
   override inline def write(path: Path, content: Array[Byte]): Unit =
