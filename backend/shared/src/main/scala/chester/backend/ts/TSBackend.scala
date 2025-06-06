@@ -95,7 +95,10 @@ case object TSBackend extends Backend(Typescript) {
   def compileType(term: Term)(using TSContext): TSType = term match {
     case IntType(meta)  => NumberType(meta)
     case UIntType(meta) => NumberType(meta)
-    case term           => throw new UnsupportedOperationException(t"This has not been implemented yet: class ${term.getClass} $term")
+    case FunctionType(Seq(telescope), returnTy, effects, meta) =>
+      require(effects.assumeEffects.isEmpty, "Effects are not supported in TypeScript backend")
+      ???
+    case term => throw new UnsupportedOperationException(t"This has not been implemented yet: class ${term.getClass} $term")
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta)  => DoubleExpr(value.toDouble, meta)
