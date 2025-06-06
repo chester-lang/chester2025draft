@@ -89,7 +89,7 @@ class CLI[F[_]](using
                           val compiled = TSBackend.compileModule(tast1)
                           for {
                             _ <- IO.println(s"Writing output to '$outputFile'.")
-                            _ <- IO.writeString(outputPath, compiled.toString)
+                            _ <- IO.writeString(outputPath, compiled.toString, writeMode = WriteMode.Overwrite)
                           } yield ()
                         }
                       }
