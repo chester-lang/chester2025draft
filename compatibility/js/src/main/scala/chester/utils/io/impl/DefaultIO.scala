@@ -8,6 +8,7 @@ import typings.node.childProcessMod.{IOType, SpawnOptions, SpawnSyncOptions}
 import typings.std.global.fetch
 import chester.i18n.*
 import chester.utils.asInt
+import typings.node.nodeStrings.close
 
 import scala.scalajs.js.Thenable.Implicits.*
 import java.io.IOException
@@ -122,13 +123,12 @@ given DefaultIO: IO[Future] {
     } else {
       val process = childProcessMod.spawn(command.head, command.tail.toJSArray, SpawnOptions().setStdio(IOType.inherit))
       val p = Promise[CommandOutput]()
-      process.on(
-        "close",
-        code =>
+      process.on_close(
+        close,
+        (code, _) =>
           p.success(CommandOutput(code match {
-            case null       => None
-            case s: Double  => Some(s.asInt)
-            case unexpected => throw new IllegalStateException(t"Unexpected close code type: $unexpected")
+            case null      => None
+            case s: Double => Some(s.asInt)
           }))
       )
       p.future
