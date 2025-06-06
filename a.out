@@ -1,0 +1,5 @@
+const a: number = 42;
+const a_1: number = a;
+const a_2: number = (Math.floor(Math.random() * 10) + 1);
+const a_3: number = a_2;
+const c: (number) => number = (Math.floor);
