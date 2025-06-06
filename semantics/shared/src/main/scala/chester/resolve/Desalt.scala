@@ -301,7 +301,7 @@ case object SimpleDesalt {
       case _ @DesaltCaseClauseMatch(x)    => x
 
       case OpSeq(Vector(a, op: Identifier, b), meta) =>
-        DotCall(a, op, Vector(Tuple(Vector(b), meta = b.meta)), meta)
+        DotCall(a, op, Vector(DesaltCallingTelescope(Vector(CallingArg(expr = b, meta = b.meta)), meta = b.meta)), meta)
 
       case block @ Block(heads, tail, _)
           if heads.exists(_.isInstanceOf[DesaltCaseClause]) ||
