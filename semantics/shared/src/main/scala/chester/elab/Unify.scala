@@ -9,6 +9,8 @@ import chester.utils.*
 import chester.utils.elab.*
 import spire.math.Trilean
 
+import scala.util.boundary
+
 case object Unify extends Kind {
   override type Of = Unify
 }
@@ -88,6 +90,22 @@ case object UnifyHandler extends Handler[ElabOps, Unify.type](Unify) {
       case (lhs, Union(rhs, _)) =>
         rhs.foreach(rhs => SolverOps.addConstraint(Unify(lhs, rhs, cause, next = next)))
         Result.Done
+      case (lhs: FunctionType, rhs: FunctionType) =>
+        boundary {
+          if (lhs.telescopes.length != rhs.telescopes.length) {
+            boundary.break(failed(c))
+          }
+          for ((l, r) <- lhs.telescopes.zip(rhs.telescopes)) {
+            if (l.args.length != r.args.length) {
+              boundary.break(failed(c))
+            }
+            for ((lArg, rArg) <- l.args.zip(r.args))
+              // TODO: implement correct alpha equivalence check
+              SolverOps.addConstraint(Unify(rArg.ty, lArg.ty, cause, next = next))
+          }
+          SolverOps.addConstraint(Unify(lhs.resultTy, rhs.resultTy, cause, next = next))
+          Result.Done
+        }
       case _ => ???
     }
   }
