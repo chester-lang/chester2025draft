@@ -2,3 +2,4 @@ let a = 42;
 let a = a;
 let a = __native(Int, "Math.floor(Math.random() * 10) + 1");
 let a = a;
+let c: (Int => Int) = __native(Int, "Math.floor");
