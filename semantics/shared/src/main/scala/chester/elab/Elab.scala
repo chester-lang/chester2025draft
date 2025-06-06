@@ -199,6 +199,6 @@ trait DefaultElab extends Elab {
         UnitTerm_(convertMeta(expr.meta))
       case expr: Expr =>
         val _ = expr
-        ???
+        throw new UnsupportedOperationException("It hasn't been implemented yet: " + expr.getClass.getName + " " + expr.toString)
     }
 }
