@@ -27,3 +27,12 @@ implicit def d(sc: StringContext): D = new D {
     Doc.group(docBuilder)
   }
 }
+
+trait DT {
+  def dt(args: ToDoc*)(using options: DocConf): Doc
+}
+
+implicit def dt(sc: StringContext): DT = new DT {
+  def dt(args: ToDoc*)(using DocConf): Doc =
+    throw new UnsupportedOperationException("TODO: implement i18n doc template support")
+}

@@ -1,5 +1,6 @@
 package chester.backend.ts
 
+import chester.i18n.d
 import chester.syntax.{Tree, TreeMap}
 import chester.utils.doc.*
 import upickle.default.*
@@ -106,14 +107,14 @@ case class TSFunctionType(
     result: TSType,
     meta: Option[Meta] = None
 ) extends TSType {
-  override type ThisTree = FunctionType
-  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): FunctionType = copy(
+  override type ThisTree = TSFunctionType
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): TSFunctionType = copy(
     params = params.map(g(_)),
     result = g(result)
   )
   override def toDoc(using DocConf): Doc = {
-    val paramsDoc = params.map(_.toDoc).mkString(", ")
+    val paramsDoc = Doc.mkList(params.map(_.toDoc))
     val resultDoc = result.toDoc
-    s"($paramsDoc) => $resultDoc"
+    d"($paramsDoc) => $resultDoc"
   }
 }

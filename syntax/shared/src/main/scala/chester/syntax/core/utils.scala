@@ -86,7 +86,7 @@ object Union_ {
 object ArgTerm_ {
 
   @deprecated("meta")
-  def from(bind: LocalV): ArgTerm = ArgTerm(bind, bind.ty, meta = None)
+  def from(bind: LocalV): ArgTerm = ArgTerm(Some(bind), bind.ty, meta = None)
 }
 
 object TelescopeTerm_ {

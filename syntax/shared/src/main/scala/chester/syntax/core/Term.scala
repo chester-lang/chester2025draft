@@ -523,7 +523,7 @@ case class LiteralType(
   override def descent(f: Term => Term, g: TreeMap[Term]): LiteralType = this
 }
 case class ArgTerm(
-    @child var bind: LocalV,
+    @const bind: Option[LocalV],
     @child var ty: Term,
     @const default: Option[Term] = None,
     @const vararg: Boolean = false,
@@ -532,14 +532,13 @@ case class ArgTerm(
   override type ThisTree = ArgTerm
   override def toDoc(using DocConf): Doc = {
     val varargDoc = if (vararg) Docs.`...` else Doc.empty
+    val bindDoc = bind.map(_.toDoc <+> Docs.`:`).getOrElse(Doc.empty)
     val defaultDoc = default.map(d => Docs.`=` <+> d.toDoc).getOrElse(Doc.empty)
-    bind.toDoc <> varargDoc <> Docs.`:` <+> ty.toDoc <> defaultDoc
+    group(bindDoc <+> ty.toDoc <+> varargDoc <+> defaultDoc)
   }
   override def descent(f: Term => Term, g: TreeMap[Term]): ArgTerm = thisOr(
-    copy(bind = g(bind), ty = f(ty), default = default.map(f))
+    copy(bind = bind.map(g(_)), ty = f(ty), default = default.map(f))
   )
-
-  def name: Name = bind.name
 }
 @ifndef("syntax-truffle")
 case class TelescopeTerm(args: Seq[ArgTerm], @const implicitly: Boolean = false, @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {

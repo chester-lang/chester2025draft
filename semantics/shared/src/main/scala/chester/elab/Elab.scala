@@ -7,7 +7,6 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.syntax.{DefaultModule, ModuleRef}
 import chester.elab.Context
-import chester.uniqid.Uniqid
 import chester.utils.HoldNotReadable
 import chester.utils.cell.{LiteralCellContent, OnceCellContent}
 import chester.utils.elab.*
@@ -222,7 +221,7 @@ trait DefaultElab extends Elab {
             TelescopeTerm(
               Vector(
                 ArgTerm(
-                  LocalV("domain", toTerm(tyFrom1.wellTyped), Uniqid.generate[LocalV], meta = tyFrom.meta),
+                  None,
                   ty = toTerm(tyFrom1.wellTyped),
                   meta = tyFrom.meta
                 )
