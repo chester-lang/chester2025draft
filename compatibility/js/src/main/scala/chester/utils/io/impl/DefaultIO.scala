@@ -48,10 +48,10 @@ given DefaultIO: IO[Future] {
   override inline def writeString(
       path: String,
       content: String,
-      writeMode: WriteMode = WriteMode.New
+      writeMode: WriteMode = WriteMode.Create
   ): Future[Unit] =
     writeMode match {
-      case WriteMode.New =>
+      case WriteMode.Create =>
         for {
           e <- exists(path)
           _ <-

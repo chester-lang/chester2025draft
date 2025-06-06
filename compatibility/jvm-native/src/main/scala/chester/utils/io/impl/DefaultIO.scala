@@ -72,10 +72,10 @@ given DefaultIO: IO[Id] {
   override inline def writeString(
       path: Path,
       content: String,
-      writeMode: WriteMode = WriteMode.New
+      writeMode: WriteMode = WriteMode.Create
   ): Unit =
     writeMode match {
-      case WriteMode.New =>
+      case WriteMode.Create =>
         os.write(path.resolveFrom(workingDir), content)
       case WriteMode.Append =>
         os.write.append(path.resolveFrom(workingDir), content)
