@@ -17,6 +17,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js.typedarray.*
 import scala.scalajs.js.JSConverters.*
 
+private val ExistsUseSync = false
+
 given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
   private def toScalaArray(input: Uint8Array): Array[Byte] =
@@ -79,8 +81,13 @@ given DefaultIO: IO[Future] {
   override inline def getHomeDir: Future[String] =
     Future.successful(osMod.homedir())
 
-  override inline def exists(path: String): Future[Boolean] =
-    Future.successful(fsMod.existsSync(path))
+  override def exists(path: String): Future[Boolean] =
+    if (ExistsUseSync) {
+      Future.successful(fsMod.existsSync(path))
+    } else {
+      val p = fsPromisesMod.access(path): Future[?]
+      p.map(_ => true).recover { case _: js.JavaScriptException => false }
+    }
 
   override inline def createDirRecursiveIfNotExists(
       path: String
