@@ -531,16 +531,6 @@ case class DotCall(
 
   def isField: Boolean = telescope.isEmpty
 
-  private def isQualifiedName: Boolean = {
-    if (telescope.nonEmpty) return false
-    if (!field.isInstanceOf[Identifier]) return false
-    expr match {
-      case _: Identifier => true
-      case dc: DotCall   => dc.isQualifiedName
-      case _             => false
-    }
-  }
-
   override def toDoc(using DocConf): Doc = group(
     expr.toDoc <> Docs.`.` <> field.toDoc <>
       Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
