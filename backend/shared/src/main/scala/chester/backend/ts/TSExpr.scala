@@ -29,7 +29,7 @@ case class RawExpr(code: String, meta: Option[Meta] = None) extends TSExpr {
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): RawExpr = this
 
-  override def toDoc(using DocConf): Doc = "("+code+")"
+  override def toDoc(using DocConf): Doc = "(" + code + ")"
 }
 
 case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
@@ -86,4 +86,34 @@ case class NumberType(meta: Option[Meta] = None) extends TSType {
   override type ThisTree = NumberType
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): NumberType = this
+}
+
+case class Param(name: Option[String], ty: TSType, meta: Option[Meta] = None) extends TSExpr {
+  override type ThisTree = Param
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): Param = copy(
+    ty = g(ty)
+  )
+
+  override def toDoc(using DocConf): Doc = name match {
+    case Some(n) => n <> ":" <+> ty.toDoc
+    case None    => ty.toDoc
+  }
+}
+
+case class TSFunctionType(
+    params: Seq[Param],
+    result: TSType,
+    meta: Option[Meta] = None
+) extends TSType {
+  override type ThisTree = FunctionType
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): FunctionType = copy(
+    params = params.map(g(_)),
+    result = g(result)
+  )
+  override def toDoc(using DocConf): Doc = {
+    val paramsDoc = params.map(_.toDoc).mkString(", ")
+    val resultDoc = result.toDoc
+    s"($paramsDoc) => $resultDoc"
+  }
 }
