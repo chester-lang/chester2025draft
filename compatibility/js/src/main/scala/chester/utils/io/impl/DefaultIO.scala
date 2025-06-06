@@ -72,7 +72,7 @@ given DefaultIO: IO[Future] {
   override inline def write(path: String, content: Array[Byte]): Future[Unit] =
     fsPromisesMod.writeFile(path, content.toTypedArray)
 
-  override inline def removeWhenExists(path: String): Future[Boolean] =
+  override def removeWhenExists(path: String): Future[Boolean] =
     fsPromisesMod.unlink(path).map(_ => true).recover { case _: js.JavaScriptException =>
       false
     }
