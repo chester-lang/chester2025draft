@@ -144,6 +144,10 @@ object Calling {
     val args0 = args.toArray
     new Calling(args0, implicitly, meta)
   }
+  def unapply(x: Term): Option[(ArraySeq[CallingArgTerm], Boolean, Option[TermMeta])] = x match {
+    case x: Calling => Some((x.args, x.implicitly, x.meta))
+    case _          => None
+  }
 }
 @ifdef("syntax-truffle")
 case class Calling(
@@ -197,6 +201,10 @@ object FCallTerm {
   ): FCallTerm = {
     val args0 = args.toArray
     new FCallTerm(f, args0, meta)
+  }
+  def unapply(x: Term): Option[(Term, ArraySeq[Calling], Option[TermMeta])] = x match {
+    case x: FCallTerm => Some((x.f, x.args, x.meta))
+    case _            => None
   }
 }
 @ifdef("syntax-truffle")
@@ -291,6 +299,10 @@ object ListTerm {
   def apply(terms: Seq[Term], meta: Option[TermMeta]): ListTerm = {
     val terms0 = terms.toArray
     new ListTerm(terms0, meta)
+  }
+  def unapply(x: Term): Option[(ArraySeq[Term], Option[TermMeta])] = x match {
+    case x: ListTerm => Some((x.terms, x.meta))
+    case _           => None
   }
 }
 @ifdef("syntax-truffle")
@@ -546,6 +558,10 @@ object TelescopeTerm {
     val args0 = args.toArray
     new TelescopeTerm(args0, implicitly, meta)
   }
+  def unapply(x: Term): Option[(ArraySeq[ArgTerm], Boolean, Option[TermMeta])] = x match {
+    case x: TelescopeTerm => Some((x.args, x.implicitly, x.meta))
+    case _                => None
+  }
 }
 @ifdef("syntax-truffle")
 case class TelescopeTerm(
@@ -629,6 +645,10 @@ object FunctionType {
     val telescopes0 = telescopes.toArray
     new FunctionType(telescopes0, resultTy, effects, meta)
   }
+  def unapply(x: Term): Option[(ArraySeq[TelescopeTerm], Term, EffectsM, Option[TermMeta])] = x match {
+    case x: FunctionType => Some((x.telescopes, x.resultTy, x.effects, x.meta))
+    case _               => None
+  }
 }
 @ifdef("syntax-truffle")
 case class FunctionType(
@@ -696,6 +716,10 @@ object ObjectTerm {
     val clauses0 = clauses.toArray
     new ObjectTerm(clauses0, meta)
   }
+  def unapply(x: Term): Option[(ArraySeq[ObjectClauseValueTerm], Option[TermMeta])] = x match {
+    case x: ObjectTerm => Some((x.clauses, x.meta))
+    case _             => None
+  }
 }
 @ifdef("syntax-truffle")
 case class ObjectTerm(
@@ -739,6 +763,10 @@ object ObjectType {
   def apply(fieldTypes: Seq[ObjectClauseValueTerm], exactFields: Boolean = false, meta: Option[TermMeta]): ObjectType = {
     val fieldTypes0 = fieldTypes.toArray
     new ObjectType(fieldTypes0, exactFields, meta)
+  }
+  def unapply(x: Term): Option[(ArraySeq[ObjectClauseValueTerm], Boolean, Option[TermMeta])] = x match {
+    case x: ObjectType => Some((x.fieldTypes, x.exactFields, x.meta))
+    case _             => None
   }
 }
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
@@ -985,6 +1013,10 @@ object BlockTerm {
   def apply(statements: Seq[StmtTerm], result: Term, meta: Option[TermMeta]): BlockTerm = {
     val statements0 = statements.toArray
     new BlockTerm(statements0, result, meta)
+  }
+  def unapply(x: Term): Option[(ArraySeq[StmtTerm], Term, Option[TermMeta])] = x match {
+    case x: BlockTerm => Some((x.statements, x.result, x.meta))
+    case _            => None
   }
 }
 @ifdef("syntax-truffle")
