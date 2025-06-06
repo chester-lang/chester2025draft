@@ -22,6 +22,12 @@ implicit inline def summonPathOpsFromIO[F[_]](using
     io: IO[F]
 ): PathOps[io.Path] = io.pathOps
 
+enum WriteMode extends Enum[WriteMode] {
+  case New
+  case Append
+  case Overwrite
+}
+
 trait IO[F[_]] {
   type Path
 
@@ -36,7 +42,7 @@ trait IO[F[_]] {
 
   def read(path: Path): F[Array[Byte]]
 
-  def writeString(path: Path, content: String, append: Boolean = false): F[Unit]
+  def writeString(path: Path, content: String, writeMode: WriteMode = WriteMode.New): F[Unit]
 
   def write(path: Path, content: Array[Byte]): F[Unit]
 
@@ -92,8 +98,8 @@ extension [F[_]](_io: IO.type)(using io: IO[F]) {
   inline def writeString(
       inline path: io.Path,
       inline content: String,
-      inline append: Boolean = false
-  ): F[Unit] = io.writeString(path, content, append)
+      inline writeMode: WriteMode = WriteMode.New
+  ): F[Unit] = io.writeString(path, content, writeMode)
   inline def write(inline path: io.Path, inline content: Array[Byte]): F[Unit] =
     io.write(path, content)
   inline def removeWhenExists(inline path: io.Path): F[Boolean] =

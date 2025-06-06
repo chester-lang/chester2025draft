@@ -72,12 +72,15 @@ given DefaultIO: IO[Id] {
   override inline def writeString(
       path: Path,
       content: String,
-      append: Boolean = false
+      writeMode: WriteMode = WriteMode.New
   ): Unit =
-    if (append) {
-      os.write.append(path.resolveFrom(workingDir), content)
-    } else {
-      os.write(path.resolveFrom(workingDir), content)
+    writeMode match {
+      case WriteMode.New =>
+        os.write(path.resolveFrom(workingDir), content)
+      case WriteMode.Append =>
+        os.write.append(path.resolveFrom(workingDir), content)
+      case WriteMode.Overwrite =>
+        os.write.overwrite(path.resolveFrom(workingDir), content)
     }
 
   override inline def write(path: Path, content: Array[Byte]): Unit =

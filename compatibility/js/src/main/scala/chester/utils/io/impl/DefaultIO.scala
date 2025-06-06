@@ -48,12 +48,20 @@ given DefaultIO: IO[Future] {
   override inline def writeString(
       path: String,
       content: String,
-      append: Boolean = false
+      writeMode: WriteMode = WriteMode.New
   ): Future[Unit] =
-    if (append) {
-      fsPromisesMod.appendFile(path, content)
-    } else {
-      fsPromisesMod.writeFile(path, content)
+    writeMode match {
+      case WriteMode.New =>
+        for {
+          e <- exists(path)
+          _ <-
+            if e then Future.failed(new IOException(t"File $path already exists.")): Future[Unit]
+            else fsPromisesMod.writeFile(path, content): Future[Unit]
+        } yield ()
+      case WriteMode.Append =>
+        fsPromisesMod.appendFile(path, content): Future[Unit]
+      case WriteMode.Overwrite =>
+        fsPromisesMod.writeFile(path, content): Future[Unit]
     }
 
   // https://stackoverflow.com/questions/76455786/scala-js-how-to-convert-arraybyte-to-blob/76463887#76463887
