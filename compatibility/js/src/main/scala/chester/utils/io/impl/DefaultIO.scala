@@ -4,20 +4,21 @@ import chester.utils.io.*
 import typings.node.bufferMod.global.BufferEncoding
 import typings.node.fsMod.MakeDirectoryOptions
 import typings.node.{childProcessMod, fsMod, fsPromisesMod, osMod, pathMod, processMod}
-import typings.node.childProcessMod.{IOType, SpawnSyncOptions}
+import typings.node.childProcessMod.{IOType, SpawnOptions, SpawnSyncOptions}
 import typings.std.global.fetch
 import chester.i18n.*
 import chester.utils.asInt
 
 import scala.scalajs.js.Thenable.Implicits.*
 import java.io.IOException
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js.typedarray.*
 import scala.scalajs.js.JSConverters.*
 
 private val ExistsUseSync = false
+private val UseSpawnSync = false
 
 given DefaultIO: IO[Future] {
   // https://stackoverflow.com/questions/75031248/scala-js-convert-uint8array-to-arraybyte/75344498#75344498
@@ -110,14 +111,28 @@ given DefaultIO: IO[Future] {
 
   override inline def getAbsolutePath(path: String): Future[String] =
     Future.successful(pathMod.resolve(path))
-  override inline def call(command: Seq[String]): Future[CommandOutput] = {
-    val result = childProcessMod.spawnSync(command.head, command.tail.toJSArray, SpawnSyncOptions().setStdio(IOType.inherit))
-    val status = result.status match {
-      case null      => None
-      case s: Double => Some(s.asInt)
+  override def call(command: Seq[String]): Future[CommandOutput] =
+    if (UseSpawnSync) {
+      val result = childProcessMod.spawnSync(command.head, command.tail.toJSArray, SpawnSyncOptions().setStdio(IOType.inherit))
+      val status = result.status match {
+        case null      => None
+        case s: Double => Some(s.asInt)
+      }
+      Future.successful(CommandOutput(status))
+    } else {
+      val process = childProcessMod.spawn(command.head, command.tail.toJSArray, SpawnOptions().setStdio(IOType.inherit))
+      val p = Promise[CommandOutput]()
+      process.on(
+        "close",
+        code =>
+          p.success(CommandOutput(code match {
+            case null       => None
+            case s: Double  => Some(s.asInt)
+            case unexpected => throw new IllegalStateException(t"Unexpected close code type: $unexpected")
+          }))
+      )
+      p.future
     }
-    Future.successful(CommandOutput(status))
-  }
 
   override def listFiles(path: String): Future[Seq[String]] =
     fsPromisesMod
