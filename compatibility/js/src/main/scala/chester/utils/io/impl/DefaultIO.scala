@@ -27,10 +27,15 @@ given DefaultIO: IO[Future] {
 
   def pathOps: PathOps[String] = PathOpsString
 
-  override inline def println(x: String): Future[Unit] =
-    Future.successful(Predef.println(x))
+  override inline def println(x: String, toStderr: Boolean = false): Future[Unit] =
+    if (toStderr)
+      Future.successful(System.err.println(x))
+    else
+      Future.successful(Predef.println(x))
 
-  override inline def ask(x: String): Future[String] = ???
+  override inline def ask(x: String): Future[String] = throw new UnsupportedOperationException(
+    t"ask is not implemented in JS environment"
+  )
 
   override inline def readString(path: String): Future[String] =
     fsPromisesMod.readFile(path, BufferEncoding.utf8)

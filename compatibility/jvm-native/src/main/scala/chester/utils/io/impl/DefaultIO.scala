@@ -47,12 +47,15 @@ object DefaultPathOps extends PathOps[_root_.os.FilePath] {
   override inline def isRelative(p: os.FilePath): Boolean = !p.toNIO.isAbsolute
 }
 
-implicit object DefaultIO extends IO[Id] {
+given DefaultIO: IO[Id] {
   type Path = os.FilePath
 
   override inline def pathOps: PathOps[FilePath] = DefaultPathOps
 
-  override inline def println(x: String): Unit = Predef.println(x)
+  override inline def println(x: String, toStderr: Boolean = false): Unit = if (toStderr)
+    System.err.println(x)
+  else
+    Predef.println(x)
   override inline def ask(x: String): String = {
     Predef.print(x)
     scala.io.StdIn.readLine()

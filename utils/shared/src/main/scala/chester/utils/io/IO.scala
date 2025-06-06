@@ -29,7 +29,7 @@ trait IO[F[_]] {
 
   def pathOps: PathOps[Path]
 
-  def println(x: String): F[Unit]
+  def println(x: String, toStderr: Boolean = false): F[Unit]
   def ask(x: String): F[String]
 
   def readString(path: Path): F[String]
@@ -80,8 +80,8 @@ object Spawn {
 }
 
 object IO {
-  inline def println[F[_]](inline x: String)(using inline io: IO[F]): F[Unit] =
-    io.println(x)
+  inline def println[F[_]](inline x: String, toStderr: Boolean = false)(using inline io: IO[F]): F[Unit] =
+    io.println(x, toStderr)
 }
 
 extension [F[_]](_io: IO.type)(using io: IO[F]) {
