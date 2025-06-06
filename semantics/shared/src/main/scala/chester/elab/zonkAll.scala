@@ -1,7 +1,7 @@
 package chester.elab
 
 import chester.syntax.TreeMap
-import chester.syntax.core.{BlockTerm, Effects, LetStmtTerm, MetaTerm, Term}
+import chester.syntax.core.*
 import chester.utils.elab.SolverOps
 
 implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
@@ -21,9 +21,11 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
     .asInstanceOf[t.ThisTree]
 
   def zonkAll(using SolverOps, Context, Elab): Term = readMetaAll.descent2Rec(TreeMap.unsafe {
-    case let: LetStmtTerm =>
-      let.copy(ty = summon[Elab].reduceNoEffectUntyped(let.ty))
-    case t => t
+    case x: LetStmtTerm =>
+      x.copy(ty = summon[Elab].reduceNoEffectUntyped(x.ty))
+    case x: ArgTerm      => x.copy(ty = summon[Elab].reduceNoEffectUntyped(x.ty))
+    case x: FunctionType => x.copy(resultTy = summon[Elab].reduceNoEffectUntyped(x.resultTy))
+    case x               => x
   })
 }
 
