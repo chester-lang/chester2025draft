@@ -197,6 +197,8 @@ trait DefaultElab extends Elab {
         SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta)), expr))
         UnitTerm_(convertMeta(expr.meta))
+      case DotCall(ty, Identifier("=>", _), Seq(DesaltCallingTelescope(Seq(CallingArg(None, argTy, false, _)), false, _)), meta) =>
+        ???
       case expr: Expr =>
         val _ = expr
         throw new UnsupportedOperationException("It hasn't been implemented yet: " + expr.getClass.getName + " " + expr.toString)
