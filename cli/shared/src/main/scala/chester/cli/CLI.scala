@@ -60,7 +60,7 @@ class CLI[F[_]](using
             inputExists <- IO.exists(inputPath)
             _ <-
               if (!inputExists) {
-                IO.println(s"Input file '$inputFile' does not exist.")
+                IO.println(s"Input file '$inputFile' does not exist.", toStderr = true)
               } else {
                 for {
                   inputContent <- IO.readString(inputPath)
@@ -82,7 +82,7 @@ class CLI[F[_]](using
                         val problems = reporter.getReports
                         val errors = problems.filter(_.isError)
                         if (errors.nonEmpty) {
-                          IO.println(s"Errors found during elaboration: ${errors.mkString("\n")}")
+                          IO.println(s"Errors found during elaboration: ${errors.mkString("\n")}", toStderr = true)
                         } else {
                           val tast1 = tast.zonkAll
                           val outputPath = io.pathOps.of(outputFile)
@@ -98,7 +98,7 @@ class CLI[F[_]](using
               }
           } yield ()
         case unsupported =>
-          IO.println(s"Unsupported target: $unsupported.")
+          IO.println(s"Unsupported target: $unsupported.", toStderr = true)
       }
   }
 }
