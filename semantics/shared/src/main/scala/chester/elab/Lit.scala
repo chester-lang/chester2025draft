@@ -28,7 +28,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
 
   override def run(c: IntegerLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
+    val ty = elab.reduceForTyUntyped(toTerm(c.ty))
     if (ty <:? IntegerType(meta) isTrue) {
       result.fill(IntegerTerm(expr.value, meta))
       return Result.Done
@@ -56,7 +56,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
 
   override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
     import c.{*, given}
-    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
+    val ty = elab.reduceForTyUntyped(toTerm(c.ty))
     ty match {
       case ty: MetaTerm[?] =>
         if (expr.value.isValidInt) {
@@ -87,7 +87,7 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
 
   override def run(c: StringLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
+    val ty = elab.reduceForTyUntyped(toTerm(c.ty))
     SolverOps.addConstraint(Unify(ty, StringType(meta), expr))
     result.fill(StringTerm(expr.value, meta))
     Result.Done
@@ -111,7 +111,7 @@ case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit)
 
   override def run(c: SymbolLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
+    val ty = elab.reduceForTyUntyped(toTerm(c.ty))
     SolverOps.addConstraint(Unify(ty, SymbolType(meta), expr))
     result.fill(SymbolTerm(expr.value, meta))
     Result.Done

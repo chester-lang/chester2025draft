@@ -146,10 +146,11 @@ trait Elab {
     )
   }
 
-  def reduceTyUnsorted(term: CellRWOr[Term])(using ctx: Context, state: SolverOps): Term =
+  /** reduce a general Term for the need of type checking without knowing the term, assuming no effects and will terminate */
+  def reduceForTyUntyped(term: CellRWOr[Term])(using ctx: Context, state: SolverOps): Term =
     toTerm(term) match {
       case v: ReferenceCall if ctx.knownMap.contains(v.uniqId) =>
-        reduceTyUnsorted(ctx.knownMap(v.uniqId).value)
+        reduceForTyUntyped(ctx.knownMap(v.uniqId).value)
       case t => t
     }
 
