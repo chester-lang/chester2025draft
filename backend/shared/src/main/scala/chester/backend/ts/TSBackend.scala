@@ -120,7 +120,7 @@ case object TSBackend extends Backend(Typescript) {
       IdentifierExpr(name, localV.meta)
     case f: FCallTerm =>
       f match {
-        case FCallTerm(f, Seq(calling), meta) => ???
+        case FCallTerm(f, Seq(Calling(args, i, cmeta)), meta) => FunctionCallExpr(compileExpr(f), args.map(x => compileExpr(x.value)), meta)
         case other =>
           throw new UnsupportedOperationException(
             t"This has not been implemented yet: FCallTerm multiple telescopes $f"

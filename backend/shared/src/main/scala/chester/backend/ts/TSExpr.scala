@@ -45,6 +45,24 @@ case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
   }
 }
 
+case class FunctionCallExpr(
+    callee: TSExpr,
+    args: Seq[TSExpr],
+    meta: Option[Meta] = None
+) extends TSExpr {
+  override type ThisTree = FunctionCallExpr
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): FunctionCallExpr = copy(
+    callee = f(callee),
+    args = args.map(g(_))
+  )
+
+  override def toDoc(using DocConf): Doc = {
+    val argsDoc = Doc.mkList(args, begin = "(", end = ")")
+    callee.toDoc <> argsDoc
+  }
+}
+
 sealed trait TSStmt extends TSExpr derives ReadWriter {
   override type ThisTree <: TSStmt
 }
