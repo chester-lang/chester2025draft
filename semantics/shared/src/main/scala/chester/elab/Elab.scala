@@ -146,10 +146,10 @@ trait Elab {
     )
   }
 
-  def reduceNoEffectUntyped(term: CellRWOr[Term])(using ctx: Context, state: SolverOps): Term =
+  def reduceTyUnsorted(term: CellRWOr[Term])(using ctx: Context, state: SolverOps): Term =
     toTerm(term) match {
       case v: ReferenceCall if ctx.knownMap.contains(v.uniqId) =>
-        reduceNoEffectUntyped(ctx.knownMap(v.uniqId).value)
+        reduceTyUnsorted(ctx.knownMap(v.uniqId).value)
       case t => t
     }
 

@@ -15,18 +15,20 @@ case object IntegerLit extends Lit {
   type Of = IntegerLit
 }
 
-case class IntegerLit(expr: IntegerLiteral, ty: CellRWOr[Term])(using ctx: Context, ops: SolverOps)
+case class IntegerLit(expr: IntegerLiteral, ty: CellRWOr[Term])(using elab0: Elab, ctx: Context, ops: SolverOps)
     extends Constraint(IntegerLit)
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
   def meta: Option[TermMeta] = convertMeta(expr.meta)
+  val elab: Elab = elab0
 }
 
 case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerLit) {
 
   override def run(c: IntegerLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
+    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
     if (ty <:? IntegerType(meta) isTrue) {
       result.fill(IntegerTerm(expr.value, meta))
       return Result.Done
@@ -43,7 +45,7 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
       result.fill(UIntTerm(expr.value, meta))
       return Result.Done
     }
-    toTerm(ty) match {
+    ty match {
       case ty: MetaTerm[?] => Result.Waiting(assumeCell(ty))
       case _ =>
         result.fill(IntegerTerm(expr.value, meta))
@@ -53,8 +55,9 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
   }
 
   override def defaulting(c: IntegerLit, level: DefaultingLevel)(using ElabOps, SolverOps): Boolean = {
-    import c.*
-    toTerm(ty) match {
+    import c.{*, given}
+    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
+    ty match {
       case ty: MetaTerm[?] =>
         if (expr.value.isValidInt) {
           assumeCell(ty).fill(IntType(meta))
@@ -72,17 +75,19 @@ case object IntegerLitHandler extends Handler[ElabOps, IntegerLit.type](IntegerL
 case object StringLit extends Lit {
   type Of = StringLit
 }
-case class StringLit(expr: StringLiteral, ty: CellRWOr[Term])(using ctx: Context, solverOps: SolverOps)
+case class StringLit(expr: StringLiteral, ty: CellRWOr[Term])(using elab0: Elab, ctx: Context, solverOps: SolverOps)
     extends Constraint(StringLit)
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
   def meta: Option[TermMeta] = convertMeta(expr.meta)
+  val elab: Elab = elab0
 }
 case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit) {
 
   override def run(c: StringLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
+    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
     SolverOps.addConstraint(Unify(ty, StringType(meta), expr))
     result.fill(StringTerm(expr.value, meta))
     Result.Done
@@ -94,17 +99,19 @@ case object StringLitHandler extends Handler[ElabOps, StringLit.type](StringLit)
 case object SymbolLit extends Lit {
   type Of = SymbolLit
 }
-case class SymbolLit(expr: SymbolLiteral, ty: CellRWOr[Term])(using ctx: Context, solverOps: SolverOps)
+case class SymbolLit(expr: SymbolLiteral, ty: CellRWOr[Term])(using elab0: Elab, ctx: Context, solverOps: SolverOps)
     extends Constraint(SymbolLit)
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx
   def meta: Option[TermMeta] = convertMeta(expr.meta)
+  val elab: Elab = elab0
 }
 case object SymbolLitHandler extends Handler[ElabOps, SymbolLit.type](SymbolLit) {
 
   override def run(c: SymbolLit)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
+    val ty = elab.reduceTyUnsorted(toTerm(c.ty))
     SolverOps.addConstraint(Unify(ty, SymbolType(meta), expr))
     result.fill(SymbolTerm(expr.value, meta))
     Result.Done
