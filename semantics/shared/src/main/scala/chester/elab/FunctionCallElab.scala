@@ -24,8 +24,11 @@ case class FunctionCallElab(
 }
 
 case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.type](FunctionCallElab) {
-  override def run(c: FunctionCallElab)(using ElabOps, SolverOps): Result =
+  override def run(c: FunctionCallElab)(using ElabOps, SolverOps): Result = {
+
+    import c.{*, given}
     ???
+  }
 
   override def canDefaulting(level: DefaultingLevel): Boolean = false
 }
