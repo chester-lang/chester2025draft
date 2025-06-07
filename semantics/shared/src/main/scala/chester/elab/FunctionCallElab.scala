@@ -44,11 +44,17 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
     if (fTyImplicit.length == callImplicit.length && fTyImplicit.zip(callImplicit).forall { case (x, y) => x == y }) {
       // simplest case
       for ((defTele, callTele) <- fTy.telescopes.zip(call.telescopes)) {
-        ???
+        if (defTele.args.length == callTele.args.length) {
+          // check the simplest case
+          ???
+        } else {
+          throw new UnsupportedOperationException("not implemented yet: default arguments in function calls")
+        }
         ???
       }
-    } else {
       ???
+    } else {
+      throw new UnsupportedOperationException("not implemented yet: omitted implicit telescopes in function calls")
     }
   }
 
