@@ -98,7 +98,8 @@ case object TSBackend extends Backend(Typescript) {
     case FunctionType(Seq(telescope), returnTy, effects, meta) =>
       require(effects.assumeEffects.isEmpty, "Effects are not supported in TypeScript backend")
       TSFunctionType(telescope.args.map(arg => Param(arg.bind.map(_.name), compileType(arg.ty))), compileType(returnTy), meta)
-    case term => throw new UnsupportedOperationException(t"This has not been implemented yet: class ${term.getClass} $term")
+    case NothingType(meta) => NeverType(meta)
+    case term              => throw new UnsupportedOperationException(t"This has not been implemented yet: class ${term.getClass} $term")
   }
   def compileExpr(term: Term)(using ctx: TSContext): TSExpr = term match {
     case IntTerm(value, meta)  => DoubleExpr(value.toDouble, meta)

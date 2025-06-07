@@ -89,6 +89,14 @@ case class NumberType(meta: Option[Meta] = None) extends TSType {
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): NumberType = this
 }
 
+case class NeverType(meta: Option[Meta] = None) extends TSType {
+  override def toDoc(using DocConf): Doc = "never"
+
+  override type ThisTree = NeverType
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): NeverType = this
+}
+
 case class Param(name: Option[String], ty: TSType, meta: Option[Meta] = None) extends TSExpr {
   override type ThisTree = Param
 
