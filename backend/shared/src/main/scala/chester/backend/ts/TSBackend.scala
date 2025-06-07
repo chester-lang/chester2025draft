@@ -118,6 +118,14 @@ case object TSBackend extends Backend(Typescript) {
         throw new IllegalArgumentException(s"Variable ${localV.name} not found in context")
       )
       IdentifierExpr(name, localV.meta)
+    case f: FCallTerm =>
+      f match {
+        case FCallTerm(f, Seq(calling), meta) => ???
+        case other =>
+          throw new UnsupportedOperationException(
+            t"This has not been implemented yet: FCallTerm multiple telescopes $f"
+          )
+      }
     case term =>
       throw new UnsupportedOperationException(
         t"This has not been implemented yet: class ${term.getClass} $term"

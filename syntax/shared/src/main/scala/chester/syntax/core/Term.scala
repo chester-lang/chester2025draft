@@ -175,8 +175,7 @@ case class Calling(
 
 }
 
-@ifndef("syntax-truffle")
-case class FCallTerm(
+open case class FCallTerm(
     @child var f: Term,
     args: Seq[Calling],
     @const meta: Option[TermMeta]
@@ -198,38 +197,19 @@ object FCallTerm {
       f: Term,
       args: Seq[Calling],
       meta: Option[TermMeta]
-  ): FCallTerm = {
+  ): FCallTerm1 = {
     val args0 = args.toArray
-    new FCallTerm(f, args0, meta)
-  }
-  def unapply(x: Term): Option[(Term, ArraySeq[Calling], Option[TermMeta])] = x match {
-    case x: FCallTerm => Some((x.f, x.args, x.meta))
-    case _            => None
+    new FCallTerm1(f, args0, meta)
   }
 }
 @ifdef("syntax-truffle")
-case class FCallTerm(
-    @child var f: Term,
+implicit inline def isFCallTerm1(x: FCallTerm): FCallTerm1 = x.asInstanceOf[FCallTerm1]
+@ifdef("syntax-truffle")
+class FCallTerm1(
+    @child var f0: Term,
     @children args0: Array[Calling],
     @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-  val args: ArraySeq[Calling] = ArraySeq.unsafeWrapArray(args0)
-  override type ThisTree = FCallTerm
-
-  override def descent(a: Term => Term, g: TreeMap[Term]): FCallTerm = thisOr(
-    copy(f = a(f), args0 = args.map(g(_)))
-  )
-  override def toDoc(using DocConf): Doc = {
-    val fDoc = f.toDoc
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    group(fDoc <+> argsDoc)
-  }
-  override def equals(other: Any): Boolean = other match {
-    case other: FCallTerm => this.f == other.f && this.args == other.args && this.meta == other.meta
-    case _                => false
-  }
-
-}
+) extends FCallTerm(f0, ArraySeq.unsafeWrapArray(args0), meta)
 sealed abstract class Pat extends SpecialTerm derives ReadWriter {
   override type ThisTree <: Pat
 }
