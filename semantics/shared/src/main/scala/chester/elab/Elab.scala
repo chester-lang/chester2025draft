@@ -232,6 +232,9 @@ trait DefaultElab extends Elab {
           resultTy = toTerm(tyTo1.wellTyped),
           meta = meta
         )
+      case expr: DesaltFunctionCall => SolverOps.callConstraint(
+        FunctionCallElab(expr, ty)
+      )
       case expr: Expr =>
         val _ = expr
         throw new UnsupportedOperationException("It hasn't been implemented yet: " + expr.getClass.getName + " " + expr.toString)
