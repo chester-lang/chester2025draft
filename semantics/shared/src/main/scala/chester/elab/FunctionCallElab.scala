@@ -20,14 +20,15 @@ case class FunctionCallElab(
 
   override val result: CellRW[Term] = newHole
 
-  given context: Context = ctx
+  val context0: Context = ctx
 
   given elab: Elab = elab0
 }
 
 case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.type](FunctionCallElab) {
   override def run(c: FunctionCallElab)(using ElabOps, SolverOps): Result = {
-    import c.*
+    import c.{*, given}
+    implicit var context: Context = c.context0
     val f = toTerm(c.f.wellTyped)
     val fTy = toTerm(c.f.ty) match {
       case meta: MetaTerm[?] =>
@@ -49,14 +50,19 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
           for ((defArg, callArg) <- defTele.args.zip(callTele.args))
             if (callArg.name.isEmpty || defArg.bind.exists(localv => localv.name == callArg.name.get.name)) {
               // simplest case, no different order of named arguments
-              ???
+              val wellTyped = elab.check(callArg.expr, defArg.ty)
+              if (defArg.bind.isDefined) {
+                val bind = defArg.bind.get
+                context = context.add(ContextItem(bind.name, bind.uniqId, bind, defArg.ty)).knownAdd(bind.uniqId, TyAndVal(defArg.ty, wellTyped))
+              }
             } else {
               throw new UnsupportedOperationException("not implemented yet: different order of named arguments")
             }
         } else {
           throw new UnsupportedOperationException("not implemented yet: default arguments in function calls")
         }
-        ???
+        result.fill(FCallTerm(??? : Term, ??? : Seq[Calling], call.meta))
+        return Result.Done
       }
       ???
     } else {
