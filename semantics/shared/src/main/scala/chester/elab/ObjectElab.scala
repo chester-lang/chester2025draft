@@ -24,7 +24,7 @@ case class ObjectElab(obj: ObjectExpr, ty: CellRWOr[Term])(using elab0: Elab, op
 case object ObjectElabHandler extends Handler[ElabOps, ObjectElab.type](ObjectElab) {
   override def run(c: ObjectElab)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    // TODO: different elab rules for more cases like when use lile a hashmap
+    // TODO: different elab rules for more cases like when use like a hashmap
     val xs = obj.clauses.map {
       case _: ObjectExprClause             => unreachable("ObjectExprClause should already be resolved")
       case clause: ObjectExprClauseOnValue => (elab.inferPure(clause.key), elab.infer(clause.value), clause.meta)
