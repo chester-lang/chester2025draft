@@ -3,6 +3,7 @@ package chester.elab
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.elab.*
+import chester.error.Reporter
 import chester.utils.elab.*
 
 case object FunctionCallElab extends Kind {
@@ -10,6 +11,7 @@ case object FunctionCallElab extends Kind {
 }
 
 case class FunctionCallElab(
+    f: (wellTyped: CellRWOr[Term], ty: CellRWOr[Term]),
     call: DesaltFunctionCall,
     ty: CellRWOr[Term]
 )(using elab0: Elab, ops: SolverOps, ctx: Context)
@@ -25,8 +27,18 @@ case class FunctionCallElab(
 
 case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.type](FunctionCallElab) {
   override def run(c: FunctionCallElab)(using ElabOps, SolverOps): Result = {
-
-    import c.{*, given}
+    import c.*
+    val f = toTerm(c.f.wellTyped)
+    val fTy = toTerm(c.f.ty) match {
+      case meta: MetaTerm[?] =>
+        // If the function type is a meta term, we need to assume it
+        return Result.Waiting(assumeCell(meta))
+      case f: FunctionType => f
+      case term =>
+        Reporter.report(???)
+        result.fill(???)
+        return Result.Done
+    }
     ???
   }
 
