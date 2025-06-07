@@ -23,9 +23,10 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
   def zonkAll(using SolverOps, Context, Elab): Term = readMetaAll.descent2Rec(TreeMap.unsafe {
     case x: LetStmtTerm =>
       x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
-    case x: ArgTerm      => x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
-    case x: FunctionType => x.copy(resultTy = summon[Elab].reduceForTyUntyped(x.resultTy))
-    case x               => x
+    case x: ArgTerm        => x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
+    case x: CallingArgTerm => x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
+    case x: FunctionType   => x.copy(resultTy = summon[Elab].reduceForTyUntyped(x.resultTy))
+    case x                 => x
   })
 }
 
