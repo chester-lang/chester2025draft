@@ -39,7 +39,17 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
         result.fill(???)
         return Result.Done
     }
-    ???
+    val fTyImplicit = fTy.telescopes.map(_.implicitly)
+    val callImplicit = call.telescopes.map(_.implicitly)
+    if (fTyImplicit.length == callImplicit.length && fTyImplicit.zip(callImplicit).forall { case (x, y) => x == y }) {
+      // simplest case
+      for ((defTele, callTele) <- fTy.telescopes.zip(call.telescopes)) {
+        ???
+        ???
+      }
+    } else {
+      ???
+    }
   }
 
   override def canDefaulting(level: DefaultingLevel): Boolean = false
