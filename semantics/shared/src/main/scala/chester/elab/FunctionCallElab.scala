@@ -46,7 +46,13 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
       for ((defTele, callTele) <- fTy.telescopes.zip(call.telescopes)) {
         if (defTele.args.length == callTele.args.length) {
           // check the simplest case
-          ???
+          for ((defArg, callArg) <- defTele.args.zip(callTele.args))
+            if (callArg.name.isEmpty || defArg.bind.exists(localv => localv.name == callArg.name.get.name)) {
+              // simplest case, no different order of named arguments
+              ???
+            } else {
+              throw new UnsupportedOperationException("not implemented yet: different order of named arguments")
+            }
         } else {
           throw new UnsupportedOperationException("not implemented yet: default arguments in function calls")
         }
