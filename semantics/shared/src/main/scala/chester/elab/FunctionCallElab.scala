@@ -53,7 +53,8 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
               val wellTyped = elab.check(callArg.expr, defArg.ty)
               if (defArg.bind.isDefined) {
                 val bind = defArg.bind.get
-                context = context.add(ContextItem(bind.name, bind.uniqId, bind, defArg.ty)).knownAdd(bind.uniqId, TyAndVal(defArg.ty, wellTyped))
+                context =
+                  context.add(ContextItem(bind.name, bind.uniqId, bind, defArg.ty)).knownAdd(bind.uniqId, TyAndVal(defArg.ty, toTerm(wellTyped)))
               }
             } else {
               throw new UnsupportedOperationException("not implemented yet: different order of named arguments")
@@ -61,7 +62,7 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
         } else {
           throw new UnsupportedOperationException("not implemented yet: default arguments in function calls")
         }
-        result.fill(FCallTerm(??? : Term, ??? : Seq[Calling], call.meta))
+        result.fill(FCallTerm(??? : Term, ??? : Seq[Calling], meta = convertMeta(call.meta)))
         return Result.Done
       }
       ???
