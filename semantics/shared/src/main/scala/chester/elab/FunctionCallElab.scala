@@ -75,6 +75,7 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
         } else {
           throw new UnsupportedOperationException("not implemented yet: default arguments in function calls")
         }
+        SolverOps.addConstraint(Unify(ty, fTy.resultTy, cause = call)) // todo: substitute by the current context?
         result.fill(FCallTerm(f, callings, meta = convertMeta(call.meta)))
         boundary.break(Result.Done)
       }
