@@ -37,14 +37,14 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-syntax-highlighter": "^15.6.1",
-    "use-debounce": "^10.0.4",
+    "use-debounce": "^10.0.5",
     "xterm": "npm:@xterm/xterm@^5.5.0",
     "xterm-pty": "^0.11.1",
     "xterm-readline": "^1.1.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",
-    "@types/node": "^22.15.29",
+    "@types/node": "^22.15.31",
     "@types/pako": "^2.0.3",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.5",
