@@ -21,7 +21,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.13.1")
 dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
 
 // cli tools
-resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+resolvers += Resolver.sonatypeCentralSnapshots
 addDependencyTreePlugin
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")

@@ -216,7 +216,7 @@ def commonSettings0 = Seq(
   // resolvers += Resolver.githubPackages("edadma", "readline"),
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
-  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+  resolvers += Resolver.sonatypeCentralSnapshots,
   // some options can be found at https://github.com/typelevel/sbt-tpolecat/commit/d4dd41451a9e9346cf8c0253018bc648f6527be3
   scalacOptions ++=
     Seq(
@@ -269,7 +269,7 @@ def scala2Common = Seq(
   scalaVersion := scala2Version,
   resolvers += "jitpack" at "https://jitpack.io",
   resolvers += Resolver.mavenLocal,
-  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+  resolvers += Resolver.sonatypeCentralSnapshots,
   scalacOptions ++= Seq(
     "-encoding",
     "utf8",
@@ -305,13 +305,13 @@ def scala2JVM = Seq(
 // semanticdbEnabled := false // not supported for beta
 )
 def commonVendorSettings = Seq(
-  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+  resolvers += Resolver.sonatypeCentralSnapshots,
   scalaVersion := scala3Lib,
   scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
   scalacOptions += "-nowarn"
 )
 def scala2VendorSettings = Seq(
-  resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
+  resolvers += Resolver.sonatypeCentralSnapshots,
   scalaVersion := scala2Version,
   scalacOptions ++= Seq("-java-output-version", javaOutputVersion),
   scalacOptions += "-nowarn"
