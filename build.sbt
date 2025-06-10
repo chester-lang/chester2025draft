@@ -571,7 +571,7 @@ lazy val scalaSTM = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .disablePlugins(ScalafixPlugin)
   .jvmSettings(commonJvmSettings)
 
-val AIRFRAME_VERSION = "2025.1.12"
+val AIRFRAME_VERSION = "2025.1.14"
 val ironVersion = "3.0.1"
 
 // split modules trying to increase incremental compilation speed
@@ -601,8 +601,8 @@ lazy val utils = useSpire(
         // "io.getkyo" %%% "kyo-data" % "0.18.0",
         "org.scala-graph" %%% "graph-core" % "2.0.3",
         "com.outr" %%% "scribe" % "3.16.1",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.2",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.2",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.4",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.4",
         "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
@@ -1072,7 +1072,7 @@ lazy val buildProtocol = crossProject(JVMPlatform)
   )
   .jvmSettings(commonJvmSettings)
 
-val jgitVersion = "7.2.1.202505142326-r"
+val jgitVersion = "7.3.0.202506031305-r"
 lazy val buildTool = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
