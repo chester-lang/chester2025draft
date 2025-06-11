@@ -112,15 +112,15 @@ trait Elab {
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
-  def levelOfSort(ty: CellRWOr[Term])(using ctx: Context, _1: ElabOps, _2: SolverOps): Term =
+  def levelOfSort(ty: CellRWOr[Term])(using  Context,  ElabOps,  SolverOps): Term =
     // TODO
     Level0
 
-  def maxLevelOf(levels: Seq[CellRWOr[Term]])(using ctx: Context, _1: ElabOps, _2: SolverOps): Term =
+  def maxLevelOf(levels: Seq[CellRWOr[Term]])(using  Context,  ElabOps,  SolverOps): Term =
     // TODO
     Level0
 
-  def maxLevel(levels: CellRWOr[Term]*)(using ctx: Context, _1: ElabOps, _2: SolverOps): Term =
+  def maxLevel(levels: CellRWOr[Term]*)(using  Context,  ElabOps,  SolverOps): Term =
     maxLevelOf(levels.toSeq)
 
   def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): TAST = {

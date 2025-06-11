@@ -144,9 +144,8 @@ object Calling {
     val args0 = args.toArray
     new Calling(args0, implicitly, meta)
   }
-  def unapply(x: Term): Option[(Seq[CallingArgTerm], Boolean, Option[TermMeta])] = x match {
-    case x: Calling => Some((x.args, x.implicitly, x.meta))
-    case _          => None
+  def unapply(x: Term): Option[(Seq[CallingArgTerm], Boolean, Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: Calling => (x.args, x.implicitly, x.meta)
   }
 }
 @ifdef("syntax-truffle")
@@ -280,9 +279,8 @@ object ListTerm {
     val terms0 = terms.toArray
     new ListTerm(terms0, meta)
   }
-  def unapply(x: Term): Option[(Seq[Term], Option[TermMeta])] = x match {
-    case x: ListTerm => Some((x.terms, x.meta))
-    case _           => None
+  def unapply(x: Term): Option[(Seq[Term], Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: ListTerm => (x.terms, x.meta)
   }
 }
 @ifdef("syntax-truffle")
@@ -537,9 +535,8 @@ object TelescopeTerm {
     val args0 = args.toArray
     new TelescopeTerm(args0, implicitly, meta)
   }
-  def unapply(x: Term): Option[(Seq[ArgTerm], Boolean, Option[TermMeta])] = x match {
-    case x: TelescopeTerm => Some((x.args, x.implicitly, x.meta))
-    case _                => None
+  def unapply(x: Term): Option[(Seq[ArgTerm], Boolean, Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: TelescopeTerm => (x.args, x.implicitly, x.meta)
   }
 }
 @ifdef("syntax-truffle")
@@ -624,9 +621,8 @@ object FunctionType {
     val telescopes0 = telescopes.toArray
     new FunctionType(telescopes0, resultTy, effects, meta)
   }
-  def unapply(x: Term): Option[(Seq[TelescopeTerm], Term, EffectsM, Option[TermMeta])] = x match {
-    case x: FunctionType => Some((x.telescopes, x.resultTy, x.effects, x.meta))
-    case _               => None
+  def unapply(x: Term): Option[(Seq[TelescopeTerm], Term, EffectsM, Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: FunctionType => (x.telescopes, x.resultTy, x.effects, x.meta)
   }
 }
 @ifdef("syntax-truffle")
@@ -695,9 +691,8 @@ object ObjectTerm {
     val clauses0 = clauses.toArray
     new ObjectTerm(clauses0, meta)
   }
-  def unapply(x: Term): Option[(Seq[ObjectClauseValueTerm], Option[TermMeta])] = x match {
-    case x: ObjectTerm => Some((x.clauses, x.meta))
-    case _             => None
+  def unapply(x: Term): Option[(Seq[ObjectClauseValueTerm], Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: ObjectTerm => (x.clauses, x.meta)
   }
 }
 @ifdef("syntax-truffle")
@@ -743,9 +738,8 @@ object ObjectType {
     val fieldTypes0 = fieldTypes.toArray
     new ObjectType(fieldTypes0, exactFields, meta)
   }
-  def unapply(x: Term): Option[(Seq[ObjectClauseValueTerm], Boolean, Option[TermMeta])] = x match {
-    case x: ObjectType => Some((x.fieldTypes, x.exactFields, x.meta))
-    case _             => None
+  def unapply(x: Term): Option[(Seq[ObjectClauseValueTerm], Boolean, Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: ObjectType => (x.fieldTypes, x.exactFields, x.meta)
   }
 }
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
@@ -993,9 +987,8 @@ object BlockTerm {
     val statements0 = statements.toArray
     new BlockTerm(statements0, result, meta)
   }
-  def unapply(x: Term): Option[(Seq[StmtTerm], Term, Option[TermMeta])] = x match {
-    case x: BlockTerm => Some((x.statements, x.result, x.meta))
-    case _            => None
+  def unapply(x: Term): Option[(Seq[StmtTerm], Term, Option[TermMeta])] = PartialFunction.condOpt(x) {
+    case x: BlockTerm => (x.statements, x.result, x.meta)
   }
 }
 @ifdef("syntax-truffle")
@@ -1261,7 +1254,7 @@ case class HoleTerm(
   }
 
   override def descent(f: Term => Term, g: TreeMap[Term]): HoleTerm = thisOr(
-    copy(ty = f(ty), effects = effects.map(x => g.use(x)))
+    copy(ty = f(ty), effects = effects.map(g.use))
   )
 }
 
@@ -1280,7 +1273,7 @@ case class NativeTerm(
     copy(
       repr = f(repr),
       ty = f(ty),
-      effects = effects.map(x => g.use(x))
+      effects = effects.map(g.use)
     )
   )
 }
