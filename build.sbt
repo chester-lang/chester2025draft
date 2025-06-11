@@ -1021,7 +1021,7 @@ lazy val lsp = crossProject(JVMPlatform)
     libraryDependencies ++= Seq(
     ),
     Compile / mainClass := Some("chester.lsp.Main"),
-    libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "1.0.0-SNAPSHOT",
+    libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0",
     assembly / assemblyOutputPath := file("target") / "chester-lsp.jar",
     nativeImageOutput := file("target") / "chester-lsp",
     commonSettings
