@@ -594,7 +594,7 @@ case object SimpleDesalt {
       case Tuple(Vector(term), _)         => unwrap(desugar(term))
       case _                              => e
     }
-  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter:Reporter[TyckProblem]): Option[Expr] =
+  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter:Reporter[TyckProblem]): Option[DefTelescope] =
     MatchDeclarationTelescope.unapply(expr)
   def desugarUnwrap(expr: Expr)(using Reporter[TyckProblem]): Expr =
     unwrap(desugar(expr))

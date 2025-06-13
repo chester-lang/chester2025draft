@@ -14,12 +14,20 @@ def resolve(
   reuse(expr, result)
 }
 
-def resolveTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, ctx: Context, reporter: Reporter[TyckProblem]): Option[Expr] = {
+def resolveTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, ctx: Context, reporter: Reporter[TyckProblem]): Option[DefTelescope] = {
   val result = SimpleDesalt.desugarTele(expr)
   result.map(result => reuse(expr, result))
 }
 
 object ResolveTele {
-  def unapply(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, ctx: Context, reporter: Reporter[TyckProblem]): Option[Expr] =
+  def unapply(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, ctx: Context, reporter: Reporter[TyckProblem]): Option[DefTelescope] =
     resolveTele(expr)
+}
+
+object ResolveTeleType {
+  def unapply(expr: Expr)(using ctx: Context, reporter: Reporter[TyckProblem]): Option[DefTelescope] = {
+    given mode: DeclTeleMode = DeclTeleMode.Type
+    resolveTele(expr)
+  }
+
 }

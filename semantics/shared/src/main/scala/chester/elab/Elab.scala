@@ -7,6 +7,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.syntax.{DefaultModule, ModuleRef}
 import chester.elab.Context
+import chester.uniqid.Uniqid
 import chester.utils.HoldNotReadable
 import chester.utils.cell.{LiteralCellContent, OnceCellContent}
 import chester.utils.elab.*
@@ -112,15 +113,15 @@ trait Elab {
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
   }
 
-  def levelOfSort(ty: CellRWOr[Term])(using  Context,  ElabOps,  SolverOps): Term =
+  def levelOfSort(ty: CellRWOr[Term])(using Context, ElabOps, SolverOps): Term =
     // TODO
     Level0
 
-  def maxLevelOf(levels: Seq[CellRWOr[Term]])(using  Context,  ElabOps,  SolverOps): Term =
+  def maxLevelOf(levels: Seq[CellRWOr[Term]])(using Context, ElabOps, SolverOps): Term =
     // TODO
     Level0
 
-  def maxLevel(levels: CellRWOr[Term]*)(using  Context,  ElabOps,  SolverOps): Term =
+  def maxLevel(levels: CellRWOr[Term]*)(using Context, ElabOps, SolverOps): Term =
     maxLevelOf(levels.toSeq)
 
   def checkWholeUnit(fileName: String, block: Block)(using ctx: Context, _1: ElabOps, _2: SolverOps): TAST = {
@@ -209,10 +210,15 @@ trait DefaultElab extends Elab {
         SolverOps.addConstraint(Pure(ctx.effects))
         SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta)), expr))
         UnitTerm_(convertMeta(expr.meta))
-      case expr @ DotCall(tyFrom, Identifier("=>", _), Seq(DesaltCallingTelescope(Seq(CallingArg(None, tyTo, false, _)), false, _)), meta) =>
-        val tyFrom1 = inferType(tyFrom)
+      case expr @ DotCall(
+            ResolveTeleType(DefTelescope(args, implicitly, telemeta)),
+            Identifier("=>", _),
+            Seq(DesaltCallingTelescope(Seq(CallingArg(None, tyTo, false, _)), false, _)),
+            meta
+          ) =>
+        val tyFrom = args.map(arg => (arg, inferType(arg.ty.get)))
         val tyTo1 = inferType(tyTo)
-        val level = maxLevel(levelOfSort(tyFrom1.ty), levelOfSort(tyTo1.ty))
+        val level = maxLevel(maxLevelOf(tyFrom.map(_._2.ty).map(levelOfSort(_))), levelOfSort(tyTo1.ty))
         // TODO: correct sort logic
         val sort = Type(level, meta)
         SolverOps.addConstraint(Unify(ty, sort, expr))
@@ -220,13 +226,13 @@ trait DefaultElab extends Elab {
         FunctionType(
           telescopes = Vector(
             TelescopeTerm(
-              Vector(
+              tyFrom.map { case (arg, tyFrom1) =>
                 ArgTerm(
-                  None,
+                  bind = arg.name.map(id => LocalV(id.name, toTerm(tyFrom1.wellTyped), Uniqid.generate[LocalV], id.meta)),
                   ty = toTerm(tyFrom1.wellTyped),
-                  meta = tyFrom.meta
+                  meta = arg.ty.get.meta
                 )
-              ),
+              },
               meta = meta
             )
           ),
