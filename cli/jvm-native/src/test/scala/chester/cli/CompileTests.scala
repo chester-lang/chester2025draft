@@ -1,4 +1,4 @@
-package cli
+package chester.cli
 
 import munit.FunSuite
 
