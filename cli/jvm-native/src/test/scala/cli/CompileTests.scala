@@ -1,8 +1,9 @@
-package chester.cli
+package cli
 
 import munit.FunSuite
 
 import java.io.File
+import java.nio.file.Files
 
 def splitFileName(file: File): (String, String) = {
   val name = file.getName
@@ -31,8 +32,12 @@ class CompileTests extends FunSuite {
       )
       val comparePathExists = comparePath.toFile.exists()
       if (comparePathExists) {
-        val compareContent = scala.io.Source.fromFile(comparePath.toFile).mkString
-        val tempContent = scala.io.Source.fromFile(tempPath.toFile).mkString
+        val compareContent = Files
+          .readString(comparePath, java.nio.charset.StandardCharsets.UTF_8)
+          .replace("\r\n", "\n")
+        val tempContent = Files
+          .readString(tempPath, java.nio.charset.StandardCharsets.UTF_8)
+          .replace("\r\n", "\n")
         assertEquals(
           tempContent,
           compareContent,
