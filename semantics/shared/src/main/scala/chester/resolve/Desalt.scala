@@ -40,9 +40,9 @@ private object MatchDeclarationTelescope {
     // Parameters enclosed in parentheses
     val argsResult = terms.map {
       case id: Identifier =>
-        Some(Arg(name = id, meta = id.meta))
+        Some(Arg(name = Some(id), meta = id.meta))
       case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
-        Some(Arg(name = id, ty = Some(ty), meta = id.meta))
+        Some(Arg(name = Some(id), ty = Some(ty), meta = id.meta))
       case _ =>
         reporter.report(ExpectParameterList(x))
         None
@@ -56,7 +56,7 @@ private object MatchDeclarationTelescope {
   )(using reporter: Reporter[TyckProblem]): Option[DefTelescope] = x match {
     case id: Identifier =>
       // Single parameter without type
-      Some(DefTelescope(Vector(Arg(name = id, meta = id.meta)), meta = x.meta))
+      Some(DefTelescope(Vector(Arg(name = Some(id), meta = id.meta)), meta = x.meta))
     case opseq @ OpSeq(terms, meta) if terms.nonEmpty => unapply(Tuple(Vector(opseq), meta))
     case t @ Tuple(terms, _)                          => handleTerms(terms, t, false)
     case t @ ListExpr(terms, _)                       => handleTerms(terms, t, true)
@@ -562,7 +562,7 @@ case object SimpleDesalt {
       case Tuple(Vector(term), _)         => unwrap(desugar(term))
       case _                              => e
     }
-  def desugarTele(expr: Expr)(using Reporter[TyckProblem]): Expr =
+  def desugarTele(expr: Expr)(using Reporter[TyckProblem]): Option[Expr] =
     MatchDeclarationTelescope.unapply(expr)
   def desugarUnwrap(expr: Expr)(using Reporter[TyckProblem]): Expr =
     unwrap(desugar(expr))

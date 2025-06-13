@@ -324,17 +324,14 @@ object Block {
 // In function declaration
 case class Arg(
     decorations: Vector[Identifier] = Vector(),
-    name: Identifier,
+    name: Option[Identifier],
     ty: Option[Expr] = None,
     exprOrDefault: Option[Expr] = None,
     vararg: Boolean = false,
     meta: Option[ExprMeta]
 ) extends Expr derives ReadWriter {
+  require(name.isDefined || ty.isDefined, "Either name or type must be defined")
   override type ThisTree = Arg
-
-  def getName: Name = name match {
-    case Identifier(name, _) => name
-  }
 
   override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Arg =
     copy(meta = updater(meta))
@@ -342,7 +339,7 @@ case class Arg(
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): Arg =
     Arg(
       decorations.map(g(_)),
-      g(name),
+      name.map(g(_)),
       ty.map(f),
       exprOrDefault.map(f),
       vararg,
@@ -361,7 +358,7 @@ case class Arg(
       if (decorations.nonEmpty)
         Doc.mkList(decorations.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty) <+> Doc.empty
       else Doc.empty
-    val nameDoc = name.toDoc
+    val nameDoc = name.map(n => n.toDoc).getOrElse(Doc.empty)
     val tyDoc = ty.map(t => Docs.`:` <+> t.toDoc).getOrElse(Doc.empty)
     val exprDoc =
       exprOrDefault.map(e => Docs.`=` <+> e.toDoc).getOrElse(Doc.empty)

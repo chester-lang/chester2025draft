@@ -14,14 +14,12 @@ def resolve(
   reuse(expr, result)
 }
 
-def resolveTele(expr: Expr)(using Context, Reporter[TyckProblem]): Expr = {
+def resolveTele(expr: Expr)(using Context, Reporter[TyckProblem]): Option[Expr] = {
   val result = SimpleDesalt.desugarTele(expr)
-  reuse(expr, result)
+  result.map(result => reuse(expr, result))
 }
 
 object ResolveTele {
-  def unapply(expr: Expr)(using Context, Reporter[TyckProblem]): Some[Expr] = {
-    val result = SimpleDesalt.desugarTele(expr)
-    Some(result)
-  }
+  def unapply(expr: Expr)(using Context, Reporter[TyckProblem]): Option[Expr] =
+    SimpleDesalt.desugarTele(expr)
 }
