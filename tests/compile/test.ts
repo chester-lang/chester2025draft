@@ -1,0 +1,8 @@
+const a: number = 42;
+const a_1: number = a;
+const a_2: number = (Math.floor(Math.random() * 10) + 1);
+const a_3: number = a_2;
+const c: (number) => number = (function(x) { return x+1; });
+const b: number = c(42);
+const d: (number, number) => number = (function(x, y) { return x + y; });
+const e: (number, number) => number = d;
