@@ -97,7 +97,11 @@ case object TSBackend extends Backend(Typescript) {
     case UIntType(meta) => NumberType(meta)
     case FunctionType(Seq(telescope), returnTy, effects, meta) =>
       require(effects.assumeEffects.isEmpty, "Effects are not supported in TypeScript backend")
-      TSFunctionType(telescope.args.map(arg => Param(arg.bind.map(_.name), compileType(arg.ty))), compileType(returnTy), meta)
+      TSFunctionType(
+        telescope.args.zipWithIndex.map { case (arg, i) => Param(arg.bind.map(_.name).getOrElse(s"_$i"), compileType(arg.ty)) },
+        compileType(returnTy),
+        meta
+      )
     case NothingType(meta) => NeverType(meta)
     case term              => throw new UnsupportedOperationException(t"This has not been implemented yet: class ${term.getClass} $term")
   }

@@ -115,17 +115,14 @@ case class NeverType(meta: Option[Meta] = None) extends TSType {
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): NeverType = this
 }
 
-case class Param(name: Option[String], ty: TSType, meta: Option[Meta] = None) extends TSExpr {
+case class Param(name: String, ty: TSType, meta: Option[Meta] = None) extends TSExpr {
   override type ThisTree = Param
 
   override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): Param = copy(
     ty = g(ty)
   )
 
-  override def toDoc(using DocConf): Doc = name match {
-    case Some(n) => n <> ":" <+> ty.toDoc
-    case None    => ty.toDoc
-  }
+  override def toDoc(using DocConf): Doc = name <> ":" <+> ty.toDoc
 }
 
 case class TSFunctionType(
