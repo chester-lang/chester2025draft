@@ -324,7 +324,7 @@ object Block {
 // In function declaration
 case class Arg(
     decorations: Vector[Identifier] = Vector(),
-    name: Option[Identifier],
+    name: Option[Identifier] = None,
     ty: Option[Expr] = None,
     exprOrDefault: Option[Expr] = None,
     vararg: Boolean = false,

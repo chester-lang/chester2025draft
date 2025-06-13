@@ -35,17 +35,36 @@ private object DesaltCaseClauseMatch {
   }
 }
 
+enum DeclTeleMode {
+  case Default
+  case Type
+}
+
 private object MatchDeclarationTelescope {
-  private def handleTerms(terms: Vector[Expr], x: Expr, implicitly: Boolean)(using reporter: Reporter[TyckProblem]): Option[DefTelescope] = {
+  private def handleTerms(terms: Vector[Expr], x: Expr, implicitly: Boolean)(using
+      mode: DeclTeleMode = DeclTeleMode.Default,
+      reporter: Reporter[TyckProblem]
+  ): Option[DefTelescope] = {
     // Parameters enclosed in parentheses
     val argsResult = terms.map {
       case id: Identifier =>
-        Some(Arg(name = Some(id), meta = id.meta))
+        mode match {
+          case DeclTeleMode.Default =>
+            Some(Arg(name = Some(id), meta = id.meta))
+          case DeclTeleMode.Type =>
+            Some(Arg(ty = Some(id), meta = id.meta))
+        }
+      // TODO: default arguments
       case OpSeq(Vector(id: Identifier, Identifier(Const.`:`, _), ty), _) =>
         Some(Arg(name = Some(id), ty = Some(ty), meta = id.meta))
-      case _ =>
-        reporter.report(ExpectParameterList(x))
-        None
+      case item =>
+        mode match {
+          case DeclTeleMode.Default =>
+            reporter.report(ExpectParameterList(x))
+            None
+          case DeclTeleMode.Type =>
+            Some(Arg(ty = Some(item), meta = item.meta))
+        }
     }
 
     Option.unless(argsResult.contains(None))(DefTelescope(argsResult.flatten, implicitly = implicitly, meta = x.meta))
@@ -53,16 +72,29 @@ private object MatchDeclarationTelescope {
   @tailrec
   def unapply(
       x: Expr
-  )(using reporter: Reporter[TyckProblem]): Option[DefTelescope] = x match {
+  )(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Option[DefTelescope] = x match {
     case id: Identifier =>
-      // Single parameter without type
-      Some(DefTelescope(Vector(Arg(name = Some(id), meta = id.meta)), meta = x.meta))
+      mode match {
+        case DeclTeleMode.Default =>
+
+          // Single parameter without type
+          Some(DefTelescope(Vector(Arg(name = Some(id), meta = id.meta)), meta = x.meta))
+
+        case DeclTeleMode.Type =>
+
+          Some(DefTelescope(Vector(Arg(ty = Some(id), meta = id.meta)), meta = x.meta))
+      }
     case opseq @ OpSeq(terms, meta) if terms.nonEmpty => unapply(Tuple(Vector(opseq), meta))
     case t @ Tuple(terms, _)                          => handleTerms(terms, t, false)
     case t @ ListExpr(terms, _)                       => handleTerms(terms, t, true)
-    case _ =>
-      reporter.report(ExpectParameterList(x))
-      None
+    case item =>
+      mode match {
+        case DeclTeleMode.Default =>
+          reporter.report(ExpectParameterList(x))
+          None
+        case DeclTeleMode.Type =>
+          Some(DefTelescope(Vector(Arg(ty = Some(item), meta = item.meta)), meta = x.meta))
+      }
   }
 }
 
