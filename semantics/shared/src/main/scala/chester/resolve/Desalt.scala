@@ -562,7 +562,8 @@ case object SimpleDesalt {
       case Tuple(Vector(term), _)         => unwrap(desugar(term))
       case _                              => e
     }
-
+  def desugarTele(expr: Expr)(using Reporter[TyckProblem]): Expr =
+    MatchDeclarationTelescope.unapply(expr)
   def desugarUnwrap(expr: Expr)(using Reporter[TyckProblem]): Expr =
     unwrap(desugar(expr))
 

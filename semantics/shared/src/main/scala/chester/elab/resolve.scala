@@ -9,7 +9,19 @@ import scala.language.implicitConversions
 
 def resolve(
     expr: Expr
-)(using  Context,  Reporter[TyckProblem]): Expr = {
+)(using Context, Reporter[TyckProblem]): Expr = {
   val result = SimpleDesalt.desugarUnwrap(expr)
   reuse(expr, result)
+}
+
+def resolveTele(expr: Expr)(using Context, Reporter[TyckProblem]): Expr = {
+  val result = SimpleDesalt.desugarTele(expr)
+  reuse(expr, result)
+}
+
+object ResolveTele {
+  def unapply(expr: Expr)(using Context, Reporter[TyckProblem]): Some[Expr] = {
+    val result = SimpleDesalt.desugarTele(expr)
+    Some(result)
+  }
 }
