@@ -136,6 +136,19 @@ open case class Calling(
   )
 
   override type ThisTree = Calling
+
+
+  @ifdef("syntax-truffle")
+  private inline def validate(): Unit = require(this.isInstanceOf[Calling1], "please call apply instead of new")
+  @ifndef("syntax-truffle")
+  private inline def validate(): Unit = ()
+  validate()
+  @ifdef("syntax-truffle")
+  def copy(
+      args: Seq[CallingArgTerm] = this.args,
+      implicitly: Boolean = this.implicitly,
+      meta: Option[TermMeta] = this.meta
+  ): Calling = Calling(args, implicitly, meta)
 }
 @ifdef("syntax-truffle")
 object Calling {
@@ -170,6 +183,19 @@ open case class FCallTerm(
     val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
     group(fDoc <+> argsDoc)
   }
+
+  @ifdef("syntax-truffle")
+  private inline def validate(): Unit = require(this.isInstanceOf[FCallTerm1], "please call apply instead of new")
+  @ifndef("syntax-truffle")
+  private inline def validate(): Unit = ()
+  validate()
+
+  @ifdef("syntax-truffle")
+  def copy(
+      f: Term = this.f,
+      args: Seq[Calling] = this.args,
+      meta: Option[TermMeta] = this.meta
+  ): FCallTerm = FCallTerm(f, args, meta)
 }
 @ifdef("syntax-truffle")
 object FCallTerm {
@@ -717,6 +743,7 @@ open case class ObjectType(
   private inline def validate(): Unit = ()
   validate()
 
+  @ifdef("syntax-truffle")
   def copy(
       fieldTypes: Seq[ObjectClauseValueTerm] = this.fieldTypes,
       exactFields: Boolean = this.exactFields,
