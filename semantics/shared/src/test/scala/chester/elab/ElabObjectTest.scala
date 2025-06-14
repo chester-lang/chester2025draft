@@ -39,11 +39,11 @@ class ElabObjectTest extends FunSuite {
       val objectTerm = judge.wellTyped.asInstanceOf[ObjectTerm]
       assertEquals(objectTerm.clauses.size, 0, "Object should have 0 clauses")
 
-      // Check the object type structure  
+      // Check the object type structure
       assert(judge.ty.isInstanceOf[ObjectType], s"Expected ObjectType but got ${judge.ty.getClass.getSimpleName}")
 
       val objectType = judge.ty.asInstanceOf[ObjectType]
-      
+
       // Verify that the object type has no clauses (empty object)
       assertEquals(objectType.fieldTypes.size, 0, "ObjectType should have 0 fieldTypes for empty object")
     }
@@ -78,11 +78,11 @@ class ElabObjectTest extends FunSuite {
       val objectTerm = judge.wellTyped.asInstanceOf[ObjectTerm]
       assertEquals(objectTerm.clauses.size, 1, "Object should have 1 clause")
 
-      // Check the object type structure  
+      // Check the object type structure
       assert(judge.ty.isInstanceOf[ObjectType], s"Expected ObjectType but got ${judge.ty.getClass.getSimpleName}")
 
       val objectType = judge.ty.asInstanceOf[ObjectType]
-      
+
       // Verify that the object type has one field
       assertEquals(objectType.fieldTypes.size, 1, "ObjectType should have 1 fieldType for single field object")
     }
@@ -117,11 +117,11 @@ class ElabObjectTest extends FunSuite {
       val objectTerm = judge.wellTyped.asInstanceOf[ObjectTerm]
       assertEquals(objectTerm.clauses.size, 2, "Object should have 2 clauses (a and b)")
 
-      // Check the object type structure  
+      // Check the object type structure
       assert(judge.ty.isInstanceOf[ObjectType], s"Expected ObjectType but got ${judge.ty.getClass.getSimpleName}")
 
       val objectType = judge.ty.asInstanceOf[ObjectType]
-      
+
       // Verify that the object type has two fields (a nested object and b simple field)
       assertEquals(objectType.fieldTypes.size, 2, "ObjectType should have 2 fieldTypes for nested object with dot notation")
     }

@@ -44,7 +44,7 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
     }
     val fTyImplicit = fTy.telescopes.map(_.implicitly)
     val callImplicit = call.telescopes.map(_.implicitly)
-    if (fTyImplicit.length == callImplicit.length && fTyImplicit.lazyZip(callImplicit).forall {  (x, y) => x == y }) {
+    if (fTyImplicit.length == callImplicit.length && fTyImplicit.lazyZip(callImplicit).forall((x, y) => x == y)) {
       // simplest case
       var callings: Vector[Calling] = Vector.empty
       for ((defTele, callTele) <- fTy.telescopes.zip(call.telescopes)) {

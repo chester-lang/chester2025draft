@@ -9,8 +9,10 @@ import chester.utils.elab.*
 case object ListOf extends Kind {
   type Of = ListOf
 }
-case class ListOf(items: Vector[(wellTyped: CellROr[Term], ty: CellRWOr[Term])], ty: CellRWOr[Term], cause: ListExpr)(using ctx: Context, ops: SolverOps)
-    extends Constraint(ListOf)
+case class ListOf(items: Vector[(wellTyped: CellROr[Term], ty: CellRWOr[Term])], ty: CellRWOr[Term], cause: ListExpr)(using
+    ctx: Context,
+    ops: SolverOps
+) extends Constraint(ListOf)
     with ConstraintTerm {
   val result: CellRW[Term] = newHole
   given Context = ctx

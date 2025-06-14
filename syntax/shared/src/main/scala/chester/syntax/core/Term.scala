@@ -137,7 +137,6 @@ open case class Calling(
 
   override type ThisTree = Calling
 
-
   @ifdef("syntax-truffle")
   private inline def validate(): Unit = require(this.isInstanceOf[Calling1], "please call apply instead of new")
   @ifndef("syntax-truffle")
@@ -164,9 +163,7 @@ class Calling1(
     @children args0: Array[CallingArgTerm],
     @const implicitly: Boolean,
     @const meta: Option[TermMeta]
-) extends Calling(ArraySeq.unsafeWrapArray(args0), implicitly, meta) {
-
-}
+) extends Calling(ArraySeq.unsafeWrapArray(args0), implicitly, meta) {}
 
 open case class FCallTerm(
     @child var f: Term,
@@ -278,7 +275,6 @@ case class ListTerm(terms: Seq[Term], @const meta: Option[TermMeta]) extends WHN
   )
   override def toDoc(using DocConf): Doc =
     Doc.mkList(terms, Docs.`[`, Docs.`]`, Doc.empty)
-
 
   @ifdef("syntax-truffle")
   private inline def validate(): Unit = require(this.isInstanceOf[ListTerm1], "please call apply instead of new")
@@ -552,8 +548,8 @@ object TelescopeTerm {
   }
 }
 
-  @ifdef("syntax-truffle")
-  implicit def isTelescopeTerm1(x: TelescopeTerm): TelescopeTerm1 = x.asInstanceOf[TelescopeTerm1]
+@ifdef("syntax-truffle")
+implicit def isTelescopeTerm1(x: TelescopeTerm): TelescopeTerm1 = x.asInstanceOf[TelescopeTerm1]
 @ifdef("syntax-truffle")
 class TelescopeTerm1(
     @children args0: Array[ArgTerm],
@@ -581,7 +577,7 @@ case class Function(
 }
 case class FunctionType(
     @const telescopes: Seq[TelescopeTerm],
-     @child var resultTy: Term,
+    @child var resultTy: Term,
     @const effects: EffectsM = Effects.Empty,
     @const meta: Option[TermMeta]
 ) extends WHNF derives ReadWriter {
@@ -603,7 +599,6 @@ case class FunctionType(
       effects = g.use(effects)
     )
   )
-
 
   @ifdef("syntax-truffle")
   private inline def validate(): Unit = require(this.isInstanceOf[FunctionType1], "please call apply instead of new")
@@ -664,7 +659,6 @@ case class ObjectTerm(
     copy(clauses = clauses.map(g(_)))
   )
 
-
   @ifdef("syntax-truffle")
   private inline def validate(): Unit = require(this.isInstanceOf[ObjectTerm1], "please call apply instead of new")
   @ifndef("syntax-truffle")
@@ -689,7 +683,7 @@ implicit def isObjectTerm1(x: ObjectTerm): ObjectTerm1 = x.asInstanceOf[ObjectTe
 class ObjectTerm1(
     @children clauses0: Array[ObjectClauseValueTerm],
     @const meta: Option[TermMeta]
-) extends ObjectTerm(ArraySeq.unsafeWrapArray(clauses0), meta) 
+) extends ObjectTerm(ArraySeq.unsafeWrapArray(clauses0), meta)
 
 open case class ObjectType(
     fieldTypes: Seq[ObjectClauseValueTerm],
@@ -975,7 +969,7 @@ class BlockTerm1(
     @children statements0: Array[StmtTerm],
     @child var result1: Term,
     @const meta: Option[TermMeta]
-) extends BlockTerm(ArraySeq.unsafeWrapArray(statements0), result1, meta) 
+) extends BlockTerm(ArraySeq.unsafeWrapArray(statements0), result1, meta)
 case class Annotation(
     @child var term: Term,
     @const ty: Option[Term],
