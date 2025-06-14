@@ -12,9 +12,10 @@ object Const {
   val Arrow: String = "->"
   val Let: String = "let"
   val Def: String = "def"
+  val Extension: String = "extension"
   val `:`: String = ":"
   val `=`: String = "="
-  val kw1: Set[String] = Set(Let, Def)
+  val kw1: Set[String] = Set(Let, Def, Extension)
   val `<:`: String = "<:"
   val Interface = "interface"
   val `with` = "with"

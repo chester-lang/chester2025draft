@@ -302,6 +302,33 @@ case object StmtDesalt {
       case _ => stmt
     }
 
+  def desugarExtension(
+      beforeKw: Vector[Expr],
+      afterKw: Vector[Expr],
+      cause: Expr
+  )(using reporter: Reporter[TyckProblem]): Stmt =
+    boundary[Stmt] {
+      if (beforeKw.nonEmpty) {
+        reporter.report(???)
+        // error recovery, just ignore beforeKw and continue, no need return something
+      }
+      if (afterKw.length < 2) {
+        reporter.report(???)
+        boundary.break(???)
+      } else if (afterKw.length == 2) {
+        // simplest case, one telescope and one block
+        val tele = MatchDeclarationTelescope.unapply(afterKw(0)).getOrElse(???)
+        val body: Block = afterKw(1) match {
+          case b: Block => b
+          case other =>
+            reporter.report(???)
+            Block(Vector(other), None, meta = other.meta)
+        }
+        ???
+      } else {
+        ???
+      }
+    }
   def unapply(x: Expr)(using Reporter[TyckProblem]): Option[Stmt] =
     x match {
       case opseq @ OpSeq(seq, _) =>
@@ -319,6 +346,8 @@ case object StmtDesalt {
               kwId.name match {
                 case Const.Let | Const.Def =>
                   Some(letdef(beforeKw, kwId, afterKw, opseq))
+                case Const.Extension =>
+                  Some(desugarExtension(beforeKw, afterKw, opseq))
                 case other => unreachable(t"Unknown keyword $other")
               }
         }
@@ -594,7 +623,7 @@ case object SimpleDesalt {
       case Tuple(Vector(term), _)         => unwrap(desugar(term))
       case _                              => e
     }
-  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter:Reporter[TyckProblem]): Option[DefTelescope] =
+  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Option[DefTelescope] =
     MatchDeclarationTelescope.unapply(expr)
   def desugarUnwrap(expr: Expr)(using Reporter[TyckProblem]): Expr =
     unwrap(desugar(expr))
