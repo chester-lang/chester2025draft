@@ -695,8 +695,7 @@ case class ObjectTerm(
   }
 }
 
-@ifndef("syntax-truffle")
-case class ObjectType(
+open case class ObjectType(
     fieldTypes: Seq[ObjectClauseValueTerm],
     @const exactFields: Boolean = false,
     @const meta: Option[TermMeta]
@@ -712,42 +711,34 @@ case class ObjectType(
   override def descent(f: Term => Term, g: TreeMap[Term]): ObjectType = thisOr(
     copy(fieldTypes = fieldTypes.map(g(_)))
   )
+  @ifdef("syntax-truffle")
+  private inline def validate(): Unit = require(this.isInstanceOf[ObjectType1], "please call apply instead of new")
+  @ifndef("syntax-truffle")
+  private inline def validate(): Unit = ()
+  validate()
+
+  def copy(
+      fieldTypes: Seq[ObjectClauseValueTerm] = this.fieldTypes,
+      exactFields: Boolean = this.exactFields,
+      meta: Option[TermMeta] = this.meta
+  ): ObjectType = ObjectType(fieldTypes, exactFields, meta)
 }
 @ifdef("syntax-truffle")
 object ObjectType {
   def apply(fieldTypes: Seq[ObjectClauseValueTerm], exactFields: Boolean = false, meta: Option[TermMeta]): ObjectType = {
     val fieldTypes0 = fieldTypes.toArray
-    new ObjectType(fieldTypes0, exactFields, meta)
-  }
-  def unapply(x: Term): Option[(Seq[ObjectClauseValueTerm], Boolean, Option[TermMeta])] = PartialFunction.condOpt(x) {
-    case x: ObjectType => (x.fieldTypes, x.exactFields, x.meta)
+    new ObjectType1(fieldTypes0, exactFields, meta)
   }
 }
+@ifdef("syntax-truffle")
+implicit def isObjectType1(x: ObjectType): ObjectType1 = x.asInstanceOf[ObjectType1]
 // exactFields is a hint: subtype relationship should not include different number of fields. Otherwise, throw a warning (only warning no error)
 @ifdef("syntax-truffle")
-case class ObjectType(
+class ObjectType1(
     @children fieldTypes0: Array[ObjectClauseValueTerm],
     @const exactFields: Boolean,
     @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-  val fieldTypes: ArraySeq[ObjectClauseValueTerm] = ArraySeq.unsafeWrapArray(fieldTypes0)
-  override type ThisTree = ObjectType
-  override def toDoc(using DocConf): Doc =
-    Doc.mkList(
-      fieldTypes.map(_.toDoc),
-      "Object" </> Docs.`{`,
-      Docs.`}`,
-      Doc.empty
-    )
-  override def descent(f: Term => Term, g: TreeMap[Term]): ObjectType = thisOr(
-    copy(fieldTypes0 = fieldTypes.map(g(_)))
-  )
-  override def equals(other: Any): Boolean = other match {
-    case other: ObjectType =>
-      this.fieldTypes == other.fieldTypes && this.exactFields == other.exactFields && this.meta == other.meta
-    case _ => false
-  }
-}
+) extends ObjectType(ArraySeq.unsafeWrapArray(fieldTypes0), exactFields, meta)
 case class ListF(@const meta: Option[TermMeta]) extends Builtin derives ReadWriter {
   override type ThisTree = ListF
   override def toDoc(using DocConf): Doc = "List"
