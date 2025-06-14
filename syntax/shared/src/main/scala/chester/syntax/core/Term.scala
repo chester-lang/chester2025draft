@@ -120,8 +120,7 @@ implicit val SeqCallingArgTermRW: ReadWriter[Seq[CallingArgTerm]] =
 
 implicit inline def makeArray[T: scala.reflect.ClassTag](xs: Seq[T]): Array[T] = xs.toArray
 
-@ifndef("syntax-truffle")
-case class Calling(
+open case class Calling(
     args: Seq[CallingArgTerm],
     @const implicitly: Boolean = false,
     @const meta: Option[TermMeta]
@@ -142,35 +141,17 @@ case class Calling(
 object Calling {
   def apply(args: Seq[CallingArgTerm], implicitly: Boolean = false, meta: Option[TermMeta]): Calling = {
     val args0 = args.toArray
-    new Calling(args0, implicitly, meta)
-  }
-  def unapply(x: Term): Option[(Seq[CallingArgTerm], Boolean, Option[TermMeta])] = PartialFunction.condOpt(x) {
-    case x: Calling => (x.args, x.implicitly, x.meta)
+    new Calling1(args0, implicitly, meta)
   }
 }
 @ifdef("syntax-truffle")
-case class Calling(
+implicit def isCalling1(x: Calling): Calling1 = x.asInstanceOf[Calling1]
+@ifdef("syntax-truffle")
+class Calling1(
     @children args0: Array[CallingArgTerm],
     @const implicitly: Boolean,
     @const meta: Option[TermMeta]
-) extends WHNF derives ReadWriter {
-
-  val args: Seq[CallingArgTerm] = ArraySeq.unsafeWrapArray(args0)
-
-  override def toDoc(using DocConf): Doc = {
-    val argsDoc = args.map(_.toDoc).reduce(_ <+> _)
-    if (implicitly) Docs.`(` <> argsDoc <> Docs.`)` else argsDoc
-  }
-
-  override def descent(f: Term => Term, g: TreeMap[Term]): Calling = thisOr(
-    copy(args0 = args.map(g(_)))
-  )
-  override def equals(other: Any): Boolean = other match {
-    case other: Calling => this.args == other.args && this.implicitly == other.implicitly && this.meta == other.meta
-    case _              => false
-  }
-
-  override type ThisTree = Calling
+) extends Calling(ArraySeq.unsafeWrapArray(args0), implicitly, meta) {
 
 }
 
