@@ -211,7 +211,7 @@ trait DefaultElab extends Elab {
         SolverOps.addConstraint(Unify(ty, UnitType(convertMeta(expr.meta)), expr))
         UnitTerm_(convertMeta(expr.meta))
       case expr @ DotCall(
-            ResolveTeleType(DefTelescope(args, implicitly, telemeta)),
+            ResolveTeleType(DefTelescope(args, implicitly, _)),
             Identifier("=>", _),
             Seq(DesaltCallingTelescope(Seq(CallingArg(None, tyTo, false, _)), false, _)),
             meta
