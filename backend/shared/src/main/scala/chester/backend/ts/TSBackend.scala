@@ -21,7 +21,7 @@ object IdentifierRules {
   // An identifier differs from a string in that a string is data, while an identifier is part of the code.
   // In JavaScript, there is no way to convert identifiers to strings, but sometimes it is possible to parse strings into identifiers.
   def charToJS(codePoint: Int): String = {
-    val str = new String(Character.toChars(codePoint))
+    val str = codepointToString(codePoint)
     if (Character.isLetter(codePoint)) return str
     if (str == "$" || str == "_") return str
     if (Character.isDigit(codePoint)) return str

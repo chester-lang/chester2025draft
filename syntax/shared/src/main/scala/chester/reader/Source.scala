@@ -2,7 +2,7 @@ package chester.reader
 
 import upickle.default.*
 import chester.error.*
-import chester.utils.{Nat, WithUTF16}
+import chester.utils.{Nat, WithUTF16, codepointToString}
 import chester.utils.doc.{Doc, DocConf}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
@@ -55,10 +55,6 @@ case class Source(
   override def fileName: String = source.fileName
 
   override def readContent: Either[ParseError, Seq[String]] = source.readContent
-}
-
-def codepointToString(codePoint: Int): String = {
-  new String(Character.toChars(codePoint))
 }
 
 case class Offset(

@@ -2,7 +2,7 @@ package chester.readerv2
 
 import chester.error.*
 import chester.i18n.*
-import chester.reader.codepointToString
+import chester.utils.codepointToString
 
 case class StringChar(text: String, span: Span) {
   require(
@@ -12,9 +12,8 @@ case class StringChar(text: String, span: Span) {
 }
 
 object StringChar {
-  def apply(codePoint: Int, span: Span): StringChar = {
+  def apply(codePoint: Int, span: Span): StringChar =
     new StringChar(codepointToString(codePoint), span)
-  }
 }
 
 sealed trait Token extends SpanRequired {
