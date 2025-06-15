@@ -3,10 +3,11 @@ package chester.readerv2
 import chester.error.*
 import chester.i18n.*
 import chester.utils.codepointToString
+import chester.utils.lenIsOne
 
 case class StringChar(text: String, span: Span) {
   require(
-    text.length == 1 || (text.length == 2 && Character.isHighSurrogate(text.charAt(0)) && Character.isLowSurrogate(text.charAt(1))),
+    text.lenIsOne,
     "StringChar must represent a single UTF-16 character or a valid surrogate pair in UTF-16"
   )
 }
