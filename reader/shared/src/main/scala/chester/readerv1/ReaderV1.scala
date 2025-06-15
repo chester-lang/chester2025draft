@@ -454,11 +454,8 @@ case class ReaderV1(
 
   def parse(ctx: ParsingContext = ParsingContext()): P[ParsedExpr] =
     P(parse0.withMeta ~ Index).flatMap { (expr, meta, index) =>
-      val itWasBlockEnding = p.input(index - 1) == '}'
       val getMeta = (endMeta: Option[ExprMeta]) => combineMeta(meta, endMeta)
-      ((!lineEnding).checkOn(
-        itWasBlockEnding && ctx.newLineAfterBlockMeansEnds
-      ) ~ tailExpr(expr, getMeta, ctx = ctx)) | Pass(expr)
+      tailExpr(expr, getMeta, ctx = ctx) | Pass(expr)
     }
 
   def exprEntrance: P[ParsedExpr] = P(

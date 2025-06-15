@@ -22,25 +22,17 @@ case class SpanInFile(start: Pos, end: Pos) derives ReadWriter {}
 type AcceptedString = String | LazyList[String] | ParserInput
 
 case class FileContent(
-    content: AcceptedString,
+    // maybe a LazyList[String]
+    content: Seq[String],
     offset: Offset
-)
+) {
+  @deprecated
+  lazy val convertToString: String = content.mkString
+}
 
 object FileContent {
-  @tailrec
-  private def convertToString0(fileContent: AcceptedString): String =
-    fileContent match {
-      case s: String            => s
-      case ll: LazyList[String] => ll.mkString
-      case pi: ParserInput      => convertToString0(parserInputToLazyList(pi))
-    }
-
-  def convertToString(fileContent: FileContent): String = convertToString0(
-    fileContent.content
-  )
-
   def apply(source: Source): FileContent = FileContent(
-    source.readContent.getOrElse(""),
+    source.readContent.getOrElse(Vector.empty),
     source.offset
   )
 }
@@ -63,7 +55,7 @@ case class Span(source: Source, range: SpanInFile) derives ReadWriter {
   def getLinesInRange: Option[Vector[(Int, String)]] = fileContent map { fileContent =>
     val startLine = range.start.line.asInt - fileContent.offset.lineOffset.asInt
     val endLine = range.end.line.asInt - fileContent.offset.lineOffset.asInt
-    val contentString = FileContent.convertToString(fileContent)
+    val contentString = fileContent.convertToString
     val lines = contentString.split('\n').toVector
 
     // Assert that the start and end lines are within valid bounds

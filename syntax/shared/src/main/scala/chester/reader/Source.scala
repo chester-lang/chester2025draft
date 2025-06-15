@@ -17,11 +17,12 @@ case class ParseError(message: String, span0: Option[Span] = None) extends Probl
 sealed trait ParserSource extends Product with Serializable derives ReadWriter {
   def fileName: String
 
-  def readContent: Either[ParseError, String]
+  // maybe a LazyList[String]
+  def readContent: Either[ParseError, Seq[String]]
 }
 
 case class FileNameAndContent(fileName: String, content: String) extends ParserSource derives ReadWriter {
-  override def readContent: Either[ParseError, String] = Right(content)
+  override val readContent: Either[ParseError, Seq[String]] = Right(Vector(content))
 }
 
 trait FilePathImpl {
@@ -41,19 +42,19 @@ object FilePath {
 
 case class FilePath private (fileName: String) extends ParserSource {
   private[chester] var impl: FilePathImpl = scala.compiletime.uninitialized
-  override lazy val readContent: Either[ParseError, String] =
+  override lazy val readContent: Either[ParseError, Seq[String]] =
     if (impl == null) Left(ParseError("No FilePathImpl provided"))
-    else impl.readContent(fileName)
+    else impl.readContent(fileName).map(Vector(_))
 }
 
 // TODO: maybe column offset for the first line also
 case class Source(
     source: ParserSource,
     offset: Offset = Offset.Zero
-) derives ReadWriter {
-  def fileName: String = source.fileName
+) extends ParserSource derives ReadWriter {
+  override def fileName: String = source.fileName
 
-  def readContent: Either[ParseError, String] = source.readContent
+  override def readContent: Either[ParseError, Seq[String]] = source.readContent
 }
 
 case class Offset(

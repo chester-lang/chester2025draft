@@ -11,7 +11,8 @@ case class LineAndColumn(
 )
 case class LineAndColumnWithUTF16(line: spire.math.Natural, column: WithUTF16)
 
-case class StringIndex(stringList: LazyList[String]) {
+// Seq[String] may be a LazyList[String]
+case class StringIndex(stringList: Seq[String]) {
 
   import java.lang.Character.{isHighSurrogate, isLowSurrogate}
 

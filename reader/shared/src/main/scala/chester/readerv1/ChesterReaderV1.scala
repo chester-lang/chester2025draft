@@ -24,7 +24,7 @@ object ChesterReaderV1 {
       { content =>
         val indexer = StringIndex(content)
         parse(
-          content,
+          IteratorParserInput(content.iterator),
           x =>
             parserFunc(
               ReaderV1(
@@ -42,7 +42,7 @@ object ChesterReaderV1 {
               pos.line,
               pos.column
             )
-            reporter.report(ParseError(t"Parsing failed: ${extra.trace().longMsg}", Some(Span(Source(source), SpanInFile(p, p)))))
+            reporter.report(ParseError(t"Parsing failed: ${extra}", Some(Span(Source(source), SpanInFile(p, p)))))
             None
         }
       }
