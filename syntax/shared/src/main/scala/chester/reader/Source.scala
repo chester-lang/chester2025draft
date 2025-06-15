@@ -60,17 +60,24 @@ case class Source(
 
 case class Offset(
     lineOffset: spire.math.Natural = Nat(0),
-    posOffset: WithUTF16 = WithUTF16.Zero
+    posOffset: WithUTF16 = WithUTF16.Zero,
+    firstLineColumnOffset: WithUTF16 = WithUTF16.Zero
 ) derives ReadWriter {
 
   if (lineOffset != Nat(0)) require(posOffset.nonZero)
   if (posOffset.nonZero) require(lineOffset != Nat(0))
+  require(posOffset >= firstLineColumnOffset)
   def getPos: Pos = add(Pos.zero)
   def next(codePoint: Int): Offset = codepointToString(codePoint) match {
-    case s@"\n" => copy(lineOffset = lineOffset + Nat(1), posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
-    case s => copy(posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
+    case s @ "\n" => copy(lineOffset = lineOffset + Nat(1), posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
+    case s        => copy(posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
   }
-  def add(x: Pos): Pos = Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)
+  def add(x: Pos): Pos =
+    if (x.line == Nat(0))
+      Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column + firstLineColumnOffset)
+    else
+      Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)
+
   def add(x: SpanInFile): SpanInFile = SpanInFile(start = add(x.start), end = add(x.end))
   def add(x: Span): Span = Span(source = x.source, range = add(x.range))
 }
