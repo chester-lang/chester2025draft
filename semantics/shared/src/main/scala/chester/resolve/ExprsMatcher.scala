@@ -1,5 +1,7 @@
 package chester.resolve
 
+// NO, I DON'T KNOW HOW TO CORRECTLY IMPLEMENT A PARSER COMBINATOR LIBRARY
+
 import chester.reader.ParseError
 import chester.syntax.concrete.Expr
 
