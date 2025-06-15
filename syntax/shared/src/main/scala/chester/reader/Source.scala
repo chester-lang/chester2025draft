@@ -57,6 +57,10 @@ case class Source(
   override def readContent: Either[ParseError, Seq[String]] = source.readContent
 }
 
+def codepointToString(codePoint: Int): String = {
+  new String(Character.toChars(codePoint))
+}
+
 case class Offset(
     lineOffset: spire.math.Natural = Nat(0),
     posOffset: WithUTF16 = WithUTF16.Zero
@@ -64,6 +68,11 @@ case class Offset(
 
   if (lineOffset != Nat(0)) require(posOffset.nonZero)
   if (posOffset.nonZero) require(lineOffset != Nat(0))
+  def getPos: Pos = add(Pos.zero)
+  def next(codePoint: Int): Offset = codepointToString(codePoint) match {
+    case s@"\n" => copy(lineOffset = lineOffset + Nat(1), posOffset = posOffset + WithUTF16(Nat(1), Nat(s.length)))
+    case s => copy(posOffset = posOffset + WithUTF16(Nat(1), Nat(s.length)))
+  }
   def add(x: Pos): Pos = Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)
   def add(x: SpanInFile): SpanInFile = SpanInFile(start = add(x.start), end = add(x.end))
   def add(x: Span): Span = Span(source = x.source, range = add(x.range))

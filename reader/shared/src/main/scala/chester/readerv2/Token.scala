@@ -2,12 +2,19 @@ package chester.readerv2
 
 import chester.error.*
 import chester.i18n.*
+import chester.reader.codepointToString
 
 case class StringChar(text: String, span: Span) {
   require(
     text.length == 1 || (text.length == 2 && Character.isHighSurrogate(text.charAt(0)) && Character.isLowSurrogate(text.charAt(1))),
     "StringChar must represent a single UTF-16 character or a valid surrogate pair in UTF-16"
   )
+}
+
+object StringChar {
+  def apply(codePoint: Int, span: Span): StringChar = {
+    new StringChar(codepointToString(codePoint), span)
+  }
 }
 
 sealed trait Token extends SpanRequired {
