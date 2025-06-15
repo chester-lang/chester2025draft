@@ -593,6 +593,7 @@ lazy val utils = useSpire(
         "com.lihaoyi" %%% "upickle" % "4.2.1",
         "com.lihaoyi" %%% "fansi" % "0.5.0",
         "com.lihaoyi" %%% "fastparse" % "3.1.1",
+        "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
         // "com.lihaoyi" %%% "scalatags" % "0.13.1",
         // "com.github.rssh" %%% "dotty-cps-async" % "0.9.23",
         // "io.getkyo" %%% "kyo-prelude" % "0.18.0",
