@@ -6,6 +6,7 @@ import chester.utils.{Nat, WithUTF16, codepointToString}
 import chester.utils.doc.{Doc, DocConf}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
+import chester.utils.utf16Len
 
 case class ParseError(message: String, span0: Option[Span] = None) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
@@ -66,8 +67,8 @@ case class Offset(
   if (posOffset.nonZero) require(lineOffset != Nat(0))
   def getPos: Pos = add(Pos.zero)
   def next(codePoint: Int): Offset = codepointToString(codePoint) match {
-    case s@"\n" => copy(lineOffset = lineOffset + Nat(1), posOffset = posOffset + WithUTF16(Nat(1), Nat(s.length)))
-    case s => copy(posOffset = posOffset + WithUTF16(Nat(1), Nat(s.length)))
+    case s@"\n" => copy(lineOffset = lineOffset + Nat(1), posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
+    case s => copy(posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
   }
   def add(x: Pos): Pos = Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)
   def add(x: SpanInFile): SpanInFile = SpanInFile(start = add(x.start), end = add(x.end))
