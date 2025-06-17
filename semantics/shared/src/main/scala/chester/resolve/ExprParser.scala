@@ -14,11 +14,11 @@ case class SeqReader[+T](seq: Seq[T]) extends Reader[T] {
   override def drop(n: Int): SeqReader[T] = SeqReader(seq.drop(n))
 
   override def pos: Position = new Position {
-    override def line: Int = ???
+    override def line: Int = 0
 
-    override def column: Int = ???
+    override def column: Int = 0
 
-    override protected def lineContents: String = ???
+    override protected def lineContents: String = ""
   }
 }
 
