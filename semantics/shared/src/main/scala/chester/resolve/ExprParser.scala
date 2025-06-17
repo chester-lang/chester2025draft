@@ -30,7 +30,7 @@ object ExprParser extends Parsers {
   def id(name: String): Parser[Expr] =
     accept(t"identifier $name", { case e: Identifier if e.name == name => e })
   def caseClause(meta: Option[ExprMeta]): Parser[DesaltCaseClause] =
-    id(Const.Case) ~ any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = meta) }
+    id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = meta) }
 
   def acceptOpSeq: Parser[OpSeq] = accept(t"operation sequence", { case ops: OpSeq => ops })
   def opseq[T](f: Option[ExprMeta] => Parser[T]): Parser[T] =
