@@ -46,4 +46,17 @@ object ExprParser extends Parsers {
   def lambda(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
 
   def letStmt(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[Stmt] = ???
+
+  def parsers(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(meta) | lambda(meta) | letStmt(meta)
+
+  def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = expr match {
+    case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
+    case OpSeq(xs, meta) =>
+      parsers(meta)(SeqReader(xs)) match {
+        case Success(result, next) => desalt(OpSeq((result +: next.asInstanceOf[SeqReader[Expr]].seq).toVector, meta))
+        case _: NoSuccess          => expr
+      }
+    case obj: ObjectExpr => ObjectDesalt.desugarObjectExpr(obj)
+    case expr            => expr
+  }
 }

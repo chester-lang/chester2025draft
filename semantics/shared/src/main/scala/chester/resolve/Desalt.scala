@@ -139,7 +139,7 @@ private object DesaltSimpleFunction {
     }
 }
 
-private object ObjectDesalt {
+private[chester] object ObjectDesalt {
   def desugarQualifiedName(qname: QualifiedName): Vector[String] = qname match {
     case Identifier(name, _) => Vector(name)
     case DotCall(expr: QualifiedName, field: Identifier, _, _) =>
