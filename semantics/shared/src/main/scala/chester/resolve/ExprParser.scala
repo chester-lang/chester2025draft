@@ -1,6 +1,6 @@
 package chester.resolve
 
-import chester.error.{ExpectCase, Reporter, TyckProblem}
+import chester.error.*
 import chester.syntax.concrete.*
 import chester.i18n.*
 import chester.syntax.Const
@@ -56,6 +56,7 @@ object ExprParser extends Parsers {
     decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
       LetDefStmt(LetDefType.Let, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
+      ||| reporter.report(ExpectLetDef(opseq))
 
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq)
 
