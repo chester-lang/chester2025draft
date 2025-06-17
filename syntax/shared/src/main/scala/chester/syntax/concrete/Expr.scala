@@ -1088,24 +1088,44 @@ enum LetDefType derives ReadWriter {
   case Def
 }
 
-sealed trait Defined extends ToDoc derives ReadWriter {
+sealed trait Defined extends DesaltExpr derives ReadWriter {
   def bindings: Vector[Identifier]
+  override type ThisTree <: Defined
 }
 
-case class DefinedPattern(pattern: DesaltPattern) extends Defined {
+case class DefinedPattern(pattern: DesaltPattern, meta: Option[ExprMeta]) extends Defined {
   override def toDoc(using DocConf): Doc = pattern.toDoc
 
-  def bindings: Vector[Identifier] = pattern.bindings
+  override def bindings: Vector[Identifier] = pattern.bindings
+
+  override type ThisTree = DefinedPattern
+
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): DefinedPattern = copy(meta = updater(meta))
+
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): DefinedPattern = thisOr(DefinedPattern(pattern = g(pattern), meta = meta))
 }
 
 case class DefinedFunction(
     id: Identifier,
-    telescope: NonEmptyVector[DefTelescope]
+    telescope: NonEmptyVector[DefTelescope],
+    meta: Option[ExprMeta]
 ) extends Defined {
-  def bindings: Vector[Identifier] = Vector(id)
+  override def bindings: Vector[Identifier] = Vector(id)
 
   override def toDoc(using DocConf): Doc = group(
     id.toDoc <> Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
+  )
+
+  override type ThisTree = DefinedFunction
+
+  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): DefinedFunction = copy(meta = updater(meta))
+
+  override def descent(f: Expr => Expr, g: TreeMap[Expr]): DefinedFunction = thisOr(
+    DefinedFunction(
+      id = g(id),
+      telescope = telescope.map(g(_)),
+      meta = meta
+    )
   )
 }
 
@@ -1135,7 +1155,7 @@ case class LetDefStmt(
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): LetDefStmt = thisOr {
     LetDefStmt(
       kind,
-      defined, // Assuming Defined does not need descent
+      g(defined),
       body.map(f),
       ty.map(f),
       effect.map(f),

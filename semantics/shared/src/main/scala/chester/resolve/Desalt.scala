@@ -215,8 +215,8 @@ case object StmtDesalt {
     else if (xs.length == 1) xs.head match {
       // TODO: support multiple telescopes
       case FunctionCall(f: Identifier, MatchDeclarationTelescope(t), _) =>
-        Some(DefinedFunction(f, Vector(t).assumeNonEmpty))
-      case a => PatternDesalt.desugar(a).map(DefinedPattern.apply)
+        Some(DefinedFunction(f, Vector(t).assumeNonEmpty, meta = None))
+      case a => PatternDesalt.desugar(a).map(DefinedPattern(_, a.meta))
     }
     else
       xs.head match {
@@ -224,7 +224,8 @@ case object StmtDesalt {
           xs.tail.traverse(MatchDeclarationTelescope.unapply).map { telescopes =>
             DefinedFunction(
               identifier,
-              NonEmptyVector.fromVectorUnsafe(telescopes)
+              NonEmptyVector.fromVectorUnsafe(telescopes),
+              meta = None
             )
           }
         case _ => None
@@ -283,7 +284,7 @@ case object StmtDesalt {
 
   private def unrollFunction(stmt: LetDefStmt): LetDefStmt =
     stmt.defined match {
-      case DefinedFunction(id, telescopes) =>
+      case DefinedFunction(id, telescopes, _) =>
         require(stmt.decorations.isEmpty, "not supported yet")
         require(stmt.body.nonEmpty, "not supported yet")
         val expr = FunctionExpr(
@@ -294,7 +295,7 @@ case object StmtDesalt {
           meta = stmt.meta
         )
         stmt.copy(
-          defined = DefinedPattern(PatternBind(id, id.meta)),
+          defined = DefinedPattern(PatternBind(id, id.meta), meta = None),
           body = Some(expr),
           ty = None,
           effect = None

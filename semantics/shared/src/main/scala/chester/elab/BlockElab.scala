@@ -34,7 +34,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     exprStatements.foreach {
       case defstmt: LetDefStmt if defstmt.kind == LetDefType.Def =>
         defstmt.defined match {
-          case _ @DefinedPattern(PatternBind(name, meta)) =>
+          case _ @DefinedPattern(PatternBind(name, meta), _) =>
             val ty = newType
             val id = Uniqid.generate[LocalV]
             val localv = LocalV(name.name, toTerm(ty), id, convertMeta(meta))
@@ -51,7 +51,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
           val pattern = let.defined
           val body = let.body.getOrElse { Reporter.report(MissingLetBody(let)); ??? }
           pattern match {
-            case DefinedPattern(pattern) =>
+            case DefinedPattern(pattern, _) =>
               val ty = toTerm(let.ty match {
                 case Some(ty) => c.given_Elab.inferType(ty).wellTyped
                 case None     => newType

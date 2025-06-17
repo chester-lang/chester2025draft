@@ -29,6 +29,8 @@ object ExprParser extends Parsers {
     accept(t"any expression", { case e => e })
   def id(name: String): Parser[Expr] =
     accept(t"identifier $name", { case e: Identifier if e.name == name => e })
+  def anyid: Parser[Identifier] =
+    accept(t"any identifier", { case e: Identifier => e })
   def caseClause(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
     (id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }) |||
       reporter.report(ExpectCase(opseq))
@@ -47,7 +49,7 @@ object ExprParser extends Parsers {
 
   def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
 
-  def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] = ???
+  def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] = anyid ^^ { id => DefinedPattern(PatternBind(id, id.meta), id.meta) }
 
   // TODO: actually implement this
   def decorationsOpt(using reporter: Reporter[TyckProblem]): Parser[Vector[Expr]] = success(Vector.empty)
@@ -58,7 +60,12 @@ object ExprParser extends Parsers {
     }
       ||| reporter.report(ExpectLetDef(opseq))
 
-  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq)
+  def defStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
+    decorationsOpt ~ id(Const.Def) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
+      LetDefStmt(LetDefType.Def, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
+    }
+      ||| reporter.report(ExpectLetDef(opseq))
+  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq)
 
   def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = expr match {
     case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
