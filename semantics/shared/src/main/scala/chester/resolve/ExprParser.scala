@@ -1,5 +1,6 @@
 package chester.resolve
 
+import chester.error.{Reporter, TyckProblem}
 import chester.syntax.concrete.*
 import chester.i18n.*
 import chester.syntax.Const
@@ -28,9 +29,9 @@ object ExprParser extends Parsers {
     accept(t"any expression", { case e => e })
   def id(name: String): Parser[Expr] =
     accept(t"identifier $name", { case e: Identifier if e.name == name => e })
-  def caseClause: Parser[DesaltCaseClause] = opseq { meta =>
+  def caseClause(meta: Option[ExprMeta]): Parser[DesaltCaseClause] =
     id(Const.Case) ~ any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = meta) }
-  }
+
   def acceptOpSeq: Parser[OpSeq] = accept(t"operation sequence", { case ops: OpSeq => ops })
   def opseq[T](f: Option[ExprMeta] => Parser[T]): Parser[T] =
     new Parser[T] {
@@ -39,4 +40,10 @@ object ExprParser extends Parsers {
         result.flatMapWithNext { case OpSeq(ops, meta) => _ => f(meta)(SeqReader(ops)) }
       }
     }.named("opseq")
+
+  def declTele(meta: Option[ExprMeta])(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] = ???
+
+  def lambda(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
+
+  def letStmt(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[Stmt] = ???
 }
