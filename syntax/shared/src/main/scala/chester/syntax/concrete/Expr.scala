@@ -921,6 +921,7 @@ case object EmptyExpr extends ErrorExpr {
     Doc.text("EmptyExpr")
 }
 
+@deprecated("don't use this")
 case class DesaltFailed(
     origin: Expr,
     error: Problem,

@@ -47,7 +47,15 @@ object ExprParser extends Parsers {
 
   def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
 
-  def letStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] = ???
+  def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] = ???
+
+  // TODO: actually implement this
+  def decorationsOpt(using reporter: Reporter[TyckProblem]): Parser[Vector[Expr]] = success(Vector.empty)
+
+  def letStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
+    decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
+      LetDefStmt(LetDefType.Let, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
+    }
 
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq)
 
