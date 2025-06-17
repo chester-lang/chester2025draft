@@ -28,8 +28,8 @@ object ExprParser extends Parsers {
     accept(t"any expression", { case e: Expr => e })
   def id(name: String): Parser[Expr] =
     accept(t"identifier $name", { case e: Identifier if e.name == name => e })
-  def caseClause(meta: Option[ExprMeta] = None): Parser[DesaltCaseClause] = id(Const.Case) ~ any ~ id(Const.Arrow2) ~ any ^^ {
-    case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = meta)
+  def caseClause: Parser[DesaltCaseClause] = opseq { meta =>
+    id(Const.Case) ~ any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = meta) }
   }
   def acceptOpSeq: Parser[OpSeq] = accept(t"operation sequence", { case ops: OpSeq => ops })
   def opseq[T](f: Option[ExprMeta] => Parser[T]): Parser[T] =
