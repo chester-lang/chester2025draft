@@ -1,6 +1,6 @@
 package chester.resolve
 
-import chester.error.{Reporter, TyckProblem}
+import chester.error.{ExpectCase, Reporter, TyckProblem}
 import chester.syntax.concrete.*
 import chester.i18n.*
 import chester.syntax.Const
@@ -29,30 +29,32 @@ object ExprParser extends Parsers {
     accept(t"any expression", { case e => e })
   def id(name: String): Parser[Expr] =
     accept(t"identifier $name", { case e: Identifier if e.name == name => e })
-  def caseClause(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
-    id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = meta) }
+  def caseClause(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
+    (id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }) |||
+      reporter.report(ExpectCase(opseq))
 
-  def acceptOpSeq: Parser[OpSeq] = accept(t"operation sequence", { case ops: OpSeq => ops })
-  def opseq[T](f: Option[ExprMeta] => Parser[T]): Parser[T] =
-    new Parser[T] {
-      def apply(in: Input): ParseResult[T] = {
-        val result = acceptOpSeq(in)
-        result.flatMapWithNext { case OpSeq(ops, meta) => _ => f(meta)(SeqReader(ops)) }
-      }
-    }.named("opseq")
+  extension [T](p: Parser[T]) {
+    def |||(other: => Unit): Parser[T] = new Parser[T] {
+      def apply(in: Input): ParseResult[T] =
+        p(in) match {
+          case success: Success[T]  => success
+          case nosuccess: NoSuccess => other; nosuccess
+        }
+    }
+  }
 
-  def declTele(meta: Option[ExprMeta])(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] = ???
+  def declTele(opseq: OpSeq)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] = ???
 
-  def lambda(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
+  def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
 
-  def letStmt(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[Stmt] = ???
+  def letStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] = ???
 
-  def parsers(meta: Option[ExprMeta])(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(meta) | lambda(meta) | letStmt(meta)
+  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq)
 
   def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = expr match {
     case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
-    case OpSeq(xs, meta) =>
-      parsers(meta)(SeqReader(xs)) match {
+    case opseq @ OpSeq(xs, meta) =>
+      parsers(opseq)(SeqReader(xs)) match {
         case Success(result, next) => desalt(OpSeq((result +: next.asInstanceOf[SeqReader[Expr]].seq).toVector, meta))
         case _: NoSuccess          => expr
       }
