@@ -25,7 +25,7 @@ case class SeqReader[+T](seq: Seq[T]) extends Reader[T] {
 object ExprParser extends Parsers {
   type Elem = Expr
   def any: Parser[Expr] =
-    accept(t"any expression", { case e: Expr => e })
+    accept(t"any expression", { case e => e })
   def id(name: String): Parser[Expr] =
     accept(t"identifier $name", { case e: Identifier if e.name == name => e })
   def caseClause: Parser[DesaltCaseClause] = opseq { meta =>
