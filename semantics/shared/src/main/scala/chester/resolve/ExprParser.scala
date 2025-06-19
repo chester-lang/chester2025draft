@@ -4,7 +4,9 @@ import chester.error.*
 import chester.syntax.concrete.*
 import chester.i18n.*
 import chester.syntax.Const
+import chester.utils.reuse
 
+import scala.annotation.tailrec
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{Position, Reader}
 
@@ -33,6 +35,10 @@ object ExprParser extends Parsers {
     accept(t"any identifier", { case e: Identifier => e })
   def anyopseq: Parser[OpSeq] =
     accept(t"any opseq", { case e: OpSeq => e })
+  def anytuple: Parser[Tuple] =
+    accept(t"any tuple", { case e: Tuple => e })
+  def anylist: Parser[ListExpr] =
+    accept(t"any list", { case e: ListExpr => e })
   def caseClause(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
     (id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }) |||
       reporter.report(ExpectCase(opseq))
@@ -66,6 +72,8 @@ object ExprParser extends Parsers {
     }
   } | (anyopseq flatMap { opseq => handleXs(opseq.seq, handleOneArgOpSeq(opseq)) })
 
+  def handleOneArgs(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[Seq[Arg]] = rep(handleOneArg)
+
   def handleOneArgOpSeq(opseq: OpSeq)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[Arg] =
     anyid ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ {
       case id ~ None ~ None =>
@@ -80,18 +88,14 @@ object ExprParser extends Parsers {
         Arg(name = Some(id), ty = ty, exprOrDefault = expr, meta = opseq.meta)
     }
 
-  def declTele(opseq: OpSeq)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] = anyid ^^ {
-    id =>
-      mode match {
-        case DeclTeleMode.Default =>
-
-          DefTelescope(Vector(Arg(name = Some(id), meta = id.meta)), meta = opseq.meta)
-
-        case DeclTeleMode.Type =>
-          DefTelescope(Vector(Arg(ty = Some(id), meta = id.meta)), meta = opseq.meta)
-      }
-  } | (anyopseq flatMap { opseq => handleXs(opseq.seq, handleOneArgOpSeq(opseq)) } map { arg => DefTelescope(Vector(arg), meta = opseq.meta) }) |||
-    reporter.report(???)
+  def declTele(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] =
+    handleOneArg ^^ { arg => DefTelescope(Vector(arg), meta = arg.meta) } |
+      (anytuple flatMap { tuple =>
+        handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = false, meta = tuple.meta) }
+      }) | (anylist flatMap { tuple =>
+        handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = true, meta = tuple.meta) }
+      })
+      ||| reporter.report(???)
 
   def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
 
@@ -113,15 +117,31 @@ object ExprParser extends Parsers {
       ||| reporter.report(ExpectLetDef(opseq))
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq)
 
-  def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = expr match {
-    case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
-    case opseq @ OpSeq(xs, meta) =>
-      parsers(opseq)(SeqReader(xs)) match {
-        case Success(result, next) =>
-          if (next.atEnd) result else expr
-        case _: NoSuccess => expr
-      }
-    case obj: ObjectExpr => ObjectDesalt.desugarObjectExpr(obj)
-    case expr            => expr
-  }
+  @tailrec
+  private def unwrap(e: Expr, next: Expr => Expr)(using Reporter[TyckProblem]): Expr =
+    e match {
+      case Block(Vector(), Some(tail), _) => unwrap(next(tail), next)
+      case Tuple(Vector(term), _)         => unwrap(next(term), next)
+      case e                              => e
+    }
+
+  def desaltUnwrap(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr =
+    reuse(expr, unwrap(desalt(expr), desalt))
+
+  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Option[DefTelescope] = ???
+
+  def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = reuse(
+    expr,
+    expr match {
+      case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
+      case opseq @ OpSeq(xs, meta) =>
+        parsers(opseq)(SeqReader(xs)) match {
+          case Success(result, next) =>
+            if (next.atEnd) result else expr
+          case _: NoSuccess => expr
+        }
+      case obj: ObjectExpr => ObjectDesalt.desugarObjectExpr(obj)
+      case expr            => expr
+    }
+  )
 }
