@@ -40,8 +40,7 @@ object ExprParser extends Parsers {
   def anylist: Parser[ListExpr] =
     accept(t"any list", { case e: ListExpr => e })
   def caseClause(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
-    (id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }) |||
-      reporter.report(ExpectCase(opseq))
+    id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }
 
   extension [T](p: Parser[T]) {
     def |||(other: => Unit): Parser[T] = new Parser[T] {
@@ -95,9 +94,8 @@ object ExprParser extends Parsers {
       }) | (anylist flatMap { tuple =>
         handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = true, meta = tuple.meta) }
       })
-      ||| reporter.report(???)
 
-  def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = ???
+  def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = failure("TODO")
 
   def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] = anyid ^^ { id => DefinedPattern(PatternBind(id, id.meta), id.meta) }
 
@@ -108,13 +106,11 @@ object ExprParser extends Parsers {
     decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
       LetDefStmt(LetDefType.Let, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
-      ||| reporter.report(ExpectLetDef(opseq))
 
   def defStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
     decorationsOpt ~ id(Const.Def) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
       LetDefStmt(LetDefType.Def, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
-      ||| reporter.report(ExpectLetDef(opseq))
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq)
 
   @tailrec
