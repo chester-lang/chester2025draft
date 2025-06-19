@@ -43,7 +43,7 @@ object ExprParser extends Parsers {
     id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }
 
   extension [T](p: Parser[T]) {
-    def |||(other: => Unit): Parser[T] = new Parser[T] {
+    def |-|(other: => Unit): Parser[T] = new Parser[T] {
       def apply(in: Input): ParseResult[T] =
         p(in) match {
           case success: Success[T]  => success
@@ -113,14 +113,16 @@ object ExprParser extends Parsers {
 
   def any1: Parser[Expr] = rep1(any) ^^ { xs => buildOpseq(xs) }
 
+  def any1NoEq: Parser[Expr] = rep1(any - id(Const.`=`)) ^^ { xs => buildOpseq(xs) }
+
   def letStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any1) ~ opt(id(Const.`=`) ~> any1) ^^ {
+    decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any1NoEq) ~ opt(id(Const.`=`) ~> any1) ^^ {
       case decorations ~ _ ~ defn ~ typ ~ expr =>
         LetDefStmt(LetDefType.Let, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
 
   def defStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    decorationsOpt ~ id(Const.Def) ~! defined ~ opt(id(Const.`:`) ~> any1) ~ opt(id(Const.`=`) ~> any1) ^^ {
+    decorationsOpt ~ id(Const.Def) ~! defined ~ opt(id(Const.`:`) ~> any1NoEq) ~ opt(id(Const.`=`) ~> any1) ^^ {
       case decorations ~ _ ~ defn ~ typ ~ expr =>
         LetDefStmt(LetDefType.Def, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }

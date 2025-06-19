@@ -50,7 +50,10 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
       ExprParser.desalt(s) match {
         case let: LetDefStmt =>
           val pattern = let.defined
-          val body = let.body.getOrElse { Reporter.report(MissingLetBody(let)); ??? }
+          val body = let.body.getOrElse {
+            Reporter.report(MissingLetBody(let))
+            ???
+          }
           pattern match {
             case DefinedPattern(pattern, _) =>
               val ty = toTerm(let.ty match {
