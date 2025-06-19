@@ -143,7 +143,36 @@ object ExprParser extends Parsers {
           case _: NoSuccess => expr
         }
       case obj: ObjectExpr => ObjectDesalt.desugarObjectExpr(obj)
-      case expr            => expr
+      case FunctionCall(function, telescopes, meta) =>
+        val desugaredFunction = desalt(function)
+        val desugaredTelescopes = telescopes match {
+          case t: Tuple =>
+            Vector(
+              DesaltCallingTelescope(
+                t.terms.map(term => CallingArg(expr = desalt(term), meta = term.meta)),
+                meta = t.meta
+              )
+            )
+          case other =>
+            reporter.report(UnexpectedTelescope(other))
+            Vector(
+              DesaltCallingTelescope(
+                Vector(CallingArg(expr = desalt(other), meta = other.meta)),
+                meta = other.meta
+              )
+            )
+        }
+        desugaredFunction match {
+          case DesaltFunctionCall(f, t, m) =>
+            DesaltFunctionCall(f, t ++ desugaredTelescopes, m)
+          case _ =>
+            DesaltFunctionCall(
+              desugaredFunction,
+              desugaredTelescopes,
+              meta
+            )
+        }
+      case expr => expr
     }
   )
 }
