@@ -102,14 +102,27 @@ object ExprParser extends Parsers {
   // TODO: actually implement this
   def decorationsOpt(using reporter: Reporter[TyckProblem]): Parser[Vector[Expr]] = success(Vector.empty)
 
+  @deprecated("this implementation is not correct")
+  def combineMeta(metas: Seq[Option[ExprMeta]]): Option[ExprMeta] = None
+
+  def buildOpseq(xs: Seq[Expr]): Expr = {
+    require(xs.nonEmpty, "xs cannot be empty")
+    if (xs.tail.isEmpty) return xs.head
+    return OpSeq(xs.toVector, meta = combineMeta(xs.map(_.meta)))
+  }
+
+  def any1: Parser[Expr] = rep1(any) ^^ { xs => buildOpseq(xs) }
+
   def letStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
-      LetDefStmt(LetDefType.Let, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
+    decorationsOpt ~ id(Const.Let) ~! defined ~ opt(id(Const.`:`) ~> any1) ~ opt(id(Const.`=`) ~> any1) ^^ {
+      case decorations ~ _ ~ defn ~ typ ~ expr =>
+        LetDefStmt(LetDefType.Let, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
 
   def defStmt(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    decorationsOpt ~ id(Const.Def) ~! defined ~ opt(id(Const.`:`) ~> any) ~ opt(id(Const.`=`) ~> any) ^^ { case decorations ~ _ ~ defn ~ typ ~ expr =>
-      LetDefStmt(LetDefType.Def, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
+    decorationsOpt ~ id(Const.Def) ~! defined ~ opt(id(Const.`:`) ~> any1) ~ opt(id(Const.`=`) ~> any1) ^^ {
+      case decorations ~ _ ~ defn ~ typ ~ expr =>
+        LetDefStmt(LetDefType.Def, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq)
 
