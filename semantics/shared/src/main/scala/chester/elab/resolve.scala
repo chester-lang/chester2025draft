@@ -2,7 +2,7 @@ package chester.elab
 
 import chester.syntax.concrete.*
 import chester.error.*
-import chester.resolve.{DeclTeleMode, ExprParser, SimpleDesalt}
+import chester.resolve.{DeclTeleMode, ExprParser}
 import chester.utils.*
 
 import scala.language.implicitConversions
@@ -14,7 +14,7 @@ def resolve(
 }
 
 def resolveTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, ctx: Context, reporter: Reporter[TyckProblem]): Option[DefTelescope] = {
-  val result = SimpleDesalt.desugarTele(expr)
+  val result = ExprParser.desugarTele(expr)
   result.map(result => reuse(expr, result))
 }
 

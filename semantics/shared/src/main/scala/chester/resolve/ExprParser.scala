@@ -128,7 +128,13 @@ object ExprParser extends Parsers {
   def desaltUnwrap(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr =
     reuse(expr, unwrap(desalt(expr), desalt))
 
-  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Option[DefTelescope] = ???
+  def desugarTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Option[DefTelescope] =
+    declTele(SeqReader(Seq(expr))) match {
+      case Success(telescope, next) =>
+        Some(telescope)
+      case failure: NoSuccess =>
+        None
+    }
 
   def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = reuse(
     expr,
