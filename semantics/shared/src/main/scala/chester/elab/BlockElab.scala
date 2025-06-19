@@ -5,6 +5,7 @@ import chester.error.{MissingLetBody, Reporter}
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.elab.{Context, ContextItem, TyAndVal, convertMeta}
+import chester.resolve.ExprParser
 import chester.uniqid.{Uniqid, UniqidOf}
 import chester.utils.elab.*
 
@@ -46,7 +47,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
       case _ => () // ignored
     }
     for (s <- exprStatements)
-      s match {
+      ExprParser.desalt(s) match {
         case let: LetDefStmt =>
           val pattern = let.defined
           val body = let.body.getOrElse { Reporter.report(MissingLetBody(let)); ??? }

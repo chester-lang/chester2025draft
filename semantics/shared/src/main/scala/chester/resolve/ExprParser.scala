@@ -135,12 +135,20 @@ object ExprParser extends Parsers {
   def desalt(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr = reuse(
     expr,
     expr match {
+      case OpSeq(Vector(a, op: Identifier, b), meta) =>
+        DotCall(a, op, Vector(DesaltCallingTelescope(Vector(CallingArg(expr = b, meta = b.meta)), meta = b.meta)), meta)
+
       case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
       case opseq @ OpSeq(xs, meta) =>
         parsers(opseq)(SeqReader(xs)) match {
           case Success(result, next) =>
-            if (next.atEnd) result else expr
-          case _: NoSuccess => expr
+            // add an assignment for debugging purposes
+            val x = if (next.atEnd) result else expr
+            x
+          case _: NoSuccess =>
+            // add an assignment for debugging purposes
+            val x = expr
+            x
         }
       case obj: ObjectExpr => ObjectDesalt.desugarObjectExpr(obj)
       case FunctionCall(function, telescopes, meta) =>

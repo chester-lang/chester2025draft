@@ -357,6 +357,7 @@ case object StmtDesalt {
 }
 
 case object SimpleDesalt {
+  @deprecated("please use ExprParser")
   def desugar(expr: Expr)(using reporter: Reporter[TyckProblem]): Expr =
     expr match {
       case OpSeq(xs, _) if xs.length == 1 => xs.head
