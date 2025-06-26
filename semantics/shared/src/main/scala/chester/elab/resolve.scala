@@ -9,9 +9,8 @@ import scala.language.implicitConversions
 
 def resolve(
     expr: Expr
-)(using Context, Reporter[TyckProblem]): Expr = {
+)(using Context, Reporter[TyckProblem]): Expr =
   ExprParser.desaltUnwrap(expr)
-}
 
 def resolveTele(expr: Expr)(using mode: DeclTeleMode = DeclTeleMode.Default, ctx: Context, reporter: Reporter[TyckProblem]): Option[DefTelescope] = {
   val result = ExprParser.desugarTele(expr)

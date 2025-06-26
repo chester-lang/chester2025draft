@@ -21,8 +21,5 @@ object CharReader {
     }
     LazyList.from(chars) #::: reading(tail, source, currentOffset)
   }
-  def read(source: Source): Either[ParseError, Seq[StringChar]] = source.readContent match {
-    case Left(error)    => Left(error)
-    case Right(strings) => Right(reading(strings, source, source.offset))
-  }
+  def read(source: Source): Either[ParseError, Seq[StringChar]] = source.readContent.map(strings => reading(strings, source, source.offset))
 }

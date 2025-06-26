@@ -13,7 +13,7 @@ import spire.math.Trilean.*
 import spire.math.{Rational, Trilean}
 import upickle.default.*
 import chester.error.ProblemUpickle.problemRW
-import chester.utils.impls.{rationalRW, uintRW, union2RW}
+import chester.utils.impls.{rationalRW, union2RW}
 import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
 import com.eed3si9n.ifdef.*

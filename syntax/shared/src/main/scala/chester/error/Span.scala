@@ -2,13 +2,11 @@ package chester.error
 
 import spire.math.Natural
 import chester.reader.{Offset, Source}
-import chester.utils.{Nat, WithUTF16, asInt, encodeString, parserInputToLazyList}
+import chester.utils.{Nat, WithUTF16, asInt, encodeString}
 import fastparse.ParserInput
 import upickle.default.*
 import chester.i18n.*
 import chester.utils.impls.naturalRW
-
-import scala.annotation.tailrec
 
 case class Pos(index: WithUTF16, line: spire.math.Natural, column: WithUTF16) derives ReadWriter
 
