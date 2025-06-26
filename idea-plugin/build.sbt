@@ -21,7 +21,7 @@ lazy val chesterPlugin =
     .settings(
       name := "ChesterLanguageSupport",
       version := "0.0.35",
-      scalaVersion := "3.7.2-RC1-bin-20250609-41cf6eb-NIGHTLY",
+      scalaVersion := "3.7.3-RC1-bin-20250620-d6b74fa-NIGHTLY",
       Compile / javacOptions ++= Seq("--release", "17"),
       Compile / scalacOptions ++= Seq("--release", "17"),
       intellijPlugins ++= Seq(

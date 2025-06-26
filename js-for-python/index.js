@@ -7,7 +7,7 @@ if (typeof Map === 'undefined') {
 }
 
 // Import the JavaScript generated from Scala.js (using fastLinkJS for better debugging)
-import * as chesterJS from './js/target/scala-3.7.1/js-for-python-fastopt/main.mjs';
+import * as chesterJS from './js/target/scala-3.7.2-RC1/js-for-python-fastopt/main.mjs';
 
 // Set global variable for js2py to access the module directly
 window.Chester = chesterJS;
