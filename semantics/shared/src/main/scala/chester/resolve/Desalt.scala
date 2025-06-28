@@ -310,19 +310,19 @@ case object StmtDesalt {
   )(using reporter: Reporter[TyckProblem]): Stmt =
     boundary[Stmt] {
       if (beforeKw.nonEmpty) {
-        reporter.report(???)
+        reporter.report(NotImplemented(beforeKw.head))
         // error recovery, just ignore beforeKw and continue, no need return something
       }
       if (afterKw.length < 2) {
-        reporter.report(???)
-        boundary.break(???)
+        reporter.report(NotImplemented(cause))
+        boundary.break(DesaltFailed(cause, NotImplemented(cause), cause.meta))
       } else if (afterKw.length == 2) {
         // simplest case, one telescope and one block
         val tele = MatchDeclarationTelescope.unapply(afterKw(0)).getOrElse(???)
         val body: Block = afterKw(1) match {
           case b: Block => b
           case other =>
-            reporter.report(???)
+            reporter.report(ExpectCase(other))
             Block(Vector(other), None, meta = other.meta)
         }
         ???

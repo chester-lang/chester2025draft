@@ -2,7 +2,7 @@ package chester.elab
 
 import chester.cell.*
 import chester.elab.*
-import chester.error.{Reporter, TyckProblem, VectorReporter}
+import chester.error.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.syntax.{DefaultModule, ModuleRef}
@@ -183,8 +183,8 @@ trait DefaultElab extends Elab {
             SolverOps.addConstraint(Unify(ty, ty1.wellTyped, expr))
             NativeTerm(StringTerm(code, s.meta), toTerm(ty1.wellTyped), meta = meta)
           case _ =>
-            Reporter.report(???)
-            ErrorTerm(???, meta = meta)
+            Reporter.report(FunctionCallArgumentMismatchError(2, telescopes.length, expr))
+            ErrorTerm(FunctionCallArgumentMismatchError(2, telescopes.length, expr), meta = meta)
         }
       case OpSeq(Vector(Identifier("?", _), holeName), meta) =>
         holeName match {
@@ -192,7 +192,7 @@ trait DefaultElab extends Elab {
             SolverOps.addConstraint(IsType(ty))
             HoleTerm(name = name, ty = toTerm(ty), meta = meta)
           case _ =>
-            Reporter.report(???)
+            Reporter.report(InvalidFieldName(holeName))
             SolverOps.addConstraint(IsType(ty))
             HoleTerm(name = "hole", ty = toTerm(ty), meta = meta)
         }
@@ -202,8 +202,8 @@ trait DefaultElab extends Elab {
             SolverOps.addConstraint(Unify(ty, item.ty, id))
             item.ref
           case None =>
-            Reporter.report(???)
-            ErrorTerm(???, meta = convertMeta(id.meta))
+            Reporter.report(UnboundVariable(id.name, id))
+            ErrorTerm(UnboundVariable(id.name, id), meta = convertMeta(id.meta))
         }
       case expr: ObjectExpr => SolverOps.callConstraint(ObjectElab(expr, ty))
       case expr: UnitExpr =>

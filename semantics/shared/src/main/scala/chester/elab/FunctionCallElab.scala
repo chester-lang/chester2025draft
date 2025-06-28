@@ -3,7 +3,7 @@ package chester.elab
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.elab.*
-import chester.error.Reporter
+import chester.error.*
 import chester.utils.elab.*
 
 import scala.util.boundary
@@ -38,8 +38,8 @@ case object FunctionCallElabHandler extends Handler[ElabOps, FunctionCallElab.ty
         boundary.break(Result.Waiting(assumeCell(meta)))
       case f: FunctionType => f
       case term =>
-        Reporter.report(???)
-        result.fill(???)
+        Reporter.report(TypeMismatch(FunctionType(Vector.empty, toTerm(ty), meta = None), term, call))
+        result.fill(ErrorTerm(TypeMismatch(FunctionType(Vector.empty, toTerm(ty), meta = None), term, call), meta = None))
         boundary.break(Result.Done)
     }
     val fTyImplicit = fTy.telescopes.map(_.implicitly)
