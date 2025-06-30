@@ -602,8 +602,8 @@ lazy val utils = useSpire(
         // "io.getkyo" %%% "kyo-data" % "0.18.0",
         "org.scala-graph" %%% "graph-core" % "2.0.3",
         "com.outr" %%% "scribe" % "3.16.1",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.5",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.5",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.6",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.6",
         "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
@@ -759,7 +759,7 @@ lazy val backend213 = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(utils, syntax, err)
   .settings(
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.7")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.8")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -795,7 +795,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonJvmSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.13.7" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.8" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       ),
