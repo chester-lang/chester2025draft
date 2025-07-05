@@ -815,7 +815,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
       // "org.graalvm.polyglot" % "js" % graalvmVersion
-      "org.bytedeco" % "llvm-platform" % "19.1.3-1.5.11" % Provided
+      "org.bytedeco" % "llvm-platform" % "20.1.7-1.5.12" % Provided
     )
   )
 
@@ -826,7 +826,7 @@ lazy val optional = crossProject(JVMPlatform)
   .settings(
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.bytedeco" % "llvm-platform" % "19.1.3-1.5.11"
+      "org.bytedeco" % "llvm-platform" % "20.1.7-1.5.12"
     )
   )
   .jvmSettings(jvmScala3Settings, commonJvmSettings)
