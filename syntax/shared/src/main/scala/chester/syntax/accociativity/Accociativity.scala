@@ -10,7 +10,7 @@ case class PrecedenceGroup(
     associativity: Associativity = Associativity.None
 ) derives ReadWriter
 
-enum Associativity derives ReadWriter {
+enum Associativity derives ReadWriter, CanEqual {
   case None
   case Left
   case Right
