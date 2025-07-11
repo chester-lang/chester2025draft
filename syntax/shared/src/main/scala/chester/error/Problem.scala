@@ -68,7 +68,7 @@ private def renderFullDescription(desc: FullDescription)(using options: DocConf,
     val elemDoc = elem.doc.toDoc
     elem.span0.flatMap(sourceReader.apply) match {
       case Some(lines) =>
-        val sourceLines = lines.map { case (lineNumber, line) =>
+        val sourceLines = lines.map { (lineNumber, line) =>
           Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
         }
         val codeBlock = Doc.group(Doc.concat(sourceLines.map(_.end)*))
