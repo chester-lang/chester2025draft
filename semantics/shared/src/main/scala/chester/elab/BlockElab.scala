@@ -80,7 +80,10 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
               }
             case _ => ???
           }
-        case e => throw new UnsupportedOperationException("not implemented: " + e)
+        case e => {
+          throw new UnsupportedOperationException("not implemented: " + e)
+          ??? // for breakpoitn debugging
+        }
       }
     val resultExpr = block.result.getOrElse(UnitExpr(meta = None))
     val returning = toTerm(c.given_Elab.check(resultExpr, ty))
