@@ -602,8 +602,8 @@ lazy val utils = useSpire(
         // "io.getkyo" %%% "kyo-data" % "0.18.0",
         "org.scala-graph" %%% "graph-core" % "2.0.3",
         "com.outr" %%% "scribe" % "3.16.1",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.6",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.6",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.7",
+        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.7",
         "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
