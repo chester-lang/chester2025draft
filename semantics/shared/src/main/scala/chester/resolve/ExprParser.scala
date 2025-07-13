@@ -94,9 +94,9 @@ object ExprParser extends Parsers {
 
   def declTele1(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] =
 
-      (anytuple flatMap { tuple =>
-        handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = false, meta = tuple.meta) }
-      }) | (anylist flatMap { tuple =>
+    (anytuple flatMap { tuple =>
+      handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = false, meta = tuple.meta) }
+    }) | (anylist flatMap { tuple =>
       handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = true, meta = tuple.meta) }
     })
 
@@ -133,14 +133,13 @@ object ExprParser extends Parsers {
     }
 
   def extensions(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    id(Const.Extension) ~! declTele1 ~ anyblock ^^ {
-      case _ ~ tele ~ body => {
-        ???
-        ???
-      }
+    id(Const.Extension) ~! declTele1 ~ anyblock ^^ { case _ ~ tele ~ body =>
+      ???
+      ???
     }
 
-  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq) | extensions(opseq)
+  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] =
+    caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq) | extensions(opseq)
 
   @tailrec
   private def unwrap(e: Expr, next: Expr => Expr)(using Reporter[TyckProblem]): Expr =

@@ -39,18 +39,18 @@ case class StringIndex(stringList: Seq[String]) {
           val nextChar = if (it.hasNext) it.next() else '\u0000'
           if (isLowSurrogate(nextChar)) {
             if (index + 1 < charIndex) {
-              unicodeIndex = unicodeIndex + (1 : Natural)
+              unicodeIndex = unicodeIndex + (1: Natural)
               index = index + Nat(2)
             } else {
-              index = index + (1 : Natural)
+              index = index + (1: Natural)
             }
           } else {
-            unicodeIndex = unicodeIndex + (1 : Natural)
-            index = index + (1 : Natural)
+            unicodeIndex = unicodeIndex + (1: Natural)
+            index = index + (1: Natural)
           }
         } else {
-          unicodeIndex = unicodeIndex + (1 : Natural)
-          index = index + (1 : Natural)
+          unicodeIndex = unicodeIndex + (1: Natural)
+          index = index + (1: Natural)
         }
       } else {
         throw new IllegalArgumentException(

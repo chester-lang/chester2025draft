@@ -14,7 +14,7 @@ object Nat {
 
 given NatFromDigits: FromDigits[Natural] {
   override def fromDigits(digits: String): Natural = {
-    if(digits.startsWith("-")) throw NumberTooSmall()
+    if (digits.startsWith("-")) throw NumberTooSmall()
     Natural.apply(digits)
   }
 }
