@@ -1,9 +1,10 @@
-package chester.utils.impls
+package chester.utils
+
 import upickle.default.*
 
 import scala.reflect.ClassTag
 
-def union2RW[A: ClassTag, B: ClassTag](implicit
+def union2RW[A: ClassTag, B: ClassTag](using
     a: ReadWriter[A],
     b: ReadWriter[B]
 ): ReadWriter[A | B] = {
@@ -26,7 +27,7 @@ def union2RW[A: ClassTag, B: ClassTag](implicit
   readwriter[Union2].bimap(_.toUnion2, _.toUnionType)
 }
 
-def union4RW[A: ClassTag, B: ClassTag, C: ClassTag, D: ClassTag](implicit
+def union4RW[A: ClassTag, B: ClassTag, C: ClassTag, D: ClassTag](using
     a: ReadWriter[A],
     b: ReadWriter[B],
     c: ReadWriter[C],

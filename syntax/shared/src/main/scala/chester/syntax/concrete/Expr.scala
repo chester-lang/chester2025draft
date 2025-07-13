@@ -1,6 +1,8 @@
 // TODO: Correctly implement toDoc. They are very broken
 package chester.syntax.concrete
 
+import scala.language.strictEquality
+
 import cats.data.*
 import chester.doc.*
 import chester.doc.consts.Docs
@@ -8,9 +10,8 @@ import chester.error.*
 import chester.syntax.*
 import chester.utils.doc.*
 import upickle.default.*
-import chester.utils.*
+import chester.utils.{*, given}
 import spire.math.Rational
-import chester.utils.impls.*
 import chester.error.ProblemUpickle.*
 import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
@@ -99,7 +100,7 @@ object MetaFactory {
     }
 }
 
-sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadWriter {
+sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadWriter, CanEqual {
   type ThisTree <: Expr
 
   /** Every Expr has meta to trace compile time errors, type checking errors */
@@ -1083,7 +1084,7 @@ case class PrecedenceGroupResolved(
     copy(meta = updater(meta))
 }
 
-enum LetDefType derives ReadWriter {
+enum LetDefType derives ReadWriter, CanEqual {
   case Let
   case Def
 }

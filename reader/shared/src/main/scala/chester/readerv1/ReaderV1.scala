@@ -25,9 +25,7 @@ case class ReaderV1(
   def comment: P[Unit] = P("//" ~ CharPred(_ != '\n').rep ~ nEnd)
 
   private def commentOneLine: P[Comment] =
-    PwithMeta("//" ~ CharPred(_ != '\n').rep.! ~ ("\n" | End)).map { case (content, meta) =>
-      Comment(content, CommentType.OneLine, meta.flatMap(_.span))
-    }
+    PwithMeta("//" ~ CharPred(_ != '\n').rep.! ~ ("\n" | End)).map((content, meta) => Comment(content, CommentType.OneLine, meta.flatMap(_.span)))
 
   private def allComment: P[Comment] = P(commentOneLine)
 
@@ -124,7 +122,7 @@ case class ReaderV1(
         inline onEnd: Boolean = false
     ): P[T] = (start, onEnd) match {
       case (true, true) =>
-        (maybeSpace1 ~ parse0 ~ maybeSpace1).map { case (b, x, e) =>
+        (maybeSpace1 ~ parse0 ~ maybeSpace1).map { (b, x, e) =>
           if (ignoreLocation) x
           else
             x.updateMeta(
@@ -132,13 +130,13 @@ case class ReaderV1(
             ).asInstanceOf[T]
         }
       case (true, false) =>
-        (maybeSpace1 ~ parse0).map { case (b, x) =>
+        (maybeSpace1 ~ parse0).map { (b, x) =>
           if (ignoreLocation) x
           else
             x.updateMeta(MetaFactory.add(commentBefore = b)).asInstanceOf[T]
         }
       case (false, true) =>
-        (parse0 ~ maybeSpace1).map { case (x, e) =>
+        (parse0 ~ maybeSpace1).map { (x, e) =>
           if (ignoreLocation) x
           else
             x.updateMeta(MetaFactory.add(commentEndInThisLine = e))
@@ -154,16 +152,14 @@ case class ReaderV1(
     @silentDeprecated("I forgot what is this doing seemingly wrong logic")
     inline def withMeta[R](using
         s: fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
-    ): P[R] = (begin ~ parse0 ~ end).map { case (b, x, e) =>
+    ): P[R] = (begin ~ parse0 ~ end).map { (b, x, e) =>
       val meta = createMeta(loc(b, e), None)
       s(x, meta)
     }
 
     inline def withSpaceAtStart[R](using
         s: fastparse.Implicits.Sequencer[T, Vector[Comment], R]
-    ): P[R] = (maybeSpace1 ~ parse0).map { case (comments, x) =>
-      s(x, comments)
-    }
+    ): P[R] = (maybeSpace1 ~ parse0).map((comments, x) => s(x, comments))
 
     private inline def must(inline message: String = "Expected something"): P[T] =
       parse0.? flatMap {
@@ -187,13 +183,9 @@ case class ReaderV1(
       fastparse.Implicits.Sequencer[T, Option[ExprMeta], R]
   ): P[R] = P(parse0.withMeta)
 
-  def identifier: P[Identifier] = P(id.withMeta).map { case (name, meta) =>
-    Identifier(name, meta)
-  }
+  def identifier: P[Identifier] = P(id.withMeta).map((name, meta) => Identifier(name, meta))
 
-  def infixIdentifier: P[Identifier] = P(operatorId.withMeta).map { case (name, meta) =>
-    Identifier(name, meta)
-  }
+  def infixIdentifier: P[Identifier] = P(operatorId.withMeta).map((name, meta) => Identifier(name, meta))
 
   private def signed: P[String] = P("".!) // P(CharIn("+\\-").?.!)
 
@@ -210,7 +202,7 @@ case class ReaderV1(
   ).!
 
   private def integerLiteral: P[ParsedExpr] =
-    P(signed ~ (hexLiteral | binLiteral | decLiteral).!).withMeta.map { case (sign, value, meta) =>
+    P(signed ~ (hexLiteral | binLiteral | decLiteral).!).withMeta.map { (sign, value, meta) =>
       val actualValue =
         if (value.startsWith("0x")) BigInt(sign + value.drop(2), 16)
         else if (value.startsWith("0b")) BigInt(sign + value.drop(2), 2)
@@ -256,9 +248,7 @@ case class ReaderV1(
   }
 
   private def stringLiteralExpr: P[ParsedExpr] =
-    P((stringLiteral | heredocLiteral).withMeta).map { case (value, meta) =>
-      StringLiteral(value, meta)
-    }
+    P((stringLiteral | heredocLiteral).withMeta).map((value, meta) => StringLiteral(value, meta))
 
   def literal: P[ParsedExpr] = P(
     doubleLiteral | integerLiteral | stringLiteralExpr
@@ -285,9 +275,8 @@ case class ReaderV1(
     "@" ~ identifier ~ callingZeroOrMore()
   )
 
-  private def annotated: P[AnnotatedExpr] = PwithMeta(annotation ~ parse()).map { case (annotation, telescope, expr, meta) =>
-    AnnotatedExpr(annotation, telescope, expr, meta)
-  }
+  private def annotated: P[AnnotatedExpr] =
+    PwithMeta(annotation ~ parse()).map((annotation, telescope, expr, meta) => AnnotatedExpr(annotation, telescope, expr, meta))
 
   case class ParsingContext(
       inOpSeq: Boolean = false,
@@ -305,9 +294,7 @@ case class ReaderV1(
   ): P[ParsedMaybeTelescope] = P(
     (list | tuple) | (lineNonEndingSpace.? ~ anonymousBlockLikeFunction.on(
       ctx.blockCall
-    )).withMeta.map { case (block, meta) =>
-      Tuple(Vector(block), meta)
-    }
+    )).withMeta.map((block, meta) => Tuple(Vector(block), meta))
   )
 
   def callingMultiple(
@@ -326,9 +313,7 @@ case class ReaderV1(
       function: ParsedExpr,
       p: Option[ExprMeta] => Option[ExprMeta],
       ctx: ParsingContext = ParsingContext()
-  ): P[FunctionCall] = PwithMeta(callingOnce(ctx = ctx)).map { case (telescope, meta) =>
-    FunctionCall(function, telescope, p(meta))
-  }
+  ): P[FunctionCall] = PwithMeta(callingOnce(ctx = ctx)).map((telescope, meta) => FunctionCall(function, telescope, p(meta)))
 
   def dotCall(
       expr: ParsedExpr,
@@ -336,13 +321,11 @@ case class ReaderV1(
       ctx: ParsingContext = ParsingContext()
   ): P[DotCall] = PwithMeta(
     maybeSpace ~ "." ~ identifier ~ callingZeroOrMore(ctx = ctx)
-  ).map { case (field, telescope, meta) =>
-    DotCall(expr, field, telescope, p(meta))
-  }
+  ).map((field, telescope, meta) => DotCall(expr, field, telescope, p(meta)))
 
   private def insideBlock: P[Block] = PwithMeta(
     (maybeSpace ~ statement).rep ~ maybeSpace ~ parse().? ~ maybeSpace
-  ).flatMap { case (heads, tail, meta) =>
+  ).flatMap { (heads, tail, meta) =>
     if (heads.isEmpty && tail.isEmpty) Fail("expect something")
     else Pass(Block(Vector.from(heads), tail, meta))
   }
@@ -367,7 +350,7 @@ case class ReaderV1(
       p: Option[ExprMeta] => Option[ExprMeta],
       ctx: ParsingContext
   ): P[OpSeq] =
-    PwithMeta(opSeqGettingExprs(ctx = ctx)).flatMap { case (exprs, meta) =>
+    PwithMeta(opSeqGettingExprs(ctx = ctx)).flatMap { (exprs, meta) =>
       val xs = expr +: exprs
       lazy val exprCouldPrefix = expr match {
         case Identifier(name, _) if strIsOperator(name) => true
@@ -389,9 +372,7 @@ case class ReaderV1(
 
   def qualifiedName: P[QualifiedName] = P(identifier).flatMap(id => qualifiedNameOn(id) | Pass(id))
 
-  def symbol: P[SymbolLiteral] = P("'" ~ id).withMeta.map { case (name, meta) =>
-    SymbolLiteral(name, meta)
-  }
+  def symbol: P[SymbolLiteral] = P("'" ~ id).withMeta.map((name, meta) => SymbolLiteral(name, meta))
 
   private def objectClause0: P[ObjectClause] =
     (maybeSpace ~ qualifiedName ~ maybeSpace ~ "=" ~ maybeSpace ~ parse() ~ maybeSpace)
@@ -407,9 +388,7 @@ case class ReaderV1(
 
   private def keyword: P[ParsedExpr] = PwithMeta(
     "#" ~ id ~ callingZeroOrMore(ParsingContext(dontAllowBlockApply = true))
-  ).map { case (id, telescope, meta) =>
-    Keyword(id, telescope, meta)
-  }
+  ).map((id, telescope, meta) => Keyword(id, telescope, meta))
 
   private def opSeqGettingExprs(ctx: ParsingContext): P[Vector[ParsedExpr]] =
     P(maybeSpace ~ parse(ctx = ctx.copy(inOpSeq = true)) ~ Index).flatMap { (expr, index) =>

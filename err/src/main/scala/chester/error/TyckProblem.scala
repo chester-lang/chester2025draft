@@ -6,7 +6,7 @@ import chester.syntax.accociativity.*
 import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.utils.doc.*
-import chester.utils.impls.*
+import chester.utils.{union2RW, given}
 import upickle.default.*
 
 import scala.reflect.ClassTag

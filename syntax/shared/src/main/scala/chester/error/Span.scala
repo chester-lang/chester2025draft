@@ -2,16 +2,16 @@ package chester.error
 
 import spire.math.Natural
 import chester.reader.{Offset, Source}
-import chester.utils.{Nat, WithUTF16, asInt, encodeString}
+import chester.utils.{Nat, WithUTF16, asInt, encodeString, given}
 import fastparse.ParserInput
 import upickle.default.*
 import chester.i18n.*
-import chester.utils.impls.naturalRW
+import scala.language.experimental.genericNumberLiterals
 
 case class Pos(index: WithUTF16, line: spire.math.Natural, column: WithUTF16) derives ReadWriter
 
 object Pos {
-  val zero: Pos = Pos(WithUTF16.Zero, Nat(0), WithUTF16.Zero)
+  val zero: Pos = Pos(WithUTF16.Zero, 0, WithUTF16.Zero)
 }
 
 /** start <= i < end */

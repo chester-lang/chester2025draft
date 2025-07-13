@@ -68,9 +68,7 @@ private def renderFullDescription(desc: FullDescription)(using options: DocConf,
     val elemDoc = elem.doc.toDoc
     elem.span0.flatMap(sourceReader.apply) match {
       case Some(lines) =>
-        val sourceLines = lines.map { case (lineNumber, line) =>
-          Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn)
-        }
+        val sourceLines = lines.map((lineNumber, line) => Doc.text(t"$lineNumber") <+> Doc.text(line, Styling.BoldOn))
         val codeBlock = Doc.group(Doc.concat(sourceLines.map(_.end)*))
         elemDoc </> codeBlock
       case None => elemDoc
@@ -101,7 +99,7 @@ private def renderToDocWithSource(p: Problem)(using options: DocConf, sourceRead
     case Some(pos) =>
       val locationHeader = Doc.text(t"Location") <+>
         Doc.text(
-          t"${pos.fileName} [${pos.range.start.line + Nat(1)}:${pos.range.start.column.unicode + Nat(1)}] to [${pos.range.end.line + Nat(1)}:${pos.range.end.column.unicode + Nat(1)}]",
+          t"${pos.fileName} [${pos.range.start.line + 1}:${pos.range.start.column.unicode + 1}] to [${pos.range.end.line + 1}:${pos.range.end.column.unicode + 1}]",
           Styling.BoldOn
         )
 
