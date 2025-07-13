@@ -4,7 +4,8 @@ import upickle.default.*
 import chester.i18n.*
 import spire.math.Natural
 import chester.utils.impls.naturalRW
-import chester.utils.{Nat, asInt}
+import chester.utils.{Nat, asInt, given}
+import scala.language.experimental.genericNumberLiterals
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
@@ -111,7 +112,7 @@ object Uniqid {
     x.collectU(collecter)
     import spire.compat.ordering // Import ordering for Natural
     if (currentRangeCollect.isEmpty) UniqIdRange(currentOffset(), currentOffset())
-    else UniqIdRange(currentRangeCollect.map(_.id).min, currentRangeCollect.map(_.id).max + Nat(1))
+    else UniqIdRange(currentRangeCollect.map(_.id).min, currentRangeCollect.map(_.id).max + (1: Natural))
   }
 
   case class GiveNewRangeResult[T <: ContainsUniqid](

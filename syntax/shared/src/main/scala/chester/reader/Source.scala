@@ -2,11 +2,12 @@ package chester.reader
 
 import upickle.default.*
 import chester.error.*
-import chester.utils.{Nat, WithUTF16, codepointToString}
+import chester.utils.{Nat, WithUTF16, codepointToString, given}
 import chester.utils.doc.{Doc, DocConf}
 import spire.math.Natural
 import chester.utils.impls.naturalRW
 import chester.utils.utf16Len
+import scala.language.experimental.genericNumberLiterals
 
 case class ParseError(message: String, span0: Option[Span] = None) extends Problem {
   override def severity: Problem.Severity = Problem.Severity.Error
@@ -59,21 +60,21 @@ case class Source(
 }
 
 case class Offset(
-    lineOffset: spire.math.Natural = Nat(0),
+    lineOffset: spire.math.Natural = 0,
     posOffset: WithUTF16 = WithUTF16.Zero,
     firstLineColumnOffset: WithUTF16 = WithUTF16.Zero
 ) derives ReadWriter {
 
-  if (lineOffset != Nat(0)) require(posOffset.nonZero)
-  if (posOffset.nonZero) require(lineOffset != Nat(0))
+  if (lineOffset != 0) require(posOffset.nonZero)
+  if (posOffset.nonZero) require(lineOffset != 0)
   require(posOffset >= firstLineColumnOffset)
   def getPos: Pos = add(Pos.zero)
   def next(codePoint: Int): Offset = codepointToString(codePoint) match {
-    case s @ "\n" => copy(lineOffset = lineOffset + Nat(1), posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
-    case s        => copy(posOffset = posOffset + WithUTF16(Nat(1), s.utf16Len))
+    case s @ "\n" => copy(lineOffset = lineOffset + (1: Natural), posOffset = posOffset + WithUTF16(1, s.utf16Len))
+    case s        => copy(posOffset = posOffset + WithUTF16(1, s.utf16Len))
   }
   def add(x: Pos): Pos =
-    if (x.line == Nat(0))
+    if (x.line == 0)
       Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column + firstLineColumnOffset)
     else
       Pos(index = posOffset + x.index, line = x.line + lineOffset, column = x.column)

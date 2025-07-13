@@ -4,6 +4,7 @@ import fastparse.ParserInput
 import _root_.io.github.iltotore.iron.constraint.all.*
 import chester.i18n.*
 import spire.math.Natural
+import scala.language.experimental.genericNumberLiterals
 
 case class LineAndColumn(
     line: spire.math.Natural,
@@ -28,8 +29,8 @@ case class StringIndex(stringList: Seq[String]) {
 
   /** 0 <= charIndex <= charLength */
   def charIndexToUnicodeIndex(charIndex: spire.math.Natural): spire.math.Natural = {
-    var index = Nat(0)
-    var unicodeIndex = Nat(0)
+    var index: Natural = 0
+    var unicodeIndex: Natural = 0
     val it = stringIterator
     while (index < charIndex)
       if (it.hasNext) {
@@ -37,19 +38,19 @@ case class StringIndex(stringList: Seq[String]) {
         if (index < charIndex && isHighSurrogate(char)) {
           val nextChar = if (it.hasNext) it.next() else '\u0000'
           if (isLowSurrogate(nextChar)) {
-            if (index + Nat(1) < charIndex) {
-              unicodeIndex = unicodeIndex + Nat(1)
+            if (index + 1 < charIndex) {
+              unicodeIndex = unicodeIndex + (1 : Natural)
               index = index + Nat(2)
             } else {
-              index = index + Nat(1)
+              index = index + (1 : Natural)
             }
           } else {
-            unicodeIndex = unicodeIndex + Nat(1)
-            index = index + Nat(1)
+            unicodeIndex = unicodeIndex + (1 : Natural)
+            index = index + (1 : Natural)
           }
         } else {
-          unicodeIndex = unicodeIndex + Nat(1)
-          index = index + Nat(1)
+          unicodeIndex = unicodeIndex + (1 : Natural)
+          index = index + (1 : Natural)
         }
       } else {
         throw new IllegalArgumentException(

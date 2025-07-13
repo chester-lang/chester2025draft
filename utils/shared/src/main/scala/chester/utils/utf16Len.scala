@@ -1,6 +1,7 @@
 package chester.utils
 
 import spire.math.Natural
+import scala.language.experimental.genericNumberLiterals
 
 extension (text: String) {
   def utf16Len: Natural = Nat(text.length)
@@ -12,5 +13,5 @@ extension (text: String) {
 
 extension (codePoint: Int) {
   def utf16Len: Natural = Nat(Character.charCount(codePoint))
-  def unicodeLen: Natural = Nat(1)
+  def unicodeLen: Natural = 1
 }

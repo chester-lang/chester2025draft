@@ -3,6 +3,7 @@ package chester.utils
 import upickle.default.*
 import spire.math.Natural
 import chester.utils.impls.naturalRW
+import scala.language.experimental.genericNumberLiterals
 
 //given WithUTF16Codec: JsonValueCodec[WithUTF16] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
@@ -15,11 +16,11 @@ case class WithUTF16(unicode: spire.math.Natural, utf16: spire.math.Natural) der
   def >=(other: WithUTF16): Boolean = unicode >= other.unicode && utf16 >= other.utf16
   def +(other: WithUTF16): WithUTF16 =
     WithUTF16(unicode + other.unicode, utf16 + other.utf16)
-  def isZero: Boolean = unicode == Nat(0) && utf16 == Nat(0)
-  def nonZero: Boolean = unicode != Nat(0) && utf16 != Nat(0)
+  def isZero: Boolean = unicode == 0 && utf16 == 0
+  def nonZero: Boolean = unicode != 0 && utf16 != 0
 }
 
 object WithUTF16 {
-  val Zero: WithUTF16 = WithUTF16(Nat(0), Nat(0))
-  val One: WithUTF16 = WithUTF16(Nat(1), Nat(1))
+  val Zero: WithUTF16 = WithUTF16(0, 0)
+  val One: WithUTF16 = WithUTF16(1, 1)
 }
