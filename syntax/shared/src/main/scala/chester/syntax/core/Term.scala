@@ -776,9 +776,7 @@ case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const met
   override type ThisTree = Effects
   override def toDoc(using DocConf): Doc =
     Doc.mkList(
-      effects.map { (k, v) =>
-        k.toDoc <+> Docs.`:` <+> v.toDoc
-      },
+      effects.map((k, v) => k.toDoc <+> Docs.`:` <+> v.toDoc),
       Docs.`{`,
       Docs.`}`,
       Doc.empty
@@ -787,9 +785,8 @@ case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const met
   override def collectMeta: Vector[MetaTerm[?]] =
     effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
-  override def replaceMeta(f: MetaTerm[?] => Term): Term = copy(effects = effects.map { (a, b) =>
-    (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))
-  })
+  override def replaceMeta(f: MetaTerm[?] => Term): Term =
+    copy(effects = effects.map((a, b) => (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))))
   def isEmpty: Boolean = effects.isEmpty
 
   def nonEmpty: Boolean = effects.nonEmpty
