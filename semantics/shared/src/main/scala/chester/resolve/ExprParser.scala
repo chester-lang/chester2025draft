@@ -39,6 +39,8 @@ object ExprParser extends Parsers {
     accept(t"any tuple", { case e: Tuple => e })
   def anylist: Parser[ListExpr] =
     accept(t"any list", { case e: ListExpr => e })
+  def anyblock: Parser[Block] =
+    accept(t"any block", { case e: Block => e })
   def caseClause(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
     id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }
 
@@ -126,7 +128,13 @@ object ExprParser extends Parsers {
       case decorations ~ _ ~ defn ~ typ ~ expr =>
         LetDefStmt(LetDefType.Def, defn, ty = typ, body = expr, decorations = decorations, meta = opseq.meta)
     }
-  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq)
+
+  def extensions(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
+    id(Const.Extension) ~! declTele ~ anyblock ^^ {
+      case _ ~ tele ~ body => ???
+    }
+
+  def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq) | extensions(opseq)
 
   @tailrec
   private def unwrap(e: Expr, next: Expr => Expr)(using Reporter[TyckProblem]): Expr =
