@@ -54,10 +54,10 @@ object ExprParser extends Parsers {
     }
   }
 
-  def handleXs[A](xs: Seq[Expr], parser: Parser[A], fail: Input => ParseResult[A] = next => Failure("Expected end of input", next)): Parser[A] = _ =>
+  def handleXs[A](xs: Seq[Expr], parser: Parser[A], fail: Input => ParseResult[A] = next => Failure("Expected end of input", next)): Parser[A] = in =>
     parser(SeqReader(xs)) match {
       case Success(result, next) =>
-        if (next.atEnd) Success(result, next)
+        if (next.atEnd) Success(result, in)
         else fail(next)
       case failure: NoSuccess =>
         failure
@@ -90,12 +90,15 @@ object ExprParser extends Parsers {
     }
 
   def declTele(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] =
-    handleOneArg ^^ { arg => DefTelescope(Vector(arg), meta = arg.meta) } |
+    handleOneArg ^^ { arg => DefTelescope(Vector(arg), meta = arg.meta) } | declTele1
+
+  def declTele1(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[DefTelescope] =
+
       (anytuple flatMap { tuple =>
         handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = false, meta = tuple.meta) }
       }) | (anylist flatMap { tuple =>
-        handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = true, meta = tuple.meta) }
-      })
+      handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = true, meta = tuple.meta) }
+    })
 
   def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = failure("TODO")
 
@@ -130,8 +133,11 @@ object ExprParser extends Parsers {
     }
 
   def extensions(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    id(Const.Extension) ~! declTele ~ anyblock ^^ {
-      case _ ~ tele ~ body => ???
+    id(Const.Extension) ~! declTele1 ~ anyblock ^^ {
+      case _ ~ tele ~ body => {
+        ???
+        ???
+      }
     }
 
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] = caseClause(opseq) | lambda(opseq) | letStmt(opseq) | defStmt(opseq) | extensions(opseq)
