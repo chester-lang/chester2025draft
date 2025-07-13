@@ -2,7 +2,7 @@ package chester.utils.doc
 
 import spire.math.Trilean
 import upickle.default.*
-import chester.utils.impls.*
+import chester.utils.given
 
 import scala.language.implicitConversions
 

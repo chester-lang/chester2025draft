@@ -3,7 +3,6 @@ package chester.uniqid
 import upickle.default.*
 import chester.i18n.*
 import spire.math.Natural
-import chester.utils.impls.naturalRW
 import chester.utils.{Nat, asInt, given}
 import scala.language.experimental.genericNumberLiterals
 

@@ -1,7 +1,7 @@
-package chester.utils.impls
+package chester.utils
 
-import upickle.default.*
 import spire.math.Trilean
+import upickle.default.*
 private enum Three derives ReadWriter {
   case True, False, Unknown
 }
@@ -18,5 +18,5 @@ private def trileanToThree(trilean: Trilean): Three = trilean match {
   case Trilean.Unknown => Three.Unknown
 }
 
-implicit val trileanRW: ReadWriter[Trilean] =
+given trileanRW: ReadWriter[Trilean] =
   readwriter[Three].bimap(trileanToThree, threeToTrilean)

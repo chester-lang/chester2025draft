@@ -1,9 +1,9 @@
-package chester.utils.impls
+package chester.utils
 
 import chester.utils.Nat
 import spire.math.Natural
 import upickle.default.*
 
 // Provide a ReadWriter for spire.math.Natural by converting to/from BigInt
-implicit val naturalRW: ReadWriter[Natural] =
+given naturalRW: ReadWriter[Natural] =
   readwriter[BigInt].bimap(_.toBigInt, Nat(_))

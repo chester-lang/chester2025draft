@@ -1,16 +1,16 @@
-package chester.utils.impls
+package chester.utils
 
 import spire.math.Rational
 import upickle.default.*
 
-case class RationalSerialized(numerator: BigInt, denominator: BigInt) derives ReadWriter {
+private case class RationalSerialized(numerator: BigInt, denominator: BigInt) derives ReadWriter {
   def toRational: Rational = Rational(numerator, denominator)
 }
 
 extension (r: Rational) {
-  def toSerialized: RationalSerialized =
+  private[utils] def toSerialized: RationalSerialized =
     RationalSerialized(r.numerator.toBigInt, r.denominator.toBigInt)
 }
 
-implicit val rationalRW: ReadWriter[Rational] =
+given rationalRW: ReadWriter[Rational] =
   readwriter[RationalSerialized].bimap(_.toSerialized, _.toRational)

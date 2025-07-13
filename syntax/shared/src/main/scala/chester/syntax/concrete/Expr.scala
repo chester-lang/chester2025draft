@@ -10,9 +10,8 @@ import chester.error.*
 import chester.syntax.*
 import chester.utils.doc.*
 import upickle.default.*
-import chester.utils.*
+import chester.utils.{*, given}
 import spire.math.Rational
-import chester.utils.impls.*
 import chester.error.ProblemUpickle.*
 import chester.uniqid.*
 import chester.syntax.accociativity.Associativity
