@@ -11,8 +11,7 @@
  * additional information regarding copyright ownership.
  */
 
-package scala.tools.nsc
-package util
+package chester.utils
 
 import java.lang.Character.{ toLowerCase => lower }
 
