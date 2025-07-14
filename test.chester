@@ -7,6 +7,9 @@ let b = c(42);
 let d = __native((Int, Int) => Int, "function(x, y) { return x + y; }");
 let e: (Int, Int) => Int = d;
 let f = e(1, 2);
-extension (x: Int) {
-  def +(y: Int): Int = d(x, y);
-}
+
+def func(a: Int, b: Int): Int = a;
+
+//extension (x: Int) {
+//  def +(y: Int): Int = d(x, y);
+//}
