@@ -48,6 +48,14 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     }
     for (s <- exprStatements)
       ExprParser.desalt(s) match {
+        case extension: ExtensionStmt => {
+          if(extension.telescope.length == 1 && extension.telescope.head.isInstanceOf[DefTelescope] && extension.telescope.head.asInstanceOf[DefTelescope].implicitly == false && extension.telescope.head.asInstanceOf[DefTelescope].args.length == 1) {
+            val arg: Arg = extension.telescope.head.asInstanceOf[DefTelescope].args.head
+            throw new UnsupportedOperationException("extension: not implemented: " + extension)
+          } else {
+            throw new UnsupportedOperationException("extension: not implemented: " + extension)
+          }
+        }
         case let: LetDefStmt =>
           val pattern = let.defined
           val body = let.body.getOrElse {
