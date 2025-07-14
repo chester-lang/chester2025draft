@@ -1,8 +1,8 @@
-// From scala2.13 https://github.com/scala/scala/blob/40829b88b983360fd916310c7e5ad0c3879783f6/src/compiler/scala/tools/nsc/util/EditDistance.scala
+// From scala2.13 https://github.com/scala/scala/blob/4814abf0106d3150050880b564e9db9d5f0beaf2/src/compiler/scala/tools/nsc/util/EditDistance.scala
 /*
  * Scala (https://www.scala-lang.org)
  *
- * Copyright EPFL and Lightbend, Inc.
+ * Copyright EPFL and Lightbend, Inc. dba Akka
  *
  * Licensed under Apache License 2.0
  * (http://www.apache.org/licenses/LICENSE-2.0).
@@ -11,25 +11,29 @@
  * additional information regarding copyright ownership.
  */
 
-package chester.utils
+package scala.tools.nsc
+package util
 
-import java.lang.Character.toLowerCase as lower
+import java.lang.Character.{ toLowerCase => lower }
 
 object EditDistance {
 
-  /** @author
-    *   Paul Phillips Translated from the java version at https://www.merriampark.com/ld.htm which is declared to be public domain.
-    */
+  /**
+   * @author Paul Phillips
+   * Translated from the java version at
+   *    https://www.merriampark.com/ld.htm
+   *  which is declared to be public domain.
+   */
   def levenshtein(
-      s: String,
-      t: String,
-      insertCost: Int = 1,
-      deleteCost: Int = 1,
-      subCost: Int = 1,
-      matchCost: Int = 0,
-      caseCost: Int = 1,
-      transpositions: Boolean = false
-  ): Int = {
+                   s: String,
+                   t: String,
+                   insertCost: Int = 1,
+                   deleteCost: Int = 1,
+                   subCost: Int = 1,
+                   matchCost: Int = 0,
+                   caseCost: Int = 1,
+                   transpositions: Boolean = false
+                 ): Int = {
     val n = s.length
     val m = t.length
     if (n == 0) return m
@@ -39,11 +43,7 @@ object EditDistance {
     0 to n foreach (x => d(x)(0) = x)
     0 to m foreach (x => d(0)(x) = x)
 
-    for {
-      i <- 1 to n
-      s_i = s(i - 1)
-      j <- 1 to m
-    } {
+    for (i <- 1 to n; s_i = s(i - 1); j <- 1 to m) {
       val t_j = t(j - 1)
       val cost = if (s_i == t_j) matchCost else if (lower(s_i) == lower(t_j)) caseCost else subCost
 
