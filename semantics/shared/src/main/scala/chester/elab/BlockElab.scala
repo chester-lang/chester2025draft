@@ -51,7 +51,14 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
         case extension: ExtensionStmt => {
           if(extension.telescope.length == 1 && extension.telescope.head.isInstanceOf[DefTelescope] && extension.telescope.head.asInstanceOf[DefTelescope].implicitly == false && extension.telescope.head.asInstanceOf[DefTelescope].args.length == 1) {
             val arg: Arg = extension.telescope.head.asInstanceOf[DefTelescope].args.head
-            throw new UnsupportedOperationException("extension: not implemented: " + extension)
+            (arg.name, arg.ty) match {
+              case (Some(name), Some(ty)) => {
+
+                throw new UnsupportedOperationException("extension: not implemented: " + extension)
+              }
+              case _ =>
+                throw new UnsupportedOperationException("extension: not implemented: " + extension)
+            }
           } else {
             throw new UnsupportedOperationException("extension: not implemented: " + extension)
           }
