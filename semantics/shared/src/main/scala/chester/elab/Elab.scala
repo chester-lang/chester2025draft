@@ -107,7 +107,7 @@ trait Elab {
       ctx: Context,
       _1: ElabOps,
       _2: SolverOps
-  ): (wellTyped: CellRWOr[Term], ty: CellRWOr[Term]) = {
+  ): (wellTyped: CellRWOr[Term], sort: CellRWOr[Term]) = {
     given Context = ctx.copy(effects = newPureEffects.toEffectsM)
     val i = infer(expr)
     (SolverOps.callConstraint(IsType(i.wellTyped)), i.ty)
@@ -218,7 +218,7 @@ trait DefaultElab extends Elab {
           ) =>
         val tyFrom = args.map(arg => (arg, inferType(arg.ty.get)))
         val tyTo1 = inferType(tyTo)
-        val level = maxLevel(maxLevelOf(tyFrom.map(_._2.ty).map(levelOfSort(_))), levelOfSort(tyTo1.ty))
+        val level = maxLevel(maxLevelOf(tyFrom.map(_._2.sort).map(levelOfSort(_))), levelOfSort(tyTo1.sort))
         // TODO: correct sort logic
         val sort = Type(level, meta)
         SolverOps.addConstraint(Unify(ty, sort, expr))

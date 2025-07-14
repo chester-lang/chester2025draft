@@ -25,7 +25,7 @@ case class BlockElab(block: Block, ty: CellRWOr[Term])(using elab: Elab, ops: So
 
 case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab) {
   override def run(c: BlockElab)(using elab: ElabOps, solver: SolverOps): Result = {
-    import c.*
+    import c.{*, given}
     val exprStatements = block.statements.map(resolve(_)(using c.context))
     // separate val and given definitions for better debugging in intellij idea
     val context: MutableContext = new MutableContext(c.context)
@@ -48,21 +48,23 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     }
     for (s <- exprStatements)
       ExprParser.desalt(s) match {
-        case extension: ExtensionStmt => {
-          if(extension.telescope.length == 1 && extension.telescope.head.isInstanceOf[DefTelescope] && extension.telescope.head.asInstanceOf[DefTelescope].implicitly == false && extension.telescope.head.asInstanceOf[DefTelescope].args.length == 1) {
+        case extension: ExtensionStmt =>
+          if (
+            extension.telescope.length == 1 && extension.telescope.head.isInstanceOf[DefTelescope] && extension.telescope.head
+              .asInstanceOf[DefTelescope]
+              .implicitly == false && extension.telescope.head.asInstanceOf[DefTelescope].args.length == 1
+          ) {
             val arg: Arg = extension.telescope.head.asInstanceOf[DefTelescope].args.head
             (arg.name, arg.ty) match {
-              case (Some(name), Some(ty)) => {
-
+              case (Some(name), Some(ty)) =>
+                val (evaledTy, sort) = summon[Elab].inferType(ty)
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
-              }
               case _ =>
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
             }
           } else {
             throw new UnsupportedOperationException("extension: not implemented: " + extension)
           }
-        }
         case let: LetDefStmt =>
           val pattern = let.defined
           val body = let.body.getOrElse {
