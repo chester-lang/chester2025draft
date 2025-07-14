@@ -66,6 +66,10 @@ object Context {
   }
 }
 
+case class ExtensionDefinition() {
+  
+}
+
 case class Context(
     effects: EffectsM = Effects.Empty,
     features: Features = Features.Default,
@@ -76,6 +80,7 @@ case class Context(
       HashMap.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
     typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
     typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
+    extensions: Vector[(ty: Term, extension: ExtensionDefinition)] = Vector.empty,
     imports: Imports = Imports.Empty,
     loadedModules: LoadedModules = LoadedModules.Empty,
     operators: OperatorsContext = OperatorsContext.Default,
