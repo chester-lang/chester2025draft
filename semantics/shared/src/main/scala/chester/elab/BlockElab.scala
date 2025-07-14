@@ -60,6 +60,10 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                 val (evaledTy, sort) = summon[Elab].inferType(ty)
                 val ty1 = summon[Elab].reduceForTyUntyped(evaledTy)
                 val localvar: LocalVar = LocalVar(name.name, ty1, Uniqid.make[LocalVar], meta = name.meta)
+                if(extension.body.result.nonEmpty) {
+                  ???
+                }
+                val definitions = extension.body
                 val result: ExtensionDefinition = ExtensionDefinition(ty = ty1, bind = localvar, methods = ???)
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
               case _ =>
