@@ -58,6 +58,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
             (arg.name, arg.ty) match {
               case (Some(name), Some(ty)) =>
                 val (evaledTy, sort) = summon[Elab].inferType(ty)
+                val ty1 = summon[Elab].reduceForTyUntyped(evaledTy)
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
               case _ =>
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
