@@ -20,11 +20,11 @@ case class TyAndVal(
 
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
-                        name: Name,
-                        uniqId: UniqidOf[Reference],
-                        ref: Reference,
-                        ty: Term,
-                        reference: Option[SymbolCollector] = None
+    name: Name,
+    uniqId: UniqidOf[Reference],
+    ref: Reference,
+    ty: Term,
+    reference: Option[SymbolCollector] = None
 )
 
 object ContextItem {
@@ -66,29 +66,24 @@ object Context {
   }
 }
 
-case class Def() {
+case class Def() {}
 
-}
-
-case class ExtensionDefinition(ty: Term, bind: Term, methods: Map[Name, Def] = HashMap.empty) {
-
-}
+case class ExtensionDefinition(ty: Term, bind: Term, methods: Map[Name, Def] = HashMap.empty) {}
 
 case class Context(
-                    effects: EffectsM = Effects.Empty,
-                    features: Features = Features.Default,
-                    map: Map[Name, UniqidOf[Reference]] = HashMap.empty[Name, UniqidOf[Reference]], // empty[...] are needed because compiler bugs
-                    contextItems: Map[UniqidOf[Reference], ContextItem] =
+    effects: EffectsM = Effects.Empty,
+    features: Features = Features.Default,
+    map: Map[Name, UniqidOf[Reference]] = HashMap.empty[Name, UniqidOf[Reference]], // empty[...] are needed because compiler bugs
+    contextItems: Map[UniqidOf[Reference], ContextItem] =
       HashMap.empty[UniqidOf[Reference], ContextItem], // empty[...] are needed because compiler bugs
-                    knownMap: Map[UniqidOf[Reference], TyAndVal] =
-      HashMap.empty[UniqidOf[Reference], TyAndVal], // empty[...] are needed because compiler bugs
-                    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
-                    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
-                    extensions: Vector[ExtensionDefinition] = Vector.empty,
-                    imports: Imports = Imports.Empty,
-                    loadedModules: LoadedModules = LoadedModules.Empty,
-                    operators: OperatorsContext = OperatorsContext.Default,
-                    currentModule: ModuleRef = DefaultModule
+    knownMap: Map[UniqidOf[Reference], TyAndVal] = HashMap.empty[UniqidOf[Reference], TyAndVal], // empty[...] are needed because compiler bugs
+    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
+    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
+    extensions: Vector[ExtensionDefinition] = Vector.empty,
+    imports: Imports = Imports.Empty,
+    loadedModules: LoadedModules = LoadedModules.Empty,
+    operators: OperatorsContext = OperatorsContext.Default,
+    currentModule: ModuleRef = DefaultModule
 ) {
   def updateModule(module: ModuleRef): Context = copy(currentModule = module)
 
