@@ -3,6 +3,8 @@ package chester.syntax
 import chester.utils.reuse
 
 import scala.language.implicitConversions
+import scala.language.strictEquality
+
 
 trait Tree[A <: Tree[A]] extends Any {
   this: A =>

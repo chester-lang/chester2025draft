@@ -8,6 +8,8 @@ import scala.language.experimental.genericNumberLiterals
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
+import scala.language.strictEquality
+
 
 private val uniqIdCounter = new AtomicInteger(0)
 
@@ -20,7 +22,7 @@ private val rwUniqID: ReadWriter[UniqidOf[Any]] = readwriter[Int].bimap(
 
 implicit inline def rwUniqIDOf[T]: ReadWriter[UniqidOf[T]] = rwUniqID.asInstanceOf[ReadWriter[UniqidOf[T]]]
 
-case class UniqidOf[+A] private[uniqid] (id: spire.math.Natural) {}
+case class UniqidOf[+A] private[uniqid] (id: spire.math.Natural) derives CanEqual {}
 type UniqidOffset = spire.math.Natural
 
 extension (id: UniqidOffset) {

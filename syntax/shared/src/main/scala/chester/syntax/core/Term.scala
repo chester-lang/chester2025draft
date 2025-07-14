@@ -17,6 +17,8 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import spire.math.*
 import com.eed3si9n.ifdef.*
 
+import scala.language.strictEquality
+
 import scala.language.implicitConversions
 import scala.collection.immutable.HashMap
 import scala.collection.immutable.ArraySeq
@@ -27,7 +29,7 @@ type ExecuteGeneric = (VirtualFrame, Term) => Object
 val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
 
 sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional0 with ContainsUniqid with Tree[Term]
-    derives ReadWriter {
+    derives ReadWriter, CanEqual {
   // ThisTree is defined for almost all subclasses of Term, except for MetaTerm
   type ThisTree <: Term
   final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric.get(frame, this)
