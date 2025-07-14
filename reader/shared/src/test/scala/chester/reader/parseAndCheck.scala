@@ -82,7 +82,7 @@ def parseV2(input: String): Expr = {
              |$line
              |$pointer""".stripMargin)
       },
-      expr => expr.descentRec(_.updateMeta(_ => None))
+      expr => expr.descentRec(_.metaUpdated(_ => None))
     )
 }
 
@@ -124,7 +124,7 @@ def parseTopLevelV2(input: String): Expr = {
              |$line
              |$pointer""".stripMargin)
       },
-      expr => expr.descentRec(_.updateMeta(_ => None))
+      expr => expr.descentRec(_.metaUpdated(_ => None))
     )
 }
 

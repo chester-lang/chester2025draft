@@ -171,7 +171,7 @@ object ExprParser extends Parsers {
       case OpSeq(Vector(a, op: Identifier, b), meta) =>
         DotCall(a, op, Vector(DesaltCallingTelescope(Vector(CallingArg(expr = b, meta = b.meta)), meta = b.meta)), meta)
 
-      case OpSeq(Seq(x), meta) => desalt(x.updateMeta(_.orElse(meta)))
+      case OpSeq(Seq(x), meta) => desalt(x.metaUpdated(_.orElse(meta)))
       case opseq @ OpSeq(xs, meta) =>
         parsers(opseq)(SeqReader(xs)) match {
           case Success(result, next) =>

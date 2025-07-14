@@ -107,9 +107,9 @@ sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadW
   def meta: Option[ExprMeta]
   final def span0: Option[Span] = meta.flatMap(_.span)
 
-  def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ThisTree
+  def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): ThisTree
 
-  final def commentAtStart(comment: Comment): ThisTree = updateMeta {
+  final def commentAtStart(comment: Comment): ThisTree = metaUpdated {
     case Some(meta) =>
       Some(
         meta.copy(commentInfo = meta.commentInfo.map(info => info.copy(commentBefore = info.commentBefore :+ comment)))
@@ -119,7 +119,7 @@ sealed trait Expr extends SpanOptional0 with Tree[Expr] with ToDoc derives ReadW
 
   final def commentAtStart(comment: Vector[Comment]): ThisTree = if (comment.isEmpty) this
   else
-    updateMeta {
+    metaUpdated {
       case Some(meta) =>
         Some(
           meta.copy(commentInfo = meta.commentInfo.map(info => info.copy(commentBefore = info.commentBefore ++ comment)))
@@ -154,7 +154,7 @@ case class Identifier(name: String, meta: Option[ExprMeta]) extends ParsedExpr d
     case Some(pos) => s"Identifier(\"${encodeString(name)}\", $pos)"
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Identifier = copy(meta = updater(meta))
 
@@ -173,7 +173,7 @@ case class ResolvedIdentifier(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ResolvedIdentifier = this
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ResolvedIdentifier = copy(meta = updater(meta))
 
@@ -192,7 +192,7 @@ case class ResolvedLocalVar(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ResolvedLocalVar = this
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ResolvedLocalVar = copy(meta = updater(meta))
 
@@ -208,7 +208,7 @@ case class OpSeq(seq: Vector[Expr], meta: Option[ExprMeta]) extends ParsedExpr w
     OpSeq(seq.map(f), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): OpSeq = copy(meta = updater(meta))
 
@@ -234,7 +234,7 @@ case class InfixExpr(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): InfixExpr = copy(meta = updater(meta))
 
@@ -257,7 +257,7 @@ case class PrefixExpr(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PrefixExpr = copy(meta = updater(meta))
 
@@ -280,7 +280,7 @@ case class PostfixExpr(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PostfixExpr = copy(meta = updater(meta))
 
@@ -300,7 +300,7 @@ case class Block(
     Block(statements.map(f), result.map(f), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Block = copy(meta = updater(meta))
 
@@ -334,7 +334,7 @@ case class Arg(
   require(name.isDefined || ty.isDefined, "Either name or type must be defined")
   override type ThisTree = Arg
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): Arg =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): Arg =
     copy(meta = updater(meta))
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): Arg =
@@ -376,7 +376,7 @@ case class CallingArg(
 ) extends Expr derives ReadWriter {
   override type ThisTree = CallingArg
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): CallingArg =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): CallingArg =
     copy(meta = updater(meta))
 
   def descent(f: Expr => Expr, g: TreeMap[Expr]): CallingArg =
@@ -403,7 +403,7 @@ case class DesaltCallingTelescope(
       DesaltCallingTelescope(args.map(g(_)), implicitly, meta)
     }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltCallingTelescope = copy(meta = updater(meta))
 
@@ -429,7 +429,7 @@ case class Tuple(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedMayb
     Tuple(terms.map(f), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Tuple = copy(meta = updater(meta))
 
@@ -449,7 +449,7 @@ case class DefTelescope(
     DefTelescope(args.map(g(_)), implicitly, meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DefTelescope = copy(meta = updater(meta))
 
@@ -473,7 +473,7 @@ case class FunctionCall(
     FunctionCall(f(function), telescope.descent(f, g), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): FunctionCall = copy(meta = updater(meta))
 
@@ -497,7 +497,7 @@ case class DesaltFunctionCall(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltFunctionCall = copy(meta = updater(meta))
 
@@ -523,7 +523,7 @@ case class DotCall(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DotCall = copy(meta = updater(meta))
 
@@ -566,7 +566,7 @@ case class IntegerLiteral(value: BigInt, meta: Option[ExprMeta]) extends Literal
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): IntegerLiteral = this
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): IntegerLiteral =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): IntegerLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
@@ -578,7 +578,7 @@ case class RationalLiteral(value: Rational, meta: Option[ExprMeta]) extends Lite
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): RationalLiteral = this
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): RationalLiteral =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): RationalLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
@@ -596,7 +596,7 @@ case class StringLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
       s"StringLiteral(\"${encodeString(value)}\", $pos)"
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): StringLiteral =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): StringLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
@@ -608,7 +608,7 @@ case class SymbolLiteral(value: String, meta: Option[ExprMeta]) extends Literal 
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): SymbolLiteral = this
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): SymbolLiteral =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): SymbolLiteral =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc =
@@ -624,7 +624,7 @@ case class ListExpr(terms: Vector[Expr], meta: Option[ExprMeta]) extends ParsedM
     ListExpr(terms.map(f), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ListExpr = copy(meta = updater(meta))
 
@@ -637,7 +637,7 @@ case class HoleExpr(description: String, meta: Option[ExprMeta]) extends Expr {
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): HoleExpr = this
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): HoleExpr = copy(meta = updater(meta))
 
@@ -653,7 +653,7 @@ case class TypeAnnotation(expr: Expr, ty: Expr, meta: Option[ExprMeta]) extends 
     TypeAnnotation(f(expr), f(ty), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): TypeAnnotation = copy(meta = updater(meta))
 
@@ -679,7 +679,7 @@ case class AnnotatedExpr(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): AnnotatedExpr = copy(meta = updater(meta))
 
@@ -697,7 +697,7 @@ case class ObjectExprClause(key: QualifiedName, value: Expr, meta: Option[ExprMe
   type ThisTree = ObjectExprClause
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ObjectExprClause =
     ObjectExprClause(key, f(value))
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectExprClause = copy(meta = updater(meta))
 
@@ -710,7 +710,7 @@ case class ObjectExprClauseOnValue(key: Expr, value: Expr, meta: Option[ExprMeta
   type ThisTree = ObjectExprClauseOnValue
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): ObjectExprClauseOnValue =
     ObjectExprClauseOnValue(f(key), f(value))
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectExprClauseOnValue = copy(meta = updater(meta))
 
@@ -739,7 +739,7 @@ case class ObjectExpr(
     ObjectExpr(clauses.map(g(_)), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectExpr = copy(meta = updater(meta))
 
@@ -768,7 +768,7 @@ case class Keyword(
     Keyword(key, telescope.map(g(_)), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): Keyword = copy(meta = updater(meta))
 
@@ -793,7 +793,7 @@ case class DesaltCaseClause(
     DesaltCaseClause(f(pattern), f(returning), meta)
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltCaseClause = copy(meta = updater(meta))
 
@@ -812,7 +812,7 @@ case class DesaltMatching(
     DesaltMatching(clauses.map(g(_)), meta)
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltMatching = copy(meta = updater(meta))
 
@@ -844,7 +844,7 @@ case class FunctionExpr(
     )
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): FunctionExpr = copy(meta = updater(meta))
 
@@ -871,7 +871,7 @@ case class TypeAnotationNoEffects(
     TypeAnotationNoEffects(f(expr), f(ty), meta)
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): TypeAnotationNoEffects = copy(meta = updater(meta))
 
@@ -896,7 +896,7 @@ case class RecoverableParseError(
     RecoverableParseError(partialResult.map(f), message, pos, meta)
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): RecoverableParseError = copy(meta = updater(meta))
 
@@ -914,7 +914,7 @@ case object EmptyExpr extends ErrorExpr {
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): EmptyExpr.type = this
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): EmptyExpr.type = throw new UnsupportedOperationException()
 
@@ -935,7 +935,7 @@ case class DesaltFailed(
     DesaltFailed(f(origin), error, meta)
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): DesaltFailed = copy(meta = updater(meta))
 
@@ -958,7 +958,7 @@ case class PatternCompare(literal: Expr, meta: Option[ExprMeta]) extends DesaltP
     PatternCompare(f(literal), meta)
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PatternCompare = copy(meta = updater(meta))
 
@@ -970,7 +970,7 @@ case class PatternBind(name: Identifier, meta: Option[ExprMeta]) extends DesaltP
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): PatternBind = this
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): PatternBind = copy(meta = updater(meta))
 
@@ -1003,7 +1003,7 @@ case class ExprStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
     ExprStmt(f(expr), meta)
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ExprStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): ExprStmt =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = expr.toDoc
@@ -1044,7 +1044,7 @@ case class PrecedenceGroupResolving(
     nameDoc <+> higherThanDoc <+> lowerThanDoc <+> associativityDoc
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): PrecedenceGroupResolving =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): PrecedenceGroupResolving =
     copy(meta = updater(meta))
 }
 
@@ -1080,7 +1080,7 @@ case class PrecedenceGroupResolved(
     Doc.text(nameDoc) <+> higherThanDoc <+> lowerThanDoc <+> associativityDoc
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): PrecedenceGroupResolved =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): PrecedenceGroupResolved =
     copy(meta = updater(meta))
 }
 
@@ -1101,7 +1101,7 @@ case class DefinedPattern(pattern: DesaltPattern, meta: Option[ExprMeta]) extend
 
   override type ThisTree = DefinedPattern
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): DefinedPattern = copy(meta = updater(meta))
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): DefinedPattern = copy(meta = updater(meta))
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DefinedPattern = thisOr(DefinedPattern(pattern = g(pattern), meta = meta))
 }
@@ -1119,7 +1119,7 @@ case class DefinedFunction(
 
   override type ThisTree = DefinedFunction
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): DefinedFunction = copy(meta = updater(meta))
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): DefinedFunction = copy(meta = updater(meta))
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DefinedFunction = thisOr(
     DefinedFunction(
@@ -1135,7 +1135,7 @@ case class UnitExpr(meta: Option[ExprMeta]) extends DesaltExpr {
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): UnitExpr = this
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): UnitExpr = copy(meta = updater(meta))
 
@@ -1182,7 +1182,7 @@ case class LetDefStmt(
     decorationsDoc <+> kindDoc <+> definedDoc <+> tyDoc <+> bodyDoc
   }
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): LetDefStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): LetDefStmt =
     copy(meta = updater(meta))
 }
 
@@ -1207,7 +1207,7 @@ case class TraitStmt(
     )
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): TraitStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): TraitStmt =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = {
@@ -1237,7 +1237,7 @@ case class InterfaceStmt(
     )
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): InterfaceStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): InterfaceStmt =
     copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = {
@@ -1264,7 +1264,7 @@ case class ExtensionStmt(
     )
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ExtensionStmt = copy(meta = updater(meta))
 
@@ -1301,7 +1301,7 @@ case class RecordField(
     meta = meta
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): RecordField = copy(meta = updater(meta))
 
@@ -1319,7 +1319,7 @@ case class ExtendsClause(superTypes: Vector[Expr], meta: Option[ExprMeta]) exten
     ExtendsClause(superTypes.map(f), meta)
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ExtendsClause = copy(meta = updater(meta))
 
@@ -1346,7 +1346,7 @@ case class RecordStmt(
     meta = meta
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): RecordStmt = copy(meta = updater(meta))
 
@@ -1377,7 +1377,7 @@ case class ObjectStmt(
     )
   )
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): ObjectStmt = copy(meta = updater(meta))
 
@@ -1402,7 +1402,7 @@ case class ReturnStmt(expr: Expr, meta: Option[ExprMeta]) extends Stmt {
     Doc.text("return ") <> expr.toDoc
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ReturnStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): ReturnStmt =
     copy(meta = updater(meta))
 }
 
@@ -1415,7 +1415,7 @@ case class ImportStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
     Doc.text("import") <+> module.toDoc
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ImportStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): ImportStmt =
     copy(meta = updater(meta))
 }
 
@@ -1428,7 +1428,7 @@ case class ModuleStmt(module: ModuleRef, meta: Option[ExprMeta]) extends Stmt {
     Doc.text("module") <+> module.toDoc
   )
 
-  override def updateMeta(updater: Option[ExprMeta] => Option[ExprMeta]): ModuleStmt =
+  override def metaUpdated(updater: Option[ExprMeta] => Option[ExprMeta]): ModuleStmt =
     copy(meta = updater(meta))
 }
 
@@ -1443,7 +1443,7 @@ case class UnionTypeExpr(
     copy(types = types.map(f))
   }
 
-  override def updateMeta(
+  override def metaUpdated(
       updater: Option[ExprMeta] => Option[ExprMeta]
   ): UnionTypeExpr = copy(meta = updater(meta))
 

@@ -125,7 +125,7 @@ case class ReaderV1(
         (maybeSpace1 ~ parse0 ~ maybeSpace1).map { (b, x, e) =>
           if (ignoreLocation) x
           else
-            x.updateMeta(
+            x.metaUpdated(
               MetaFactory.add(commentBefore = b, commentEndInThisLine = e)
             ).asInstanceOf[T]
         }
@@ -133,13 +133,13 @@ case class ReaderV1(
         (maybeSpace1 ~ parse0).map { (b, x) =>
           if (ignoreLocation) x
           else
-            x.updateMeta(MetaFactory.add(commentBefore = b)).asInstanceOf[T]
+            x.metaUpdated(MetaFactory.add(commentBefore = b)).asInstanceOf[T]
         }
       case (false, true) =>
         (parse0 ~ maybeSpace1).map { (x, e) =>
           if (ignoreLocation) x
           else
-            x.updateMeta(MetaFactory.add(commentEndInThisLine = e))
+            x.metaUpdated(MetaFactory.add(commentEndInThisLine = e))
               .asInstanceOf[T]
         }
       case (false, false) => parse0
