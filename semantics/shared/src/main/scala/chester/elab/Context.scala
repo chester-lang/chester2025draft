@@ -68,7 +68,7 @@ object Context {
 
 case class Def() {}
 
-case class ExtensionDefinition(ty: Term, bind: Term, methods: Map[Name, Def] = HashMap.empty) {}
+case class ExtensionDefinition(ty: Term, bind: LocalVar, methods: Map[Name, Def] = HashMap.empty) {}
 
 case class Context(
     effects: EffectsM = Effects.Empty,
