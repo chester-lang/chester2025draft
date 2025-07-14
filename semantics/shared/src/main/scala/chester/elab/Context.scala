@@ -79,12 +79,9 @@ case class Context(
     imports: Imports = Imports.Empty,
     loadedModules: LoadedModules = LoadedModules.Empty,
     operators: OperatorsContext = OperatorsContext.Default,
-    currentModule: ModuleRef = DefaultModule,
-    currentProcessingType: String = "" // Can be "trait", "record", etc.
+    currentModule: ModuleRef = DefaultModule
 ) {
   def updateModule(module: ModuleRef): Context = copy(currentModule = module)
-
-  def withProcessingType(typeStr: String): Context = copy(currentProcessingType = typeStr)
 
   def getKnown(x: ReferenceCall): Option[TyAndVal] =
     knownMap.get(x.uniqId.asInstanceOf[UniqidOf[ReferenceCall]])
