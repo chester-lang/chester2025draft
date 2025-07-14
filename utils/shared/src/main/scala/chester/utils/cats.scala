@@ -25,6 +25,11 @@ extension [T](x: Vector[T]) {
     NonEmptyVector.fromVectorUnsafe(x)
 }
 
+extension [T](x: NonEmptySeq[T]) {
+  def toNonEmptyVector: NonEmptyVector[T] =
+    NonEmptyVector.fromVectorUnsafe(x.toSeq.toVector)
+}
+
 implicit def nonEmptySeqRW[T: ReadWriter]: ReadWriter[NonEmptySeq[T]] =
   readwriter[Seq[T]].bimap(_.toSeq, NonEmptySeq.fromSeqUnsafe)
 implicit def nonEmptyVectorRW[T: ReadWriter]: ReadWriter[NonEmptyVector[T]] =

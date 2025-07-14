@@ -1,5 +1,8 @@
 package chester.resolve
 
+import chester.utils.{assumeNonEmpty,toNonEmptyVector}
+
+import cats.data.NonEmptySeq
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.i18n.*
@@ -100,6 +103,9 @@ object ExprParser extends Parsers {
       handleXs(tuple.terms, handleOneArgs) ^^ { args => DefTelescope(args.toVector, implicitly = true, meta = tuple.meta) }
     })
 
+  def declTele1s(using mode: DeclTeleMode = DeclTeleMode.Default, reporter: Reporter[TyckProblem]): Parser[NonEmptySeq[DefTelescope]] =
+    rep1(declTele1) map (_.assumeNonEmpty)
+
   def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = failure("TODO")
 
   def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] = anyid ^^ { id => DefinedPattern(PatternBind(id, id.meta), id.meta) }
@@ -133,9 +139,8 @@ object ExprParser extends Parsers {
     }
 
   def extensions(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Stmt] =
-    id(Const.Extension) ~! declTele1 ~ anyblock ^^ { case _ ~ tele ~ body =>
-      ???
-      ???
+    id(Const.Extension) ~! declTele1s ~ anyblock ^^ { case _ ~ tele ~ body =>
+      ExtensionStmt(tele.toNonEmptyVector, body, meta = opseq.meta)
     }
 
   def parsers(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[Expr] =

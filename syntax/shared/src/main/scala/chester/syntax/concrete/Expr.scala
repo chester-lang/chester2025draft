@@ -1252,7 +1252,7 @@ case class InterfaceStmt(
 
 case class ExtensionStmt(
     // usually exact one telescope with exact one explicit argument
-    telescope: Vector[MaybeTelescope],
+    telescope: NonEmptyVector[MaybeTelescope],
     body: Block,
     meta: Option[ExprMeta]
 ) extends DeclarationStmt {
