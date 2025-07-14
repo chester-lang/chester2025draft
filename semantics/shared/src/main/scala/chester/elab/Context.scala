@@ -31,8 +31,8 @@ object ContextItem {
   def builtin(
       item: BuiltinItem
   ): (TyAndVal, ContextItem) = {
-    val varId = Uniqid.generate[ToplevelV]
-    val name = ToplevelV(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
+    val varId = Uniqid.generate[ToplevelVar]
+    val name = ToplevelVar(AbsoluteRef(BuiltinModule, item.id), item.ty, varId, None)
     val ty1 = item.ty
     (
       TyAndVal(ty1, item.value),

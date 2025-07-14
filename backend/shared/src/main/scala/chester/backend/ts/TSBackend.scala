@@ -62,7 +62,7 @@ object IdentifierRules {
 
 }
 
-case class TSContext(map: mutable.HashMap[UniqidOf[LocalV], String], definedSymbols: Set[String] = Set.empty) {
+case class TSContext(map: mutable.HashMap[UniqidOf[LocalVar], String], definedSymbols: Set[String] = Set.empty) {
   def convertAndAdd(name: String): (String, TSContext) = {
     val converted = IdentifierRules.convertToJSIdentifier(name)
     val newName = IdentifierRules.newSymbol(definedSymbols, converted)
@@ -72,7 +72,7 @@ case class TSContext(map: mutable.HashMap[UniqidOf[LocalV], String], definedSymb
 }
 
 object TSContext {
-  def create(map: mutable.HashMap[UniqidOf[LocalV], String] = new mutable.HashMap()): TSContext =
+  def create(map: mutable.HashMap[UniqidOf[LocalVar], String] = new mutable.HashMap()): TSContext =
     TSContext(map)
 }
 
@@ -116,7 +116,7 @@ case object TSBackend extends Backend(Typescript) {
             t"This has not been implemented yet: NativeTerm with repr $repr and type $ty"
           )
       }
-    case localV: LocalV =>
+    case localV: LocalVar =>
       val name = ctx.map.getOrElse(
         localV.uniqId,
         throw new IllegalArgumentException(s"Variable ${localV.name} not found in context")
@@ -142,7 +142,7 @@ case object TSBackend extends Backend(Typescript) {
     val _ = ctx.map.put(let.localv.uniqId, name)
     (name, ctx1)
   }
-  def useVar(localV: LocalV)(using ctx: TSContext): String =
+  def useVar(localV: LocalVar)(using ctx: TSContext): String =
     ctx.map.getOrElse(localV.uniqId, throw new IllegalArgumentException(s"Variable ${localV.name} not found in context"))
   def compileStmt(stmt: StmtTerm)(using ctx: TSContext): (TSStmt, TSContext) = stmt match {
     case let: LetStmtTerm =>

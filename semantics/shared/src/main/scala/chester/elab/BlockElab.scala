@@ -31,14 +31,14 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     val context: MutableContext = new MutableContext(c.context)
     given MutableContext = context
     var statements: Vector[StmtTerm] = Vector()
-    val defs: mutable.Queue[(defined: Identifier, ty: CellRW[Term], id: UniqidOf[LocalV], localv: LocalV)] = mutable.Queue()
+    val defs: mutable.Queue[(defined: Identifier, ty: CellRW[Term], id: UniqidOf[LocalVar], localv: LocalVar)] = mutable.Queue()
     exprStatements.foreach {
       case defstmt: LetDefStmt if defstmt.kind == LetDefType.Def =>
         defstmt.defined match {
           case _ @DefinedPattern(PatternBind(name, meta), _) =>
             val ty = newType
-            val id = Uniqid.generate[LocalV]
-            val localv = LocalV(name.name, toTerm(ty), id, convertMeta(meta))
+            val id = Uniqid.generate[LocalVar]
+            val localv = LocalVar(name.name, toTerm(ty), id, convertMeta(meta))
             val r = elab.collector.newSymbol(localv, id, defstmt, context.ctx)
             context.update(_.add(ContextItem(name.name, id, localv, toTerm(ty), Some(r))))
             defs.enqueue((name, ty, id, localv))
@@ -83,8 +83,8 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
               pattern match {
                 case PatternBind(name, meta) =>
                   if (let.kind == LetDefType.Let) {
-                    val id = Uniqid.generate[LocalV]
-                    val localv = LocalV(name.name, ty, id, convertMeta(meta))
+                    val id = Uniqid.generate[LocalVar]
+                    val localv = LocalVar(name.name, ty, id, convertMeta(meta))
                     val r = elab.collector.newSymbol(localv, id, let, context.ctx)
                     context.update(_.add(ContextItem(name.name, id, localv, ty, Some(r))).knownAdd(id, TyAndVal(ty, wellTyped)))
                     statements = statements :+ LetStmtTerm(localv, wellTyped, ty, convertMeta(let.meta))

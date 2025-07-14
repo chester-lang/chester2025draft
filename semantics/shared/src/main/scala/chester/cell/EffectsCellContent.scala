@@ -7,12 +7,12 @@ import chester.utils.elab.{Cell, SolverOps}
 type CellEffects = Cell[Effects, Effects, EffectsCellContent]
 trait EffectsCellContent extends CellContentRW[Effects] {}
 
-case class DynamicEffectsCellContent(effects: Map[LocalV, Term] = Map.empty)
-    extends BaseMapCell[LocalV, Term]
+case class DynamicEffectsCellContent(effects: Map[LocalVar, Term] = Map.empty)
+    extends BaseMapCell[LocalVar, Term]
     with EffectsCellContent
     with UnstableCellContent[Effects, Effects]
     with NoFill[Effects, Effects] {
-  override def add(key: LocalV, value: Term): DynamicEffectsCellContent = {
+  override def add(key: LocalVar, value: Term): DynamicEffectsCellContent = {
     require(!effects.contains(key))
     copy(effects = effects.updated(key, value))
   }

@@ -283,10 +283,10 @@ class ElabLiteralAndListTest extends FunSuite {
       assert(letStmt.value.isInstanceOf[IntTerm], s"Let binding value should be IntTerm but got ${letStmt.value.getClass.getSimpleName}")
 
       // The return expression should be a LocalV (variable reference)
-      assert(blockTerm.result.isInstanceOf[LocalV], s"Expected LocalV but got ${blockTerm.result.getClass.getSimpleName}")
+      assert(blockTerm.result.isInstanceOf[LocalVar], s"Expected LocalV but got ${blockTerm.result.getClass.getSimpleName}")
 
       // Verify it refers to the correct variable
-      val varRef = blockTerm.result.asInstanceOf[LocalV]
+      val varRef = blockTerm.result.asInstanceOf[LocalVar]
       assertEquals(varRef.name, "x", "Variable reference should be to 'x'")
 
       // Check that the type of the whole expression is IntType (inferred from x which has type Int)

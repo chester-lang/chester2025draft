@@ -36,7 +36,7 @@ object AbstractIntTerm_ {
 
 object Bind_ {
   @deprecated("meta")
-  def from(bind: LocalV): Bind = Bind(bind, bind.ty, None)
+  def from(bind: LocalVar): Bind = Bind(bind, bind.ty, None)
 }
 
 object MetaTerm_ {
@@ -51,7 +51,7 @@ object FunctionType_ {
 }
 
 def TyToty: FunctionType = {
-  val ty = LocalV("x", Type0, Uniqid.generate[LocalV], None)
+  val ty = LocalVar("x", Type0, Uniqid.generate[LocalVar], None)
   FunctionType_(TelescopeTerm_.from(ArgTerm_.from(ty)), ty)
 }
 
@@ -86,7 +86,7 @@ object Union_ {
 object ArgTerm_ {
 
   @deprecated("meta")
-  def from(bind: LocalV): ArgTerm = ArgTerm(Some(bind), bind.ty, meta = None)
+  def from(bind: LocalVar): ArgTerm = ArgTerm(Some(bind), bind.ty, meta = None)
 }
 
 object TelescopeTerm_ {

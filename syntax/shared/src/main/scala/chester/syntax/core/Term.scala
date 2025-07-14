@@ -29,7 +29,8 @@ type ExecuteGeneric = (VirtualFrame, Term) => Object
 val globalExecuteGeneric: Parameter[ExecuteGeneric] = new Parameter[ExecuteGeneric]
 
 sealed abstract class Term extends com.oracle.truffle.api.nodes.Node with ToDoc with SpanOptional0 with ContainsUniqid with Tree[Term]
-    derives ReadWriter, CanEqual {
+    derives ReadWriter,
+      CanEqual {
   // ThisTree is defined for almost all subclasses of Term, except for MetaTerm
   type ThisTree <: Term
   final def executeGeneric(frame: VirtualFrame): Object = globalExecuteGeneric.get(frame, this)
@@ -218,7 +219,7 @@ sealed abstract class Pat extends SpecialTerm derives ReadWriter {
   override type ThisTree <: Pat
 }
 case class Bind(
-    @child var bind: LocalV,
+    @child var bind: LocalVar,
     @child var ty: Term,
     @const meta: Option[TermMeta]
 ) extends Pat derives ReadWriter {
@@ -502,7 +503,7 @@ case class LiteralType(
   override def descent(f: Term => Term, g: TreeMap[Term]): LiteralType = this
 }
 case class ArgTerm(
-    @const bind: Option[LocalV],
+    @const bind: Option[LocalVar],
     @child var ty: Term,
     @const default: Option[Term] = None,
     @const vararg: Boolean = false,
@@ -772,7 +773,7 @@ sealed abstract class Builtin extends WHNF derives ReadWriter {
 sealed abstract class Effect extends WHNF derives ReadWriter {
   override type ThisTree <: Effect
 }
-case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
+case class Effects(@const effects: Map[LocalVar, Term] = HashMap.empty, @const meta: Option[TermMeta]) extends WHNF derives ReadWriter {
 
   override type ThisTree = Effects
   override def toDoc(using DocConf): Doc =
@@ -787,7 +788,7 @@ case class Effects(@const effects: Map[LocalV, Term] = HashMap.empty, @const met
     effects.flatMap((a, b) => a.collectMeta ++ b.collectMeta).toVector
 
   override def replaceMeta(f: MetaTerm[?] => Term): Term =
-    copy(effects = effects.map((a, b) => (a.replaceMeta(f).asInstanceOf[LocalV], b.replaceMeta(f))))
+    copy(effects = effects.map((a, b) => (a.replaceMeta(f).asInstanceOf[LocalVar], b.replaceMeta(f))))
   def isEmpty: Boolean = effects.isEmpty
 
   def nonEmpty: Boolean = effects.nonEmpty
@@ -819,29 +820,29 @@ sealed abstract class Reference extends Uneval with TermWithUniqid derives ReadW
   def ty: Term
 
 }
-case class LocalV(
+case class LocalVar(
     @const name: Name,
     @child var ty: Term,
-    @const uniqId: UniqidOf[LocalV],
+    @const uniqId: UniqidOf[LocalVar],
     @const meta: Option[TermMeta]
 ) extends Reference derives ReadWriter {
-  override type ThisTree = LocalV
+  override type ThisTree = LocalVar
   override def toDoc(using DocConf): Doc = Doc.text(name)
-  override def descent(f: Term => Term, g: TreeMap[Term]): LocalV = thisOr(copy(ty = f(ty)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): LocalVar = thisOr(copy(ty = f(ty)))
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
 
 }
-case class ToplevelV(
+case class ToplevelVar(
     @const id: AbsoluteRef,
     @child var ty: Term,
-    @const uniqId: UniqidOf[ToplevelV],
+    @const uniqId: UniqidOf[ToplevelVar],
     @const meta: Option[TermMeta]
 ) extends Reference derives ReadWriter {
-  override type ThisTree = ToplevelV
+  override type ThisTree = ToplevelVar
   override def toDoc(using DocConf): Doc = group(
     id.toDoc <+> Docs.`.` <+> ty.toDoc
   )
-  override def descent(f: Term => Term, g: TreeMap[Term]): ToplevelV = thisOr(copy(ty = f(ty)))
+  override def descent(f: Term => Term, g: TreeMap[Term]): ToplevelVar = thisOr(copy(ty = f(ty)))
 
   override def switchUniqId(r: UReplacer): ThisTree = copy(uniqId = r(uniqId))
   @deprecated("dont use")
@@ -857,7 +858,7 @@ sealed abstract class StmtTerm extends Term with SpecialTerm derives ReadWriter 
   override type ThisTree <: StmtTerm
 }
 case class LetStmtTerm(
-    @child var localv: LocalV,
+    @child var localv: LocalVar,
     @child var value: Term,
     @child var ty: Term,
     @const meta: Option[TermMeta]
@@ -875,7 +876,7 @@ case class LetStmtTerm(
   )
 }
 case class DefStmtTerm(
-    @child var localv: LocalV,
+    @child var localv: LocalVar,
     @child var value: Term,
     @child var ty: Term,
     @const meta: Option[TermMeta]
