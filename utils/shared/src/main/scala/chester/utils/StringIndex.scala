@@ -5,7 +5,6 @@ import _root_.io.github.iltotore.iron.constraint.all.*
 import chester.i18n.*
 import spire.math.Natural
 import scala.language.experimental.genericNumberLiterals
-import language.experimental.captureChecking
 
 case class LineAndColumn(
     line: spire.math.Natural,
@@ -14,11 +13,11 @@ case class LineAndColumn(
 case class LineAndColumnWithUTF16(line: spire.math.Natural, column: WithUTF16)
 
 // Seq[String] may be a LazyList[String]
-case class StringIndex(stringList: Seq[String]^) {
+case class StringIndex(stringList: Seq[String]) {
 
   import java.lang.Character.{isHighSurrogate, isLowSurrogate}
 
-  def stringIterator: Iterator[Char] = stringList.iterator.flatten
+  private def stringIterator: Iterator[Char] = stringList.iterator.flatten
 
   lazy val unicodeLength: Int =
     stringIterator.foldLeft(0)((count, char) => count + (if (isHighSurrogate(char)) 0 else 1))
