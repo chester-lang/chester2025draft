@@ -20,11 +20,11 @@ case class TyAndVal(
 
 /** for pure values only like let and def. record is not included */
 case class ContextItem(
-    name: Name,
-    uniqId: UniqidOf[ReferenceCall],
-    ref: ReferenceCall,
-    ty: Term,
-    reference: Option[SymbolCollector] = None
+                        name: Name,
+                        uniqId: UniqidOf[Reference],
+                        ref: Reference,
+                        ty: Term,
+                        reference: Option[SymbolCollector] = None
 )
 
 object ContextItem {
@@ -58,10 +58,10 @@ object Context {
     val items = PreludeBuiltin.builtinItems.map(ContextItem.builtin)
     val map = items.map(item => item._2.name -> item._2.uniqId).toMap
     val contextItems = items.map(item => item._2.uniqId -> item._2).toMap
-    val knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] = items
+    val knownMap: Map[UniqidOf[Reference], TyAndVal] = items
       .map(item => item._2.uniqId -> item._1)
       .toMap
-      .asInstanceOf[Map[UniqidOf[ReferenceCall], TyAndVal]]
+      .asInstanceOf[Map[UniqidOf[Reference], TyAndVal]]
     Context(map = map, contextItems = contextItems, knownMap = knownMap)
   }
 }
@@ -75,34 +75,34 @@ case class ExtensionDefinition(ty: Term, bind: Term, methods: Map[Name, Def] = H
 }
 
 case class Context(
-    effects: EffectsM = Effects.Empty,
-    features: Features = Features.Default,
-    map: Map[Name, UniqidOf[ReferenceCall]] = HashMap.empty[Name, UniqidOf[ReferenceCall]], // empty[...] are needed because compiler bugs
-    contextItems: Map[UniqidOf[ReferenceCall], ContextItem] =
-      HashMap.empty[UniqidOf[ReferenceCall], ContextItem], // empty[...] are needed because compiler bugs
-    knownMap: Map[UniqidOf[ReferenceCall], TyAndVal] =
-      HashMap.empty[UniqidOf[ReferenceCall], TyAndVal], // empty[...] are needed because compiler bugs
-    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
-    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
-    extensions: Vector[ExtensionDefinition] = Vector.empty,
-    imports: Imports = Imports.Empty,
-    loadedModules: LoadedModules = LoadedModules.Empty,
-    operators: OperatorsContext = OperatorsContext.Default,
-    currentModule: ModuleRef = DefaultModule
+                    effects: EffectsM = Effects.Empty,
+                    features: Features = Features.Default,
+                    map: Map[Name, UniqidOf[Reference]] = HashMap.empty[Name, UniqidOf[Reference]], // empty[...] are needed because compiler bugs
+                    contextItems: Map[UniqidOf[Reference], ContextItem] =
+      HashMap.empty[UniqidOf[Reference], ContextItem], // empty[...] are needed because compiler bugs
+                    knownMap: Map[UniqidOf[Reference], TyAndVal] =
+      HashMap.empty[UniqidOf[Reference], TyAndVal], // empty[...] are needed because compiler bugs
+                    typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
+                    typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
+                    extensions: Vector[ExtensionDefinition] = Vector.empty,
+                    imports: Imports = Imports.Empty,
+                    loadedModules: LoadedModules = LoadedModules.Empty,
+                    operators: OperatorsContext = OperatorsContext.Default,
+                    currentModule: ModuleRef = DefaultModule
 ) {
   def updateModule(module: ModuleRef): Context = copy(currentModule = module)
 
-  def getKnown(x: ReferenceCall): Option[TyAndVal] =
-    knownMap.get(x.uniqId.asInstanceOf[UniqidOf[ReferenceCall]])
+  def getKnown(x: Reference): Option[TyAndVal] =
+    knownMap.get(x.uniqId.asInstanceOf[UniqidOf[Reference]])
 
   def get(id: Name): Option[ContextItem] =
     map.get(id).flatMap(contextItems.get)
 
-  def knownAdd(id: UniqidOf[ReferenceCall], y: TyAndVal): Context =
+  def knownAdd(id: UniqidOf[Reference], y: TyAndVal): Context =
     knownAdd(Seq(id -> y))
 
   def knownAdd(
-      seq: Seq[(UniqidOf[ReferenceCall], TyAndVal)]
+      seq: Seq[(UniqidOf[Reference], TyAndVal)]
   ): Context = {
     val newKnownMap = seq.foldLeft(knownMap) { (acc, item) =>
       assert(!acc.contains(item._1), t"Duplicate key ${item._1}")

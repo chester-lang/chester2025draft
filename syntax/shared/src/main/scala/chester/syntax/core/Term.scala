@@ -811,9 +811,9 @@ case class ExceptionEffect(@const meta: Option[TermMeta]) extends Effect derives
 // todo: may not terminate
 
 // todo:  whatever IO: console, file, network, ...
-sealed abstract class ReferenceCall extends Uneval with TermWithUniqid derives ReadWriter {
-  override type ThisTree <: ReferenceCall
-  override def uniqId: UniqidOf[ReferenceCall]
+sealed abstract class Reference extends Uneval with TermWithUniqid derives ReadWriter {
+  override type ThisTree <: Reference
+  override def uniqId: UniqidOf[Reference]
   def name: Name
 
   def ty: Term
@@ -824,7 +824,7 @@ case class LocalV(
     @child var ty: Term,
     @const uniqId: UniqidOf[LocalV],
     @const meta: Option[TermMeta]
-) extends ReferenceCall derives ReadWriter {
+) extends Reference derives ReadWriter {
   override type ThisTree = LocalV
   override def toDoc(using DocConf): Doc = Doc.text(name)
   override def descent(f: Term => Term, g: TreeMap[Term]): LocalV = thisOr(copy(ty = f(ty)))
@@ -836,7 +836,7 @@ case class ToplevelV(
     @child var ty: Term,
     @const uniqId: UniqidOf[ToplevelV],
     @const meta: Option[TermMeta]
-) extends ReferenceCall derives ReadWriter {
+) extends Reference derives ReadWriter {
   override type ThisTree = ToplevelV
   override def toDoc(using DocConf): Doc = group(
     id.toDoc <+> Docs.`.` <+> ty.toDoc

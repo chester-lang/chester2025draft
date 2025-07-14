@@ -39,7 +39,7 @@ sealed trait TyckWarning extends TyckProblem derives ReadWriter {
   override final def severity: Problem.Severity = Problem.Severity.Warning
 }
 
-case class UnusedVariableWarning(id: ReferenceCall, cause: Expr) extends TyckWarning {
+case class UnusedVariableWarning(id: Reference, cause: Expr) extends TyckWarning {
   override def toDoc(using
       DocConf
   ): Doc =
