@@ -2,6 +2,9 @@ package chester.elab
 
 import chester.syntax.core.{IntType, IntegerType, ListType, StringType, SymbolType, Term, UIntType}
 
+import scala.annotation.tailrec
+
+@tailrec
 def eqType(a: Term, b: Term): Boolean = (a, b) match {
   case (IntType(_), IntType(_))         => true
   case (IntegerType(_), IntegerType(_)) => true
