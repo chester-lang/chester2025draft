@@ -21,7 +21,7 @@ case class ListOf(items: Vector[(wellTyped: CellROr[Term], ty: CellRWOr[Term])],
 case object ListOfHandler extends Handler[ElabOps, ListOf.type](ListOf) {
   override def run(c: ListOf)(using ElabOps, SolverOps): Result = {
     import c.{*, given}
-    toTerm(ty) match {
+    toTerm(ty).runtimeChecked match {
       case ty: MetaTerm[?] => Result.Waiting(assumeCell(ty))
       case ListType(ty, meta) =>
         SolverOps.addConstraint(IsType(ty))
