@@ -1,8 +1,7 @@
 package chester.resolve
 
-import chester.utils.{assumeNonEmpty,toNonEmptyVector}
-
-import cats.data.NonEmptySeq
+import chester.utils.{assumeNonEmpty, toNonEmptyVector}
+import cats.data.{NonEmptySeq, NonEmptyVector}
 import chester.error.*
 import chester.syntax.concrete.*
 import chester.i18n.*
@@ -29,6 +28,7 @@ case class SeqReader[+T](seq: Seq[T]) extends Reader[T] {
 }
 
 object ExprParser extends Parsers {
+  val noInput = SeqReader(Seq.empty[Expr])
   type Elem = Expr
   def any: Parser[Expr] =
     accept(t"any expression", { case e => e })
@@ -44,6 +44,8 @@ object ExprParser extends Parsers {
     accept(t"any list", { case e: ListExpr => e })
   def anyblock: Parser[Block] =
     accept(t"any block", { case e: Block => e })
+  def anyFunctionCall: Parser[FunctionCall] =
+    accept(t"any function call", { case e: FunctionCall => e })
   def caseClause(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[DesaltCaseClause] =
     id(Const.Case) ~! any ~ id(Const.Arrow2) ~ any ^^ { case _ ~ pattern ~ _ ~ expr => DesaltCaseClause(pattern, expr, meta = opseq.meta) }
 
@@ -108,7 +110,32 @@ object ExprParser extends Parsers {
 
   def lambda(opseq: OpSeq)(using reporter: Reporter[TyckProblem]): Parser[FunctionExpr] = failure("TODO")
 
-  def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] = anyid ^^ { id => DefinedPattern(PatternBind(id, id.meta), id.meta) }
+  // on DeclTeleMode.Default
+  def processTelescope(x: MaybeTelescope)(using reporter: Reporter[TyckProblem]): DefTelescope = x match {
+    case Tuple(xs, meta) =>
+      val results = xs.map {
+        case id: Identifier => Arg(name = Some(id), meta = id.meta)
+        case opseq: OpSeq =>
+          handleXs(opseq.seq, handleOneArgOpSeq(opseq))(noInput) match {
+            case Success(arg, _) => arg
+            case f: Failure      => ???
+          }
+      }
+      DefTelescope(results, implicitly = false, meta = meta)
+    case _ => ???
+  }
+
+  def defined(using reporter: Reporter[TyckProblem]): Parser[Defined] =
+    anyid ~ declTele1s ^^ { case id ~ tele =>
+      // TODO: correct meta
+      DefinedFunction(id, tele.toNonEmptyVector, id.meta)
+    } | anyid ^^ { id => DefinedPattern(PatternBind(id, id.meta), id.meta) } |
+      anyFunctionCall ^^ { call =>
+        call.function match {
+          case id: Identifier => DefinedFunction(id, NonEmptyVector.of(processTelescope(call.telescope)), call.meta)
+          case _              => ???
+        }
+      }
 
   // TODO: actually implement this
   def decorationsOpt(using reporter: Reporter[TyckProblem]): Parser[Vector[Expr]] = success(Vector.empty)
