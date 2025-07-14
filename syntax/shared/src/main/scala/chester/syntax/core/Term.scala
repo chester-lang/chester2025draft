@@ -1005,12 +1005,12 @@ case class FieldTerm(
   )
 }
 case class RecordStmtTerm(
-    @const name: Name,
-    @const uniqId: UniqidOf[RecordStmtTerm] = Uniqid.generate[RecordStmtTerm],
-    @const fields: Vector[FieldTerm],
-    @const body: Option[BlockTerm],
-    @const extendsClause: Option[Term] = None,
-    @const meta: Option[TermMeta]
+                           @const name: Name,
+                           @const uniqId: UniqidOf[RecordStmtTerm] = Uniqid.make[RecordStmtTerm],
+                           @const fields: Vector[FieldTerm],
+                           @const body: Option[BlockTerm],
+                           @const extendsClause: Option[Term] = None,
+                           @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = RecordStmtTerm
@@ -1050,11 +1050,11 @@ case class RecordConstructTerm(
   )
 }
 case class TraitStmtTerm(
-    @const name: Name,
-    @const uniqId: UniqidOf[TraitStmtTerm] = Uniqid.generate[TraitStmtTerm],
-    @const extendsClause: Option[Term] = None,
-    @const body: Option[BlockTerm] = None,
-    @const meta: Option[TermMeta]
+                          @const name: Name,
+                          @const uniqId: UniqidOf[TraitStmtTerm] = Uniqid.make[TraitStmtTerm],
+                          @const extendsClause: Option[Term] = None,
+                          @const body: Option[BlockTerm] = None,
+                          @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = TraitStmtTerm
@@ -1073,11 +1073,11 @@ case class TraitStmtTerm(
   )
 }
 case class InterfaceStmtTerm(
-    @const name: Name,
-    @const uniqId: UniqidOf[InterfaceStmtTerm] = Uniqid.generate[InterfaceStmtTerm],
-    @const extendsClause: Option[Term] = None,
-    @const body: Option[BlockTerm] = None,
-    @const meta: Option[TermMeta]
+                              @const name: Name,
+                              @const uniqId: UniqidOf[InterfaceStmtTerm] = Uniqid.make[InterfaceStmtTerm],
+                              @const extendsClause: Option[Term] = None,
+                              @const body: Option[BlockTerm] = None,
+                              @const meta: Option[TermMeta]
 ) extends TypeDefinition derives ReadWriter {
   override def names: NonEmptyVector[Name] = NonEmptyVector.of(name)
   override type ThisTree = InterfaceStmtTerm

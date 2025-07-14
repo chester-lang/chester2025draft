@@ -228,7 +228,7 @@ trait DefaultElab extends Elab {
             TelescopeTerm(
               tyFrom.map { case (arg, tyFrom1) =>
                 ArgTerm(
-                  bind = arg.name.map(id => LocalVar(id.name, toTerm(tyFrom1.wellTyped), Uniqid.generate[LocalVar], id.meta)),
+                  bind = arg.name.map(id => LocalVar(id.name, toTerm(tyFrom1.wellTyped), Uniqid.make[LocalVar], id.meta)),
                   ty = toTerm(tyFrom1.wellTyped),
                   meta = arg.ty.get.meta
                 )

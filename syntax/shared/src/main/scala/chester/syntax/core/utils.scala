@@ -51,7 +51,7 @@ object FunctionType_ {
 }
 
 def TyToty: FunctionType = {
-  val ty = LocalVar("x", Type0, Uniqid.generate[LocalVar], None)
+  val ty = LocalVar("x", Type0, Uniqid.make[LocalVar], None)
   FunctionType_(TelescopeTerm_.from(ArgTerm_.from(ty)), ty)
 }
 

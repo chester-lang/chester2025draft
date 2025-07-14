@@ -37,7 +37,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
         defstmt.defined match {
           case _ @DefinedPattern(PatternBind(name, meta), _) =>
             val ty = newType
-            val id = Uniqid.generate[LocalVar]
+            val id = Uniqid.make[LocalVar]
             val localv = LocalVar(name.name, toTerm(ty), id, convertMeta(meta))
             val r = elab.collector.newSymbol(localv, id, defstmt, context.ctx)
             context.update(_.add(ContextItem(name.name, id, localv, toTerm(ty), Some(r))))
@@ -59,7 +59,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
               case (Some(name), Some(ty)) =>
                 val (evaledTy, sort) = summon[Elab].inferType(ty)
                 val ty1 = summon[Elab].reduceForTyUntyped(evaledTy)
-                val localvar: LocalVar = LocalVar(name.name, ty1, Uniqid.generate[LocalVar], meta = name.meta)
+                val localvar: LocalVar = LocalVar(name.name, ty1, Uniqid.make[LocalVar], meta = name.meta)
                 val result: ExtensionDefinition = ExtensionDefinition(ty = ty1, bind = localvar, methods = ???)
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
               case _ =>
@@ -84,7 +84,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
               pattern match {
                 case PatternBind(name, meta) =>
                   if (let.kind == LetDefType.Let) {
-                    val id = Uniqid.generate[LocalVar]
+                    val id = Uniqid.make[LocalVar]
                     val localv = LocalVar(name.name, ty, id, convertMeta(meta))
                     val r = elab.collector.newSymbol(localv, id, let, context.ctx)
                     context.update(_.add(ContextItem(name.name, id, localv, ty, Some(r))).knownAdd(id, TyAndVal(ty, wellTyped)))

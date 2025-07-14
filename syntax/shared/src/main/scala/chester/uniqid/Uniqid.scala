@@ -82,7 +82,7 @@ trait OnlyHasUniqid extends Any {
 trait HasUniqid extends Any with ContainsUniqid with OnlyHasUniqid {}
 
 object Uniqid {
-  def generate[T]: UniqidOf[T] = UniqidOf(Nat(uniqIdCounter.getAndIncrement()))
+  def make[T]: UniqidOf[T] = UniqidOf(Nat(uniqIdCounter.getAndIncrement()))
 
   def requireRange(size: spire.math.Natural): UniqIdRange = { // size is Natural
     val sizeInt = size.asInt // Convert to Int for AtomicInteger
