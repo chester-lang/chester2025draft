@@ -63,7 +63,15 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                 if(extension.body.result.nonEmpty) {
                   ???
                 }
-                val definitions = extension.body
+                val definitions = extension.body.statements.map(x=>ExprParser.desalt(x)).map{
+                  case let: LetDefStmt if let.kind == LetDefType.Def => {
+                    ???
+                    ???
+                  }
+                  case stmt =>
+                    Reporter.report(???)
+                    ???
+                }
                 val result: ExtensionDefinition = ExtensionDefinition(ty = ty1, bind = localvar, methods = ???)
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
               case _ =>
