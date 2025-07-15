@@ -826,7 +826,8 @@ case class DesaltMatching(
 }
 
 case class FunctionExpr(
-    telescope: Vector[DefTelescope],
+    // zero or more telescopes
+    telescopes: Vector[DefTelescope],
     resultTy: Option[Expr] = None,
     effect: Option[Expr] = None,
     body: Expr,
@@ -836,7 +837,7 @@ case class FunctionExpr(
 
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): FunctionExpr = thisOr(
     FunctionExpr(
-      telescope.map(g(_)),
+      telescopes.map(g(_)),
       resultTy.map(f),
       effect.map(f),
       f(body),
@@ -849,7 +850,7 @@ case class FunctionExpr(
   ): FunctionExpr = copy(meta = updater(meta))
 
   override def toDoc(using DocConf): Doc = group {
-    val telescopeDoc = Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
+    val telescopeDoc = Doc.mkList(telescopes.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
     val effectDoc = effect.map(_.toDoc).getOrElse(Doc.empty)
     val resultDoc = resultTy.map(r => Docs.`->` <+> r.toDoc).getOrElse(Doc.empty)
     val bodyDoc = body.toDoc
@@ -1108,6 +1109,7 @@ case class DefinedPattern(pattern: DesaltPattern, meta: Option[ExprMeta]) extend
 
 case class DefinedFunction(
     id: Identifier,
+    // zero or more telescopes
     telescopes: Vector[DefTelescope],
     meta: Option[ExprMeta]
 ) extends Defined {

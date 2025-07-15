@@ -125,7 +125,7 @@ private object DesaltSimpleFunction {
             val body = opSeq(after)
             Some(
               FunctionExpr(
-                telescope = telescopes,
+                telescopes = telescopes,
                 body = body,
                 meta = meta
               )
@@ -288,7 +288,7 @@ case object StmtDesalt {
         require(stmt.decorations.isEmpty, "not supported yet")
         require(stmt.body.nonEmpty, "not supported yet")
         val expr = FunctionExpr(
-          telescope = telescopes.toVector,
+          telescopes = telescopes.toVector,
           resultTy = stmt.ty,
           effect = stmt.effect,
           body = stmt.body.get,
