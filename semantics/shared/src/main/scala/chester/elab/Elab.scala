@@ -248,7 +248,27 @@ trait DefaultElab extends Elab {
         toTerm(ty) match {
           case ft: FunctionType => ???
           case ty =>
-            val innerContext: Context = ???
+            val innerContext = new MutableContext(ctx)
+            val telescopes = expr.telescopes.map { telescope =>
+              val args = telescope.args.map { arg =>
+                val ty = toTerm(arg.ty match {
+                  case Some(ty) => inferType(ty).wellTyped
+                  case None     => newType
+                })
+                val bind = arg.name.map(id => LocalVar(id.name, ty, Uniqid.make[LocalVar], id.meta))
+                bind match {
+                  case None =>
+                  case Some(bind) =>
+                    innerContext.update(_.add(ContextItem(bind.name, bind.uniqId, bind, ty, None)))
+                }
+                ArgTerm(
+                  bind = bind,
+                  ty = ty,
+                  meta = arg.meta
+                )
+              }
+              TelescopeTerm(args, meta = telescope.meta)
+            }
             val innerEffects: EffectsM = ???
             val bodyWellTyped = infer(expr.body)(using innerContext.copy(effects = innerEffects), ops, state)
             ???
