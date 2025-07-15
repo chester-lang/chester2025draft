@@ -116,7 +116,11 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                 case _ => ???
               }
             case DefinedFunction(name, telescopes, meta) => {
-              val (wellTyped, ty) = c.given_Elab.infer(???)
+              val body = let.body.getOrElse {
+                Reporter.report(MissingLetBody(let))
+                ???
+              }
+              val (wellTyped, ty) = c.given_Elab.infer(FunctionExpr(telescopes, resultTy=let.ty, body=body, meta=let.meta))
               ???
             }
           }
