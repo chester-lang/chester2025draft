@@ -244,6 +244,15 @@ trait DefaultElab extends Elab {
         SolverOps.callConstraint(
           FunctionCallElab(f, expr, ty)
         )
+      case expr: FunctionExpr =>
+        toTerm(ty) match {
+          case ft: FunctionType => ???
+          case ty =>
+            val innerContext: Context = ???
+            val innerEffects: EffectsM = ???
+            val bodyWellTyped = infer(expr.body)(using innerContext.copy(effects = innerEffects), ops, state)
+            ???
+        }
       case expr: Expr =>
         val _ = expr
         throw new UnsupportedOperationException("It hasn't been implemented yet: " + expr.getClass.getName + " " + expr.toString)
