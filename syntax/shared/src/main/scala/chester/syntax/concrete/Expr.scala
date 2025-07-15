@@ -1108,13 +1108,13 @@ case class DefinedPattern(pattern: DesaltPattern, meta: Option[ExprMeta]) extend
 
 case class DefinedFunction(
     id: Identifier,
-    telescope: NonEmptyVector[DefTelescope],
+    telescopes: Vector[DefTelescope],
     meta: Option[ExprMeta]
 ) extends Defined {
   override def bindings: Vector[Identifier] = Vector(id)
 
   override def toDoc(using DocConf): Doc = group(
-    id.toDoc <> Doc.mkList(telescope.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
+    id.toDoc <> Doc.mkList(telescopes.map(_.toDoc), Doc.empty, Doc.empty, Doc.empty)
   )
 
   override type ThisTree = DefinedFunction
@@ -1124,7 +1124,7 @@ case class DefinedFunction(
   override def descent(f: Expr => Expr, g: TreeMap[Expr]): DefinedFunction = thisOr(
     DefinedFunction(
       id = g(id),
-      telescope = telescope.map(g(_)),
+      telescopes = telescopes.map(g(_)),
       meta = meta
     )
   )

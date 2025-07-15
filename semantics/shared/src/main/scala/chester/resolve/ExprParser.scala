@@ -1,5 +1,6 @@
 package chester.resolve
 
+import chester.utils.elimNonEmptyVector
 import chester.utils.{assumeNonEmpty, toNonEmptyVector}
 import cats.data.{NonEmptySeq, NonEmptyVector}
 import chester.error.*

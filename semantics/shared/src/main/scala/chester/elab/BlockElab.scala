@@ -35,14 +35,20 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
     exprStatements.foreach {
       case defstmt: LetDefStmt if defstmt.kind == LetDefType.Def =>
         defstmt.defined match {
-          case _ @DefinedPattern(PatternBind(name, meta), _) =>
+          case DefinedPattern(PatternBind(name, meta), _) =>
             val ty = newType
             val id = Uniqid.make[LocalVar]
             val localv = LocalVar(name.name, toTerm(ty), id, convertMeta(meta))
             val r = elab.collector.newSymbol(localv, id, defstmt, context.ctx)
             context.update(_.add(ContextItem(name.name, id, localv, toTerm(ty), Some(r))))
             defs.enqueue((name, ty, id, localv))
-          case _ => ???
+          case DefinedFunction(name, _, meta) =>
+            val ty = newType
+            val id = Uniqid.make[LocalVar]
+            val localv = LocalVar(name.name, toTerm(ty), id, convertMeta(meta))
+            val r = elab.collector.newSymbol(localv, id, defstmt, context.ctx)
+            context.update(_.add(ContextItem(name.name, id, localv, toTerm(ty), Some(r))))
+            defs.enqueue((name, ty, id, localv))
         }
       case _ => () // ignored
     }
@@ -60,14 +66,13 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                 val (evaledTy, sort) = summon[Elab].inferType(ty)
                 val ty1 = summon[Elab].reduceForTyUntyped(evaledTy)
                 val localvar: LocalVar = LocalVar(name.name, ty1, Uniqid.make[LocalVar], meta = name.meta)
-                if(extension.body.result.nonEmpty) {
+                if (extension.body.result.nonEmpty) {
                   ???
                 }
-                val definitions = extension.body.statements.map(x=>ExprParser.desalt(x)).map{
-                  case let: LetDefStmt if let.kind == LetDefType.Def => {
+                val definitions = extension.body.statements.map(x => ExprParser.desalt(x)).map {
+                  case let: LetDefStmt if let.kind == LetDefType.Def =>
                     ???
                     ???
-                  }
                   case stmt =>
                     Reporter.report(???)
                     ???
@@ -110,7 +115,10 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                   }
                 case _ => ???
               }
-            case _ => ???
+            case DefinedFunction(name, telescopes, meta) => {
+              val (wellTyped, ty) = c.given_Elab.infer(???)
+              ???
+            }
           }
         case e =>
           throw new UnsupportedOperationException("not implemented: " + e)
