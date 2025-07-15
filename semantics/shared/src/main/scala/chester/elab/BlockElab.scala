@@ -115,14 +115,27 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                   }
                 case _ => ???
               }
-            case DefinedFunction(name, telescopes, meta) => {
+            case DefinedFunction(name, telescopes, meta) =>
               val body = let.body.getOrElse {
                 Reporter.report(MissingLetBody(let))
                 ???
               }
-              val (wellTyped, ty) = c.given_Elab.infer(FunctionExpr(telescopes, resultTy=let.ty, body=body, meta=let.meta))
-              ???
-            }
+              val (wellTyped0, ty0) = c.given_Elab.infer(FunctionExpr(telescopes, resultTy = let.ty, body = body, meta = let.meta))
+              val wellTyped = toTerm(wellTyped0)
+              val ty = toTerm(ty0)
+              if (let.kind == LetDefType.Let) {
+                val id = Uniqid.make[LocalVar]
+                val localv = LocalVar(name.name, ty, id, convertMeta(meta))
+                val r = elab.collector.newSymbol(localv, id, let, context.ctx)
+                context.update(_.add(ContextItem(name.name, id, localv, ty, Some(r))).knownAdd(id, TyAndVal(ty, wellTyped)))
+                statements = statements :+ LetStmtTerm(localv, wellTyped, ty, convertMeta(let.meta))
+              } else {
+                val self = defs.dequeue()
+                assume(self.defined == name)
+                self.ty.fill(ty)
+                context.update(_.knownAdd(self.id, TyAndVal(ty, wellTyped)))
+                statements = statements :+ DefStmtTerm(self.localv, wellTyped, ty, convertMeta(let.meta))
+              }
           }
         case e =>
           throw new UnsupportedOperationException("not implemented: " + e)
