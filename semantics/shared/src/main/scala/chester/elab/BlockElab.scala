@@ -107,6 +107,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                     context.update(_.add(ContextItem(name.name, id, localv, ty, Some(r))).knownAdd(id, TyAndVal(ty, wellTyped)))
                     statements = statements :+ LetStmtTerm(localv, wellTyped, ty, convertMeta(let.meta))
                   } else {
+                    // TODO: semantics of def a: Int = ... then a: =>Int
                     val self = defs.dequeue()
                     assume(self.defined == name)
                     self.ty.fill(ty)
