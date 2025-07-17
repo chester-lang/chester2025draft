@@ -600,11 +600,11 @@ lazy val utils = useSpire(
         // "io.getkyo" %%% "kyo-core" % "0.18.0",
         // "io.getkyo" %%% "kyo-direct" % "0.18.0",
         // "io.getkyo" %%% "kyo-data" % "0.18.0",
-        "org.scala-graph" %%% "graph-core" % "2.0.3",
-        "com.outr" %%% "scribe" % "3.16.1",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.7",
-        "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.7",
-        "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
+        "org.scala-graph" %%% "graph-core" % "2.0.3"
+        // "com.outr" %%% "scribe" % "3.16.1",
+        // "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.7",
+        // "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.7",
+        // "org.wvlet.airframe" %%% "airframe-log" % AIRFRAME_VERSION // Logging
         /*
         "org.wvlet.airframe" %%% "airframe" % AIRFRAME_VERSION, // Dependency injection
         "org.wvlet.airframe" %%% "airframe-codec" % AIRFRAME_VERSION, // MessagePack-based schema-on-read codec
@@ -798,8 +798,8 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "org.scalameta" %% "semanticdb-shared" % "4.13.8" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
-      ),
-      "org.scala-lang.modules" % "scala-asm" % "9.8.0-scala-1" % Provided, // Provided by scala-compiler-2
+      )
+      // "org.scala-lang.modules" % "scala-asm" % "9.8.0-scala-1" % Provided, // Provided by scala-compiler-2
       // "ch.epfl.scala" %% "tasty-query" % "1.4.0",
       // "org.scala-lang" %% "scala3-tasty-inspector" % scalaVersion.value,
       // "fr.inria.gforge.spoon" % "spoon-core" % "11.1.1-beta-9",
@@ -815,10 +815,11 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       // https://www.graalvm.org/latest/reference-manual/native-image/guides/build-polyglot-native-executable/
       // "org.graalvm.polyglot" % "polyglot" % graalvmVersion,
       // "org.graalvm.polyglot" % "js" % graalvmVersion
-      "org.bytedeco" % "llvm-platform" % "20.1.7-1.5.12" % Provided
+      // "org.bytedeco" % "llvm-platform" % "20.1.7-1.5.12" % Provided // TODO: optional dependencies
     )
   )
 
+// TODO: optional dependencies
 lazy val optional = crossProject(JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -826,7 +827,7 @@ lazy val optional = crossProject(JVMPlatform)
   .settings(
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.bytedeco" % "llvm-platform" % "20.1.7-1.5.12"
+      // "org.bytedeco" % "llvm-platform" % "20.1.7-1.5.12"
     )
   )
   .jvmSettings(jvmScala3Settings, commonJvmSettings)
@@ -1088,8 +1089,8 @@ lazy val buildTool = crossProject(JVMPlatform)
     commonSettings,
     graalvmSettings,
     libraryDependencies ++= Seq(
-      "org.eclipse.jgit" % "org.eclipse.jgit" % jgitVersion,
-      "org.eclipse.jgit" % "org.eclipse.jgit.lfs" % jgitVersion
+      // "org.eclipse.jgit" % "org.eclipse.jgit" % jgitVersion,
+      // "org.eclipse.jgit" % "org.eclipse.jgit.lfs" % jgitVersion
     )
   )
 
