@@ -142,10 +142,29 @@ case object TSBackend extends Backend(Typescript) {
     val _ = ctx.map.put(let.localv.uniqId, name)
     (name, ctx1)
   }
+  def introduceLetVar(let: DefStmtTerm)(using ctx: TSContext): (String, TSContext) = {
+    // TODO: handle shadowing and uniqueness and javascript reserved words and javascript reserved symbols and a lot more
+    val (name, ctx1) = ctx.convertAndAdd(let.localv.name)
+    assume(!ctx.map.contains(let.localv.uniqId), s"Variable $name already exists in the context")
+    val _ = ctx.map.put(let.localv.uniqId, name)
+    (name, ctx1)
+  }
   def useVar(localV: LocalVar)(using ctx: TSContext): String =
     ctx.map.getOrElse(localV.uniqId, throw new IllegalArgumentException(s"Variable ${localV.name} not found in context"))
   def compileStmt(stmt: StmtTerm)(using ctx: TSContext): (TSStmt, TSContext) = stmt match {
     case let: LetStmtTerm =>
+      val (name, ctx) = introduceLetVar(let)
+      (
+        ConstStmt(
+          name = name,
+          ty = Some(compileType(let.ty)),
+          value = compileExpr(let.value),
+          meta = let.meta
+        ),
+        ctx
+      )
+    // TODO: corrrect scope rules for def
+    case let: DefStmtTerm =>
       val (name, ctx) = introduceLetVar(let)
       (
         ConstStmt(
