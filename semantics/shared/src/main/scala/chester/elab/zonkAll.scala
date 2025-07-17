@@ -25,9 +25,13 @@ implicit class ZonkAllOnTerm[T <: Term](val t: T) extends AnyVal {
       x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
     case x: ArgTerm        => x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
     case x: CallingArgTerm => x.copy(ty = summon[Elab].reduceForTyUntyped(x.ty))
-    case x: FunctionType   => x.copy(resultTy = summon[Elab].reduceForTyUntyped(x.resultTy))
+    case x: FunctionType   => x.copy(resultTy = summon[Elab].reduceForTyUntyped(x.resultTy), effects = x.effects.zonkAll)
     case x                 => x
   })
+}
+
+implicit class ZonkAllOnEffectsM(private val x: EffectsM) extends AnyVal {
+  def zonkAll(using SolverOps, Context, Elab): Effects = x.readMetaAll.assumeEffects
 }
 
 implicit class ZonkAllOnTAST(private val tast: TAST) extends AnyVal {
