@@ -1,5 +1,6 @@
 package chester.cell
 
+import chester.elab.toEffectsM
 import chester.syntax.core.*
 import chester.utils.cell.*
 import chester.utils.elab.{Cell, SolverOps}
@@ -25,6 +26,8 @@ case class FixedEffectsCellContent(effects: Effects) extends EffectsCellContent 
 }
 
 def newDynamicEffects(using SolverOps): CellEffects = SolverOps.addCell(DynamicEffectsCellContent())
+
+def newEffects(using SolverOps): EffectsM = newDynamicEffects.toEffectsM
 
 def newPureEffects(using SolverOps): CellEffects = {
   val effects = Effects(Map.empty, None)

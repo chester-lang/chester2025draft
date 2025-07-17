@@ -269,7 +269,7 @@ trait DefaultElab extends Elab {
               }
               TelescopeTerm(args, meta = telescope.meta)
             }
-            val innerEffects: EffectsM = ???
+            val innerEffects: EffectsM = newEffects
             val bodyWellTyped = infer(expr.body)(using innerContext.copy(effects = innerEffects), ops, state)
             ???
         }
