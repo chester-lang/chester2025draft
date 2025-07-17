@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable
 import scala.language.strictEquality
 
-
 private val uniqIdCounter = new AtomicInteger(0)
 
 type Uniqid = UniqidOf[Any]
