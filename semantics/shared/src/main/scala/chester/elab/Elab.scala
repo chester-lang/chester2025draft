@@ -270,8 +270,10 @@ trait DefaultElab extends Elab {
               TelescopeTerm(args, meta = telescope.meta)
             }
             val innerEffects: EffectsM = newEffects
-            val bodyWellTyped = infer(expr.body)(using innerContext.copy(effects = innerEffects), ops, state)
-            ???
+            val body = infer(expr.body)(using innerContext.copy(effects = innerEffects), ops, state)
+            val fty = FunctionType(telescopes, toTerm(body.ty), effects = innerEffects, meta = expr.meta)
+            SolverOps.addConstraint(Unify(ty, fty, expr))
+            Function(fty, toTerm(body.wellTyped), expr.meta)
         }
       case expr: Expr =>
         val _ = expr
