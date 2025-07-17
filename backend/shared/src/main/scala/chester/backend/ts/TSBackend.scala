@@ -130,6 +130,17 @@ case object TSBackend extends Backend(Typescript) {
             t"This has not been implemented yet: FCallTerm multiple telescopes $f"
           )
       }
+    case f: Function if f.ty.telescopes.size == 1 => {
+      assume(f.ty.effects.assumeEffects.isEmpty, "Effects are not yet supported in TypeScript backend")
+        val telescope = f.ty.telescopes.head
+      LambdaExpr(
+        telescope.args.zipWithIndex.map { case (arg, i) =>
+          Param(arg.bind.map(_.name).getOrElse(s"_$i"), compileType(arg.ty))
+        },
+        compileExpr(f.body),
+        f.meta
+      )
+    }
     case term =>
       throw new UnsupportedOperationException(
         t"This has not been implemented yet: class ${term.getClass} $term"
