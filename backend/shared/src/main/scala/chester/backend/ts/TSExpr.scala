@@ -45,6 +45,24 @@ case class DoubleExpr(value: Double, meta: Option[Meta] = None) extends TSExpr {
   }
 }
 
+case class LambdaExpr(
+    params: Seq[Param],
+    body: TSExpr,
+    meta: Option[Meta] = None
+) extends TSExpr {
+  override type ThisTree = LambdaExpr
+
+  override def descent(f: TSExpr => TSExpr, g: TreeMap[TSExpr]): LambdaExpr = copy(
+    params = params.map(g(_)),
+    body = f(body)
+  )
+
+  override def toDoc(using DocConf): Doc = {
+    val paramsDoc = Doc.mkList(params, begin = "(", end = ")")
+    d"function $paramsDoc { return ${body.toDoc}; }"
+  }
+}
+
 case class FunctionCallExpr(
     callee: TSExpr,
     args: Seq[TSExpr],
