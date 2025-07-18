@@ -75,6 +75,10 @@ case class TSContext(map: mutable.HashMap[UniqidOf[LocalVar], String], definedSy
     assume(!definedSymbols.contains(newName), s"Symbol $newName already exists in the context")
     (newName, copy(definedSymbols = definedSymbols + newName))
   }
+  def link(id: UniqidOf[LocalVar], name: String): Unit = {
+    assume(!map.contains(id), s"Variable ${id.name} already exists in the context")
+    map.put(id, name): Unit
+  }
 }
 
 object TSContext {
@@ -145,8 +149,7 @@ case object TSBackend extends Backend(Typescript) {
         innerCtx = innerCtx1
         arg.bind match {
           case Some(localv) =>
-            assume(!ctx.map.contains(localv.uniqId), s"Variable $name already exists in the context")
-            ctx.map.put(localv.uniqId, name): Unit
+            ctx.link(localv.uniqId, name)
           case None =>
         }
         Param(name, compileType(arg.ty)(using innerCtx))
@@ -164,15 +167,13 @@ case object TSBackend extends Backend(Typescript) {
   def introduceLetVar(let: LetStmtTerm)(using ctx: TSContext): (String, TSContext) = {
     // TODO: handle shadowing and uniqueness and javascript reserved words and javascript reserved symbols and a lot more
     val (name, ctx1) = ctx.convertAndAdd(let.localv.name)
-    assume(!ctx.map.contains(let.localv.uniqId), s"Variable $name already exists in the context")
-    val _ = ctx.map.put(let.localv.uniqId, name)
+    ctx1.link(let.localv.uniqId, name)
     (name, ctx1)
   }
   def introduceLetVar(let: DefStmtTerm)(using ctx: TSContext): (String, TSContext) = {
     // TODO: handle shadowing and uniqueness and javascript reserved words and javascript reserved symbols and a lot more
     val (name, ctx1) = ctx.convertAndAdd(let.localv.name)
-    assume(!ctx.map.contains(let.localv.uniqId), s"Variable $name already exists in the context")
-    val _ = ctx.map.put(let.localv.uniqId, name)
+    ctx1.link(let.localv.uniqId, name)
     (name, ctx1)
   }
   def useVar(localV: LocalVar)(using ctx: TSContext): String =
