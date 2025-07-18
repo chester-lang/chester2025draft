@@ -76,7 +76,7 @@ case class TSContext(map: mutable.HashMap[UniqidOf[LocalVar], String], definedSy
     (newName, copy(definedSymbols = definedSymbols + newName))
   }
   def link(id: UniqidOf[LocalVar], name: String): Unit = {
-    assume(!map.contains(id), s"Variable ${id.name} already exists in the context")
+    assume(!map.contains(id), s"Variable $name already exists in the context")
     map.put(id, name): Unit
   }
 }
