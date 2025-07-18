@@ -69,6 +69,12 @@ case class TSContext(map: mutable.HashMap[UniqidOf[LocalVar], String], definedSy
     assume(!definedSymbols.contains(newName), s"Symbol $newName already exists in the context")
     (newName, copy(definedSymbols = definedSymbols + newName))
   }
+  def addArgument(name: String): (String, TSContext) = {
+    val converted = IdentifierRules.convertToJSIdentifier(name)
+    val newName = IdentifierRules.newSymbol(definedSymbols, converted)
+    assume(!definedSymbols.contains(newName), s"Symbol $newName already exists in the context")
+    (newName, copy(definedSymbols = definedSymbols + newName))
+  }
 }
 
 object TSContext {
@@ -130,17 +136,26 @@ case object TSBackend extends Backend(Typescript) {
             t"This has not been implemented yet: FCallTerm multiple telescopes $f"
           )
       }
-    case f: Function if f.ty.telescopes.size == 1 => {
+    case f: Function if f.ty.telescopes.size == 1 =>
+      var innerCtx = ctx
       assume(f.ty.effects.assumeEffects.isEmpty, "Effects are not yet supported in TypeScript backend")
-        val telescope = f.ty.telescopes.head
+      val telescope = f.ty.telescopes.head
+      val args = telescope.args.zipWithIndex.map { case (arg, i) =>
+        val (name, innerCtx1) = innerCtx.addArgument(arg.bind.map(_.name).getOrElse(s"_$i"))
+        innerCtx = innerCtx1
+        arg.bind match {
+          case Some(localv) =>
+            assume(!ctx.map.contains(localv.uniqId), s"Variable $name already exists in the context")
+            ctx.map.put(localv.uniqId, name): Unit
+          case None =>
+        }
+        Param(name, compileType(arg.ty)(using innerCtx))
+      }
       LambdaExpr(
-        telescope.args.zipWithIndex.map { case (arg, i) =>
-          Param(arg.bind.map(_.name).getOrElse(s"_$i"), compileType(arg.ty))
-        },
-        compileExpr(f.body),
+        args,
+        compileExpr(f.body)(using innerCtx),
         f.meta
       )
-    }
     case term =>
       throw new UnsupportedOperationException(
         t"This has not been implemented yet: class ${term.getClass} $term"
