@@ -1066,9 +1066,9 @@ lazy val buildProtocol = crossProject(JVMPlatform)
       // "com.lihaoyi" %%% "sourcecode" % "0.4.3-M1",
       // "org.typelevel" %%% "cats-core" % "2.13.0",
       // "org.typelevel" %%% "cats-kernel" % "2.13.0",
-      // "org.log4s" %%% "log4s" % "1.10.0",
-      // "org.slf4j" % "slf4j-api" % "2.0.17",
-      // "org.slf4j" % "slf4j-simple" % "2.0.17",
+      "org.log4s" %%% "log4s" % "1.10.0",
+      "org.slf4j" % "slf4j-api" % "2.0.17",
+      "org.slf4j" % "slf4j-simple" % "2.0.17",
       "ch.epfl.scala" % "bsp4j" % "2.2.0-M4.TEST"
     )
   )
