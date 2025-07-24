@@ -8,7 +8,7 @@ val scala2Beta = "2.13.17-M1"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
-val graalvmVersion = "24.2.1"
+val graalvmVersion = "24.2.2"
 
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.35")
 ThisBuild / organization := "com.github.chester-lang"
