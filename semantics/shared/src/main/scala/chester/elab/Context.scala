@@ -66,7 +66,15 @@ object Context {
   }
 }
 
-case class Def() {}
+case class Def(uniqId: UniqidOf[Def]) extends HasUniqid {
+
+  override def collectU(collector: UCollector): Unit =
+    collector(uniqId)
+
+  override def replaceU(reranger: UReplacer): Any = copy(
+    uniqId = reranger(uniqId)
+  )
+}
 
 case class ExtensionDefinition(
     uniqId: UniqidOf[ExtensionDefinition],
@@ -80,13 +88,17 @@ case class ExtensionDefinition(
     collector(uniqId)
     ty.collectU(collector)
     bind.collectU(collector)
+    methods.values.foreach(_.collectU(collector))
   }
 
   override def replaceU(reranger: UReplacer): Any =
     copy(
       uniqId = reranger(uniqId),
       ty = ty.replaceU(reranger),
-      bind = bind.replaceU(reranger).asInstanceOf[LocalVar]
+      bind = bind.replaceU(reranger).asInstanceOf[LocalVar],
+      methods = methods.map { case (name, defn) =>
+        name -> defn.replaceU(reranger).asInstanceOf[Def]
+      }
     )
 }
 
