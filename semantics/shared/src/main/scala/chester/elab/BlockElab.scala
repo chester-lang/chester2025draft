@@ -6,7 +6,7 @@ import chester.syntax.concrete.*
 import chester.syntax.core.*
 import chester.elab.{Context, ContextItem, TyAndVal, convertMeta}
 import chester.resolve.ExprParser
-import chester.uniqid.{Uniqid, UniqidOf}
+import chester.uniqid.*
 import chester.utils.elab.*
 
 import scala.collection.mutable
@@ -60,6 +60,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
               .asInstanceOf[DefTelescope]
               .implicitly == false && extension.telescope.head.asInstanceOf[DefTelescope].args.length == 1
           ) {
+            val uniqId = Uniqid.make[ExtensionDefinition]
             val arg: Arg = extension.telescope.head.asInstanceOf[DefTelescope].args.head
             (arg.name, arg.ty) match {
               case (Some(name), Some(ty)) =>
@@ -77,7 +78,7 @@ case object BlockElabHandler extends Handler[ElabOps, BlockElab.type](BlockElab)
                     Reporter.report(???)
                     ???
                 }
-                val result: ExtensionDefinition = ExtensionDefinition(ty = ty1, bind = localvar, methods = ???)
+                val result: ExtensionDefinition = ExtensionDefinition(uniqId = uniqId, ref = ???, ty = ty1, bind = localvar, methods = ???)
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)
               case _ =>
                 throw new UnsupportedOperationException("extension: not implemented: " + extension)

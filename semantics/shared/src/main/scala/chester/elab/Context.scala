@@ -5,7 +5,7 @@ import chester.syntax.*
 import chester.syntax.accociativity.OperatorsContext
 import chester.syntax.core.*
 import chester.elab.api.SymbolCollector
-import chester.uniqid.{Uniqid, UniqidOf}
+import chester.uniqid.*
 import chester.reduce.ReduceContext
 import chester.reduce.{DefaultReducer, Reducer}
 import chester.i18n.*
@@ -68,7 +68,27 @@ object Context {
 
 case class Def() {}
 
-case class ExtensionDefinition(ty: Term, bind: LocalVar, methods: Map[Name, Def] = HashMap.empty) {}
+case class ExtensionDefinition(
+    uniqId: UniqidOf[ExtensionDefinition],
+    ref: AbsoluteRef,
+    ty: Term,
+    bind: LocalVar,
+    methods: Map[Name, Def] = HashMap.empty
+) extends HasUniqid {
+
+  override def collectU(collector: UCollector): Unit = {
+    collector(uniqId)
+    ty.collectU(collector)
+    bind.collectU(collector)
+  }
+
+  override def replaceU(reranger: UReplacer): Any =
+    copy(
+      uniqId = reranger(uniqId),
+      ty = ty.replaceU(reranger),
+      bind = bind.replaceU(reranger).asInstanceOf[LocalVar]
+    )
+}
 
 case class Context(
     effects: EffectsM = Effects.Empty,
@@ -79,7 +99,10 @@ case class Context(
     knownMap: Map[UniqidOf[Reference], TyAndVal] = HashMap.empty[UniqidOf[Reference], TyAndVal], // empty[...] are needed because compiler bugs
     typeDefinitionNames: Map[Name, UniqidOf[TypeDefinition]] = HashMap.empty,
     typeDefinitions: Map[UniqidOf[TypeDefinition], TypeDefinition] = HashMap.empty,
-    extensions: Vector[ExtensionDefinition] = Vector.empty,
+    // all extensions
+    extensions: Map[UniqidOf[ExtensionDefinition], ExtensionDefinition] = HashMap.empty,
+    // activated extensions
+    extensionsLookup: Vector[UniqidOf[ExtensionDefinition]] = Vector.empty,
     imports: Imports = Imports.Empty,
     loadedModules: LoadedModules = LoadedModules.Empty,
     operators: OperatorsContext = OperatorsContext.Default,
