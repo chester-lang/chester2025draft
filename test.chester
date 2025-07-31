@@ -10,6 +10,9 @@ let f = e(1, 2);
 
 def func(a: Int, b: Int): Int = a;
 
-extension (x: Int) {
+extension IntOps(x: Int) {
   def +(y: Int): Int = d(x, y);
 }
+
+def tmp: Int = 1->IntOps.+(2);
+def tmp2: Int = 1+2;
