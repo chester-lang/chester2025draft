@@ -10,6 +10,4 @@ let f = e(1, 2);
 
 def func(a: Int, b: Int): Int = a;
 
-def +(x: Int, y: Int): Int = d(x, y);
-
-def tmp: Int = 1->+(2);
+def tmp: Int = 1->d(2);
