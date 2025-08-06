@@ -633,7 +633,7 @@ lazy val utils = useSpire(
     )
     .nativeSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.5"
+        "com.lihaoyi" %%% "os-lib" % "0.11.4"
       ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
