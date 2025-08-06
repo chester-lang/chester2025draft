@@ -572,7 +572,7 @@ lazy val scalaSTM = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(commonJvmSettings)
 
 val AIRFRAME_VERSION = "2025.1.14"
-val ironVersion = "3.0.2"
+val ironVersion = "3.1.0"
 
 // split modules trying to increase incremental compilation speed
 lazy val utils = useSpire(
@@ -589,9 +589,9 @@ lazy val utils = useSpire(
         "io.github.iltotore" %%% "iron-upickle" % ironVersion exclude ("com.lihaoyi", "upickle_3"),
         "org.typelevel" %%% "cats-core" % "2.13.0",
         "org.typelevel" %%% "cats-free" % "2.13.0",
-        "com.lihaoyi" %%% "pprint" % "0.9.0",
+        "com.lihaoyi" %%% "pprint" % "0.9.3",
         "com.lihaoyi" %%% "upickle" % "4.2.1",
-        "com.lihaoyi" %%% "fansi" % "0.5.0",
+        "com.lihaoyi" %%% "fansi" % "0.5.1",
         "com.lihaoyi" %%% "fastparse" % "3.1.1",
         "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
         // "com.lihaoyi" %%% "scalatags" % "0.13.1",
@@ -620,7 +620,7 @@ lazy val utils = useSpire(
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4"
+        "com.lihaoyi" %%% "os-lib" % "0.11.5"
       ),
       commonJvmSettings,
       libraryDependencies ++= Seq(
@@ -633,7 +633,7 @@ lazy val utils = useSpire(
     )
     .nativeSettings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "os-lib" % "0.11.4"
+        "com.lihaoyi" %%% "os-lib" % "0.11.5"
       ),
       libraryDependencies ++= Seq(
         "org.scala-js" %% "scalajs-stubs" % "1.1.0"
@@ -759,7 +759,7 @@ lazy val backend213 = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(utils, syntax, err)
   .settings(
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.8")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.9")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -795,7 +795,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonJvmSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.13.8" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.9" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       )
