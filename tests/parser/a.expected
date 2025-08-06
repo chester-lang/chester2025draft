@@ -1,1 +1,1 @@
-Block(statements = Vector(), result = Some(value = IntegerLiteral(value = 0, meta = None)), meta = None)
+Block(statements = Vector(), result = Some(IntegerLiteral(value = 0, meta = None)), meta = None)

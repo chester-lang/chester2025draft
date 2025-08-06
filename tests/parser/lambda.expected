@@ -73,7 +73,7 @@ Block(
               meta = None
             )
           ),
-          result = Some(value = Identifier(name = "y", meta = None)),
+          result = Some(Identifier(name = "y", meta = None)),
           meta = None
         )
       ),
