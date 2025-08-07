@@ -2,6 +2,8 @@
 
 This project is under development and not usable yet.
 
+This project used too much scala and fancy features. Scala compiler is taking all the resources from my computer and thus I am unable to work on this project comfortably
+
 
 https://www.the-lingo.org - note that the domain is subject to change
 
