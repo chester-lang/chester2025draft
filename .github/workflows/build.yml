@@ -34,7 +34,7 @@ jobs:
             os_name: macos-x86_64
 
     env:
-      SCALA_VERSION: '3.7.3-RC1'
+      SCALA_VERSION: '3.7.4-RC1'
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     defaults:
