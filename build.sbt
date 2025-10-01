@@ -3,12 +3,12 @@
 val scala3Nightly = "3.8.0-RC1-bin-20250822-658c8bd-NIGHTLY"
 val scala3Version = "3.7.4-RC1"
 val scala3Lib = "3.6.4"
-val scala2Version = "2.13.16"
+val scala2Version = "2.13.17"
 val scala2Beta = "2.13.17-M1"
 
 val graalVm = "graalvm-java24"
 val graalJdkVersion = "24.0.1"
-val graalvmVersion = "24.2.2"
+val graalvmVersion = "25.0.0"
 
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.35")
 ThisBuild / organization := "com.github.chester-lang"
@@ -235,12 +235,12 @@ def commonSettings0 = Seq(
   scalacOptions ++= Seq("-Wunused:all"), // "-Xlint:adapted-args"
   scalacOptions ++= Seq("-rewrite", "-source", "3.7-migration"),
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.1" % Test,
+    "org.scalameta" %%% "munit" % "1.2.0" % Test,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test,
     "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test,
-    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test
+    "org.scalacheck" %%% "scalacheck" % "1.19.0" % Test
     // "com.eed3si9n.verify" %%% "verify" % "1.0.0" % Test
   ),
   testFrameworks += new TestFramework("verify.runner.Framework"),
@@ -279,12 +279,12 @@ def scala2Common = Seq(
   // required by scalafix?
   scalacOptions ++= Seq("-Xlint:adapted-args"), // "-Wunused:all",
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % "1.1.1" % Test cross CrossVersion.for2_13Use3,
+    "org.scalameta" %%% "munit" % "1.2.0" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest-funsuite" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
     "org.scalatest" %%% "scalatest-shouldmatchers" % "3.2.19" % Test cross CrossVersion.for2_13Use3,
     "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % Test cross CrossVersion.for2_13Use3,
-    "org.scalacheck" %%% "scalacheck" % "1.18.1" % Test cross CrossVersion.for2_13Use3
+    "org.scalacheck" %%% "scalacheck" % "1.19.0" % Test cross CrossVersion.for2_13Use3
   ),
   excludeDependencies ++= Seq(
     ExclusionRule("com.lihaoyi", "fastparse_2.13"),
@@ -572,7 +572,7 @@ lazy val scalaSTM = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(commonJvmSettings)
 
 val AIRFRAME_VERSION = "2025.1.14"
-val ironVersion = "3.1.0"
+val ironVersion = "3.2.0"
 
 // split modules trying to increase incremental compilation speed
 lazy val utils = useSpire(
@@ -583,14 +583,14 @@ lazy val utils = useSpire(
     .settings(
       commonLibSettings,
       libraryDependencies ++= Seq(
-        "com.github.alexarchambault" %%% "case-app" % "2.1.0-M30",
+        "com.github.alexarchambault" %%% "case-app" % "2.1.0",
         "io.github.iltotore" %%% "iron" % ironVersion,
         "io.github.iltotore" %%% "iron-cats" % ironVersion,
         "io.github.iltotore" %%% "iron-upickle" % ironVersion exclude ("com.lihaoyi", "upickle_3"),
         "org.typelevel" %%% "cats-core" % "2.13.0",
         "org.typelevel" %%% "cats-free" % "2.13.0",
-        "com.lihaoyi" %%% "pprint" % "0.9.3",
-        "com.lihaoyi" %%% "upickle" % "4.2.1",
+        "com.lihaoyi" %%% "pprint" % "0.9.4",
+        "com.lihaoyi" %%% "upickle" % "4.3.2",
         "com.lihaoyi" %%% "fansi" % "0.5.1",
         "com.lihaoyi" %%% "fastparse" % "3.1.1",
         "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.4.0",
@@ -759,7 +759,7 @@ lazy val backend213 = crossProject(JSPlatform, JVMPlatform)
   .dependsOn(utils, syntax, err)
   .settings(
     scala2Common,
-    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.9")
+    libraryDependencies += ("org.scalameta" %%% "scalameta" % "4.13.10")
       .cross(CrossVersion.for3Use2_13)
       .exclude("org.jline", "jline"),
     // scalap is a dependency of scalameta
@@ -795,7 +795,7 @@ lazy val platform = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     commonJvmSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scalap" % scala2Version exclude ("org.jline", "jline"), // dependency of semanticdb-shared
-      "org.scalameta" %% "semanticdb-shared" % "4.13.9" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
+      "org.scalameta" %% "semanticdb-shared" % "4.13.10" cross CrossVersion.for3Use2_13 exclude ("com.lihaoyi", "sourcecode_2.13") exclude (
         "org.jline",
         "jline"
       )
@@ -904,7 +904,7 @@ ThisBuild / enableCliReadline := false
 val windows: Boolean = System.getProperty("os.name").toLowerCase.contains("win")
 val unix: Boolean = !windows
 
-val jlineVersion = "3.30.4"
+val jlineVersion = "3.30.6"
 lazy val cli = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Full)
