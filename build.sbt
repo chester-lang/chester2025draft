@@ -3,11 +3,11 @@
 val scala3Nightly = "3.8.0-RC1-bin-20250822-658c8bd-NIGHTLY"
 val scala3Version = "3.7.4-RC1"
 val scala3Lib = "3.6.4"
-val scala2Version = "2.13.17"
+val scala2Version = "2.13.16"
 val scala2Beta = "2.13.17-M1"
 
-val graalVm = "graalvm-java24"
-val graalJdkVersion = "24.0.1"
+val graalVm = "graalvm-java25"
+val graalJdkVersion = "25.0.0"
 val graalvmVersion = "25.0.0"
 
 ThisBuild / version := sys.env.getOrElse("VERSION", "0.0.35")
